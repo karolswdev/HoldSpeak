@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "source_commit": "34323afe",
+  "council": "PHILO-2-06 draft, Muad'Dib 2026-09-23",
+  "resolutions": [
+    {
+      "id": "res.decisions_route_dead",
+      "findings": [
+        "fnd.live.decisions_route_dead",
+        "finding.live_astra.decision_create_500"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:1",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    },
+    {
+      "id": "res.summary_lands_on_arrival",
+      "findings": [
+        "fnd.arrival.summary_never_lands",
+        "fnd.live.failed_summary_reads_nothing_needs_you",
+        "finding.live_astra.summary_recipe"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:2",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "pending"
+      }
+    },
+    {
+      "id": "res.thought_receipt",
+      "findings": [
+        "fnd.astra.thought_save_status_is_filing",
+        "finding.live_astra.thought_receipt_time"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:3",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    },
+    {
+      "id": "res.brief_unknown_is_not_absence",
+      "findings": [
+        "finding.arrival_brief_load_error_swallowed",
+        "fnd.brief.unknown_drawn_as_absence",
+        "fnd.brief.no_date_on_the_face"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:4",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    },
+    {
+      "id": "res.receipt_open_goes_somewhere",
+      "findings": [
+        "fnd.shade.dictation_door_wrong_target",
+        "fnd.astra.shade_open_wrong_source_identity",
+        "fnd.projections.dismiss_is_forever"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:5",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "pending"
+      }
+    },
+    {
+      "id": "res.first_value_recovery_owner",
+      "findings": [
+        "fnd.astra.first_value_setup_wrong_owner",
+        "fnd.capture.recovery_has_no_face",
+        "fnd.arrival.talk_key_drops_words"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:6",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "pending"
+      }
+    },
+    {
+      "id": "res.local_time",
+      "findings": [
+        "fnd.live.rhythm_shows_utc",
+        "finding.live_astra.rhythm_clock"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:7",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    },
+    {
+      "id": "res.desk_memory_one_thing",
+      "findings": [
+        "fnd.desk_memory.one_name_three_faces",
+        "fnd.astra.recall_recent_actions_lose_mode"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:8",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "pending"
+      }
+    },
+    {
+      "id": "res.concierge_finishes",
+      "findings": [
+        "fnd.concierge.download_never_finishes",
+        "finding.concierge_download_no_completion_poll",
+        "finding.concierge_cloud_check_no_probe"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:9",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    },
+    {
+      "id": "res.arrival_record_says_something",
+      "findings": [
+        "fnd.arrival.record_says_nothing"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:10",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "pending"
+      }
+    },
+    {
+      "id": "res.tooling_live_prep",
+      "findings": [
+        "finding.live_astra.capture_boundary",
+        "finding.live_astra.missing_replays",
+        "finding.live_astra.weak_completion",
+        "finding.live_astra.unminted_preconditions",
+        "finding.live_astra.unavailable_fault_adapters",
+        "finding.live_astra.assignment_payloads",
+        "finding.live_astra.draft_wrong_target",
+        "finding.live_astra.summary_fixture",
+        "fnd.atlas.placeholder_triggers",
+        "fnd.tooling.validator_needs_dev_extra"
+      ],
+      "bin": "tooling-debt",
+      "disposition": "story7",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      }
+    }
+  ]
+}

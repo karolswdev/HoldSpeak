@@ -41,7 +41,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 | PHILO-2-03 | The static pass, Astra | done | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-2-04 | The live pass, Muad'Dib | done | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-2-05 | The live pass, Astra | done | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | [evidence-story-05](./evidence-story-05.md) |
-| PHILO-2-06 | The council | backlog | [story-06-the-council](./story-06-the-council.md) | - |
+| PHILO-2-06 | The council | in-progress | [story-06-the-council](./story-06-the-council.md) | - |
 | PHILO-2-07 | The tree up to par | backlog | [story-07-the-tree-up-to-par](./story-07-the-tree-up-to-par.md) | - |
 
 ## Lanes

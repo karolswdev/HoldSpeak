@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 2
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-2-02, 03, 04, 05
 - **Unblocks:** see the phase status doc
 - **Owner:** both brains; the owner rules dissents
