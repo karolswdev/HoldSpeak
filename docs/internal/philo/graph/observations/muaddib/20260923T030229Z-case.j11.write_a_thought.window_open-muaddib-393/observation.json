@@ -1,0 +1,651 @@
+{
+  "id": "obs-20260923T030229Z-case.j11.write_a_thought.window_open-muaddib-393",
+  "run_id": "20260923T030229Z-case.j11.write_a_thought.window_open-muaddib-393",
+  "case_id": "case.j11.write_a_thought.window_open",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.arrival_develop_thought"
+  ],
+  "state_id": "state.desk_presentation.window_open_thought",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61098",
+      "port": 61098,
+      "pid": 11050,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zh5em1jx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zh5em1jx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T03:02:29.613652+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the desk shown",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-develop-thought]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Thought\nThought\nStart with what you know\u2026\n\nONE QUESTION\nNO ENGINE YET\nChoose an engine\nREADS \u00b7 NOTHING\nKEPT\nChange\nFinish"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "pullout:note_d69685d69e10",
+        "tabindex": "-1",
+        "class": "desk-pullout thought-workspace-window desk-window desk-window-shell is-sheet is-front",
+        "role": "region",
+        "aria-label": "Thought",
+        "style": "z-index: 43; opacity: 1; transform: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 629
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:02 PM\n1 need you\nNO CAL",
+      "after": "Note body"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Thought",
+          "rect": {
+            "x": 0,
+            "y": 54,
+            "w": 393,
+            "h": 629
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "f1cac88eaea5a722836400c683528e5f821d5fb7a90ef4fe1e47fe20ae16b6f7",
+      "after": "18e7f978c710de9af4131596ad45bde5f7e9e86c891e186f2bc9373faa26c2ae"
+    },
+    "document_text_len": {
+      "before": 248,
+      "after": 408
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n09:02 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:61098/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "f1cac88eaea5a722836400c683528e5f821d5fb7a90ef4fe1e47fe20ae16b6f7",
+    "document_text_len": 248,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T03:02:34.998634+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window",
+    "target_present": true,
+    "text": "Thought\nThought\nStart with what you know\u2026\n\nONE QUESTION\nNO ENGINE YET\nChoose an engine\nREADS \u00b7 NOTHING\nKEPT\nChange\nFinish",
+    "attrs": {
+      "id": "pullout:note_d69685d69e10",
+      "tabindex": "-1",
+      "class": "desk-pullout thought-workspace-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Thought",
+      "style": "z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 54,
+      "w": 393,
+      "h": 629
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:61098/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "18e7f978c710de9af4131596ad45bde5f7e9e86c891e186f2bc9373faa26c2ae",
+    "document_text_len": 408,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T03:02:36.565142+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "3abacf68830bd8e8da5079a9c6f6aca2ae330e9a364e36e31f4865d09d477be4",
+      "body": {
+        "note": {
+          "id": "note_d69685d69e10",
+          "title": "Thought",
+          "body_markdown": "",
+          "tags": [],
+          "created_at": "2026-09-23T03:02:35Z",
+          "updated_at": "2026-09-23T03:02:35Z",
+          "last_modified": "2026-09-23T03:02:35Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:61098) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window",
+    "target_present": true,
+    "text": "Thought\nThought\nStart with what you know\u2026\n\nONE QUESTION\nNO ENGINE YET\nChoose an engine\nREADS \u00b7 NOTHING\nKEPT\nChange\nFinish",
+    "attrs": {
+      "id": "pullout:note_d69685d69e10",
+      "tabindex": "-1",
+      "class": "desk-pullout thought-workspace-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Thought",
+      "style": "z-index: 43; opacity: 0; transform: translateX(50.1272px);"
+    },
+    "rect": {
+      "x": 50,
+      "y": 54,
+      "w": 393,
+      "h": 629
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:61098/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 50,
+          "y": 54,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "18e7f978c710de9af4131596ad45bde5f7e9e86c891e186f2bc9373faa26c2ae",
+    "document_text_len": 408,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T03:02:35.980678+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "3abacf68830bd8e8da5079a9c6f6aca2ae330e9a364e36e31f4865d09d477be4",
+      "body": {
+        "note": {
+          "id": "note_d69685d69e10",
+          "title": "Thought",
+          "body_markdown": "",
+          "tags": [],
+          "created_at": "2026-09-23T03:02:35Z",
+          "updated_at": "2026-09-23T03:02:35Z",
+          "last_modified": "2026-09-23T03:02:35Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:61098) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "windows after: ['Thought']",
+    "elapsed_s": 0.921
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "windows after: ['Thought']",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.504,
+    "first_satisfied_at_s": 0.921,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: windows after: ['Thought']"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:61098) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/notes",
+      "status": 201,
+      "body_sha256": "3abacf68830bd8e8da5079a9c6f6aca2ae330e9a364e36e31f4865d09d477be4",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:61098) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:61098) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/notes",
+        "status": 201,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/for-note/note_d69685d69e10",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/thoughts/adopt",
+        "status": 201,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note8.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "docs/internal/philo/graph/observations/muaddib/20260923T030229Z-case.j11.write_a_thought.window_open-muaddib-393/before.png",
+    "docs/internal/philo/graph/observations/muaddib/20260923T030229Z-case.j11.write_a_thought.window_open-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zh5em1jx/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61098"
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "id": "obs-20260923T025316Z-case.j10.brief_latest.absent-muaddib-1440",
+  "run_id": "20260923T025316Z-case.j10.brief_latest.absent-muaddib-1440",
+  "case_id": "case.j10.brief_latest.absent",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.route.brief_latest"
+  ],
+  "state_id": "state.briefs.absent",
+  "provenance": {
+    "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f872c6384eb22ce20c3a6d429fe833a2bc682f6bf2091f207c1f45cc4d4539fc",
+      "assets": [
+        "index-BNDgWxUD.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:59412",
+      "port": 59412,
+      "pid": 4856,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-c37t9pxx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-c37t9pxx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T02:53:16.810282+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "no brief generated",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "api",
+    "method": "GET",
+    "path": "/api/brief/latest",
+    "adapter": "http-route",
+    "status": 200,
+    "response": "None",
+    "response_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "[data-testid=arrival-brief]",
+    "target_present": true,
+    "text": "BRIEF\nTHIS DEVICE\nGenerate\nNo brief yet",
+    "attrs": {
+      "data-testid": "arrival-brief"
+    },
+    "rect": {
+      "x": 256,
+      "y": 260,
+      "w": 928,
+      "h": 65
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:59412/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d23929b4b56dbfa733987c87eec241a80557737e9478ec6e61c4570b86209f3c",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      }
+    ],
+    "at_utc": "2026-09-23T02:53:22.767404+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief]",
+    "target_present": true,
+    "text": "BRIEF\nTHIS DEVICE\nGenerate\nNo brief yet",
+    "attrs": {
+      "data-testid": "arrival-brief"
+    },
+    "rect": {
+      "x": 256,
+      "y": 260,
+      "w": 928,
+      "h": 65
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:59412/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d23929b4b56dbfa733987c87eec241a80557737e9478ec6e61c4570b86209f3c",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      }
+    ],
+    "at_utc": "2026-09-23T02:53:23.901965+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": "None"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief]",
+    "target_present": true,
+    "text": "BRIEF\nTHIS DEVICE\nGenerate\nNo brief yet",
+    "attrs": {
+      "data-testid": "arrival-brief"
+    },
+    "rect": {
+      "x": 256,
+      "y": 260,
+      "w": 928,
+      "h": 65
+    },
+    "visible": true,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:59412/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d23929b4b56dbfa733987c87eec241a80557737e9478ec6e61c4570b86209f3c",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      }
+    ],
+    "at_utc": "2026-09-23T02:53:23.771074+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": "None"
+    },
+    "predicate_satisfied": true,
+    "reading": "'No brief yet' in observe_at text",
+    "elapsed_s": 0.907
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'No brief yet' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.038,
+    "first_satisfied_at_s": 0.907,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'No brief yet' in observe_at text"
+  ],
+  "complete": true,
+  "shots": [
+    "docs/internal/philo/graph/observations/muaddib/20260923T025316Z-case.j10.brief_latest.absent-muaddib-1440/before.png",
+    "docs/internal/philo/graph/observations/muaddib/20260923T025316Z-case.j10.brief_latest.absent-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-c37t9pxx/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:59412"
+  ]
+}
