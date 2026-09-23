@@ -1,0 +1,664 @@
+{
+  "schema_version": 1,
+  "source_commit": "34323afe",
+  "council": "PHILO-2-06 draft, Muad'Dib 2026-09-23",
+  "resolutions": [
+    {
+      "id": "res.decisions_route_dead",
+      "findings": [
+        "fnd.live.decisions_route_dead",
+        "finding.live_astra.decision_create_500"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:1",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "proposed:A1; create/read/reopen proof; brief and shelf require their own outcomes",
+      "disposition_final": "phase3:A1"
+    },
+    {
+      "id": "res.summary_lands_on_arrival",
+      "findings": [
+        "fnd.arrival.summary_never_lands",
+        "fnd.live.failed_summary_reads_nothing_needs_you"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:2",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "proposed:A2; actual host, automatic arrival refresh, honest retry and retained restart result",
+      "notes": "Astra accepts the source-backed arrival/retry defects. No sealed terminal summary observation exists; Muaddib reports off-rig completion/restart but says the raw output was not retained. The recipe finding is split into tooling debt.",
+      "disposition_final": "phase3:A2"
+    },
+    {
+      "id": "res.thought_receipt",
+      "findings": [
+        "fnd.astra.thought_save_status_is_filing",
+        "finding.live_astra.thought_receipt_time"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:3",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:first follow-up after A1-A3; current-write receipt remains unpaid",
+      "disposition_final": "phase3:A4 (pending owner D3)"
+    },
+    {
+      "id": "res.brief_unknown_is_not_absence",
+      "findings": [
+        "finding.arrival_brief_load_error_swallowed",
+        "fnd.brief.unknown_drawn_as_absence",
+        "fnd.brief.no_date_on_the_face"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:4",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "proposed:A3; dated brief, load failure/Retry, same-day identity and next-day decision inclusion",
+      "disposition_final": "phase3:A3"
+    },
+    {
+      "id": "res.receipt_open_goes_somewhere",
+      "findings": [
+        "fnd.shade.dictation_door_wrong_target",
+        "fnd.astra.shade_open_wrong_source_identity",
+        "fnd.projections.dismiss_is_forever"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:5",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:receipt target and return-path repair; backend restore exists; no data-loss claim",
+      "notes": "Dismiss has no user-facing return path. The store and API support restore, so this does not establish deletion or a broken restore endpoint.",
+      "disposition_final": "deferred"
+    },
+    {
+      "id": "res.first_value_recovery_owner",
+      "findings": [
+        "fnd.astra.first_value_setup_wrong_owner",
+        "fnd.capture.recovery_has_no_face",
+        "fnd.arrival.talk_key_drops_words"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:6",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:separate first-value and native-capture scope; no New Project recovery, lost Talk output or recovery door certified",
+      "disposition_final": "deferred"
+    },
+    {
+      "id": "res.local_time",
+      "findings": [
+        "fnd.live.rhythm_shows_utc",
+        "finding.live_astra.rhythm_clock"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:7",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:Rhythm and Settings show local time or a named zone",
+      "disposition_final": "deferred"
+    },
+    {
+      "id": "res.desk_memory_one_thing",
+      "findings": [
+        "fnd.desk_memory.one_name_three_faces",
+        "fnd.astra.recall_recent_actions_lose_mode"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:8",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "disagree: Confusing names and stale Recall results are real, but one face is not required by Tenets 3 and 5. Repair recent-mode refresh separately; a consolidation is outside the minimum meeting result."
+      },
+      "astra_disposition": "deferred:targeted Recall recent-mode refresh and clear naming; no mandated three-face consolidation",
+      "disposition_final": "deferred: recall refresh only (consolidation withdrawn, \u00a74.7)"
+    },
+    {
+      "id": "res.concierge_finishes",
+      "findings": [
+        "fnd.concierge.download_never_finishes",
+        "finding.concierge_download_no_completion_poll",
+        "finding.concierge_cloud_check_no_probe"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:9",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:alternate download/cloud setup; not a dependency of the configured LAN result",
+      "disposition_final": "deferred"
+    },
+    {
+      "id": "res.arrival_record_says_something",
+      "findings": [
+        "fnd.arrival.record_says_nothing"
+      ],
+      "bin": "product-defect",
+      "disposition": "phase3:10",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "deferred:native recording feedback/recovery; import duration remains a separate unverified outcome",
+      "notes": "The finding establishes different Record entry behavior by source. Duration zero during an accepted import does not establish a product duration defect.",
+      "disposition_final": "deferred"
+    },
+    {
+      "id": "res.tooling_live_prep",
+      "findings": [
+        "finding.live_astra.capture_boundary",
+        "finding.live_astra.missing_replays",
+        "finding.live_astra.weak_completion",
+        "finding.live_astra.unminted_preconditions",
+        "finding.live_astra.unavailable_fault_adapters",
+        "finding.live_astra.assignment_payloads",
+        "finding.live_astra.draft_wrong_target",
+        "finding.live_astra.summary_fixture",
+        "fnd.tooling.validator_needs_dev_extra",
+        "fnd.live.boundary_substitutions_missing",
+        "fnd.live.atlas_request_shapes_drift",
+        "fnd.live.atlas_predicates_and_states",
+        "fnd.live.passes_that_prove_less"
+      ],
+      "bin": "tooling-debt",
+      "disposition": "story7",
+      "positions": {
+        "muaddib": "agree",
+        "astra": "agree"
+      },
+      "astra_disposition": "proposed:A2/A3 for required waits/replies/clock/failure cases only; remaining adapters and cases deferred with their limits; story7 owns documented maintenance",
+      "notes": "Assigned speech is not healthy speech. Old placeholder-control findings have their own historical resolution; repaired selectors do not close blocked recovery cases. Retain the J10 serial replacements and the disclosed incident. Missing clock control is a dependency of any next-day claim; story7 currently does not charter all six adapter implementations.",
+      "disposition_final": "story7 + A2 proof repairs"
+    },
+    {
+      "id": "res.summary_recipe_tooling",
+      "findings": [
+        "finding.live_astra.summary_recipe",
+        "fnd.live.atlas_import_timing_and_run_order"
+      ],
+      "bin": "tooling-debt",
+      "disposition": "proposed:A2 proof prerequisites",
+      "positions": {
+        "muaddib": "Second: it blocked 20 runs across J3, J5, J6, J7 and J9, including every summary case.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/astra/20260923T020613Z-case.j6.run_summary.intel_running-astra-1440/observation.json",
+          "line": 1,
+          "anchor": "case.j6.run_summary.intel_running",
+          "claim": "Duplicate setup POST returned HTTP 409 already queued; trigger not reached."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/astra/20260923T020712Z-case.j6.run_summary.intel_ready-astra-1440/observation.json",
+          "line": 1,
+          "anchor": "case.j6.run_summary.intel_ready",
+          "claim": "Ready-state recipe stopped at the duplicate request."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/astra/20260923T021638Z-case.j6.run_summary.summary_text-astra-1440/observation.json",
+          "line": 1,
+          "anchor": "case.j6.run_summary.summary_text",
+          "claim": "Missing Run control blocks the transcript-to-summary result."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/astra/20260923T020409Z-case.j6.run_summary.intel_queued-astra-1440/observation.json",
+          "line": 1,
+          "anchor": "case.j6.run_summary.intel_queued",
+          "claim": "New queued retry row and missing-openai log; no completed result."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "web/src/desk/chair/ChairHome.tsx",
+          "line": 2004,
+          "anchor": "ChairHome",
+          "claim": "Run summary is rendered only for isOff and hasTranscript."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/astra-inputs/environment-bootstrap.txt",
+          "line": 1,
+          "anchor": "environment-bootstrap",
+          "claim": "Declared test extra installed openai after the first queue attempt."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/astra/20260923T020409Z-case.j6.run_summary.intel_queued-astra-1440/after.png",
+          "line": 1,
+          "anchor": "after",
+          "claim": "Models displays the configured Qwen identity and READY."
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T015831Z-case.j5.meeting_open.route_disclosed-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "precondition arrival-run-intel absent at the 5 s check",
+          "anchor": "preconditions"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020019Z-case.j5.meeting_open.route_disclosed-muaddib-393/observation.json",
+          "line": 1,
+          "claim": "the same case passes when transcription finished in time (waited 0.0 s)",
+          "anchor": "preconditions"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020428Z-case.j6.run_summary.intel_running-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "the second run POST answers 409 already queued",
+          "anchor": "notes"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020529Z-case.j6.run_summary.summary_text-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "precondition checks a verb setup already clicked",
+          "anchor": "notes"
+        }
+      ],
+      "notes": "Split from the product arrival-refresh resolution. Wait for a completed import, issue Run exactly once, and bind terminal output to the meeting/job. Astra installed the declared test extra before later recipe blocks; missing client is not the cause of every attempt.",
+      "disposition_final": "proposed:A2 proof prerequisites"
+    },
+    {
+      "id": "res.runtime_client_prerequisite",
+      "findings": [
+        "fnd.live.lane_runtime_lacks_meeting_client"
+      ],
+      "bin": "tooling-debt",
+      "disposition": "proposed:A2 isolated documented-install check",
+      "positions": {
+        "muaddib": "Top tooling debt: it decides whether J6/J7 can ever be proven by the rig. Add the `meeting` (or `test`) extra to the lane command, or declare the client in `dev`.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "pyproject.toml",
+          "line": 86,
+          "claim": "openai is listed under the test extra",
+          "anchor": "test"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "pyproject.toml",
+          "line": 90,
+          "claim": "openai is listed under the meeting extra",
+          "anchor": "meeting"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "holdspeak/intel/engine.py",
+          "line": 308,
+          "claim": "MeetingIntelError('openai package is not available')",
+          "anchor": "_ensure_runtime_loaded"
+        }
+      ],
+      "notes": "Agree about the missing client in the reported dev-only runtime. Astra installed the declared test extra before subsequent runs. Whether the owner install has the client is unknown; unretained success diagnostics are not verified terminal proof. Inspect README source-install and pyproject dependencies in isolation before assigning product or documentation repair.",
+      "disposition_final": "proposed:A2 isolated documented-install check"
+    },
+    {
+      "id": "res.atlas_controls_corrected_before_live",
+      "findings": [
+        "fnd.atlas.placeholder_triggers",
+        "fnd.astra.atlas_controls_not_bound_to_results"
+      ],
+      "bin": "tooling-debt",
+      "disposition": "historical:pre-live preparation corrected named selectors and J11 content predicate",
+      "positions": {
+        "muaddib": "Shared rig preparation, not a finding against either brain's work: the atlas is a shared input. It must be paid before story 04/05 fire these cases.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 3409,
+          "claim": "the case",
+          "anchor": "\"case.j9.shade_acknowledge.acknowledged\""
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/components/SystemShade.tsx",
+          "line": 342,
+          "claim": "the control the case should press",
+          "anchor": "onClick={() => void store.present(row.id, \"acknowledge\")}"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "line": 494,
+          "claim": "and the one J11 should press",
+          "symbol": "ThoughtWorkspaceWindow"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 4636,
+          "symbol": "case.j11.thought_keep.kept",
+          "claim": "The setup fills .desk-window textarea, then fills main.chair, and triggers a click on main.chair; the predicate only tests whether KEPT appears in the footer."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/thought-workspace/ThoughtDocumentPane.tsx",
+          "line": 49,
+          "symbol": "ThoughtDocumentPane",
+          "claim": "The active note body is DeskEditor with ariaLabel Note body; it is not a textarea."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/components/DeskEditor.tsx",
+          "line": 224,
+          "symbol": "DeskEditor",
+          "claim": "DeskEditor mounts CodeMirror EditorView into a div host (line 435), not a textarea."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/chair/Chair.tsx",
+          "line": 14,
+          "symbol": "Chair",
+          "claim": "The normal Chair is a div.chair; main.chair belongs to the first-value screen, not the post-gate desk."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "scripts/graph_walk.py",
+          "line": 1768,
+          "claim": "The fill adapter directly calls locator.first.fill; it does not translate main.chair or textarea into a CodeMirror input.",
+          "anchor": "apply_ui_step"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "scripts/graph_walk.py",
+          "line": 579,
+          "claim": "text_contains checks only observe_at text; it does not compare the stored note body to the text just entered.",
+          "anchor": "evaluate_predicate"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 3118,
+          "anchor": "case.j9.shade_receipt_open.rhythm_face",
+          "claim": "This J9 case declares click main.chair as its trigger, not the named projection control."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 3253,
+          "anchor": "case.j9.shade_open.door_stale",
+          "claim": "This J9 case declares click main.chair as its trigger, not the named projection control."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 3409,
+          "anchor": "case.j9.shade_acknowledge.acknowledged",
+          "claim": "This J9 case declares click main.chair as its trigger, not the named projection control."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "docs/internal/philo/graph/atlas.json",
+          "line": 3587,
+          "anchor": "case.j9.shade_dismiss.dismissed",
+          "claim": "This J9 case declares click main.chair as its trigger, not the named projection control."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "scripts/graph_walk.py",
+          "line": 1758,
+          "symbol": "_ui_step",
+          "claim": "The click adapter directly resolves and clicks step.selector; reload is a distinct branch that ignores the selector."
+        }
+      ],
+      "notes": "Historical source evidence is retained at c42963bc. Current atlas.json:3355 uses the receipt Open control; :5399 edits Note body; :5408 binds the saved body. J9 Open and J11 saved words have live records. Other stale/acknowledge/dismiss/restore cases remain blocked on their separate adapters/replies; do not schedule removal of already-removed main.chair triggers.",
+      "disposition_final": "historical:pre-live preparation corrected named selectors and J11 content predicate"
+    },
+    {
+      "id": "res.thread_keep_note_result",
+      "findings": [
+        "fnd.astra.thread_keep_note_is_artifact"
+      ],
+      "bin": "product-defect",
+      "disposition": "proposed:deferred Thread Keep as note result repair",
+      "positions": {
+        "muaddib": "Council reply not recorded; this row is Astra's proposed disposition.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "line": 609,
+          "symbol": "executeSlashCommand",
+          "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/pullouts/ThreadPullout.tsx",
+          "line": 1368,
+          "symbol": "handleKeep",
+          "claim": "handleKeep forwards the message id and as argument to keepMessage inside attempt error handling."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/threads.ts",
+          "line": 461,
+          "symbol": "keepMessage",
+          "claim": "keepMessage sends POST /api/threads/{thread_id}/keep with message_id and as in JSON."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "holdspeak/web/routes/threads.py",
+          "line": 298,
+          "symbol": "api_keep",
+          "claim": "The route forwards as_kind from body.as to ThreadService.keep and returns its payload."
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "holdspeak/services/thread_service.py",
+          "line": 1755,
+          "symbol": "ThreadService.keep",
+          "claim": "as_kind is accepted but unused; all successful calls record a plugin_output artifact and return artifact_id at line 1797. No note is created."
+        }
+      ],
+      "notes": "The callback chain executes, but ThreadService.keep accepts as_kind and always persists a plugin_output artifact. Preserve the intended note type and prove Notes lookup in the future repair; outside the selected meeting-to-brief result.",
+      "disposition_final": "proposed:deferred Thread Keep as note result repair"
+    },
+    {
+      "id": "res.raw_control_census",
+      "findings": [
+        "fnd.faces.raw_controls_outside_the_library"
+      ],
+      "bin": "product-defect",
+      "disposition": "proposed:pay actual Button violations in touched faces; classify wider census later",
+      "positions": {
+        "muaddib": "Ranked below the dead verbs: it costs consistency, not a result. The census is in this graph as one node per site, so story 07 can measure the same number again.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "line": 178,
+          "claim": "the largest single holder",
+          "anchor": "<button"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/components/DeskToolInspector.tsx",
+          "line": 274,
+          "claim": "the second",
+          "anchor": "<button"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/pages/cores/history/CatalogRail.tsx",
+          "line": 216,
+          "claim": "the pattern that pays it: the row body IS the library Button with the plate withheld",
+          "symbol": "MeetingStreamRow"
+        }
+      ],
+      "notes": "Agree on the concrete raw-button debt at the cited sites under Tenet 5 and UX-CANON A.1. Retain 183 as the sealed raw-element handler-site census, not a count of individually established Button violations; form/input/container handlers require ownership classification. This check did not independently recount every site.",
+      "disposition_final": "proposed:pay actual Button violations in touched faces; classify wider census later"
+    },
+    {
+      "id": "res.no_transcript_during_import",
+      "findings": [
+        "fnd.live.run_refused_as_no_transcript_while_transcribing"
+      ],
+      "bin": "product-defect",
+      "disposition": "open-dissent:COUNCIL section 4.6",
+      "positions": {
+        "muaddib": "Rank 4, protocol only: the face withholds the verb until the import finishes, so he does not see this; an agent or MCP caller does.",
+        "astra": "disagree: The request ran while the import had no transcript. The truthful empty refusal demonstrates the wrong no-assignment test precondition, not a product defect without a further contract or misleading face observation."
+      },
+      "evidence": [
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "holdspeak/services/meeting_intel_service.py",
+          "line": 165,
+          "claim": "'empty' maps to 'Meeting has no transcript'",
+          "anchor": "empty"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020726Z-case.j6.route_intelligence_run.refusal-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "409 'Meeting has no transcript' seconds after the 202 import",
+          "anchor": "after"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020735Z-case.j6.route_intelligence_run.no_assignment-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "the same empty refusal pre-empts the no-assignment branch",
+          "anchor": "after"
+        }
+      ],
+      "notes": "Original bin and Muaddib position retained. Astra proposes recipe repair in A2; no product wording change is authorized by this observation alone.",
+      "astra_bin": "tooling-debt",
+      "disposition_final": "open-dissent:COUNCIL section 4.6"
+    },
+    {
+      "id": "res.docs_desk_changed_comment",
+      "findings": [
+        "fnd.docs.desk_changed_comment_drift"
+      ],
+      "bin": "doc-drift",
+      "disposition": "story7",
+      "positions": {
+        "muaddib": "Ledger only; correction is story 07.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/useDeskChangedRefresh.ts",
+          "line": 15,
+          "claim": "the comment",
+          "anchor": "Writes on other tables (meetings, project rooms, thoughts,"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "holdspeak/services/meeting_service.py",
+          "line": 289,
+          "claim": "the meeting write that does emit one",
+          "symbol": "import_meeting"
+        }
+      ],
+      "notes": "Correct the current comment to include the import event; retain the sealed historical graph and source revision.",
+      "disposition_final": "story7"
+    },
+    {
+      "id": "res.docs_assignment_exposure",
+      "findings": [
+        "fnd.docs.model_assignment_exposure"
+      ],
+      "bin": "doc-drift",
+      "disposition": "story7",
+      "positions": {
+        "muaddib": "Ledger only; correction is story 07. Rank last because it costs no Tuesday.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "line": 569,
+          "claim": "the user verb",
+          "symbol": "ConciergeCore"
+        },
+        {
+          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
+          "path": "web/src/desk/chair/ChairHome.tsx",
+          "line": 953,
+          "claim": "the front door on the first screen",
+          "symbol": "Arrival"
+        }
+      ],
+      "notes": "Correct the curated exposure/surface claim to include the user-facing SETUP and Models path. This does not verify every field or provider readiness.",
+      "disposition_final": "story7"
+    },
+    {
+      "id": "res.docs_engine_address",
+      "findings": [
+        "fnd.live.lane_brief_engine_address"
+      ],
+      "bin": "doc-drift",
+      "disposition": "story7",
+      "positions": {
+        "muaddib": "Last. Cosmetic; the atlas value worked.",
+        "astra": "agree"
+      },
+      "evidence": [
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/briefs/live-pass-lane-brief.md",
+          "line": 15,
+          "claim": "the brief's /v1 address",
+          "anchor": "J6 with the real LAN engine"
+        },
+        {
+          "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
+          "path": "docs/internal/philo/graph/observations/muaddib/20260923T020312Z-case.j6.run_summary.intel_queued-muaddib-1440/observation.json",
+          "line": 1,
+          "claim": "the atlas address produced a ready route to 192.168.1.43",
+          "anchor": "after"
+        }
+      ],
+      "notes": "Reconcile future brief/atlas instructions. Preserve Muaddib's no-/v1 input and Astra's authorized endpoint-only runtime substitution as distinct provenance; neither is a terminal execution proof.",
+      "disposition_final": "story7"
+    }
+  ],
+  "astra_review": {
+    "session": "01a0cc44-993b-7b32-a30b-394d7af593cc",
+    "draft_commit": "20eafcb7",
+    "verdict": "DO-NOT-RATIFY",
+    "record": "docs/internal/philo/graph/COUNCIL.md#astra--check-and-counter-draft",
+    "position_scope": "Positions address the finding and stated qualifications. Original draft dispositions remain attributed to Muaddib; astra_disposition is a counter-proposal, not a ratified charter. New Muaddib positions quote the sealed pass where available; an unrecorded reply is not agreement.",
+    "open_dissents": "docs/internal/philo/graph/COUNCIL.md#4-open-dissents-verbatim"
+  },
+  "council_round": 2,
+  "open_dissents": [
+    "4.3 the smallest Phase 3 (D3)"
+  ]
+}

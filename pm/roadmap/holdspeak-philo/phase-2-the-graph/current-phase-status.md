@@ -41,7 +41,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 | PHILO-2-03 | The static pass, Astra | done | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-2-04 | The live pass, Muad'Dib | done | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-2-05 | The live pass, Astra | done | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | [evidence-story-05](./evidence-story-05.md) |
-| PHILO-2-06 | The council | backlog | [story-06-the-council](./story-06-the-council.md) | - |
+| PHILO-2-06 | The council | done | [story-06-the-council](./story-06-the-council.md) | [evidence-story-06](./evidence-story-06.md) |
 | PHILO-2-07 | The tree up to par | backlog | [story-07-the-tree-up-to-par](./story-07-the-tree-up-to-par.md) | - |
 
 ## Lanes
@@ -59,6 +59,8 @@ Every pass, every finding and the council's verdict is read through that lens an
 Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 02 ‖ 03 (each brain seals its static graph) → 04 ‖ 05 (live; one versioned `scripts/graph_walk.py`, adapters may differ) → all four reports sealed → 06 → 07. Neither brain reads the other's findings until all four are sealed; shared schema, fixture recipes and rig calibration are preparation, not findings.
 
 ## Where we are
+
+2026-09-23: THE COUNCIL sat (PHILO-2-06): Muad'Dib's draft, Astra's check (DO-NOT-RATIFY the first page) and counter-draft, Muad'Dib's reply and rulings — six of seven dissents resolved for Astra on the evidence; one open for the owner (D3: A1–A3 vs A1–A4). COUNCIL.md opens with the decision page; council-resolutions.json carries every finding's final disposition; Phase 3 The Meeting Loop is DRAFTED (pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop) pending the owner's ruling on D1–D4. Story 07 (the tree up to par) is next and last.
 
 2026-09-23: PHILO-2-04 (Muad'Dib's live pass) SEALED — 120 runs; decisions route dead (500), a retrying summary reads as nothing-needs-you, Rhythm shows UTC; J6/J7 blocked on the rig by the lane runtime's missing `openai` client (diagnostics show the real engine working). PHILO-2-05 (Astra's live pass) runs sealed. Then the council.
 
@@ -107,7 +109,7 @@ Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped 
 
 ## Open dissents
 
-None yet.
+- **§4.3 The smallest Phase 3 (D3)** — Astra: "Ratify three bounded stories for the imported-meeting-to-next-brief result … Defer the other product repairs explicitly; they are real costs, but they are not dependencies of this result." Muad'Dib: A1–A3 adopted as the core plus A4 the thought's receipt, "because the first user named that face as unusable on 2026-09-20 and Tenet 7 ranks his stated jobs first." The owner rules.
 
 
 ## Astra independent live seal — PHILO-2-05, 2026-09-22
