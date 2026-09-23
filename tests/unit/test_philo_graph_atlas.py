@@ -791,3 +791,188 @@ def test_every_captured_id_names_the_field_it_reads(atlas: dict) -> None:
         and step.get("kind") == "fixture"
     ]
     assert not problems, problems
+
+
+# ─────────── Astra round three, findings 3-5: the ACTUAL atlas cases ───────────
+#
+# Each fence reads the case as the atlas holds it and, where a verdict is at
+# stake, hands that case's OWN predicate to the rig's evaluator
+# (scripts/graph_walk.py::check_predicate) with a synthetic before/after, so a
+# predicate an empty element or a failure sentence could satisfy is caught here.
+
+SAME_DAY = "case.j10.arrival_generate_again.same_day_idempotent"
+POPULATED = "case.j10.arrival_generate_brief.populated"
+KEPT = "case.j11.thought_keep.kept"
+BRIEF_HEADLINE = "[data-testid=arrival-brief-headline]"
+GENERATE = "[data-testid=arrival-brief-generate]"
+TEXT_KINDS = frozenset({"text_contains", "text_absent", "text_equals"})
+
+
+def _case(atlas: dict, case_id: str) -> dict:
+    found = [case for case in atlas["cases"] if case["id"] == case_id]
+    assert len(found) == 1, f"{case_id} is not in the atlas exactly once"
+    return found[0]
+
+
+def _mints_brief_material(step: dict) -> bool:
+    return (step.get("kind") == "api" and step.get("method") == "POST"
+            and step.get("path") == "/api/decisions")
+
+
+def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: dict) -> None:
+    """Finding 3: the returned brief must BE the displayed one, and the face the
+    trigger acts on must be the brief the store gave back after a reload."""
+    case = _case(atlas, SAME_DAY)
+    predicate = case["expected"]["predicate"]
+    assert predicate["kind"] == "unchanged"
+    spec = _rig().identity_spec(predicate)
+    assert spec and spec["from"] == "trigger", spec
+    assert spec.get("display") == BRIEF_HEADLINE == case["expected"]["observe_at"], spec
+
+    setup = case["setup"]
+    first_click = next(i for i, s in enumerate(setup)
+                       if s.get("action") == "click" and s.get("selector") == GENERATE)
+    reload = next(i for i, s in enumerate(setup) if s.get("action") == "reload")
+    assert first_click < reload, "the reload must come after the first brief is made"
+    waits = [s for s in setup[reload + 1:] if s.get("action") == "wait_for"]
+    assert waits and waits[0]["selector"] == BRIEF_HEADLINE, "no retention wait after the reload"
+    captured = [s for s in setup[reload + 1:] if s.get("capture_as") == "first_brief_id"]
+    assert captured and captured[0]["path"] == "/api/brief/latest", (
+        "the retained brief id is not captured after the reload")
+    assert case["trigger"].get("selector") == GENERATE
+
+    # The rig's own verdict on this predicate.
+    check = _rig().check_predicate
+    shown = "Nothing material changed."
+    before = {"text": shown, "attrs": {}}
+
+    def after(returned: str | None, displayed: str | None) -> dict:
+        snap = {"text": shown, "attrs": {}, "identity_display": {"value": displayed}}
+        if returned is not None:
+            snap["trigger_response"] = {"status": 200, "body": {
+                "id": "brief-second", "headline": returned}}
+        return snap
+
+    assert check(predicate, before, after(shown, shown))[0]
+    ok, why = check(predicate, before, after("2 things changed.", shown))
+    assert not ok, f"a stale face beside a different returned brief passed: {why}"
+    assert not check(predicate, before, after(None, shown))[0], "passed with no response"
+    assert not check(predicate, before, after(shown, None))[0], "passed with nothing displayed"
+
+
+def _populated_brief_cases(atlas: dict) -> list[dict]:
+    """Applicable cases only: an unreachable case is never fired (it keeps a
+    reason instead), so it has no setup to mint anything."""
+    return [
+        case for case in atlas["cases"]
+        if case["applicability"] == "applicable" and (
+            case["state_id"] == "state.briefs.populated"
+            or any(_mints_brief_material(step) for step in case["setup"])
+            or any(isinstance(line, str) and "populated" in line
+                   for line in case["preconditions"]))
+    ]
+
+
+def test_no_populated_brief_case_reads_the_headline(atlas: dict) -> None:
+    """Finding 4: an empty headline element passed `text_absent`. A populated
+    case creates its material in setup and reads an item row."""
+    cases = _populated_brief_cases(atlas)
+    ids = {case["id"] for case in cases}
+    assert POPULATED in ids, "the fence found no populated case to guard"
+    problems: list[str] = []
+    for case in cases:
+        predicates = [(case["expected"].get("observe_at"), case["expected"].get("predicate"))]
+        predicates += [(entry["observe_at"], entry["predicate"]) for entry in _checks(case)]
+        for where, predicate in predicates:
+            if predicate and predicate["kind"] in TEXT_KINDS and where == BRIEF_HEADLINE:
+                problems.append(f"{case['id']}: {predicate['kind']} on the headline element")
+        acts = _acts(case)
+        mint = next((i for i, s in enumerate(acts) if _mints_brief_material(s)), None)
+        make = next((i for i, s in enumerate(acts)
+                     if s.get("action") == "click" and s.get("selector") == GENERATE), None)
+        if mint is None:
+            problems.append(f"{case['id']}: no brief material is minted in setup")
+        elif make is None or make < mint:
+            problems.append(f"{case['id']}: the brief is made before its material exists")
+    assert not problems, problems
+
+
+def test_the_populated_brief_predicate_needs_the_minted_row(atlas: dict) -> None:
+    case = _case(atlas, POPULATED)
+    predicate, where = case["expected"]["predicate"], case["expected"]["observe_at"]
+    titles = [step["body"]["title"] for step in case["setup"] if _mints_brief_material(step)]
+    assert titles, "no minted title"
+    assert predicate["kind"] == "text_contains"
+    assert predicate["value"] == f"Review decision: {titles[0]}", (
+        "the row text the decisions collector writes "
+        "(holdspeak/services/monday_brief_service.py:758)")
+    assert where != BRIEF_HEADLINE and "arrival-brief" in where and _is_css_selector(where)
+
+    check = _rig().check_predicate
+    assert not check(predicate, {"text": ""}, {"text": ""})[0], "an empty element passed"
+    assert not check(predicate, {"text": ""},
+                     {"text": "Nothing material changed."})[0], "the empty brief passed"
+    assert check(predicate, {"text": ""},
+                 {"text": f"{predicate['value']} Ack Defer"})[0]
+
+
+def test_j11_kept_verifies_the_saved_words_in_the_store(atlas: dict) -> None:
+    """Finding 5: `CHANGED ELSEWHERE` satisfied the absence of one failure
+    sentence. The case must read the typed words back from the store."""
+    case = _case(atlas, KEPT)
+    expected = case["expected"]
+    predicate = expected["predicate"]
+    assert expected["observe_at"] == f"{_rig().PROTOCOL_PREFIX} GET /api/notes"
+    assert predicate["kind"] == "protocol_rows" and int(predicate.get("min_new", 1)) >= 1
+    typed = case["trigger"]["value"]
+    assert case["trigger"]["action"] == "fill" and typed
+    assert typed in predicate["match"].values(), "the store is not asked for the typed words"
+    assert not any(isinstance(step.get("value"), str) and typed in step["value"]
+                   for step in case["setup"]), "setup writes the words before the trigger"
+
+    check = _rig().check_predicate
+
+    def snap(bodies: list[str]) -> dict:
+        return {"protocol": {"status": 200, "path": "/api/notes", "rows": [
+            {"id": f"n{i}", "body_markdown": body} for i, body in enumerate(bodies)]}}
+
+    assert check(predicate, snap([""]), snap([typed]))[0]
+    ok, why = check(predicate, snap([""]), snap([""]))
+    assert not ok, f"a save that never landed (CHANGED ELSEWHERE) passed: {why}"
+    assert not check(predicate, snap([typed]), snap([typed]))[0], "an old row passed as new"
+
+
+SAME_ID = "case.j10.route_generate_again.same_day_same_id"
+
+
+def test_same_day_same_id_fails_a_different_id_by_machine(atlas: dict) -> None:
+    """The face draws no brief id, so the protocol sibling of the same-day case
+    proves the producer returns the RETAINED id (monday_brief_service.py:194-202)."""
+    case = _case(atlas, SAME_ID)
+    face = _case(atlas, SAME_DAY)
+    assert case["setup"] == face["setup"], "the sibling must run the same chain"
+    reload = next(i for i, s in enumerate(case["setup"]) if s.get("action") == "reload")
+    captured = [i for i, s in enumerate(case["setup"]) if s.get("capture_as") == "first_brief_id"]
+    assert captured and captured[0] > reload, "the id is not the retained one"
+    trigger = case["trigger"]
+    assert (trigger["kind"], trigger["method"], trigger["path"]) == (
+        "api", "POST", "/api/brief/generate")
+    predicate = case["expected"]["predicate"]
+    assert predicate == {"kind": "protocol_status", "method": "POST",
+                         "path": "/api/brief/generate", "status": 200,
+                         "body_contains": "{first_brief_id}"}
+    assert SAME_ID in next(s for s in atlas["states"]
+                           if s["id"] == case["state_id"])["reachable_by"]
+
+    rig = _rig()
+    bound = rig.substitute(predicate, {"first_brief_id": "brief-first"})
+
+    def after(returned_id: str, status: int = 200) -> dict:
+        return {"trigger_response": {"method": "POST", "path": "/api/brief/generate",
+                                     "status": status, "body": {"id": returned_id,
+                                     "headline": "Nothing material changed."}}}
+
+    assert rig.check_predicate(bound, {}, after("brief-first"))[0]
+    ok, why = rig.check_predicate(bound, {}, after("brief-second"))
+    assert not ok, f"a different id beside unchanged content passed: {why}"
+    assert not rig.check_predicate(bound, {}, after("brief-first", 500))[0]

@@ -320,6 +320,23 @@
             },
             "exact": {
               "type": "boolean"
+            },
+            "trigger_route": {
+              "type": "object",
+              "required": [
+                "method",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "description": "Pins which network response the rig records as the clicked trigger's own response."
             }
           },
           "allOf": [
@@ -589,6 +606,23 @@
               "enum": [
                 "restart_hub"
               ]
+            },
+            "trigger_route": {
+              "type": "object",
+              "required": [
+                "method",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "description": "Pins which network response the rig records as the clicked trigger's own response."
             }
           }
         }

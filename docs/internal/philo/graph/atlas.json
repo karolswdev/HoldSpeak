@@ -4289,7 +4289,7 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "at least one meeting or follow-through in the window",
+        "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
         {
           "kind": "check",
           "predicate": {
@@ -4315,6 +4315,17 @@
           "name": "Continue later",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
         }
       ],
       "trigger": {
@@ -4325,11 +4336,17 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "Nothing material changed."
+          "kind": "text_contains",
+          "value": "Review decision: Graph walk brief material J10"
         },
-        "observe_at": "[data-testid=arrival-brief-headline]",
-        "words": "ASTRA round 2: a populated brief must NOT read as empty. The headline is composed from the real counts (monday_brief_service.py:335-376), so its words are not knowable at authoring time; asserting the EMPTY headline is absent inside the headline element fails both when the section vanishes (the rig blocks text_absent on a missing scope, graph_walk.py:564) and when the producer wrongly says nothing changed. The first item's text is recorded beside the verdict for the council. || ASTRA (A): an absent BRIEF section no longer satisfies this - the section must be PRESENT and carry its own receipt line (briefEgress.ts:53 'Brief ready'). || one POST /api/brief/generate; the brief's OWN words stay on the face after it (not replaced by a receipt), and [data-testid=arrival-brief-receipt] carries the receipt [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+        "words": "ASTRA round 3 (finding 4): the populated brief is proven by the ITEM ROW the setup minted, never by the headline element (an empty headline passed `text_absent`). The setup creates one proposed desk decision through POST /api/decisions; one POST /api/brief/generate makes the brief; the Chair's populated branch (ChairHome.tsx:1114-1120) draws that item in the brief's row ledger (BriefSection, ChairHome.tsx:1847-1874) as 'Review decision: Graph walk brief material J10'. The ledger shows at most 3 rows (BRIEF_CAP, ChairHome.tsx:1829) and decisions are the last section on the face (:683), so a desk with more than two other visible items hides the row: that is a FAIL the council reads, not a pass. || one POST /api/brief/generate; the brief's OWN item stays on the face, and [data-testid=arrival-brief-receipt] carries the receipt [the audit's stated observation location: face: [data-testid=arrival-brief] .surface-ledger]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -4404,7 +4421,7 @@
       "state_id": "state.briefs.reload_persisted",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, and every item shelved -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1136-1167) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
       ],
       "setup": [
         {
@@ -4483,6 +4500,16 @@
           },
           "observe_at": "[data-testid=arrival-headline]",
           "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
         }
       ],
       "setup": [
@@ -4511,21 +4538,47 @@
           "action": "wait_for",
           "selector": "[data-testid=arrival-brief-receipt]",
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-brief-generate]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/brief/generate"
+        }
       },
       "expected": {
         "predicate": {
           "kind": "unchanged",
-          "replay_identity": "trigger:id"
+          "replay_identity": "trigger:headline",
+          "identity_display": "[data-testid=arrival-brief-headline]"
         },
-        "observe_at": "[data-testid=arrival-brief]",
-        "words": "ASTRA round 2: the identity is the brief id the SECOND POST returned, not an attribute that was already on the page. The displayed brief must be that same brief. || a SECOND POST /api/brief/generate is sent; the producer RETURNS THE EXISTING brief for the current local date (same brief id - the source-backed idempotent contract), a receipt is shown, and the brief that is DISPLAYED is the one that was returned (compare the returned id and its words against the face, not merely 'something is still drawn'). Then reload once more: the same brief is RETAINED on the face. A stale face beside a fresh receipt is a finding; so is an unchanged face with no second POST and no receipt [the audit's stated observation location: protocol: the two POSTs and their brief ids; face: [data-testid=arrival-brief] and [data-testid=arrival-brief-receipt], before and after a reload]",
+        "observe_at": "[data-testid=arrival-brief-headline]",
+        "words": "ASTRA round 3 (finding 3): the proof chain is RETURNED == DISPLAYED == RETAINED. Retained: setup generates, reloads, and waits for the headline, so the before-capture is the brief the store gave back (GET /api/brief/latest). Returned: the second POST /api/brief/generate the click fires answers a brief (the producer returns the existing brief for the current local date, monday_brief_service.py:185-202); its `headline` is the identity. Displayed: that headline must BE the text at [data-testid=arrival-brief-headline]; a stale face beside a different returned headline FAILS (graph_walk.py `unchanged`, the trigger branch). The face draws no brief id (ChairHome.tsx:1144-1177), so the id is a protocol claim: the retained id is captured as {first_brief_id} and the returned id travels in the trigger response; a DIFFERENT id beside unchanged content is a FAIL by contract (the producer is idempotent per day), which the council reads from those two recorded values -- the one predicate does not compare them. An unchanged face with no second POST and no receipt is a finding [the audit's stated observation location: protocol: the two POSTs and their brief ids; face: [data-testid=arrival-brief-headline] before and after the reload]",
         "reads": [
           {
             "method": "GET",
@@ -4538,6 +4591,114 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.j10.route_generate_again.same_day_same_id",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_generate"
+      ],
+      "state_id": "state.briefs.same_day_idempotent",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-brief-headline"
+          },
+          "observe_at": "[data-testid=arrival-brief-headline]",
+          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-headline]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "body": null,
+        "adapter": "http-route",
+        "why": "the same producer entry the Chair's Generate again verb calls (ChairHome.tsx:559)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "status": 200,
+          "body_contains": "{first_brief_id}"
+        },
+        "observe_at": "protocol: GET /api/brief/latest",
+        "words": "a different id beside unchanged content is a FAIL. The sibling of case.j10.arrival_generate_again.same_day_idempotent, which proves returned == displayed == retained on the face by headline; the face draws no brief id, so this case proves the id by machine. Setup is the same chain (gate, generate, wait for the receipt, reload, capture the RETAINED id as {first_brief_id} from GET /api/brief/latest); the trigger is a second POST /api/brief/generate. The producer returns the existing brief for the current local date (holdspeak/services/monday_brief_service.py:194-202), so the second response must answer 200 and carry {first_brief_id}; a new id is a FAIL [the audit's stated observation location: protocol: the second POST's own response]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": []
     },
     {
       "id": "case.j10.arrival_generate_again.next_day",
@@ -4641,7 +4802,7 @@
       "state_id": "state.briefs.item.acknowledged",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
         {
           "kind": "check",
           "predicate": {
@@ -4666,28 +4827,49 @@
         {
           "kind": "ui",
           "action": "goto",
-          "adapter": "ui-navigation",
-          "url": "/"
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-generate]"
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-receipt]"
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id",
+          "adapter": "http-route",
+          "why": "the item the shelf verb acts on is the one the brief really holds: the minted decision's item, read from the brief's own read route (holdspeak/web/routes/monday_brief.py:100)"
         }
       ],
       "trigger": {
@@ -4720,7 +4902,7 @@
       "state_id": "state.briefs.item.deferred",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
         {
           "kind": "check",
           "predicate": {
@@ -4745,28 +4927,49 @@
         {
           "kind": "ui",
           "action": "goto",
-          "adapter": "ui-navigation",
-          "url": "/"
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-generate]"
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-receipt]"
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id",
+          "adapter": "http-route",
+          "why": "the item the shelf verb acts on is the one the brief really holds: the minted decision's item, read from the brief's own read route (holdspeak/web/routes/monday_brief.py:100)"
         }
       ],
       "trigger": {
@@ -4940,61 +5143,52 @@
         {
           "kind": "ui",
           "action": "goto",
-          "adapter": "ui-navigation",
-          "url": "/"
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-develop-thought]"
+          "selector": "[data-testid=arrival-develop-thought]",
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window"
-        },
-        {
-          "kind": "ui",
-          "action": "fill",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window textarea",
-          "value": "one sentence"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[aria-label=\"Note body\"]"
+          "selector": "[aria-label=\"Note body\"]",
+          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "fill",
-        "adapter": "ui-pointer",
         "selector": "[aria-label=\"Note body\"]",
-        "value": "one sentence"
+        "value": "Graph walk J11 kept words",
+        "adapter": "ui-pointer"
       },
       "expected": {
         "predicate": {
-          "kind": "text_absent",
-          "value": "THE NOTE DID NOT SAVE"
+          "kind": "protocol_rows",
+          "collection": "notes",
+          "match": {
+            "body_markdown__prefix": "Graph walk J11 kept words"
+          },
+          "min_new": 1
         },
-        "observe_at": ".thought-note-foot .surface-footer-receipt-line",
-        "words": "MUAD'DIB static pass: the trigger was the placeholder `main.chair`. The real control is the editor's own field, `[aria-label=\"Note body\"]` (ThoughtDocumentPane.tsx:50-53), and the words it takes are autosaved. FINDING for the council: this face has NO Keep verb -- its footer verbs are Change and Finish/Resume (ThoughtWorkspaceWindow.tsx:491-494) -- and its foot reads KEPT only when `filing_status === \"filed\"` (:486), otherwise `NOT IN A DRAWER`. J11's stated result, a note kept with \"Kept - time\", is therefore not reachable on this face. The predicate asserts what IS promised: the words reached the store without the save failing (:485). [the audit's stated observation location: the Thought window's foot]",
+        "observe_at": "protocol: GET /api/notes",
+        "words": "ASTRA round 3 (finding 5): the result is the SAVED WORDS in the store, never the absence of one failure sentence (`CHANGED ELSEWHERE` passed that and is a save failure, ThoughtWorkspaceWindow.tsx:485). The editor autosaves 450 ms after an edit (useThoughtNoteWriter.ts:205) through PATCH /api/thoughts/{id}/working (web/src/desk/thoughts.ts:304), which writes the working note's row (refinement_thought_service.py:1158); GET /api/notes (holdspeak/web/routes/primitives/notes.py:43) must then hold one NEW row whose body starts with the typed words. A conflict or a refused save leaves no such row: FAIL. The face's own receipt, the foot at .thought-note-foot .surface-footer-receipt-line, is kept in the after-shot for the council. The earlier setup step that filled `.desk-window textarea` is gone: that textarea is the answer well, drawn only when a question exists (ThoughtWorkspaceWindow.tsx:440-456). FINDING for the council, unchanged: this face has NO Keep verb -- its footer verbs are Change and Finish/Resume (:491-494) -- and its foot reads KEPT only when `filing_status === \"filed\"` (:486), otherwise `NOT IN A DRAWER`; J11's stated result, a note kept with \"Kept - time\", is not reachable on this face. [the audit's stated observation location: protocol: GET /api/notes; face: the Thought window's foot]",
         "reads": [
           {
             "method": "GET",
-            "path": "/api/notes"
+            "path": "/api/thoughts"
           }
         ]
       },
@@ -5311,7 +5505,7 @@
       "state_id": "state.briefs.item.untouched",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached, with at least one item -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
         {
           "kind": "check",
           "predicate": {
@@ -5336,28 +5530,49 @@
         {
           "kind": "ui",
           "action": "goto",
-          "adapter": "ui-navigation",
-          "url": "/"
+          "url": "/",
+          "adapter": "ui-navigation"
         },
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the brief's real material, minted through the production create route (holdspeak/web/routes/primitives/decisions.py:43, 201 {decision}); the decisions collector turns every proposed desk decision into the item 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:750-758). No engine is needed."
         },
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-generate]"
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-receipt]"
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id",
+          "adapter": "http-route",
+          "why": "the item the shelf verb acts on is the one the brief really holds: the minted decision's item, read from the brief's own read route (holdspeak/web/routes/monday_brief.py:100)"
         }
       ],
       "trigger": {
@@ -7048,7 +7263,8 @@
         }
       ],
       "reachable_by": [
-        "case.j10.arrival_generate_again.same_day_idempotent"
+        "case.j10.arrival_generate_again.same_day_idempotent",
+        "case.j10.route_generate_again.same_day_same_id"
       ]
     },
     {

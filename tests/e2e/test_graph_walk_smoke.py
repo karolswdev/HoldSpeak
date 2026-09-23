@@ -31,11 +31,11 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
 # ── THE INTEGRATION FENCE ──────────────────────────────────────────────
 #
-# Three cases from the REAL atlas (docs/internal/philo/graph/atlas.json), one
+# Five cases from the REAL atlas (docs/internal/philo/graph/atlas.json), one
 # hub each, serial, at 1440. A rig that only ever runs its own sample atlas
 # proves nothing about the pass it was built for.
 #
-# Two of the three are BLOCKED, and the block is the atlas's, not the rig's.
+# At round two, two of the first three were BLOCKED, by the atlas, not the rig.
 # Both were confirmed against a live desk (counts queried on a fresh HOME):
 #
 #   behind the first-value gate   after "Continue later"
@@ -58,6 +58,16 @@ ATLAS_FENCE = {
     ),
     "case.j10.arrival_generate_brief.generated_empty": (
         "pass", "", "the empty brief says so on the face",
+    ),
+    # Astra round three, MISSED: the import path and the response-identity
+    # path changed in round three and were in no integration case.
+    "case.j4.meetings_import.imported": (
+        "pass", "", "the fixture WAV through the REAL import route mints a "
+        "meeting; the trigger binds {meeting_id} and the row carries it",
+    ),
+    "case.j10.arrival_generate_again.same_day_idempotent": (
+        "pass", "", "the clicked Generate again's OWN response is the identity, "
+        "and the face shows what it returned",
     ),
 }
 
@@ -82,6 +92,18 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
     else:
         assert record["terminal_outcome"]["within_bound"] is True
         assert record["before"] and record["after"]
+
+    if case_id == "case.j4.meetings_import.imported":
+        # the upload FIRED (finding 2) and bound the id its own 202 returned
+        answer = record["after"]["trigger_response"]
+        assert answer["status"] == 202, answer
+        assert answer["path"] == "/api/meetings/import"
+        assert record["variables"]["meeting_id"] == answer["body"]["meeting_id"]
+    if case_id == "case.j10.arrival_generate_again.same_day_idempotent":
+        # the identity came from the click's own POST (finding 3)
+        chosen = record["trigger_response_capture"]["chosen"]
+        assert chosen and (chosen["method"], chosen["path"]) == (
+            "POST", "/api/brief/generate"), record["trigger_response_capture"]
 
 
 @pytest.mark.parametrize("viewport", [1440, 393])

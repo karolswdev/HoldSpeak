@@ -935,3 +935,122 @@ def test_a_not_applicable_case_is_recorded_not_skipped(tmp_path):
     assert record["complete"] is True
     assert any("UNEXERCISED" in note for note in record["notes"]), record["notes"]
     assert (tmp_path / record["run_id"] / "observation.json").exists()
+
+
+# ── Astra round three: findings 2 and 3 ────────────────────────────────
+#
+# Each fence below FAILED against the rig at 8eb866fb (the pre-fix proof is
+# in the story evidence): J4 blocked before uploading, and a clicked verb
+# never had a response to read its identity from.
+
+REAL_ATLAS = REPO / "docs/internal/philo/graph/atlas.json"
+J4_IMPORT = "case.j4.meetings_import.imported"
+
+
+def _atlas_case(case_id):
+    atlas = json.loads(REAL_ATLAS.read_text())
+    return next(c for c in atlas["cases"] if c["id"] == case_id)
+
+
+def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_path):
+    """Finding 2: the ACTUAL atlas case, through a synthetic import boundary
+    that answers like the real route (202 {"meeting_id", "status"}). Before
+    the fix: BLOCKED "unresolved placeholder … meeting_id", zero uploads."""
+    case = _atlas_case(J4_IMPORT)
+    assert case["trigger"]["capture_as"] == "meeting_id", "the atlas case changed"
+    record = calibrate(tmp_path, cases=[case])[0]
+    state = json.loads(Path(record["provenance"]["db_path"]).read_text())
+
+    assert state.get("upload_calls") == 1, record["notes"]
+    assert record["verdict"] == "pass", record["notes"]
+    minted = record["trigger"]["captured"]["value"]
+    assert minted == state["meetings"][0]["id"]
+    assert record["variables"]["meeting_id"] == minted
+    # the upload WAS the trigger, and its own answer travels with the after
+    answer = record["after"]["trigger_response"]
+    assert answer["status"] == 202 and answer["path"] == "/api/meetings/import"
+    assert answer["body"]["meeting_id"] == minted
+    # before the trigger there was no meeting, and nothing named one
+    assert record["before"]["protocol"]["rows"] == []
+    assert record["pending_placeholders"] == ["meeting_id"]
+    assert any(minted in note for note in record["notes"])
+
+
+def test_a_placeholder_nothing_binds_blocks_before_the_trigger(negatives):
+    """The other half: a name no step and not the trigger captures is refused
+    BEFORE the upload — zero calls reach the boundary."""
+    record = negatives["NEG-11-unbindable-placeholder-never-fires"]
+    assert record["verdict"] == "blocked"
+    assert record["trigger"] is None
+    assert any("'meeting_id'" in n and "NOT fired" in n for n in record["notes"])
+    state = json.loads(Path(record["provenance"]["db_path"]).read_text())
+    assert state.get("upload_calls", 0) == 0
+
+
+def test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it(tmp_path):
+    """A trigger that binds one name does not excuse another."""
+    case = dict(_atlas_case(J4_IMPORT))
+    case["id"] = "CAL-u-bound-one-not-the-other"
+    case["expected"] = {**case["expected"],
+                        "observe_at": "protocol: GET /api/meetings",
+                        "predicate": {"kind": "protocol_field",
+                                      "path": "/meetings/0/id",
+                                      "value": "{meeting_id}-{other}"}}
+    record = calibrate(tmp_path, cases=[case])[0]
+    assert record["verdict"] == "blocked"
+    assert any("'other'" in n for n in record["notes"]), record["notes"]
+    state = json.loads(Path(record["provenance"]["db_path"]).read_text())
+    assert state.get("upload_calls", 0) == 0
+
+
+def test_a_clicked_verb_reads_its_identity_from_its_own_response(predicate_calibration):
+    """Finding 3: before the fix a `ui` trigger never set `trigger_response`
+    and this case was BLOCKED "no response was recorded"."""
+    by_id, _ = predicate_calibration
+    record = by_id["CAL-s-clicked-identity"]
+    assert record["verdict"] == "pass", record["notes"]
+    answer = record["after"]["trigger_response"]
+    assert (answer["method"], answer["path"], answer["status"]) == (
+        "POST", "/brief/generate", 200)
+    assert answer["body"]["id"] == "brief-7" and len(answer["body_sha256"]) == 64
+    capture = record["trigger_response_capture"]
+    assert "first same-origin" in capture["rule"] and "non-GET" in capture["rule"]
+    # the GET the click fired first was seen and NOT chosen
+    assert any(s["method"] == "GET" and s["path"] == "/echo" for s in capture["seen"])
+    assert capture["chosen"]["path"] == "/brief/generate"
+    assert record["before"].get("trigger_response") is None
+
+
+def test_a_clicked_verb_status_is_read_by_its_declared_route(predicate_calibration):
+    by_id, _ = predicate_calibration
+    record = by_id["CAL-t-clicked-status"]
+    assert record["verdict"] == "pass", record["notes"]
+    assert "trigger_route POST /brief/generate" in record["trigger_response_capture"]["rule"]
+
+
+def test_a_different_id_beside_unchanged_old_content_fails(negatives):
+    """Astra's exact probe: the click minted brief-8; the face still shows
+    brief-7 beside the old words. Before the fix it was BLOCKED, never a fail."""
+    record = negatives["NEG-10-stale-id-beside-old-content"]
+    assert record["verdict"] == "fail", record["notes"]
+    assert record["after"]["trigger_response"]["body"]["id"] == "brief-8"
+    assert record["after"]["identity_display"]["value"] == "brief-7"
+    assert any("stale face" in note for note in record["notes"])
+
+
+def test_a_longer_id_does_not_display_a_shorter_one():
+    """`brief-77` beside unchanged content is a DIFFERENT id, not brief-7."""
+    predicate = {"kind": "unchanged", "replay_identity": "trigger:id",
+                 "identity_display": "#s-id"}
+    same = {"text": "old words", "attrs": {}}
+    answer = {"trigger_response": {"body": {"id": "brief-7", "headline": "old words"}}}
+    assert check_predicate(predicate, same, {**same, **answer,
+                           "identity_display": {"value": "brief-77"}})[0] is False
+    assert check_predicate(predicate, same, {**same, **answer,
+                           "identity_display": {"value": "Kept brief-7 at 09:00"}})[0] is True
+    # the face may show the brief's WORDS: `identity_display_path` names them
+    by_words = {**predicate, "identity_display_path": "headline"}
+    assert check_predicate(by_words, same, {**same, **answer,
+                           "identity_display": {"value": "old words"}})[0] is True
+    assert check_predicate(by_words, same, {**same, **answer,
+                           "identity_display": {"value": "other words"}})[0] is False

@@ -43,6 +43,18 @@ value fills `{name}` in every later step's `path`, `body`, `selector`, `name`,
 `value`, `url` and `key`, and in the case's own `expected.observe_at` and
 predicate fields. An unresolved `{name}` at fire time is BLOCKED, naming it —
 it is never sent literally. The captured values travel in the observation.
+The TRIGGER may capture too (J4's import mints `{meeting_id}`): `expected` is
+resolved AFTER the trigger fires; before it, a read field naming a value only
+the trigger binds is not read. A name nothing binds blocks before the trigger;
+one still unbound after it blocks, naming it.
+
+TRIGGER RESPONSE: an api/fixture trigger's own response is recorded. A `ui`
+trigger records the network response its click fired: the first response to
+the step's (or case's) `trigger_route: {method, path}`, else the first
+same-origin non-GET response after the click, with the rule that chose it
+(`trigger_response_capture`). `trigger:<path>` identity and `protocol_status`
+read it. `identity_display_path` names the response field the face shows,
+when that is not the identity itself.
 
 A step is `{"kind": <one of STEP_KINDS>, ...}`:
 
@@ -160,6 +172,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from datetime import datetime, timezone
@@ -167,7 +180,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.0.0"
+RIG_VERSION = "1.1.0"
 
 REPO = Path(__file__).resolve().parents[1]
 CALIBRATION_PAGE = REPO / "tests/fixtures/graph_walk_calibration.html"
@@ -477,7 +490,19 @@ def identity_spec(predicate: Any) -> dict[str, Any] | None:
         selector, _, attr = str(shown).partition("@")
         spec["display"] = selector
         spec["display_attr"] = attr or None
+        # the response field whose value the face shows; the identity itself
+        # by default (a face may show the brief's words, not its id)
+        spec["display_path"] = predicate.get("identity_display_path")
     return spec
+
+
+def _shown_as_token(shown: Any, value: Any) -> bool:
+    """`value` is displayed at `shown` as a whole token: `brief-7` is not
+    shown by `brief-77` (a longer, different id beside it)."""
+    text, want = str(shown), str(value)
+    if text.strip() == want.strip():
+        return True
+    return re.search(rf"(?<![\w-]){re.escape(want)}(?![\w-])", text) is not None
 
 
 def _read_identity(page: Any, spec: dict[str, Any]) -> dict[str, Any] | None:
@@ -705,12 +730,25 @@ def check_predicate(
                 if shown is None:
                     return False, (f"BLOCKED: nothing at {spec['display']!r} "
                                    "displays the returned identity")
-                if str(shown).find(str(returned)) < 0 and str(shown) != str(returned):
-                    return False, (f"the operation returned {returned!r} but the "
-                                   f"face shows {shown!r} — a stale face beside a "
-                                   "new result")
+                expect_shown = returned
+                if spec.get("display_path"):
+                    got, expect_shown = _json_path(answer.get("body"),
+                                                   spec["display_path"])
+                    if not got or expect_shown in (None, ""):
+                        return False, (f"the operation's response carries no "
+                                       f"{spec['display_path']!r} to compare "
+                                       "against the face")
+                if not _shown_as_token(shown, expect_shown):
+                    return False, (f"the operation returned {returned!r} "
+                                   f"({spec.get('display_path') or spec.get('path')}"
+                                   f"={expect_shown!r}) but the face shows "
+                                   f"{shown!r} at {spec['display']!r} — a stale "
+                                   "face beside a new result")
                 return True, (f"unchanged result; the returned identity {returned!r} "
-                              f"IS the one displayed at {spec['display']!r}")
+                              f"({spec.get('display_path') or spec.get('path')}="
+                              f"{expect_shown!r}) IS the one displayed at "
+                              f"{spec['display']!r} (response chosen by "
+                              f"{answer.get('chosen_by') or 'the api trigger'})")
             return True, (f"unchanged result; the operation's own response "
                           f"returned the identity {returned!r}")
 
@@ -909,30 +947,38 @@ class Hub:
 
     def upload(self, method: str, path: str, wav: Path, field: str) -> tuple[int, Any]:
         """The fixture WAV at the documented input boundary. Never a microphone."""
-        boundary = uuid.uuid4().hex
-        head = (
-            f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="{field}"; filename="{wav.name}"\r\n'
-            "Content-Type: audio/wav\r\n\r\n"
-        ).encode()
-        payload = head + wav.read_bytes() + f"\r\n--{boundary}--\r\n".encode()
-        req = urllib.request.Request(
-            f"{self.url}{path}", data=payload, method=method,
-            headers={"X-HoldSpeak-Token": self.token,
-                     "Content-Type": f"multipart/form-data; boundary={boundary}"},
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=300) as resp:
-                raw = resp.read().decode()
-                try:
-                    return resp.status, json.loads(raw)
-                except Exception:  # noqa: BLE001
-                    return resp.status, raw[:2000]
-        except urllib.error.HTTPError as exc:
-            return exc.code, exc.read().decode()[:2000]
+        return _multipart_upload(f"{self.url}{path}", method, wav, field,
+                                 {"X-HoldSpeak-Token": self.token})
 
     def stop(self) -> None:
         _terminate(self.proc)
+
+
+def _multipart_upload(url: str, method: str, wav: Path, field: str,
+                      headers: dict[str, str]) -> tuple[int, Any]:
+    """One multipart/form-data upload of `wav` as `field` (the import route
+    takes an UploadFile, holdspeak/web/routes/meeting_import.py:52-55)."""
+    boundary = uuid.uuid4().hex
+    head = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="{field}"; filename="{wav.name}"\r\n'
+        "Content-Type: audio/wav\r\n\r\n"
+    ).encode()
+    payload = head + wav.read_bytes() + f"\r\n--{boundary}--\r\n".encode()
+    req = urllib.request.Request(
+        url, data=payload, method=method,
+        headers={**headers,
+                 "Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            raw = resp.read().decode()
+            try:
+                return resp.status, json.loads(raw)
+            except Exception:  # noqa: BLE001
+                return resp.status, raw[:2000]
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode()[:2000]
 
 
 def _start_real_heartbeat_conductor() -> None:
@@ -1199,6 +1245,10 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
         if self.path.startswith("/state"):
             self._json(200, {**_read_cal_state(), "served_by_pid": os.getpid()})
             return
+        if self.path.split("?")[0] == "/api/meetings":
+            # the shape of GET /api/meetings: newest first
+            self._json(200, {"meetings": _read_cal_state().get("meetings", [])})
+            return
         body = CALIBRATION_PAGE.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1211,6 +1261,41 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
             # An intelligible refusal, by name — the shape a 4xx case promises.
             self._json(422, {"error": "no engine is assigned for "
                                       "meeting.deferred_analysis"})
+            return
+        if self.path.split("?")[0] == "/api/meetings/import":
+            # a SYNTHETIC import boundary with the real route's answer:
+            # 202 {"meeting_id", "status": "importing"}
+            # (holdspeak/services/meeting_service.py:226). It counts uploads, so
+            # a fence can prove the trigger really fired.
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b""
+            multipart = ("multipart/form-data" in (self.headers.get("Content-Type") or "")
+                         and b'name="file"' in raw)
+            state = _read_cal_state()
+            state["upload_calls"] = int(state.get("upload_calls", 0)) + 1
+            if not multipart:
+                _write_cal_state(state)
+                self._json(422, {"error": "file: field required (multipart)"})
+                return
+            meeting_id = f"cal-m-{state['upload_calls']}"
+            state.setdefault("meetings", []).insert(
+                0, {"id": meeting_id, "status": "importing", "bytes": len(raw)})
+            _write_cal_state(state)
+            self._json(202, {"meeting_id": meeting_id, "status": "importing"})
+            return
+        if self.path.split("?")[0] == "/brief/generate":
+            # the same-day idempotent producer: the SAME brief every time
+            state = _read_cal_state()
+            state["generate_calls"] = int(state.get("generate_calls", 0)) + 1
+            _write_cal_state(state)
+            self._json(200, {"id": "brief-7", "headline": "Nothing material changed."})
+            return
+        if self.path.split("?")[0] == "/brief/generate-fresh":
+            # a producer that mints a NEW brief the page never shows
+            state = _read_cal_state()
+            state["generate_calls"] = int(state.get("generate_calls", 0)) + 1
+            _write_cal_state(state)
+            self._json(200, {"id": "brief-8", "headline": "Something else."})
             return
         if self.path.startswith("/state/note"):
             state = _read_cal_state()
@@ -1296,6 +1381,10 @@ class CalibrationServer:
                 return exc.code, json.loads(raw)
             except Exception:  # noqa: BLE001
                 return exc.code, raw[:600]
+
+    def upload(self, method: str, path: str, wav: Path, field: str) -> tuple[int, Any]:
+        """The same multipart upload a real hub receives."""
+        return _multipart_upload(f"{self.base}{path}", method, wav, field, {})
 
     def restart(self) -> dict[str, Any]:
         return _restart_process(self)
@@ -1574,8 +1663,47 @@ CALIBRATION_NEGATIVE_CASES: list[dict[str, Any]] = [
     },
 ]
 
+# Astra round three, finding 3: "a different ID beside unchanged old
+# content" must FAIL. The click POSTs; the producer returns brief-8; the face
+# still shows brief-7 beside the old words.
+CALIBRATION_NEGATIVE_CASES.append({
+    "id": "NEG-10-stale-id-beside-old-content",
+    "job": "a clicked verb's returned id must be the one displayed",
+    "edge_ids": ["neg:10"], "state_id": "cal:page",
+    "applicability": "applicable",
+    "preconditions": "the calibration page is loaded",
+    "setup": [],
+    "trigger": {"kind": "ui", "action": "click", "selector": "#s-stale",
+                "adapter": "ui-pointer"},
+    "expected": {"observe_at": "#s-content",
+                 "predicate": {"kind": "unchanged", "replay_identity": "trigger:id",
+                               "identity_display": "#s-id"}},
+    "completion_bound_s": 3, "viewports": [1440],
+})
+
+# Astra round three, finding 2: a placeholder that NOTHING binds (the import
+# trigger here declares no `capture_as`) blocks BEFORE the trigger fires, so
+# the synthetic import boundary counts zero uploads.
+CALIBRATION_NEGATIVE_CASES.append({
+    "id": "NEG-11-unbindable-placeholder-never-fires",
+    "job": "an `expected` naming a value nothing captures never fires the trigger",
+    "edge_ids": ["neg:11"], "state_id": "cal:protocol",
+    "applicability": "applicable",
+    "preconditions": "the calibration protocol surface is up",
+    "setup": [],
+    "trigger": {"kind": "fixture", "path": "tests/fixtures/core_path_smoke_16k.wav",
+                "route": {"method": "POST", "path": "/api/meetings/import"},
+                "field": "file", "adapter": "http-route"},
+    "expected": {"observe_at": "protocol: GET /api/meetings",
+                 "predicate": {"kind": "protocol_field", "path": "/meetings/0/id",
+                               "value": "{meeting_id}"}},
+    "completion_bound_s": 10, "viewports": [],
+})
+
 #: What each negative control MUST come out as. A `pass` here is a false pass.
 CALIBRATION_NEGATIVE_EXPECTED: dict[str, str] = {
+    "NEG-10-stale-id-beside-old-content": "fail",
+    "NEG-11-unbindable-placeholder-never-fires": "blocked",
     "NEG-1-refresh-without-handler": "fail",
     "NEG-2-result-after-the-bound": "fail",
     "NEG-3a-absent-without-a-scope": "blocked",
@@ -1743,6 +1871,44 @@ CALIBRATION_PREDICATE_CASES: list[dict[str, Any]] = [
         "completion_bound_s": 10, "viewports": [],
     },
 ]
+
+# Astra round three, finding 3: a CLICKED verb's identity is its own network
+# response. (s) has no declared route, so the rig takes the first same-origin
+# non-GET response after the click (the GET before it is skipped); (t) names
+# its route and reads the status of the click's own POST.
+CALIBRATION_PREDICATE_CASES.extend([
+    {
+        "id": "CAL-s-clicked-identity",
+        "job": "a clicked verb returns the same brief, and the face shows that brief",
+        "edge_ids": ["cal:s"], "state_id": "cal:page",
+        "applicability": "applicable",
+        "preconditions": "the calibration page is loaded",
+        "setup": [],
+        "trigger": {"kind": "ui", "action": "click", "selector": "#s-good",
+                    "adapter": "ui-pointer"},
+        "expected": {"observe_at": "#s-content",
+                     "predicate": {"kind": "unchanged",
+                                   "replay_identity": "trigger:id",
+                                   "identity_display": "#s-id"}},
+        "completion_bound_s": 3, "viewports": [1440],
+    },
+    {
+        "id": "CAL-t-clicked-status",
+        "job": "the status of the POST a click fired, by its declared route",
+        "edge_ids": ["cal:t"], "state_id": "cal:page",
+        "applicability": "applicable",
+        "preconditions": "the calibration page is loaded",
+        "setup": [],
+        "trigger": {"kind": "ui", "action": "click", "selector": "#s-good",
+                    "adapter": "ui-pointer",
+                    "trigger_route": {"method": "POST", "path": "/brief/generate"}},
+        "expected": {"observe_at": "#s-content",
+                     "predicate": {"kind": "protocol_status", "method": "POST",
+                                   "path": "/brief/generate", "status": 200,
+                                   "body_contains": "brief-7"}},
+        "completion_bound_s": 5, "viewports": [1440],
+    },
+])
 
 # NOT one of the six. It calibrates the `scheduler-wait` clock adapter against
 # a stand-in scheduler in the same static page: setup arms the timer (as the
@@ -2318,6 +2484,140 @@ class Recorder:
         self.path.write_text(json.dumps(self.record, indent=2, default=str))
 
 
+def _blank_unresolved(value: Any) -> Any:
+    """Every string still carrying a `{name}` becomes None (a `reads` entry
+    with an unresolved path is dropped). Used for the reads BEFORE a trigger
+    that will bind the name: nothing is ever sent with a literal `{name}`."""
+    if isinstance(value, str):
+        return None if unresolved(value) else value
+    if isinstance(value, dict):
+        return {k: _blank_unresolved(v) for k, v in value.items()}
+    if isinstance(value, list):
+        kept = [_blank_unresolved(v) for v in value]
+        return [v for v in kept
+                if not (isinstance(v, dict) and "path" in v and v["path"] is None)]
+    return value
+
+
+def _url_path(url: str) -> str:
+    return urllib.parse.urlsplit(url).path or "/"
+
+
+def _url_origin(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+class _UiResponseCapture:
+    """The network response a clicked verb fired (Astra round three, finding 3).
+
+    Armed before the click. A candidate is a response to a request issued
+    AFTER arming. The chosen one is, in order of preference:
+
+    * the first response matching the step's (or the case's) declared
+      `trigger_route: {method, path}` — the path compared without its query,
+      `{name}` filled from the captured variables;
+    * otherwise the first SAME-ORIGIN, NON-GET response after the click.
+
+    It is recorded with method, path, status, body_sha256 and body, and the
+    rule that chose it, so `trigger:<path>` identity and `protocol_status`
+    work for a clicked verb exactly as for an api trigger.
+    """
+
+    def __init__(self, page: Any, step: dict[str, Any], case: dict[str, Any],
+                 variables: dict[str, str]) -> None:
+        self.page = page
+        route = step.get("trigger_route") or case.get("trigger_route")
+        self.route = substitute(route, variables) if isinstance(route, dict) else None
+        self.origin = _url_origin(page.url or "")
+        self.requests: list[Any] = []
+        self.responses: list[Any] = []
+        self._chosen: dict[str, Any] | None = None
+        self._closed = False
+        self._on_request = lambda request: self.requests.append(request)
+        self._on_response = lambda response: self.responses.append(response)
+        page.on("request", self._on_request)
+        page.on("response", self._on_response)
+
+    def rule(self) -> str:
+        if self.route:
+            return (f"the declared trigger_route "
+                    f"{str(self.route.get('method', '')).upper()} {self.route.get('path')}")
+        return f"the first same-origin ({self.origin}) non-GET response after the click"
+
+    def _issued_after_arming(self, response: Any) -> bool:
+        request = response.request
+        return any(request is seen for seen in self.requests)
+
+    def _matches(self, response: Any) -> bool:
+        request = response.request
+        method = str(request.method).upper()
+        if self.route:
+            want_method = str(self.route.get("method") or method).upper()
+            return (method == want_method
+                    and _url_path(response.url) == self.route.get("path"))
+        return (method != "GET" and _url_origin(response.url) == self.origin)
+
+    def chosen(self) -> dict[str, Any] | None:
+        if self._chosen is not None:
+            return self._chosen
+        for response in list(self.responses):
+            if not self._issued_after_arming(response) or not self._matches(response):
+                continue
+            body: Any = None
+            body_error = None
+            try:
+                raw = response.body()
+                try:
+                    body = json.loads(raw.decode())
+                except Exception:  # noqa: BLE001
+                    body = raw.decode(errors="replace")[:2000]
+            except Exception as exc:  # noqa: BLE001
+                body_error = repr(exc)[:300]
+            self._chosen = {
+                "method": str(response.request.method).upper(),
+                "path": _url_path(response.url),
+                "status": response.status,
+                "body_sha256": hashlib.sha256(
+                    json.dumps(body, sort_keys=True, default=str).encode()).hexdigest(),
+                "body": body,
+                "source": "ui-network",
+                "chosen_by": self.rule(),
+            }
+            if body_error:
+                self._chosen["body_error"] = body_error
+            return self._chosen
+        return None
+
+    def record(self) -> dict[str, Any]:
+        seen = [
+            {"method": str(r.request.method).upper(), "path": _url_path(r.url),
+             "status": r.status, "same_origin": _url_origin(r.url) == self.origin,
+             "after_arming": self._issued_after_arming(r)}
+            for r in list(self.responses)[:40]
+        ]
+        chosen = self.chosen()
+        return {
+            "rule": self.rule(),
+            "chosen": ({k: v for k, v in chosen.items() if k != "body"}
+                       if chosen else None),
+            "why": (f"chosen by {self.rule()}" if chosen else
+                    f"NO response matched {self.rule()}; the click fired none"),
+            "seen": seen,
+        }
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        for event, handler in (("request", self._on_request),
+                               ("response", self._on_response)):
+            try:
+                self.page.remove_listener(event, handler)
+            except Exception:  # noqa: BLE001
+                pass
+
+
 def exercise(
     page: Any,
     case: dict[str, Any],
@@ -2346,57 +2646,107 @@ def exercise(
         recorder.set(setup=steps, provenance=provenance,
                      variables=dict(variables))
 
-    # From here the case reads with its captured values filled in.
-    case = {**case, "expected": substitute(case.get("expected") or {}, variables)}
-    predicate = case_predicate(case)
-    outstanding = unresolved({field: case["expected"].get(field)
-                              for field in _EXPECTED_READ_FIELDS})
-    if outstanding:
+    # Placeholders in `expected` are resolved AFTER the trigger (Astra round
+    # three, finding 2): a trigger that mints `{meeting_id}` (J4's import,
+    # `capture_as`) must be FIRED before its own `expected` can name the id.
+    # A placeholder that neither setup nor the trigger can bind blocks here,
+    # before anything is fired.
+    trigger = case_trigger(case)
+    minted = {trigger.get("capture_as")} - {None, ""}
+    pre_expected = substitute(case.get("expected") or {}, variables)
+    outstanding = set(unresolved({field: pre_expected.get(field)
+                                  for field in _EXPECTED_READ_FIELDS}))
+    unbindable = outstanding - minted
+    if unbindable:
         raise Blocked(
-            f"unresolved placeholder(s) {sorted(set(outstanding))} in the case's "
-            "`expected`; no observation location or predicate can be read")
+            f"unresolved placeholder(s) {sorted(unbindable)} in the case's "
+            "`expected`: no setup step and not the trigger captures them "
+            "(`capture_as`), so the trigger was NOT fired")
+    # Before the trigger, a read field that names a value the trigger will
+    # mint cannot be read yet: it is blanked (never sent with a literal
+    # `{name}`), and the record says so.
+    pre_case = {**case, "expected": _blank_unresolved(pre_expected)}
+    if outstanding:
+        recorder.set(pending_placeholders=sorted(outstanding))
+        recorder.note(
+            f"placeholder(s) {sorted(outstanding)} are bound by the trigger's own "
+            "`capture_as`; `expected` is resolved after it fires (fields naming "
+            "them are not read before the trigger)")
+    pre_predicate = case_predicate(pre_case)
 
     # Preconditions, AFTER setup and BEFORE the before-capture: a case whose
     # starting state was never reached is blocked, not failed.
     settle(page)
-    checks = check_preconditions(case, page, hub, recorder, variables)
+    checks = check_preconditions(pre_case, page, hub, recorder, variables)
     recorder.set(preconditions=checks)
 
     settle(page)
-    before = snapshot(page, case, hub)
+    before = snapshot(page, pre_case, hub)
     page.screenshot(path=str(shots / "before.png"))
     recorder.set(before=_clean(before))
 
     # A replay identity must be produced by THIS operation. The rig records it
     # and then clears it, so an identity that merely SAT on the page before the
     # trigger cannot be mistaken for one the operation wrote (Astra's counsel).
-    probe = arm_replay_identity(page, predicate, before)
+    probe = arm_replay_identity(page, pre_predicate, before)
     if probe:
         recorder.set(replay_identity_probe=probe)
 
-    trigger = case_trigger(case)
+    # A clicked verb's own network response (Astra round three, finding 3):
+    # the listener is armed BEFORE the click, so only requests the click (or
+    # what follows it) issued are candidates.
+    ui_capture = (_UiResponseCapture(page, trigger, case, variables)
+                  if trigger.get("kind") == "ui" and page is not None else None)
     fired_at = time.monotonic()
-    trigger_record = run_step(trigger, page, hub, provenance, case,
-                              allow_error=True, variables=variables)
-    recorder.set(trigger=trigger_record, provenance=provenance)
+    try:
+        trigger_record = run_step(trigger, page, hub, provenance, pre_case,
+                                  allow_error=True, variables=variables)
+    except Exception:
+        if ui_capture is not None:
+            ui_capture.close()
+        raise
+    recorder.set(trigger=trigger_record, provenance=provenance,
+                 variables=dict(variables))
+
+    # From here the case reads with EVERY captured value filled in, including
+    # the ones the trigger just bound. One still unfilled blocks, naming it.
+    case = {**case, "expected": substitute(case.get("expected") or {}, variables)}
+    predicate = case_predicate(case)
+    still = unresolved({field: case["expected"].get(field)
+                        for field in _EXPECTED_READ_FIELDS})
+    if still:
+        if ui_capture is not None:
+            ui_capture.close()
+        raise Blocked(
+            f"unresolved placeholder(s) {sorted(set(still))} in the case's "
+            "`expected` AFTER the trigger fired; the trigger did not bind them, "
+            "so no observation location or predicate can be read")
 
     # The trigger's OWN response travels with every observation taken after it
     # (and with none taken before it): a `protocol_status` predicate reads the
     # status the route really answered instead of firing the call a second time.
     trigger_response = None
     if "status" in trigger_record:
+        # a fixture trigger's `path` is the WAV; its route is where it went
+        route = trigger_record.get("route") or {}
         trigger_response = {
-            "method": trigger_record.get("method"),
-            "path": trigger_record.get("path"),
+            "method": route.get("method") or trigger_record.get("method"),
+            "path": route.get("path") or trigger_record.get("path"),
             "status": trigger_record.get("status"),
-            "body_sha256": trigger_record.get("response_sha256"),
+            "body_sha256": trigger_record.get("response_sha256") or hashlib.sha256(
+                json.dumps(trigger_record.get("response"), sort_keys=True,
+                           default=str).encode()).hexdigest(),
             "body": trigger_record.get("response"),
         }
 
     def observe() -> dict[str, Any]:
         snap = snapshot(page, case, hub)
-        if trigger_response is not None:
-            snap["trigger_response"] = trigger_response
+        answer = trigger_response
+        if answer is None and ui_capture is not None:
+            answer = ui_capture.chosen()
+            recorder.record["trigger_response_capture"] = ui_capture.record()
+        if answer is not None:
+            snap["trigger_response"] = answer
         return snap
 
     # The moment the promised result FIRST existed. The bound is measured
@@ -2484,6 +2834,9 @@ def exercise(
     }
     state = terminal["state"]
     page.screenshot(path=str(shots / "after.png"))
+    if ui_capture is not None:
+        recorder.set(trigger_response_capture=ui_capture.record())
+        ui_capture.close()
 
     # A reading the evaluator itself could not make is BLOCKED, never a fail:
     # a missing scope or a missing predicate is a rig/atlas fact, not a defect.
