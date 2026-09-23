@@ -44,3 +44,45 @@ graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
 API reference checked
 OpenAPI: 569 paths
 ```
+
+### Captured run — 2026-09-23T19:30:16Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.X8GuYjmzq2 sh -c set -o pipefail; uv run --extra dev --extra test pytest -q -p no:cacheprovider tests/unit/test_philo_graph_atlas.py tests/unit/test_philo3_03_brief_clock.py tests/unit/test_philo_graph_reference.py && (cd web && npx vitest run src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx) && uv run --extra dev python scripts/philo_graph_reference.py --check && uv run python scripts/philo_api_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 2955236059b3e94e43143dbedc1ed5f6322b0107
+
+```text
+.......................................................................  [100%]
+71 passed in 3.41s
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-03/web
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  13:30:21
+   Duration  854ms (transform 312ms, setup 56ms, import 420ms, tests 140ms, environment 168ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+API reference checked
+```

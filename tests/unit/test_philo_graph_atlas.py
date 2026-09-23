@@ -890,6 +890,53 @@ def _populated_brief_cases(atlas: dict) -> list[dict]:
     ]
 
 
+def _generates_a_brief(step: dict) -> bool:
+    """The Chair's Generate click, or the route it calls."""
+    return ((step.get("action") == "click" and step.get("selector") == GENERATE)
+            or (step.get("kind") == "api" and step.get("method") == "POST"
+                and step.get("path") == "/api/brief/generate"))
+
+
+def _advances_the_producer_day(step: dict) -> bool:
+    """PHILO-3-03: the ONE valid producer-day advance (scripts/graph_walk.py
+    producer_clock_advance): clock.python_wall moved by whole days >= 1."""
+    days = step.get("advance_days")
+    return (step.get("kind") == "clock" and step.get("adapter") == "producer-clock"
+            and step.get("clock") == "clock.python_wall"
+            and isinstance(days, int) and not isinstance(days, bool) and days >= 1)
+
+
+def _brief_recipe_problem(case: dict) -> str | None:
+    """A populated recipe's brief under observation must hold its material.
+
+    Same-day generation returns the ORIGINAL brief (monday_brief_service.py
+    same-day idempotency), so a brief generated before the material exists
+    stays empty all that producer-day. The brief under observation is the
+    LAST generation. Astra's counsel on A3: an earlier empty generation is
+    permitted only when a valid producer-day advance sits between it and the
+    observed one. Stated as: in the observed generation's producer-day (the
+    acts after the last valid advance before it), the FIRST generation comes
+    after the material, and so does the observed one.
+    """
+    acts = _acts(case)
+    mint = next((i for i, s in enumerate(acts) if _mints_brief_material(s)), None)
+    if mint is None:
+        return "no brief material is minted in setup"
+    gens = [i for i, s in enumerate(acts) if _generates_a_brief(s)]
+    if not gens:
+        return "no brief is generated"
+    observed = gens[-1]
+    if observed < mint:
+        return "the brief is made before its material exists"
+    advances = [i for i, s in enumerate(acts[:observed]) if _advances_the_producer_day(s)]
+    day_start = advances[-1] if advances else -1
+    first_that_day = next(g for g in gens if g > day_start)
+    if first_that_day < mint:
+        return ("the brief is made before its material exists, and no producer-day "
+                "advance separates that generation from the observed one")
+    return None
+
+
 def test_no_populated_brief_case_reads_the_headline(atlas: dict) -> None:
     """Finding 4: an empty headline element passed `text_absent`. A populated
     case creates its material in setup and reads an item row."""
@@ -903,19 +950,72 @@ def test_no_populated_brief_case_reads_the_headline(atlas: dict) -> None:
         for where, predicate in predicates:
             if predicate and predicate["kind"] in TEXT_KINDS and where == BRIEF_HEADLINE:
                 problems.append(f"{case['id']}: {predicate['kind']} on the headline element")
-        acts = _acts(case)
-        mint = next((i for i, s in enumerate(acts) if _mints_brief_material(s)), None)
-        # PHILO-3-03: the brief under observation is the one the LAST Generate
-        # makes. The next-day case makes an empty brief FIRST on purpose (COUNCIL
-        # A3: record the decision after an empty brief), then Generates again.
-        makes = [i for i, s in enumerate(acts)
-                 if s.get("action") == "click" and s.get("selector") == GENERATE]
-        make = makes[-1] if makes else None
-        if mint is None:
-            problems.append(f"{case['id']}: no brief material is minted in setup")
-        elif make is None or make < mint:
-            problems.append(f"{case['id']}: the brief is made before its material exists")
+        problem = _brief_recipe_problem(case)
+        if problem:
+            problems.append(f"{case['id']}: {problem}")
     assert not problems, problems
+
+
+NEXT_DAY = "case.j10.arrival_generate_again.next_day"
+PHASE3_NEXT_DAY = ("case.a3.brief_next_day.decision_on_the_face",
+                   "case.a3.brief_next_day.new_id_with_the_decision")
+
+
+def test_the_brief_recipe_fence_refuses_its_mutations(atlas: dict) -> None:
+    """Astra's counsel on A3: the fence must FAIL each false acceptance she
+    reproduced, on in-memory copies of the actual recipes, and pass the real ones."""
+    import copy
+
+    phase3 = json.loads((REPO / "docs/internal/philo/graph/atlas-phase3.json").read_text())
+    next_day = _case(atlas, NEXT_DAY)
+    populated = _case(atlas, POPULATED)
+    for case in [next_day, populated] + [_case(phase3, cid) for cid in PHASE3_NEXT_DAY]:
+        assert _brief_recipe_problem(case) is None, case["id"]
+
+    def advance_index(case: dict) -> int:
+        found = [i for i, s in enumerate(case["setup"]) if _advances_the_producer_day(s)]
+        assert len(found) == 1, case["id"]
+        return found[0]
+
+    for case in [next_day] + [_case(phase3, cid) for cid in PHASE3_NEXT_DAY]:
+        # 1. the advance removed
+        removed = copy.deepcopy(case)
+        del removed["setup"][advance_index(removed)]
+        assert _brief_recipe_problem(removed), f"{case['id']}: passed without its advance"
+        # 2. the advance moved AFTER the observed generation (the trigger)
+        moved = copy.deepcopy(case)
+        step = moved["setup"].pop(advance_index(moved))
+        moved["setup"].append(moved.pop("trigger"))
+        moved["trigger"] = step
+        assert _brief_recipe_problem(moved), f"{case['id']}: passed with the advance after it"
+        # 3. an invalid advance (zero days, or another adapter) is no advance
+        for bad in ({"advance_days": 0}, {"adapter": "scheduler-wait"}):
+            weak = copy.deepcopy(case)
+            weak["setup"][advance_index(case)].update(bad)
+            assert _brief_recipe_problem(weak), f"{case['id']}: passed with {bad}"
+
+    # 4. an empty Generate inserted before the material in the ordinary recipe
+    early = copy.deepcopy(populated)
+    mint = next(i for i, s in enumerate(early["setup"]) if _mints_brief_material(s))
+    early["setup"].insert(mint, {"kind": "ui", "action": "click", "selector": GENERATE,
+                                 "adapter": "ui-pointer"})
+    assert _brief_recipe_problem(early), "an empty Generate before the material passed"
+    # 5. the same through the route, not the face
+    early_api = copy.deepcopy(populated)
+    early_api["setup"].insert(mint, {"kind": "api", "method": "POST",
+                                     "path": "/api/brief/generate", "body": None})
+    assert _brief_recipe_problem(early_api), "an empty route generate before the material passed"
+    # 6. an empty generation on the OBSERVED day, before the material, is not
+    #    rescued by an earlier advance (same-day id: the observed brief is empty)
+    late2 = copy.deepcopy(next_day)
+    mint2 = next(k for k, s in enumerate(late2["setup"]) if _mints_brief_material(s))
+    material = late2["setup"].pop(mint2)
+    j = advance_index(late2)
+    late2["setup"].insert(j + 1, {"kind": "api", "method": "POST",
+                                  "path": "/api/brief/generate", "body": None})
+    late2["setup"].insert(j + 2, material)
+    # day two: generate (empty) THEN material THEN observed -> same-day id, empty
+    assert _brief_recipe_problem(late2), "an empty generation on the observed day passed"
 
 
 def test_the_populated_brief_predicate_needs_the_minted_row(atlas: dict) -> None:
