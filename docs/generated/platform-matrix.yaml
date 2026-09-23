@@ -1056,7 +1056,9 @@
       "source_ids": [
         "holdspeak/plugins/builtin/__init__.py",
         "holdspeak/meeting_plugins.py",
-        "holdspeak/plugins/host.py"
+        "holdspeak/plugins/host.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/services/meeting_intel_service.py"
       ],
       "status": "experimental"
     },
@@ -1068,7 +1070,9 @@
       "source_ids": [
         "holdspeak/plugins/builtin/__init__.py",
         "holdspeak/meeting_plugins.py",
-        "holdspeak/plugins/host.py"
+        "holdspeak/plugins/host.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/services/meeting_intel_service.py"
       ],
       "status": "experimental"
     },
@@ -1080,7 +1084,9 @@
       "source_ids": [
         "holdspeak/plugins/builtin/__init__.py",
         "holdspeak/meeting_plugins.py",
-        "holdspeak/plugins/host.py"
+        "holdspeak/plugins/host.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/services/meeting_intel_service.py"
       ],
       "status": "experimental"
     },
@@ -1092,7 +1098,9 @@
       "source_ids": [
         "holdspeak/plugins/builtin/__init__.py",
         "holdspeak/meeting_plugins.py",
-        "holdspeak/plugins/host.py"
+        "holdspeak/plugins/host.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/services/meeting_intel_service.py"
       ],
       "status": "experimental"
     },
@@ -1104,7 +1112,9 @@
       "source_ids": [
         "holdspeak/plugins/builtin/__init__.py",
         "holdspeak/meeting_plugins.py",
-        "holdspeak/plugins/host.py"
+        "holdspeak/plugins/host.py",
+        "holdspeak/intel_queue.py",
+        "holdspeak/services/meeting_intel_service.py"
       ],
       "status": "experimental"
     },

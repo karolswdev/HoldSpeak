@@ -1,0 +1,13 @@
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2 src/desk/chair/arrivalSummaryCompletion.test.tsx src/desk/chair/arrivalSummaryRun.test.tsx src/desk/chair/__tests__/drainerBadge.test.tsx src/desk/__tests__/deskChangedRefresh.test.tsx
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  10:18:55
+   Duration  2.57s (transform 612ms, setup 245ms, import 1.10s, tests 1.86s, environment 873ms)
+

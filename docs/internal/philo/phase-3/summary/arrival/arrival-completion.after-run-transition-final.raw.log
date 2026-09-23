@@ -1,0 +1,9 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  09:48:31
+   Duration  2.43s (transform 344ms, setup 60ms, import 461ms, tests 1.65s, environment 179ms)
+

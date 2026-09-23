@@ -1,0 +1,248 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+stderr | src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > drops a stale response when the visible meeting identity changes
+An update to Arrival inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Arrival inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ❯ src/desk/chair/arrivalSummaryCompletion.test.tsx (9 tests | 2 failed) 2040ms
+     × renders the ready summary and transcript from the producer detail 15ms
+     × drops a stale response when the visible meeting identity changes 1007ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the ready summary and transcript from the producer detail
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/desk/chair/arrivalSummaryCompletion.test.tsx:143:88
+    141|     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("…
+    142|     expect(screen.getByText("16 WORDS")).toBeInTheDocument();
+    143|     expect(screen.getAllByText("We will ship the boundary change on Tu…
+       |                                                                                        ^
+    144|   });
+    145|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > drops a stale response when the visible meeting identity changes
+AssertionError: expected 2 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"chair"[39m
+        [33mdata-testid[39m=[32m"chair"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"arrival-headline"[39m
+          [33mdata-testid[39m=[32m"arrival-headline"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+            [33mdata-testid[39m=[32m"arrival-display"[39m
+          [36m>[39m
+            [0mNothing needs you[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-brief"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBRIEF[0m
+              [36m</h3>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                [33mdata-scope[39m=[32m"local"[39m
+                [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+              [36m>[39m
+                [0mTHIS DEVICE[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGenerate[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"arrival-brief-empty"[39m
+            [36m>[39m
+              [0mNo brief yet[0m
+            [36m</span>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-meetings"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mMEETINGS 1[0m
+              [36m</h3>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger"[39m
+              [33mdata-cols[39m=[32m"room"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-count"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-open[39m=[32m"true"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-testid[39m=[32m"arrival-meeting-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-time"[39m
+                  [36m>[39m
+                    [0mAUG 10[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mArchitecture boundary review[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"arrival-meeting-duration"[39m
+                  [36m>[39m
+                    [0m35 S[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"arrival-meeting-duration"[39m
+                  [36m>[39m
+                    [0m16 WORDS[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"arrival-meeting-badge"[39m
+                    [33mdata-badge[39m=[32m"running"[39m
+                    [33mdata-testid[39m=[32m"arrival-meeting-badge"[39m
+                  [36m>[39m
+                    [0mRUNNING[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-open"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"surface-well"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"surface-well-head"[39m
+                    [36m>[39m
+                      [0mTRANSCRIPT 2[0m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"surface-well-body"[39m
+                    [36m>[39m
+                      [36m<ol[39m
+                        [33mclass[39m=[32m"transcript-list"[39m
+                      [36m>[39m
+                        [36m<li[39m
+                          [33mid[39m=[32m"transcript-m-summary-running-0"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"transcript-speaker"[39m
+                            [33mdata-testid[39m=[32m"transcript-speaker"[39m
+                          [36m>[39m
+                            [0mRECORDING[0m
+                          [36m</span>[39m
+                          [36m<p>[39m
+                            [0mWe will ship the boundary change on Tuesday.[0m
+                          [36m</p>[39m
+                        [36m</li>[39m
+                        [36m<li[39m
+                          [33mid[39m=[32m"transcript-m-summary-running-1"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"transcript-speaker"[39m
+                            [33mdata-testid[39m=[32m"transcript-speaker"[39m
+                          [36m>[39m
+                            [0mRECORDING[0m
+                          [36m</span>[39m
+                          [36m<p>[39m
+                            [0mWe will ship the boundary change on Tuesday.[0m
+                          [36m</p>[39m
+                        [36m</li>[39m
+                      [36m</ol>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<f...
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/desk/chair/arrivalSummaryCompletion.test.tsx:241:108
+    239|     seat(running);
+    240|
+    241|     await waitFor(() => expect(screen.getAllByText("We will ship the b…
+       |                                                                                                            ^
+    242|     resolveFirst(ready.detail);
+    243|     await waitFor(() => expect(screen.queryByText("The team reviewed t…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 19 passed (21)
+   Start at  09:42:52
+   Duration  2.83s (transform 683ms, setup 207ms, import 1.12s, tests 2.26s, environment 700ms)
+

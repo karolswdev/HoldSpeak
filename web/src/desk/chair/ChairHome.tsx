@@ -25,6 +25,7 @@ import {
   SurfaceSection,
   SurfaceLedger,
   SurfaceLedgerRow,
+  SurfaceWell,
   EgressChip,
   StateChip,
   Disclosure,
@@ -54,6 +55,9 @@ import {
 } from "../attention";
 import { unfinishedThoughts, type UnfinishedThought } from "../thoughts";
 import type { Meeting } from "../../lib/primitives";
+import { fromWireMeeting } from "../api";
+import { MeetingSummarySlab } from "../../meetings/MeetingSummarySlab";
+import { TranscriptWell } from "../../pages/cores/history/TranscriptWell";
 import {
   RefusalToken,
   RouteDisclosure,
@@ -220,12 +224,35 @@ function ledgerDate(iso: string): string {
 
 function durationMin(seconds: number | null | undefined): string {
   if (!seconds || seconds <= 0) return "";
-  // UX-CANON A.8 (Astra's counsel finding 5): a 30-second meeting rounded
-  // to `0 MIN` on the Chair. A zero token says nothing, so it is omitted —
-  // the same rule the ledger's `durationToken` already keeps.
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))} S`;
   const minutes = Math.round(seconds / 60);
   if (minutes <= 0) return "";
   return `${minutes} MIN`;
+}
+
+function arrivalIntelBadge(meeting: Meeting): string {
+  const job = meeting.intelJob;
+  // A queued successor with a failed lineage remains RETRYING after its
+  // scheduled time. Manual and initial queues have no failure fact.
+  if (
+    (job?.status === "queued" || job?.status === "retrying") &&
+    job.attempts > 0 &&
+    Boolean(job.lastError)
+  ) {
+    return "RETRYING";
+  }
+  if (job?.status === "failed") return "FAILED";
+  return intelBadge(meeting.intelStatus);
+}
+
+function hasMeetingAttention(meeting: Meeting): boolean {
+  const state = arrivalIntelBadge(meeting);
+  return state === "RETRYING" || state === "FAILED";
+}
+
+interface ArrivalMeetingDetail {
+  meeting: Meeting | null;
+  error: string | null;
 }
 
 /** Source emblem token: GH for github, J for jira, MTG for proposals, etc. */
@@ -474,6 +501,61 @@ function Arrival() {
 
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
+  const meetingDetailKey = useMemo(
+    () => [...meetings]
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+      .slice(0, 3)
+      .map((meeting) => meeting.id)
+      .join("|"),
+    [meetings],
+  );
+  const [meetingDetails, setMeetingDetails] = useState<Record<string, ArrivalMeetingDetail>>({});
+  const meetingReadGeneration = useRef(0);
+  useEffect(() => {
+    const ids = meetingDetailKey ? meetingDetailKey.split("|") : [];
+    const generation = ++meetingReadGeneration.current;
+    // A desk refresh starts a new read generation. Do not keep an old detail
+    // well visible while its replacement is in flight.
+    setMeetingDetails({});
+    if (ids.length === 0) return;
+    let active = true;
+    for (const id of ids) {
+      void apiFetch<unknown>(`/api/meetings/${encodeURIComponent(id)}`)
+        .then((wire) => {
+          if (!active || generation !== meetingReadGeneration.current) return;
+          const detail = fromWireMeeting(wire);
+          if (!detail) {
+            setMeetingDetails((current) => ({
+              ...current,
+              [id]: { meeting: null, error: "MEETING DETAIL HAS NO IDENTITY" },
+            }));
+            return;
+          }
+          if (detail.id !== id) {
+            setMeetingDetails((current) => ({
+              ...current,
+              [id]: {
+                meeting: null,
+                error: `MEETING DETAIL IDENTITY CHANGED · EXPECTED ${id} · RECEIVED ${detail.id}`,
+              },
+            }));
+            return;
+          }
+          setMeetingDetails((current) => ({
+            ...current,
+            [id]: { meeting: detail, error: null },
+          }));
+        })
+        .catch((cause) => {
+          if (!active || generation !== meetingReadGeneration.current) return;
+          setMeetingDetails((current) => ({
+            ...current,
+            [id]: { meeting: null, error: readableError(cause) },
+          }));
+        });
+    }
+    return () => { active = false; };
+  }, [meetingDetailKey, deskUpdatedAt]);
 
   // ── the meeting-path blockers (HS-201-01) ──
   // The assignment roster, re-read whenever it can have changed. Counsel
@@ -624,9 +706,10 @@ function Arrival() {
   // HS-201-01: what needs the owner but is not an attention row -- the
   // meeting-path blocker and every FAILED meeting. `Nothing needs you`
   // is never spoken over one (audits/face-walk-opus.md defect 8).
-  const failedMeetings = meetings.filter(
-    (m) => intelBadge(m.intelStatus) === "FAILED",
-  ).length;
+  const failedMeetings = meetings.filter((meeting) => {
+    const detail = meetingDetails[meeting.id]?.meeting;
+    return hasMeetingAttention(detail ?? meeting);
+  }).length;
   // HS-201-11 (owner's ruling): the calendar row is an OFFER, not a row
   // that asks. A desk with no calendar must not say `1 need you` for ever
   // (tenet 3), so `Connect calendar` renders and the head never counts it.
@@ -714,13 +797,13 @@ function Arrival() {
     finally { setBusyBriefId(null); }
   };
 
-  // ── intel run (S-2: response carries host for the egress chip) ──
+  // ── intel run ──
   const [runningIntel, setRunningIntel] = useState<string | null>(null);
   // HS-200-42: the receipt carries the DRAINER's state too. The verb
   // enqueues; whether anything executes the queue is a separate fact, and
   // the face must not say "Running..." when the answer is "nothing will".
   const [intelReceipt, setIntelReceipt] = useState<
-    { meetingId: string; host: string; drainer: string } | null
+    { meetingId: string; drainer: string } | null
   >(null);
   // HS-201-04: the hub's 409, kept as a refusal with its plain reason.
   const [intelRefusal, setIntelRefusal] = useState<
@@ -750,7 +833,6 @@ function Arrival() {
       }
       setIntelReceipt({
         meetingId,
-        host: outcome.route?.legs?.[0]?.host || outcome.result.host || "THIS DEVICE",
         drainer: outcome.result.drainer === "running" ? "running" : "absent",
       });
       void useDesk.getState().refresh();
@@ -1182,6 +1264,7 @@ function Arrival() {
         <div data-testid="arrival-meetings">
           <MeetingsSection
             meetings={meetings}
+            details={meetingDetails}
             runningIntel={runningIntel}
             intelReceipt={intelReceipt}
             intelRefusal={intelRefusal}
@@ -1889,17 +1972,107 @@ function BriefSection({
   );
 }
 
-/** HS-201-04 — the click's egress receipt, said the ONE way the product
- *  says a host (`egressFor`). Never the raw wire word, never "cloud" by
- *  default (Article III; Astra's counsel finding 4). */
-function ReceiptChip({ host }: { host: string }) {
-  const eg = egressFor(host);
-  if (!eg.label) return null;
-  return <EgressChip label={eg.label} scope={eg.scope} />;
+function ArrivalMeetingWells({
+  meeting,
+  error,
+  receipt,
+}: {
+  meeting: Meeting | null;
+  error: string | null;
+  receipt: ReturnType<typeof executedReceipt>;
+}) {
+  if (error) {
+    return (
+      <SurfaceWell head="SUMMARY · READ FAILED">
+        <span className="arrival-meeting-read-error" data-testid="arrival-detail-error">
+          {`DETAIL READ FAILED · ${error}`}
+        </span>
+      </SurfaceWell>
+    );
+  }
+  if (!meeting) return null;
+  const summary = String(meeting.intelSummary ?? "").trim();
+  const job = meeting.intelJob;
+  const badge = arrivalIntelBadge(meeting);
+  const hasFailureFact = badge === "RETRYING" || badge === "FAILED" || Boolean(job?.lastError);
+  const statusFacts = [
+    hasFailureFact ? badge : "",
+    hasFailureFact && job?.attempts && job.attempts > 0 && receipt
+      ? `LAST ATTEMPT · ${egressFor(receipt.attempts[receipt.attempts.length - 1]?.host ?? "").label}`
+      : "",
+    job?.lastError ? `LAST ERROR · ${job.lastError}` : "",
+  ].filter(Boolean);
+  const hasStatusFacts = statusFacts.length > 0;
+  const segments = (meeting.segments ?? []).map((segment) => ({
+    speaker: segment.speaker,
+    text: segment.text,
+    start_time: segment.startedAt,
+  }));
+  return (
+    <>
+      {summary && !hasStatusFacts ? (
+        <MeetingSummarySlab
+          intel={{ summary, topics: meeting.intelTopics ?? [] }}
+          receipt={receipt}
+        />
+      ) : summary && hasStatusFacts ? (
+        <SurfaceWell
+          head={
+            <span className="summary-well-head">
+              <span>SUMMARY</span>
+              <RunAttempts receipt={receipt} testId="summary-record-attempts" />
+            </span>
+          }
+        >
+          <p className="summary-text" data-testid="meeting-summary-text">
+            {summary}
+          </p>
+          {meeting.intelTopics && meeting.intelTopics.length > 0 ? (
+            <span className="summary-topics" data-testid="meeting-summary-topics">
+              {meeting.intelTopics.map((topic) => (
+                <span key={topic} className="surface-token" data-chip>
+                  {topic.toUpperCase()}
+                </span>
+              ))}
+            </span>
+          ) : null}
+          <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
+            {statusFacts.map((fact, index) => (
+              <span
+                key={`${fact}-${index}`}
+                className="arrival-meeting-status-fact"
+                data-tone={fact === "FAILED" || fact.startsWith("LAST ERROR") ? "danger" : undefined}
+              >
+                {fact}
+              </span>
+            ))}
+          </div>
+        </SurfaceWell>
+      ) : hasStatusFacts ? (
+        <SurfaceWell head="SUMMARY">
+          <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
+            {statusFacts.map((fact, index) => (
+              <span
+                key={`${fact}-${index}`}
+                className="arrival-meeting-status-fact"
+                data-tone={fact === "FAILED" || fact.startsWith("LAST ERROR") ? "danger" : undefined}
+              >
+                {fact}
+              </span>
+            ))}
+          </div>
+        </SurfaceWell>
+      ) : null}
+      {segments.length > 0 ? (
+        <TranscriptWell id={meeting.id} segments={segments} />
+      ) : null}
+    </>
+  );
 }
 
 function MeetingsSection({
   meetings,
+  details,
   runningIntel,
   intelReceipt,
   intelRefusal,
@@ -1907,8 +2080,9 @@ function MeetingsSection({
   onRunIntel,
 }: {
   meetings: Meeting[];
+  details: Record<string, ArrivalMeetingDetail>;
   runningIntel: string | null;
-  intelReceipt: { meetingId: string; host: string; drainer: string } | null;
+  intelReceipt: { meetingId: string; drainer: string } | null;
   /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
   intelRefusal: { meetingId: string; refusal: SummaryRefusal } | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
@@ -1925,17 +2099,21 @@ function MeetingsSection({
   // wears the filled species.
   const leadRunId =
     sorted.find(
-      (m) =>
-        intelBadge(m.intelStatus) === "OFF" &&
-        m.transcriptWords != null &&
-        m.transcriptWords > 0 &&
-        routeReady(m.plannedRoute ?? null),
+      (m) => {
+        const row = details[m.id]?.meeting ?? m;
+        return arrivalIntelBadge(row) === "OFF" &&
+          ((row.segments?.length ?? 0) > 0 ||
+            (row.transcriptWords != null && row.transcriptWords > 0)) &&
+          routeReady(row.plannedRoute ?? null);
+      },
     )?.id ?? null;
 
   return (
     <SurfaceSection label={countLabel("MEETINGS", sorted.length)}>
       <SurfaceLedger count={null} cols="room">
         {sorted.map((m) => {
+          const detailState = details[m.id];
+          const rowMeeting = detailState?.meeting ?? m;
           const receipt = intelReceipt?.meetingId === m.id ? intelReceipt : null;
           // HS-200-42 (counsel F1): the honest surface is the BADGE. The verb
           // label could never carry the drainer fact: the moment a receipt
@@ -1943,7 +2121,7 @@ function MeetingsSection({
           // story-42 walk shot both worlds and got identical pixels). A queued
           // job with nothing to execute it says so here, in the badge species'
           // own vocabulary.
-          const serverBadge = intelBadge(m.intelStatus);
+          const serverBadge = arrivalIntelBadge(rowMeeting);
           const badge = receipt
             ? receipt.drainer === "running"
               ? "QUEUED"
@@ -1951,14 +2129,16 @@ function MeetingsSection({
             : serverBadge === "QUEUED" && drainerAbsent
               ? "NOT DRAINING"
               : serverBadge;
-          const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
+          const hasTranscript =
+            (rowMeeting.segments?.length ?? 0) > 0 ||
+            (rowMeeting.transcriptWords != null && rowMeeting.transcriptWords > 0);
           const isOff = badge === "OFF";
           const isComplete = badge === "RAN" || badge === "SAVED";
           // HS-201-04 (Article III): the route this row's Run WILL use,
           // read before the click; the refusal's fresh route wins.
           const rowRefusal =
             intelRefusal?.meetingId === m.id ? intelRefusal.refusal : null;
-          const route = rowRefusal?.route ?? m.plannedRoute ?? null;
+          const route = rowRefusal?.route ?? rowMeeting.plannedRoute ?? m.plannedRoute ?? null;
           const canRun = routeReady(route);
           return (
             <SurfaceLedgerRow
@@ -1967,9 +2147,14 @@ function MeetingsSection({
               primary={m.title || "Meeting with no title"}
               cells={
                 <>
-                  {durationMin(m.durationSeconds) ? (
+                  {durationMin(rowMeeting.durationSeconds) ? (
                     <span className="arrival-meeting-duration">
-                      {durationMin(m.durationSeconds)}
+                      {durationMin(rowMeeting.durationSeconds)}
+                    </span>
+                  ) : null}
+                  {rowMeeting.transcriptWords != null && rowMeeting.transcriptWords > 0 ? (
+                    <span className="arrival-meeting-duration">
+                      {`${rowMeeting.transcriptWords} WORDS`}
                     </span>
                   ) : null}
                   {badge === "RAN" ? (
@@ -1983,19 +2168,19 @@ function MeetingsSection({
                       {badge}
                     </span>
                   )}
-                  {/* HS-201-04 (Astra's counsel finding 4): the click's own
-                      receipt goes through the ONE egress mapper the ledger
-                      uses. It printed the wire word `same_device` verbatim
-                      and called every host but "local" a cloud host. */}
-                  {receipt ? <ReceiptChip host={receipt.host} /> : null}
                   {/* After the run: the destinations actually contacted. */}
                   <RunAttempts
-                    receipt={executedReceipt(m.id, rowRefusal?.receipt, m.runReceipt)}
+                    receipt={executedReceipt(
+                      m.id,
+                      rowRefusal?.receipt,
+                      rowMeeting.runReceipt,
+                      rowMeeting.intelJob?.runReceipt,
+                    )}
                     testId="arrival-attempts"
                   />
                   <RefusalToken
                     refusal={rowRefusal}
-                    durable={m.lastRefusal ?? null}
+                    durable={rowMeeting.lastRefusal ?? null}
                     testId="arrival-refusal"
                   />
                 </>
@@ -2036,8 +2221,21 @@ function MeetingsSection({
               onToggle={() =>
                 openSurfaceOr("review-meetings", "/meetings", `meeting:${m.id}`)
               }
+              open={Boolean(detailState)}
               expands={false}
               wrap
+              children={
+                <ArrivalMeetingWells
+                  meeting={detailState?.meeting ?? null}
+                  error={detailState?.error ?? null}
+                  receipt={executedReceipt(
+                    m.id,
+                    rowRefusal?.receipt,
+                    rowMeeting.runReceipt,
+                    rowMeeting.intelJob?.runReceipt,
+                  )}
+                />
+              }
               data-testid="arrival-meeting-row"
             />
           );

@@ -1,0 +1,48 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_summary_arrival_observations_name_the_rendered_states __________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> None:
+        """Rendered proof reads Arrival's summary/error surfaces, not old wrappers."""
+        wanted = {
+            "case.j6.run_summary.summary_text": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+            "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_contains"),
+            "case.j7.arrival_load.reload_persisted": ("[data-testid=meeting-summary-text]", "text_equals"),
+        }
+        problems: list[str] = []
+        for case_id, (selector, kind) in wanted.items():
+            case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+            expected = case["expected"]
+            predicate = expected.get("predicate") or {}
+            if expected.get("observe_at") != selector or predicate.get("kind") != kind:
+                problems.append(f"{case_id}: expected {kind} at {selector}")
+            words = expected.get("words", "")
+            if "HOLDSPEAK-SYNTH-1" in words or ".desk-window .surface-material" in words:
+                problems.append(f"{case_id}: retains the old summary marker or wrapper")
+        failed = next(case for case in _summary_cases(atlas) if case["id"] == "case.j6.run_summary.intel_failed")
+        if failed["expected"]["predicate"].get("value") != "FAILED\nLAST ATTEMPT":
+            problems.append("case.j6.run_summary.intel_failed: a retry cause is not terminal failure")
+>       assert not problems, problems
+E       AssertionError: ['case.j7.arrival_load.reload_persisted: expected text_equals at [data-testid=meeting-summary-text]']
+E       assert not ['case.j7.arrival_load.reload_persisted: expected text_equals at [data-testid=meeting-summary-text]']
+
+tests/unit/test_philo_graph_atlas.py:710: AssertionError
+_________ test_summary_reload_reads_the_same_already_persisted_summary _________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_reload_reads_the_same_already_persisted_summary(atlas: dict) -> None:
+        case = next(c for c in atlas['cases'] if c['id'] == 'case.j7.arrival_load.reload_persisted')
+        setup = case['setup']
+        run = next(i for i,s in enumerate(setup) if s.get('action') == 'click' and s.get('selector') == '[data-testid=arrival-run-intel]')
+        waits = [i for i,s in enumerate(setup) if s.get('action') == 'wait_for' and s.get('selector') == '[data-testid=meeting-summary-text]']
+>       assert waits and waits[0] > run
+E       assert ([])
+
+tests/unit/test_philo_graph_atlas.py:1369: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_arrival_observations_name_the_rendered_states
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_reload_reads_the_same_already_persisted_summary
+2 failed, 66 deselected in 0.37s

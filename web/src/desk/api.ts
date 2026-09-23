@@ -28,6 +28,7 @@ import type {
   Thread,
   Workbench,
   Workflow,
+  IntelJob,
 } from "../lib/primitives";
 import {
   readLastRefusal,
@@ -432,9 +433,55 @@ export const fromWireThread = (t: unknown): Thread | null => {
   };
 };
 
-const fromWireMeeting = (m: unknown): Meeting | null => {
+function wireRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function readIntelJob(source: unknown): IntelJob | null {
+  const job = wireRecord(source);
+  if (!job || typeof job.status !== "string") return null;
+  return {
+    status: job.status,
+    attempts: typeof job.attempts === "number" ? job.attempts : 0,
+    lastError: typeof job.last_error === "string" ? job.last_error : null,
+    requestedAt: typeof job.requested_at === "string" ? job.requested_at : null,
+    updatedAt: typeof job.updated_at === "string" ? job.updated_at : null,
+    retryScheduled: typeof job.retry_scheduled === "boolean" ? job.retry_scheduled : undefined,
+    nextRetryAt: typeof job.next_retry_at === "string" ? job.next_retry_at : null,
+    retriesRemaining: typeof job.retries_remaining === "number" ? job.retries_remaining : null,
+    retryMaxAttempts: typeof job.retry_max_attempts === "number" ? job.retry_max_attempts : null,
+    runReceipt: readRunReceipt(job.run_receipt),
+  };
+}
+
+/** Adapt both list rows and detail rows. Detail fields are optional so the
+ * list remains light; the Arrival merges a bounded detail read on refresh. */
+export const fromWireMeeting = (m: unknown): Meeting | null => {
   const id = wireString(m, "id");
   if (!id) { warnMissingId("meeting", m, "id"); return null; }
+  const intelStatus = wireRaw(m, "intel_status");
+  const intelStatusObject = wireRecord(intelStatus);
+  const intel = wireRecord(wireRaw(m, "intel"));
+  const durationRaw = wireRaw(m, "duration_seconds") ?? wireRaw(m, "duration");
+  const transcriptWordsRaw = wireRaw(m, "transcriptWords") ?? wireRaw(m, "transcript_words");
+  const segments = wireArray(m, "segments")
+    .map((segment) => {
+      const row = wireRecord(segment);
+      if (!row || typeof row.text !== "string") return null;
+      return {
+        speaker: typeof row.speaker === "string" ? row.speaker : undefined,
+        text: row.text,
+        startedAt:
+          typeof row.started_at === "string"
+            ? row.started_at
+            : typeof row.start_time === "number"
+              ? String(row.start_time)
+              : undefined,
+      };
+    })
+    .filter((segment): segment is NonNullable<typeof segment> => segment !== null);
   return {
     kind: "meeting",
     id,
@@ -444,13 +491,42 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
     endedAt: wireStringOrNull(m, "ended_at"),
     segmentCount: wireNumber(m, "segment_count"),
     actionItemCount: wireNumber(m, "action_item_count"),
-    durationSeconds: wireRaw(m, "duration_seconds") as number | null | undefined,
+    durationSeconds: typeof durationRaw === "number" ? durationRaw : null,
     tags: wireArray(m, "tags").filter((t): t is string => typeof t === "string"),
-    intelStatus: wireStringOrNull(m, "intel_status"),
+    intelStatus:
+      typeof intelStatus === "string"
+        ? intelStatus
+        : intelStatusObject && typeof intelStatusObject.state === "string"
+          ? intelStatusObject.state
+          : null,
+    intelSummary: intel && typeof intel.summary === "string" ? intel.summary : null,
+    intelTopics: intel && Array.isArray(intel.topics)
+      ? intel.topics.filter((topic): topic is string => typeof topic === "string")
+      : [],
+    intelStatusDetail:
+      typeof wireRaw(m, "intel_status_detail") === "string"
+        ? wireRaw(m, "intel_status_detail") as string
+        : intelStatusObject && typeof intelStatusObject.detail === "string"
+          ? intelStatusObject.detail
+          : null,
+    intelRequestedAt:
+      typeof wireRaw(m, "intel_requested_at") === "string"
+        ? wireRaw(m, "intel_requested_at") as string
+        : intelStatusObject && typeof intelStatusObject.requested_at === "string"
+          ? intelStatusObject.requested_at
+          : null,
+    intelCompletedAt:
+      typeof wireRaw(m, "intel_completed_at") === "string"
+        ? wireRaw(m, "intel_completed_at") as string
+        : intelStatusObject && typeof intelStatusObject.completed_at === "string"
+          ? intelStatusObject.completed_at
+          : null,
+    intelJob: readIntelJob(wireRaw(m, "intel_job")),
     calendarEventId: wireStringOrNull(m, "calendar_event_id"),
     calendarEventTitle: wireStringOrNull(m, "calendar_event_title"),
     calendarSourceLabel: wireStringOrNull(m, "calendar_source_label"),
-    transcriptWords: wireRaw(m, "transcriptWords") as number | null | undefined,
+    transcriptWords: typeof transcriptWordsRaw === "number" ? transcriptWordsRaw : null,
+    segments,
     // HS-201-04: the disclosed route and the run receipt travel with the
     // row, so the Chair's Run verb never composes a host from config.
     plannedRoute: readPlannedRoute(m),

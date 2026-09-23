@@ -1,0 +1,19 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_optional_framing_keeps_raw_verdict_independent_and_names_scroll_failure _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-331/test_optional_framing_keeps_ra0')
+
+    def test_optional_framing_keeps_raw_verdict_independent_and_names_scroll_failure(tmp_path):
+        class Page:
+            def locator(self, selector):
+                raise RuntimeError('target disappeared after the raw observation')
+        case = {'expected': {'frame_selector': '[data-testid=meeting-summary-text]'}}
+>       result = rig.capture_framed_view(Page(), case, None, tmp_path)
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'philo3_summary_rig' has no attribute 'capture_framed_view'
+
+tests/unit/test_philo3_summary_rig.py:308: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo3_summary_rig.py::test_optional_framing_keeps_raw_verdict_independent_and_names_scroll_failure
+1 failed, 11 deselected in 0.29s

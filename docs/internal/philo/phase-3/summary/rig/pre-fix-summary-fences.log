@@ -1,0 +1,93 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_________ test_summary_cases_use_the_retained_architect_import_fixture _________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_cases_use_the_retained_architect_import_fixture(atlas: dict) -> None:
+        """A2's meeting material enters through the real multipart import boundary.
+    
+        J4's microphone cases stay separate: their browser-device boundary is a
+        lawful blocked proof, while every imported meeting used by J4-J7 must use
+        the retained synthetic architect WAV. The old smoke WAV made a transport
+        pass look like useful meeting material.
+        """
+        expected = "tests/fixtures/philo3_architect_meeting.wav"
+        problems: list[str] = []
+        for case in _summary_cases(atlas):
+            imports = [
+                step for step in _acts(case)
+                if step.get("kind") == "fixture"
+                and step.get("route", {}).get("path") == "/api/meetings/import"
+            ]
+            if imports and any(step.get("path") != expected for step in imports):
+                problems.append(f"{case['id']}: imported material is not {expected}")
+>       assert not problems, problems
+E       AssertionError: ['case.j4.meetings_import.imported: imported material is not tests/fixtures/philo3_architect_meeting.wav', 'case.j5.me...ing.wav', 'case.j6.run_summary.intel_ready: imported material is not tests/fixtures/philo3_architect_meeting.wav', ...]
+E       assert not ['case.j4.meetings_import.imported: imported material is not tests/fixtures/philo3_architect_meeting.wav', 'case.j5.me...ing.wav', 'case.j6.run_summary.intel_ready: imported material is not tests/fixtures/philo3_architect_meeting.wav', ...]
+
+tests/unit/test_philo_graph_atlas.py:521: AssertionError
+_________________ test_summary_run_cases_have_one_run_trigger __________________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_run_cases_have_one_run_trigger(atlas: dict) -> None:
+        """The real Arrival Run gesture is the one trigger; setup never re-runs it."""
+        problems: list[str] = []
+        for case in atlas["cases"]:
+            if not case["id"].startswith("case.j6.run_summary."):
+                continue
+            steps = _acts(case)
+            clicks = [
+                step for step in steps
+                if step.get("kind") == "ui"
+                and step.get("action") == "click"
+                and step.get("selector") == "[data-testid=arrival-run-intel]"
+            ]
+            api_runs = [
+                step for step in steps
+                if step.get("kind") == "api"
+                and step.get("method") == "POST"
+                and "/intelligence/run" in step.get("path", "")
+            ]
+            if len(clicks) != 1 or api_runs:
+                problems.append(
+                    f"{case['id']}: Run clicks={len(clicks)}, API run steps={len(api_runs)}"
+                )
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.intel_running: Run clicks=1, API run steps=1', 'case.j6.run_summary.intel_ready: Run clicks=1, API run steps=1']
+E       assert not ['case.j6.run_summary.intel_running: Run clicks=1, API run steps=1', 'case.j6.run_summary.intel_ready: Run clicks=1, API run steps=1']
+
+tests/unit/test_philo_graph_atlas.py:547: AssertionError
+_______ test_summary_failure_cases_retain_reply_at_the_provider_boundary _______
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_failure_cases_retain_reply_at_the_provider_boundary(atlas: dict) -> None:
+        """Failure replay is a tree artifact and the rig's real provider seam."""
+        expected = "tests/fixtures/philo3_summary_failure_reply.json"
+        problems: list[str] = []
+        for case in atlas["cases"]:
+            if case["id"] not in {
+                "case.j6.run_summary.intel_failed",
+                "case.j6.run_summary.intel_retry",
+            }:
+                continue
+            boundaries = [step for step in _acts(case) if step.get("kind") == "boundary"]
+            replies = [step for step in boundaries if step.get("substitute") == "engine_reply"]
+            if len(replies) != 1:
+                problems.append(f"{case['id']}: expected one engine_reply boundary")
+                continue
+            boundary = replies[0]
+            if boundary.get("reply") != expected or "reply_path" in boundary:
+                problems.append(f"{case['id']}: boundary must use reply={expected!r}")
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.intel_failed: expected one engine_reply boundary', "case.j6.run_summary.intel_retry: boundary must use reply='tests/fixtures/philo3_summary_failure_reply.json'"]
+E       assert not ['case.j6.run_summary.intel_failed: expected one engine_reply boundary', "case.j6.run_summary.intel_retry: boundary must use reply='tests/fixtures/philo3_summary_failure_reply.json'"]
+
+tests/unit/test_philo_graph_atlas.py:568: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_cases_use_the_retained_architect_import_fixture
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_run_cases_have_one_run_trigger
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_failure_cases_retain_reply_at_the_provider_boundary
+3 failed, 49 deselected in 0.39s

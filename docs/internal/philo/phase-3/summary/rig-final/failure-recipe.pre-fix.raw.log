@@ -1,0 +1,54 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_summary_arrival_observations_name_the_rendered_states __________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> None:
+        """Rendered proof reads Arrival's summary/error surfaces, not old wrappers."""
+        wanted = {
+            "case.j6.run_summary.summary_text": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+            "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_contains"),
+            "case.j7.arrival_load.reload_persisted": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+        }
+        problems: list[str] = []
+        for case_id, (selector, kind) in wanted.items():
+            case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+            expected = case["expected"]
+            predicate = expected.get("predicate") or {}
+            if expected.get("observe_at") != selector or predicate.get("kind") != kind:
+                problems.append(f"{case_id}: expected {kind} at {selector}")
+            words = expected.get("words", "")
+            if "HOLDSPEAK-SYNTH-1" in words or ".desk-window .surface-material" in words:
+                problems.append(f"{case_id}: retains the old summary marker or wrapper")
+        failed = next(case for case in _summary_cases(atlas) if case["id"] == "case.j6.run_summary.intel_failed")
+        if failed["expected"]["predicate"].get("value") != "FAILED\nLAST ATTEMPT":
+            problems.append("case.j6.run_summary.intel_failed: a retry cause is not terminal failure")
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.intel_failed: a retry cause is not terminal failure']
+E       assert not ['case.j6.run_summary.intel_failed: a retry cause is not terminal failure']
+
+tests/unit/test_philo_graph_atlas.py:710: AssertionError
+______ test_summary_failure_settings_reach_the_real_drainer_after_restart ______
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_failure_settings_reach_the_real_drainer_after_restart(atlas: dict) -> None:
+        """The real conductor captures retry settings at startup, not each tick."""
+        ids = {"case.j6.run_summary.intel_failed", "case.j6.run_summary.intel_retry",
+               "case.j6.run_summary.retrying"}
+        for case in atlas["cases"]:
+            if case["id"] not in ids:
+                continue
+            setup = case["setup"]
+            settings = next(i for i, s in enumerate(setup) if s.get("path") == "/api/settings")
+            restart = next((i for i, s in enumerate(setup) if s.get("action") == "restart_hub"), -1)
+>           assert restart > settings, case["id"]
+E           AssertionError: case.j6.run_summary.intel_failed
+E           assert -1 > 2
+
+tests/unit/test_philo_graph_atlas.py:1352: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_arrival_observations_name_the_rendered_states
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_failure_settings_reach_the_real_drainer_after_restart
+2 failed, 64 deselected in 0.36s

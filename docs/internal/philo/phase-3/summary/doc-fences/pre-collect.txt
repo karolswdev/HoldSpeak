@@ -1,0 +1,4 @@
+tests/unit/test_phase200_doc_claims.py::test_registered_claim_anchor_is_still_in_its_document[holds:useDeskChangedRefresh.ts:15]
+tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15]
+
+2/47 tests collected (45 deselected) in 0.05s

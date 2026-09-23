@@ -345,7 +345,7 @@
         },
         "preconditions": {
           "type": "array",
-          "description": "Human lines (recorded, not checked) and/or executable check steps evaluated after setup and before the before-capture (brief \u00a73, \u00a77).",
+          "description": "Human lines (recorded, not checked) and/or executable check steps evaluated after setup and before the before-capture (brief §3, §7).",
           "items": {
             "oneOf": [
               {
@@ -446,7 +446,7 @@
               "description": "Why this step is the real path and not a substitute."
             }
           },
-          "description": "The step fired through its real entry point after setup and the before-capture (brief \u00a77). Required when applicability is applicable."
+          "description": "The step fired through its real entry point after setup and the before-capture (brief §7). Required when applicability is applicable."
         },
         "expected": {
           "type": "object",
@@ -477,7 +477,9 @@
                     "text_contains",
                     "text_equals",
                     "unchanged",
-                    "window_titled"
+                    "window_titled",
+                    "text_nonempty",
+                    "hit_target"
                   ]
                 }
               }
@@ -510,6 +512,10 @@
                   }
                 }
               }
+            },
+            "frame_selector": {
+              "type": "string",
+              "description": "Optional separately labelled scroll capture after the raw verdict; never changes the predicate or completion time."
             }
           }
         },

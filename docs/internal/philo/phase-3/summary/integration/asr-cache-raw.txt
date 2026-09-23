@@ -1,0 +1,3 @@
+Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 4 files:  25%|██▌       | 1/4 [00:00<00:01,  1.92it/s]Fetching 4 files: 100%|██████████| 4/4 [00:06<00:00,  1.78s/it]Fetching 4 files: 100%|██████████| 4/4 [00:06<00:00,  1.69s/it]
+/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-model-cache/hub/models--mlx-community--whisper-base-mlx/snapshots/1e3e249fb8d01c655324bd6841b1deadffd6d04c

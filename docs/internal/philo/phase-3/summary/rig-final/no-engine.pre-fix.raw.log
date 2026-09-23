@@ -1,0 +1,20 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_summary_no_engine_absence_is_read_inside_the_existing_meetings_scope ___
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_no_engine_absence_is_read_inside_the_existing_meetings_scope(atlas: dict) -> None:
+        case = next(c for c in atlas['cases'] if c['id'] == 'case.j5.meeting_open.no_engine_no_verb')
+>       assert case['expected']['observe_at'] == '[data-testid=arrival-meetings]'
+E       AssertionError: assert '[data-testid...al-run-intel]' == '[data-testid...val-meetings]'
+E         
+E         - [data-testid=arrival-meetings]
+E         ?                      ^^^^  ^^
+E         + [data-testid=arrival-run-intel]
+E         ?                      ^^^^  ^^^
+
+tests/unit/test_philo_graph_atlas.py:1360: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_no_engine_absence_is_read_inside_the_existing_meetings_scope
+1 failed, 66 deselected in 0.35s

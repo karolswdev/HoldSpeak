@@ -778,6 +778,11 @@ class MeetingService:
                     }
                     p["run_receipt"] = None
                     p["last_refusal"] = None
+                from .meeting_intel_service import project_intel_job
+
+                p["intel_job"] = project_intel_job(
+                    self._db, self._db.intel.get_latest_intel_job(meeting_id)
+                )
             if p.get("intel_model_host") is None and meeting_id:
                 try:
                     recorded = self._db.intel.get_intel_job_model_host(meeting_id)

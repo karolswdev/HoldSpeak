@@ -1,0 +1,30 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+__ test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15] __
+
+claim = Claim(doc='web/src/desk/useDeskChangedRefresh.ts', anchor='One meeting write announces itself too: the import worker',...eting_intel_service.py never announce (fnd.docs.desk_changed_comment_drift, corrected 2026-09-22)", story='PHILO-2-07')
+
+    @pytest.mark.parametrize("claim", CLAIMS, ids=_IDS)
+    def test_registered_claim_matches_its_state(claim: Claim) -> None:
+        """A ``holds`` claim must stay true; a ``known_false`` claim must stay false."""
+        assert claim.state in {"holds", "known_false"}, claim.state
+        satisfied = bool(claim.predicate())
+    
+        if claim.state == "holds":
+>           assert satisfied, (
+                f"a documentation claim that used to HOLD is now FALSE: {_where(claim)}\n"
+                f"  the sentence: {claim.sentence}\n"
+                f"  what is true: {claim.truth}\n"
+                "  Fix the code, or correct the sentence AND its registry row "
+                "(tests/unit/doc_claims/registry.py) in this same commit."
+            )
+E           AssertionError: a documentation claim that used to HOLD is now FALSE: web/src/desk/useDeskChangedRefresh.ts:15
+E               the sentence: One meeting write announces itself too: the import worker emits a `meeting` frame when an import ends, success or failure (`MeetingService._run_import_job`). Other meeting writes, the summary queue, project rooms, thoughts and sync emit no frame; their surfaces carry their own signals.
+E               what is true: the only literal-kind 'meeting' desk_changed call under holdspeak/ is in MeetingService._run_import_job (meeting_service.py:289); no literal thought/project/room/sync kind exists; intel_queue.py, intel_queue_conductor.py and meeting_intel_service.py never announce (fnd.docs.desk_changed_comment_drift, corrected 2026-09-22)
+E               Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.
+E           assert False
+
+tests/unit/test_phase200_doc_claims.py:63: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15]
+1 failed, 1 passed, 45 deselected in 0.37s
