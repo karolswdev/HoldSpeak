@@ -87,6 +87,15 @@
   <span class="out" id="g-out">no tick yet</span>
 </section>
 
+<!-- (s) a clicked verb whose identity lives in its own network response
+     (J10 "Generate again"). The face shows the brief id and its words. -->
+<section id="case-s">
+  <button id="s-good" type="button">Generate again</button>
+  <button id="s-stale" type="button">Generate again (stale face)</button>
+  <span class="out" id="s-content">Nothing material changed.</span>
+  <span class="out" id="s-id">brief-7</span>
+</section>
+
 <div class="desk-window" id="d-target" tabindex="-1">
   <span class="desk-window-title">Calibration window</span>
 </div>
@@ -156,6 +165,21 @@
       ticks += 1;
       document.getElementById("g-out").textContent = "tick " + ticks;
     }, 3000);
+  });
+
+  // (s) good: a GET first (never the chosen response), then the POST; the
+  // face renders the id and the words the POST returned.
+  document.getElementById("s-good").addEventListener("click", async () => {
+    await (await fetch("/echo?case=s")).json();
+    const data = await (await fetch("/brief/generate", {method: "POST"})).json();
+    document.getElementById("s-id").textContent = data.id;
+    document.getElementById("s-content").textContent = data.headline;
+  });
+
+  // (s) stale: the POST mints a DIFFERENT brief and the face never shows
+  // it — the old id beside the old, unchanged words.
+  document.getElementById("s-stale").addEventListener("click", async () => {
+    await (await fetch("/brief/generate-fresh", {method: "POST"})).json();
   });
 
   // (f) starts, says it is busy, and never finishes.
