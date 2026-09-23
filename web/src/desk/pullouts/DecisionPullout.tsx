@@ -17,6 +17,9 @@ import { FoldGadget, PadGadget } from "../surface/gadgets";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 
+/** The title createPrimitive("decision") gives (store/dataSlice.ts). */
+export const DEFAULT_DECISION_TITLE = "New decision";
+
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const { openPullout } = useDesk.getState();
@@ -30,23 +33,37 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     `# Consequences\n\n${String(ir.consequencesMarkdown || "")}`,
   ].join("\n\n");
 
-  const [editingDecision, setEditingDecision] = useState(false);
-  const [decisionDraft, setDecisionDraft] = useState({
-    context_markdown: "",
-    decision_markdown: "",
-    consequences_markdown: "",
+  // PHILO-3-01 — every draft starts from the current record, so an Edit
+  // that opens by itself (a decision just created) never writes blanks
+  // over saved text.
+  const draftFromRecord = () => ({
+    context_markdown: String(ir.contextMarkdown || ""),
+    decision_markdown: String(ir.decisionMarkdown || ""),
+    consequences_markdown: String(ir.consequencesMarkdown || ""),
   });
+  // PHILO-3-01 — a decision just created opens in Edit.
+  const [editingDecision, setEditingDecision] = useState(() =>
+    useDesk.getState().newIds.includes(o.id),
+  );
+  const [decisionDraft, setDecisionDraft] = useState(draftFromRecord);
 
   const startDecisionEdit = () => {
-    setDecisionDraft({
-      context_markdown: String(ir.contextMarkdown || ""),
-      decision_markdown: String(ir.decisionMarkdown || ""),
-      consequences_markdown: String(ir.consequencesMarkdown || ""),
-    });
+    setDecisionDraft(draftFromRecord());
     setEditingDecision(true);
   };
   const commitDecisionEdit = () => {
-    void useDesk.getState().updatePrimitive("decision", o.id, decisionDraft);
+    // PHILO-3-01 — the default title yields to the first line of the
+    // decision text, so the brief says "Review decision: <that line>".
+    const firstLine = decisionDraft.decision_markdown
+      .split("\n")
+      .map((line) => line.replace(/^#+\s*/, "").trim())
+      .find(Boolean);
+    const title = String(o.title || "");
+    const patch =
+      firstLine && (!title || title === DEFAULT_DECISION_TITLE)
+        ? { ...decisionDraft, title: firstLine.slice(0, 120) }
+        : decisionDraft;
+    void useDesk.getState().updatePrimitive("decision", o.id, patch);
     setEditingDecision(false);
   };
   const cycleDecisionStatus = () => {

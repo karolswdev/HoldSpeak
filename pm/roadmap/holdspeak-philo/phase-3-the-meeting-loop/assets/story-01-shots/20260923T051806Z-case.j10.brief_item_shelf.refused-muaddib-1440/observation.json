@@ -1,0 +1,362 @@
+{
+  "id": "obs-20260923T051806Z-case.j10.brief_item_shelf.refused-muaddib-1440",
+  "run_id": "20260923T051806Z-case.j10.brief_item_shelf.refused-muaddib-1440",
+  "case_id": "case.j10.brief_item_shelf.refused",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.route.brief_item_shelf"
+  ],
+  "state_id": "state.briefs.item.untouched",
+  "provenance": {
+    "revision": "7ce953580b0dd27f7e4445d5e41da4c9a0a55f75",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e56c85cb89d2a862cd31fad68345e583b016c879b24d63ded92c08f32f9fdb6a",
+      "assets": [
+        "index-DVBCVHGd.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63131",
+      "port": 63131,
+      "pid": 81112,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-swln7oz_",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-swln7oz_/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T05:18:07.058451+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "64af1de4364c57c4df644b8df23445fcd6bccf713e3429d6855882abb875dafe",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_54026ef008f6",
+          "title": "Graph walk brief material J10",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-23T05:18:10Z",
+          "updated_at": "2026-09-23T05:18:10Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "942033787e12ed1393be5024ea9fb3119c7116b852a1e792a406e072203069db"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-c71993866de34c58bb10edea336fca1f",
+        "period_start": "2026-09-21T17:00:00",
+        "period_end": "2026-09-22T23:18:13.325636",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-dd0a5fe48aab4e91993c137523bf2560",
+              "section": "decisions",
+              "text": "Review decision: Graph walk brief material J10",
+              "detail": null,
+              "source_ref": "decision:decision_54026ef008f6",
+              "priority": 200
+            }
+          ]
+        },
+        "generated_at": "2026-09-22T23:18:13.325636",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 22",
+        "generated_label": "GENERATED SEP 22 23:18",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "6df0281c09cd40f9339c18f983508b09adce897fca881ca8f9faaccba1b73f00",
+      "captured": {
+        "name": "item_id",
+        "path": "sections.decisions.0.id",
+        "value": "brief-item-dd0a5fe48aab4e91993c137523bf2560"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief]",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "Brief ready"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'Brief ready' in observe_at text"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "item_id": "brief-item-dd0a5fe48aab4e91993c137523bf2560"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf",
+    "adapter": "http-route",
+    "status": 422,
+    "response": "{\"detail\":\"Unknown shelf state: shelved\"}",
+    "response_sha256": "963e3b1fb8695fad42a0a5b6ce433e03297f536e9ed7147d4d22fdffd813ed14"
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:63131/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "rows": [],
+      "payload": {}
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "document_text_sha256": "34759880a9cc89cf8a2841e5c77cf204eeef1c49be3c3578fa810bc94ffda41b",
+    "document_text_len": 432,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:18:13.825780+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:63131/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "rows": [],
+      "payload": {}
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "document_text_sha256": "34759880a9cc89cf8a2841e5c77cf204eeef1c49be3c3578fa810bc94ffda41b",
+    "document_text_len": 432,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:18:14.986901+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf",
+      "status": 422,
+      "body_sha256": "963e3b1fb8695fad42a0a5b6ce433e03297f536e9ed7147d4d22fdffd813ed14",
+      "body": "{\"detail\":\"Unknown shelf state: shelved\"}"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nTue,",
+    "url": "http://127.0.0.1:63131/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "rows": [],
+      "payload": {}
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "document_text_sha256": "34759880a9cc89cf8a2841e5c77cf204eeef1c49be3c3578fa810bc94ffda41b",
+    "document_text_len": 432,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:18:14.853855+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf",
+      "status": 422,
+      "body_sha256": "963e3b1fb8695fad42a0a5b6ce433e03297f536e9ed7147d4d22fdffd813ed14",
+      "body": "{\"detail\":\"Unknown shelf state: shelved\"}"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf answered 422, wanted 422 (body sha256 963e3b1fb869)",
+    "elapsed_s": 0.914
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf answered 422, wanted 422 (body sha256 963e3b1fb869)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.047,
+    "first_satisfied_at_s": 0.914,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/brief/items/brief-item-dd0a5fe48aab4e91993c137523bf2560/shelf answered 422, wanted 422 (body sha256 963e3b1fb869)"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T051806Z-case.j10.brief_item_shelf.refused-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T051806Z-case.j10.brief_item_shelf.refused-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-swln7oz_/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63131"
+  ]
+}

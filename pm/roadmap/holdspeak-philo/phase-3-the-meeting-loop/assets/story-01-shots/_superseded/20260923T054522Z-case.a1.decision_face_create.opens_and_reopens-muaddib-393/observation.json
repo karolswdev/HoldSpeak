@@ -1,0 +1,477 @@
+{
+  "id": "obs-20260923T054522Z-case.a1.decision_face_create.opens_and_reopens-muaddib-393",
+  "run_id": "20260923T054522Z-case.a1.decision_face_create.opens_and_reopens-muaddib-393",
+  "case_id": "case.a1.decision_face_create.opens_and_reopens",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_create"
+  ],
+  "state_id": "state.decisions.desk.recorded",
+  "provenance": {
+    "revision": "ec3d6dd5adbae0fc926fbc93753754901d443536",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "7f8c10cce28f6db48da69205639f8345719c8cd165d3d624f5740eab05ced102",
+      "assets": [
+        "index-Bt8DkrJi.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64583",
+      "port": 64583,
+      "pid": 3452,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kf4qbgl3",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kf4qbgl3/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T05:45:22.650310+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.1.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "5bfa2f2ca5f616c4a0dd886461421bf30134c1c4b4cb00f09e34e0396810fc8b",
+      "version": "phase3-01"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-desk.new-decision']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-decision-card textarea[aria-label=Decision]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[role=region][aria-label='New decision']",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "New decision"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'New decision' in observe_at text"
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "decisions": [
+          {
+            "id": "decision_df9ade3c4a1c",
+            "title": "New decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-23T05:45:28Z",
+            "updated_at": "2026-09-23T05:45:28Z",
+            "deleted": false
+          }
+        ]
+      },
+      "response_sha256": "33ddb8ae7de76f371ee4a04e3864eaf4daac23699c5cd5b6fb236f49f7d8c7b7",
+      "captured": {
+        "name": "decision_id",
+        "path": "decisions.0.id",
+        "value": "decision_df9ade3c4a1c"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Done",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions/decision_df9ade3c4a1c",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decision.title",
+        "value": "Adopt the one desk bus"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decision.title = 'Adopt the one desk bus', wanted 'Adopt the one desk bus'"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions/decision_df9ade3c4a1c",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decision.decision_markdown",
+        "value": "Adopt the one desk bus\nfor every frame"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decision.decision_markdown = 'Adopt the one desk bus\\nfor every frame', wanted 'Adopt the one desk bus\\nfor every frame'"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions/decision_df9ade3c4a1c",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decision.context_markdown",
+        "value": "Source: meeting review 2026-09-22"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decision.context_markdown = 'Source: meeting review 2026-09-22', wanted 'Source: meeting review 2026-09-22'"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-decision:decision_df9ade3c4a1c']",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "for every frame"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'for every frame' in observe_at text"
+    },
+    {
+      "kind": "check",
+      "observe_at": "[role=region][aria-label='Adopt the one desk bus'] .desk-decision-card",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "Source: meeting review 2026-09-22"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'Source: meeting review 2026-09-22' in observe_at text"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME; no decision on the desk before the setup",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_df9ade3c4a1c"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/decisions",
+    "adapter": "http-route",
+    "status": 400,
+    "response": "{\"error\":\"invalid decision status: bogus\"}",
+    "response_sha256": "75a37ad65fa2a0506b7f199ee58405929a94fbd842d8bf6d844b94fb3e70951d"
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_df9ade3c4a1c",
+    "focus_label": "Adopt the one desk bus",
+    "url": "http://127.0.0.1:64583/",
+    "windows": [
+      {
+        "title": "Adopt the one desk bus",
+        "rect": {
+          "x": 0,
+          "y": 274,
+          "w": 393,
+          "h": 403
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "8a30484a4a4ce05243f78fa7680effff01c31cfe0614217f2b2ca701a8970c73",
+    "document_text_len": 470,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:45:31.910157+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_df9ade3c4a1c",
+    "focus_label": "Adopt the one desk bus",
+    "url": "http://127.0.0.1:64583/",
+    "windows": [
+      {
+        "title": "Adopt the one desk bus",
+        "rect": {
+          "x": 0,
+          "y": 274,
+          "w": 393,
+          "h": 403
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "8a30484a4a4ce05243f78fa7680effff01c31cfe0614217f2b2ca701a8970c73",
+    "document_text_len": 470,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:45:32.995174+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "body_sha256": "75a37ad65fa2a0506b7f199ee58405929a94fbd842d8bf6d844b94fb3e70951d",
+      "body": "{\"error\":\"invalid decision status: bogus\"}"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: POST /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_df9ade3c4a1c",
+    "focus_label": "Adopt the one desk bus",
+    "url": "http://127.0.0.1:64583/",
+    "windows": [
+      {
+        "title": "Adopt the one desk bus",
+        "rect": {
+          "x": 0,
+          "y": 274,
+          "w": 393,
+          "h": 403
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2",
+      "rows": [],
+      "payload": "{\"error\":\"expected a JSON object\"}"
+    },
+    "protocol_digest": {
+      "status": 400,
+      "row_count": 0,
+      "payload_sha256": "9a0a5d1561c86df758f382b6b5a9fb60b3e5436526df0f8e20c65de2dc993cf2"
+    },
+    "document_text_sha256": "8a30484a4a4ce05243f78fa7680effff01c31cfe0614217f2b2ca701a8970c73",
+    "document_text_len": 470,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T05:45:32.867340+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/decisions",
+      "status": 400,
+      "body_sha256": "75a37ad65fa2a0506b7f199ee58405929a94fbd842d8bf6d844b94fb3e70951d",
+      "body": "{\"error\":\"invalid decision status: bogus\"}"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/decisions answered 400, wanted 400 (body sha256 75a37ad65fa2); 'invalid decision status' in the response body",
+    "elapsed_s": 0.906
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/decisions answered 400, wanted 400 (body sha256 75a37ad65fa2); 'invalid decision status' in the response body",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.033,
+    "first_satisfied_at_s": 0.906,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/decisions answered 400, wanted 400 (body sha256 75a37ad65fa2); 'invalid decision status' in the response body"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T054522Z-case.a1.decision_face_create.opens_and_reopens-muaddib-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/20260923T054522Z-case.a1.decision_face_create.opens_and_reopens-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kf4qbgl3/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64583"
+  ]
+}

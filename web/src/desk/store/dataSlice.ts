@@ -6,6 +6,7 @@
 import { apiRequest, newDeliveryId } from "../../lib/api";
 import {
   clearWriteFailure,
+  currentWriteFailure,
   reportWriteFailure,
 } from "../hooks/useWriteReceipt";
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
@@ -161,9 +162,21 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   async refresh() {
     set({ loading: true, error: "" });
     const [
-      { items, profiles, projects, inferenceTargets, models, status, error },
+      { items, profiles, projects, inferenceTargets, models, status, error, failed },
       setup,
     ] = await Promise.all([loadAll(), loadSetup()]);
+    // PHILO-3-01 — a failed collection read is named on the face (the desk
+    // receipt line), with Retry; a clean read clears only a READ receipt.
+    // A pending write (CREATE, SAVE, ...) keeps its receipt and its Retry:
+    // a read failure never replaces it.
+    const standing = currentWriteFailure();
+    const readReceipt = !standing || standing.verb.startsWith("READ ");
+    if (failed) {
+      if (readReceipt)
+        reportWriteFailure(`READ ${failed.label}`, failed.cause, () => void get().refresh());
+    } else if (standing && standing.verb.startsWith("READ ")) {
+      clearWriteFailure();
+    }
     set({
       items,
       profiles,
@@ -251,6 +264,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       // "workbench" never reaches here — it returns early to the
       // pre-persistence chooser (HS-130-09).
       if (kind === "zone") get().setRenamingZone(createdId);
+      // PHILO-3-01 — a decision has no inline editor; its face is the
+      // DecisionPullout, which opens in Edit for a new decision.
+      else if (kind === "decision") get().openPullout(createdId);
       else get().openEditor(createdId);
     }
   },

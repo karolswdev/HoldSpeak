@@ -34,7 +34,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-3-01 | Record the decision (A1) | backlog | [story-01-record-the-decision](./story-01-record-the-decision.md) | - |
+| PHILO-3-01 | Record the decision (A1) | done | [story-01-record-the-decision](./story-01-record-the-decision.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-3-02 | See and find the summary (A2) | in-progress | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
 | PHILO-3-04 | The thought's receipt (A4) | done | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -51,6 +51,10 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 ## Where we are
 
 2026-09-23: A4 BUILT on the ratified canvas — the Thought foot shows KEPT · time / SAVING… / DID NOT SAVE · cause + Retry / CHANGED ELSEWHERE + Reload with the filing line below; every state shot on a real hub at both widths; the library receipt line raised to the 12 px floor. A1 on PR #613 (Astra counsel). A2 (Astra) in flight.
+
+2026-09-23 16:15: A1 RATIFIED by Astra on round five (RATIFY, no conditions) and merged; the owner passed the shots and ruled the 393 receipt row. A4 merged. A2 (Astra) building the ratified Arrival face and the proof chain. A3 next.
+
+2026-09-23: A1 BUILT — the decisions route saves and reads back (one line); the existing face proven on a real hub at both widths; the shelf passes as protocol cases; four face findings ledgered for the council (New Decision opens nothing on the Chair; no title at create; a failed read is only an aria-label; raw Retry/Dismiss). A2 (Astra) and A4 (build) in flight.
 
 Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
 
@@ -70,6 +74,8 @@ PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then q
 - 2026-09-23 — chartered from the council's decision page; A1–A3 per Astra's counter-draft, A4 per Muad'Dib's ruling, D3 open — the two brains.
 
 ## Decisions deferred
+
+- Tooling flaw found by Astra (A1 r3): `scripts/check_web_baseline.py` compares inherited failures by test NAME, so a new failing path under a baselined name is hidden ("zero branch-new" was false for `containerQueryLaw.test.ts`); key the comparator on id + failing file/path — a tree task after this phase.
 
 - (none) D3 ruled: A4 is in; lane owners assigned above.
 

@@ -403,7 +403,8 @@
                   "fixture",
                   "boundary",
                   "cli",
-                  "tool"
+                  "tool",
+                  "check"
                 ]
               },
               "adapter": {
@@ -434,7 +435,8 @@
                 "fixture",
                 "boundary",
                 "cli",
-                "tool"
+                "tool",
+                "check"
               ]
             },
             "adapter": {
