@@ -101,7 +101,9 @@ def test_summary_and_receipt_survive_real_hub_restart_on_both_glasses(tmp_path, 
                 _normal_chair(page)
                 row = page.get_by_test_id(f"meeting-row-{meeting.id}")
                 row.locator(".meetings-stream-row-body").click()
-                page.get_by_text("We agreed to send the budget report.", exact=True).wait_for()
+                page.locator("#surface-meetings").get_by_text(
+                    "We agreed to send the budget report.", exact=True
+                ).wait_for()
                 _settle(page)
                 _assert_clean(page, errors)
                 shot = SHOTS / f"meeting-after-restart-{width}.png"

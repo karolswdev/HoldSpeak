@@ -2540,11 +2540,11 @@
       "expected": {
         "predicate": {
           "kind": "protocol_field",
-          "path": "/jobs/0/status",
+          "path": "/intel_job/status",
           "value": "succeeded"
         },
-        "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "The real drainer leaves the admitted job in succeeded; this is a state read, not a newly inserted row claim."
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "The real admitted job succeeded. Read its durable meeting detail because succeeded jobs leave the active queue."
       },
       "completion_bound_s": 600,
       "viewports": []
@@ -7000,18 +7000,18 @@
       "trigger": {
         "kind": "api",
         "method": "GET",
-        "path": "/api/intel/jobs",
+        "path": "/api/meetings/{meeting_id}",
         "body": null,
         "adapter": "http-route"
       },
       "expected": {
         "predicate": {
           "kind": "protocol_field",
-          "path": "/jobs/0/run_receipt/attempts/0/host",
+          "path": "/run_receipt/attempts/0/host",
           "value": "192.168.1.43"
         },
-        "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "ASTRA round 2: the EXECUTED host, not the planned one. `run_receipt` lives on the durable job row (meeting_intel_service.py:74) and its shape is `{receipt_id, job_id, meeting_id, selection_hash, outcome, attempts[{leg_ordinal, host, outcome, operation_id}]}` (phase-201 story-03:40); the first attempt is the leg that ran. The PLANNED host is a separate case (case.j5.meeting_open.planned_host_disclosed) and the council compares them. The value is the declared LAN engine and is environment-specific. || Article III: the host is NAMED on the job. READ OFF SOURCE - this is the PLANNED host recorded on the job row (meeting_intel_service.py:74 carries planned_route; ChairHome.tsx:2018 reads legs[0].host). The host that actually RAN lives in run_receipt, whose shape I could not verify, so the live pass must record BOTH and the council compares them against the host J5 disclosed. The value is the declared LAN engine and is environment-specific."
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "The executed host is read from the durable meeting run receipt, separately from the planned route. Succeeded jobs leave the active queue; completion cannot be read from its first active row."
       },
       "completion_bound_s": 60,
       "viewports": []

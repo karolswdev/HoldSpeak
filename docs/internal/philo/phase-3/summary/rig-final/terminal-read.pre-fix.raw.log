@@ -1,0 +1,45 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.intel_ready-/intel_job/status] _
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+case_id = 'case.j6.run_summary.intel_ready', field = '/intel_job/status'
+
+    @pytest.mark.parametrize("case_id,field", [
+        ("case.j6.run_summary.intel_ready", "/intel_job/status"),
+        ("case.j6.run_summary.host_named", "/run_receipt/attempts/0/host"),
+    ])
+    def test_summary_terminal_cases_read_durable_meeting_not_active_queue(atlas, case_id, field):
+        """Succeeded jobs leave the active queue; the durable meeting owns completion."""
+        case = next(case for case in atlas["cases"] if case["id"] == case_id)
+>       assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
+E       AssertionError: assert 'protocol: GE...pi/intel/jobs' == 'protocol: GE.../{meeting_id}'
+E         
+E         - protocol: GET /api/meetings/{meeting_id}
+E         + protocol: GET /api/intel/jobs
+
+tests/unit/test_philo_graph_atlas.py:1381: AssertionError
+_ test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.host_named-/run_receipt/attempts/0/host] _
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+case_id = 'case.j6.run_summary.host_named'
+field = '/run_receipt/attempts/0/host'
+
+    @pytest.mark.parametrize("case_id,field", [
+        ("case.j6.run_summary.intel_ready", "/intel_job/status"),
+        ("case.j6.run_summary.host_named", "/run_receipt/attempts/0/host"),
+    ])
+    def test_summary_terminal_cases_read_durable_meeting_not_active_queue(atlas, case_id, field):
+        """Succeeded jobs leave the active queue; the durable meeting owns completion."""
+        case = next(case for case in atlas["cases"] if case["id"] == case_id)
+>       assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
+E       AssertionError: assert 'protocol: GE...pi/intel/jobs' == 'protocol: GE.../{meeting_id}'
+E         
+E         - protocol: GET /api/meetings/{meeting_id}
+E         + protocol: GET /api/intel/jobs
+
+tests/unit/test_philo_graph_atlas.py:1381: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.intel_ready-/intel_job/status]
+FAILED tests/unit/test_philo_graph_atlas.py::test_summary_terminal_cases_read_durable_meeting_not_active_queue[case.j6.run_summary.host_named-/run_receipt/attempts/0/host]
+2 failed, 68 deselected in 0.37s

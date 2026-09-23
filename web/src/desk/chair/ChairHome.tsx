@@ -1985,7 +1985,13 @@ function ArrivalMeetingWells({
     return (
       <SurfaceWell head="SUMMARY · READ FAILED">
         <span className="arrival-meeting-read-error" data-testid="arrival-detail-error">
-          {`DETAIL READ FAILED · ${error}`}
+          {error}
+        </span>
+        <span
+          className="arrival-meeting-status-fact"
+          data-testid="arrival-detail-retained"
+        >
+          MEETING KEPT
         </span>
       </SurfaceWell>
     );

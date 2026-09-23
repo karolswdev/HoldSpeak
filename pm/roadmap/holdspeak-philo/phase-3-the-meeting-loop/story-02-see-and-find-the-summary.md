@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 3
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** the meeting loop
 - **Owner:** Astra; Muad'Dib checks design and counsels on built
@@ -23,11 +23,11 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 
 ## Acceptance criteria
 
-- [ ] A COMPLETED import with its length and transcript on the row (the case waits for completion).
-- [ ] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; a retrying or failed job reads truthfully with its cause.
-- [ ] The same summary is found after a hub restart (the rig's restart step, retained evidence), and the planned host is visible at 393 with nothing covering the control.
-- [ ] One synthetic architect meeting with planted decisions, owners and actions is the material; the documented install is reproduced in isolation and its result retained (the model client question, D2) before the owner touches it.
-- [ ] Closure evidence: the end-to-end chain on the rig with retained observations at both widths; technical completion and owner usefulness reported separately.
+- [x] A COMPLETED import with its length and transcript on the row (the case waits for completion).
+- [x] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; a retrying or failed job reads truthfully with its cause.
+- [x] The same summary is found after a hub restart (the rig's restart step, retained evidence), and the planned host is visible at 393 with nothing covering the control.
+- [x] One synthetic architect meeting with planted decisions, owners and actions is the material; the documented install is reproduced in isolation and its result retained (the model client question, D2) before the owner touches it.
+- [x] Closure evidence: the end-to-end chain on the rig with retained observations at both widths; technical completion and owner usefulness reported separately.
 
 ## Effort (council estimate, not a promise)
 
@@ -43,4 +43,8 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 
 2026-09-23 — **OWNER RATIFIED:** “Ratify, build it.” The corrected Arrival boards in `assets/story-02-canvas/` were published at [the owner canvas](https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX). Seams (c) and (d) now build under that ratification and Muad'Dib's recorded check: existing row grammar, length and words, planned host before Run, actual receipt afterwards, summary/transcript wells, LAST ATTEMPT / LAST ERROR, no new row verb or attempt limit.
 
-2026-09-23: under Muad'Dib's recorded RATIFY-WITH-CONDITIONS, install correction committed first as `794f07ff`, verified by an independent base install from fresh source/HOME/venv. Queue correction committed as `a28c19f9`, after four pre-fix failing producer fences and 77 passing focused tests. [Corrected canvas](assets/story-02-canvas/README.md) goes to Muad'Dib for the owner's ratification before Arrival implementation. [Retained proof and remaining steps](summary-lane-record.md). Acceptance criteria are unchanged and unclosed.
+2026-09-23: under Muad'Dib's recorded RATIFY-WITH-CONDITIONS, install correction committed first as `794f07ff`, verified by an independent base install from fresh source/HOME/venv. Queue correction committed as `a28c19f9`, after four pre-fix failing producer fences and 77 passing focused tests. [Corrected canvas](assets/story-02-canvas/README.md) goes to Muad'Dib for the owner's ratification before Arrival implementation. [Retained proof and remaining steps](summary-lane-record.md). Acceptance criteria were unchanged and unclosed at that checkpoint.
+
+## Closure — 2026-09-23
+
+Technical A2 is complete under the owner-ratified design. [Lane record](summary-lane-record.md), [captured evidence](evidence-story-02.md), [technical observations](../../../../docs/internal/philo/phase-3/summary/technical-completion.md), [usefulness with omissions](../../../../docs/internal/philo/phase-3/summary/usefulness.md), and [full-suite classification](../../../../docs/internal/philo/phase-3/summary/integration/full-suite-classification.md). Usefulness is partial; the owner has not sat with the chain. This closes the five technical/reporting acceptance boxes, not the phase exit. Muad'Dib counsels on built before merge.

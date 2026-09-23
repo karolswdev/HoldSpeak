@@ -246,10 +246,11 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
 
             # ── station 3: the record AFTER the run: the text and the hosts ──
             open_meetings(first_id)
-            summary_text = page.get_by_test_id("meeting-summary-text")
+            meetings_surface = page.locator("#surface-meetings")
+            summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = page.get_by_test_id("summary-record-attempts")
+            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
             attempts.wait_for()
             for attempt in receipt["attempts"]:
                 assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
@@ -273,7 +274,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             print(f"REVIEW {not_run.text_content()!r}")
             _shot(page, "review-not-run")
             page.get_by_role("tab", name="Outcomes").click()
-            page.get_by_test_id("meeting-summary-text").wait_for(timeout=15_000)
+            page.locator("#surface-meetings").get_by_test_id(
+                "meeting-summary-text"
+            ).wait_for(timeout=15_000)
 
             # ── station 4: a FAILED record, its slab, and a STALE refusal ──
             # The producer refuses once, with retries exhausted, so the
@@ -437,7 +440,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
                     break
             assert opened, "no Open verb on the Chair after the restart"
             moves += 1
-            found = page.get_by_test_id("meeting-summary-text")
+            found = page.locator("#surface-meetings").get_by_test_id(
+                "meeting-summary-text"
+            )
             try:
                 found.wait_for(timeout=10_000)
             except Exception:
@@ -787,10 +792,11 @@ def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
             page.get_by_test_id(f"meeting-row-{imported.id}").locator(
                 ".meetings-stream-row-body"
             ).click()
-            summary_text = page.get_by_test_id("meeting-summary-text")
+            meetings_surface = page.locator("#surface-meetings")
+            summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = page.get_by_test_id("summary-record-attempts")
+            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
             attempts.wait_for(timeout=15_000)
             for attempt in receipt["attempts"]:
                 assert _chip_label(attempt["host"]) in (attempts.text_content() or "")

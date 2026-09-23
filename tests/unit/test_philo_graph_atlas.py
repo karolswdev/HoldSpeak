@@ -1371,3 +1371,12 @@ def test_summary_reload_reads_the_same_already_persisted_summary(atlas: dict) ->
     assert capture['path'] == '/api/meetings/{meeting_id}'
     assert capture['capture_path'] == '/intel/summary'
     assert case['expected']['predicate'] == {'kind':'text_equals', 'value':'{persisted_summary}'}
+@pytest.mark.parametrize("case_id,field", [
+    ("case.j6.run_summary.intel_ready", "/intel_job/status"),
+    ("case.j6.run_summary.host_named", "/run_receipt/attempts/0/host"),
+])
+def test_summary_terminal_cases_read_durable_meeting_not_active_queue(atlas, case_id, field):
+    """Succeeded jobs leave the active queue; the durable meeting owns completion."""
+    case = next(case for case in atlas["cases"] if case["id"] == case_id)
+    assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
+    assert case["expected"]["predicate"]["path"] == field

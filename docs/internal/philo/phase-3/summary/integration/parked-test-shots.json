@@ -1,0 +1,47 @@
+[
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-1440.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-1440.png",
+    "sha256": "4dd69e45410c01e86250c74fe305e6cc29603e1fd8383f4c3563dc56b19cb860"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-393.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-393.png",
+    "sha256": "440c05fa3528780d92b4adb25569ee9917c3d61a08612ccb25ba05df9c9e4f3f"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-1440.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-1440.png",
+    "sha256": "d05aa71de03ec82d955c92f2bc750ff858102a17d364eaedd03faebf087b6a01"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-393.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-393.png",
+    "sha256": "4d3f58afd668fb6f469f4fc1f26e7e06be71b7394dbaf3ec723fccb5e1404b6a"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-archive-1440.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-archive-1440.png",
+    "sha256": "8aef2fa6f0cb201785de52ea79cd61d5c178b05f8baa71c8351ddbf7d276f7a2"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-search-1440.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-search-1440.png",
+    "sha256": "c5b3e7d080c8d94cf2921b22b39c6148e0bfeea655cf9419a670d5ca4e8e9f38"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-1440.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-1440.png",
+    "sha256": "6f90a65f97e1262004742e4100f48fb21f998510fb34d901ae5a6de144e45676"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-393.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-393.png",
+    "sha256": "6a883dd95e5fff58870e7d84bda83f98415fd2932022a03573afe45064202320"
+  },
+  {
+    "original_path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-393.png",
+    "parked_path": ".tmp/philo3-generated-untracked/pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-393.png",
+    "sha256": "348c2a97b1ed934c45ce84afc0e2e17cd3ffd7db7e1c85183ac499a0f09ea915"
+  }
+]

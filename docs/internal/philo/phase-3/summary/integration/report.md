@@ -21,3 +21,5 @@ HOME into the lane's isolated `.tmp/philo3-model-cache` HF cache. The resolved
 snapshot and download output are in `asr-cache-raw.txt`. Subsequent rig runs use
 this model cache and a fresh HOME for every run. No owner model credentials,
 database, microphone or keychain were used.
+
+A1 subsequently merged on main as `7b2c2b2a`. Astra checkpointed the tested A2 implementation as `68fc32d1`, then merged main through the gate as **`0ad59c04`**. The generated graph was rebuilt; the phase table keeps A1 done and A2 in progress. The combined API, browser-fault and rig checks passed **90 tests**; the integrated full web check passed **2,806 tests**. This merge does not claim A2 closure.

@@ -1,0 +1,336 @@
+case-revision: live-astra ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: live-astra ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: live-astra ran an older revision of case.j4.meetings_import.imported
+case-revision: live-astra ran an older revision of case.j4.record_only.no_speech_head
+case-revision: live-astra ran an older revision of case.j4.record_start.capture_recording
+case-revision: live-astra ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: live-astra ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: live-astra ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: live-astra ran an older revision of case.j6.run_summary.host_named
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_failed
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_queued
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_ready
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_retry
+case-revision: live-astra ran an older revision of case.j6.run_summary.intel_running
+case-revision: live-astra ran an older revision of case.j6.run_summary.summary_text
+case-revision: live-astra ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: live-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: live-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-muaddib ran an older revision of case.j3.speech_missing.row_stays
+case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: live-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: live-muaddib ran an older revision of case.j4.meetings_import.imported
+case-revision: live-muaddib ran an older revision of case.j4.record_only.no_speech_head
+case-revision: live-muaddib ran an older revision of case.j4.record_start.capture_recording
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.planned_host_disclosed
+case-revision: live-muaddib ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: live-muaddib ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: live-muaddib ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.host_named
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_failed
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_queued
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_ready
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_retry
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.intel_running
+case-revision: live-muaddib ran an older revision of case.j6.run_summary.summary_text
+case-revision: live-muaddib ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: live-muaddib ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: live-muaddib ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: live-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: live-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: live-muaddib ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-astra ran an older revision of case.beyond.first_words_reload.retained_draft
+case-revision: static-astra ran an older revision of case.j1.first_words_continue_later.draft_custody
+case-revision: static-astra ran an older revision of case.j1.first_words_continue_later.idle
+case-revision: static-astra ran an older revision of case.j1.first_words_keep_as_note.kept
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.kept
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.mic_unsupported
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.permission_denied
+case-revision: static-astra ran an older revision of case.j1.first_words_speak.unreachable_hub
+case-revision: static-astra ran an older revision of case.j1.speech_readiness.ready
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: static-astra ran an older revision of case.j10.arrival_generate_brief.populated
+case-revision: static-astra ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: static-astra ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: static-astra ran an older revision of case.j10.brief_latest.absent
+case-revision: static-astra ran an older revision of case.j11.thought_keep.kept
+case-revision: static-astra ran an older revision of case.j2.arrival_load.engines_both_missing
+case-revision: static-astra ran an older revision of case.j2.arrival_load.read_pending
+case-revision: static-astra ran an older revision of case.j2.arrival_load.read_unknown
+case-revision: static-astra ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-astra ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-astra ran an older revision of case.j3.speech_missing.row_stays
+case-revision: static-astra ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: static-astra ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: static-astra ran an older revision of case.j4.meetings_import.imported
+case-revision: static-astra ran an older revision of case.j4.record_only.no_speech_head
+case-revision: static-astra ran an older revision of case.j4.record_start.capture_recording
+case-revision: static-astra ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: static-astra ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: static-astra ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: static-astra ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: static-astra ran an older revision of case.j6.run_summary.host_named
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_failed
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_queued
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_ready
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_retry
+case-revision: static-astra ran an older revision of case.j6.run_summary.intel_running
+case-revision: static-astra ran an older revision of case.j6.run_summary.summary_text
+case-revision: static-astra ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: static-astra ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: static-astra ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: static-astra ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: static-astra ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-astra ran an older revision of case.j9.shade_open.door_present
+case-revision: static-astra ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-astra ran an older revision of case.j9.shade_receipt_open.rhythm_face
+case-revision: static-muaddib ran an older revision of case.beyond.first_words_reload.retained_draft
+case-revision: static-muaddib ran an older revision of case.j1.first_words_continue_later.draft_custody
+case-revision: static-muaddib ran an older revision of case.j1.first_words_continue_later.idle
+case-revision: static-muaddib ran an older revision of case.j1.first_words_keep_as_note.kept
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.kept
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.mic_unsupported
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.permission_denied
+case-revision: static-muaddib ran an older revision of case.j1.first_words_speak.unreachable_hub
+case-revision: static-muaddib ran an older revision of case.j1.speech_readiness.ready
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_again.same_day_idempotent
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_brief.generated_empty
+case-revision: static-muaddib ran an older revision of case.j10.arrival_generate_brief.populated
+case-revision: static-muaddib ran an older revision of case.j10.arrival_reload.reload_persisted
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.acknowledged
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.deferred
+case-revision: static-muaddib ran an older revision of case.j10.brief_item_shelf.refused
+case-revision: static-muaddib ran an older revision of case.j10.brief_latest.absent
+case-revision: static-muaddib ran an older revision of case.j11.thought_keep.kept
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.engines_both_missing
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_pending
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.read_unknown
+case-revision: static-muaddib ran an older revision of case.j2.arrival_load.summary_missing_only
+case-revision: static-muaddib ran an older revision of case.j3.concierge_use_for_summaries.assigned_ready
+case-revision: static-muaddib ran an older revision of case.j3.speech_missing.row_stays
+case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.capture_finalized
+case-revision: static-muaddib ran an older revision of case.j4.meeting_stop.transcription_absent
+case-revision: static-muaddib ran an older revision of case.j4.meetings_import.imported
+case-revision: static-muaddib ran an older revision of case.j4.record_only.no_speech_head
+case-revision: static-muaddib ran an older revision of case.j4.record_start.capture_recording
+case-revision: static-muaddib ran an older revision of case.j5.meeting_open.no_engine_no_verb
+case-revision: static-muaddib ran an older revision of case.j5.meeting_open.route_disclosed
+case-revision: static-muaddib ran an older revision of case.j6.route_intelligence_run.no_assignment
+case-revision: static-muaddib ran an older revision of case.j6.route_intelligence_run.refusal
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.host_named
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_failed
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_queued
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_ready
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_retry
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.intel_running
+case-revision: static-muaddib ran an older revision of case.j6.run_summary.summary_text
+case-revision: static-muaddib ran an older revision of case.j7.arrival_load.reload_persisted
+case-revision: static-muaddib ran an older revision of case.j7.hub_restart.intel_retained
+case-revision: static-muaddib ran an older revision of case.j9.route_presentation_restore.restored
+case-revision: static-muaddib ran an older revision of case.j9.shade_acknowledge.acknowledged
+case-revision: static-muaddib ran an older revision of case.j9.shade_dismiss.dismissed
+case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_present
+case-revision: static-muaddib ran an older revision of case.j9.shade_open.door_stale
+case-revision: static-muaddib ran an older revision of case.j9.shade_receipt_open.rhythm_face
+exposure-disagreement: edge.timer.workbench_conductor: astra=conditional; muaddib=active
+exposure-disagreement: edge.verb.desk_arrange: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_brief: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_find_receipt: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_overdue: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_intelligence_review_decisions: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_agent: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_decision: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_knowledge: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_note: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_project: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_thread: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_workbench: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_workflow: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_new_zone: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_open_intelligence: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_open_people: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_overview: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_refresh: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_reset_layout: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_reset_to_seed: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_settle: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.desk_toggle_view: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_ask: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_ask_project: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_continue_in_thread: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_delete: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_duplicate: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_edit: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_file: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_info: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_open: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.object_rename: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.system_search: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.system_sheet: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.thread_compact: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_fork: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_guardrail: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_keep: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_mode: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_new: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_prompt: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_stop: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_todo: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.thread_tools: astra=internal; muaddib=conditional
+exposure-disagreement: edge.verb.window_close: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_cycle: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_cycle_reverse: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_maximize: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_minimize: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_snap_left: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.window_snap_right: astra=active; muaddib=conditional
+exposure-disagreement: edge.verb.zone_focus: astra=active; muaddib=conditional
+subtype-conflict: edge.cli.hub_restart: astra=process.restart; muaddib=cli
+subtype-conflict: edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+subtype-conflict: edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+subtype-conflict: edge.route.brief_item_shelf: astra=ui; muaddib=http
+subtype-conflict: edge.route.brief_latest: astra=ui; muaddib=http
+subtype-conflict: edge.route.heartbeat_run_now: astra=ui; muaddib=http
+subtype-conflict: edge.route.inference_assignments_set: astra=ui; muaddib=http
+subtype-conflict: edge.route.model_profile_delete: astra=ui; muaddib=http
+subtype-conflict: edge.route.model_profile_unbind: astra=ui; muaddib=http
+subtype-conflict: edge.route.projection_presentation: astra=ui; muaddib=http
+subtype-conflict: edge.route.projections_list: astra=ui; muaddib=http
+subtype-conflict: edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+subtype-conflict: iface.face.arrival: astra=face.section; muaddib=face.window
+subtype-conflict: iface.face.first_words: astra=face.card; muaddib=face.panel
+subtype-normalized: edge.face.arrival_brief_generate: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.arrival_brief_generate_again: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_add_check: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_add_engine: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_apply: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_check: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_download: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.concierge_use_for_summaries: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.shade_acknowledge: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.shade_dismiss: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.shade_open: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.face.shade_receipt_open: astra=ui; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.route.inference_assignments: astra=http.GET; muaddib=http -> http.GET (refinement)
+subtype-normalized: edge.route.intel_retry: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.route.meeting_capture_recover: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.route.meeting_intelligence_run: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.route.meeting_start: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.route.meeting_stop: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.route.meetings_import: astra=http.POST; muaddib=http -> http.POST (refinement)
+subtype-normalized: edge.verb.desk_arrange: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_intelligence_brief: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_intelligence_find_receipt: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_intelligence_overdue: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_intelligence_review_decisions: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_agent: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_decision: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.desk_new_knowledge: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_note: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.desk_new_project: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_thread: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_workbench: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_workflow: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_new_zone: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_open_intelligence: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_open_people: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_overview: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.desk_refresh: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_reset_layout: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_reset_to_seed: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.desk_settle: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.desk_toggle_view: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_ask: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_ask_project: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_continue_in_thread: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_delete: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.object_duplicate: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_edit: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_file: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_info: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_open: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.object_rename: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.system_search: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.system_sheet: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.thread_compact: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_fork: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_guardrail: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_keep: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_mode: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_new: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_prompt: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_stop: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_todo: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.thread_tools: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.window_close: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.window_cycle: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.window_cycle_reverse: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.window_maximize: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.window_minimize: astra=verb; muaddib=keyboard -> keyboard (bucket)
+subtype-normalized: edge.verb.window_snap_left: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.window_snap_right: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: edge.verb.zone_focus: astra=verb; muaddib=pointer.click -> pointer.click (bucket)
+subtype-normalized: iface.face.concierge: astra=ui; muaddib=face.window -> face.window (bucket)
+subtype-normalized: state.briefs.absent: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.generated_empty: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.generating: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.generation_failure: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.item.acknowledged: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.item.deferred: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.item.untouched: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.next_day_window: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.people.unavailable: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.populated: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.reload_persisted: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.briefs.same_day_idempotent: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)
+subtype-normalized: state.desk_presentation.reload_reconnect: astra=atlas.desk_presentation; muaddib=browser.presentation -> browser.presentation (vocabulary)
+subtype-normalized: state.desk_presentation.window_open_thought: astra=atlas.desk_presentation; muaddib=browser.presentation -> browser.presentation (vocabulary)
+subtype-normalized: state.engines.add_engine_ready: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.add_engine_refused: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.assigned_ready: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.assignment_missing: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.binding_absent: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.both_missing: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.profile_missing: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.read_pending: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.read_unknown: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.speech_assignment_missing: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.speech_ready: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.engines.unreachable: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)
+subtype-normalized: state.first_value.continue_later: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.draft_custody: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.failure.permission_denied: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.failure.unreachable_hub: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.kept: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.listening: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.mic_unsupported: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.retained_draft: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.first_value.success: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)
+subtype-normalized: state.meetings.capture.finalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.capture.imported: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.capture.recording: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.capture.recoverable: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.capture.recovered: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.available: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.failed: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.queued: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.ready: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.retained_after_restart: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.retry_after_failure: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.intel.running: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.transcription.absent: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.meetings.transcription.record_only: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)
+subtype-normalized: state.projections.attention.acknowledged: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.attention.dismissed: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.attention.restored: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.door.absent: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.door.present: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.door.stale: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.projections.receipt.resolved: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)
+subtype-normalized: state.time.next_due_sweep: astra=atlas.time; muaddib=clock -> clock (vocabulary)
+subtype-normalized: state.time.sweep_held_remote: astra=atlas.time; muaddib=clock -> clock (vocabulary)
+graph join generated: docs/generated/graph.json — 6472 nodes, 808 links, 74 cases, 216 observations, 112 claim reviews, 47 findings, 47 resolutions; 335 note(s)

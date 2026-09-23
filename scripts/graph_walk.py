@@ -1485,6 +1485,31 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
             # the shape of GET /api/meetings: newest first
             self._json(200, {"meetings": _read_cal_state().get("meetings", [])})
             return
+        meeting_prefix = "/api/meetings/"
+        if self.path.split("?")[0].startswith(meeting_prefix):
+            meeting_id = self.path.split("?", 1)[0][len(meeting_prefix):]
+            state = _read_cal_state()
+            meeting = next(
+                (row for row in state.get("meetings", [])
+                 if row.get("id") == meeting_id),
+                None,
+            )
+            if meeting is None:
+                self._json(404, {"error": "meeting not found"})
+                return
+            # The import boundary answers 202 first.  The declared completion
+            # read is a separate route, so the calibration double completes
+            # the synthetic row only when that read is made.
+            if meeting.get("status") == "importing":
+                meeting.update({
+                    "status": "complete",
+                    "transcription_status": "complete",
+                    "duration": 1.0,
+                    "segments": [{"text": "Architecture boundary review"}],
+                })
+                _write_cal_state(state)
+            self._json(200, meeting)
+            return
         body = CALIBRATION_PAGE.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1581,6 +1606,11 @@ class CalibrationServer:
         self.proc: subprocess.Popen[str] | None = None
 
     @property
+    def url(self) -> str:
+        """Expose the same origin name as the real Hub adapter."""
+        return self.base
+
+    @property
     def db_path(self) -> str:
         return str(self.state_path)
 
@@ -1618,9 +1648,10 @@ class CalibrationServer:
             except Exception:  # noqa: BLE001
                 return exc.code, raw[:600]
 
-    def upload(self, method: str, path: str, wav: Path, field: str) -> tuple[int, Any]:
+    def upload(self, method: str, path: str, wav: Path, field: str,
+               form: dict[str, Any] | None = None) -> tuple[int, Any]:
         """The same multipart upload a real hub receives."""
-        return _multipart_upload(f"{self.base}{path}", method, wav, field, {})
+        return _multipart_upload(f"{self.base}{path}", method, wav, field, {}, form=form)
 
     def restart(self) -> dict[str, Any]:
         return _restart_process(self)

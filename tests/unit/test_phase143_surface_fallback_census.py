@@ -71,6 +71,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/route_probe.py", "_unresolved"): ("task-probe refusal receipt when no frozen route plan resolves; names the cause in reasonCode and invents no model, boundary or host; selects and dispatches nothing", "200-04"),
     ("holdspeak/services/inference_setup_service.py", "_thought_target"): ("legacy Thoughts selector", "143-07"),
     ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
+    ("holdspeak/services/meeting_intel_service.py", "_is_scheduled_retry"): ("scheduled-retry lineage projection; no route selection or dispatch", "143-08"),
     ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),
     ("holdspeak/services/profile_key_service.py", "_profile"): ("credential owner lookup", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_profile_id"): ("canonical Profile identity parser", "143-03"),

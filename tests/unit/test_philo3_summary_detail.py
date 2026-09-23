@@ -459,6 +459,10 @@ def test_real_producer_success_keeps_detail_and_recovery_job_projection(
     assert reads["detail"]["intel_job"]["status"] == "succeeded"
     assert reads["detail"]["intel_job"]["last_error"] is None
     assert reads["recovery"]["job"]["status"] == "succeeded"
+    # A terminal job is no longer in the active queue. The actual-atlas
+    # completion and executed-host cases must read these durable detail fields.
+    assert db.intel.list_intel_jobs(status="all") == []
+    assert reads["detail"]["run_receipt"]["attempts"][0]["host"] == "same_device"
 
 
 def test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued(

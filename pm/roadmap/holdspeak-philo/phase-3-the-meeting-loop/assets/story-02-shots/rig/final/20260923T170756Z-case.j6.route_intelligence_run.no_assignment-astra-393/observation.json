@@ -1,0 +1,805 @@
+{
+  "id": "obs-20260923T170756Z-case.j6.route_intelligence_run.no_assignment-astra-393",
+  "run_id": "20260923T170756Z-case.j6.route_intelligence_run.no_assignment-astra-393",
+  "case_id": "case.j6.route_intelligence_run.no_assignment",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meeting_intelligence_run"
+  ],
+  "state_id": "state.engines.assignment_missing",
+  "provenance": {
+    "revision": "0ad59c0488ba100b516e3b1763d93a9a81f486ac",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f7df17ed5696e8a501abac65ba23f861455e1a0c4506142eeeb259d8c6087642",
+      "assets": [
+        "index-EPIMRzZ0.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62955",
+      "port": 62955,
+      "pid": 12544,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kcz2k2t7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kcz2k2t7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T17:07:56.813338+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "1e8e4d3f3b81c3f7be15d8ed347802a3be51257777aa18e45ea58a0576ada6f9",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "152f971a",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "152f971a"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/152f971a",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 7,
+        "elapsed_s": 3.071,
+        "payload": {
+          "id": "152f971a",
+          "started_at": "2026-09-23T11:08:00.196690",
+          "ended_at": "2026-09-23T11:08:34.871940",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176\u5176",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T11:08:03.205768",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a meeting WITH a transcript",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "no capability head for meeting.deferred_analysis",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "152f971a"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/152f971a",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/planned_route/status",
+        "value": "unavailable"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/planned_route/status equals the declared value"
+    }
+  ],
+  "variables": {
+    "meeting_id": "152f971a"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/152f971a/intelligence/run",
+    "adapter": "http-route",
+    "status": 409,
+    "response": "{\"success\":false,\"error\":\"The summary route is not available.\",\"plainReason\":\"The summary route is not available.\",\"code\":\"route_unavailable\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":{\"attempts\":[],\"job_id\":\"ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe\",\"meeting_id\":\"152f971a\",\"outcome\":\"refused\",\"receipt_id\":\"rr_2c4510586ec59f107aaa25b6352757b7\",\"selection_hash\":null},\"last_refusal\":{\"a",
+    "response_sha256": "502af35982004c46c360d40271d1c026934804958cd9d40ec909d660728150fc"
+  },
+  "diff": {
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "7ea2f0845979b1163688bf312e9f0d0081a954725c26b1950732d50b6baa29ba"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 2,
+        "payload_sha256": "0240d41d9376e8b5dbd9db87cf3824068d766053808b9b0ca8922cd169a59edf"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n11:08 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62955/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 1,
+      "payload_sha256": "7ea2f0845979b1163688bf312e9f0d0081a954725c26b1950732d50b6baa29ba",
+      "rows": [
+        {
+          "id": "meeting:152f971a:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:152f971a",
+          "subject_label": "Architecture boundary review",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T17:08:03Z",
+          "correlation_id": "meeting:152f971a",
+          "source_kind": "meeting",
+          "source_id": "152f971a",
+          "source_api": "/api/meetings/152f971a",
+          "detail_url": "/history?meeting=152f971a",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:152f971a:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:152f971a",
+            "subject_label": "Architecture boundary review",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T17:08:03Z",
+            "correlation_id": "meeting:152f971a",
+            "source_kind": "meeting",
+            "source_id": "152f971a",
+            "source_api": "/api/meetings/152f971a",
+            "detail_url": "/history?meeting=152f971a",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 0,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:152f971a": {
+            "needs_attention": 0,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 1,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "7ea2f0845979b1163688bf312e9f0d0081a954725c26b1950732d50b6baa29ba"
+    },
+    "document_text_sha256": "eaea3d1b5d460bb124589a33cc48b081a548c4b0fdea1530907072f3231899e0",
+    "document_text_len": 1103,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T17:08:04.928625+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n11:08 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62955/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 2,
+      "payload_sha256": "0240d41d9376e8b5dbd9db87cf3824068d766053808b9b0ca8922cd169a59edf",
+      "rows": [
+        {
+          "id": "meeting:152f971a:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:152f971a",
+          "subject_label": "Architecture boundary review",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T17:08:04Z",
+          "correlation_id": "meeting:152f971a",
+          "source_kind": "meeting",
+          "source_id": "152f971a",
+          "source_api": "/api/meetings/152f971a",
+          "detail_url": "/history?meeting=152f971a",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        },
+        {
+          "id": "intel_job:ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe:failed",
+          "projection_kind": "attention",
+          "subject_ref": "meeting:152f971a",
+          "subject_label": "Architecture boundary review",
+          "title": "Meeting intelligence failed",
+          "summary": "The source queue retains retry history and error detail.",
+          "reason_code": "intel_job_failed",
+          "decision_kind": "execution",
+          "attention_state": "needs_attention",
+          "actual_destination": "configured_inference_target",
+          "authority_basis": "configured_queue",
+          "attempt": 1,
+          "outcome": "failed",
+          "timestamp": "2026-09-23T11:08:04.985133Z",
+          "correlation_id": "meeting:152f971a",
+          "source_kind": "intel_job",
+          "source_id": "ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe",
+          "source_api": "/api/intel/jobs",
+          "detail_url": "/history?meeting=152f971a",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "error",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:152f971a:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:152f971a",
+            "subject_label": "Architecture boundary review",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T17:08:04Z",
+            "correlation_id": "meeting:152f971a",
+            "source_kind": "meeting",
+            "source_id": "152f971a",
+            "source_api": "/api/meetings/152f971a",
+            "detail_url": "/history?meeting=152f971a",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          },
+          {
+            "id": "intel_job:ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe:failed",
+            "projection_kind": "attention",
+            "subject_ref": "meeting:152f971a",
+            "subject_label": "Architecture boundary review",
+            "title": "Meeting intelligence failed",
+            "summary": "The source queue retains retry history and error detail.",
+            "reason_code": "intel_job_failed",
+            "decision_kind": "execution",
+            "attention_state": "needs_attention",
+            "actual_destination": "configured_inference_target",
+            "authority_basis": "configured_queue",
+            "attempt": 1,
+            "outcome": "failed",
+            "timestamp": "2026-09-23T11:08:04.985133Z",
+            "correlation_id": "meeting:152f971a",
+            "source_kind": "intel_job",
+            "source_id": "ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe",
+            "source_api": "/api/intel/jobs",
+            "detail_url": "/history?meeting=152f971a",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "error",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 1,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:152f971a": {
+            "needs_attention": 1,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 2,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 2,
+      "payload_sha256": "0240d41d9376e8b5dbd9db87cf3824068d766053808b9b0ca8922cd169a59edf"
+    },
+    "document_text_sha256": "eaea3d1b5d460bb124589a33cc48b081a548c4b0fdea1530907072f3231899e0",
+    "document_text_len": 1103,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T17:08:06.028615+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/152f971a/intelligence/run",
+      "status": 409,
+      "body_sha256": "502af35982004c46c360d40271d1c026934804958cd9d40ec909d660728150fc",
+      "body": "{\"success\":false,\"error\":\"The summary route is not available.\",\"plainReason\":\"The summary route is not available.\",\"code\":\"route_unavailable\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":{\"attempts\":[],\"job_id\":\"ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe\",\"meeting_id\":\"152f971a\",\"outcome\":\"refused\",\"receipt_id\":\"rr_2c4510586ec59f107aaa25b6352757b7\",\"selection_hash\":null},\"last_refusal\":{\"a"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/desk/projections",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n11:08 AM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:62955/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/desk/projections",
+      "status": 200,
+      "collection": "projections",
+      "row_count": 2,
+      "payload_sha256": "0240d41d9376e8b5dbd9db87cf3824068d766053808b9b0ca8922cd169a59edf",
+      "rows": [
+        {
+          "id": "meeting:152f971a:capture:finalized",
+          "projection_kind": "receipt",
+          "subject_ref": "meeting:152f971a",
+          "subject_label": "Architecture boundary review",
+          "title": "Meeting saved",
+          "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+          "reason_code": "capture_finalized",
+          "decision_kind": "recovery",
+          "attention_state": "resolved",
+          "actual_destination": "this_machine",
+          "authority_basis": "explicit_capture",
+          "attempt": null,
+          "outcome": "finalized",
+          "timestamp": "2026-09-23T17:08:04Z",
+          "correlation_id": "meeting:152f971a",
+          "source_kind": "meeting",
+          "source_id": "152f971a",
+          "source_api": "/api/meetings/152f971a",
+          "detail_url": "/history?meeting=152f971a",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "normal",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        },
+        {
+          "id": "intel_job:ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe:failed",
+          "projection_kind": "attention",
+          "subject_ref": "meeting:152f971a",
+          "subject_label": "Architecture boundary review",
+          "title": "Meeting intelligence failed",
+          "summary": "The source queue retains retry history and error detail.",
+          "reason_code": "intel_job_failed",
+          "decision_kind": "execution",
+          "attention_state": "needs_attention",
+          "actual_destination": "configured_inference_target",
+          "authority_basis": "configured_queue",
+          "attempt": 1,
+          "outcome": "failed",
+          "timestamp": "2026-09-23T11:08:04.985133Z",
+          "correlation_id": "meeting:152f971a",
+          "source_kind": "intel_job",
+          "source_id": "ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe",
+          "source_api": "/api/intel/jobs",
+          "detail_url": "/history?meeting=152f971a",
+          "control_mode": null,
+          "policy_version": null,
+          "effect_class": null,
+          "severity": "error",
+          "dismissed": false,
+          "version": 1,
+          "origin": null,
+          "caller": null,
+          "caller_identity": null
+        }
+      ],
+      "payload": {
+        "version": 1,
+        "projections": [
+          {
+            "id": "meeting:152f971a:capture:finalized",
+            "projection_kind": "receipt",
+            "subject_ref": "meeting:152f971a",
+            "subject_label": "Architecture boundary review",
+            "title": "Meeting saved",
+            "summary": "Open the Meeting for its durable checkpoint, transcript, and recovery actions.",
+            "reason_code": "capture_finalized",
+            "decision_kind": "recovery",
+            "attention_state": "resolved",
+            "actual_destination": "this_machine",
+            "authority_basis": "explicit_capture",
+            "attempt": null,
+            "outcome": "finalized",
+            "timestamp": "2026-09-23T17:08:04Z",
+            "correlation_id": "meeting:152f971a",
+            "source_kind": "meeting",
+            "source_id": "152f971a",
+            "source_api": "/api/meetings/152f971a",
+            "detail_url": "/history?meeting=152f971a",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "normal",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          },
+          {
+            "id": "intel_job:ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe:failed",
+            "projection_kind": "attention",
+            "subject_ref": "meeting:152f971a",
+            "subject_label": "Architecture boundary review",
+            "title": "Meeting intelligence failed",
+            "summary": "The source queue retains retry history and error detail.",
+            "reason_code": "intel_job_failed",
+            "decision_kind": "execution",
+            "attention_state": "needs_attention",
+            "actual_destination": "configured_inference_target",
+            "authority_basis": "configured_queue",
+            "attempt": 1,
+            "outcome": "failed",
+            "timestamp": "2026-09-23T11:08:04.985133Z",
+            "correlation_id": "meeting:152f971a",
+            "source_kind": "intel_job",
+            "source_id": "ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe",
+            "source_api": "/api/intel/jobs",
+            "detail_url": "/history?meeting=152f971a",
+            "control_mode": null,
+            "policy_version": null,
+            "effect_class": null,
+            "severity": "error",
+            "dismissed": false,
+            "version": 1,
+            "origin": null,
+            "caller": null,
+            "caller_identity": null
+          }
+        ],
+        "counts": {
+          "needs_attention": 1,
+          "unseen": 0,
+          "acknowledged": 0,
+          "receipts": 1
+        },
+        "subject_counts": {
+          "meeting:152f971a": {
+            "needs_attention": 1,
+            "receipts": 1
+          }
+        },
+        "page": {
+          "offset": 0,
+          "limit": 50,
+          "total": 2,
+          "has_more": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 2,
+      "payload_sha256": "0240d41d9376e8b5dbd9db87cf3824068d766053808b9b0ca8922cd169a59edf"
+    },
+    "document_text_sha256": "eaea3d1b5d460bb124589a33cc48b081a548c4b0fdea1530907072f3231899e0",
+    "document_text_len": 1103,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T17:08:05.897091+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/152f971a/intelligence/run",
+      "status": 409,
+      "body_sha256": "502af35982004c46c360d40271d1c026934804958cd9d40ec909d660728150fc",
+      "body": "{\"success\":false,\"error\":\"The summary route is not available.\",\"plainReason\":\"The summary route is not available.\",\"code\":\"route_unavailable\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":{\"attempts\":[],\"job_id\":\"ij_d83e5db81445f16a6bf4992e7227aca73b3348f803b38028bfeb0a56504968fe\",\"meeting_id\":\"152f971a\",\"outcome\":\"refused\",\"receipt_id\":\"rr_2c4510586ec59f107aaa25b6352757b7\",\"selection_hash\":null},\"last_refusal\":{\"a"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/152f971a/intelligence/run answered 409, wanted 409 (body sha256 502af3598200); response body contains the declared admission facts",
+    "elapsed_s": 0.914
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/152f971a/intelligence/run answered 409, wanted 409 (body sha256 502af3598200); response body contains the declared admission facts",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.045,
+    "first_satisfied_at_s": 0.914,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/meetings/152f971a/intelligence/run answered 409, wanted 409 (body sha256 502af3598200); response body contains the declared admission facts"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T170756Z-case.j6.route_intelligence_run.no_assignment-astra-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T170756Z-case.j6.route_intelligence_run.no_assignment-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kcz2k2t7/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62955",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:00<00:00, 105517.08it/s]"
+  ]
+}

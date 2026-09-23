@@ -1,0 +1,65 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_______ test_private_backend_route_and_recovery_decisions_are_classified _______
+
+    def test_private_backend_route_and_recovery_decisions_are_classified() -> None:
+        """A new private selector/retry/fallback helper fails closed until reviewed."""
+        found = _private_decisions()
+>       assert found == set(BACKEND_PRIVATE_DECISIONS), (
+            "Unclassified private route/recovery decision(s): "
+            f"{sorted(found - set(BACKEND_PRIVATE_DECISIONS))}; stale classifications: "
+            f"{sorted(set(BACKEND_PRIVATE_DECISIONS) - found)}"
+        )
+E       AssertionError: Unclassified private route/recovery decision(s): [('holdspeak/services/meeting_intel_service.py', '_is_scheduled_retry')]; stale classifications: []
+E       assert {('holdspeak/...resent'), ...} == {('holdspeak/...resent'), ...}
+E         
+E         Extra items in the left set:
+E         ('holdspeak/services/meeting_intel_service.py', '_is_scheduled_retry')
+E         Use -v to get more diff
+
+tests/unit/test_phase143_surface_fallback_census.py:208: AssertionError
+______________ test_the_last_known_observation_survives_a_restart ______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-358/test_the_last_known_observatio0')
+
+    def test_the_last_known_observation_survives_a_restart(tmp_path: Path) -> None:
+        """HS-200-15 left `LastKnownStore` process-local; a failed source after a
+        restart replayed nothing.  With the durable store a fresh process still
+        carries the last observation, marked as such."""
+        db = _db(tmp_path)
+        _seed_room(db)
+        observed = "2026-09-07T08:41:00"
+        items = [{"id": "p-q4:commitment:x", "projectId": "p-q4", "title": "Priya confirms the freeze window",
+                  "source": "commitment", "why": "DUE TODAY", "severity": "warning", "since": observed}]
+        LastKnownStore(db_factory=lambda: db).remember("project:p-q4", items=items, observed_at=observed,
+                                                       label="Q4 Platform", project_id="p-q4")
+    
+        fresh = LastKnownStore(db_factory=lambda: Database(tmp_path / "continuity.db"))
+        recalled = fresh.recall("project:p-q4")
+>       assert recalled is not None and recalled["observed_at"] == observed
+E       assert (None is not None)
+
+tests/unit/test_phase200_continuity.py:423: AssertionError
+____________ test_primary_copy_has_no_prohibited_operational_drift _____________
+
+    def test_primary_copy_has_no_prohibited_operational_drift() -> None:
+        recorded = _recorded_copy_debt()
+        problems = [
+            item
+            for item in violations(inventory(REPO))
+            if (str(item.path), item.rule_id, item.text) not in recorded
+        ]
+>       assert not problems, "Primary product-copy drift:\n  " + "\n  ".join(
+            f"{item.path}:{item.line}: {item.rule_id}: {item.text}"
+            for item in problems
+        )
+E       AssertionError: Primary product-copy drift:
+E           web/src/desk/chair/ChairHome.tsx:1988: failure-missing-facts: DETAIL READ FAILED · {value
+E       assert not [CopyViolation(rule_id='failure-missing-facts', path='web/src/desk/chair/ChairHome.tsx', line=1988, text='DETAIL READ ...iled, retained work, the next valid action, and the destination when relevant (missing: retained_work, next_action).')]
+
+tests/unit/test_product_copy.py:74: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_phase143_surface_fallback_census.py::test_private_backend_route_and_recovery_decisions_are_classified
+FAILED tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart
+FAILED tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift
+3 failed in 3.89s

@@ -1,0 +1,50 @@
+.......................................................F................ [ 50%]
+........................................................................ [100%]
+=================================== FAILURES ===================================
+____ test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-363/test_the_real_j4_import_case_f0')
+
+    def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_path):
+        """Finding 2: the ACTUAL atlas case, through a synthetic import boundary
+        that answers like the real route (202 {"meeting_id", "status"}). Before
+        the fix: BLOCKED "unresolved placeholder … meeting_id", zero uploads."""
+        case = _atlas_case(J4_IMPORT)
+        assert case["trigger"]["capture_as"] == "meeting_id", "the atlas case changed"
+        record = calibrate(tmp_path, cases=[case])[0]
+        state = json.loads(Path(record["provenance"]["db_path"]).read_text())
+    
+        assert state.get("upload_calls") == 1, record["notes"]
+        assert record["verdict"] == "pass", record["notes"]
+        minted = record["trigger"]["captured"]["value"]
+        assert minted == state["meetings"][0]["id"]
+        assert record["variables"]["meeting_id"] == minted
+        # This is the calibration double's transport answer, not the fixture's
+        # JSON body: the upload WAS the trigger and answered 202 before the
+        # separate completion read.
+        upload = record["trigger"]
+        assert upload["kind"] == "fixture" and upload["status"] == 202
+    
+        completion = upload["completion_wait"]
+        assert completion["matched"] is True
+        assert completion["status"] == 200
+        completed = completion["payload"]
+        assert completed["transcription_status"] == "complete"
+        assert completed["duration"] > 0
+        assert len(completed["segments"]) >= 1
+    
+        # The upload's own answer travels with the after observation.
+        answer = record["after"]["trigger_response"]
+        assert answer["status"] == 202 and answer["path"] == "/api/meetings/import"
+        assert answer["body"]["meeting_id"] == minted
+        # before the trigger there was no meeting, and nothing named one
+        assert record["before"]["protocol"]["rows"] == []
+        assert record["pending_placeholders"] == ["meeting_id"]
+>       assert any(minted in note for note in record["notes"])
+E       assert False
+E        +  where False = any(<generator object test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id.<locals>.<genexpr> at 0x108c5b100>)
+
+tests/unit/test_graph_walk_calibration.py:990: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id
+1 failed, 143 passed in 96.06s (0:01:36)

@@ -35,7 +35,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-3-01 | Record the decision (A1) | done | [story-01-record-the-decision](./story-01-record-the-decision.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-3-02 | See and find the summary (A2) | in-progress | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
+| PHILO-3-02 | See and find the summary (A2) | done | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | backlog | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | - |
 | PHILO-3-04 | The thought's receipt (A4) | done | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | [evidence-story-04](./evidence-story-04.md) |
 
@@ -49,6 +49,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-23: **A2 BUILT, technical completion verified**. One completed synthetic import → one Run → actual LAN host and summary on Arrival → identical summary/receipt after restart, at both widths. Full web green; Python fallout fixed or reproduced on main and classified. [Lane record](summary-lane-record.md) separates this from **partial usefulness** and the pending owner sitting. Muad'Dib's counsel on built is pending before merge. The phase exit stays open.
 
 2026-09-23: A4 BUILT on the ratified canvas — the Thought foot shows KEPT · time / SAVING… / DID NOT SAVE · cause + Retry / CHANGED ELSEWHERE + Reload with the filing line below; every state shot on a real hub at both widths; the library receipt line raised to the 12 px floor. A1 on PR #613 (Astra counsel). A2 (Astra) in flight.
 

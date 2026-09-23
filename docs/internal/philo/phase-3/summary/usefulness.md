@@ -53,3 +53,44 @@ The 1440 summary shot is technically contained and hit-test owned ([1440 observa
 `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T163145Z-case.j6.run_summary.summary_text-astra-393/after.png`
 
 No owner sitting was performed. Therefore this draft records technical pass evidence and usefulness defects; it does not claim that the owner can use the summary on a Tuesday.
+
+## Integrated build — additional fixed observations
+
+All earlier observations above remain in the tree. The integrated summary runs are `20260923T170832Z` at 1440 (meeting `1cae49e2`) and `20260923T170913Z` at 393 (meeting `29f33f35`), under the same `assets/story-02-shots/rig/final/` directory. They do not repair the usefulness defects:
+
+| Planted item | 1440 integrated output | 393 integrated output | Assessment |
+| --- | --- | --- | --- |
+| SQLite ledger; Maya Chen; migration plan Friday | Summary omits SQLite; owner is Mayyachan; action and Friday retained | Summary says SQ; owner is Mayyachan; action and Friday retained | Partial; incorrect name and technology |
+| Keep local retrieval after restart; Leo Martinez; test Tuesday | Summary retains test/owner/Tuesday but omits the decision | Decision, owner, action and Tuesday retained | Exact useful item on phone; partial on desktop |
+| Recorded reply; Priya Shah; named failure fence before ship | Summary and structured action invent installing replies; failure fence and deadline absent | Decision retained; Priya and her action absent from summary and structured actions | Failure for the planted action |
+
+At 393 the raw arrival capture again has its last summary line covered by the existing aftercare panel. The separately retained `framed.png` records one ordinary scroll, after the raw completion observation: the full summary then owns all nine sample points (`y=382..472`), and Open remains clear. The original after shot and `all_owned: false` are retained; the scroll does not change the raw verdict or time. On the integrated build, summary first appeared without reload at 8.319 seconds (1440) and 7.074 seconds (393).
+
+Other retained runs are not hidden: the earlier phone restart `20260923T163844Z` attributes the third action to Shagar Radha; the integrated ready run `20260923T170219Z` invents Jeanne Shah and a submission task. The generated observation index includes every completed real-engine summary and its structured actions for comparison. No run is selected because its content is better.
+
+## Final integrated restart observations
+
+The final J7 runs are `20260923T171417Z` at 1440 (meeting `3511adbe`) and `20260923T171510Z` at 393 (meeting `6d66aa30`). Both preserve the exact nonempty summary, receipt and meeting ID across different hub PIDs on the same isolated DB. [The complete index](observations-index.md) retains both full output payloads and all earlier outputs.
+
+| Planted fact | Final 1440 output | Final 393 output |
+| --- | --- | --- |
+| Use SQLite for the local meeting ledger | ASR says “SQ like”; summary omits the decision | ASR says “SQ like”; summary omits the decision |
+| Maya Chen owns the migration plan, due Friday | Summary and structured action retain task/Friday but name Mayyachan | Same task/date recovery and name corruption |
+| Keep summary retrieval on the local desk after hub restart | Transcript retains the decision; summary omits the local-desk decision | Same omission from summary |
+| Leo Martinez tests restart retrieval on Tuesday | Summary and structured action recover owner, task and Tuesday | Summary and structured action recover owner, task and Tuesday |
+| Use a recorded provider reply for isolated rig tests | Summary retains the decision as a task attributed to Priya | Summary retains the decision as a task attributed to Priya |
+| Priya Shah adds the named failure fence before ship | Transcript action is corrupted; output substitutes the recorded-reply decision and loses before-ship timing | Transcript action is corrupted; summary substitutes the decision; structured actions omit Priya entirely |
+
+Usefulness remains **PARTIAL**, including a **failed third action**. Persistence preserves these errors too. No owner-use verdict or phase-exit acceptance follows from the technical restart pass.
+
+## Final built Arrival observations
+
+Final build `3d79edd5` produces the live summaries in `20260923T191042Z` (1440, meeting `2ebf16d2`) and `20260923T191150Z` (393, meeting `0f31e46e`). Both retain 34.67525 seconds and real ASR segments; both have only two structured actions.
+
+| Planted item | 1440 final output | 393 final output | Result |
+| --- | --- | --- | --- |
+| SQLite ledger / Maya Chen / migration plan Friday | Ledger decision says SQ; name Mayyachan; migration plan/Friday retained | Ledger decision omitted from summary; name Mayyachan; migration plan/Friday retained | Partial |
+| Local desk retrieval after restart / Leo Martinez / test Tuesday | Test, owner and Tuesday retained; local-desk decision omitted | Same task/owner/date recovery; local-desk decision omitted | Partial |
+| Recorded provider reply / Priya Shah / named failure fence before ship | Summary says Priya handles isolated rig tests; recorded-reply decision is imprecise; failure fence and deadline absent; no structured Priya action | Summary substitutes the recorded-reply decision for her action; failure fence and deadline absent; no structured Priya action | Planted action fails |
+
+The final 393 summary is four lines (72 px) and all nine raw hit samples are owned. This does not erase the earlier longer-summary overlap with aftercare. The comparison still supports technical completion and partial usefulness, not an owner-use verdict.

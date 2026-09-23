@@ -1,0 +1,38 @@
+
+> holdspeak-web@0.0.1 check
+> npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build && npm run bundle:gate
+
+
+> holdspeak-web@0.0.1 tokens:check
+> node scripts/generate-tokens.cjs --check
+
+tokens.css and tokens.gen.ts match design-tokens.json
+
+> holdspeak-web@0.0.1 tokens:gate
+> node scripts/validate-tokens.cjs
+
+token gate: clean (11 allow-listed exceptions, all in use)
+
+> holdspeak-web@0.0.1 guard:architecture
+> node scripts/guard-architecture.mjs
+
+React architecture guard passed (826 source files; zero framework residue).
+
+> holdspeak-web@0.0.1 typecheck
+> tsc --noEmit
+
+src/desk/chair/arrivalSummaryCompletion.test.tsx(148,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/desk/chair/arrivalSummaryCompletion.test.tsx(277,74): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/desk/chair/arrivalSummaryCompletion.test.tsx(344,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.

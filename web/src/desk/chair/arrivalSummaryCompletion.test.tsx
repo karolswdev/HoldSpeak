@@ -1,6 +1,6 @@
 // PHILO-3-02 — Arrival reads the durable meeting detail on desk refresh.
 // These fences consume the summary_detail service producer wire directly.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import summaryWire from "../../../../tests/fixtures/philo3_summary_wire.json";
@@ -142,6 +142,11 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.queryByTestId("arrival-summary-status")).toBeNull();
     expect(screen.getByText("16 WORDS")).toBeInTheDocument();
     expect(screen.getAllByText("We will ship the boundary change on Tuesday.").length).toBe(2);
+    expect(
+      within(screen.getByTestId("arrival-meeting-row")).getByRole("button", {
+        name: /^Open$/,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("keeps a failed lineage as RETRYING after its scheduled time and names the producer cause", async () => {
@@ -264,6 +269,13 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(await screen.findByTestId("arrival-detail-error")).toHaveTextContent(
       `MEETING DETAIL IDENTITY CHANGED · EXPECTED ${ready.detail.id} · RECEIVED ${running.detail.id}`,
     );
+    expect(screen.getByText("SUMMARY · READ FAILED")).toBeInTheDocument();
+    expect(screen.getByTestId("arrival-detail-retained")).toHaveTextContent("MEETING KEPT");
+    const retainedRow = screen.getByTestId("arrival-meeting-row");
+    expect(retainedRow).toHaveTextContent(ready.detail.title);
+    const open = within(retainedRow).getByRole("button", { name: /^Open$/ });
+    expect(open).toBeEnabled();
+    expect(open).toHaveClass("btn");
   });
 
   it("clicks Run once, then follows desk_changed to a ready summary and durable receipt", async () => {
@@ -325,6 +337,11 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
       "The team reviewed the budget.",
     ));
+    expect(
+      within(screen.getByTestId("arrival-meeting-row")).getByRole("button", {
+        name: /^Open$/,
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
     expect(screen.queryAllByTestId("arrival-run-intel")).toHaveLength(0);
     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).endsWith("/intelligence/run"))).toHaveLength(1);

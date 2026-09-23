@@ -1,0 +1,524 @@
+{
+  "id": "obs-20260923T165230Z-case.j4.meetings_import.imported-astra-393",
+  "run_id": "20260923T165230Z-case.j4.meetings_import.imported-astra-393",
+  "case_id": "case.j4.meetings_import.imported",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import"
+  ],
+  "state_id": "state.meetings.capture.imported",
+  "provenance": {
+    "revision": "0ad59c0488ba100b516e3b1763d93a9a81f486ac",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f7df17ed5696e8a501abac65ba23f861455e1a0c4506142eeeb259d8c6087642",
+      "assets": [
+        "index-EPIMRzZ0.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:60705",
+      "port": 60705,
+      "pid": 2238,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y8lst9th",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y8lst9th/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T16:52:30.102570+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "b8ca15b05c6bdeed28c7ca2e378aef6046d4e735542e417fc490ef3a3b4d4809",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j1.speech_readiness.ready passed; otherwise BLOCKED, not failed",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "35520cf1"
+  },
+  "trigger": {
+    "kind": "fixture",
+    "path": "tests/fixtures/philo3_architect_meeting.wav",
+    "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+    },
+    "adapter": "http-route",
+    "status": 202,
+    "response": {
+      "meeting_id": "35520cf1",
+      "status": "importing"
+    },
+    "captured": {
+      "name": "meeting_id",
+      "path": "meeting_id",
+      "value": "35520cf1"
+    },
+    "completion_wait": {
+      "method": "GET",
+      "path": "/api/meetings/35520cf1",
+      "fields": {
+        "/transcription_status": "complete",
+        "/duration": {
+          "positive": true
+        },
+        "/segments": {
+          "min_items": 1
+        }
+      },
+      "status": 200,
+      "matched": true,
+      "polls": 6,
+      "elapsed_s": 2.553,
+      "payload": {
+        "id": "35520cf1",
+        "started_at": "2026-09-23T10:52:32.662306",
+        "ended_at": "2026-09-23T10:53:07.337556",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [],
+        "segments": [
+          {
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs LEDs",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "disabled",
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 299,
+        "sync_modified_at": "2026-09-23T10:52:35.186464",
+        "devices": [],
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null,
+        "intel_model_host": null
+      },
+      "field_matches": {
+        "/transcription_status": true,
+        "/duration": true,
+        "/segments": true
+      }
+    }
+  },
+  "diff": {
+    "focus_label": {
+      "before": "",
+      "after": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep"
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 120
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "02a9786846178be65482fdeef7d9bcff725ee8958745a10a873b19c3a58ed78f"
+      }
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:60705/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599",
+      "rows": [],
+      "payload": {
+        "meetings": [],
+        "total": 0
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:52:32.621536+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:60705/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "02a9786846178be65482fdeef7d9bcff725ee8958745a10a873b19c3a58ed78f",
+      "rows": [
+        {
+          "id": "35520cf1",
+          "started_at": "2026-09-23T10:52:32.662306",
+          "ended_at": "2026-09-23T10:53:07.337556",
+          "title": "Architecture boundary review",
+          "duration_seconds": 34.67525,
+          "segment_count": 2,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "35520cf1",
+            "started_at": "2026-09-23T10:52:32.662306",
+            "ended_at": "2026-09-23T10:53:07.337556",
+            "title": "Architecture boundary review",
+            "duration_seconds": 34.67525,
+            "segment_count": 2,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 299,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "02a9786846178be65482fdeef7d9bcff725ee8958745a10a873b19c3a58ed78f"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:52:36.265150+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "f0f9cd56c66d2f7982ea320f91ccb2679b8f635f3cbe70f29f7d89eef7320b31",
+      "body": {
+        "meeting_id": "35520cf1",
+        "status": "importing"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [
+      {
+        "selector": "div#desk-next > main.chair.chair-first-value > section.desk-first-words > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "VOICE TYPING\nDictate one sentence\n\nSpeak. Then edit and keep",
+    "url": "http://127.0.0.1:60705/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "02a9786846178be65482fdeef7d9bcff725ee8958745a10a873b19c3a58ed78f",
+      "rows": [
+        {
+          "id": "35520cf1",
+          "started_at": "2026-09-23T10:52:32.662306",
+          "ended_at": "2026-09-23T10:53:07.337556",
+          "title": "Architecture boundary review",
+          "duration_seconds": 34.67525,
+          "segment_count": 2,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "35520cf1",
+            "started_at": "2026-09-23T10:52:32.662306",
+            "ended_at": "2026-09-23T10:53:07.337556",
+            "title": "Architecture boundary review",
+            "duration_seconds": 34.67525,
+            "segment_count": 2,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 299,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "02a9786846178be65482fdeef7d9bcff725ee8958745a10a873b19c3a58ed78f"
+    },
+    "document_text_sha256": "7af36687590250af61f701ce0893b3ddbcaab0f186b2c14b6fda8d125b707df5",
+    "document_text_len": 120,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:52:36.130941+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "f0f9cd56c66d2f7982ea320f91ccb2679b8f635f3cbe70f29f7d89eef7320b31",
+      "body": {
+        "meeting_id": "35520cf1",
+        "status": "importing"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id equals the declared value",
+    "elapsed_s": 3.473
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 3.608,
+    "first_satisfied_at_s": 3.473,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: /meetings/0/id equals the declared value"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "meeting_id"
+  ],
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T165230Z-case.j4.meetings_import.imported-astra-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T165230Z-case.j4.meetings_import.imported-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y8lst9th/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:60705",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:00<00:00, 36080.03it/s]"
+  ]
+}
