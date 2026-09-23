@@ -70,7 +70,7 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "ui",
@@ -302,13 +302,13 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "CREATE DECISION FAILED · HTTP 500"
+            "value": "CREATE DECISION FAILED \u00b7 HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "the failed create is named, and the read failure that follows (refresh) does not replace it or its Retry"
@@ -417,7 +417,7 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "READ DECISIONS FAILED · HTTP 500"
+            "value": "READ DECISIONS FAILED \u00b7 HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "a failed decisions read is named with Retry"
@@ -449,6 +449,152 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.j11.thought_keep.receipt_time",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.thought_keep"
+      ],
+      "state_id": "state.desk_presentation.window_open_thought",
+      "applicability": "applicable",
+      "preconditions": [
+        "case.j11.write_a_thought.window_open reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-develop-thought]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[aria-label=\"Note body\"]",
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "selector": "[aria-label=\"Note body\"]",
+        "value": "Graph walk J11 receipt time",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "KEPT \u00b7"
+        },
+        "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT \u00b7 <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING\u2026` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/thoughts"
+          }
+        ]
+      },
+      "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
     }
-  ]
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.window_open_thought",
+      "family": "desk_presentation",
+      "values": {
+        "window": "thought workspace"
+      },
+      "phase1_refs": [
+        {
+          "path": "docs/internal/philo/data/desk.json",
+          "record_id": "desk.window"
+        }
+      ],
+      "sources": [
+        {
+          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "symbol": "documentThought",
+          "line": 114,
+          "claim": "the Thought window holds the note it opened"
+        },
+        {
+          "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
+          "symbol": "filing_status",
+          "line": 42,
+          "claim": "its foot states the write (KEPT \u00b7 <time>, SAVING\u2026, DID NOT SAVE \u00b7 <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
+        }
+      ],
+      "reachable_by": [
+        "case.j11.write_a_thought.window_open",
+        "case.j11.thought_keep.kept"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.browser_date",
+      "source": "the browser's Date/timers inside the page under observation",
+      "mechanism": "playwright page.clock (install / setFixedTime / fastForward); playwright 1.57.0 is installed in this environment and Page.clock is present. It moves ONLY the browser's clock: it never reaches the hub's producers.",
+      "status": "available",
+      "used_by": [
+        "case.j10.arrival_reload.reload_persisted"
+      ]
+    },
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() / time.time() inside the hub process (holdspeak/services/monday_brief_service.py:146, holdspeak/runtime/heartbeat.py:110)",
+      "mechanism": "none within scope - the hub is a separate process, no libfaketime is on PATH, and the brief forbids changing the machine clock. Any case needing a different calendar day is tooling-debt, not a state.",
+      "status": "tooling_debt",
+      "used_by": []
+    },
+    {
+      "id": "clock.sqlite_now",
+      "source": "datetime('now') inside SQL written by the hub (holdspeak/db/projections.py:163, :169, :172)",
+      "mechanism": "none within scope - it reads the same hub-process wall clock as clock.python_wall.",
+      "status": "tooling_debt",
+      "used_by": []
+    },
+    {
+      "id": "clock.heartbeat_scheduler",
+      "source": "the heartbeat conductor loop (holdspeak/runtime/heartbeat.py:86 TICK_SECONDS, :111 the due test)",
+      "mechanism": "PUT /api/settings/heartbeat {\"sweep_every_minutes\": 1} lowers the interval to its floor (holdspeak/services/heartbeat_service.py:176-178), then the run waits at most two 60s ticks. No clock is moved and the sweep is produced by the real timer. The out-of-band POST /api/settings/heartbeat/run-now reaches the same producer but is a DIFFERENT edge (owner_hand=True, holdspeak/web/routes/system/settings.py:337).",
+      "status": "available",
+      "used_by": [
+        "case.j9.timer_sweep.receipt_resolved",
+        "case.beyond.sweep_held_remote.receipt_resolved"
+      ]
+    },
+    {
+      "id": "clock.intel_drainer",
+      "source": "the meeting-intelligence queue drainer that claims and runs queued jobs (holdspeak/db/intel.py:1215-1243 selects the claimable queued rows)",
+      "mechanism": "scheduler-wait: poll the real queue through GET /api/intel/jobs until the job leaves 'queued', bounded by the case's completion_bound_s. No clock is moved and no job is claimed by hand.",
+      "status": "available",
+      "used_by": [
+        "case.j6.run_summary.intel_running",
+        "case.j6.run_summary.intel_ready"
+      ]
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
 }

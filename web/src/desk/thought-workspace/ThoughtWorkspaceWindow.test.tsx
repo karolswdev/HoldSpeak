@@ -141,7 +141,9 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     const primaries = document.querySelectorAll(".btn--primary");
     expect(primaries).toHaveLength(1);
     expect(primaries[0]).toHaveTextContent("Finish");
-    expect(screen.getByText("KEPT")).toBeInTheDocument();
+    // PHILO-3-04: the filing state is its own line; KEPT carries a time
+    // and needs a hub stamp, which this fixture's note does not have.
+    expect(screen.getByText("IN A DRAWER")).toBeInTheDocument();
     expect(screen.queryByText(/Filed|Saved/)).not.toBeInTheDocument();
 
     // The window that was two features is one: no tabs, no rail, no rack.
@@ -278,18 +280,18 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     await waitFor(() => expect(screen.queryByText("CHANGED ELSEWHERE")).not.toBeInTheDocument());
   });
 
-  it("says a save failure once, in the foot, with its own Try again", async () => {
+  it("says a save failure once, in the foot, with its own Retry", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     vi.mocked(saveThoughtWorkingInWorkspace).mockRejectedValue(new Error("offline"));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
     fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
-    const line = await screen.findByText("THE NOTE DID NOT SAVE");
+    const line = await screen.findByText("DID NOT SAVE · THE HUB DID NOT ANSWER");
     expect(line.closest(".surface-footer")).not.toBeNull();
-    expect(screen.getAllByText("THE NOTE DID NOT SAVE")).toHaveLength(1);
-    expect(screen.queryByText("KEPT")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getAllByText("DID NOT SAVE · THE HUB DID NOT ANSWER")).toHaveLength(1);
+    expect(screen.queryByText(/^KEPT/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(2));
   });
 
@@ -300,7 +302,8 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     expect(await screen.findByTestId("note-title")).toHaveTextContent(thought.working_note.title);
     expect(screen.getByTestId("note-locked")).toHaveTextContent("FINISHED");
-    expect(screen.getByText(/KEPT · FINISHED/)).toBeInTheDocument();
+    // PHILO-3-04: FINISHED joins the filing line (canvas, state 1).
+    expect(screen.getByText("IN A DRAWER · FINISHED")).toBeInTheDocument();
     const primaries = document.querySelectorAll(".btn--primary");
     expect(primaries).toHaveLength(1);
     expect(primaries[0]).toHaveTextContent("Resume");

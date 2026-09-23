@@ -10,6 +10,19 @@ import {
 
 export type ThoughtDraft = { title: string; body: string; tags: string };
 
+/* PHILO-3-04 — the foot states the fault; the writer names its cause.
+   `no_answer`: the request got no response (fetch threw).
+   `not_accepted`: the hub answered with an error status (ApiError). */
+export type ThoughtSaveFailure = "no_answer" | "not_accepted";
+
+/** The writer's own refusal, so a face can leave it to the foot. */
+export class ThoughtSaveFault extends Error {
+  constructor(message: "thought save failed" | "thought save conflict") {
+    super(message);
+    this.name = "ThoughtSaveFault";
+  }
+}
+
 const toDraft = (thought: Thought): ThoughtDraft => ({
   title: thought.working_note.title,
   body: thought.working_note.body_markdown,
@@ -37,8 +50,13 @@ export function useThoughtNoteWriter({
   workspaceCursor?: ThoughtWorkspaceCursor;
 }) {
   const [draftState, setDraftState] = useState<ThoughtDraft>(() => toDraft(thought));
-  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  /* PHILO-3-04 — the foot's four states are React state, never a ref read
+     at render: an edit, a failure and a conflict each re-render the foot. */
+  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState<ThoughtSaveFailure | null>(null);
+  const [conflicted, setConflicted] = useState(false);
+  const [keptAt, setKeptAt] = useState<string | null>(() => thought.working_note.last_modified ?? null);
   const timer = useRef<number | null>(null);
   const inFlight = useRef(false);
   const dirty = useRef(false);
@@ -52,6 +70,16 @@ export function useThoughtNoteWriter({
   const current = useRef(thought);
   const cursor = useRef(workspaceCursor);
   const waiters = useRef<Array<() => void>>([]);
+
+  const fence = (value: boolean) => {
+    conflictFenced.current = value;
+    if (mounted.current) setConflicted(value);
+  };
+  const fail = (value: ThoughtSaveFailure | null) => {
+    saveFailed.current = value !== null;
+    if (mounted.current) setFailure(value);
+  };
+  const settle = () => { if (mounted.current) setPending(false); };
 
   const wake = () => {
     const pending = waiters.current.splice(0);
@@ -69,14 +97,16 @@ export function useThoughtNoteWriter({
     authorityEpoch.current += 1;
     clearTimer();
     dirty.current = false;
-    saveFailed.current = false;
-    conflictFenced.current = options.fence;
+    fail(null);
+    fence(options.fence);
     current.current = authoritative;
     const next = toDraft(authoritative);
     draft.current = next;
     if (mounted.current) {
       setDraftState(next);
       setSaving(false);
+      setPending(false);
+      setKeptAt(authoritative.working_note.last_modified ?? null);
     }
     if (options.notify) onThought(authoritative);
     wake();
@@ -87,11 +117,11 @@ export function useThoughtNoteWriter({
     clearTimer();
     current.current = authoritative;
     dirty.current = true;
-    saveFailed.current = false;
-    conflictFenced.current = true;
+    fail(null);
+    fence(true);
     if (mounted.current) {
       setSaving(false);
-      setMessage("This thought changed elsewhere. Your unsaved edits are still here. Review them, then edit again to save against the latest version.");
+      setPending(false);
       onThought(authoritative);
     }
     wake();
@@ -103,7 +133,7 @@ export function useThoughtNoteWriter({
     if ((!force && commandFence.current) || inFlight.current || !dirty.current || conflictFenced.current) return;
     inFlight.current = true;
     dirty.current = false;
-    saveFailed.current = false;
+    fail(null);
     if (mounted.current) setSaving(true);
     const requestEpoch = authorityEpoch.current;
     const sent = { ...draft.current };
@@ -123,7 +153,8 @@ export function useThoughtNoteWriter({
       }
       if (result.workbench && onProjection?.(result.workbench) === false) {
         dirty.current = true;
-        conflictFenced.current = true;
+        fence(true);
+        settle();
         if (mounted.current) setSaving(false);
         wake();
         return;
@@ -133,11 +164,15 @@ export function useThoughtNoteWriter({
       if (result.workbench) cursor.current = result.workbench.workspace_cursor;
       if (mounted.current) {
         onThought(result.thought);
-        setMessage("");
         setSaving(false);
+        /* The receipt's time is the hub's stamp on THIS write
+           (refinement_thought_service.py:1158), never the client clock. */
+        setKeptAt(result.thought.working_note.last_modified ?? null);
       }
       if (dirty.current && !conflictFenced.current) {
         schedule(0);
+      } else {
+        settle();
       }
       wake();
     } catch (cause) {
@@ -164,8 +199,8 @@ export function useThoughtNoteWriter({
             current.current = refreshed.thought;
             cursor.current = refreshed.workspace_cursor;
             dirty.current = true;
-            saveFailed.current = false;
-            conflictFenced.current = false;
+            fail(null);
+            fence(false);
             if (mounted.current) setSaving(false);
             schedule(0);
             wake();
@@ -173,14 +208,16 @@ export function useThoughtNoteWriter({
           }
         }
         dirty.current = true;
-        conflictFenced.current = true;
+        fence(true);
+        settle();
         wake();
         return;
       }
       if (projection) {
         if (onProjection?.(projection) === false) {
           dirty.current = true;
-          conflictFenced.current = true;
+          fence(true);
+          settle();
           wake();
           return;
         }
@@ -194,8 +231,8 @@ export function useThoughtNoteWriter({
         retainDraftAgainst(authoritative);
       } else if (!superseded) {
         dirty.current = true;
-        saveFailed.current = true;
-        if (mounted.current) setMessage("Could not save this thought. Your changes are still here. Retry save.");
+        fail(cause instanceof ApiError ? "not_accepted" : "no_answer");
+        settle();
       }
       wake();
     }
@@ -214,32 +251,32 @@ export function useThoughtNoteWriter({
     draft.current = value;
     setDraftState(value);
     dirty.current = true;
-    saveFailed.current = false;
+    fail(null);
     cursorRetryUsed.current = false;
-    conflictFenced.current = false;
-    setMessage("");
+    fence(false);
+    setPending(true);
     schedule();
   };
 
   const flush = async ({ fence = false }: { fence?: boolean } = {}): Promise<Thought> => {
     if (fence) commandFence.current = true;
     clearTimer();
-    if (saveFailed.current) throw new Error("thought save failed");
+    if (saveFailed.current) throw new ThoughtSaveFault("thought save failed");
     while (inFlight.current || dirty.current) {
       if (!inFlight.current && dirty.current) await drainRef.current(true);
       else await wait();
-      if (conflictFenced.current) throw new Error("thought save conflict");
-      if (saveFailed.current) throw new Error("thought save failed");
+      if (conflictFenced.current) throw new ThoughtSaveFault("thought save conflict");
+      if (saveFailed.current) throw new ThoughtSaveFault("thought save failed");
     }
-    if (conflictFenced.current) throw new Error("thought save conflict");
+    if (conflictFenced.current) throw new ThoughtSaveFault("thought save conflict");
     return current.current;
   };
 
   const retry = () => {
     if (inFlight.current || conflictFenced.current || commandFence.current) return;
     dirty.current = true;
-    saveFailed.current = false;
-    setMessage("");
+    fail(null);
+    setPending(true);
     schedule(0);
   };
 
@@ -279,10 +316,15 @@ export function useThoughtNoteWriter({
     retry,
     pause,
     resume,
-    message,
     saving,
+    /* true from an edit (inside the 450 ms wait) until the write lands or
+       fails; `saving` alone is only the request in flight. */
+    pending,
     dirty: dirty.current,
-    conflicted: conflictFenced.current,
-    failed: saveFailed.current,
+    conflicted,
+    failed: failure !== null,
+    failure,
+    /** The hub's `last_modified` for the last kept write (ISO, UTC). */
+    keptAt,
   };
 }
