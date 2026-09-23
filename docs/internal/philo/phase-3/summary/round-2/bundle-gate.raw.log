@@ -1,0 +1,5 @@
+
+> holdspeak-web@0.0.1 bundle:gate
+> node scripts/check-bundle.mjs
+
+bundle gate passed (Desk JS 1320728 B; Desk CSS 319048 B; source maps 0)

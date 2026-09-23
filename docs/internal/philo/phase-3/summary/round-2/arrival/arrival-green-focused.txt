@@ -1,0 +1,15 @@
+PHILO-3-02 Arrival round 2 green proof
+Captured 2026-09-23 after the real producer fixture was refreshed.
+
+Command:
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npm_config_cache=/Users/karol/.npm npm exec -- vitest run src/desk/chair/arrivalSummaryCompletion.test.tsx --maxWorkers=1
+
+Result:
+Test Files  1 passed (1)
+Tests       12 passed (12)
+
+The green run covers imported/ready detail, the collapsed transcript fold and
+one-click open, retry and terminal provider causes, persisted summary after a
+failure, stale generation and wrong identity guards, top-three detail reads,
+Run-to-ready and Run-to-failure receipts, and rendered wells/transcript state
+through an unresolved same-identity desk refresh.

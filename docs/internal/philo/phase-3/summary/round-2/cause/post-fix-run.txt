@@ -1,0 +1,12 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo3_summary_detail.py tests/unit/test_philo3_summary_queue.py
+
+Result:
+..........                                                               [100%]
+10 passed in 4.33s
+
+The run admitted jobs through MeetingIntelService, drained them through the
+production queue, and exercised the retained provider-boundary reply. Retry
+and terminal projections now carry the plain provider cause "PROVIDER FAILED".
+Queue attempt rows
+retain their existing audit event shape.

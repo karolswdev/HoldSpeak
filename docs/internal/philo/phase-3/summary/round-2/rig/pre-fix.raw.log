@@ -1,0 +1,66 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.intel_failed-FAILED] _
+
+case_id = 'case.j6.run_summary.intel_failed', state = 'FAILED'
+
+    @pytest.mark.parametrize(
+        ("case_id", "state"),
+        [
+            ("case.j6.run_summary.intel_failed", "FAILED"),
+            ("case.j6.run_summary.retrying", "RETRYING"),
+        ],
+    )
+    def test_actual_j6_recipe_requires_plain_provider_cause(case_id, state):
+        atlas = json.loads((ROOT / "docs/internal/philo/graph/atlas.json").read_text())
+        case = next(case for case in atlas["cases"] if case["id"] == case_id)
+        replay = next(step for step in case["setup"] if step.get("substitute") == "engine_reply")
+        reply = json.loads((ROOT / replay["reply"]).read_text())
+        expected = case["expected"]
+        assert expected["observe_at"] == "[data-testid=arrival-summary-status]"
+>       assert expected["predicate"] == {
+            "kind": "text_equals",
+            "value": f"{state}\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · {reply['error'].upper()}",
+        }
+E       AssertionError: assert {'kind': 'tex...LAST ATTEMPT'} == {'kind': 'tex...INT BOUNDARY'}
+E         
+E         Differing items:
+E         {'kind': 'text_contains'} != {'kind': 'text_equals'}
+E         {'value': 'FAILED\nLAST ATTEMPT'} != {'value': 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · RECORDED PROVIDER FAILURE AT THE ENDPOINT BOUNDARY'}
+E         Use -v to get more diff
+
+tests/unit/test_philo3_summary_round2_atlas.py:26: AssertionError
+_ test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.retrying-RETRYING] _
+
+case_id = 'case.j6.run_summary.retrying', state = 'RETRYING'
+
+    @pytest.mark.parametrize(
+        ("case_id", "state"),
+        [
+            ("case.j6.run_summary.intel_failed", "FAILED"),
+            ("case.j6.run_summary.retrying", "RETRYING"),
+        ],
+    )
+    def test_actual_j6_recipe_requires_plain_provider_cause(case_id, state):
+        atlas = json.loads((ROOT / "docs/internal/philo/graph/atlas.json").read_text())
+        case = next(case for case in atlas["cases"] if case["id"] == case_id)
+        replay = next(step for step in case["setup"] if step.get("substitute") == "engine_reply")
+        reply = json.loads((ROOT / replay["reply"]).read_text())
+        expected = case["expected"]
+        assert expected["observe_at"] == "[data-testid=arrival-summary-status]"
+>       assert expected["predicate"] == {
+            "kind": "text_equals",
+            "value": f"{state}\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · {reply['error'].upper()}",
+        }
+E       AssertionError: assert {'kind': 'tex...': 'RETRYING'} == {'kind': 'tex...INT BOUNDARY'}
+E         
+E         Differing items:
+E         {'kind': 'text_contains'} != {'kind': 'text_equals'}
+E         {'value': 'RETRYING'} != {'value': 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · RECORDED PROVIDER FAILURE AT THE ENDPOINT BOUNDARY'}
+E         Use -v to get more diff
+
+tests/unit/test_philo3_summary_round2_atlas.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo3_summary_round2_atlas.py::test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.intel_failed-FAILED]
+FAILED tests/unit/test_philo3_summary_round2_atlas.py::test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.retrying-RETRYING]
+2 failed in 0.33s

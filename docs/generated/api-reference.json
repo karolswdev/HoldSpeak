@@ -17599,6 +17599,7 @@
       "test_candidates": [
         "tests/integration/test_web_server.py",
         "tests/unit/test_phase143_intel_queue_inventory.py",
+        "tests/unit/test_philo3_summary_round2_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",

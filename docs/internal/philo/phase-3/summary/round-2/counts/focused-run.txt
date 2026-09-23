@@ -1,0 +1,5 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo3_summary_counts.py tests/unit/test_runtime_queue_frame.py
+
+.....                                                                    [100%]
+5 passed in 2.60s

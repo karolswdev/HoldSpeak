@@ -32,6 +32,7 @@ RETRY_FAILURE_HYSTERESIS_MINUTES = 5.0
 RETRY_FAILURE_WEBHOOK_TIMEOUT_SECONDS = 5.0
 # Must stay materially below db.intel.BOUND_EXECUTOR_LEASE_SECONDS.
 BOUND_EXECUTOR_HEARTBEAT_SECONDS = 3.0
+PROVIDER_FAILURE_CAUSE = "PROVIDER FAILED"
 
 RESOLVED_PLUGIN_STATUSES = frozenset({"success", "proposed", "deduped", "skipped"})
 
@@ -79,7 +80,7 @@ def build_runtime_queue_frame(db) -> dict:
 
 
 def _notify_queue_meeting_changed(meeting_id: str | None) -> None:
-    """Announce a durable queue transition through the existing desk bus."""
+    """Announce a durable queue transition on both desk and queue buses."""
     if not meeting_id:
         return
     try:
@@ -88,6 +89,16 @@ def _notify_queue_meeting_changed(meeting_id: str | None) -> None:
         notify_desk_changed("meeting", str(meeting_id), "update")
     except Exception as exc:  # pragma: no cover - bus failures cannot undo a write
         log.debug("Deferred intel desk notification failed: %s", type(exc).__name__)
+    try:
+        # The desk bus refreshes the meeting row, but the ambient Queue HUD
+        # listens to `runtime_queue`. Publish the freshly settled frame here so
+        # a terminal failure cannot leave the admission-time QUEUED count on
+        # the glass. `broadcast` is a no-op outside a live hub.
+        from .intel_queue_conductor import broadcast
+
+        broadcast("runtime_queue", build_runtime_queue_frame(get_database()))
+    except Exception as exc:  # pragma: no cover - a frame is never a gate
+        log.debug("Deferred intel queue frame failed: %s", type(exc).__name__)
 
 
 def _compute_retry_delay_seconds(
@@ -522,7 +533,7 @@ def _process_bound_intel_job(
             return changed
         if projection is None:
             changed = _retry_or_fail_job(
-                db, job, "Deferred intel failed: bound analysis did not publish",
+                db, job, PROVIDER_FAILURE_CAUSE,
                 max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
                 max_delay_seconds=retry_max_seconds,
             )

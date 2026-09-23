@@ -34,7 +34,7 @@
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "1e8e4d3f3b81c3f7be15d8ed347802a3be51257777aa18e45ea58a0576ada6f9"
+   "sha256": "3243fff157c39284ddbf3e3de975fd2ee0cdeb53b8f5fc646360d08b30fd1add"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",
@@ -145853,15 +145853,19 @@
    },
    "expected": {
     "predicate": {
-     "kind": "text_contains",
-     "value": "FAILED\nLAST ATTEMPT"
+     "kind": "text_equals",
+     "value": "FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
     },
     "observe_at": "[data-testid=arrival-summary-status]",
-    "words": "FAILED with LAST ATTEMPT and LAST ERROR on Arrival; a scheduled retry is not terminal failure",
+    "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
     "reads": [
      {
       "method": "GET",
       "path": "/api/meetings/{meeting_id}"
+     },
+     {
+      "method": "GET",
+      "path": "/api/intel/summary"
      }
     ]
    },
@@ -146877,15 +146881,19 @@
    },
    "expected": {
     "predicate": {
-     "kind": "text_contains",
-     "value": "RETRYING"
+     "kind": "text_equals",
+     "value": "RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
     },
     "observe_at": "[data-testid=arrival-summary-status]",
-    "words": "After one Run and a retained provider failure, Arrival reads RETRYING with LAST ERROR and the actual LAST ATTEMPT host; its real automatic successor is queued with backoff.",
+    "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
     "reads": [
      {
       "method": "GET",
       "path": "/api/meetings/{meeting_id}"
+     },
+     {
+      "method": "GET",
+      "path": "/api/intel/summary"
      }
     ]
    },

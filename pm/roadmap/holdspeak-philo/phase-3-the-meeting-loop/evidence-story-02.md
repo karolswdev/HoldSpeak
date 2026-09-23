@@ -6279,3 +6279,366 @@ case.j6.run_summary.summary_text 393 6.223 seconds; real engine; raw summary vis
 60 retained observations; 40 actual case-width pairs; 30 pass; 10 blocked; no missing pairs; all linked shots present
 Both restart identity records verified; synthetic WAV hash verified. Technical completion is separate from partial usefulness.
 ```
+
+### Captured run — 2026-09-23T21:35:25Z
+
+- **Command:** `uv run --no-sync pytest -q tests/unit/test_philo3_summary_detail.py tests/unit/test_philo3_summary_queue.py tests/unit/test_philo3_summary_counts.py tests/unit/test_intel_queue.py tests/unit/test_meeting_deferred_admission.py tests/unit/test_philo3_summary_round2_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_product_copy.py tests/unit/test_phase143_surface_fallback_census.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+.........                                                                [100%]
+153 passed in 24.99s
+```
+
+### Captured run — 2026-09-23T21:35:45Z
+
+- **Command:** `npm --prefix web run check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+
+> holdspeak-web@0.0.1 check
+> npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build && npm run bundle:gate
+
+
+> holdspeak-web@0.0.1 tokens:check
+> node scripts/generate-tokens.cjs --check
+
+tokens.css and tokens.gen.ts match design-tokens.json
+
+> holdspeak-web@0.0.1 tokens:gate
+> node scripts/validate-tokens.cjs
+
+token gate: clean (11 allow-listed exceptions, all in use)
+
+> holdspeak-web@0.0.1 guard:architecture
+> node scripts/guard-architecture.mjs
+
+React architecture guard passed (826 source files; zero framework residue).
+
+> holdspeak-web@0.0.1 typecheck
+> tsc --noEmit
+
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at createColoredCanvas (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:7:26)
+    at canUseNewCanvasBlendModes (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:17:21)
+    at file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canvasUtils.mjs:11:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at VitestModuleEvaluator.runExternalModule (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/vitest/dist/module-evaluator.js:80:21) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at getTestContext (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getTestContext.mjs:8:22)
+    at getMaxFragmentPrecision (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getMaxFragmentPrecision.mjs:8:16)
+    at new _GlProgram (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:37:40)
+    at Function.from (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:77:27)
+    at new ParticleShader (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/shader/ParticleShader.mjs:15:33)
+    at new ParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/ParticleContainerPipe.mjs:29:26)
+    at new CanvasParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/canvas/CanvasParticleContainerPipe.mjs:8:5) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at createColoredCanvas (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:7:26)
+    at canUseNewCanvasBlendModes (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:17:21)
+    at file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canvasUtils.mjs:11:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at VitestModuleEvaluator.runExternalModule (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/vitest/dist/module-evaluator.js:80:21) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at getTestContext (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getTestContext.mjs:8:22)
+    at getMaxFragmentPrecision (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getMaxFragmentPrecision.mjs:8:16)
+    at new _GlProgram (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:37:40)
+    at Function.from (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:77:27)
+    at new ParticleShader (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/shader/ParticleShader.mjs:15:33)
+    at new ParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/ParticleContainerPipe.mjs:29:26)
+    at new CanvasParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/canvas/CanvasParticleContainerPipe.mjs:8:5) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at /Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:16723:49
+    at Object.get (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:11239:23)
+    at _isIconLigature (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:16722:41)
+    at /Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28288:54
+    at Array.some (<anonymous>)
+    at hasRealTextChildren (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28287:35)
+    at Rule.colorContrastMatches [as matches] (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28249:12) undefined
+
+ Test Files  306 passed (306)
+      Tests  2807 passed (2807)
+   Start at  15:35:54
+   Duration  89.48s (transform 4.84s, setup 11.97s, import 32.27s, tests 60.88s, environment 52.38s)
+
+
+> holdspeak-web@0.0.1 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1690 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/api.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/usePrepareController.ts but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/ProjectRoomCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/RoomPeopleSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/useProjectRoomController.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/window/Dock.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/store/compositorSlice.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/usePrepareController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SettingsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/SpeakFace.tsx but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/App.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/components/AmbientLayer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/chair/ChairHome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/AttentionDrawer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskStartActions.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskToolInspector.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskToolShelf.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/FirstWords.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/GlassDropLayer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/Pullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/RecordOrb.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/SurfaceWindows.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/SystemShade.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/TrustWindow.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/ArtifactPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/ChainPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/CoderPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/DecisionPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/DirectoryPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/KbPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/MeetingPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/NotePullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/RecipePullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/WorkflowPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/shared/CapabilitySection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/views/BriefView.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/views/FollowThroughView.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/surface/citations.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/verbRegistry.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/ProjectRoomCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/RoomPeopleSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/door/useDoorController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/PreparePosture.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/recall/RecallFace.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/useProjectRoomController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/CommandsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/CompanionCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/HistoryCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/LiveCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/PeopleCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/RuntimeDocsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SettingsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SetupCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/DictationSections.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/Readiness.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/ArtifactsLibrary.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/DoorSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/ImportSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/MeetingReview.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/store.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/DeskApp.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/chair/ChairHome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/AskPanel.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskChrome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```
+
+### Captured run — 2026-09-23T21:37:53Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.intel_failed --brain astra --viewport 1440 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57344 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-64u7h4l_/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440/after.png']
+NOTE: predicate: observe_at text is 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T21:38:42Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.intel_failed --brain astra --viewport 393 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57418 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-drqzhmdc/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213842Z-case.j6.run_summary.intel_failed-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213842Z-case.j6.run_summary.intel_failed-astra-393/after.png']
+NOTE: predicate: observe_at text is 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T21:39:24Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.retrying --brain astra --viewport 1440 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57476 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_q8w6fq0/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213924Z-case.j6.run_summary.retrying-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213924Z-case.j6.run_summary.retrying-astra-1440/after.png']
+NOTE: predicate: observe_at text is 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T21:40:19Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.retrying --brain astra --viewport 393 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57572 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ohs6nxmz/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214019Z-case.j6.run_summary.retrying-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214019Z-case.j6.run_summary.retrying-astra-393/after.png']
+NOTE: predicate: observe_at text is 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T21:41:20Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.summary_text --brain astra --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57627 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-59acyrgw/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is present
+```
+
+### Captured run — 2026-09-23T21:42:13Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.summary_text --brain astra --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: dfbaccd541e46e5a793786f3a6a6373e81b6e1a4 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-lDHBzCUa.js'] hub=http://127.0.0.1:57681 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n3h1k6_q/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is present
+```
+
+### Captured run — 2026-09-23T21:43:37Z
+
+- **Command:** `/bin/zsh .tmp/philo3-r2-full.sh`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+...........ssssssssssssssssssssss.........ssssss............s..s........ [  0%]
+..................ssssssssssss....sssssssss......................ssss... [  1%]
+.ssssss................
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)
+SKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)
+SKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:17: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e
+SKIPPED [1] tests/e2e/test_workbench_walk.py:46: no hub listening at http://localhost:8778
+SKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'
+SKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e
+SKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [2] tests/e2e/test_hs14104_refinement_glass.py:58: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105_context_glass.py:109: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105a_default_context_glass.py:99: superseded by the Thought Workbench real-path glass
+SKIPPED [1] tests/e2e/test_hs145_door_polish_glass.py:181: HS-170: door-board scroll-hint PARKED (HS-170-04); the arrival has no horizontal-scroll viewport -- capability intentionally gone
+SKIPPED [1] tests/e2e/test_hs147_one_tap_glass.py:160: HS-170: door-rail one-tap arm PARKED (HS-170-04); per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:552: HS-170: front-door pack cards PARKED (HS-170-03); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:618: HS-170: front-door candidate picker PARKED (HS-170-03); capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:171: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:232: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs158_room_glass.py:281: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs159_interview_glass.py:149: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:396: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:461: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:554: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:270: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:521: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:673: HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:921: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs161_github_glass.py:1090: gh CLI not authenticated or not installed (skip-clean)
+SKIPPED [2] tests/e2e/test_hs166_jira_glass.py:327: HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs166_jira_walk.py:1636: acli jira auth status failed (exit 1): ✗ Error: unauthorized: use 'acli jira auth login' to authenticate
+SKIPPED [2] tests/e2e/test_hs168_connections_glass.py:318: gh auth status failed (exit 1): You are not logged into any GitHub hosts. To log in, run: gh auth login
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:281: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:367: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/threading.py:1095: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+106 passed, 69 skipped in 1247.51s (0:20:47)
+```
+
+### Captured run — 2026-09-23T22:05:55Z
+
+- **Command:** `python3 docs/internal/philo/phase-3/summary/round-2/verify_observations.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fef486032f22ba2987a1bf4b01f9314a1f77721b
+
+```text
+('case.j6.run_summary.intel_failed', 1440) pass 77 words 0.928 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.intel_failed', 393) pass 77 words 0.926 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.retrying', 1440) pass 299 words 0.926 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T15:41:37.845513'}
+('case.j6.run_summary.retrying', 393) pass 299 words 0.929 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T15:42:33.992113'}
+('case.j6.run_summary.summary_text', 1440) pass 114 words 7.082 seconds real LAN engine
+('case.j6.run_summary.summary_text', 393) pass 78 words 6.676 seconds real LAN engine
+Six actual case/width pairs pass; all shots retained; import completion, single Run, closed setup window, plain causes, settled counts and real ready-engine identity verified.
+Astra also inspected all before/after/framed shots. Fold defaults and refresh continuity are rendered-fence evidence; owner usefulness remains partial.
+```

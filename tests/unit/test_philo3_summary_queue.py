@@ -122,6 +122,7 @@ def test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt(
     assert process_next_intel_job(retry_max_attempts=1) is True
     assert [item["meeting_status"] for item in observations] == ["running", "error"]
     assert observations[1]["job_status"] == "failed"
+    assert db.intel.get_latest_intel_job(state.id).last_error == "PROVIDER FAILED"
     assert observations[1]["job_receipt"] is not None
     assert observations[1]["receipt"] is not None
 

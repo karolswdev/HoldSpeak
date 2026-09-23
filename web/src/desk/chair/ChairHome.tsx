@@ -514,9 +514,19 @@ function Arrival() {
   useEffect(() => {
     const ids = meetingDetailKey ? meetingDetailKey.split("|") : [];
     const generation = ++meetingReadGeneration.current;
-    // A desk refresh starts a new read generation. Do not keep an old detail
-    // well visible while its replacement is in flight.
-    setMeetingDetails({});
+    // A desk refresh starts a new read generation. Keep wells already rendered
+    // for the same meeting in place until its replacement arrives; this also
+    // preserves a transcript fold the owner opened. Drop identities that left
+    // the visible top-three set so removed meetings cannot linger.
+    setMeetingDetails((current) => {
+      const visible = new Set(ids);
+      const retained = Object.fromEntries(
+        Object.entries(current).filter(([id]) => visible.has(id)),
+      );
+      return Object.keys(retained).length === Object.keys(current).length
+        ? current
+        : retained;
+    });
     if (ids.length === 0) return;
     let active = true;
     for (const id of ids) {
@@ -527,7 +537,7 @@ function Arrival() {
           if (!detail) {
             setMeetingDetails((current) => ({
               ...current,
-              [id]: { meeting: null, error: "MEETING DETAIL HAS NO IDENTITY" },
+              [id]: { meeting: null, error: "SUMMARY READ FAILED" },
             }));
             return;
           }
@@ -536,7 +546,7 @@ function Arrival() {
               ...current,
               [id]: {
                 meeting: null,
-                error: `MEETING DETAIL IDENTITY CHANGED · EXPECTED ${id} · RECEIVED ${detail.id}`,
+                error: "SUMMARY READ FAILED",
               },
             }));
             return;
@@ -1991,7 +2001,7 @@ function ArrivalMeetingWells({
           className="arrival-meeting-status-fact"
           data-testid="arrival-detail-retained"
         >
-          MEETING KEPT
+          MEETING SAVED
         </span>
       </SurfaceWell>
     );
@@ -2070,7 +2080,12 @@ function ArrivalMeetingWells({
         </SurfaceWell>
       ) : null}
       {segments.length > 0 ? (
-        <TranscriptWell id={meeting.id} segments={segments} />
+        <TranscriptWell
+          id={meeting.id}
+          segments={segments}
+          defaultOpen={false}
+          wordCount={meeting.transcriptWords}
+        />
       ) : null}
     </>
   );

@@ -1,5 +1,27 @@
 # PHILO-3-02 — lane record
 
+LANE: **PHILO-3-02 (A2), round two**. Owner Astra; checker Muad'Dib. Worktree `/Users/karol/dev/tools/wt-philo-3-02`; branch `feat/philo-3-02-summary`. [PR #616 — PHILO-3-02: see and find the summary](https://github.com/karolswdev/HoldSpeak/pull/616). Muad'Dib re-reads and merges.
+
+OUTCOME: **built — round-two corrections verified; main integration and final full verification in progress; usefulness partial**. Muad'Dib's [recorded RATIFY-WITH-CONDITIONS](checks/story-02-built-muaddib.md) is paid by the [round-two response](checks/story-02-built-astra-response.md), awaiting his re-read. Failed and retrying wells now display the ratified **LAST ERROR · PROVIDER FAILED**, with the actual LAST ATTEMPT host. The queue header receives fresh settlement counts. Same-identity summary/transcript wells stay mounted through a desk refresh. Per the owner's ruling, summary is open; transcript is collapsed with its word count and one click to open. Read facts contain no raw IDs. The earlier statement that the queue wrapper retained a plain cause was too broad; the exact words and failing displayed-word fence replace that claim.
+
+PROOF:
+
+- [Round-two report, raw red/green evidence and six-run index](../../../../docs/internal/philo/phase-3/summary/round-2/report.md). Astra independently reproduced five backend failures and nine rendered failures against `dfbaccd5`, plus the isolated refresh-clearing failure and two old-atlas failures. Final focused Python: **153 collected / 153 passed**. Full web: **306 files / 2,807 tests**, typecheck/build/bundle gate pass.
+- Full serial Python, isolated HOME, no metal: **interrupted to integrate A3/main: 106 passed, 69 skipped, exit 2**. [Raw output and a/b/c classification](../../../../docs/internal/philo/phase-3/summary/round-2/full-suite-classification.md). No full Python green or flake claim.
+- Actual J6 failed/retrying walks at **1440 and 393**: exact plain cause, settled header counts, transcript folded; all four pass. Two additional real-LAN ready walks pass at both widths, result at **7.082 / 6.676 seconds** after one Run. All observations/shots retained under `assets/story-02-shots/rig/round-2/`; Astra inspected all fourteen images. Engine: **Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf**, llama.cpp at `192.168.1.43:8080`.
+- [Original 60 observations](../../../../docs/internal/philo/phase-3/summary/observations-index.md) remain immutable: 40 actual J4–J7 case-width pairs, 30 pass / 10 blocked, with both restart identity records. The six round-two walks supplement that closure evidence; no blocked/native case is promoted and no new restart run is claimed.
+- [Paired DW captures](evidence-story-02.md) append the full/focused runs, actual rig invocations and observation audit. The story remains **done**, with no re-flip. Original D2/install, queue, canvas and chain proof remain below as history. Words and their fences ship in the same gate commit.
+
+LEDGER: [Aftercare covers Capture Bar verbs at 1440 and topics/dock at 393; ASR varies on the same WAV](../../../../docs/internal/philo/phase-3/summary/round-2/deferred-ledger.md): inherited **b**, ledgered only as instructed. [New planted-fact mapping](../../../../docs/internal/philo/phase-3/summary/round-2/usefulness.md): SQLite and Maya's identity are lost/corrupted; Leo's action/Tuesday survive; Priya's failure-fence action and before-ship timing are omitted at both widths. Earlier inherited suite debt and graph-census debt remain named in their records.
+
+AMENDMENTS: the owner's **summary open / transcript collapsed** ruling is applied using the existing fold. No new Arrival verb, attempt limit, council scope expansion, or story re-flip. No aftercare or ASR repair.
+
+UNKNOWN: **Muad'Dib's re-read and the owner's sitting remain pending**. Native microphone recording, real LAN outage recovery and eventual retry success were not exercised. Failure/retry proof uses the in-tree provider-boundary reply. Trigger/receipt job-ID lineage remains unverified here. Complete planted-fact recovery is disproved by retained output. Refresh/read-error behaviour has rendered fences, not a separately walked native-failure claim.
+
+# Initial closure — retained history, superseded where corrected above
+
+# PHILO-3-02 — lane record
+
 LANE: **PHILO-3-02 (A2)**. Owner Astra; design checker and counsel on built Muad'Dib. Worktree `/Users/karol/dev/tools/wt-philo-3-02`; branch `feat/philo-3-02-summary`. [PR #616 — PHILO-3-02: see and find the summary](https://github.com/karolswdev/HoldSpeak/pull/616). No merge before Muad'Dib's counsel on built.
 
 OUTCOME: **built — technical completion; usefulness partial**. The owner ratified the corrected Arrival canvas on 2026-09-23 (“Ratify, build it”). Install, queue notification, bounded detail reads and the existing-row summary/transcript/receipt face are implemented. One Run brings the actual LAN host and summary back to Arrival; failed/retrying jobs retain their cause; summary/receipt/meeting identity survive the rig's restart. The synthetic input loses facts through ASR and summary generation; this does not close the owner's sitting or the phase exit.

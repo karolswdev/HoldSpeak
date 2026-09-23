@@ -651,7 +651,7 @@
           "architecture"
         ],
         "intel_status": "queued",
-        "intel_status_detail": "Deferred intel attempt 1/6 failed: Deferred intel failed: bound analysis did not publish Retrying at 2026-09-23T09:40:33.",
+        "intel_status_detail": "PROVIDER FAILED",
         "intel_model_host": "same_device",
         "intel_duration_s": null,
         "capture_status": "finalized",
@@ -697,7 +697,7 @@
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
           "updated_at": "2026-09-23T09:39:33.981366",
-          "last_error": "Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00"
         }
@@ -736,7 +736,7 @@
         "intel": null,
         "intel_status": {
           "state": "queued",
-          "detail": "Deferred intel attempt 1/6 failed: Deferred intel failed: bound analysis did not publish Retrying at 2026-09-23T09:40:33.",
+          "detail": "PROVIDER FAILED",
           "requested_at": "2026-09-23T09:39:33.852695",
           "completed_at": null
         },
@@ -790,7 +790,7 @@
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
           "updated_at": "2026-09-23T09:39:33.981366",
-          "last_error": "Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00"
         },
@@ -844,14 +844,14 @@
         "last_refusal": null,
         "remaining": {
           "label": "Summary, topics, action items, and routed artifacts",
-          "detail": "Deferred intel failed: bound analysis did not publish"
+          "detail": "PROVIDER FAILED"
         },
         "job": {
           "status": "retrying",
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
           "updated_at": "2026-09-23T09:39:33.981366",
-          "last_error": "Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00",
           "planned_route": {
@@ -891,7 +891,7 @@
           "architecture"
         ],
         "intel_status": "error",
-        "intel_status_detail": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
+        "intel_status_detail": "PROVIDER FAILED",
         "intel_model_host": "same_device",
         "intel_duration_s": null,
         "capture_status": "finalized",
@@ -937,7 +937,7 @@
           "attempts": 1,
           "requested_at": "2026-09-23T09:39:34.139415",
           "updated_at": "2026-09-23T09:39:34.278445",
-          "last_error": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null
         }
@@ -976,7 +976,7 @@
         "intel": null,
         "intel_status": {
           "state": "error",
-          "detail": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
+          "detail": "PROVIDER FAILED",
           "requested_at": "2026-09-23T09:39:34.138755",
           "completed_at": null
         },
@@ -1030,7 +1030,7 @@
           "attempts": 1,
           "requested_at": "2026-09-23T09:39:34.139415",
           "updated_at": "2026-09-23T09:39:34.278445",
-          "last_error": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null
         },
@@ -1084,14 +1084,14 @@
         "last_refusal": null,
         "remaining": {
           "label": "Summary, topics, action items, and routed artifacts",
-          "detail": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish"
+          "detail": "PROVIDER FAILED"
         },
         "job": {
           "status": "failed",
           "attempts": 1,
           "requested_at": "2026-09-23T09:39:34.139415",
           "updated_at": "2026-09-23T09:39:34.278445",
-          "last_error": "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
+          "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null,
           "planned_route": {

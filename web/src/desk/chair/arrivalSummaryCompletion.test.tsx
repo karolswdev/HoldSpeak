@@ -103,6 +103,14 @@ function detailCalls() {
     .filter((path) => /^\/api\/meetings\/[^/?]+$/.test(path));
 }
 
+function expectProducerCause(candidate: SummaryCase) {
+  const cause = String(candidate.detail.intel_job?.last_error ?? "").trim();
+  const status = screen.getByTestId("arrival-summary-status");
+  expect(status).toHaveTextContent("LAST ERROR · PROVIDER FAILED");
+  expect(cause).toBe("PROVIDER FAILED");
+  expect(status.textContent ?? "").not.toMatch(/ATTEMPT\(S\)|DEFERRED INTEL|BOUND ANALYSIS|PUBLISH/i);
+}
+
 function emitRuntime(type: string) {
   for (const handler of [...(runtime.handlers[type] ?? [])]) handler();
 }
@@ -121,8 +129,8 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
 
     expect(await screen.findByText("35 S")).toBeInTheDocument();
-    expect(screen.getByText("16 WORDS")).toBeInTheDocument();
-    expect((await screen.findAllByText("We will ship the boundary change on Tuesday.")).length).toBe(2);
+    expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
+    expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
     expect(screen.getByTestId("arrival-route")).toHaveTextContent("THIS DEVICE");
     expect(screen.getByTestId("arrival-run-intel")).toBeInTheDocument();
     expect(screen.queryByTestId("meeting-summary-text")).toBeNull();
@@ -140,8 +148,12 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
     expect(screen.queryByTestId("arrival-summary-status")).toBeNull();
-    expect(screen.getByText("16 WORDS")).toBeInTheDocument();
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.").length).toBe(2);
+    expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
+    const transcriptFold = screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ });
+    expect(transcriptFold).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(0);
+    fireEvent.click(transcriptFold);
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
     expect(
       within(screen.getByTestId("arrival-meeting-row")).getByRole("button", {
         name: /^Open$/,
@@ -160,9 +172,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
       "LAST ATTEMPT · THIS DEVICE",
     );
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ERROR · Deferred intel failed: bound analysis did not publish",
-    );
+    expectProducerCause(retry);
     expect(screen.queryByText("Nothing needs you")).toBeNull();
   });
 
@@ -176,9 +186,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
       "LAST ATTEMPT · THIS DEVICE",
     );
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ERROR · Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
-    );
+    expectProducerCause(failed);
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you");
     expect(screen.queryByText("Nothing needs you")).toBeNull();
   });
@@ -199,9 +207,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       "The team reviewed the budget.",
     );
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("FAILED");
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ERROR · Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
-    );
+    expectProducerCause(mixed);
     expect(screen.getByTestId("summary-record-attempts")).toHaveTextContent("THIS DEVICE");
   });
 
@@ -244,10 +250,66 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<ChairHome />);
     seat(running);
 
-    await waitFor(() => expect(screen.getAllByText("We will ship the boundary change on Tuesday.").length).toBe(2));
+    await waitFor(() => expect(screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ })).toBeInTheDocument());
     resolveFirst(ready.detail);
     await waitFor(() => expect(screen.queryByText("The team reviewed the budget.")).toBeNull());
     expect(screen.queryByText("MEETING DETAIL IDENTITY CHANGED")).toBeNull();
+  });
+
+  it("keeps the open summary and user-open transcript through an unresolved desk refresh", async () => {
+    const ready = withTestIdentity(caseFor("success"), "m-refresh-stable");
+    const refreshed = {
+      ...ready,
+      detail: {
+        ...ready.detail,
+        intel: { ...ready.detail.intel, summary: "The team reviewed the launch." },
+      },
+    } as SummaryCase;
+    let detailReads = 0;
+    let resolveRefresh!: (value: unknown) => void;
+    const pendingRefresh = new Promise((resolve) => { resolveRefresh = resolve; });
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value === `/api/meetings/${ready.detail.id}`) {
+        detailReads += 1;
+        return detailReads === 1 ? ready.detail as never : pendingRefresh as never;
+      }
+      if (value === "/api/inference/assignments") return { rows: [], task_overrides: [], issue_count: 0 } as never;
+      if (value.startsWith("/api/desk/needs-you")) {
+        return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
+      }
+      if (value === "/api/door") return { board: {}, upcoming: [] } as never;
+      return null as never;
+    });
+    seat(ready);
+    render(<ChairHome />);
+
+    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent(
+      "The team reviewed the budget.",
+    );
+    const transcriptFold = screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ });
+    fireEvent.click(transcriptFold);
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+
+    const updatedAt = Number(useDesk.getState().updatedAt ?? 0) + 1;
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, meeting: [meetingFor(refreshed)] },
+      updatedAt,
+    } as never);
+    await waitFor(() => expect(detailReads).toBe(2));
+    expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
+      "The team reviewed the budget.",
+    );
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ }))
+      .toHaveAttribute("aria-expanded", "true");
+
+    resolveRefresh(refreshed.detail);
+    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent(
+      "The team reviewed the launch.",
+    ));
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+    expect(screen.getByTestId("arrival-meeting-row").parentElement).toHaveAttribute("data-open", "true");
   });
 
   it("names a response whose identity does not match the requested meeting", async () => {
@@ -266,11 +328,11 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     seat(ready);
     render(<ChairHome />);
 
-    expect(await screen.findByTestId("arrival-detail-error")).toHaveTextContent(
-      `MEETING DETAIL IDENTITY CHANGED · EXPECTED ${ready.detail.id} · RECEIVED ${running.detail.id}`,
-    );
+    expect(await screen.findByTestId("arrival-detail-error")).toHaveTextContent("SUMMARY READ FAILED");
     expect(screen.getByText("SUMMARY · READ FAILED")).toBeInTheDocument();
-    expect(screen.getByTestId("arrival-detail-retained")).toHaveTextContent("MEETING KEPT");
+    expect(screen.getByTestId("arrival-detail-retained")).toHaveTextContent("MEETING SAVED");
+    expect(screen.queryByText(ready.detail.id)).toBeNull();
+    expect(screen.queryByText(running.detail.id)).toBeNull();
     const retainedRow = screen.getByTestId("arrival-meeting-row");
     expect(retainedRow).toHaveTextContent(ready.detail.title);
     const open = within(retainedRow).getByRole("button", { name: /^Open$/ });
@@ -396,17 +458,13 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("RETRYING"));
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ERROR · Deferred intel failed: bound analysis did not publish",
-    );
+    expectProducerCause(snapshots[1]);
 
     emitRuntime("desk_changed");
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
-    expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent(
-      "LAST ERROR · Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish",
-    );
+    expectProducerCause(snapshots[2]);
     expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you");
     expect(screen.queryAllByTestId("arrival-run-intel")).toHaveLength(0);
     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).endsWith("/intelligence/run"))).toHaveLength(1);

@@ -1,0 +1,9 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo3_summary_detail.py tests/unit/test_philo3_summary_queue.py tests/unit/test_intel_queue.py tests/unit/test_meeting_deferred_admission.py
+
+Raw pytest tail:
+...............................................................          [100%]
+63 passed in 19.34s
+
+This combines the 10 cause/detail and queue tests with the 53 retry, lease,
+provider-boundary, and admission lifecycle tests.

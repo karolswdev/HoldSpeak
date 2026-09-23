@@ -1,0 +1,10 @@
+# PHILO-3-02 round two — inherited owner costs
+
+The owner explicitly ordered these two findings to be ledgered, not repaired in A2. Neither is a flake claim or a claim of usefulness. Muad'Dib's [recorded check](../../../../../../pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/checks/story-02-built-muaddib.md) supplies the counsel findings; the original observations remain immutable.
+
+| Finding | Classification | Evidence and owner cost | Home |
+| --- | --- | --- | --- |
+| Aftercare panel covers controls | b — inherited face defect | `web/src/components/AmbientLayer.tsx:158` renders the fixed aftercare panel, with bottom `104px`. The file is unchanged from main. The panel covers Capture Bar verbs at 1440 and topic tokens/dock at 393, not just a summary line. The retained `20260923T170832Z` 1440 and `20260923T170913Z` 393 summary shots show the panel; the latter raw summary hit test also fails ownership. This can obstruct a next action after successful completion. | Council follow-up for AmbientLayer/aftercare placement. Keep outside this A2 correction; no layout patch here. |
+| ASR instability on identical input | b — inherited speech-result defect | The same 34.67525-second synthetic WAV yields 76–299 transcript words in retained runs. `20260923T170507Z` failed/1440 records repeated `Casey Casey…`; other retained runs contain repetition and substitutions. The 81-word input and fixture hash did not change. ASR changes the material supplied to the summarizer, so successful summary transport does not prove recovery of planted facts. | Meeting ASR quality follow-up, using the retained source/WAV and complete observations. No decoding/model change here. |
+
+Evidence paths are under `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/`; each full run name is indexed in [all retained observations](../observations-index.md). [Usefulness](../usefulness.md) preserves the missing or corrupted decision/owner/action facts. The new transcript fold reduces default Arrival height; it does not repair either finding above.

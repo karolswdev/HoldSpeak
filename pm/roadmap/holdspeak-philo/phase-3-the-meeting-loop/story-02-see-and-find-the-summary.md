@@ -24,7 +24,7 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 ## Acceptance criteria
 
 - [x] A COMPLETED import with its length and transcript on the row (the case waits for completion).
-- [x] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; a retrying or failed job reads truthfully with its cause.
+- [x] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; retrying and failed jobs show their state, actual LAST ATTEMPT host, and the plain LAST ERROR · PROVIDER FAILED cause.
 - [x] The same summary is found after a hub restart (the rig's restart step, retained evidence), and the planned host is visible at 393 with nothing covering the control.
 - [x] One synthetic architect meeting with planted decisions, owners and actions is the material; the documented install is reproduced in isolation and its result retained (the model client question, D2) before the owner touches it.
 - [x] Closure evidence: the end-to-end chain on the rig with retained observations at both widths; technical completion and owner usefulness reported separately.
@@ -40,6 +40,8 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 - **Manual / device:** the owner's sitting on the finished chain.
 
 ## Lane record
+
+2026-09-23 — **OWNER RULED, counsel round two:** summary open, transcript collapsed by default, word count on its existing fold, one click to open. [Muad'Dib's RATIFY-WITH-CONDITIONS](checks/story-02-built-muaddib.md) identified that the earlier cause claim described a queue wrapper, not a plain cause. Box 2 now names the required displayed facts. The C1 correction, current queue count, refresh continuity and plain read-error facts are paid in the same follow-up; the story remains done and evidence is appended, with no new status flip. Aftercare obstruction and ASR instability are [ledgered, not repaired here](../../../../docs/internal/philo/phase-3/summary/round-2/deferred-ledger.md).
 
 2026-09-23 — **OWNER RATIFIED:** “Ratify, build it.” The corrected Arrival boards in `assets/story-02-canvas/` were published at [the owner canvas](https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX). Seams (c) and (d) now build under that ratification and Muad'Dib's recorded check: existing row grammar, length and words, planned host before Run, actual receipt afterwards, summary/transcript wells, LAST ATTEMPT / LAST ERROR, no new row verb or attempt limit.
 

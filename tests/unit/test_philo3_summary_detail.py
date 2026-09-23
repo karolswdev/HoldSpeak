@@ -31,6 +31,15 @@ from tests.unit.test_phase143_inference_assignments import _manifest, _result_cl
 
 OWNER = Principal(PrincipalKind.OWNER, "summary-detail-owner")
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "philo3_summary_wire.json"
+PROVIDER_FAILURE_CAUSE = "PROVIDER FAILED"
+
+
+def _assert_plain_provider_cause(cause: Any, expected: str) -> None:
+    """The Arrival receives the provider cause, without queue implementation text."""
+    assert cause == expected
+    assert "Deferred intel failed" not in cause
+    assert "bound analysis" not in cause
+    assert "attempt(s)" not in cause
 
 
 def _meeting(db: Any, meeting_id: str) -> MeetingState:
@@ -485,6 +494,8 @@ def test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_sta
     reads = _reads(db, state.id)
     producer_error = db.intel.get_latest_intel_job(state.id).last_error
     assert producer_error
+    assert producer_error == PROVIDER_FAILURE_CAUSE
+    _assert_plain_provider_cause(producer_error, PROVIDER_FAILURE_CAUSE)
     for payload in (reads["list"], reads["detail"]):
         job = payload["intel_job"]
         assert job["status"] == "retrying"
@@ -524,6 +535,7 @@ def test_real_producer_terminal_failure_projects_failed_cause(
     reads = _reads(db, state.id)
     producer_error = db.intel.get_latest_intel_job(state.id).last_error
     assert producer_error
+    _assert_plain_provider_cause(producer_error, PROVIDER_FAILURE_CAUSE)
     for payload in (reads["list"], reads["detail"]):
         job = payload["intel_job"]
         assert job["status"] == "failed"

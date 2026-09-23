@@ -691,7 +691,7 @@ def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> N
     """Rendered proof reads Arrival's summary/error surfaces, not old wrappers."""
     wanted = {
         "case.j6.run_summary.summary_text": ("[data-testid=meeting-summary-text]", "text_nonempty"),
-        "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_contains"),
+        "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_equals"),
         "case.j7.arrival_load.reload_persisted": ("[data-testid=meeting-summary-text]", "text_equals"),
     }
     problems: list[str] = []
@@ -705,7 +705,7 @@ def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> N
         if "HOLDSPEAK-SYNTH-1" in words or ".desk-window .surface-material" in words:
             problems.append(f"{case_id}: retains the old summary marker or wrapper")
     failed = next(case for case in _summary_cases(atlas) if case["id"] == "case.j6.run_summary.intel_failed")
-    if failed["expected"]["predicate"].get("value") != "FAILED\nLAST ATTEMPT":
+    if not failed["expected"]["predicate"].get("value", "").startswith("FAILED\nLAST ATTEMPT · "):
         problems.append("case.j6.run_summary.intel_failed: a retry cause is not terminal failure")
     assert not problems, problems
 

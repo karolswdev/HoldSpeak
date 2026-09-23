@@ -50,7 +50,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 ## Where we are
 
-2026-09-23: **A2 BUILT, technical completion verified**. One completed synthetic import → one Run → actual LAN host and summary on Arrival → identical summary/receipt after restart, at both widths. Full web green; Python fallout fixed or reproduced on main and classified. [Lane record](summary-lane-record.md) separates this from **partial usefulness** and the pending owner sitting. Muad'Dib's counsel on built is pending before merge. The phase exit stays open.
+2026-09-23: **A2 BUILT, technical completion verified**. One completed synthetic import → one Run → actual LAN host and summary on Arrival → identical summary/receipt after restart, at both widths. Full web green; Python fallout fixed or reproduced on main and classified. [Lane record](summary-lane-record.md) separates this from **partial usefulness** and the pending owner sitting. Muad'Dib's [recorded counsel on built](checks/story-02-built-muaddib.md) is RATIFY-WITH-CONDITIONS. Round-two corrections and six new walks pass; integrating A3/main and completing final full verification precede push and his re-read. The phase exit stays open.
 
 2026-09-23: A4 BUILT on the ratified canvas — the Thought foot shows KEPT · time / SAVING… / DID NOT SAVE · cause + Retry / CHANGED ELSEWHERE + Reload with the filing line below; every state shot on a real hub at both widths; the library receipt line raised to the 12 px floor. A1 on PR #613 (Astra counsel). A2 (Astra) in flight.
 
@@ -72,6 +72,8 @@ PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then q
 | Scope creep from the deferred list | high | the deferred list is explicit; a new story needs the owner's word | a fifth story appears |
 
 ## Decisions made (this phase)
+
+- 2026-09-23 — owner ruled summary open, transcript collapsed by default, word count on the existing fold, one click to open; applied in A2 round two. Aftercare obstruction and ASR instability are ledgered, not repaired in A2.
 
 - 2026-09-23 — chartered from the council's decision page; A1–A3 per Astra's counter-draft, A4 per Muad'Dib's ruling, D3 open — the two brains.
 

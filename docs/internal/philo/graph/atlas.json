@@ -2748,15 +2748,19 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "FAILED\nLAST ATTEMPT"
+          "kind": "text_equals",
+          "value": "FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
-        "words": "FAILED with LAST ATTEMPT and LAST ERROR on Arrival; a scheduled retry is not terminal failure",
+        "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
         "reads": [
           {
             "method": "GET",
             "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/summary"
           }
         ]
       },
@@ -7397,15 +7401,19 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "RETRYING"
+          "kind": "text_equals",
+          "value": "RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
-        "words": "After one Run and a retained provider failure, Arrival reads RETRYING with LAST ERROR and the actual LAST ATTEMPT host; its real automatic successor is queued with backoff.",
+        "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
         "reads": [
           {
             "method": "GET",
             "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/summary"
           }
         ]
       },
@@ -8054,7 +8062,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefLoading",
-          "line": 1162,
+          "line": 1172,
           "claim": "the Chair draws the generate branch when the read finished and there is no brief"
         }
       ],
@@ -8104,7 +8112,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 1174,
+          "line": 1184,
           "claim": "the Chair's second verb reads Generating... in flight"
         }
       ],
@@ -8142,7 +8150,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "reportWriteFailure",
-          "line": 646,
+          "line": 656,
           "claim": "a refused generate reaches the desk's write-failure channel with a retry"
         }
       ],
@@ -8192,7 +8200,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 767,
+          "line": 777,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -8212,7 +8220,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1163,
+          "line": 1173,
           "claim": "a brief with nothing untriaged still keeps its own section after a reload"
         }
       ],
@@ -8239,7 +8247,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 770,
+          "line": 780,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -8663,7 +8671,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2132,
+          "line": 2153,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -10357,7 +10365,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 565,
+          "line": 575,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {

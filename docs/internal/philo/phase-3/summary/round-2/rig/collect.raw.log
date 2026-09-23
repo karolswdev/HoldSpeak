@@ -1,0 +1,4 @@
+tests/unit/test_philo3_summary_round2_atlas.py::test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.intel_failed-FAILED]
+tests/unit/test_philo3_summary_round2_atlas.py::test_actual_j6_recipe_requires_plain_provider_cause[case.j6.run_summary.retrying-RETRYING]
+
+2 tests collected in 0.04s
