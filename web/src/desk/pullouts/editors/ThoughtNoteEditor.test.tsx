@@ -82,7 +82,7 @@ describe("ThoughtNoteEditor", () => {
     expect(calls[1][1]).toMatchObject({ title: "B" });
   });
 
-  it("keeps a generic save failure in the editor with Retry save and refuses completion flush", async () => {
+  it("keeps a generic save failure in the editor with Retry and refuses completion flush", async () => {
     vi.useFakeTimers();
     useDesk.setState({ refresh: vi.fn() });
     vi.mocked(saveThoughtWorking).mockRejectedValueOnce(new Error("offline"));
@@ -90,7 +90,8 @@ describe("ThoughtNoteEditor", () => {
     render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Unsaved" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
-    expect(screen.getByRole("status")).toHaveTextContent("Retry save");
+    expect(screen.getByRole("status")).toHaveTextContent("DID NOT SAVE · THE HUB DID NOT ANSWER");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     await expect(editor.current!.flush()).rejects.toThrow("thought save failed");
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
@@ -113,7 +114,7 @@ describe("ThoughtNoteEditor", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("B");
     expect(screen.getByLabelText("Body")).toHaveValue("Before body");
     expect(screen.getByLabelText("Tags")).toHaveValue("before");
-    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(screen.getByRole("status")).toHaveTextContent("CHANGED ELSEWHERE");
     expect(onThought).toHaveBeenCalledWith(current);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
@@ -138,7 +139,7 @@ describe("ThoughtNoteEditor", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("A");
     expect(screen.getByLabelText("Body")).toHaveValue("Before body");
     expect(screen.getByLabelText("Tags")).toHaveValue("before");
-    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(screen.getByRole("status")).toHaveTextContent("CHANGED ELSEWHERE");
     expect(onThought).toHaveBeenCalledWith(parentCurrent);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });
@@ -163,7 +164,7 @@ describe("ThoughtNoteEditor", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("A");
     expect(screen.getByLabelText("Body")).toHaveValue("Before body");
     expect(screen.getByLabelText("Tags")).toHaveValue("before");
-    expect(screen.getByRole("status")).toHaveTextContent("unsaved edits are still here");
+    expect(screen.getByRole("status")).toHaveTextContent("CHANGED ELSEWHERE");
     expect(onThought).toHaveBeenCalledWith(parentCurrent);
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);
   });

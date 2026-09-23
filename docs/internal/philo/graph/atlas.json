@@ -9430,14 +9430,14 @@
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
           "symbol": "documentThought",
-          "line": 113,
+          "line": 114,
           "claim": "the Thought window holds the note it opened"
         },
         {
-          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
-          "line": 486,
-          "claim": "its foot states KEPT or NOT IN A DRAWER"
+          "line": 42,
+          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT \u00b7 time from the last successful write (PHILO-3-04)"
         }
       ],
       "reachable_by": [
@@ -9461,7 +9461,7 @@
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
           "symbol": "setRevealRange",
-          "line": 121,
+          "line": 125,
           "claim": "the Thought window carries an explicit focus/selection range"
         }
       ],

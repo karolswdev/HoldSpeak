@@ -24,6 +24,9 @@ export interface Thought {
   attachments?: ThoughtAttachment[];
   working_note: ThoughtNote;
   filing_status: "filed" | "missing";
+  /** The drawer the working note is filed in (present when filed). */
+  directory_id?: string;
+  directory_name?: string;
   continuity?: { state: string; invocation_id?: string; review_result_id?: string; code?: string };
 }
 

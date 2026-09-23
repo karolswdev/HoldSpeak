@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** the meeting loop
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -23,9 +23,9 @@ edge.face.thought_editor_fill; edge.route.thoughts_working_patch; state.thoughts
 
 ## Acceptance criteria
 
-- [ ] The Thought face shows "Kept · HH:MM" bound to the LAST SUCCESSFUL WRITE, with distinct pending and failure states; the filing state stays a separate line.
-- [ ] The face is designed on the canvas first (UX-CANON: design before build) and the owner ratifies the canvas.
-- [ ] Closure evidence: type → autosave → the receipt with its time on the face and the row in `GET /api/notes`, at both widths; a failed write shows its failure.
+- [x] The Thought face shows "Kept · HH:MM" bound to the LAST SUCCESSFUL WRITE, with distinct pending and failure states; the filing state stays a separate line.
+- [x] The face is designed on the canvas first (UX-CANON: design before build) and the owner ratifies the canvas.
+- [x] Closure evidence: type → autosave → the receipt with its time on the face and the row in `GET /api/notes`, at both widths; a failed write shows its failure.
 
 ## Effort (council estimate, not a promise)
 
