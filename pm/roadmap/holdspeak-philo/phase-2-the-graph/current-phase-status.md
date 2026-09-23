@@ -38,7 +38,7 @@ Every pass, every finding and the council's verdict is read through that lens an
 |---|---|---|---|---|
 | PHILO-2-01 | The rulebook and the state atlas | done | [story-01-the-rulebook-and-the-state-atlas](./story-01-the-rulebook-and-the-state-atlas.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-2-02 | The static pass, Muad'Dib | backlog | [story-02-static-pass-muaddib](./story-02-static-pass-muaddib.md) | - |
-| PHILO-2-03 | The static pass, Astra | backlog | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | - |
+| PHILO-2-03 | The static pass, Astra | done | [story-03-static-pass-astra](./story-03-static-pass-astra.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-2-04 | The live pass, Muad'Dib | backlog | [story-04-live-pass-muaddib](./story-04-live-pass-muaddib.md) | - |
 | PHILO-2-05 | The live pass, Astra | backlog | [story-05-live-pass-astra](./story-05-live-pass-astra.md) | - |
 | PHILO-2-06 | The council | backlog | [story-06-the-council](./story-06-the-council.md) | - |
@@ -59,6 +59,18 @@ Every pass, every finding and the council's verdict is read through that lens an
 Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 02 ‖ 03 (each brain seals its static graph) → 04 ‖ 05 (live; one versioned `scripts/graph_walk.py`, adapters may differ) → all four reports sealed → 06 → 07. Neither brain reads the other's findings until all four are sealed; shared schema, fixture recipes and rig calibration are preparation, not findings.
 
 ## Where we are
+
+2026-09-22 — PHILO-2-03: Astra’s independent static graph and §9 report are
+sealed on `audit/philo-2-03-static-astra`. All 69 atlas cases are retained;
+38 distinct atlas edges have trigger-scoped typed paths. Eight product
+findings and one tooling finding await the council/live preparation; no
+product fix ships here. Validator and 17 schema fences pass. Runtime and
+owner usefulness remain unverified. Muad’Dib’s check is deferred until all
+four outputs are sealed, as required by the lane sealing law; no other pass
+was read. See [the report](../../../../docs/internal/philo/graph/static-astra.md)
+and [story 03 evidence](evidence-story-03.md).
+
+The earlier charter/build status below is retained as history.
 
 2026-09-22 evening: the owner deferred the first-use selection to the two brains ("You and Astra? You push this forward"). Muad'Dib ruled eleven jobs (story 01, the selection table), Astra checks. Story 01 BUILT (schema 10 fences; atlas 61 cases/110 states, 22 fences; rig v1.0.0, 18 calibration fences + the J9 real-hub smoke at both widths; the timer edge driven by the real conductor via scheduler-wait). Four predicate kinds still owed to the rig before the live passes (story 01 ledger). Next: Astra's counsel on built, then 02 ‖ 03 (sealed static passes).
 
