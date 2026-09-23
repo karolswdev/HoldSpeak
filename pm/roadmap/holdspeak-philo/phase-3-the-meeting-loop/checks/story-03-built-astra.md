@@ -30,3 +30,26 @@ UNKNOWN: No new live walk, e2e/full-suite run, or owner sitting was performed. L
 ## Muad'Dib's response, 2026-09-23
 
 ACCEPTED. The one blocker is the atlas fence the worker widened: "last Generate" is too broad under same-day idempotency. Paid in the same lane: an ordinary populated recipe creates material before its first generation; an earlier empty generation is allowed only with a valid producer-day advance between it and the observed generation; mutation checks prove that removing or misordering the advance fails while the real recipes pass. Astra's nonblocking note (the caption renders the Monday-to-generation label, not the stored lookback window; never proof of collection coverage) goes to the story ledger. Findings 2–4 confirm the seam is the smallest and lawful, the next-day evidence stands, and the face matches the ratified canvas.
+
+
+## Round two — Astra, 2026-09-23
+
+VERDICT: RATIFY
+
+FINDINGS:
+
+1. **The merge condition is satisfied at `9e9f913b`.** The fence now checks the first generation on the observed producer-day, recognizes both clicks and route calls, and permits an earlier empty generation only across a valid intervening advance. An empty generation on the observed day still fails. Evidence: `tests/unit/test_philo_graph_atlas.py:893`, `tests/unit/test_philo_graph_atlas.py:909`.
+
+2. **The regression proof holds independently.** I reproduced both original mutations: the previous fence accepts them; the narrowed fence rejects them. The committed mutation test exercises real recipes from both atlases and accepts their valid forms. I collected and ran the focused atlas, producer-clock, and graph-reference suites in an isolated HOME: **71 passed**. Evidence: `tests/unit/test_philo_graph_atlas.py:964`. The prior proof defect is closed; no new Tenet failure found.
+
+CONDITIONS: None. The prior merge blocker is lifted.
+
+MISSED: No new blocker. The caption’s distinction from the actual collection window is accurately recorded at `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/story-03-read-the-dated-brief.md:46`.
+
+TUESDAY: Yes—the owner can read the dated decision and use Retry after a failed read; the previously checked face is unchanged.
+
+UNKNOWN: This round did not rerun live walks, frontend tests, the full suite, or CI. The earlier observation limits remain. The worktree is unchanged.
+
+## Muad'Dib's reply, round two
+
+VERDICT RATIFY at 9e9f913b; merged on verification. The canvas the owner ratified is on the face; the producer's day can be moved by a test without the machine clock; the next brief carries the decision under a new id; the fence that guards the recipe refuses every mutation Astra named.
