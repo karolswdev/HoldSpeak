@@ -21,6 +21,7 @@ import { useLaunchers } from "./DeskWindow";
 import { useGate } from "../gate";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
+import { useCompactViewport } from "../useCompactViewport";
 import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
@@ -139,6 +140,10 @@ export function DeskChrome({
   // (Create, Seed) names itself in the system bar beside the hub state it
   // belongs with, and yields to any nearer receipt line on screen.
   const { receipt: writeReceipt } = useDeskWriteReceipt({ fallback: true });
+  // PHILO-3-01 (the owner's ruling 2026-09-23): at phone width the receipt
+  // is its own full-width row in the desk flow (DeskReceiptRow), not a seat
+  // in the bar.
+  const compact = useCompactViewport();
 
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
@@ -261,7 +266,7 @@ export function DeskChrome({
         />
       </div>
 
-      {writeReceipt ? (
+      {writeReceipt && !compact ? (
         <div className="desk-chrome desk-chrome-receipt">{writeReceipt}</div>
       ) : null}
 

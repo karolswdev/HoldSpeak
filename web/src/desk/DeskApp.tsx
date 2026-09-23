@@ -9,6 +9,8 @@ import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
+import { DeskReceiptRow } from "./components/DeskReceiptRow";
+import { useCompactViewport } from "./useCompactViewport";
 import { ChairHome } from "./chair";
 import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
@@ -74,6 +76,7 @@ function menuGlyphsVariant(): string {
 }
 
 export default function DeskApp() {
+  const compact = useCompactViewport();
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
   const roadmapWindows = useDesk((s) => s.roadmapWindows);
@@ -183,6 +186,9 @@ export default function DeskApp() {
       )}
       {showFloor && <GlassDropLayer />}
       {!arrivalRequired && <DeskChrome showDailyStarts={!empty} />}
+      {/* PHILO-3-01 — the owner's ruling: at phone width a standing write
+          receipt is a full-width row between the bar and the work. */}
+      {!arrivalRequired && compact && <DeskReceiptRow />}
       {showFloor ? (
         empty ? (
           <EmptyDesk arrivalRequired={setup?.arrival_required === true} />

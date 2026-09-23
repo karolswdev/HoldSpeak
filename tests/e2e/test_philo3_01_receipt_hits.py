@@ -146,6 +146,36 @@ def _probe(page, scope: str, name: str, width: int, failures: list[str]) -> None
     page.screenshot(path=str(SHOTS / f"{name}-{width}.png"))
 
 
+def _row_law(page, failures: list[str]) -> None:
+    """The row is in the flow between the bar and the work, full width, its
+    label whole; the Chair starts below it; the bar holds no receipt."""
+    fact = page.evaluate("""() => {
+      const row = document.querySelector('.desk-receipt-row');
+      const bar = document.querySelector('.desk-menubar');
+      const chair = document.querySelector('.chair');
+      const label = row.querySelector('.write-receipt-label');
+      const rr = row.getBoundingClientRect(), br = bar.getBoundingClientRect();
+      const cr = chair ? chair.getBoundingClientRect() : null;
+      return { position: getComputedStyle(row).position, rowTop: rr.top, rowBottom: rr.bottom,
+               rowLeft: rr.left, rowRight: rr.right, barBottom: br.bottom, vw: innerWidth,
+               chairTop: cr && cr.top, labelClipped: label.scrollWidth > label.clientWidth + 1,
+               labelFont: parseFloat(getComputedStyle(label).fontSize),
+               barReceipt: !!document.querySelector('.desk-menubar .write-receipt') };
+    }""")
+    if fact["position"] not in ("static", "relative"):
+        failures.append(f"row@393: position {fact['position']}, not in the flow")
+    if fact["rowTop"] < fact["barBottom"]:
+        failures.append(f"row@393: top {fact['rowTop']} is under the bar ({fact['barBottom']})")
+    if fact["rowLeft"] > 16.5 or fact["rowRight"] < fact["vw"] - 16.5:
+        failures.append(f"row@393: {fact['rowLeft']}..{fact['rowRight']} is not full width")
+    if fact["chairTop"] is not None and fact["chairTop"] < fact["rowBottom"]:
+        failures.append(f"row@393: the Chair starts at {fact['chairTop']}, inside the row")
+    if fact["labelClipped"]:
+        failures.append("row@393: the label is cut")
+    if fact["barReceipt"]:
+        failures.append("row@393: the bar still holds a receipt")
+
+
 @pytest.fixture(scope="module")
 def hub():
     home = Path(tempfile.mkdtemp(prefix="philo3-receipt-hits-"))
@@ -173,7 +203,12 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         # 1. the chrome receipt (the desk backstop)
         _fault(page, "POST", "/api/decisions")
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
-        _probe(page, ".desk-chrome-receipt", "chrome", width, failures)
+        # the owner's ruling (2026-09-23): at phone width the backstop is a
+        # full-width row in the desk flow, not a seat in the bar
+        seat = ".desk-receipt-row" if width <= 720 else ".desk-chrome-receipt"
+        _probe(page, seat, "chrome", width, failures)
+        if width <= 720:
+            _row_law(page, failures)
         page.unroute("**/*")
         page.reload()
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)

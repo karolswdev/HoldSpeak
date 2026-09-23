@@ -936,36 +936,6 @@
   .desk-next .desk-menubar .desk-chrome-inbound + .egress-badge {
     max-width: 80px;
   }
-  /* PHILO-3-01 — the phone bar has no room for the backstop receipt (its
-     slot collapsed to zero width, so a failure was in the DOM and on no
-     screen). It seats as a strip under the bar, on the left. Its top keeps
-     the verbs' 44 px areas off the bar: an area that reached into the bar
-     would take points from the bar's controls. PLACEMENT AWAITS THE
-     OWNER'S RULING (story-01-canvas/receipt-strip-393). */
-  .desk-next .desk-menubar .desk-chrome-receipt {
-    position: fixed;
-    top: 38px;
-    left: 12px;
-    overflow: visible;
-  }
-  .desk-next .desk-menubar .write-receipt {
-    height: 24px;
-    flex-wrap: nowrap;
-    max-width: calc(100vw - 72px);
-    letter-spacing: 0.01em;
-    gap: 3px;
-    padding: 0 4px;
-  }
-  .desk-next .desk-menubar .write-receipt-label {
-    min-width: 0;
-  }
-  .desk-next .desk-menubar .write-receipt button {
-    min-height: 24px;
-    height: 24px;
-    margin-block: 0;
-    padding: 0 5px;
-    font-size: 12px;
-  }
 }
 
 @media (max-width: 420px) {

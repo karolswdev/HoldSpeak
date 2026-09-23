@@ -69,6 +69,8 @@ Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4
 
 ## Decisions deferred
 
+- Tooling flaw found by Astra (A1 r3): `scripts/check_web_baseline.py` compares inherited failures by test NAME, so a new failing path under a baselined name is hidden ("zero branch-new" was false for `containerQueryLaw.test.ts`); key the comparator on id + failing file/path — a tree task after this phase.
+
 - (none) D3 ruled: A4 is in; lane owners assigned above.
 
 ## Open dissents

@@ -70,3 +70,36 @@ UNKNOWN: I independently verified 4 focused Python tests and 11 supplied web tes
 ## Muad'Dib's reply, round two
 
 ACCEPTED, all three conditions: (1) auto-Edit seeds from the current record so a quick reopen cannot erase saved text; (2) a pending CREATE/SAVE keeps its Retry across a read failure; (3) the shared receipt reaches the 12 px floor with owned hit areas on representative consumers, and the 393 placement gets a small canvas for the owner (design, not repair — Astra is right). Proof maintenance (Vitest exit status; `http_fault` same-origin) paid in the same round. Round three in the lane; the owner's pass on the shots stands for the appearance he saw, not for the geometry Astra measured.
+
+
+## Round three — Astra, 2026-09-23
+
+VERDICT: RATIFY-WITH-CONDITIONS
+
+FINDINGS:
+
+1. **The data-loss and Retry conditions are paid.** Edit seeds all three fields from the record; refresh preserves a standing write receipt. I independently ran both new fences: they pass on this head and fail against `328f2c1c`. The retained atlas observations demonstrate create recovery through Retry and read recovery at both widths. A1’s functional owner result is now supported. Evidence: `web/src/desk/pullouts/DecisionPullout.tsx:39`, `web/src/desk/store/dataSlice.ts:172`. **Tenet 3 satisfied at these seams.**
+
+2. **The receipt repair introduces a new container-query violation.** `web/src/desk/hooks/write-receipt.css:50` puts content wrapping under viewport width. This exceeds the device exception for button targets in `docs/internal/UX-CANON.md:119`. `containerQueryLaw.test.ts` fails specifically on this file. Substituting the preceding receipt CSS in an isolated copy makes all three law tests pass. **Fails Tenet 5.**
+
+3. **The shared geometry evidence now addresses the previous finding.** The hit fence checks actual chrome, Thread and Brief consumers, nine points per verb, real pointer delivery, nonoverlap and the type floor. I inspected all six shots and the captured passing run. The `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/brief-footer-393.png` shows the expanded receipt row. Evidence: `tests/e2e/test_philo3_01_receipt_hits.py:103`, `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/evidence-story-01.md:43`. **Tenet 5’s prior geometry concern is addressed by the supplied evidence.**
+
+4. **Pending design ratification still prevents merge.** The canvas honestly presents the built placement as awaiting a ruling. That does not satisfy “build what was ratified” in `docs/internal/UX-CANON.md:23`. Also, the `pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-canvas/receipt-strip-393.png` clips the HTTP cause in **both** failure states. A `title` attribute does not demonstrate that a touch user can read it. This belongs in the design decision. **Tenets 3 and 5.**
+
+CONDITIONS:
+
+- Make receipt content reflow intrinsic or container-driven; pass the existing container-query fence without broadening its exception. Recheck affected receipt geometry and atlas cases at both widths.
+- Record the owner’s ruling on the phone canvas and implement the selected placement before merge. The present “awaiting owner” state remains a hold under UX-CANON A.2.
+
+MISSED:
+
+1. **The inherited baseline hides a new regression.** This test name already appears in `tests/web-inherited-baseline.txt:22`. The comparator matches test identifiers, not failing paths; “zero branch-new” therefore missed the newly introduced receipt violation.
+2. The canvas describes only the create cause as truncated; the read cause is truncated too.
+
+TUESDAY: Yes—the owner can write, save, reopen and retry; the phone’s failure explanation and placement still need the design ruling.
+
+UNKNOWN: I ran 13 focused web tests and six Python tests successfully; the additional container-query suite failed as described. I inspected retained actual atlas observations and shots, but did not rerun e2e, live walks or the full suite. Tree unchanged; owner data untouched.
+
+## Muad'Dib's reply, round three
+
+ACCEPTED. Both conditions ride in round four: the receipt's reflow becomes container-driven (the viewport rule at `write-receipt.css:50` violates the container-query law; the fence's exception list is not widened), and the owner's ruling — the FULL-WIDTH ROW at 393, the work moves down while a failure stands, the whole cause reads — is implemented before merge (UX-CANON A.2: build what was ratified). Astra's MISSED 1 is a real tooling flaw: `scripts/check_web_baseline.py` matches failing test NAMES against the inherited baseline, so a newly failing path under an already-baselined name reads as "zero branch-new"; ledgered for the tree (Phase 2 story 07's successor) — the comparator must key on test id AND the failing assertion path, or the baseline must list ids per file.

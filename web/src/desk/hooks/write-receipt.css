@@ -7,7 +7,12 @@
   align-items: center;
   gap: 6px;
   max-width: 100%;
-  height: 24px;
+  /* PHILO-3-01: the strip grows in layout to hold its verbs (at the narrow
+     desk the library Button reserves its 44 px area in margin; the ruling:
+     allow layout growth, reject a clipped area). No query: it wraps, and
+     the label goes above the verbs when the row is short. */
+  min-height: 24px;
+  flex-wrap: wrap;
   padding: 0 7px;
   border-radius: 2px;
   background: var(--wash-1);
@@ -38,28 +43,13 @@
 
 .write-receipt-retry,
 .write-receipt-dismiss {
-  height: 20px;
+  height: 24px;
   font-size: 12px;
   padding: 0 6px;
 }
 
-/* PHILO-3-01: at the narrow desk the verbs keep the library's 24 px face
-   and 44 px owned area (global.css, HS-202-05). The strip grows in layout
-   to hold the areas (the ruling: allow layout growth, reject a clipped
-   area), and the label wraps above the verbs when the row is short. */
-@media (max-width: 420px) {
-  .write-receipt {
-    height: auto;
-    min-height: 24px;
-    flex-wrap: wrap;
-  }
-  .write-receipt-label {
-    min-width: min(100%, max-content);
-  }
-  .write-receipt-retry,
-  .write-receipt-dismiss {
-    height: 24px;
-  }
+.write-receipt-label {
+  min-width: min(100%, max-content);
 }
 
 .write-receipt-row {
@@ -76,7 +66,11 @@
 }
 .desk-next .desk-menubar .write-receipt {
   height: 24px;
+  flex-wrap: nowrap;
   max-width: 46vw;
+}
+.desk-next .desk-menubar .write-receipt-label {
+  min-width: 0;
 }
 /* PHILO-3-01: the verbs are the library Button (no longer .desk-chip). The
    bar's own button rule would give them 22 px in a 24 px strip; they keep
@@ -86,4 +80,32 @@
   height: 20px;
   padding: 0 6px;
   font-size: 12px;
+}
+
+/* PHILO-3-01 — the owner's ruling (2026-09-23): "Full-width row, work
+   moves down". At phone width (DeskReceiptRow) the receipt is a row in the
+   desk flow between the bar and the work: the full width, the label never
+   cut (it wraps), the verbs below it when needed. The Chair starts under
+   the row and gives up exactly the row's height (--desk-receipt-row-h,
+   measured by the row). A clean desk renders no row. */
+.desk-next > .desk-receipt-row {
+  margin: var(--desk-work-top) var(--space-3) 0;
+}
+.desk-receipt-row .write-receipt {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  padding-block: 2px;
+}
+.desk-receipt-row .write-receipt-label {
+  flex: 1 1 12ch;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+.desk-next:has(> .desk-receipt-row) .chair:not(.chair-first-value) {
+  margin-top: var(--space-2);
+  height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - var(--desk-receipt-row-h, 0px) - var(--space-2));
+  max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - var(--desk-receipt-row-h, 0px) - var(--space-2));
 }
