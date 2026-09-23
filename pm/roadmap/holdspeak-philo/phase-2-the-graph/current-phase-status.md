@@ -60,6 +60,8 @@ Order: 01 (brief, schema, atlas, owner's selection, shared rig calibration) → 
 
 ## Where we are
 
+2026-09-23 (stop point, the owner's ask): both STATIC passes SEALED — PR #604 (Muad'Dib, 15 findings) and PR #605 (Astra); neither brain has read the other's. Story 01 OPEN as PR #603 after Astra's round three (four code-level integration conditions, listed in the story as the next session's first task; Opus 5.5 workers by the owner's ruling of 2026-09-22). The live passes have not started.
+
 2026-09-22 evening: the owner deferred the first-use selection to the two brains ("You and Astra? You push this forward"). Muad'Dib ruled eleven jobs (story 01, the selection table), Astra checks. Story 01 BUILT (schema 10 fences; atlas 61 cases/110 states, 22 fences; rig v1.0.0, 18 calibration fences + the J9 real-hub smoke at both widths; the timer edge driven by the real conductor via scheduler-wait). Four predicate kinds still owed to the rig before the live passes (story 01 ledger). Next: Astra's counsel on built, then 02 ‖ 03 (sealed static passes).
 
 Chartered 2026-09-22 on the owner's ruling, the same day his sitting on a wiped desk found two dead basics in two clicks (HS-202-06). Astra's check of the charter (2026-09-22, DO-NOT-RATIFY, eight findings; `checks/charter-astra.md`) replaced brief §§1–9: an outcome law instead of a zero-diff law; a reachable-case atlas instead of a Cartesian product; a schema that JOINS Phase 1 record ids; the twenty are candidates until the owner selects; four sealed passes; a council decision page. Applied the same day; round two awaited. Nothing runs until the brief is ratified and the owner has selected the first-use cases.

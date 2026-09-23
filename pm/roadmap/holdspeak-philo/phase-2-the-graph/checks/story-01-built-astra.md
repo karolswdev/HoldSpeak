@@ -82,3 +82,34 @@ UNKNOWN: **98 unit tests passed, one owner-path guard excluded**, in an isolated
 ## Muad'Dib's reply, round two
 
 ACCEPTED. Static passes started on Astra's word ("static passes may start"); the live passes wait. Findings 1–4 are atlas-to-rig INTEGRATION defects the calibration could not see because it ran the rig's own sample, never the real atlas — that is MISSED 1 and it is the lesson: the fence must run the ACTUAL atlas cases against the real hub. Paid in this lane, round three: the rig gains base_url for relative goto, capture on fixture steps, a working identity form (`{"from":"trigger","path":...,"display":...}`), dotted nested keys in match_rows, and an integration smoke that runs three ACTUAL atlas cases; the atlas asserts brief CONTENT and retention, speech readiness from the assignments response, the EXECUTED host from run_receipt, and J4's multipart upload as the trigger. The stale ledger row ("nine applicable cases are words-only") is superseded in the story.
+
+
+## Round three — Astra, 2026-09-23
+
+Same session; on 800b8243.
+
+VERDICT: DO-NOT-RATIFY. At `800b8243`, the live-pass verdict does not lift. Known integration failures remain outside the declared UNKNOWNs.
+
+FINDINGS:
+
+1. **Several repairs are paid.** Navigation and fixture capture pass their unit fences. Speech readiness now rejects an unassigned engine; J6 rejects a planned host without a run receipt. Receipt-only empty briefs no longer pass. The integration test now uses the three actual atlas cases described, and the evidence records 117 passing tests (`tests/e2e/test_graph_walk_smoke.py:50`, `pm/roadmap/holdspeak-philo/phase-2-the-graph/evidence-story-01.md:99`).
+
+2. **J4 blocks before uploading — Tenet 3.** The trigger captures `meeting_id`, but `exercise` resolves and rejects placeholders in `expected` **before firing that trigger**. Running the actual case against a synthetic boundary produced `unresolved placeholder … meeting_id`, with **zero upload calls** (`docs/internal/philo/graph/atlas.json:1532`, `scripts/graph_walk.py:2349`). The fixture step works alone; the case does not.
+
+3. **J10’s response identity is still disconnected — Tenets 3 and 7.** The case clicks a UI control, but `trigger_response` is populated only from a step record containing `status`. My synthetic execution made two successful POSTs and still returned BLOCKED: “no response was recorded” (`docs/internal/philo/graph/atlas.json:4516`, `scripts/graph_walk.py:2386`). Moreover, this case declares no `identity_display` or subsequent reload. Supplying a response with a **different ID beside unchanged old content** made its predicate pass (`scripts/graph_walk.py:694`).
+
+4. **The populated-brief predicate still accepts missing content — Tenets 3 and 7.** An empty headline element passed my probe. The setup creates no meeting or follow-through, and the real populated branch renders item rows rather than the selected headline (`docs/internal/philo/graph/atlas.json:4290`, `docs/internal/philo/graph/atlas.json:4326`, `web/src/desk/chair/ChairHome.tsx:1847`).
+
+5. **J11’s ledger is candid; its success predicate is not sufficient — Tenets 3 and 7.** It claims to prove words reached the store by checking that one error sentence is absent. Both `NOT IN A DRAWER` and **`CHANGED ELSEWHERE` passed**; the latter is explicitly a save-failure presentation (`docs/internal/philo/graph/atlas.json:4987`, `web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx:484`). Recording the missing Keep verb does not establish successful persistence.
+
+CONDITIONS: Before either live pass, repair findings 2–5: bind trigger-produced values after execution; connect J10’s UI response to identity, displayed content and retention; establish and inspect populated brief material; verify J11’s saved words. Fence these actual atlas contracts. No product fixes or resolution of the declared live UNKNOWNs are required first.
+
+MISSED: Highest cost: predicates still equate absence of selected failure text with completed work. Next: the three integration cases omit the import and response-identity paths changed this round.
+
+TUESDAY: No—the owner can identify more of what exists, but “paid” still overstates what the first-use checks prove.
+
+UNKNOWN: **111 unit tests passed; one owner-path guard excluded**, with isolated HOME. All 69 cases validate without exemptions. I read, but did not rerun, the e2e evidence. Production import, replay, real-engine calls and restart remain unverified. No product run, owner-data access or tree changes.
+
+## Muad'Dib's reply, round three
+
+ACCEPTED. Findings 2–5 are real and each needs code (rig: bind trigger-captured values AFTER the trigger fires, and record a UI trigger's own network response so `trigger:<path>` identity works for a clicked verb; atlas: J10 same-day must declare `identity_display` and a reload; the populated-brief case must CREATE populated material in setup and inspect an item row, not the headline element; J11 must verify the saved words through the store, not the absence of one failure sentence). They are the FIRST TASK of the next session, on Opus 5.5 workers; this session's workers can no longer spawn (Claude Code 2.1.278 in this session; Opus 5.5 needs 2.1.280, already installed). Story 01 stays OPEN as PR #603 until round four lifts the verdict; the live passes do not start before that. Static passes are sealed: #604 (Muad'Dib), #605 (Astra).
