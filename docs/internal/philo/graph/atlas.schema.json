@@ -1,0 +1,1115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.local/philo/graph/atlas.schema.json",
+  "title": "Philo Phase 2 state atlas",
+  "description": "The reachable-case atlas required by docs/internal/philo/briefs/graph-audit-brief.md section 4. Cases carry the section 8 case contract; states are reachable tuples, never a Cartesian product.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cases",
+    "clocks",
+    "council_readings",
+    "excluded",
+    "schema_version",
+    "source_commit",
+    "states"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/state"
+      }
+    },
+    "clocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/clock"
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/excluded"
+      }
+    },
+    "council_readings": {
+      "description": "A claim the rig cannot decide and the council reads instead. It is NOT a case: it has no trigger, no predicate and no verdict.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "job",
+          "words",
+          "sources",
+          "reads"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^reading\\."
+          },
+          "job": {
+            "enum": [
+              "j1",
+              "j2",
+              "j3",
+              "j4",
+              "j5",
+              "j6",
+              "j7",
+              "j8",
+              "j9",
+              "j10",
+              "j11",
+              "beyond"
+            ]
+          },
+          "words": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/sourceRef"
+            }
+          },
+          "reads": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "method",
+                "path"
+              ],
+              "properties": {
+                "method": {
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "pattern": "^/"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "symbol",
+        "line",
+        "claim"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "phase1Ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "record_id"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^docs/internal/philo/data/[a-z-]+\\.json$"
+        },
+        "record_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "step": {
+      "description": "One ordered act. A setup step prepares the case; the case's single `trigger` is the same shape and is the act fired through the real production entry point.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "api",
+            "ui",
+            "clock",
+            "fixture",
+            "boundary",
+            "cli"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "method",
+            "path",
+            "body"
+          ],
+          "properties": {
+            "kind": {
+              "const": "api"
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "body": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "capture_as": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Bind this step's minted id to {name} for later steps."
+            },
+            "capture_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The dotted or JSON-pointer path into this step's response that holds the captured value. The rig defaults to `id`, so a route answering another name must say so."
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "action"
+          ],
+          "properties": {
+            "kind": {
+              "const": "ui"
+            },
+            "selector": {
+              "type": "string",
+              "minLength": 1
+            },
+            "action": {
+              "enum": [
+                "goto",
+                "reload",
+                "click",
+                "click_role",
+                "fill",
+                "press",
+                "wait_for"
+              ],
+              "description": "One of the actions scripts/graph_walk.py::_ui_step implements."
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "wait_until": {
+              "type": "string",
+              "minLength": 1
+            },
+            "exact": {
+              "type": "boolean"
+            },
+            "trigger_route": {
+              "type": "object",
+              "required": [
+                "method",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "description": "Pins which network response the rig records as the clicked trigger's own response."
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "click",
+                      "fill",
+                      "wait_for"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "selector"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "fill"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "value"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "goto"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "url"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "const": "click_role"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              "then": {
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "clock",
+            "how"
+          ],
+          "properties": {
+            "kind": {
+              "const": "clock"
+            },
+            "clock": {
+              "type": "string",
+              "pattern": "^clock\\."
+            },
+            "how": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "path",
+            "sha256",
+            "route"
+          ],
+          "properties": {
+            "kind": {
+              "const": "fixture"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^tests/fixtures/"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "route": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "method",
+                "path"
+              ],
+              "properties": {
+                "method": {
+                  "enum": [
+                    "POST",
+                    "PUT",
+                    "PATCH"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "pattern": "^/"
+                }
+              },
+              "description": "The documented HTTP input boundary; the rig never opens a microphone."
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capture_as": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Bind this step's minted id to {name} for later steps."
+            },
+            "capture_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The dotted or JSON-pointer path into this step's response that holds the captured value. The rig defaults to `id`, so a route answering another name must say so."
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "substitutes",
+            "substitute",
+            "label"
+          ],
+          "properties": {
+            "kind": {
+              "const": "boundary"
+            },
+            "substitutes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "substitute": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The named substitution kind, not a sentence."
+            },
+            "reply_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where the recorded reply this boundary replays lives."
+            },
+            "api": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "action"
+          ],
+          "properties": {
+            "kind": {
+              "const": "cli"
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "action": {
+              "enum": [
+                "restart_hub"
+              ]
+            },
+            "trigger_route": {
+              "type": "object",
+              "required": [
+                "method",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "description": "Pins which network response the rig records as the clicked trigger's own response."
+            }
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "job",
+        "edge_ids",
+        "state_id",
+        "applicability",
+        "preconditions",
+        "setup",
+        "completion_bound_s",
+        "viewports"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "job": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The owner job this case serves, for example J9."
+        },
+        "edge_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "state_id": {
+          "$ref": "#/$defs/id"
+        },
+        "applicability": {
+          "type": "string",
+          "enum": [
+            "applicable",
+            "not_applicable",
+            "unreachable"
+          ]
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "Human lines (recorded, not checked) and/or executable check steps evaluated after setup and before the before-capture (brief \u00a73, \u00a77).",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "predicate",
+                  "observe_at"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "kind": {
+                    "const": "check"
+                  },
+                  "predicate": {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "observe_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "setup": {
+          "type": "array",
+          "description": "The production setup sequence, including the fixture and clock settings the case depends on.",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "api",
+                  "ui",
+                  "clock",
+                  "fixture",
+                  "boundary",
+                  "cli",
+                  "tool"
+                ]
+              },
+              "adapter": {
+                "type": "string",
+                "description": "How the rig reaches the real entry point (ui-pointer, http-route, scheduler, ...)."
+              },
+              "why": {
+                "type": "string",
+                "description": "Why this step is the real path and not a substitute."
+              }
+            },
+            "description": "An executable step in the rig's contract (scripts/graph_walk.py): kind plus kind-specific fields (api: method, path, body; ui: action, selector/role+name; fixture: path, boundary; clock: mechanism; boundary: label + inner step)."
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "api",
+                "ui",
+                "clock",
+                "fixture",
+                "boundary",
+                "cli",
+                "tool"
+              ]
+            },
+            "adapter": {
+              "type": "string",
+              "description": "How the rig reaches the real entry point (ui-pointer, http-route, scheduler, ...)."
+            },
+            "why": {
+              "type": "string",
+              "description": "Why this step is the real path and not a substitute."
+            }
+          },
+          "description": "The step fired through its real entry point after setup and the before-capture (brief \u00a77). Required when applicability is applicable."
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "words"
+          ],
+          "description": "The expected result in the rig's contract (scripts/graph_walk.py PREDICATES): a structured predicate at a named observation location; `words` keeps the human sentence.",
+          "properties": {
+            "predicate": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "attr_equals",
+                    "input_value",
+                    "presentation_change",
+                    "protocol_field",
+                    "protocol_rows",
+                    "protocol_rows_gone",
+                    "protocol_status",
+                    "text_absent",
+                    "text_contains",
+                    "text_equals",
+                    "unchanged",
+                    "window_titled"
+                  ]
+                }
+              }
+            },
+            "observe_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A CSS selector/testid for face cases, or 'protocol: METHOD /path' for protocol cases."
+            },
+            "words": {
+              "type": "string"
+            },
+            "reads": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "method",
+                  "path"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "completion_bound_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "viewports": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Empty for protocol-only cases; face cases carry 1440 and 393."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the case is not_applicable or unreachable (the atlas's field)."
+        }
+      },
+      "if": {
+        "properties": {
+          "applicability": {
+            "enum": [
+              "not_applicable",
+              "unreachable"
+            ]
+          }
+        },
+        "required": [
+          "applicability"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "applicability": {
+                "const": "applicable"
+              }
+            },
+            "required": [
+              "applicability"
+            ]
+          },
+          "then": {
+            "required": [
+              "trigger",
+              "expected"
+            ],
+            "properties": {
+              "expected": {
+                "required": [
+                  "predicate",
+                  "observe_at"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+            },
+            "job": {
+              "enum": [
+                "j1",
+                "j2",
+                "j3",
+                "j4",
+                "j5",
+                "j6",
+                "j7",
+                "j8",
+                "j9",
+                "j10",
+                "j11",
+                "beyond"
+              ]
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string",
+                "pattern": "^edge\\.(face|route|timer|tool|cli)\\.[a-z0-9_]+$"
+              }
+            },
+            "state_id": {
+              "type": "string",
+              "pattern": "^state\\."
+            },
+            "setup": {
+              "items": {
+                "$ref": "#/$defs/step"
+              }
+            },
+            "trigger": {
+              "$ref": "#/$defs/step"
+            },
+            "completion_bound_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "viewports": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  1440,
+                  393
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "applicability": {
+                "enum": [
+                  "not_applicable",
+                  "unreachable"
+                ]
+              }
+            },
+            "required": [
+              "applicability"
+            ]
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "family",
+        "values",
+        "phase1_refs",
+        "sources",
+        "reachable_by"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^state\\.[a-z0-9_]+\\."
+        },
+        "family": {
+          "enum": [
+            "projections",
+            "briefs",
+            "meetings",
+            "engines",
+            "first_value",
+            "desk_presentation",
+            "time"
+          ]
+        },
+        "values": {
+          "type": "object",
+          "minProperties": 1
+        },
+        "phase1_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/phase1Ref"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sourceRef"
+          }
+        },
+        "reachable_by": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(case\\.|unexercised: )"
+          }
+        }
+      }
+    },
+    "clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "mechanism",
+        "status",
+        "used_by"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^clock\\.[a-z0-9_]+$"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mechanism": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "available",
+            "tooling_debt"
+          ]
+        },
+        "used_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^case\\."
+          }
+        }
+      }
+    },
+    "excluded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "combination",
+        "applicability",
+        "reason"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^excluded\\."
+        },
+        "combination": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicability": {
+          "enum": [
+            "not_applicable",
+            "unreachable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 120,
+      "pattern": "^[a-z][a-z0-9_]*(?:[.:-][a-z0-9_]+)*$",
+      "description": "A stable, human-readable identifier. A label or a source line number is evidence, not identity."
+    }
+  }
+}

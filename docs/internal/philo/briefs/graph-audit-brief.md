@@ -257,8 +257,10 @@ Story 01 must deliver a machine-validatable schema with these contracts:
   the actual connection, such as calls, reads, writes, produces or
   renders. Endpoints must resolve.
 - Cases: stable id, edge and state IDs, applicability, preconditions,
-  setup recipe, expected-result predicate, observation location and
-  completion bound.
+  setup recipe, the TRIGGER step (fired through its real entry point
+  after setup and the before-capture; required when applicable — a
+  correction found by the rig, story 01), expected-result predicate,
+  observation location and completion bound.
 - Observations: unique run/case/brain/pass identity, viewport when
   applicable, runtime provenance, real/replayed boundary mode,
   before/after evidence, observed result and verdict.

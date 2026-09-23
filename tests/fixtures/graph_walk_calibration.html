@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>graph_walk calibration</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; }
+  section { border: 1px solid #999; padding: 8px; margin: 8px 0; }
+  .out { display: block; padding: 4px; min-height: 1.4em; }
+  .desk-window {
+    position: absolute; left: 600px; top: 60px; width: 300px; height: 120px;
+    border: 2px solid #333; background: #eee; transition: none;
+  }
+  .desk-window.is-shifted { left: 400px; top: 200px; }
+  .desk-window-title { display: block; font-weight: bold; padding: 4px; }
+</style>
+</head>
+<body>
+<h1>graph_walk calibration page</h1>
+
+<!-- (a) a dead button: no handler at all -->
+<section id="case-a">
+  <button id="a-btn" type="button">Save</button>
+  <span class="out" id="a-out">waiting</span>
+</section>
+
+<!-- (b) a request that answers; the promised text never appears -->
+<section id="case-b">
+  <button id="b-btn" type="button">Save</button>
+  <span class="out" id="b-out">waiting</span>
+</section>
+
+<!-- (c) the result lands in the wrong target -->
+<section id="case-c">
+  <button id="c-btn" type="button">Save</button>
+  <span class="out" id="c-out">waiting</span>
+  <span class="out" id="c-wrong">waiting</span>
+</section>
+
+<!-- (d) focus + geometry only; the contract promises exactly that -->
+<section id="case-d">
+  <button id="d-btn" type="button">Bring the window here</button>
+  <span class="out" id="d-out">stays the same</span>
+</section>
+
+<!-- (e) an idempotent refresh: unchanged result, same replay identity -->
+<section id="case-e">
+  <button id="e-btn" type="button">Refresh</button>
+  <span class="out" id="e-out" data-replay-id="rev-7">3 items</span>
+</section>
+
+<!-- (f) an operation that never completes -->
+<section id="case-f">
+  <button id="f-btn" type="button">Run it</button>
+  <span class="out" id="f-out">waiting</span>
+</section>
+
+<!-- (o) a Refresh with its handler REMOVED: the replay identity is already on
+     the page, so a rig that reads it from there passes a dead verb. -->
+<section id="case-o">
+  <button id="o-btn" type="button">Refresh</button>
+  <span class="out" id="o-out" data-replay-id="rev-7">3 items</span>
+</section>
+
+<!-- (p) a result that arrives long after any sane bound -->
+<section id="case-p">
+  <button id="p-btn" type="button">Run it</button>
+  <span class="out" id="p-out">waiting</span>
+</section>
+
+<!-- (q) a precondition that does not hold -->
+<section id="case-q">
+  <button id="q-btn" type="button">Go</button>
+  <span class="out" id="q-out">not ready</span>
+</section>
+
+<!-- (k) a draft that must survive a reload: the value lives in the field,
+     not in the DOM text. -->
+<section id="case-k">
+  <textarea id="k-draft" rows="2"></textarea>
+</section>
+
+<!-- (g) a stand-in scheduler: armed by setup, then it ticks on its own.
+     Not one of the six; it calibrates the scheduler-wait adapter. -->
+<section id="case-g">
+  <button id="g-arm" type="button">Arm the timer</button>
+  <span class="out" id="g-out">no tick yet</span>
+</section>
+
+<!-- (s) a clicked verb whose identity lives in its own network response
+     (J10 "Generate again"). The face shows the brief id and its words. -->
+<section id="case-s">
+  <button id="s-good" type="button">Generate again</button>
+  <button id="s-stale" type="button">Generate again (stale face)</button>
+  <span class="out" id="s-content">Nothing material changed.</span>
+  <span class="out" id="s-id">brief-7</span>
+</section>
+
+<div class="desk-window" id="d-target" tabindex="-1">
+  <span class="desk-window-title">Calibration window</span>
+</div>
+
+<pre id="log"></pre>
+
+<script>
+  // (a) has no handler on purpose.
+
+  const log = (line) => {
+    document.getElementById("log").textContent += line + "\n";
+  };
+
+  // (b) the route answers; nothing ever writes #b-out.
+  document.getElementById("b-btn").addEventListener("click", async () => {
+    const response = await fetch("/echo?case=b");
+    await response.json();
+    log("POSTED " + response.status);
+  });
+
+  // (c) the promised text appears, in the wrong place.
+  document.getElementById("c-btn").addEventListener("click", () => {
+    document.getElementById("c-wrong").textContent = "saved";
+  });
+
+  // (d) focus and geometry move; no text changes anywhere.
+  document.getElementById("d-btn").addEventListener("click", () => {
+    const win = document.getElementById("d-target");
+    win.classList.add("is-shifted");
+    win.focus();
+  });
+
+  // (e) idempotent: the same result, the same replay identity.
+  document.getElementById("e-btn").addEventListener("click", () => {
+    const out = document.getElementById("e-out");
+    out.textContent = "3 items";
+    out.setAttribute("data-replay-id", "rev-7");
+  });
+
+  // (o) has NO handler: the Refresh is dead, and `data-replay-id` is stale.
+
+  // (p) answers, but only at 4s — long after a 1s bound.
+  document.getElementById("p-btn").addEventListener("click", () => {
+    setTimeout(() => {
+      document.getElementById("p-out").textContent = "ready";
+    }, 4000);
+  });
+
+  // (q) works; its case's PRECONDITION is what does not hold.
+  document.getElementById("q-btn").addEventListener("click", () => {
+    document.getElementById("q-out").textContent = "went";
+  });
+
+  // (k) the durable draft: typed text is kept and read back on load.
+  const draft = document.getElementById("k-draft");
+  try { draft.value = localStorage.getItem("cal.draft") || ""; } catch (e) {}
+  draft.addEventListener("input", () => {
+    try { localStorage.setItem("cal.draft", draft.value); } catch (e) {}
+  });
+
+  // (g) the stand-in scheduler. Setup arms it (as the real case lowers the
+  // sweep interval to its floor); nothing else is pressed after that — the
+  // timer alone writes the result.
+  document.getElementById("g-arm").addEventListener("click", () => {
+    let ticks = 0;
+    setInterval(() => {
+      ticks += 1;
+      document.getElementById("g-out").textContent = "tick " + ticks;
+    }, 3000);
+  });
+
+  // (s) good: a GET first (never the chosen response), then the POST; the
+  // face renders the id and the words the POST returned.
+  document.getElementById("s-good").addEventListener("click", async () => {
+    await (await fetch("/echo?case=s")).json();
+    const data = await (await fetch("/brief/generate", {method: "POST"})).json();
+    document.getElementById("s-id").textContent = data.id;
+    document.getElementById("s-content").textContent = data.headline;
+  });
+
+  // (s) stale: the POST mints a DIFFERENT brief and the face never shows
+  // it — the old id beside the old, unchanged words.
+  document.getElementById("s-stale").addEventListener("click", async () => {
+    await (await fetch("/brief/generate-fresh", {method: "POST"})).json();
+  });
+
+  // (f) starts, says it is busy, and never finishes.
+  document.getElementById("f-btn").addEventListener("click", () => {
+    document.getElementById("f-out").setAttribute("aria-busy", "true");
+  });
+</script>
+</body>
+</html>
