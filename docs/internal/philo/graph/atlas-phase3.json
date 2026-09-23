@@ -86,14 +86,14 @@
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
           "symbol": "documentThought",
-          "line": 113,
+          "line": 114,
           "claim": "the Thought window holds the note it opened"
         },
         {
-          "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+          "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
-          "line": 486,
-          "claim": "its foot states KEPT or NOT IN A DRAWER"
+          "line": 42,
+          "claim": "its foot states the write (KEPT · <time>, SAVING…, DID NOT SAVE · <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
         }
       ],
       "reachable_by": [

@@ -24,3 +24,26 @@ npm notice
 API reference checked
 OpenAPI: 569 paths
 ```
+
+### Captured run — 2026-09-23T06:11:20Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.XRW9OV9yE4 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm sh -c set -o pipefail; (cd web && npx vitest run src/desk/thought-workspace src/desk/pullouts/editors src/desk/surface/__tests__/receiptTypeFloor.test.ts) && uv run --extra dev pytest -q -p no:cacheprovider tests/unit/test_refinement_thought_service.py tests/unit/test_doc_drift_guard.py tests/unit/test_philo_graph_atlas.py tests/e2e/test_philo304_thought_foot_reflow.py && uv run python scripts/philo_api_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** b1d1f425a40a240438320965bd5037b73378f1a7
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-04/web
+
+
+ Test Files  7 passed (7)
+      Tests  46 passed (46)
+   Start at  00:11:21
+   Duration  3.63s (transform 1.35s, setup 847ms, import 2.17s, tests 4.61s, environment 2.69s)
+
+........................................................................ [ 65%]
+......................................                                   [100%]
+110 passed in 38.78s
+API reference drift: docs/generated/api-reference.json
+```

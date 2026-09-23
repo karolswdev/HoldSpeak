@@ -326,7 +326,11 @@
    width) instead of ellipsizing.  KEPT keeps its floor, the verbs keep
    their size, and the foot grows by a line. */
 .desk-next .surface-footer-layout.thought-note-foot {
-  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  /* PHILO-3-04 counsel (Astra, condition 1): the receipt column is `auto`,
+     not `max-content` — it takes its full width when there is room and
+     wraps when there is not, so a long cause or drawer name never pushes
+     the verbs off the glass. READS keeps a floor of 10ch. */
+  grid-template-columns: minmax(10ch, 1fr) auto max-content;
   padding: 5px 0;
 }
 
@@ -370,6 +374,13 @@
 
 .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line[data-line="filing"] {
   color: var(--text-faint);
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: end;
 }
 
 /* The shell rule — and the ONLY viewport rule here: it sizes the window
@@ -442,7 +453,7 @@
   }
 
   .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
-    white-space: normal;
+    text-align: start;
   }
 }
 
