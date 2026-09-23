@@ -1,6 +1,6 @@
 # THE COUNCIL — Philo Phase 2, The Graph (PHILO-2-06)
 
-**Status:** ROUND TWO, 2026-09-23 — Muad'Dib's draft, Astra's check and counter-draft (DO-NOT-RATIFY the first page), Muad'Dib's reply and rulings below. Narrowed per the counter-draft; one dissent open for the owner (§4.3). Drafted by Muad'Dib, 2026-09-23, from all four sealed passes (`static-muaddib`, `static-astra`, `live-muaddib`, `live-astra`, main `34323afe`). Astra's check and counter-draft follow under "Astra"; open dissents are verbatim; the owner rules them and the Phase 3 charter. Plain words, per brief §9.
+**Status:** RULED BY THE OWNER, 2026-09-23 (D1 synthetic meeting first; D2 the lane checks the install in isolation; D3 FOUR stories — the dissent is closed in Muad'Dib's favour by the owner; D4 keep the built dark ember). Round two, 2026-09-23 — Muad'Dib's draft, Astra's check and counter-draft (DO-NOT-RATIFY the first page), Muad'Dib's reply and rulings below. Narrowed per the counter-draft; one dissent open for the owner (§4.3). Drafted by Muad'Dib, 2026-09-23, from all four sealed passes (`static-muaddib`, `static-astra`, `live-muaddib`, `live-astra`, main `34323afe`). Astra's check and counter-draft follow under "Astra"; open dissents are verbatim; the owner rules them and the Phase 3 charter. Plain words, per brief §9.
 
 ## 1. The decision page
 
@@ -45,10 +45,10 @@ Tooling (PHILO-2-07 and A2's own proof repairs): the lane runtime's missing clie
 
 | # | Question | Recommendation | Alternative | Cost | Decisive evidence | Dissent |
 |---|---|---|---|---|---|---|
-| D1 | What material tests the summary's usefulness? | The lane prepares ONE synthetic architect meeting with known decisions, owners and actions (input and output shown together); your own recording follows when you choose | You supply a recording first | a day of preparation; a pangram can only test transport | live-astra #10; live-muaddib J6 | resolved (Astra's default adopted) |
-| D2 | Does the product's documented install carry the model client? | The lane reproduces the documented install in isolation (README, `pyproject.toml:86,90`) and retains the result BEFORE you touch it; you judge a summary, never diagnose a missing client | You run it and read the receipt | if the documented install lacks the client, A2's first line | live-muaddib DIAGNOSTICS; live-astra.md:29 | resolved (Astra's position adopted) |
-| D3 | The size of Phase 3. | **Muad'Dib: A1–A4** (three for the meeting loop, plus the thought's receipt because it is your stated gripe). **Astra: A1–A3** (the smallest cut for the stated result; Thought is a real cost but not a dependency). | Re-cut by your day | one lane-week either way; A4 adds days and a canvas | §4.3 verbatim | **OPEN — yours to rule** |
-| D4 | The ember accent look from Phase 202. | Choose between the built dark ember (`--accent-ink`, 5.24:1) and a second look that ALSO meets 4.5:1 on small text, to be drawn; both shown as shots | Name a canon amendment to the contrast rule | one look | phase-202 story-05 shots; UX-CANON §C | resolved (a 2.2:1 option is withdrawn) |
+| D1 | What material tests the summary's usefulness? | The lane prepares ONE synthetic architect meeting with known decisions, owners and actions (input and output shown together); your own recording follows when you choose | You supply a recording first | a day of preparation; a pangram can only test transport | live-astra #10; live-muaddib J6 | RULED: synthetic first |
+| D2 | Does the product's documented install carry the model client? | The lane reproduces the documented install in isolation (README, `pyproject.toml:86,90`) and retains the result BEFORE you touch it; you judge a summary, never diagnose a missing client | You run it and read the receipt | if the documented install lacks the client, A2's first line | live-muaddib DIAGNOSTICS; live-astra.md:29 | RULED: the lane, in isolation |
+| D3 | The size of Phase 3. | **Muad'Dib: A1–A4** (three for the meeting loop, plus the thought's receipt because it is your stated gripe). **Astra: A1–A3** (the smallest cut for the stated result; Thought is a real cost but not a dependency). | Re-cut by your day | one lane-week either way; A4 adds days and a canvas | §4.3 verbatim | **RULED: four stories (A1–A4)** — the owner, 2026-09-23 |
+| D4 | The ember accent look from Phase 202. | Choose between the built dark ember (`--accent-ink`, 5.24:1) and a second look that ALSO meets 4.5:1 on small text, to be drawn; both shown as shots | Name a canon amendment to the contrast rule | one look | phase-202 story-05 shots; UX-CANON §C | RULED: keep the built dark ember |
 
 ### Deferred, and what you still cannot do
 
@@ -133,7 +133,7 @@ Evidence: `live-astra.md:29`; `live-muaddib.md:55` (DIAGNOSTICS).
 Evidence and dependencies: Astra's Phase 3 table below. This is a scope proposal, not authority to start work.
 
 
-**Ruling: OPEN for the owner (D3).** Muad'Dib holds A1–A4; Astra holds A1–A3. The difference is one story, the thought's receipt, argued from Tenet 7 (his stated gripe) against Tenet 1 (the smallest cut). Both positions stand verbatim above.
+**Ruling: CLOSED BY THE OWNER, 2026-09-23 — four stories (A1–A4).** Muad'Dib held A1–A4; Astra held A1–A3; both positions stand verbatim above as the record. The difference is one story, the thought's receipt, argued from Tenet 7 (his stated gripe) against Tenet 1 (the smallest cut). Both positions stand verbatim above.
 
 ### 4.4 Who diagnoses the install
 
