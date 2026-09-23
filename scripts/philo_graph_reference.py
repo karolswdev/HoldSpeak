@@ -24,15 +24,44 @@ It does not rewrite the join: saved observations keep their original revision,
 and a regeneration never turns old execution evidence into proof of current
 behaviour.
 
+The HTTP census reads the routes from source: it assembles the app through
+the route owner the Philo scripts share (``scripts/gen_api_surface.py``,
+``build_reference_app``) and compares method, path and handler name with the
+edges.  It does not read ``docs/generated/openapi.json`` for membership, so a
+route added, removed or renamed in source shows even when OpenAPI is
+unchanged.  When the committed OpenAPI no longer matches source, the census
+also prints ``stale`` lines.
+
+When you change a route:
+
+1. Change the route in source.
+2. ``uv run --extra dev python scripts/philo_openapi_reference.py``
+   (regenerate OpenAPI).
+3. ``python scripts/philo_graph_reference.py`` (regenerate the join).
+4. ``python scripts/philo_graph_reference.py --check``.
+5. ``uv run --extra dev python scripts/philo_graph_reference.py --census``.
+
+The census names the new, removed or changed edge.  The sealed passes are not
+edited to agree: a pass describes the route as it was at its recorded
+revision, and that evidence is never rewritten.  A new pass or a council
+resolution records the current route.
+
 The join rules, in full:
 
 * Nodes: one node per id.  The ``kind`` must agree in every pass (else an
   error).  ``phase1_refs`` and ``sources`` are the union, each source keeping
-  its own revision.  The label and subtype come from the first pass that has
-  them, in the order above.  When the passes classify the exposure of one
-  node differently, the label names every position (``[exposure
-  disagreement: astra=...; muaddib=...]``) and the summary lists the node;
-  the join does not choose.
+  its own revision.  The label comes from the first pass that has it, in the
+  order above.  When the passes classify the exposure of one node
+  differently, the label names every position (``[exposure disagreement:
+  astra=...; muaddib=...]``) and the summary lists the node; the join does
+  not choose.
+* Subtypes: when every pass that gives a subtype gives the same one, the node
+  has it.  When they differ, the label names every position and the summary
+  lists the node.  ``SUBTYPE_NORMALIZATION`` below is the whole table of
+  differences that are one classification at two granularities; such a node
+  gets the finer value and ``[subtype normalized: ...]``.  Every other
+  difference is a conflict: the node gets no subtype and ``[subtype
+  conflict: ...]``.  Precedence never decides a subtype.
 * Links: one link per (from, to, relation); evidence is the union.
 * Cases: the current atlas owns the case contract.  Every case a pass names
   must be in the atlas (else an error).  A pass that ran an older revision of
@@ -69,10 +98,39 @@ GRAPH_DIR = "docs/internal/philo/graph"
 PASSES = ("static-muaddib", "static-astra", "live-muaddib", "live-astra")
 ATLAS = f"{GRAPH_DIR}/atlas.json"
 RESOLUTIONS = f"{GRAPH_DIR}/council-resolutions.json"
-# The council record sealed at this revision (PHILO-2-06, round two).  A
-# resolution row cites the resolutions file at this revision.  Change it when
-# the council rules again.
-COUNCIL_REVISION = "e58b4a14dc371a921633aa0c1abd7d2374b7b147"
+# The revision whose council-resolutions.json is byte-equal to the file the
+# join reads (PHILO-2-07 corrected the import refusal's bin after the PHILO-2-06
+# council commit e58b4a14).  A resolution row cites the file at this revision.
+# When the council rules again: commit the resolutions file, set this to that
+# commit, regenerate.  tests/unit/test_philo_graph_reference.py proves the file
+# at this revision hashes to the input the join used.
+COUNCIL_REVISION = "54cf71a78e65355002cd00fc298e7919ffb7a1bf"
+# Subtype normalization: the whole table.  Two different subtypes for one node
+# are one classification only when a row below relates them; the node then
+# gets the finer (right-hand) value.  Anything else is a conflict and stays
+# unresolved in the join.
+#   refinement - the finer value extends the coarser one with a dotted suffix
+#                (http -> http.POST).  A rule, not rows.
+#   bucket     - Astra's class names ``ui`` and ``verb`` hold a named trigger
+#                or face kind.  The schema's subtype is the trigger, so the
+#                named trigger is the finer value.  ``ui`` does not hold http
+#                or timer: those are a conflict.
+#   vocabulary - on state nodes Astra names the atlas section that holds the
+#                state (atlas.meetings); Muad'Dib names the state
+#                (domain.meeting).  One state, two names.
+SUBTYPE_BUCKETS = {
+    "ui": ("pointer.", "keyboard", "face."),
+    "verb": ("pointer.click", "keyboard"),
+}
+SUBTYPE_VOCABULARY = {
+    "atlas.briefs": "projection.brief",
+    "atlas.desk_presentation": "browser.presentation",
+    "atlas.engines": "projection.assignment",
+    "atlas.first_value": "lifecycle.first_value",
+    "atlas.meetings": "domain.meeting",
+    "atlas.projections": "projection.desk",
+    "atlas.time": "clock",
+}
 EXPOSURE = re.compile(r"\[(?:exposure=)?(active|conditional|internal|parked|historical)\]")
 
 
@@ -146,6 +204,26 @@ def _one_value(inputs: Inputs, field_name: str, pass_names: tuple[str, ...], pro
     return sorted(values)[0]
 
 
+def _finer(coarse: str, fine: str) -> str | None:
+    """The normalization row that makes ``fine`` the finer form of ``coarse``."""
+    if fine.startswith(coarse + "."):
+        return "refinement"
+    if any(fine == item or (item.endswith(".") and fine.startswith(item)) for item in SUBTYPE_BUCKETS.get(coarse, ())):
+        return "bucket"
+    if SUBTYPE_VOCABULARY.get(coarse) == fine:
+        return "vocabulary"
+    return None
+
+
+def normalize_subtypes(values: set[str]) -> tuple[str, str] | None:
+    """(value, rows) when the table makes the differing values one; else None."""
+    for candidate in sorted(values):
+        rows = {_finer(value, candidate) for value in values - {candidate}}
+        if None not in rows:
+            return candidate, "+".join(sorted(rows))
+    return None
+
+
 def _join_nodes(inputs: Inputs, problems: list[str], notes: list[str]) -> list[dict]:
     grouped: dict[str, list[tuple[str, dict]]] = {}
     for name in PASSES:
@@ -162,7 +240,12 @@ def _join_nodes(inputs: Inputs, problems: list[str], notes: list[str]) -> list[d
             continue
         first = members[0][1]
         label = first["label"]
-        subtype = next((node["subtype"] for _, node in members if node.get("subtype")), None)
+        subtypes: dict[str, set[str]] = {}
+        for name, node in members:
+            if node.get("subtype"):
+                subtypes.setdefault(_brain(name), set()).add(node["subtype"])
+        values = {value for brain_values in subtypes.values() for value in brain_values}
+        subtype = next(iter(values)) if len(values) == 1 else None
 
         exposures: dict[str, set[str]] = {}
         for name, node in members:
@@ -176,6 +259,18 @@ def _join_nodes(inputs: Inputs, problems: list[str], notes: list[str]) -> list[d
             )
             label = f"{label} [exposure disagreement: {said}]"
             notes.append(f"exposure-disagreement: {node_id}: {said}")
+        if len(values) > 1:
+            said = "; ".join(
+                f"{brain}={'/'.join(sorted(subtypes[brain]))}" for brain in sorted(subtypes)
+            )
+            normal = normalize_subtypes(values)
+            if normal:
+                subtype = normal[0]
+                label = f"{label} [subtype normalized: {said} -> {subtype} ({normal[1]})]"
+                notes.append(f"subtype-normalized: {node_id}: {said} -> {subtype} ({normal[1]})")
+            else:
+                label = f"{label} [subtype conflict: {said}]"
+                notes.append(f"subtype-conflict: {node_id}: {said}")
 
         refs = {_key(ref): ref for _, node in members for ref in node.get("phase1_refs", [])}
         sources = {_key(src): src for _, node in members for src in node.get("sources", [])}
@@ -398,14 +493,65 @@ def _norm(entry: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", entry.lower()).strip("_")
 
 
-def current_routes(root: Path) -> set[tuple[str, str]]:
-    document = json.loads((root / "docs/generated/openapi.json").read_text(encoding="utf-8"))
-    pairs = set()
-    for path, operations in document.get("paths", {}).items():
-        for method in operations:
-            if method.upper() in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
-                pairs.add((method.upper(), path))
-    return pairs
+HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
+
+
+def route_table(app: Any) -> dict[tuple[str, str], dict]:
+    """(METHOD, path) -> handler name and defining file, for an assembled app.
+
+    Routes are read in dispatch order; when two routes share a method and
+    path, the first one serves the request and is the one recorded.  Paths
+    are written as OpenAPI writes them (``{path:path}`` becomes ``{path}``).
+    Routes hidden from the schema (the page shells, /docs, /openapi.json) are
+    not API operations and have no edge, so they are not censused."""
+    table: dict[tuple[str, str], dict] = {}
+    for route in getattr(app, "routes", []):
+        endpoint = getattr(route, "endpoint", None)
+        methods = (getattr(route, "methods", None) or set()) & HTTP_METHODS
+        if endpoint is None or not methods or not getattr(route, "include_in_schema", True):
+            continue  # mounts, websockets and schema-hidden routes
+        path = re.sub(r"\{([^}:]+):[^}]+\}", r"{\1}", route.path)
+        module = getattr(endpoint, "__module__", "") or ""
+        entry = {
+            "handler": getattr(endpoint, "__name__", ""),
+            "module": module.replace(".", "/") + ".py",
+        }
+        for method in methods:
+            table.setdefault((method, path), entry)
+    return table
+
+
+def current_routes(root: Path) -> dict[tuple[str, str], dict] | str:
+    """The HTTP routes of the current source, or why they could not be read.
+
+    Membership comes from the app assembled by the route owner the Philo
+    scripts share (scripts/gen_api_surface.py), not from the committed
+    OpenAPI, so a source-only route change is visible.  ``root`` is unused:
+    the app is the importable ``holdspeak`` package."""
+    del root
+    scripts = str(Path(__file__).resolve().parent)
+    try:
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+        import gen_api_surface
+
+        return route_table(gen_api_surface.build_reference_app())
+    except Exception as exc:  # noqa: BLE001 - any assembly failure is reported, not guessed around
+        return f"{type(exc).__name__}: {exc}"
+
+
+def openapi_routes(root: Path) -> set[tuple[str, str]]:
+    """The (METHOD, path) pairs of the committed docs/generated/openapi.json."""
+    target = root / "docs/generated/openapi.json"
+    if not target.is_file():
+        return set()
+    document = json.loads(target.read_text(encoding="utf-8"))
+    return {
+        (method.upper(), path)
+        for path, operations in document.get("paths", {}).items()
+        for method in operations
+        if method.upper() in HTTP_METHODS
+    }
 
 
 def current_verbs(root: Path) -> set[str]:
@@ -480,30 +626,61 @@ def census(graph: dict, root: Path = ROOT) -> list[str]:
     def text(rel: str) -> str:
         return (root / rel).read_text(encoding="utf-8", errors="replace")
 
-    # HTTP routes: the route roster (docs/generated/openapi.json) against every
-    # edge that carries an OpenAPI method/path reference.  Changed: a cited
-    # handler file is gone, or a cited handler is no longer defined in it.
+    # HTTP routes: the routes of the current source (the assembled app)
+    # against every edge that carries an OpenAPI method/path reference.
+    # Changed: a cited file is gone, or the handler that source registers for
+    # the method and path is not the handler the edge cites.
     routes = current_routes(root)
     graphed: dict[tuple[str, str], list[dict]] = {}
     for node in edges:
         for ref in node["phase1_refs"]:
             if ref.get("inventory_path") == "docs/generated/openapi.json" and "method" in ref:
                 graphed.setdefault((ref["method"].upper(), ref["path"]), []).append(node)
-    for method, path in sorted(routes - set(graphed)):
-        lines.append(f"new: http {method} {path} has no edge")
-    for method, path in sorted(set(graphed) - routes):
+    if isinstance(routes, str):
+        lines.append(f"unread: http route table could not be assembled ({routes}); not censused")
+        routes = {}
+    else:
+        roster = openapi_routes(root)
+        for method, path in sorted(set(routes) - roster):
+            lines.append(f"stale: http {method} {path} is in source, not in docs/generated/openapi.json")
+        for method, path in sorted(roster - set(routes)):
+            lines.append(f"stale: http {method} {path} is in docs/generated/openapi.json, not in source")
+    for method, path in sorted(set(routes) - set(graphed)):
+        lines.append(f"new: http {method} {path} has no edge ({routes[(method, path)]['handler']})")
+    for method, path in sorted(set(graphed) - set(routes)):
         ids = ", ".join(sorted(node["id"] for node in graphed[(method, path)]))
-        lines.append(f"removed: http {method} {path} is gone from the roster ({ids})")
-    for pair in sorted(set(graphed) & routes):
+        lines.append(f"removed: http {method} {path} is not in source ({ids})")
+    for pair in sorted(set(graphed) & set(routes)):
+        handler = routes[pair]["handler"]
         for node in graphed[pair]:
             why = _gone(root, node)
             kind = "changed"
-            if why is None:
-                for source in _code_sources(node):
-                    symbol = source.get("symbol", "")
-                    if not source["path"].endswith(".py") or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", symbol):
-                        continue
-                    if symbol == "source_census" or f"def {symbol}(" in text(source["path"]):
+            cited = [
+                source
+                for source in _code_sources(node)
+                if source["path"].endswith(".py")
+                and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", source.get("symbol", ""))
+                and source["symbol"] != "source_census"
+            ]
+            if why is None and cited and handler not in {source["symbol"] for source in cited}:
+                # The registered handler is not a cited one.  If the file had
+                # that handler at the pass's revision, the pass cited the
+                # wrong function; if not, source changed since.
+                source = cited[0]
+                then = _at_revision(root, source["revision"], routes[pair]["module"])
+                if then is not None and f"def {handler}(" in then:
+                    kind = "miscited"
+                    why = (
+                        f"source registered {handler} at {source['revision'][:8]} already; "
+                        f"the pass cited {source['symbol']}"
+                    )
+                else:
+                    why = f"source registers {handler}, not the cited {source['symbol']}"
+            elif why is None:
+                # The handler is cited; every other cited function must still exist.
+                for source in cited:
+                    symbol = source["symbol"]
+                    if f"def {symbol}(" in text(source["path"]):
                         continue
                     then = _at_revision(root, source["revision"], source["path"])
                     if then is not None and f"def {symbol}(" not in then:
@@ -546,12 +723,24 @@ def census(graph: dict, root: Path = ROOT) -> list[str]:
 
 
 CENSUS_SCOPE = (
-    "census scope: HTTP routes (docs/generated/openapi.json), desk verbs "
+    "census scope: HTTP routes (the app assembled from source by "
+    "scripts/gen_api_surface.py, schema-hidden page routes excluded; stale = "
+    "docs/generated/openapi.json differs from source), desk verbs "
     "(web/src/desk/verbRegistry.ts + applications.ts), MCP tools (the real "
     "holdspeak.mcp.tools catalogue). Face handlers, keys, timers, frames, CLI "
     "and connector edges are not censused. miscited = a pass cited a handler "
     "that was not in the file at the revision it examined."
 )
+
+
+def subtype_conflicts(graph: dict) -> list[str]:
+    """The unresolved subtype conflicts the join recorded in node labels."""
+    lines = []
+    for node in graph["nodes"]:
+        match = re.search(r"\[subtype conflict: ([^\]]+)\]", node["label"])
+        if match:
+            lines.append(f"note: subtype conflict {node['id']}: {match.group(1)}")
+    return lines
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -573,15 +762,20 @@ def main(argv: list[str] | None = None) -> int:
         print(CENSUS_SCOPE)
         for line in differences:
             print(line)
-        counts = {kind: sum(1 for line in differences if line.startswith(kind + ":")) for kind in ("new", "removed", "changed", "miscited", "unread")}
+        conflicts = subtype_conflicts(graph)
+        for line in conflicts:
+            print(line)
+        counts = {kind: sum(1 for line in differences if line.startswith(kind + ":")) for kind in ("new", "removed", "changed", "stale", "miscited", "unread")}
         print(
             f"census: {counts['new']} new, {counts['removed']} removed, {counts['changed']} changed, "
-            f"{counts['miscited']} miscited, {counts['unread']} unread "
+            f"{counts['stale']} stale, {counts['miscited']} miscited, {counts['unread']} unread, "
+            f"{len(conflicts)} subtype conflict note(s) "
             f"against {OUTPUT} (source_commit {graph['source_commit'][:8]})"
         )
-        # A miscited source is a sealed pass's error, not source drift; it is
-        # reported and does not fail the census.
-        return 1 if any(counts[kind] for kind in ("new", "removed", "changed", "unread")) else 0
+        # A miscited source is a sealed pass's error, not source drift, and a
+        # subtype conflict is an open classification question; both are
+        # reported and do not fail the census.
+        return 1 if any(counts[kind] for kind in ("new", "removed", "changed", "stale", "unread")) else 0
 
     try:
         graph, notes = join(load_inputs(root))
@@ -595,7 +789,10 @@ def main(argv: list[str] | None = None) -> int:
         if not target.is_file() or target.read_text(encoding="utf-8") != text:
             print(f"graph join drift: {OUTPUT} (run python scripts/philo_graph_reference.py)")
             return 1
-        print(f"graph join checked: {OUTPUT}")
+        conflicts = subtype_conflicts(graph)
+        for line in conflicts:
+            print(line)
+        print(f"graph join checked: {OUTPUT}; {len(conflicts)} subtype conflict note(s)")
         return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")

@@ -12796,7 +12796,7 @@
   {
    "id": "edge.cli.hub_restart",
    "kind": "edge",
-   "label": "Stop the hub; start it again",
+   "label": "Stop the hub; start it again [subtype conflict: astra=process.restart; muaddib=cli]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -12833,8 +12833,7 @@
      "claim": "every conductor the lifespan started is stopped on shutdown",
      "anchor": "async def _shutdown() -> None:"
     }
-   ],
-   "subtype": "cli"
+   ]
   },
   {
    "id": "edge.cli.import",
@@ -57170,7 +57169,7 @@
   {
    "id": "edge.face.arrival_brief_generate",
    "kind": "edge",
-   "label": "Generate (the brief)",
+   "label": "Generate (the brief) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -57212,7 +57211,7 @@
   {
    "id": "edge.face.arrival_brief_generate_again",
    "kind": "edge",
-   "label": "Generate again (the brief)",
+   "label": "Generate again (the brief) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -57344,7 +57343,7 @@
   {
    "id": "edge.face.arrival_load",
    "kind": "edge",
-   "label": "Arrival (opening the desk)",
+   "label": "Arrival (opening the desk) [subtype conflict: astra=lifecycle.mount; muaddib=navigation.load]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -57401,8 +57400,7 @@
      "claim": "mount reads the assignment roster",
      "symbol": "Arrival"
     }
-   ],
-   "subtype": "navigation.load"
+   ]
   },
   {
    "id": "edge.face.arrival_meeting_row",
@@ -57702,7 +57700,7 @@
   {
    "id": "edge.face.concierge_add_check",
    "kind": "edge",
-   "label": "Check (the new engine's address)",
+   "label": "Check (the new engine's address) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -57737,7 +57735,7 @@
   {
    "id": "edge.face.concierge_add_engine",
    "kind": "edge",
-   "label": "Add an engine",
+   "label": "Add an engine [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -57788,7 +57786,7 @@
   {
    "id": "edge.face.concierge_apply",
    "kind": "edge",
-   "label": "Use these (the set)",
+   "label": "Use these (the set) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -57839,7 +57837,7 @@
   {
    "id": "edge.face.concierge_check",
    "kind": "edge",
-   "label": "Check (a found cloud engine)",
+   "label": "Check (a found cloud engine) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -57890,7 +57888,7 @@
   {
    "id": "edge.face.concierge_download",
    "kind": "edge",
-   "label": "Download (a preset engine)",
+   "label": "Download (a preset engine) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -57989,7 +57987,7 @@
   {
    "id": "edge.face.concierge_use_for_summaries",
    "kind": "edge",
-   "label": "Use this for summaries",
+   "label": "Use this for summaries [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -58698,7 +58696,7 @@
   {
    "id": "edge.face.shade_acknowledge",
    "kind": "edge",
-   "label": "Acknowledge (a Needs-you row)",
+   "label": "Acknowledge (a Needs-you row) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -58765,7 +58763,7 @@
   {
    "id": "edge.face.shade_dismiss",
    "kind": "edge",
-   "label": "Dismiss (a Needs-you row)",
+   "label": "Dismiss (a Needs-you row) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -58896,7 +58894,7 @@
   {
    "id": "edge.face.shade_open",
    "kind": "edge",
-   "label": "Desk memory (the dock launcher)",
+   "label": "Desk memory (the dock launcher) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -58954,7 +58952,7 @@
   {
    "id": "edge.face.shade_receipt_open",
    "kind": "edge",
-   "label": "Open (a receipt's door in Finished)",
+   "label": "Open (a receipt's door in Finished) [subtype normalized: astra=ui; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -59097,7 +59095,7 @@
   {
    "id": "edge.face.thought_keep",
    "kind": "edge",
-   "label": "Finish (keep the thought)",
+   "label": "Finish (keep the thought) [subtype conflict: astra=pointer.blur; muaddib=pointer.click]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -59133,8 +59131,7 @@
      "claim": "the foot's primary",
      "symbol": "ThoughtWorkspaceWindow"
     }
-   ],
-   "subtype": "pointer.click"
+   ]
   },
   {
    "id": "edge.face.thought_mic",
@@ -81687,7 +81684,7 @@
   {
    "id": "edge.route.brief_item_shelf",
    "kind": "edge",
-   "label": "POST /api/brief/items/{item_id}/shelf",
+   "label": "POST /api/brief/items/{item_id}/shelf [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -81717,13 +81714,12 @@
      "claim": "one owner triage verb against one item",
      "symbol": "write_shelf"
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.brief_latest",
    "kind": "edge",
-   "label": "GET /api/brief/latest",
+   "label": "GET /api/brief/latest [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -81753,8 +81749,7 @@
      "claim": "the most recently generated brief, whatever its date",
      "symbol": "latest"
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.demoted_routes_activity",
@@ -82015,7 +82010,7 @@
   {
    "id": "edge.route.heartbeat_run_now",
    "kind": "edge",
-   "label": "POST /api/settings/heartbeat/run-now",
+   "label": "POST /api/settings/heartbeat/run-now [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82045,13 +82040,12 @@
      "symbol": "api_run_heartbeat",
      "claim": "Run-now executes owner-hand sweep."
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.inference_assignments",
    "kind": "edge",
-   "label": "GET /api/inference/assignments (protocol)",
+   "label": "GET /api/inference/assignments (protocol) [subtype normalized: astra=http.GET; muaddib=http -> http.GET (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82082,12 +82076,12 @@
      "symbol": "get_assignments"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.GET"
   },
   {
    "id": "edge.route.inference_assignments_set",
    "kind": "edge",
-   "label": "POST /api/inference/assignments/set",
+   "label": "POST /api/inference/assignments/set [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82117,13 +82111,12 @@
      "claim": "the direct assignment write",
      "symbol": "set_assignment"
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.intel_retry",
    "kind": "edge",
-   "label": "POST /api/intel/retry/{meeting_id}",
+   "label": "POST /api/intel/retry/{meeting_id} [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82165,12 +82158,12 @@
      "anchor": "\"intel/retry\""
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.meeting_capture_recover",
    "kind": "edge",
-   "label": "POST /api/meetings/{meeting_id}/capture/recover",
+   "label": "POST /api/meetings/{meeting_id}/capture/recover [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82205,12 +82198,12 @@
      "symbol": "api_recover_meeting_capture"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.meeting_intelligence_run",
    "kind": "edge",
-   "label": "POST /api/meetings/{meeting_id}/intelligence/run",
+   "label": "POST /api/meetings/{meeting_id}/intelligence/run [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82245,12 +82238,12 @@
      "symbol": "api_run_meeting_intelligence"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.meeting_start",
    "kind": "edge",
-   "label": "POST /api/meeting/start",
+   "label": "POST /api/meeting/start [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82285,12 +82278,12 @@
      "symbol": "api_meeting_start"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.meeting_stop",
    "kind": "edge",
-   "label": "POST /api/meeting/stop",
+   "label": "POST /api/meeting/stop [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82330,12 +82323,12 @@
      "symbol": "api_meeting_stop"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.meetings_import",
    "kind": "edge",
-   "label": "POST /api/meetings/import",
+   "label": "POST /api/meetings/import [subtype normalized: astra=http.POST; muaddib=http -> http.POST (refinement)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82370,12 +82363,12 @@
      "symbol": "import_recording"
     }
    ],
-   "subtype": "http"
+   "subtype": "http.POST"
   },
   {
    "id": "edge.route.model_profile_delete",
    "kind": "edge",
-   "label": "DELETE /api/model-profiles/{profile_id}",
+   "label": "DELETE /api/model-profiles/{profile_id} [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82398,13 +82391,12 @@
      "symbol": "api_delete_model_profile",
      "claim": "Delete passes revision."
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.model_profile_unbind",
    "kind": "edge",
-   "label": "DELETE /api/model-profiles/{profile_id}/binding",
+   "label": "DELETE /api/model-profiles/{profile_id}/binding [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82427,8 +82419,7 @@
      "claim": "the owner-only unbind",
      "anchor": "@router.delete(\"/api/model-profiles/{profile_id}/binding\")"
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.product_routes_presence",
@@ -82481,7 +82472,7 @@
   {
    "id": "edge.route.projection_presentation",
    "kind": "edge",
-   "label": "PUT /api/desk/projections/{projection_id}/presentation",
+   "label": "PUT /api/desk/projections/{projection_id}/presentation [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82511,13 +82502,12 @@
      "symbol": "present",
      "claim": "Store writes presentation action."
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.projections_list",
    "kind": "edge",
-   "label": "GET /api/desk/projections",
+   "label": "GET /api/desk/projections [subtype conflict: astra=ui; muaddib=http]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/openapi.json",
@@ -82547,8 +82537,7 @@
      "claim": "the projection list route, under the /api/desk/projections prefix",
      "symbol": "api_list_projections"
     }
-   ],
-   "subtype": "http"
+   ]
   },
   {
    "id": "edge.route.wildcard_redirect",
@@ -82808,7 +82797,7 @@
   {
    "id": "edge.timer.heartbeat_sweep",
    "kind": "edge",
-   "label": "The heartbeat sweep (the always-on timer)",
+   "label": "The heartbeat sweep (the always-on timer) [subtype conflict: astra=ui; muaddib=timer]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -82844,8 +82833,7 @@
      "claim": "started with the hub, gated only on database ownership",
      "symbol": "_start_scheduled_work"
     }
-   ],
-   "subtype": "timer"
+   ]
   },
   {
    "id": "edge.timer.heartbeat_sweep_loop",
@@ -113565,7 +113553,7 @@
   {
    "id": "edge.verb.desk_arrange",
    "kind": "edge",
-   "label": "Arrange desk (desk verb `desk.arrange`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Arrange desk (desk verb `desk.arrange`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113597,7 +113585,7 @@
   {
    "id": "edge.verb.desk_intelligence_brief",
    "kind": "edge",
-   "label": "Show today's brief (desk verb `desk.intelligence-brief`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Show today's brief (desk verb `desk.intelligence-brief`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113629,7 +113617,7 @@
   {
    "id": "edge.verb.desk_intelligence_find_receipt",
    "kind": "edge",
-   "label": "Find receipt… (desk verb `desk.intelligence-find-receipt`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Find receipt… (desk verb `desk.intelligence-find-receipt`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113661,7 +113649,7 @@
   {
    "id": "edge.verb.desk_intelligence_overdue",
    "kind": "edge",
-   "label": "Show overdue follow-through (desk verb `desk.intelligence-overdue`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Show overdue follow-through (desk verb `desk.intelligence-overdue`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113693,7 +113681,7 @@
   {
    "id": "edge.verb.desk_intelligence_review_decisions",
    "kind": "edge",
-   "label": "Review decisions (desk verb `desk.intelligence-review-decisions`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Review decisions (desk verb `desk.intelligence-review-decisions`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113725,7 +113713,7 @@
   {
    "id": "edge.verb.desk_new_agent",
    "kind": "edge",
-   "label": "New Agent (desk verb `desk.new-agent`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Agent (desk verb `desk.new-agent`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113757,7 +113745,7 @@
   {
    "id": "edge.verb.desk_new_decision",
    "kind": "edge",
-   "label": "New Decision · key ⌘⇧N (desk verb `desk.new-decision`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Decision · key ⌘⇧N (desk verb `desk.new-decision`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113789,7 +113777,7 @@
   {
    "id": "edge.verb.desk_new_knowledge",
    "kind": "edge",
-   "label": "New Knowledge (desk verb `desk.new-knowledge`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Knowledge (desk verb `desk.new-knowledge`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113821,7 +113809,7 @@
   {
    "id": "edge.verb.desk_new_note",
    "kind": "edge",
-   "label": "New Note · key ⌘N (desk verb `desk.new-note`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Note · key ⌘N (desk verb `desk.new-note`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113853,7 +113841,7 @@
   {
    "id": "edge.verb.desk_new_project",
    "kind": "edge",
-   "label": "New Project (desk verb `desk.new-project`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Project (desk verb `desk.new-project`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113885,7 +113873,7 @@
   {
    "id": "edge.verb.desk_new_thread",
    "kind": "edge",
-   "label": "New Thread (desk verb `desk.new-thread`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Thread (desk verb `desk.new-thread`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113917,7 +113905,7 @@
   {
    "id": "edge.verb.desk_new_workbench",
    "kind": "edge",
-   "label": "New Workbench (desk verb `desk.new-workbench`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Workbench (desk verb `desk.new-workbench`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113949,7 +113937,7 @@
   {
    "id": "edge.verb.desk_new_workflow",
    "kind": "edge",
-   "label": "New Workflow (desk verb `desk.new-workflow`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Workflow (desk verb `desk.new-workflow`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -113981,7 +113969,7 @@
   {
    "id": "edge.verb.desk_new_zone",
    "kind": "edge",
-   "label": "New Zone (desk verb `desk.new-zone`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "New Zone (desk verb `desk.new-zone`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114013,7 +114001,7 @@
   {
    "id": "edge.verb.desk_open_intelligence",
    "kind": "edge",
-   "label": "Open Intelligence (desk verb `desk.open-intelligence`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Open Intelligence (desk verb `desk.open-intelligence`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114045,7 +114033,7 @@
   {
    "id": "edge.verb.desk_open_people",
    "kind": "edge",
-   "label": "Open People (desk verb `desk.open-people`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Open People (desk verb `desk.open-people`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114077,7 +114065,7 @@
   {
    "id": "edge.verb.desk_overview",
    "kind": "edge",
-   "label": "Overview · key ⌃↑ (desk verb `desk.overview`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Overview · key ⌃↑ (desk verb `desk.overview`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114109,7 +114097,7 @@
   {
    "id": "edge.verb.desk_refresh",
    "kind": "edge",
-   "label": "Refresh from hub (desk verb `desk.refresh`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Refresh from hub (desk verb `desk.refresh`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114141,7 +114129,7 @@
   {
    "id": "edge.verb.desk_reset_layout",
    "kind": "edge",
-   "label": "Reset layout (desk verb `desk.reset-layout`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Reset layout (desk verb `desk.reset-layout`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114173,7 +114161,7 @@
   {
    "id": "edge.verb.desk_reset_to_seed",
    "kind": "edge",
-   "label": "Reset to seed… (desk verb `desk.reset-to-seed`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Reset to seed… (desk verb `desk.reset-to-seed`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114205,7 +114193,7 @@
   {
    "id": "edge.verb.desk_settle",
    "kind": "edge",
-   "label": "desk.settle · key ⌘⇧F (desk verb `desk.settle`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "desk.settle · key ⌘⇧F (desk verb `desk.settle`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114237,7 +114225,7 @@
   {
    "id": "edge.verb.desk_toggle_view",
    "kind": "edge",
-   "label": "desk.toggle-view (desk verb `desk.toggle-view`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "desk.toggle-view (desk verb `desk.toggle-view`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114637,7 +114625,7 @@
   {
    "id": "edge.verb.object_ask",
    "kind": "edge",
-   "label": "Ask AI (desk verb `object.ask`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Ask AI (desk verb `object.ask`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114669,7 +114657,7 @@
   {
    "id": "edge.verb.object_ask_project",
    "kind": "edge",
-   "label": "Ask this project (desk verb `object.ask-project`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Ask this project (desk verb `object.ask-project`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114701,7 +114689,7 @@
   {
    "id": "edge.verb.object_continue_in_thread",
    "kind": "edge",
-   "label": "Continue in thread (desk verb `object.continue-in-thread`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Continue in thread (desk verb `object.continue-in-thread`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114733,7 +114721,7 @@
   {
    "id": "edge.verb.object_delete",
    "kind": "edge",
-   "label": "Delete · key Delete (desk verb `object.delete`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Delete · key Delete (desk verb `object.delete`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114765,7 +114753,7 @@
   {
    "id": "edge.verb.object_duplicate",
    "kind": "edge",
-   "label": "Duplicate (desk verb `object.duplicate`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Duplicate (desk verb `object.duplicate`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114797,7 +114785,7 @@
   {
    "id": "edge.verb.object_edit",
    "kind": "edge",
-   "label": "Edit (desk verb `object.edit`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Edit (desk verb `object.edit`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114829,7 +114817,7 @@
   {
    "id": "edge.verb.object_file",
    "kind": "edge",
-   "label": "Move to Zone (desk verb `object.file`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Move to Zone (desk verb `object.file`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114861,7 +114849,7 @@
   {
    "id": "edge.verb.object_info",
    "kind": "edge",
-   "label": "Get Info (desk verb `object.info`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Get Info (desk verb `object.info`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114893,7 +114881,7 @@
   {
    "id": "edge.verb.object_open",
    "kind": "edge",
-   "label": "Open (desk verb `object.open`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Open (desk verb `object.open`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114925,7 +114913,7 @@
   {
    "id": "edge.verb.object_rename",
    "kind": "edge",
-   "label": "Rename · key F2 (desk verb `object.rename`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Rename · key F2 (desk verb `object.rename`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114957,7 +114945,7 @@
   {
    "id": "edge.verb.system_search",
    "kind": "edge",
-   "label": "Search · key ⌘K (desk verb `system.search`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Search · key ⌘K (desk verb `system.search`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -114989,7 +114977,7 @@
   {
    "id": "edge.verb.system_sheet",
    "kind": "edge",
-   "label": "Keyboard shortcuts · key ⌘/ (desk verb `system.sheet`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Keyboard shortcuts · key ⌘/ (desk verb `system.sheet`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115021,7 +115009,7 @@
   {
    "id": "edge.verb.thread_compact",
    "kind": "edge",
-   "label": "Compact thread (desk verb `thread.compact`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Compact thread (desk verb `thread.compact`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115053,7 +115041,7 @@
   {
    "id": "edge.verb.thread_fork",
    "kind": "edge",
-   "label": "Fork from here (desk verb `thread.fork`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Fork from here (desk verb `thread.fork`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115085,7 +115073,7 @@
   {
    "id": "edge.verb.thread_guardrail",
    "kind": "edge",
-   "label": "Toggle guardrail (desk verb `thread.guardrail`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Toggle guardrail (desk verb `thread.guardrail`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115117,7 +115105,7 @@
   {
    "id": "edge.verb.thread_keep",
    "kind": "edge",
-   "label": "Keep as note (desk verb `thread.keep`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Keep as note (desk verb `thread.keep`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115149,7 +115137,7 @@
   {
    "id": "edge.verb.thread_mode",
    "kind": "edge",
-   "label": "Switch mode (desk verb `thread.mode`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Switch mode (desk verb `thread.mode`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115181,7 +115169,7 @@
   {
    "id": "edge.verb.thread_new",
    "kind": "edge",
-   "label": "New thread (desk verb `thread.new`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "New thread (desk verb `thread.new`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115213,7 +115201,7 @@
   {
    "id": "edge.verb.thread_prompt",
    "kind": "edge",
-   "label": "Insert prompt (desk verb `thread.prompt`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Insert prompt (desk verb `thread.prompt`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115245,7 +115233,7 @@
   {
    "id": "edge.verb.thread_stop",
    "kind": "edge",
-   "label": "Stop generation (desk verb `thread.stop`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Stop generation (desk verb `thread.stop`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115277,7 +115265,7 @@
   {
    "id": "edge.verb.thread_todo",
    "kind": "edge",
-   "label": "Add todo (desk verb `thread.todo`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Add todo (desk verb `thread.todo`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115309,7 +115297,7 @@
   {
    "id": "edge.verb.thread_tools",
    "kind": "edge",
-   "label": "Show tools (desk verb `thread.tools`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional]",
+   "label": "Show tools (desk verb `thread.tools`) [conditional] [exposure disagreement: astra=internal; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115341,7 +115329,7 @@
   {
    "id": "edge.verb.window_close",
    "kind": "edge",
-   "label": "Close window · key ⌘W (desk verb `window.close`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Close window · key ⌘W (desk verb `window.close`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115373,7 +115361,7 @@
   {
    "id": "edge.verb.window_cycle",
    "kind": "edge",
-   "label": "Cycle windows · key ⌃` (desk verb `window.cycle`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Cycle windows · key ⌃` (desk verb `window.cycle`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115405,7 +115393,7 @@
   {
    "id": "edge.verb.window_cycle_reverse",
    "kind": "edge",
-   "label": "Cycle windows (reverse) · key ⌃⇧` (desk verb `window.cycle-reverse`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Cycle windows (reverse) · key ⌃⇧` (desk verb `window.cycle-reverse`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115437,7 +115425,7 @@
   {
    "id": "edge.verb.window_maximize",
    "kind": "edge",
-   "label": "Maximize (desk verb `window.maximize`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Maximize (desk verb `window.maximize`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115469,7 +115457,7 @@
   {
    "id": "edge.verb.window_minimize",
    "kind": "edge",
-   "label": "Minimize window · key ⌘M (desk verb `window.minimize`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Minimize window · key ⌘M (desk verb `window.minimize`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=keyboard -> keyboard (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115501,7 +115489,7 @@
   {
    "id": "edge.verb.window_snap_left",
    "kind": "edge",
-   "label": "Snap left (desk verb `window.snap-left`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Snap left (desk verb `window.snap-left`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115533,7 +115521,7 @@
   {
    "id": "edge.verb.window_snap_right",
    "kind": "edge",
-   "label": "Snap right (desk verb `window.snap-right`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Snap right (desk verb `window.snap-right`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -115565,7 +115553,7 @@
   {
    "id": "edge.verb.zone_focus",
    "kind": "edge",
-   "label": "Focus (desk verb `zone.focus`) [conditional] [exposure disagreement: astra=active; muaddib=conditional]",
+   "label": "Focus (desk verb `zone.focus`) [conditional] [exposure disagreement: astra=active; muaddib=conditional] [subtype normalized: astra=verb; muaddib=pointer.click -> pointer.click (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -119599,7 +119587,7 @@
   {
    "id": "iface.face.arrival",
    "kind": "interface",
-   "label": "The arrival (the Chair)",
+   "label": "The arrival (the Chair) [subtype conflict: astra=face.section; muaddib=face.window]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -119639,8 +119627,7 @@
      "symbol": "arrival-capture-bar",
      "claim": "The arrival capture bar presents Talk, Write a thought and Record meeting controls."
     }
-   ],
-   "subtype": "face.window"
+   ]
   },
   {
    "id": "iface.face.arrival_load",
@@ -119779,7 +119766,7 @@
   {
    "id": "iface.face.concierge",
    "kind": "interface",
-   "label": "Models (the Concierge)",
+   "label": "Models (the Concierge) [subtype normalized: astra=ui; muaddib=face.window -> face.window (bucket)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/generated/components.yaml",
@@ -119818,7 +119805,7 @@
   {
    "id": "iface.face.first_words",
    "kind": "interface",
-   "label": "Voice typing (the first-value gate)",
+   "label": "Voice typing (the first-value gate) [subtype conflict: astra=face.card; muaddib=face.panel]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -119854,8 +119841,7 @@
      "claim": "the gate is one section; it is the whole first screen",
      "symbol": "FirstWords"
     }
-   ],
-   "subtype": "face.panel"
+   ]
   },
   {
    "id": "iface.face.meeting_detail",
@@ -123645,7 +123631,7 @@
   {
    "id": "state.briefs.absent",
    "kind": "state",
-   "label": "briefs · absent (latest=None)",
+   "label": "briefs · absent (latest=None) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123696,7 +123682,7 @@
   {
    "id": "state.briefs.generated_empty",
    "kind": "state",
-   "label": "briefs · generated empty (is_empty=True)",
+   "label": "briefs · generated empty (is_empty=True) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123747,7 +123733,7 @@
   {
    "id": "state.briefs.generating",
    "kind": "state",
-   "label": "briefs · generating (generating=True)",
+   "label": "briefs · generating (generating=True) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123784,7 +123770,7 @@
   {
    "id": "state.briefs.generation_failure",
    "kind": "state",
-   "label": "briefs · generation failure (write_failure=Generate brief)",
+   "label": "briefs · generation failure (write_failure=Generate brief) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123821,7 +123807,7 @@
   {
    "id": "state.briefs.item.acknowledged",
    "kind": "state",
-   "label": "briefs · item · acknowledged (shelf=acknowledged)",
+   "label": "briefs · item · acknowledged (shelf=acknowledged) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123872,7 +123858,7 @@
   {
    "id": "state.briefs.item.deferred",
    "kind": "state",
-   "label": "briefs · item · deferred (shelf=deferred)",
+   "label": "briefs · item · deferred (shelf=deferred) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -123923,7 +123909,7 @@
   {
    "id": "state.briefs.item.untouched",
    "kind": "state",
-   "label": "briefs · item · untouched (shelf=None)",
+   "label": "briefs · item · untouched (shelf=None) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124013,7 +123999,7 @@
   {
    "id": "state.briefs.next_day_window",
    "kind": "state",
-   "label": "briefs · next day window (period_end=the following day)",
+   "label": "briefs · next day window (period_end=the following day) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124087,7 +124073,7 @@
   {
    "id": "state.briefs.people.unavailable",
    "kind": "state",
-   "label": "briefs · people · unavailable (person_sections_state=unavailable)",
+   "label": "briefs · people · unavailable (person_sections_state=unavailable) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124138,7 +124124,7 @@
   {
    "id": "state.briefs.populated",
    "kind": "state",
-   "label": "briefs · populated (is_empty=False)",
+   "label": "briefs · populated (is_empty=False) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124189,7 +124175,7 @@
   {
    "id": "state.briefs.reload_persisted",
    "kind": "state",
-   "label": "briefs · reload persisted (brief=present, untriaged=0)",
+   "label": "briefs · reload persisted (brief=present, untriaged=0) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124226,7 +124212,7 @@
   {
    "id": "state.briefs.same_day_idempotent",
    "kind": "state",
-   "label": "briefs · same day idempotent (second_generate=returns the existing row)",
+   "label": "briefs · same day idempotent (second_generate=returns the existing row) [subtype normalized: astra=atlas.briefs; muaddib=projection.brief -> projection.brief (vocabulary)]",
    "phase1_refs": [],
    "sources": [
     {
@@ -124298,7 +124284,7 @@
   {
    "id": "state.desk_presentation.reload_reconnect",
    "kind": "state",
-   "label": "desk presentation · reload reconnect (after=browser reload)",
+   "label": "desk presentation · reload reconnect (after=browser reload) [subtype normalized: astra=atlas.desk_presentation; muaddib=browser.presentation -> browser.presentation (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -124529,7 +124515,7 @@
   {
    "id": "state.desk_presentation.window_open_thought",
    "kind": "state",
-   "label": "desk presentation · window open thought (window=thought workspace)",
+   "label": "desk presentation · window open thought (window=thought workspace) [subtype normalized: astra=atlas.desk_presentation; muaddib=browser.presentation -> browser.presentation (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -124592,7 +124578,7 @@
   {
    "id": "state.engines.add_engine_ready",
    "kind": "state",
-   "label": "engines · add engine ready (addEngineState=READY)",
+   "label": "engines · add engine ready (addEngineState=READY) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124641,7 +124627,7 @@
   {
    "id": "state.engines.add_engine_refused",
    "kind": "state",
-   "label": "engines · add engine refused (addEngineReason=non-empty)",
+   "label": "engines · add engine refused (addEngineReason=non-empty) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124676,7 +124662,7 @@
   {
    "id": "state.engines.assigned_ready",
    "kind": "state",
-   "label": "engines · assigned ready (effective_status=assigned, setup_row=gone)",
+   "label": "engines · assigned ready (effective_status=assigned, setup_row=gone) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124732,7 +124718,7 @@
   {
    "id": "state.engines.assignment_missing",
    "kind": "state",
-   "label": "engines · assignment missing (capability=meeting.deferred_analysis, has_override=False)",
+   "label": "engines · assignment missing (capability=meeting.deferred_analysis, has_override=False) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124802,7 +124788,7 @@
   {
    "id": "state.engines.binding_absent",
    "kind": "state",
-   "label": "engines · binding absent (binding=removed)",
+   "label": "engines · binding absent (binding=removed) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124851,7 +124837,7 @@
   {
    "id": "state.engines.both_missing",
    "kind": "state",
-   "label": "engines · both missing (speech=missing, summary=missing, label=No engine yet)",
+   "label": "engines · both missing (speech=missing, summary=missing, label=No engine yet) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -124935,7 +124921,7 @@
   {
    "id": "state.engines.profile_missing",
    "kind": "state",
-   "label": "engines · profile missing (reason=assigned profile missing: <id>)",
+   "label": "engines · profile missing (reason=assigned profile missing: <id>) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125005,7 +124991,7 @@
   {
    "id": "state.engines.read_pending",
    "kind": "state",
-   "label": "engines · read pending (read=pending, rows=0)",
+   "label": "engines · read pending (read=pending, rows=0) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125047,7 +125033,7 @@
   {
    "id": "state.engines.read_unknown",
    "kind": "state",
-   "label": "engines · read unknown (read=failed, label=Could not read setup)",
+   "label": "engines · read unknown (read=failed, label=Could not read setup) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125103,7 +125089,7 @@
   {
    "id": "state.engines.speech_assignment_missing",
    "kind": "state",
-   "label": "engines · speech assignment missing (capability=speech.transcribe, effective_status=not assigned)",
+   "label": "engines · speech assignment missing (capability=speech.transcribe, effective_status=not assigned) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125152,7 +125138,7 @@
   {
    "id": "state.engines.speech_ready",
    "kind": "state",
-   "label": "engines · speech ready (capability=speech.transcribe, effective_status=assigned)",
+   "label": "engines · speech ready (capability=speech.transcribe, effective_status=assigned) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125236,7 +125222,7 @@
   {
    "id": "state.engines.unreachable",
    "kind": "state",
-   "label": "engines · unreachable (engine_state=UNREACHABLE)",
+   "label": "engines · unreachable (engine_state=UNREACHABLE) [subtype normalized: astra=atlas.engines; muaddib=projection.assignment -> projection.assignment (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125285,7 +125271,7 @@
   {
    "id": "state.first_value.continue_later",
    "kind": "state",
-   "label": "first value · continue later (disposition=dismissed)",
+   "label": "first value · continue later (disposition=dismissed) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125348,7 +125334,7 @@
   {
    "id": "state.first_value.draft_custody",
    "kind": "state",
-   "label": "first value · draft custody (needs_draft_custody=True, verb=Save draft & continue)",
+   "label": "first value · draft custody (needs_draft_custody=True, verb=Save draft & continue) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125586,7 +125572,7 @@
   {
    "id": "state.first_value.failure.permission_denied",
    "kind": "state",
-   "label": "first value · failure · permission denied (capture_state=failed, failure=permission_denied)",
+   "label": "first value · failure · permission denied (capture_state=failed, failure=permission_denied) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125789,7 +125775,7 @@
   {
    "id": "state.first_value.failure.unreachable_hub",
    "kind": "state",
-   "label": "first value · failure · unreachable hub (capture_state=failed, failure=unreachable_hub)",
+   "label": "first value · failure · unreachable hub (capture_state=failed, failure=unreachable_hub) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125880,7 +125866,7 @@
   {
    "id": "state.first_value.kept",
    "kind": "state",
-   "label": "first value · kept (kept_note_id=non-empty, disposition=completed)",
+   "label": "first value · kept (kept_note_id=non-empty, disposition=completed) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -125964,7 +125950,7 @@
   {
    "id": "state.first_value.listening",
    "kind": "state",
-   "label": "first value · listening (capture_state=listening)",
+   "label": "first value · listening (capture_state=listening) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126020,7 +126006,7 @@
   {
    "id": "state.first_value.mic_unsupported",
    "kind": "state",
-   "label": "first value · mic unsupported (supported=False)",
+   "label": "first value · mic unsupported (supported=False) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126139,7 +126125,7 @@
   {
    "id": "state.first_value.retained_draft",
    "kind": "state",
-   "label": "first value · retained draft (recovered=True)",
+   "label": "first value · retained draft (recovered=True) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126202,7 +126188,7 @@
   {
    "id": "state.first_value.success",
    "kind": "state",
-   "label": "first value · success (capture_state=success)",
+   "label": "first value · success (capture_state=success) [subtype normalized: astra=atlas.first_value; muaddib=lifecycle.first_value -> lifecycle.first_value (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126341,7 +126327,7 @@
   {
    "id": "state.meetings.capture.finalized",
    "kind": "state",
-   "label": "meetings · capture · finalized (axis=capture, capture_status=finalized)",
+   "label": "meetings · capture · finalized (axis=capture, capture_status=finalized) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126404,7 +126390,7 @@
   {
    "id": "state.meetings.capture.imported",
    "kind": "state",
-   "label": "meetings · capture · imported (axis=capture, input=imported file)",
+   "label": "meetings · capture · imported (axis=capture, input=imported file) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126495,7 +126481,7 @@
   {
    "id": "state.meetings.capture.recording",
    "kind": "state",
-   "label": "meetings · capture · recording (axis=capture, capture_status=recording)",
+   "label": "meetings · capture · recording (axis=capture, capture_status=recording) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126558,7 +126544,7 @@
   {
    "id": "state.meetings.capture.recoverable",
    "kind": "state",
-   "label": "meetings · capture · recoverable (axis=capture, capture_status=recoverable)",
+   "label": "meetings · capture · recoverable (axis=capture, capture_status=recoverable) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/runtime.json",
@@ -126614,7 +126600,7 @@
   {
    "id": "state.meetings.capture.recovered",
    "kind": "state",
-   "label": "meetings · capture · recovered (axis=capture, capture_status=recovered)",
+   "label": "meetings · capture · recovered (axis=capture, capture_status=recovered) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/runtime.json",
@@ -126677,7 +126663,7 @@
   {
    "id": "state.meetings.intel.available",
    "kind": "state",
-   "label": "meetings · intel · available (axis=intelligence, gesture_state=available)",
+   "label": "meetings · intel · available (axis=intelligence, gesture_state=available) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126733,7 +126719,7 @@
   {
    "id": "state.meetings.intel.failed",
    "kind": "state",
-   "label": "meetings · intel · failed (axis=intelligence, job_status=failed)",
+   "label": "meetings · intel · failed (axis=intelligence, job_status=failed) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126796,7 +126782,7 @@
   {
    "id": "state.meetings.intel.queued",
    "kind": "state",
-   "label": "meetings · intel · queued (axis=intelligence, gesture_state=queued)",
+   "label": "meetings · intel · queued (axis=intelligence, gesture_state=queued) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126859,7 +126845,7 @@
   {
    "id": "state.meetings.intel.ready",
    "kind": "state",
-   "label": "meetings · intel · ready (axis=intelligence, gesture_state=ready)",
+   "label": "meetings · intel · ready (axis=intelligence, gesture_state=ready) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126929,7 +126915,7 @@
   {
    "id": "state.meetings.intel.retained_after_restart",
    "kind": "state",
-   "label": "meetings · intel · retained after restart (axis=intelligence, gesture_state=ready, after=hub restart)",
+   "label": "meetings · intel · retained after restart (axis=intelligence, gesture_state=ready, after=hub restart) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -126964,7 +126950,7 @@
   {
    "id": "state.meetings.intel.retry_after_failure",
    "kind": "state",
-   "label": "meetings · intel · retry after failure (axis=intelligence, lineage=retry leaf supersedes the failed ancestor)",
+   "label": "meetings · intel · retry after failure (axis=intelligence, lineage=retry leaf supersedes the failed ancestor) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -127027,7 +127013,7 @@
   {
    "id": "state.meetings.intel.running",
    "kind": "state",
-   "label": "meetings · intel · running (axis=intelligence, gesture_state=running)",
+   "label": "meetings · intel · running (axis=intelligence, gesture_state=running) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -127069,7 +127055,7 @@
   {
    "id": "state.meetings.transcription.absent",
    "kind": "state",
-   "label": "meetings · transcription · absent (axis=transcription, segments=0)",
+   "label": "meetings · transcription · absent (axis=transcription, segments=0) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -127181,7 +127167,7 @@
   {
    "id": "state.meetings.transcription.record_only",
    "kind": "state",
-   "label": "meetings · transcription · record only (axis=transcription, transcription_status=record_only)",
+   "label": "meetings · transcription · record only (axis=transcription, transcription_status=record_only) [subtype normalized: astra=atlas.meetings; muaddib=domain.meeting -> domain.meeting (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/voice.json",
@@ -127265,7 +127251,7 @@
   {
    "id": "state.projections.attention.acknowledged",
    "kind": "state",
-   "label": "projections · attention · acknowledged (attention_state=acknowledged, dismissed=False, overlay=True)",
+   "label": "projections · attention · acknowledged (attention_state=acknowledged, dismissed=False, overlay=True) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127321,7 +127307,7 @@
   {
    "id": "state.projections.attention.dismissed",
    "kind": "state",
-   "label": "projections · attention · dismissed (dismissed=True, listed_by_default=False)",
+   "label": "projections · attention · dismissed (dismissed=True, listed_by_default=False) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127412,7 +127398,7 @@
   {
    "id": "state.projections.attention.restored",
    "kind": "state",
-   "label": "projections · attention · restored (attention_state=unseen, dismissed=False, after=restore)",
+   "label": "projections · attention · restored (attention_state=unseen, dismissed=False, after=restore) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127503,7 +127489,7 @@
   {
    "id": "state.projections.door.absent",
    "kind": "state",
-   "label": "projections · door · absent (detail_url=, verb_drawn=False)",
+   "label": "projections · door · absent (detail_url=, verb_drawn=False) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127573,7 +127559,7 @@
   {
    "id": "state.projections.door.present",
    "kind": "state",
-   "label": "projections · door · present (detail_url=/cadence, verb_drawn=True)",
+   "label": "projections · door · present (detail_url=/cadence, verb_drawn=True) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127643,7 +127629,7 @@
   {
    "id": "state.projections.door.stale",
    "kind": "state",
-   "label": "projections · door · stale (detail_url=/history?meeting=<deleted id>, target_resolves=False)",
+   "label": "projections · door · stale (detail_url=/history?meeting=<deleted id>, target_resolves=False) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -127729,7 +127715,7 @@
   {
    "id": "state.projections.receipt.resolved",
    "kind": "state",
-   "label": "projections · receipt · resolved (projection_kind=receipt, attention_state=resolved)",
+   "label": "projections · receipt · resolved (projection_kind=receipt, attention_state=resolved) [subtype normalized: astra=atlas.projections; muaddib=projection.desk -> projection.desk (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -128172,7 +128158,7 @@
   {
    "id": "state.time.next_due_sweep",
    "kind": "state",
-   "label": "time · next due sweep (elapsed_s=>= sweep_every_minutes * 60)",
+   "label": "time · next due sweep (elapsed_s=>= sweep_every_minutes * 60) [subtype normalized: astra=atlas.time; muaddib=clock -> clock (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/runtime.json",
@@ -128242,7 +128228,7 @@
   {
    "id": "state.time.sweep_held_remote",
    "kind": "state",
-   "label": "time · sweep held remote (runs_on=not local, held=True)",
+   "label": "time · sweep held remote (runs_on=not local, held=True) [subtype normalized: astra=atlas.time; muaddib=clock -> clock (vocabulary)]",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/runtime.json",
@@ -158079,7 +158065,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 148,
      "anchor": "res.arrival_record_says_something",
@@ -158094,7 +158080,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Shared rig preparation, not a finding against either brain's work: the atlas is a shared input. It must be paid before story 04/05 fire these cases.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 321,
      "anchor": "res.atlas_controls_corrected_before_live",
@@ -158207,7 +158193,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Shared rig preparation, not a finding against either brain's work: the atlas is a shared input. It must be paid before story 04/05 fire these cases.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 321,
      "anchor": "res.atlas_controls_corrected_before_live",
@@ -158320,7 +158306,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 53,
      "anchor": "res.brief_unknown_is_not_absence",
@@ -158335,7 +158321,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 53,
      "anchor": "res.brief_unknown_is_not_absence",
@@ -158350,7 +158336,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 53,
      "anchor": "res.brief_unknown_is_not_absence",
@@ -158365,7 +158351,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 132,
      "anchor": "res.concierge_finishes",
@@ -158380,7 +158366,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 132,
      "anchor": "res.concierge_finishes",
@@ -158395,7 +158381,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 132,
      "anchor": "res.concierge_finishes",
@@ -158410,7 +158396,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 7,
      "anchor": "res.decisions_route_dead",
@@ -158425,7 +158411,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 7,
      "anchor": "res.decisions_route_dead",
@@ -158440,7 +158426,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=disagree: Confusing names and stale Recall results are real, but one face is not required by Tenets 3 and 5. Repair recent-mode refresh separately; a consolidation is outside the minimum meeting result.",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 117,
      "anchor": "res.desk_memory_one_thing",
@@ -158455,7 +158441,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=disagree: Confusing names and stale Recall results are real, but one face is not required by Tenets 3 and 5. Repair recent-mode refresh separately; a consolidation is outside the minimum meeting result.",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 117,
      "anchor": "res.desk_memory_one_thing",
@@ -158470,7 +158456,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Ledger only; correction is story 07. Rank last because it costs no Tuesday.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 592,
      "anchor": "res.docs_assignment_exposure",
@@ -158499,7 +158485,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Ledger only; correction is story 07.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 562,
      "anchor": "res.docs_desk_changed_comment",
@@ -158528,7 +158514,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Last. Cosmetic; the atlas value worked.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 622,
      "anchor": "res.docs_engine_address",
@@ -158557,7 +158543,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 86,
      "anchor": "res.first_value_recovery_owner",
@@ -158572,7 +158558,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 86,
      "anchor": "res.first_value_recovery_owner",
@@ -158587,7 +158573,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 86,
      "anchor": "res.first_value_recovery_owner",
@@ -158602,7 +158588,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 102,
      "anchor": "res.local_time",
@@ -158617,7 +158603,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 102,
      "anchor": "res.local_time",
@@ -158632,7 +158618,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree (ruling §4.6); astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 524,
      "anchor": "res.no_transcript_during_import",
@@ -158668,7 +158654,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Ranked below the dead verbs: it costs consistency, not a result. The census is in this graph as one node per site, so story 07 can measure the same number again.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 487,
      "anchor": "res.raw_control_census",
@@ -158704,7 +158690,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 69,
      "anchor": "res.receipt_open_goes_somewhere",
@@ -158719,7 +158705,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 69,
      "anchor": "res.receipt_open_goes_somewhere",
@@ -158734,7 +158720,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 69,
      "anchor": "res.receipt_open_goes_somewhere",
@@ -158749,7 +158735,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Top tooling debt: it decides whether J6/J7 can ever be proven by the rig. Add the `meeting` (or `test`) extra to the lane command, or declare the client in `dev`.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 284,
      "anchor": "res.runtime_client_prerequisite",
@@ -158785,7 +158771,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 22,
      "anchor": "res.summary_lands_on_arrival",
@@ -158800,7 +158786,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 22,
      "anchor": "res.summary_lands_on_arrival",
@@ -158815,7 +158801,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Second: it blocked 20 runs across J3, J5, J6, J7 and J9, including every summary case.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 190,
      "anchor": "res.summary_recipe_tooling",
@@ -158907,7 +158893,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Second: it blocked 20 runs across J3, J5, J6, J7 and J9, including every summary case.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 190,
      "anchor": "res.summary_recipe_tooling",
@@ -158999,7 +158985,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 38,
      "anchor": "res.thought_receipt",
@@ -159014,7 +159000,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 38,
      "anchor": "res.thought_receipt",
@@ -159029,7 +159015,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=Council reply not recorded; this row is Astra's proposed disposition.; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 436,
      "anchor": "res.thread_keep_note_result",
@@ -159079,7 +159065,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159094,7 +159080,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159109,7 +159095,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159124,7 +159110,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159139,7 +159125,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159154,7 +159140,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159169,7 +159155,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159184,7 +159170,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159199,7 +159185,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159214,7 +159200,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159229,7 +159215,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159244,7 +159230,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",
@@ -159259,7 +159245,7 @@
    "by": "council PHILO-2-06 draft, Muad'Dib 2026-09-23, round 2; muaddib=agree; astra=agree",
    "evidence": [
     {
-     "revision": "e58b4a14dc371a921633aa0c1abd7d2374b7b147",
+     "revision": "54cf71a78e65355002cd00fc298e7919ffb7a1bf",
      "path": "docs/internal/philo/graph/council-resolutions.json",
      "line": 163,
      "anchor": "res.tooling_live_prep",

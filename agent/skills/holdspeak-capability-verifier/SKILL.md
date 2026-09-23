@@ -82,7 +82,25 @@ holds the cases; `docs/generated/graph.json` is the join of the passes.
    `python scripts/philo_graph_reference.py` and commit
    `docs/generated/graph.json`; `--check` proves it is current, and
    `uv run --extra dev python scripts/philo_graph_reference.py --census` lists
-   new, removed and changed entry points since the passes.
+   new, removed and changed entry points since the passes. The census reads
+   HTTP routes from source (the app that `scripts/gen_api_surface.py`
+   assembles), not from the committed OpenAPI. Subtype conflicts between the
+   passes show as `note:` lines; the join does not choose one.
+7. **When you change a route, do these steps in this order:**
+
+   ```bash
+   # 1. change the route in source
+   uv run --extra dev python scripts/philo_openapi_reference.py        # 2. OpenAPI
+   python scripts/philo_graph_reference.py                             # 3. the join
+   python scripts/philo_graph_reference.py --check                     # 4. current
+   uv run --extra dev python scripts/philo_graph_reference.py --census # 5. census
+   ```
+
+   A `stale` line means step 2 is not done. The census then names the new,
+   removed or changed edge. Do not edit a sealed pass to agree with the new
+   route. Pass evidence describes the route as it was at its recorded
+   revision, and that evidence is never rewritten. A new pass or a council
+   resolution records the current route.
 
 The isolated-HOME law covers every step: never the owner's data directory,
 keychain or microphone, and never a hub on his port.

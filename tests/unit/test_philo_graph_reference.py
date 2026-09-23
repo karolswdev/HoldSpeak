@@ -250,6 +250,14 @@ def test_census_names_new_removed_and_changed(tmp_path, monkeypatch):
     (tmp_path / "holdspeak").mkdir()
     (tmp_path / "holdspeak/routes.py").write_text("async def renamed_handler():\n    pass\n")
     monkeypatch.setattr(gen, "current_mcp_tools", lambda: {"demo.tool"})
+    monkeypatch.setattr(
+        gen,
+        "current_routes",
+        lambda root: {
+            ("GET", "/api/kept"): {"handler": "renamed_handler", "module": "holdspeak/routes.py"},
+            ("POST", "/api/new"): {"handler": "new_handler", "module": "holdspeak/routes.py"},
+        },
+    )
 
     def edge(node_id, source, refs=()):
         return {"id": node_id, "kind": "edge", "label": node_id, "phase1_refs": list(refs), "sources": [source]}
@@ -266,10 +274,135 @@ def test_census_names_new_removed_and_changed(tmp_path, monkeypatch):
         ],
     }
     lines = gen.census(graph, tmp_path)
-    assert "new: http POST /api/new has no edge" in lines
-    assert "removed: http DELETE /api/gone is gone from the roster (edge.route.gone)" in lines
+    assert "new: http POST /api/new has no edge (new_handler)" in lines
+    assert "removed: http DELETE /api/gone is not in source (edge.route.gone)" in lines
     assert "removed: verb edge edge.verb.desk_retired names nothing declared now" in lines
     assert "changed: mcp tool demo.tool (edge.mcp.demo_tool): holdspeak/gone.py is gone" in lines
-    # git cannot read revision aaaa… in a temporary tree, so the moved handler is "changed".
-    assert "changed: http GET /api/kept (edge.route.kept): def kept_handler is no longer in holdspeak/routes.py" in lines
+    # git cannot read revision aaaa… in a temporary tree, so the renamed handler is "changed".
+    assert "changed: http GET /api/kept (edge.route.kept): source registers renamed_handler, not the cited kept_handler" in lines
+    assert not any(line.startswith("stale:") for line in lines)
     assert not any("desk.kept" in line for line in lines)
+
+
+# ---------------------------------------------------------------------------
+# Counsel round (Astra's check of the built story, findings 1-3).
+# ---------------------------------------------------------------------------
+
+def _openapi_digest() -> str:
+    import hashlib
+
+    return hashlib.sha256((ROOT / "docs/generated/openapi.json").read_bytes()).hexdigest()
+
+
+@pytest.fixture(scope="module")
+def route_surface():
+    """The route owner the Philo scripts share (scripts/gen_api_surface.py)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        import gen_api_surface
+    finally:
+        sys.path.remove(str(ROOT / "scripts"))
+    return gen_api_surface
+
+
+def test_census_sees_source_route_changes_while_openapi_is_unchanged(route_surface, monkeypatch):
+    """Finding 1: add, remove and rename a route decorator in the assembled app
+    and leave docs/generated/openapi.json alone.  The census must name all three."""
+    before = _openapi_digest()
+    app = route_surface.build_reference_app()
+
+    @app.post("/api/philo-census-probe")
+    def philo_census_probe():  # added in source, absent from OpenAPI and the join
+        return {}
+
+    def _drop(method: str, path: str):
+        (route,) = [r for r in app.router.routes if getattr(r, "path", "") == path and method in getattr(r, "methods", set())]
+        app.router.routes.remove(route)
+        return route
+
+    _drop("DELETE", "/api/activity/domains/{domain}")  # removed from source
+    _drop("DELETE", "/api/activity/records")
+
+    @app.delete("/api/activity/records")
+    def delete_records_renamed():  # same method and path, new handler name
+        return {}
+
+    monkeypatch.setattr(route_surface, "build_reference_app", lambda: app)
+    graph = json.loads((ROOT / gen.OUTPUT).read_text(encoding="utf-8"))
+    lines = gen.census(graph, ROOT)
+
+    assert _openapi_digest() == before
+    assert "new: http POST /api/philo-census-probe has no edge (philo_census_probe)" in lines
+    assert any(line.startswith("removed: http DELETE /api/activity/domains/{domain} ") for line in lines)
+    assert any(
+        line.startswith("changed: http DELETE /api/activity/records (")
+        and "delete_records_renamed" in line
+        for line in lines
+    )
+
+
+def _typed(node_id: str, subtype: str) -> dict:
+    return {**_node(node_id, "edge", node_id), "subtype": subtype}
+
+
+def test_subtype_conflict_keeps_both_positions_and_is_not_decided():
+    """Finding 2: http versus ui is a conflict; the join names both and picks neither."""
+    inputs = _inputs(
+        {
+            "static-muaddib": _pass(nodes=[_typed("edge.route.demo", "http")]),
+            "static-astra": _pass(nodes=[_typed("edge.route.demo", "ui")]),
+        }
+    )
+    graph, notes = gen.join(inputs)
+    (node,) = graph["nodes"]
+    assert "subtype" not in node
+    assert node["label"].endswith("[subtype conflict: astra=ui; muaddib=http]")
+    assert "subtype-conflict: edge.route.demo: astra=ui; muaddib=http" in notes
+
+
+def test_subtype_refinement_is_normalized_by_the_table_and_keeps_both():
+    inputs = _inputs(
+        {
+            "static-muaddib": _pass(nodes=[_typed("edge.route.demo", "http")]),
+            "static-astra": _pass(nodes=[_typed("edge.route.demo", "http.POST")]),
+        }
+    )
+    graph, notes = gen.join(inputs)
+    (node,) = graph["nodes"]
+    assert node["subtype"] == "http.POST"
+    assert "astra=http.POST; muaddib=http" in node["label"]
+    assert any(note.startswith("subtype-normalized: edge.route.demo: astra=http.POST; muaddib=http") for note in notes)
+
+
+def test_committed_join_names_every_subtype_disagreement(joined):
+    graph, notes = joined
+    labels = {node["id"]: node["label"] for node in graph["nodes"]}
+    disagreeing = set()
+    by_id: dict[str, set[str]] = {}
+    for name in gen.PASSES:
+        sealed = json.loads((ROOT / gen.GRAPH_DIR / f"{name}.json").read_text(encoding="utf-8"))
+        for node in sealed["nodes"]:
+            if node.get("subtype"):
+                by_id.setdefault(node["id"], set()).add(node["subtype"])
+    disagreeing = {node_id for node_id, values in by_id.items() if len(values) > 1}
+    assert disagreeing
+    for node_id in disagreeing:
+        assert "[subtype " in labels[node_id], node_id
+        assert all(value in labels[node_id] for value in by_id[node_id]), node_id
+    listed = {note.split(": ")[1] for note in notes if note.startswith(("subtype-conflict:", "subtype-normalized:"))}
+    assert listed == disagreeing
+
+
+def test_council_revision_holds_the_resolutions_the_join_read(joined):
+    """Finding 3: the cited revision's council-resolutions.json is the file the join used."""
+    import hashlib
+    import subprocess
+
+    graph, _ = joined
+    shown = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{gen.COUNCIL_REVISION}:{gen.RESOLUTIONS}"],
+        capture_output=True, check=True,
+    ).stdout
+    used = {item["path"]: item["sha256"] for item in graph["inputs"]}[gen.RESOLUTIONS]
+    assert hashlib.sha256(shown).hexdigest() == used
+    assert {row["evidence"][0]["revision"] for row in graph["resolutions"]} == {gen.COUNCIL_REVISION}
