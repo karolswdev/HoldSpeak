@@ -227,7 +227,7 @@ From an active source environment, install only the extras you need:
 | Meeting analysis and optional meeting dependencies | `uv pip install -e '.[meeting]'` |
 | Local GGUF text runtime | `uv pip install -e '.[dictation-llama]'` |
 | MLX text runtime on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
-| OpenAI-compatible dictation runtime | `uv pip install -e '.[dictation-openai]'` |
+| OpenAI-compatible dictation runtime | Included in the base install (`uv pip install -e .`) |
 
 The package form uses `holdspeak[extra]` in place of `.[extra]` and omits `-e`.
 See [Meeting mode](MEETING_MODE_GUIDE.md) for system audio setup.

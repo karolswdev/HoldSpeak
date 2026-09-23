@@ -1,0 +1,47 @@
+# Executable production import fence (not a pytest collection claim)
+
+This probe runs the production import head used by meeting intelligence:
+`from holdspeak.intel import OpenAI`. It is run directly by each retained
+isolated venv, with a fresh isolated HOME. No hub, model, endpoint, keychain,
+microphone, or test suite is started.
+
+## README/base installation — expected failure
+
+Command:
+
+```sh
+probe_home=$(mktemp -d); export HOME="$probe_home"; baseline_venv=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.7N7LjZODSs; printf '%s\n' "HOME=$HOME" "VENV=$baseline_venv"; "$baseline_venv/bin/python" -c 'from holdspeak.intel import OpenAI; print(f"OpenAI={OpenAI!r}"); assert OpenAI is not None, "production OpenAI client is unavailable"'
+```
+
+Output:
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.XQJ8RhWvCS
+VENV=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.7N7LjZODSs
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from holdspeak.intel import OpenAI; print(f"OpenAI={OpenAI!r}"); assert OpenAI is not None, "production OpenAI client is unavailable"
+                                                                            ^^^^^^^^^^^^^^^^^^
+AssertionError: production OpenAI client is unavailable
+OpenAI=None
+```
+
+Exit status: `1`.
+
+## `[meeting]` installation — expected success
+
+Command:
+
+```sh
+probe_home=$(mktemp -d); export HOME="$probe_home"; meeting_venv=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.gR65PVgc3Z; printf '%s\n' "HOME=$HOME" "VENV=$meeting_venv"; "$meeting_venv/bin/python" -c 'from holdspeak.intel import OpenAI; print(f"OpenAI={OpenAI!r}"); assert OpenAI is not None, "production OpenAI client is unavailable"'
+```
+
+Output:
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.FnEOeANCHl
+VENV=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.gR65PVgc3Z
+OpenAI=<class 'openai.OpenAI'>
+```
+
+Exit status: `0`.

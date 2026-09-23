@@ -1,0 +1,61 @@
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.DJpm7mKkd5
+VENV=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.kySSUvD00i
+COMMAND=uv venv "$install_venv"; source "$install_venv/bin/activate"; uv pip install -e .
+Using CPython 3.13.11 interpreter at: /Users/karol/.local/bin/python3.13
+Creating virtual environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.kySSUvD00i
+Activate with: source /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.kySSUvD00i/bin/activate
+Using Python 3.13.11 environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.kySSUvD00i
+Resolved 75 packages in 17ms
+   Building holdspeak @ file:///Users/karol/dev/tools/wt-philo-3-02
+  × Failed to build `holdspeak @ file:///Users/karol/dev/tools/wt-philo-3-02`
+  ├─▶ The build backend returned an error
+  ╰─▶ Call to `hatchling.build.build_editable` failed (exit status: 1)
+
+      [stderr]
+      npm error code ENOTEMPTY
+      npm error syscall rmdir
+      npm error path
+      /Users/karol/dev/tools/wt-philo-3-02/web/node_modules/caniuse-lite/data/regions
+      npm error errno -66
+      npm error ENOTEMPTY: directory not empty, rmdir
+      '/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/caniuse-lite/data/regions'
+      npm notice
+      npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+      npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+      npm notice To update run: npm install -g npm@11.20.0
+      npm notice
+      npm error A complete log of this run can be found in:
+      /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.DJpm7mKkd5/.npm/_logs/2026-09-23T05_54_14_558Z-debug-0.log
+      Traceback (most recent call last):
+        File "<string>", line 11, in <module>
+          wheel_filename =
+      backend.build_editable("/Users/karol/Library/Caches/uv/builds-v0/.tmp8k6akW",
+      {}, None)
+        File
+      "/Users/karol/Library/Caches/uv/builds-v0/.tmp5za6x7/lib/python3.13/site-packages/hatchling/build.py",
+      line 83, in build_editable
+          return os.path.basename(next(builder.build(directory=wheel_directory,
+      versions=["editable"])))
+      
+      ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/Users/karol/Library/Caches/uv/builds-v0/.tmp5za6x7/lib/python3.13/site-packages/hatchling/builders/plugin/interface.py",
+      line 158, in build
+          build_hook.initialize(version, build_data)
+          ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+        File "/Users/karol/dev/tools/wt-philo-3-02/hatch_build.py", line 47,
+      in initialize
+          subprocess.run(install_cmd, cwd=web_dir, check=True)
+          ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/Users/karol/.local/share/uv/python/cpython-3.13.11-macos-aarch64-none/lib/python3.13/subprocess.py",
+      line 577, in run
+          raise CalledProcessError(retcode, process.args,
+                                   output=stdout, stderr=stderr)
+      subprocess.CalledProcessError: Command
+      '['/Users/karol/.nvm/versions/node/v22.21.0/bin/npm', 'ci']' returned
+      non-zero exit status 190.
+
+      hint: This usually indicates a problem with the package or the build
+      environment.
+EXIT=1

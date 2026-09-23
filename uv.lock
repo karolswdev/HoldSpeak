@@ -869,6 +869,7 @@ dependencies = [
     { name = "mlx-whisper", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "openai" },
     { name = "pynput" },
     { name = "pyperclip" },
     { name = "python-multipart" },
@@ -907,7 +908,6 @@ linux = [
 ]
 meeting = [
     { name = "llama-cpp-python" },
-    { name = "openai" },
     { name = "resemblyzer" },
     { name = "zeroconf" },
 ]
@@ -919,7 +919,6 @@ presence = [
 test = [
     { name = "httpx" },
     { name = "jsonschema" },
-    { name = "openai" },
     { name = "playwright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -953,9 +952,8 @@ requires-dist = [
     { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.19" },
     { name = "mlx-whisper", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'", specifier = ">=0.4.0" },
     { name = "numpy", specifier = ">=1.24.0" },
+    { name = "openai", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'dictation-openai'", specifier = ">=1.0.0" },
-    { name = "openai", marker = "extra == 'meeting'", specifier = ">=1.0.0" },
-    { name = "openai", marker = "extra == 'test'", specifier = ">=1.0.0" },
     { name = "openwakeword", marker = "extra == 'wakeword'", specifier = ">=0.6.0" },
     { name = "outlines", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'dictation-mlx'", specifier = ">=0.1.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40.0" },

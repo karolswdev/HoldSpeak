@@ -1,0 +1,56 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_produced_core_metadata_has_endpoint_client_only _____________
+
+    def test_produced_core_metadata_has_endpoint_client_only() -> None:
+        """Inspect the installed distribution metadata produced by the backend.
+    
+        ``uv run pytest`` installs the editable project before collection, so this
+        reads the same ``METADATA`` that a wheel or editable build exposes.  The
+        optional markers are intentionally ignored: ``openai`` must be an
+        unconditional requirement while local model and speaker runtimes stay
+        optional.
+        """
+        requirements = [
+            Requirement(value)
+            for value in (metadata.distribution("holdspeak").requires or [])
+        ]
+        core = {
+            requirement.name.lower()
+            for requirement in requirements
+            if requirement.marker is None
+        }
+    
+>       assert "openai" in core
+E       AssertionError: assert 'openai' in {'cryptography', 'fastapi', 'icalendar', 'keyring', 'numpy', 'pynput', ...}
+
+/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/unit/test_philo3_install_contract.py:34: AssertionError
+=============================== warnings summary ===============================
+../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/conftest.py:13
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/conftest.py:13: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as _StarletteTestClient
+
+../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_mode
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.eP8AG1rtzI/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../../../../../var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.AsTjT2AUuf/tests/unit/test_philo3_install_contract.py::test_produced_core_metadata_has_endpoint_client_only
+1 failed, 5 warnings in 0.15s

@@ -129,7 +129,7 @@ From an active source environment:
 | --- | --- |
 | GGUF through llama.cpp | `uv pip install -e '.[dictation-llama]'` |
 | MLX text models on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
-| OpenAI-compatible dictation endpoint | `uv pip install -e '.[dictation-openai]'` |
+| OpenAI-compatible dictation endpoint | Included in the base install (`uv pip install -e .`) |
 | Optional meeting analysis dependencies | `uv pip install -e '.[meeting]'` |
 
 For a package installation, use the equivalent `holdspeak[extra]` package.
