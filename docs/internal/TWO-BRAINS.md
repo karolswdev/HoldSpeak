@@ -19,6 +19,10 @@ The owner, 2026-09-19, verbatim:
 > And you both rely on orchestrating down, at the end of the day.
 > `codex` will be told to orchestrate down to luna-xhigh reasoning
 > models, and you will orchestrate down to opus-4-6[1m] agents."
+>
+> Amended 2026-09-22: "there's a new king in town - Opus-5-5, and I want
+> our opus-workers to use this model!" The Fedaykin follow the newest Opus
+> on his ruling each time; the quote above is kept verbatim as history.
 
 Two orchestrators, one product, one gate. Neither is the other's
 counsel-on-call; each is the other's equal, and each is checked by the
@@ -30,7 +34,7 @@ other before anything it authored is acted on.
 |---|---|---|
 | Runtime | Claude Code (this session), `claude-fable-5-1` | `codex exec`, `gpt-6-astra`, reasoning `xhigh` |
 | Reads on entry | `CLAUDE.md`, memory, this doc | `AGENTS.md` (repo root), this doc |
-| Orchestrates down to | `.claude/agents/opus-worker.md` — Opus 4.6 (1M), the Fedaykin | `spawn_agent` with `model="gpt-5.6-luna"`, `reasoning_effort="xhigh"` — the Luna lanes |
+| Orchestrates down to | `.claude/agents/opus-worker.md` — Opus 5.5 (`claude-opus-5-5`, ruling 2026-09-22), the Fedaykin | `spawn_agent` with `model="gpt-5.6-luna"`, `reasoning_effort="xhigh"` — the Luna lanes |
 | Invoked by | the owner, or Astra via `claude -p` | the owner, or Muad'Dib via `scripts/astra` |
 | Session record | Claude Code transcript + memory | `~/.codex/sessions/…/rollout-<ts>-<id>.jsonl` (persisted; never `--ephemeral` for real work) |
 
@@ -198,7 +202,7 @@ or the next Muad'Dib session pays the check before it is acted on.
 Both brains are orchestrators first. Each fans out to its own workers
 and never to the other's:
 
-- **Muad'Dib → Opus 4.6 (1M)** via the `opus-worker` agent
+- **Muad'Dib → Opus 5.5** (`claude-opus-5-5`; needs Claude Code ≥ 2.1.280) via the `opus-worker` agent
   (`.claude/agents/opus-worker.md`, `model: opus`; the file is
   gitignored, re-applied per clone). Worker laws: ORCHESTRATION.md §3
   and the agent file.
