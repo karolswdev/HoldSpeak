@@ -7,7 +7,7 @@ BOARDS = ["0-today","1-generate-reachable","2a-generating","2b-reading","3a-did-
 # Library-risk probes (Astra r2, condition 3): the REAL DirectoryPullout and
 # ConnectionsPane at 393. Each asserts no horizontal overflow and every
 # Button's text inside its own box.
-LIBS = {"lib-directory": ".surface-section-head", "lib-jira-chip": "[data-testid=connections-jira-conn-c1]"}
+LIBS = {"lib-directory": ".surface-section-head", "lib-jira-chip": "[data-testid=connections-jira-conn-c1]", "lib-route-fallback": "[data-testid=summary-route]"}
 FLOOR = 12.0
 MEASURE = r"""() => {
   const root = document.querySelector('[data-testid=arrival-brief]');

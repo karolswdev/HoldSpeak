@@ -181,6 +181,20 @@ function GitHubCard({
   );
 }
 
+/* PHILO-4-01 r4: an acli host chip. The row label shows the full host, so
+   this chip (and only this kind) may truncate; title carries the full host
+   so the chip never inherits EgressChip's "route not set" default. */
+function HostChip({ site }: { site: string }) {
+  return (
+    <EgressChip
+      label={site.toUpperCase()}
+      scope="cloud"
+      className="gadget-chip-truncate"
+      title={site}
+    />
+  );
+}
+
 function JiraConnectionRow({
   conn,
   onRecheck,
@@ -212,7 +226,7 @@ function JiraConnectionRow({
             <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
-            <EgressChip label={site.toUpperCase()} scope="cloud" />
+            <HostChip site={site} />
           </>
         ) : null}
       </div>
@@ -223,7 +237,7 @@ function JiraConnectionRow({
             <Button dense variant="primary" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
-            <EgressChip label={site.toUpperCase()} scope="cloud" />
+            <HostChip site={site} />
           </div>
         </div>
       ) : null}
@@ -337,7 +351,7 @@ function ConfluenceConnectionRow({
             <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
-            <EgressChip label={site.toUpperCase()} scope="cloud" />
+            <HostChip site={site} />
           </>
         ) : null}
       </div>
@@ -348,7 +362,7 @@ function ConfluenceConnectionRow({
             <Button dense variant="primary" onClick={onRecheck} loading={busy}>
               Recheck
             </Button>
-            <EgressChip label={site.toUpperCase()} scope="cloud" />
+            <HostChip site={site} />
           </div>
         </div>
       ) : null}

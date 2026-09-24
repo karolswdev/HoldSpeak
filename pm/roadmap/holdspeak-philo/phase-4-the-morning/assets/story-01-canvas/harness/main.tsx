@@ -3,6 +3,7 @@
  * BRIEF section's own markup (ChairHome.tsx:1196-1330, 1978-2040).
  * Round three adds two library-risk probes (lib-*): the REAL
  * DirectoryPullout and the REAL ConnectionsPane, fed by a stubbed fetch.
+ * Round four adds the REAL RouteDisclosure with a long fallback leg.
  * Scratch only; never shipped. */
 import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
@@ -15,6 +16,8 @@ import { Button } from "@w/components/signal/Signal";
 import { BriefEgress } from "@w/desk/chair/briefEgress";
 import { DirectoryPullout } from "@w/desk/pullouts/DirectoryPullout";
 import { ConnectionsPane } from "@w/pages/cores/connections/ConnectionsPane";
+import { RouteDisclosure } from "@w/meetings/RouteDisclosure";
+import { readPlannedRoute } from "@w/meetings/summaryRoute";
 
 type Item = { id: string; text: string };
 const BRIEF_CAP = 3;
@@ -30,8 +33,12 @@ const C1 = { id: "c1", text: "Commitment due 2026-09-25: Send the Q4 plan to Dan
 
 const DAY1 = "SEP 21 – 23 · GENERATED SEP 23 17:40";
 const DAY2 = "SEP 21 – 24 · GENERATED SEP 24 08:02";
-/* The producer's headline for DAY1's four items (monday_brief_service.py:346-387). */
-const DAY1_HEADLINE = "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.";
+/* The producer's headline for DAY1's four items, pasted verbatim from the
+ * REAL `_compose` (harness/compose_headline.py): the four items in the
+ * sections the producer gives them (C1 `Commitment due` is a `decisions`
+ * item, monday_brief_service.py:812; the Arrival reads changed, broke,
+ * waiting, decisions and never this_week, ChairHome.tsx:801). */
+const DAY1_HEADLINE = "1 thing changed, 1 thing waiting, 2 decisions waiting.";
 
 function Verbs({ busy }: { busy?: boolean }) {
   return (
@@ -204,11 +211,24 @@ const DIRECTORY = {
          memberIds: Array.from({ length: 123 }, (_, i) => `note:m${i}`) },
 } as unknown as Parameters<typeof DirectoryPullout>[0]["object"];
 
+/* Round four (Astra r3): a route disclosure keeps its FULL text. The lead
+ * leg and a long cloud fallback, the shape summaryRun.test.tsx fences. */
+const FALLBACK_ROUTE = readPlannedRoute({ planned_route: {
+  status: "ready", reason_code: null, selection_hash: "sha256:abc123",
+  legs: [
+    { ordinal: 1, host: "192.168.1.43", boundary: "lan", profile_id: "summary-first", profile_revision: 2, deployment_revision_id: "dep-1" },
+    { ordinal: 2, host: "api.anthropic.com", boundary: "cloud", profile_id: "summary-fallback", profile_revision: 1, deployment_revision_id: "dep-2" },
+  ] } });
+
 const probes: Record<string, ReactNode> = {
   "lib-directory": <DirectoryPullout object={DIRECTORY} onClose={() => undefined} />,
   "lib-jira-chip": (
     <div className="desk-pullout-body desk-surface-body">
       <ConnectionsPane onFooterUpdate={() => undefined} onOpenModule={() => undefined} />
+    </div>),
+  "lib-route-fallback": (
+    <div className="desk-pullout-body desk-surface-body">
+      <RouteDisclosure route={FALLBACK_ROUTE} />
     </div>),
 };
 

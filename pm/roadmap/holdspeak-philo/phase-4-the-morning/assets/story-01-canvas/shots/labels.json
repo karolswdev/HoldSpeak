@@ -154,8 +154,8 @@
   "verbs_today": [
    "Generate again"
   ],
-  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
-  "headline_source": "the stored headline (monday_brief_service.py:346-387); triage does not rewrite it",
+  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+  "headline_source": "the stored headline, pasted verbatim from the REAL _compose (harness/compose_headline.py; monday_brief_service.py:327-387) over DAY1's four items in the producer's sections: changed = Meeting recorded (:507), waiting = Open loop (:708), decisions = Review decision (:768) + Commitment due (:812); triage does not rewrite it",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
  },
  "8a-quiet-generating": {
@@ -165,7 +165,7 @@
   "verbs": [
    "Generate (disabled)"
   ],
-  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
   "status": "GENERATING…"
  },
@@ -176,7 +176,7 @@
   "verbs": [
    "Generate"
   ],
-  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
   "status": "BRIEF DID NOT GENERATE · HTTP 500"
  },
@@ -202,6 +202,14 @@
   "verbs": [
    "Recheck"
   ],
-  "egress": "ARCHITECTURE-PLATFORM-PRO… (full: ARCHITECTURE-PLATFORM-PROD.ATLASSIAN.NET; truncated at 32ch with an ellipsis)"
+  "egress": "ARCHITECTURE-PLATFORM-PRO… (full: ARCHITECTURE-PLATFORM-PROD.ATLASSIAN.NET; the opt-in gadget-chip-truncate modifier, set only on the acli host chip because the row label shows the full host)",
+  "title": "architecture-platform-prod.atlassian.net"
+ },
+ "lib-route-fallback": {
+  "state": "Library probe (round four): the REAL RouteDisclosure at 393, a LAN lead leg and a long cloud fallback",
+  "chips": [
+   "192.168.1.43 · LAN",
+   "+ FALLBACK API.ANTHROPIC.COM (full text; a route chip never truncates)"
+  ]
  }
 }

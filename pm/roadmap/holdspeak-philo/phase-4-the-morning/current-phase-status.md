@@ -20,7 +20,7 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 
 ## Scope
 
-- **In:** the three stories below; their fences (red pre-fix); the closure chain's step 5 re-run on the rig at 1440 and 393 as written (no detour) — `case.closure.chain.*` in `atlas-phase3.json`, re-pointed; the Phase 3 exit 1 language updated to cite this phase when it passes.
+- **In:** the stories below; their fences (red pre-fix); the closure chain's step 5 re-run on the rig at 1440 and 393 as written (no detour) — `case.closure.chain.*` in `atlas-phase3.json`, re-pointed; the Phase 3 exit 1 language updated to cite this phase when it passes.
 - **Out (real costs, ledgered, not dependencies of the morning):** the brief view's own Generate limitation (`BriefView.tsx:297`); breakage titles carrying service/method/connector ids (Tenet 4 wording, `monday_brief_service.py:546`); owners and due dates lost on the Arrival rows; raw internals in the brief view; the decision window covering the BRIEF verbs at 1440 (normal window behaviour under UX-CANON.md:111, an observation not a repair); the decision row below the fold at 393; the A4 receipt-line regression on the HS-201-12 fence; ASR instability; the aftercare overlap; exception-path queue wording; `1 WORDS`.
 
 ## Exit criteria (evidence required)
@@ -37,6 +37,7 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 | PHILO-4-01 | Generate is always reachable | backlog | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | - |
 | PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | backlog | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | - |
 | PHILO-4-03 | A failure never collides with the next brief | backlog | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | - |
+| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | backlog | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
 
 ## Lanes
 
@@ -45,6 +46,7 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 | The verb (canvas first) | 01 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-4-01 | feat/philo-4-01-generate |
 | The rows | 02 | Astra (Luna) | Muad'Dib | ../wt-philo-4-02 | feat/philo-4-02-rows |
 | The ids | 03 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-4-03 | feat/philo-4-03-ids |
+| The headline | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-4-04 | feat/philo-4-04-headline |
 
 ## Where we are
 
@@ -64,6 +66,7 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 
 - 2026-09-23 — chartered on "yes close and open"; the service-layer draft renumbered to Phase 5 — Muad'Dib.
 - 2026-09-23 — Astra's charter check RATIFY-WITH-CONDITIONS; all five conditions paid in the charter text (this commit); the charter goes to the owner for ratification — Muad'Dib.
+- 2026-09-23 — story 04 The triaged headline chartered (unratified) from Astra's round-three canvas check, finding 6: after full triage the stored headline still counts waiting items; lane Astra — Muad'Dib.
 
 ## Decisions deferred
 

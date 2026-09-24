@@ -1681,7 +1681,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -1749,7 +1749,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -1822,7 +1822,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3600,7 +3600,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3668,7 +3668,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3741,7 +3741,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3891,6 +3891,47 @@
     "clientW": 228,
     "truncated": true,
     "text_overflow": "ellipsis",
+    "title": "architecture-platform-prod.atlassian.net"
+   }
+  ],
+  "heading": null,
+  "overflowing_descendants": [],
+  "scrollW": 393,
+  "vw": 393,
+  "no_h_overflow": true
+ },
+ "lib-route-fallback-393": {
+  "target": "[data-testid=summary-route]",
+  "target_box": {
+   "left": 14,
+   "right": 379,
+   "w": 365
+  },
+  "target_scrollW": 365,
+  "target_clientW": 365,
+  "inside_viewport": true,
+  "buttons": [],
+  "chips": [
+   {
+    "text": "192.168.1.43 · LAN",
+    "left": 14,
+    "right": 179,
+    "w": 165,
+    "scrollW": 163,
+    "clientW": 163,
+    "truncated": false,
+    "text_overflow": "clip",
+    "title": "The route for this face is not set."
+   },
+   {
+    "text": "+ FALLBACK api.anthropic.com",
+    "left": 14,
+    "right": 260,
+    "w": 246,
+    "scrollW": 244,
+    "clientW": 244,
+    "truncated": false,
+    "text_overflow": "clip",
     "title": "The route for this face is not set."
    }
   ],
