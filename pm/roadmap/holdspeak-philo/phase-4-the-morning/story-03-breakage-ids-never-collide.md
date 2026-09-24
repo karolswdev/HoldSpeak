@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** the morning in one move
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)

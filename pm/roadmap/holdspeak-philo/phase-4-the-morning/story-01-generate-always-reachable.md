@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** the morning in one move
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -37,6 +37,8 @@
 - **Manual / device:** the owner's sitting on the morning.
 
 ## Notes
+
+- 2026-09-23 — RATIFIED by the owner on the round-six canvas ("so... my walk says: yes!"): all six asks. Build what was ratified: the boards in `assets/story-01-canvas/` are the spec; `No changes` (ask 5) is in this story's scope with its wording fences.
 
 - 2026-09-23 — chartered from the Phase 3 closure run `20260924T013355Z` / `013440Z` (BLOCKED), `013738Z` / `014018Z` (FAIL behind "1 more"), `012420Z` (500).
 - 2026-09-23 — canvas round two after Astra's bounce: `assets/story-01-canvas/` (README, 11 boards × 1440/393 in `shots/`, `morning-brief.html`); artifact https://claude.ai/artifact/LHjuHKL1pVZuh4aK5J9qRU. The 12 px floor paid in the library (section head label, chip). UNRATIFIED.
