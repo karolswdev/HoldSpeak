@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
@@ -26,7 +27,7 @@ pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependenc
 # browser seam by their dedicated suites.
 pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
 
-ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05"
+ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05")
 TOKEN = "hs14105-context-glass"
 MARKER_V1 = "ORCHID CLOCK belongs in the launch note"
 MARKER_V2 = MARKER_V1 + ", version two"

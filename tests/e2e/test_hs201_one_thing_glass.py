@@ -40,10 +40,11 @@ from .glass_infra import (
     assign_engine,
     engine_profile,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="HS-201 glass needs Playwright")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots")
 TOKEN = "hs201-one-thing"
 SUMMARY_CAPABILITY = "meeting.deferred_analysis"
 SPEECH_CAPABILITY = "speech.transcribe"
@@ -519,7 +520,7 @@ class TestOneThing:
 # WIRE and the CONSOLE of a cold arrival: no 4xx, no 5xx, no console
 # error, and the head does not speak an all-clear over a row that asks.
 
-QUIET_SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots"
+QUIET_SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots")
 
 _SFX_REF = re.compile(r"""([^"'`]*)desk/sfx/""")
 

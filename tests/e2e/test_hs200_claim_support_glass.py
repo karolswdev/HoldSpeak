@@ -28,6 +28,7 @@ import os
 import pytest
 
 from .glass_infra import _boot, _api, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Claim glass needs Playwright")
 
@@ -44,10 +45,7 @@ def _shot(page: Any, path: Path, **kw: Any) -> None:
     page.screenshot(path=str(path), **kw)
 
 
-SHOTS = (
-    REPO
-    / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-06-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-06-shots")
 
 
 # ── Helpers ─────────────────────────────────────────────────────────

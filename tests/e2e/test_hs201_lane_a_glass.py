@@ -13,11 +13,10 @@ from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+from tests._evidence import evidence_dir
 
 
-SHOTS = Path(__file__).resolve().parents[2] / (
-    "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a")
 TOKEN = "hs201-lane-a-fixture"
 
 

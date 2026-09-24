@@ -17,12 +17,13 @@ from .glass_infra import (
     _settle,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
 TOKEN = "hs201-summary-trust-followup2"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2")
 SUMMARY_HOST = "api.openai.com"
 
 

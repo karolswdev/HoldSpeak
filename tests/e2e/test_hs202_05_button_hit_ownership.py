@@ -32,12 +32,13 @@ from pathlib import Path
 
 import pytest
 from playwright.sync_api import sync_playwright
+from tests._evidence import evidence_dir
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(180, method="thread")]
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_CSS_DIR = REPO / "web/src/styles"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots")
 NARROW = {"width": 393, "height": 852}
 
 # The dense row (`.btn--sm`, 24px painted) and the standard column

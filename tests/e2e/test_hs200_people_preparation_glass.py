@@ -46,13 +46,11 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="People preparation glass needs Playwright")
 
-SHOTS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-14-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-14-shots")
 WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
 
 TOKEN = "hs200-people"

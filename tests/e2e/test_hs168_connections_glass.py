@@ -25,12 +25,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot as _conftest_boot, _api, _ensure_build, _settle
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Connections glass needs Playwright")
 
 TOKEN = "hs168-connections-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots")
 
 
 # ── Skip guard for real-readiness leg ──────────────────────────────

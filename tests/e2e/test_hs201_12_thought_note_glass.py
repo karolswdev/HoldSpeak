@@ -14,14 +14,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Thought glass needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="Thought glass needs web dependencies")
 
 TOKEN = "hs201-12-thought-glass"
-SHOTS = Path(__file__).resolve().parents[2] / (
-    "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots")
 # The owner's own shot (2026-09-20): a dictated note, a mid-sentence title.
 OWNER_TITLE = "Well, there's just a little bit of misunderstanding here, I believe my team…"
 OWNER_BODY = "Yeah, I have it that way and what about you?"

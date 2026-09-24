@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.skip(
     "HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); "
@@ -24,7 +25,7 @@ pytest.importorskip("playwright.sync_api", reason="Assignments glass needs Playw
 
 TOKEN = "hs143-assignments-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-143-intelligence-router/assets/story-13-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-143-intelligence-router/assets/story-13-shots")
 
 
 def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str]:

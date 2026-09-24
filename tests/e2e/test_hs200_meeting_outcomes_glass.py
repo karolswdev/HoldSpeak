@@ -48,11 +48,12 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Meeting outcomes glass needs Playwright")
 
 TOKEN = "hs200-outcomes-glass"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-12-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-12-shots")
 
 DEC = "decision_capture"
 ACT = "action_owner_enforcer"

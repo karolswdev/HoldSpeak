@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="168 walk needs Playwright")
 
@@ -81,7 +82,7 @@ pytestmark = pytest.mark.skipif(
 TOKEN = "hs168-tuesday-walk"
 REPO = Path(__file__).resolve().parents[2]
 WALK_MODE = os.environ.get("HS168_WALK_DB", "isolated")
-PHASE_DIR = REPO / "pm/roadmap/holdspeak/phase-168-the-connections-door"
+PHASE_DIR = evidence_dir("pm/roadmap/holdspeak/phase-168-the-connections-door")
 WALK_SHOTS = PHASE_DIR / "assets" / "story-05-walk"
 
 OUTCOME_TEXT = "Ship the Q4 platform on schedule with zero incidents"

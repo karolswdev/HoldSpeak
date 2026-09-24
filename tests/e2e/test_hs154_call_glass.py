@@ -15,15 +15,16 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs154-call-glass"
-SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots"
-SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots"
-SHOTS_03 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots"
-SHOTS_04 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots"
+SHOTS_01 = evidence_dir("pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots")
+SHOTS_02 = evidence_dir("pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots")
+SHOTS_03 = evidence_dir("pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots")
+SHOTS_04 = evidence_dir("pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots")
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 

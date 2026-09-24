@@ -18,14 +18,15 @@ from typing import Any
 import pytest
 
 from .glass_infra import _normal_chair, _settle
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs153-practice-glass"
-SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots"
-SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots"
-SHOTS_08 = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots"
+SHOTS_01 = evidence_dir("pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots")
+SHOTS_02 = evidence_dir("pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots")
+SHOTS_08 = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots")
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -435,7 +436,7 @@ def test_slash_completion_and_prompt_insert(hub: dict) -> None:
 
 # ----------------------------------------------------------------- guardrail leg (HS-153-03)
 
-SHOTS_03 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-03-shots"
+SHOTS_03 = evidence_dir("pm/roadmap/holdspeak/phase-153-the-practice/assets/story-03-shots")
 
 
 class _ToolCallEngine:
@@ -642,7 +643,7 @@ def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
 
 # ----------------------------------------------------------------- annotate leg (HS-153-04)
 
-SHOTS_04 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots"
+SHOTS_04 = evidence_dir("pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots")
 
 
 def test_annotation_popover_and_chips(hub: dict) -> None:
@@ -844,7 +845,7 @@ def test_annotation_popover_and_chips(hub: dict) -> None:
 
 # ----------------------------------------------------------------- compact leg (HS-153-05)
 
-SHOTS_05 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots"
+SHOTS_05 = evidence_dir("pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots")
 
 
 def test_compact_cut_marker_and_fold(hub: dict) -> None:

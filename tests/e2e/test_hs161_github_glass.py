@@ -36,16 +36,14 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="GitHub glass needs Playwright")
 
 TOKEN = "hs161-github-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-161-the-github-watch/assets/story-06-shots"
-STOPWATCH_JSON = (
-    REPO / "pm/roadmap/holdspeak/phase-161-the-github-watch"
-    / "assets/story-06-stopwatch.json"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-161-the-github-watch/assets/story-06-shots")
+STOPWATCH_JSON = evidence_dir("pm/roadmap/holdspeak/phase-161-the-github-watch/assets") / "story-06-stopwatch.json"
 
 OUTCOME_TEXT = "Ship the Q4 Payments Platform on time with zero incidents"
 SIGNALS_TEXT = "Missed sprint commitments, overdue action items, stale decisions"

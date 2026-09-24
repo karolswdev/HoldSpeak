@@ -32,6 +32,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, parse_qs
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tests._evidence import evidence_dir  # noqa: E402
+
 # ── pytest collection guard (same as live169_walk.py) ──
 # This file is a standalone script, not a test module.  If pytest tries
 # to collect it, we define no test_* functions and no Test* classes, so
@@ -40,7 +43,7 @@ collect_ignore_glob = ["live170_walk.py"]
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT = REPO / "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots"
+DEFAULT_OUT = evidence_dir("pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots")
 
 VIEWPORTS = [
     {"width": 1440, "height": 900, "suffix": "1440"},

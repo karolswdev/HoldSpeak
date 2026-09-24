@@ -34,13 +34,11 @@ from .glass_infra import (
     _settle,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Census glass needs Playwright")
 
-CENSUS_DIR = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census"
-)
+CENSUS_DIR = evidence_dir("pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census")
 CENSUS_DIR.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "hs170-census"

@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
@@ -23,7 +24,7 @@ pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependenc
 # Thought Workbench at both widths.
 pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
 
-ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-04"
+ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-04")
 TOKEN = "hs14104-deterministic-glass"
 
 

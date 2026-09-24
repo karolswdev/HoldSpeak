@@ -55,10 +55,11 @@ from .glass_infra import (
     pinned_desk_zone,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots")
 TOKEN = "hs175-arrival"
 
 

@@ -27,11 +27,12 @@ from .glass_infra import (
     _settle,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the identity glass needs Playwright")
 
 TOKEN = "hs200-runtime-identity"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots")
 BUILT = REPO / "holdspeak" / "static" / "_built"
 
 

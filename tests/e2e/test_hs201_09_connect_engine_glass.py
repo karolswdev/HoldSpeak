@@ -39,12 +39,13 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="HS-201-09 glass needs Playwright")
 
 pytestmark = pytest.mark.timeout(900, method="thread")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots")
 TOKEN = "hs201-09-connect"
 SUMMARY_CAPABILITY = "meeting.deferred_analysis"
 LAN_URL = "http://192.168.1.43:8080/v1"

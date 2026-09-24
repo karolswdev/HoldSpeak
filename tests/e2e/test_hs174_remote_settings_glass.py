@@ -28,10 +28,11 @@ from .glass_infra import (
     _settle,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Settings glass needs Playwright")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots")
 TOKEN = "hs174-remote-settings"
 
 
