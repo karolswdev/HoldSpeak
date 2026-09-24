@@ -124,6 +124,7 @@ _TRANSPORT_PRINCIPAL = (
 # the service and repository coerce it (``title=123`` is stored as "123";
 # ``decided_at=20260924`` as "20260924"; a non-list ``tags`` as []). The
 # contract preserves every input the service accepted; it refuses only what was
+# Exception (ratified, Astra r2 2026-09-24): authority fields inside update data are REFUSED — on main eight of them were accepted-and-ignored and `principal` already failed (positional collision); arguments cannot supply authority.
 # already refused (an unknown field on create, once a Python ``TypeError``).
 _DECISION_FIELDS: dict[str, Any] = {
     "title": {"description": "Text; defaults to 'New decision'."},

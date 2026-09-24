@@ -200,6 +200,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — Astra r2 on story 01: RATIFY-WITH-CONDITIONS, paid; the authority-field narrowing in `decision.update` RATIFIED as an explicit compatibility exception (eight fields accepted-and-ignored on main → refused; `principal` already failed on main). Merged on the fast CI jobs + both brains' verdicts per the owner's ruling — Muad'Dib.
+
 - 2026-09-24 — PHILO-5-01: the published MCP tool schemas stay byte-identical (no per-kind conditional schemas); the decisions branch's effective schema is the descriptor's, enforced by `invoke` and fenced through dispatch — Muad'Dib lane (Opus 5.5).
 - 2026-09-24 — PHILO-5-01 round two: the descriptor's decision fields are type-permissive (they were typed in round one and refused inputs main accepted); `decision.list` takes an optional `limit`; a `decision_id` in update data stays refused; the one kept narrowing is the authority refusal on update (settled Effects position) — Muad'Dib lane (Opus 5.5), after Astra's BOUNCE on built.
 - 2026-09-24 — PHILO-5-01: `decision.update` keeps `additionalProperties: true` because both transports passed unknown fields through before (the desk rename sends `name`); `decision.create` is closed — Muad'Dib lane (Opus 5.5).

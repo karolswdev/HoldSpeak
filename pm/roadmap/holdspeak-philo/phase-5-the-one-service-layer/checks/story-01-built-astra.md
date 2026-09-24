@@ -38,3 +38,35 @@ MISSED:
 TUESDAY: Yes for creating, editing, reopening, and recovering one decision after restart; Info-window rename still silently fails.
 
 UNKNOWN: Full CI was still running at my final check; I ran no full suite. Atlas runs used the unchanged lane frontend bundle in an archive copy, whose recorded Git revision is blank. These are rehearsals, not owner observation or proof of the full Phase 5 loop.
+## Check — Astra, 2026-09-24, round two on built: PHILO-5-01 (PR #634 @ d34237cc)
+
+VERDICT: RATIFY-WITH-CONDITIONS — #634 at `d34237cc`. The r1 compatibility blockers are resolved; no further product-code blocker found.
+
+FINDINGS:
+
+1. **Compatibility verified across all three states.** The unchanged fence produces **11 passed** on `5580a0da`, **9 failed / 2 passed** on `e4010fd4`, and **11 passed** on `d34237cc`. HTTP returns 501 rows when requested; its default remains 200 and MCP’s remains 500. The Tenets 3/7 regression is closed. Evidence: `tests/unit/test_philo5_compat.py:71`, [independent results](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo501-r2-a33sdrps).
+
+2. **The `decision_id` refusal change is lawful.** Independently reproduced through both transports: main refuses, round one wrongly accepts, round two refuses. HTTP **500 → 400** names the invalid input; MCP retains `isError`. Neither decision changes on refusal. Evidence: `holdspeak/operations.py:284`, `holdspeak/web/routes/primitives/decisions.py:88`.
+
+3. **Authority-field ruling: ratify the explicit narrowing.** Keep refusal; do not restore accepted-and-ignored behavior. The settled Effects position and the recorded compatibility exception supply its scope: `pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/current-phase-status.md:137`, `pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/current-phase-status.md:204`. All nine fields now refuse through HTTP and MCP without applying accompanying edits. This is a small contract rule consistent with Tenet 1—not proof of kernel admission.
+
+4. **The inherited debts have homes.** Rename is parked; missing decision admissions are assigned to story 02. Neither is certified as fixed. Evidence: `pm/roadmap/holdspeak/BACKLOG.md:1197`, `pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/current-phase-status.md:227`. The rename still fails Tenet 3/UX-CANON A11; admission remains Article XI debt.
+
+5. **Whitespace residue is evidence-only.** Round-two `git diff --check` exits **0**. The complete PR exits **2**, solely for round-one captured output in `red-main-behaviour.txt`, `red-mutations.txt`, and `evidence-story-01.md:122,129`. No new source residue; no merge blocker.
+
+6. **Verification supports the change.** Scoped registry, route, composition, proxy/restart and roster checks pass. Six initial failures came from schemas omitted from my archive; completing that archive yielded **13/13 contract/roster passes**. Operations export, residual census (**327**), API reference and boundary checks pass. Fast CI logs read: documentation, Linux smoke, G0 (**11 passed**) and Web Quality (**2,837 passed**, build/bundle gate green). [CI run](https://github.com/karolswdev/HoldSpeak/actions/runs/36048617230). Worktree unchanged.
+
+CONDITIONS:
+
+- Record this check, including the authority ruling and qualification below.
+- Before merging, read the remaining CI conclusions and resolve or demonstrate inherited failures under the existing merge rule.
+
+MISSED:
+
+1. **The authority history needs one qualification:** `principal` already failed on main because it collided with the positional argument; the other eight reserved fields were accepted and ignored. Thus `principal` changes refusal shape, not acceptance. The broad preservation comment at `holdspeak/operations.py:126` also omits the documented exception. Record this precisely; no behavioral rollback required.
+
+TUESDAY: The verified decision create/edit/read/restart path works; Info-window rename still silently fails. This does not close the whole Phase 5 job.
+
+UNKNOWN: Unit and integration CI were running; E2E was queued at the final check. No full suite, fresh Codex-client session, or new 1440/393 browser walk in r2; those broader claims remain supported by the recorded r1 evidence.
+
+Conditions paid by Muad'Dib in this commit: the check recorded; the authority qualification recorded (`principal` already failed on main by colliding with the positional argument — a refusal-shape change; the other eight reserved fields were accepted-and-ignored on main and are now refused, a ratified explicit narrowing); the preservation comment at `operations.py:126` corrected. CI: the fast jobs green (Astra read them); the heavy jobs not waited on, per the owner's ruling.
