@@ -76,6 +76,7 @@ export function RouteDisclosure({
       <EgressChip
         label={lead.label}
         scope={lead.scope}
+        title={lead.label}
         ariaLabel={`Summary runs on ${lead.label}`}
       />
       {fallbacks.map((leg) => {
@@ -85,6 +86,7 @@ export function RouteDisclosure({
             key={leg.ordinal}
             label={`+ FALLBACK ${fallback.label}`}
             scope={fallback.scope}
+            title={`+ FALLBACK ${fallback.label}`}
           />
         );
       })}
@@ -109,7 +111,7 @@ export function RunAttempts({
         const failed = attempt.outcome !== "succeeded";
         return (
           <Fragment key={`${attempt.leg_ordinal}-${index}`}>
-            <EgressChip label={contacted.label} scope={contacted.scope} />
+            <EgressChip label={contacted.label} scope={contacted.scope} title={contacted.label} />
             {failed ? (
               <span className="surface-token" data-chip data-tone="danger">
                 {attempt.outcome.toUpperCase()}

@@ -1,0 +1,3945 @@
+{
+ "0-today-1440": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": null,
+   "chip_clipped": null
+  },
+  "rows": [
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 113,
+    "bottom": 157,
+    "in_viewport": true
+   },
+   {
+    "text": "Overdue: Send the vendor review notes",
+    "top": 158,
+    "bottom": 202,
+    "in_viewport": true
+   },
+   {
+    "text": "Unassigned: Draft the migration runbook",
+    "top": 203,
+    "bottom": 247,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Overdue: Send the vendor review notes",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Unassigned: Draft the migration runbook",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "1-generate-reachable-1440": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "2a-generating-1440": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "2b-reading-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "READING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "READING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "3a-did-not-generate-1440": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "3b-did-not-load-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Retry",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Retry",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "3c-generate-after-load-failure-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "4-next-day-one-decision-1440": {
+  "label": "BRIEF · 7 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "4 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 7 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "4",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "5-next-day-several-decisions-1440": {
+  "label": "BRIEF · 9 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "6 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 9 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "6",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "6-null-brief-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No brief yet",
+    "px": 12,
+    "cls": "arrival-brief-empty"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "6b-null-brief-did-not-generate-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "7a-empty-brief-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No changes",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "7b-fully-triaged-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "8a-quiet-generating-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "8b-quiet-did-not-generate-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "9-empty-success-receipt-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No changes",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "console-errors-1440": [],
+ "0-today-393": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": null,
+   "chip_clipped": null
+  },
+  "rows": [
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 109,
+    "bottom": 202,
+    "in_viewport": true
+   },
+   {
+    "text": "Overdue: Send the vendor review notes",
+    "top": 203,
+    "bottom": 296,
+    "in_viewport": true
+   },
+   {
+    "text": "Unassigned: Draft the migration runbook",
+    "top": 297,
+    "bottom": 390,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Overdue: Send the vendor review notes",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Unassigned: Draft the migration runbook",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "1-generate-reachable-393": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 144,
+    "bottom": 237,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 238,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "2a-generating-393": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 144,
+    "bottom": 237,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 238,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "2b-reading-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "READING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "READING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "3a-did-not-generate-393": {
+  "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 144,
+    "bottom": 237,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 238,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "3 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "3b-did-not-load-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Retry",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Retry",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "3c-generate-after-load-failure-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "4-next-day-one-decision-393": {
+  "label": "BRIEF · 7 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 144,
+    "bottom": 258,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "top": 259,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "top": 353,
+    "bottom": 467,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "4 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 7 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "4",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "5-next-day-several-decisions-393": {
+  "label": "BRIEF · 9 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 144,
+    "bottom": 258,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "top": 259,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "top": 353,
+    "bottom": 446,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "6 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 9 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "6",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "6-null-brief-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No brief yet",
+    "px": 12,
+    "cls": "arrival-brief-empty"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "6b-null-brief-did-not-generate-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "7a-empty-brief-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No changes",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "7b-fully-triaged-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "8a-quiet-generating-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "8b-quiet-did-not-generate-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": "12px",
+    "tone": "danger"
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "9-empty-success-receipt-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No changes",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "lib-directory-393": {
+  "target": ".surface-section-head",
+  "target_box": {
+   "left": 14,
+   "right": 379,
+   "w": 365
+  },
+  "target_scrollW": 365,
+  "target_clientW": 365,
+  "inside_viewport": true,
+  "buttons": [],
+  "chips": [],
+  "heading": {
+   "text": "ArchitectureDecisionReviewWorkspace2026PlatformGuild",
+   "left": 14,
+   "right": 282,
+   "w": 268,
+   "scrollW": 268,
+   "clientW": 268,
+   "lines": 2
+  },
+  "overflowing_descendants": [],
+  "scrollW": 393,
+  "vw": 393,
+  "no_h_overflow": true
+ },
+ "lib-jira-chip-393": {
+  "target": "[data-testid=connections-jira-conn-c1]",
+  "target_box": {
+   "left": 14,
+   "right": 379,
+   "w": 365
+  },
+  "target_scrollW": 363,
+  "target_clientW": 363,
+  "inside_viewport": true,
+  "buttons": [
+   {
+    "text": "Recheck",
+    "w": 68,
+    "text_w": 50,
+    "content_w": 50,
+    "text_fits": true
+   }
+  ],
+  "chips": [
+   {
+    "text": "ARCHITECTURE-PLATFORM-PROD.ATLASSIAN.NET",
+    "left": 95,
+    "right": 326,
+    "w": 230,
+    "scrollW": 342,
+    "clientW": 228,
+    "truncated": true,
+    "text_overflow": "ellipsis",
+    "title": "architecture-platform-prod.atlassian.net"
+   }
+  ],
+  "heading": null,
+  "overflowing_descendants": [],
+  "scrollW": 393,
+  "vw": 393,
+  "no_h_overflow": true
+ },
+ "lib-route-fallback-393": {
+  "target": "[data-testid=summary-route]",
+  "target_box": {
+   "left": 14,
+   "right": 379,
+   "w": 365
+  },
+  "target_scrollW": 365,
+  "target_clientW": 365,
+  "inside_viewport": true,
+  "buttons": [],
+  "chips": [
+   {
+    "text": "192.168.1.43 · LAN",
+    "left": 14,
+    "right": 179,
+    "w": 165,
+    "scrollW": 163,
+    "clientW": 163,
+    "truncated": false,
+    "text_overflow": "clip",
+    "title": "192.168.1.43 · LAN"
+   },
+   {
+    "text": "+ FALLBACK api.anthropic.com",
+    "left": 14,
+    "right": 260,
+    "w": 246,
+    "scrollW": 244,
+    "clientW": 244,
+    "truncated": false,
+    "text_overflow": "clip",
+    "title": "+ FALLBACK api.anthropic.com"
+   }
+  ],
+  "heading": null,
+  "overflowing_descendants": [],
+  "scrollW": 393,
+  "vw": 393,
+  "no_h_overflow": true
+ },
+ "console-errors-393": []
+}

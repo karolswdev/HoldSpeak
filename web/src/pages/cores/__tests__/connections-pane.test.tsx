@@ -282,6 +282,20 @@ describe("ConnectionsPane", () => {
     });
   });
 
+  describe("Jira host chip (PHILO-4-01 r4)", () => {
+    it("truncates only the host chip, whose title is the full host", async () => {
+      renderPane();
+      const conn = await screen.findByTestId("connections-jira-conn-alpha-user");
+      const chip = within(conn).getByText("ALPHA.ATLASSIAN.NET");
+      expect(chip.classList.contains("gadget-chip")).toBe(true);
+      expect(chip.classList.contains("gadget-chip-truncate")).toBe(true);
+      // Never the inherited "route not set" default on a known destination.
+      expect(chip.getAttribute("title")).toBe("alpha.atlassian.net");
+      // The row label shows the full host, so the chip may truncate.
+      expect(conn.querySelector(".connections-tool-label")?.textContent).toBe("alpha.atlassian.net");
+    });
+  });
+
   describe("Jira with 2 connections", () => {
     it("shows both connection rows", async () => {
       const response: ConnectionsResponse = {

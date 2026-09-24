@@ -19,6 +19,8 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { MeetingIntelRecovery } from "../MeetingIntelRecovery";
 import { MeetingSummarySlab, readMeetingIntel } from "../MeetingSummarySlab";
 import { RouteDisclosure, RunAttempts } from "../RouteDisclosure";
+import gadgetsCss from "../../desk/surface/gadgets.css?raw";
+import { EgressChip } from "../../desk/surface/gadgets";
 import {
   forgetExecutedReceipts,
   readPlannedRoute,
@@ -135,6 +137,54 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(chips).toContain("+ FALLBACK api.example.com");
     // Article III: the lead host is the FIRST thing said.
     expect(chips.indexOf("192.168.1.43")).toBeLessThan(chips.indexOf("FALLBACK"));
+  });
+
+  it("keeps the FULL fallback text: a route chip never truncates (PHILO-4-01 r4)", () => {
+    // The disclosure is the only place the destination shows, so its chips
+    // carry no truncate modifier and the whole host is in the text.
+    const route = {
+      ...READY_ROUTE,
+      legs: [READY_ROUTE.legs[0], { ...READY_ROUTE.legs[1], host: "api.anthropic.com" }],
+    };
+    render(<RouteDisclosure route={readPlannedRoute({ planned_route: route })} />);
+    const chips = [...screen.getByTestId("summary-route").querySelectorAll(".gadget-chip")];
+    const fallback = chips.find((chip) => chip.textContent?.includes("FALLBACK"));
+    expect(fallback?.textContent).toBe("+ FALLBACK api.anthropic.com");
+    for (const chip of chips) {
+      expect(chip.classList.contains("gadget-chip-truncate")).toBe(false);
+    }
+    // jsdom paints no CSS, so the species rule itself is the fence: the base
+    // chip never clips; only the opt-in modifier does.
+    const base = gadgetsCss.match(/\n\.gadget-chip \{[^}]*\}/)?.[0] ?? "";
+    expect(base).toContain("white-space: nowrap");
+    expect(base).not.toMatch(/text-overflow|max-width|overflow:/);
+    expect(gadgetsCss).toMatch(/\.gadget-chip\.gadget-chip-truncate \{[^}]*text-overflow: ellipsis/);
+  });
+
+  it("gives each route chip its full destination as its title (PHILO-4-01 r5)", () => {
+    // A known destination never inherits the unset sentence; the tooltip
+    // is the chip's own full text.
+    const route = {
+      ...READY_ROUTE,
+      legs: [READY_ROUTE.legs[0], { ...READY_ROUTE.legs[1], host: "api.anthropic.com" }],
+    };
+    render(<RouteDisclosure route={readPlannedRoute({ planned_route: route })} />);
+    const chips = [...screen.getByTestId("summary-route").querySelectorAll(".gadget-chip")];
+    const fallback = chips.find((chip) => chip.textContent?.includes("FALLBACK"));
+    expect(fallback?.getAttribute("title")).toBe(fallback?.textContent);
+    expect(fallback?.getAttribute("title")).toBe("+ FALLBACK api.anthropic.com");
+    for (const chip of chips) {
+      expect(chip.getAttribute("title")).toBe(chip.textContent);
+      expect(chip.getAttribute("title")).not.toBe("The route for this face is not set.");
+    }
+  });
+
+  it("keeps the unset sentence only on a chip that is truly unset", () => {
+    render(<><EgressChip /><EgressChip label="GITHUB.COM" scope="cloud" /></>);
+    const [unset, known] = [...document.querySelectorAll(".gadget-chip")];
+    expect(unset.textContent).toBe("NOT SET");
+    expect(unset.getAttribute("title")).toBe("The route for this face is not set.");
+    expect(known.getAttribute("title")).toBe("GITHUB.COM");
   });
 
   it("says the reason in plain words when no route resolves", () => {

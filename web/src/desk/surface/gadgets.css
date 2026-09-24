@@ -827,6 +827,9 @@
 }
 
 /* ── Etched chips: secret state + the ONE egress badge ── */
+/* PHILO-4-01: a chip is one token on one line (nowrap), 12px on a
+   16px line; the 1px border keeps the 18px chip. A chip keeps its full
+   text: a route or egress token is the only place its value shows. */
 .gadget-chip {
   display: inline-flex;
   align-items: center;
@@ -837,9 +840,21 @@
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
   color: var(--text-faint);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 12px / 16px var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+/* PHILO-4-01 r4: truncation is opt-in, ONLY where the full value shows
+   elsewhere on the same row (the Jira host chip: the row label names the
+   host; the caller also sets title = the full value). Inline-block so the
+   ellipsis paints (text-overflow needs a block container). */
+.gadget-chip.gadget-chip-truncate {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .gadget-chip[data-set] {
   color: var(--accent);

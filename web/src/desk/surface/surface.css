@@ -56,11 +56,25 @@
   border-top: 0;
   padding-top: 0;
 }
+/* PHILO-4-01: at the 12 px floor the head is tight at 393. The label
+   wraps; a head verb, the egress chip and a quiet fact beside the label
+   (`123 members`) keep their width (a squeezed Button paints its word
+   over its own padding; a squeezed fact breaks onto two lines). */
+.surface-section-head > .btn,
+.surface-section-head > .gadget-chip,
+.surface-section-head > .quiet {
+  flex-shrink: 0;
+}
 /* HS-111-01: section labels in mono — the system-label style */
+/* PHILO-4-01 r3: a label is often user data (a directory name, a
+   destination). A long single word breaks inside the label; it never
+   pushes the head wider than its section. */
 .surface-section-head h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

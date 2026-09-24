@@ -1,0 +1,278 @@
+{
+ "0-today": {
+  "state": "TODAY (reference): populated, untriaged; no Generate; decisions last (ChairHome.tsx:801); each section in the _compose priority order; the decision is row 5 of 6, behind 3 more",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "verbs": [
+   "Ack",
+   "Defer",
+   "3 more"
+  ],
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "rows_visible": [
+   "Meeting recorded: Platform sync (changed, 50)",
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)"
+  ],
+  "rows_folded": [
+   "Open loop: Rate limits for the partner API (waiting, 100)",
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); today: changed, broke, waiting, decisions"
+ },
+ "1-generate-reachable": {
+  "state": "Board 1: populated, untriaged; Generate in the head verb slot",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate",
+   "Ack",
+   "Defer",
+   "3 more"
+  ],
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
+ },
+ "2a-generating": {
+  "state": "Board 2a: generation open; Generate disabled",
+  "verbs": [
+   "Generate (disabled)",
+   "Ack",
+   "Defer",
+   "3 more"
+  ],
+  "status": "GENERATING…",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
+ },
+ "2b-reading": {
+  "state": "Board 2b: read open; Generate disabled",
+  "head": "BRIEF",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "status": "READING…"
+ },
+ "3a-did-not-generate": {
+  "state": "Board 3a: generation failed; day-one rows untouched; no Retry (the enabled head Generate repeats the same POST)",
+  "verbs": [
+   "Generate",
+   "Ack",
+   "Defer",
+   "3 more"
+  ],
+  "status": "BRIEF DID NOT GENERATE · HTTP 500",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
+ },
+ "3b-did-not-load": {
+  "state": "Board 3b: read failed; Retry repeats the GET (a different action from Generate)",
+  "head": "BRIEF",
+  "verbs": [
+   "Generate",
+   "Retry"
+  ],
+  "status": "BRIEF DID NOT LOAD · HTTP 500"
+ },
+ "3c-generate-after-load-failure": {
+  "state": "Board 3c: Generate pressed from the 3b state; GENERATING… takes the one status slot (the read-failure line and its Retry go); Generate disabled",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "status": "GENERATING…",
+  "result": "success: the populated branch with the receipt (board 4 treatment); failure: BRIEF DID NOT GENERATE · <cause> in the status slot, Generate enabled (board 3a treatment)"
+ },
+ "4-next-day-one-decision": {
+  "state": "Board 4: next-day brief after ONE Generate; the day's one new decision leads; decisions newest first by created_at, then changed, waiting in _compose order",
+  "head": "BRIEF · 7 THINGS WAITING",
+  "headline_compose": "1 thing changed, 3 things waiting, 3 decisions waiting.",
+  "carry": "carried from DAY1 (no time window): o1, u1, l1, d2, c1; not carried: m1 (meeting collector is windowed, :473-516; it ended SEP 23 15:30, inside DAY1's window); triage untouched (new brief, new item ids, empty shelf :1131, :1157)",
+  "rows_visible": [
+   "Review decision: Ship the ingest API behind a flag",
+   "Review decision: Adopt the one desk bus",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana"
+  ],
+  "rows_created_at": [
+   "SEP 24 07:58",
+   "SEP 22 11:30",
+   "SEP 21 10:15"
+  ],
+  "fold": "4 more",
+  "fold_holds": [
+   "Meeting recorded: Architecture review (changed, 50, new: ended SEP 23 18:10)",
+   "Overdue: Send the vendor review notes (waiting, 300, carried)",
+   "Unassigned: Draft the migration runbook (waiting, 200, carried)",
+   "Open loop: Rate limits for the partner API (waiting, 100, carried)"
+  ],
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 7 items · 8:02 AM"
+ },
+ "5-next-day-several-decisions": {
+  "state": "Board 5: next-day brief, several new decisions (all recorded after DAY1's generation at SEP 23 17:40); decisions lead, strictly newest first by created_at",
+  "head": "BRIEF · 9 THINGS WAITING",
+  "headline_compose": "1 thing changed, 3 things waiting, 5 decisions waiting.",
+  "carry": "carried from DAY1 (no time window): o1, u1, l1, d2, c1; not carried: m1 (meeting collector is windowed, :473-516; it ended SEP 23 15:30, inside DAY1's window); triage untouched (new brief, new item ids, empty shelf :1131, :1157)",
+  "rows_visible": [
+   "Review decision: Ship the ingest API behind a flag",
+   "Review decision: Keep one hub per desk",
+   "Review decision: Use SQLite for the local store"
+  ],
+  "rows_created_at": [
+   "SEP 24 07:58",
+   "SEP 24 07:31",
+   "SEP 23 18:05"
+  ],
+  "fold": "6 more",
+  "fold_holds": [
+   "Review decision: Adopt the one desk bus (SEP 22 11:30, carried)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (SEP 21 10:15, carried)",
+   "Meeting recorded: Architecture review (changed, 50, new)",
+   "Overdue: Send the vendor review notes (waiting, 300, carried)",
+   "Unassigned: Draft the migration runbook (waiting, 200, carried)",
+   "Open loop: Rate limits for the partner API (waiting, 100, carried)"
+  ],
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 9 items · 8:02 AM"
+ },
+ "6-null-brief": {
+  "state": "Board 6: no brief on the hub yet; Generate in the head",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "empty": "No brief yet",
+  "busy": "Generate disabled + GENERATING… in place of No brief yet (the board 3c composition: same head label, same one line)",
+  "failure": "board 6b",
+  "result": "the populated branch with the receipt (board 4 treatment)"
+ },
+ "6b-null-brief-did-not-generate": {
+  "state": "Board 6b: no brief yet; the generation failed; the failure line takes the place of No brief yet",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "status": "BRIEF DID NOT GENERATE · HTTP 500",
+  "retry": null
+ },
+ "7a-empty-brief": {
+  "state": "Board 7a: a brief generated with ZERO items (ChairHome.tsx:1286-1328 quiet branch)",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "No changes",
+  "headline_today": "Nothing material changed. (monday_brief_service.py:340-341)",
+  "headline_status": "PROPOSED: the build changes the producer string and its wording fences together, or the owner keeps the sentence",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "7b-fully-triaged": {
+  "state": "Board 7b: the day-one brief (6 items), all six rows Ack'd/Defer'd; untriagedBrief is empty, so the quiet branch renders (ChairHome.tsx:1286-1328); the rows are gone from the Arrival",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "verbs_today": [
+   "Generate again"
+  ],
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+  "headline_source": "the stored headline, pasted verbatim from the REAL _compose (harness/compose_headline.py; monday_brief_service.py:327-387) over DAY1's six items in the producer's sections and priorities: changed = Meeting recorded (50, :511); waiting = Overdue (300) + Unassigned (200) (:655-672) + Open loop (100, :712); decisions = Review decision (200, :771) + Commitment due (110, :815); triage does not rewrite it",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "8a-quiet-generating": {
+  "state": "Board 8a: the quiet branch (7a and 7b share it) while the generation is open; drawn on 7b, on 7a only the headline differs",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "status": "GENERATING…"
+ },
+ "8b-quiet-did-not-generate": {
+  "state": "Board 8b: the quiet branch after a failed generation; no Retry, the enabled Generate repeats the POST",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "status": "BRIEF DID NOT GENERATE · HTTP 500"
+ },
+ "9-empty-success-receipt": {
+  "state": "Board 9: a successful generation that produced an empty brief; the quiet branch holds the receipt (ChairHome.tsx:1315)",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "No changes",
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 8:02 AM",
+  "receipt_rule": "no counter of zero: briefReceipt drops the count when it is 0 (web/src/desk/chair/briefEgress.tsx:51-56); never `Brief ready · 0 items · 8:02 AM`"
+ },
+ "lib-directory": {
+  "state": "Library probe: the REAL DirectoryPullout at 393, a long single-word directory name",
+  "head": "ARCHITECTUREDECISIONREVIEWWORKSPACE2026PLATFORMGUILD (wraps inside the label)",
+  "fact": "123 members (one line)"
+ },
+ "lib-jira-chip": {
+  "state": "Library probe: the REAL ConnectionsPane Jira row at 393 (stubbed wire), a long site host",
+  "verbs": [
+   "Recheck"
+  ],
+  "egress": "ARCHITECTURE-PLATFORM-PRO… (full: ARCHITECTURE-PLATFORM-PROD.ATLASSIAN.NET; the opt-in gadget-chip-truncate modifier, set only on the acli host chip because the row label shows the full host)",
+  "title": "architecture-platform-prod.atlassian.net"
+ },
+ "lib-route-fallback": {
+  "state": "Library probe (round four): the REAL RouteDisclosure at 393, a LAN lead leg and a long cloud fallback",
+  "chips": [
+   "192.168.1.43 · LAN",
+   "+ FALLBACK API.ANTHROPIC.COM (full text; a route chip never truncates)"
+  ],
+  "titles": [
+   "192.168.1.43 · LAN",
+   "+ FALLBACK api.anthropic.com"
+  ],
+  "title_rule": "round five: each route chip's title is its full text (RouteDisclosure.tsx passes it; EgressChip falls back to its label); the unset sentence stays only on a chip with no label or NOT SET"
+ }
+}
