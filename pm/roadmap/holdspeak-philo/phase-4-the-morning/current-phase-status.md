@@ -1,6 +1,6 @@
 # Phase 4 - The Morning
 
-**Last updated:** 2026-09-24 (PHILO-4-02 built and checked; exits 1 and 2 proved on the lane; PR to remain open).
+**Last updated:** 2026-09-24 (04 canvas ratified; sitting waived) (PHILO-4-02 built and checked; exits 1 and 2 proved on the lane; PR to remain open).
 
 ## Goal
 
@@ -30,7 +30,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 - [x] A lookback with a breakage item generates the next brief with 200 (fence red pre-fix on the id collision).
   **Proof:** the separately named real-failure variants `20260924T072814Z` (1440) and `20260924T072722Z` (393) both return 200, retain one failure source in both briefs with different item ids, and leave the old rows/shelf unchanged. [Checked DB proof](../../../../docs/internal/philo/phase-4/rows/closure-proof.json); `test_philo4_03_breakage_ids.py` also passes in the 92-test capture.
 - [ ] Every repaired seam has a fence that failed pre-fix.
-- [ ] The owner's sitting on the morning (his Phase 3 sitting extends to it).
+- [x] The owner's sitting on the morning (his Phase 3 sitting extends to it). **WAIVED by the owner 2026-09-24 ("good to go, no sitting reqd..."): accepted, not observed — no walk is claimed; the retained rig evidence of exits 1–2 stands as the phase's proof.**
 
 ## Story status
 
@@ -39,7 +39,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | PHILO-4-01 | Generate is always reachable | done | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | done | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-4-03 | A failure never collides with the next brief | done | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | backlog | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
+| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | in-progress | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
 
 ## Lanes
 
@@ -72,6 +72,8 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | The id fix silently drops or moves a failure or its triage | medium | brief-scoped ids only; both briefs and the old triage read back; no `OR IGNORE`/`OR REPLACE`; no migration | a row or a triage record missing after generation |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — the owner RATIFIED the story 04 canvas ("good to go"): ask 1 the recommended board 7c (`ALL n HANDLED` under the existing date; headline and date unmoved); ask 2 the count = Arrival rows with an Ack/Defer, THIS WEEK excluded; ask 3 `No changes` stays bare. He WAIVED the sitting ("no sitting reqd..."): exit 4 closes as accepted-not-observed; Phase 3 exit 3 likewise. Build 04 (Astra lane) starts — Muad'Dib.
 
 - 2026-09-24 — Muad'Dib's counsel on built (story 02, PR #626): RATIFY-WITH-CONDITIONS, paid: (C1) the canonical schema snapshot gains `monday_brief_items.created_at` (the branch's `schema.py:2447` column; `test_db.py::test_fresh_schema_matches_canonical_snapshot` was red on HEAD); (C2) RULING under ask 2: the decisions section is newest-first by the record's `created_at` for EVERY decision item, so a pending actuator authorization (formerly `priority=300`, "always leads the decision queue") and a due-today commitment can now sit behind `N more` when older — recorded, not silent; the cost (a waiting authorization may go unseen for a day) is LEDGERED for the owner's sitting, and a follow-up (authorizations pinned above the newest-first order) is his call; (C3) the story 01 canvas item 7 is CORRECTED: the real producer files the commitment c1 under THIS WEEK on both dates (`rows/README.md`), so the ratified boards 4/5 over-count by one (`7 THINGS WAITING` where the producer says 6) — the boards stand as ratified, the record says so; (C4) Astra's worktree `web/node_modules` restored after a counsel worker's `uv sync` wiped it through a symlink (the law again). Astra's own `claude -p` checks (`checks/rows-built-muaddib.md`, `rows-seam-muaddib.md`) are the canonical Astra→Muad'Dib channel (TWO-BRAINS.md:38) and stand as Astra-launched checks; this session's counsel is `checks/story-02-built-muaddib.md` — Muad'Dib.
 

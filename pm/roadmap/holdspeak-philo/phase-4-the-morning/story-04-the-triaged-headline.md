@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 4
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-4-01 (the quiet branch it draws, boards 7b, 8a, 8b)
 - **Unblocks:** the morning in one move
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -37,3 +37,4 @@ After every row is handled, the stored headline still says "N things waiting" wi
 
 - 2026-09-23 — chartered (unratified) from Astra's round-three check of the PHILO-4-01 canvas (finding 6); the canvas README ask 6 points here.
 - 2026-09-23 — canvas round six (Astra round-five condition): the Problem cites the round-five fixture; the fence criterion asserts the intended state, so it fails today.
+- 2026-09-24 — RATIFIED by the owner on the canvas (https://claude.ai/artifact/WJocx1XUtYfvHzZM6s1qed, PR #627 @ 34475b1e): board 7c; the count = Arrival rows with Ack/Defer (THIS WEEK excluded); `No changes` bare. Build what was ratified.
