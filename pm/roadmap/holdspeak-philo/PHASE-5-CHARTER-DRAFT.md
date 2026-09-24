@@ -1,6 +1,6 @@
 # Phase 5 — The One Service Layer (CHARTER DRAFT r2, not ratified; renumbered from 4 on 2026-09-23 when the owner opened Phase 4 The Morning)
 
-**r1** drafted 2026-09-23 by Muad'Dib. **Astra check r1: BOUNCE** (`.tmp/two-brains/20260923-190909-check/phase-4-charter-astra.md`, reviewed HEAD 46172fcf) — the inventory was loose, the owner's ruling and Muad'Dib's proposal were blurred, the existing descriptor was over-read, two composition gaps were unnamed, the ratchet counted aggregates, and story 06 asked the owner to learn operation names. **r2** (this file) pays that check. Astra's counter-proposal for the story list is adopted with amendments noted. The owner has not ruled. Nothing is built. Phase 3 closes first.
+**r1** drafted 2026-09-23 by Muad'Dib. **Astra check r1: BOUNCE** (`.tmp/two-brains/20260923-190909-check/phase-4-charter-astra.md`, reviewed HEAD 46172fcf) — the inventory was loose, the owner's ruling and Muad'Dib's proposal were blurred, the existing descriptor was over-read, two composition gaps were unnamed, the ratchet counted aggregates, and story 06 asked the owner to learn operation names. **r2** (this file) pays most of that check; Astra (charter check of Phase 4, 2026-09-23) lists the CARRIED conditions in §12, so "paid" is not claimed. Astra's counter-proposal for the story list is adopted with amendments noted. The owner has not ruled. Nothing is built. Phase 3 closes first.
 
 ## 1. The owner's ruling (verbatim, 2026-09-23)
 
@@ -92,3 +92,11 @@ Settled between the brains, not put to him: declaration style; effect handling (
 
 - Exact pilot table (§6): confirm the Thought pair and the decision create/read pair against A1/A4's routes.
 - Whether `composition.service()` gains caching for pilot services or the hub composes them eagerly at startup.
+
+## 12. Carried conditions from Astra r1 (not yet paid in r2)
+
+- The revision and counting basis for §3 (recount after Phase 3 closes; state the counting rules).
+- Exact transport mappings for every pilot operation (§6 is an enumeration, not the settled table).
+- NAMED atlas pairs for story 03 (not "cases that have both").
+- Explicit compatibility and palette preservation for migrated MCP entries.
+- Separate real-engine and replayed-provider evidence in story 03/04 acceptance.

@@ -19,14 +19,16 @@
 
 ## Acceptance criteria
 
-- [ ] The Generate verb is a library Button, present on the BRIEF section in every state (rows untriaged or not), placed on the canvas at 1440 and 393 and RATIFIED by the owner before build.
-- [ ] Generating with untriaged rows keeps those rows' triage state (nothing is silently acknowledged).
-- [ ] Fence red pre-fix: a rendered BRIEF section with one untriaged row has no Generate.
+- [ ] Scope: the Arrival's BRIEF section ONLY (`ChairHome.tsx:1260,1283`). The brief view's own limitation (`BriefView.tsx:297`, Generate only when there is no brief) is retained and ledgered, not repaired here.
+- [ ] The Generate verb is the existing library Button, present on the BRIEF section whether or not day-one rows are untriaged; placed on the canvas at 1440 and 393 with its loading / failed-read / generating states (reachable never means concurrently enabled: disabled while a read or a generation is open) and RATIFIED by the owner before build.
+- [ ] The egress badge, the period/generated date caption and the receipt survive the rendered transition unchanged (A3's caption law).
+- [ ] Generating with untriaged rows keeps those rows' triage state on the old brief's durable shelf (nothing is silently acknowledged or deferred); read back after generation.
+- [ ] Fence: a rendered BRIEF section with one untriaged day-one row HAS the Generate Button (the fence asserts presence; today it is absent, and that absence is the recorded pre-fix red).
 - [ ] Rig: closure chain step 5 as written reaches Generate without the acknowledgement detour, both widths.
 
 ## Effort (council-style estimate, not a promise)
 
-1–2 days incl. the canvas
+1–2 days incl. the canvas (Astra's check: the right minimal action)
 
 ## Test plan
 

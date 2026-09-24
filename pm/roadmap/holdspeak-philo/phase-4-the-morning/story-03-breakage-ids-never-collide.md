@@ -19,9 +19,11 @@ Breakage items get a fixed id (`brief-break-pipeline-{event_id}`, `holdspeak/ser
 
 ## Acceptance criteria
 
-- [ ] A lookback containing a breakage item generates the next brief with 200 and carries the breakage row (id scoped to the brief, or the insert idempotent; no schema migration).
+- [ ] Fix shape settled (Astra's in-memory probe on the real table declarations): BRIEF-SCOPED ids for BOTH pipeline and connector items (`monday_brief_service.py:546,575`), retaining `source_ref` and the cause; NOT `INSERT OR IGNORE` (the new brief silently loses the row) and NOT `INSERT OR REPLACE` (the old brief loses its row and, with foreign keys on, its triage — `schema.py:2440`). No schema migration.
+- [ ] A lookback containing a breakage item already stored in an earlier brief generates the next brief with 200; BOTH briefs read back with their rows; the old brief's triage is preserved; same-day regeneration stays idempotent (same id).
+- [ ] The overlapping failure is minted through its REAL producer (a failed pipeline run selected into two briefs), never a hand-inserted row.
 - [ ] Fence red pre-fix: two generations across a producer-day advance with one breakage in the lookback; today's code raises IntegrityError.
-- [ ] The brief's failure row still names the cause in plain words (Tenet 4).
+- [ ] Words unchanged by this story: breakage titles today carry service/method or connector ids (`:546`) and the Arrival renders `item.text` (`ChairHome.tsx:2000`); an id fix does not change the face. The Tenet 4 wording debt is ledgered in the phase status, not claimed here.
 
 ## Effort (council-style estimate, not a promise)
 

@@ -24,8 +24,9 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | --- | --- | --- | --- |
 | 1 | Source audit, maintained documentation and Desk specification | done | [Phase 1](phase-1-audit-and-specification/current-phase-status.md) |
 | 2 | The Graph — edges → interfaces → connections → actions; both brains, both passes; a council; Phase 3 for what must be built | done | [Phase 2](phase-2-the-graph/current-phase-status.md) |
-| 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | done (exits 1 and 3 open, ledgered) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
-| 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | chartered (unratified) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
+| 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | closed by ruling 2026-09-23; exits 1 and 3 open ([final summary](phase-3-the-meeting-loop/final-summary.md)) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
+| 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | chartered, unratified (Astra check paid) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
+| 5 | The One Service Layer — one application-operation contract; routes, MCP and the rig over it; the Phase 3 loop as pilot | parked draft r2, unratified | [draft](PHASE-5-CHARTER-DRAFT.md) |
 
 ## Operating cadence
 
@@ -33,9 +34,3 @@ Update this date, the owning story and the phase status with each story completi
 One story completes per commit with paired captured evidence. The owner requested one umbrella PR.
 Do not edit the main HoldSpeak project's current phase or Phase 201 status.
 
-## Phase index
-
-| Phase | Goal (one line) | Status | Folder |
-|---|---|---|---|
-| 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | done | [phase-2-the-graph](./phase-2-the-graph/) |
-| 3 | One imported meeting, its summary arriving on the arrival with the actual host, found again after a restart, one decision recorded from it, seen in the next day's dated brief; plus the ratified thought's receipt. | active — 4/4 stories merged; chain steps 1–4 pass, step 5 blocked; exits 1 and 3 open ([final summary](./phase-3-the-meeting-loop/final-summary.md)) | [phase-3-the-meeting-loop](./phase-3-the-meeting-loop/) |

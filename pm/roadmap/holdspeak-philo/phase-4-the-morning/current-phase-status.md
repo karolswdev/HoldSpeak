@@ -21,11 +21,11 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 ## Scope
 
 - **In:** the three stories below; their fences (red pre-fix); the closure chain's step 5 re-run on the rig at 1440 and 393 as written (no detour) — `case.closure.chain.*` in `atlas-phase3.json`, re-pointed; the Phase 3 exit 1 language updated to cite this phase when it passes.
-- **Out (real costs, ledgered in Phase 3, not dependencies of the morning):** owners and due dates lost on the Arrival rows; raw internals in the brief view; the decision window covering the BRIEF verbs at 1440 (normal window behaviour under UX-CANON.md:111, an observation not a repair); the decision row below the fold at 393; the A4 receipt-line regression on the HS-201-12 fence; ASR instability; the aftercare overlap; exception-path queue wording; `1 WORDS`.
+- **Out (real costs, ledgered, not dependencies of the morning):** the brief view's own Generate limitation (`BriefView.tsx:297`); breakage titles carrying service/method/connector ids (Tenet 4 wording, `monday_brief_service.py:546`); owners and due dates lost on the Arrival rows; raw internals in the brief view; the decision window covering the BRIEF verbs at 1440 (normal window behaviour under UX-CANON.md:111, an observation not a repair); the decision row below the fold at 393; the A4 receipt-line regression on the HS-201-12 fence; ASR instability; the aftercare overlap; exception-path queue wording; `1 WORDS`.
 
 ## Exit criteria (evidence required)
 
-- [ ] The closure chain step 5 AS WRITTEN passes on the rig at 1440 and 393: after the producer day advances, one Generate on the Arrival, and the decision is in the visible BRIEF rows — no acknowledgement detour, no "1 more".
+- [ ] The closure chain step 5 AS WRITTEN passes on the rig at 1440 and 393: a populated, untriaged day-one brief → the producer day advances → ONE Generate on the Arrival → the new decision readable in the visible BRIEF rows — no Ack/Defer, no fold. Proof strengthened past text containment (the rig's predicate accepts text the observation marks invisible/off-viewport, `graph_walk.py:832`): the new brief's identity and date; the old brief's triage unchanged; the decision row's geometry visible and inside the viewport; the shots at both widths inspected; the cumulative restart evidence retained.
 - [ ] A lookback with a breakage item generates the next brief with 200 (fence red pre-fix on the id collision).
 - [ ] Every repaired seam has a fence that failed pre-fix.
 - [ ] The owner's sitting on the morning (his Phase 3 sitting extends to it).
@@ -35,7 +35,7 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-4-01 | Generate is always reachable | backlog | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | - |
-| PHILO-4-02 | The new decision is in the visible rows | backlog | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | - |
+| PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | backlog | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | - |
 | PHILO-4-03 | A failure never collides with the next brief | backlog | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | - |
 
 ## Lanes
@@ -48,19 +48,22 @@ DRAFTED by Muad'Dib 2026-09-23 on Astra's closure counsel ("Charter A5 … 1–2
 
 ## Where we are
 
-2026-09-23: chartered from the Phase 3 closure (`final-summary.md`, "What he still cannot do" 1–3) on the owner's word; Astra's check and the owner's ratification owed; 01's canvas next.
+2026-09-23: chartered from the Phase 3 closure (`final-summary.md`, "What he still cannot do" 1–3) on the owner's word. Astra's check (RATIFY-WITH-CONDITIONS, `checks/charter-astra.md`) paid: the cap's provenance corrected (Phase 170 code, never canvassed); the ordering rule settled on the decision record's `created_at`; brief-scoped ids chosen over idempotent inserts; story 01 scoped to the Arrival with its states; the closure proof strengthened past containment; estimates reconciled. The owner's ratification owed; then 01's canvas (with 02's order on it).
+
+**Estimate:** stories total 2.5–4 engineering days; with 01 → 02 and 03 in parallel the critical path is 2–3 working days, excluding the owner's canvas and sitting. This supersedes Astra's closure-counsel estimate of 1–2 days (Astra, charter check).
 
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
-| 01 grows into a BRIEF-section redesign | medium | one verb, placed on the canvas, ratified; the section's rows and triage stay as built (Phase 175/200) | a second verb or a row change appears |
-| 02's row cap is a ratified design, not a bug | medium | read the ratifying canvas for the three-row BRIEF (Phase 175 story 05); if the cap is ratified, the repair is ORDER (newest decision first), not the cap | the story changes the cap without his word |
-| The id fix touches the schema | low | scope the id to the brief (`brief-break-pipeline-{brief_id}-{event_id}`) or make the insert idempotent; no migration (migrations stay minimal) | a schema change |
+| 01 grows into a BRIEF-section redesign | medium | one verb with its states, placed on the canvas, ratified; the section's rows and triage stay as built | a second verb or a row change appears |
+| 02 orders by an inferred recency (random item ids) and still shows old decisions | medium | the rule is the decision record's `created_at`; the fence seeds several older decisions | the fence has no older decisions |
+| The id fix silently drops or moves a failure or its triage | medium | brief-scoped ids only; both briefs and the old triage read back; no `OR IGNORE`/`OR REPLACE`; no migration | a row or a triage record missing after generation |
 
 ## Decisions made (this phase)
 
 - 2026-09-23 — chartered on "yes close and open"; the service-layer draft renumbered to Phase 5 — Muad'Dib.
+- 2026-09-23 — Astra's charter check RATIFY-WITH-CONDITIONS; all five conditions paid in the charter text (this commit); the charter goes to the owner for ratification — Muad'Dib.
 
 ## Decisions deferred
 
