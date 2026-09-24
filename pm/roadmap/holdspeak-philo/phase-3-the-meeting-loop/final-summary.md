@@ -38,10 +38,10 @@ One hub per run, a fresh mkdtemp HOME per run, the actual LAN engine. `GET http:
 | 1 Import complete (J4) | trigger waits for `transcription_status: complete`, duration > 0, ≥ 1 segment; minted id is `/meetings/0/id` | `20260924T011648Z` (import 30.6 s) | `20260924T012020Z` (8.7 s) | **PASS** |
 | 2 Summary on the row with the host (J6) | `192.168.1.43` inside `[data-testid=summary-record-attempts]`, which draws only inside a non-empty summary slab | `20260924T012038Z` (7.6 s) | `20260924T012106Z` (7.2 s) | **PASS** |
 | 3 Same summary after a restart (J7) | the reloaded face text equals the summary read before the restart; restart record: `summary_retained`, `receipt_retained`, `meeting_identity_retained` all true | `20260924T012132Z` | `20260924T012202Z` | **PASS** |
-| 4 Decision recorded through the face (A1) | `/decisions/0/title` = `Keep summary retrieval on the local desk` (planted decision two, source in Context) | `20260924T012742Z` | `20260924T012814Z` | **PASS** |
+| 4 Decision recorded through the face (A1) | `/decisions/0/title` = `Keep summary retrieval on the local desk` (planted decision two, source in Context) — persistence by protocol; the 393 `after.png` shows the decision window with empty fields, so a settled visible save confirmation is NOT established | `20260924T012742Z` | `20260924T012814Z` | **PASS** |
 | 5 Next-day brief has it (J10), as written | Generate again on the Arrival after the day advance; the ledger holds `Review decision: …` | `20260924T013355Z` | `20260924T013440Z` | **BLOCKED** — no Generate verb |
 | 5, triage detour | Ack every day-one row, then Generate again | `20260924T013738Z` | `20260924T014018Z` | **FAIL** on the Arrival face — the row is behind `1 more`; the API brief has it |
-| 5, one more move | as the detour, then `1 more`; the brief view's lookback rows hold the title | `20260924T014258Z` | `20260924T014339Z` | **PASS** |
+| 5, one more move | as the detour, then the fold (`1 more` at 1440, `2 more` at 393); the brief view's lookback rows hold the title (DOM containment; at 393 `REVIEW DECISION` sits at the bottom with its title under the footer — readable delivery NOT shown) | `20260924T014258Z` | `20260924T014339Z` | **PASS** |
 
 Step 5 facts. The day-one brief has no decision (setup check). The producer clock read `advance_days=1 now=2026-09-24T…`. The trigger answered 200 with a new id, `GENERATED SEP 24`, and `sections.decisions = [Review decision: Keep summary retrieval on the local desk]` in every detour run. Protocol: the dated brief contains the decision. Face: two moves, and only after triage.
 
@@ -51,7 +51,7 @@ All runs are kept. None is selected:
 - `20260924T011937Z` (detour, 1440): BLOCKED. The decision window covers the BRIEF section's Generate again.
 - `20260924T012420Z` (detour, 393): FAIL. The next-day Generate answered **500** (`UNIQUE constraint failed: monday_brief_items.id`). The rig caused the breakage row that collides: a restart snapshot sent `GET /api/decisions/{decision_id}` with the placeholder unfilled, and the hub recorded the failed read as a pipeline breakage. The product defect is real (below). The rig now never sends an unfilled read (`scripts/graph_walk.py` `snapshot`).
 - `20260924T012231Z`, `012305Z` (step 4, before that rig fix): PASS, with the same literal read in the record. Re-run clean as `012742Z`, `012814Z`.
-- `20260924T012848Z`, `013121Z` (detour, first recipe): FAIL, the same `1 more` cap.
+- `20260924T012848Z`, `013121Z` (detour, first recipe): FAIL, the same three-row cap (`1 more` at 1440, `2 more` at 393).
 - `20260924T013558Z` (one more move, 1440): BLOCKED. The model made three actions, so two Acks were not enough. The Acks are now count-tolerant.
 - `20260924T013640Z` (one more move, 393): PASS.
 
@@ -72,7 +72,7 @@ Source: `tests/fixtures/philo3_architect_meeting.txt`, WAV sha256 `165ea975…d4
 | D3 use a recorded provider reply for isolated rig tests | in 19/22 summaries | Mostly recovered |
 | O3 Priya Shah | in 16/22 summaries; a Priya action in 4/22 | **Partial** |
 | A3 Priya adds the named failure fence before ship | ASR "named failure offense" in 22/22; "fence" in 0; the 4 Priya actions are "Research …", "Start scanning for …", "Use a recorded provider reply …", "Add named failure offense before ship"; none has a deadline | **Lost** |
-| The decision in the dated brief | typed by the rig from planted D2; in the next-day brief in every detour run | Delivered (typed, not extracted) |
+| The decision in the dated brief | typed by the rig from planted D2; in the next-day brief in every SUCCESSFUL next-day generation (the retained detours also include BLOCKED and HTTP 500 outcomes) | Delivered by protocol (typed, not extracted) |
 
 What the face loses after extraction: the Arrival's NEEDS YOU and BRIEF rows say `UNASSIGNED` and `NO DUE DATE` for both actions. The structured actions carry Mayyachan/Friday and Leo Martinez/Tuesday. The brief view shows `Due Friday` but still `UNASSIGNED`.
 
@@ -83,8 +83,8 @@ ASR on the same WAV: 76–299 words; 10 of 22 transcripts carry a repetition or 
 New in this closure (not repaired here):
 
 1. **Make the next brief from the face while yesterday's has an untriaged row.** `BriefSection` (`web/src/desk/chair/ChairHome.tsx:1260`, `:1980`) has Ack/Defer but no Generate. Generate again exists only when no row is untriaged (`:1283`). The brief view offers Generate only when there is no brief (`web/src/desk/pullouts/views/BriefView.tsx:297`). A3's next-day case passed only because its day-one brief was empty.
-2. **Generate the next brief after any failure in the lookback.** Breakage items have fixed ids (`brief-break-pipeline-{event_id}`, `holdspeak/services/monday_brief_service.py:546`; connectors `:575`). The next brief inserts the same id again (`:305`) into a table-wide primary key (`holdspeak/db/schema.py:2441`): 500. Seen once (`20260924T012420Z`, hub log in the observation), with a rig-caused failure. Any real failure in two days' lookback reaches the same path. Not reproduced without the rig cause.
-3. **See the new decision on the Arrival.** Three brief rows show; the decision was the fifth row, behind `1 more`, in every detour run.
+2. **Generate the next brief when a failure already stored in an earlier brief is selected again.** Breakage items have source-derived ids (`brief-break-pipeline-{event_id}`, `holdspeak/services/monday_brief_service.py:546`; connectors `:575`). Selection keeps the latest failure per service/method or connector over a window that starts at the preceding business close (`:516`, `:145`); when the same failure is selected into a second brief, the plain INSERT (`:305`) reuses its id against a table-wide primary key (`holdspeak/db/schema.py:2441`): 500. Seen once (`20260924T012420Z`, hub log in the observation), with a rig-caused failure row; a Wednesday-evening failure selected Wednesday evening and again Thursday morning takes the same path; a newly encountered failure need not (Astra, closure check). Not reproduced without the rig cause.
+3. **See the new decision on the Arrival.** Three brief rows show; the decision was behind the fold (`1 more` at 1440, `2 more` at 393) in every successful next-day generation; after opening the fold at 393 its title sits under the footer (`20260924T014339Z/after.png`).
 4. **Reach the brief verbs with a decision window open at 1440.** The window covers the BRIEF section's verbs (`20260924T011937Z/blocked.png`).
 5. **See owners and due dates on the Arrival.** See Usefulness.
 6. **Read the brief view without raw names.** It prints `MeetingIntelService.run_intelligence` and its JSON (`20260924T014339Z/after.png`). At 393 the decision row is below the window's fold.
