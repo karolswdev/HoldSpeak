@@ -50,6 +50,53 @@ def test_worked_example_passes_schema_and_integrity(schema, example):
     assert validator_module.validate(example, schema) == []
 
 
+def test_operation_observation_object_and_step_validate(schema, example):
+    """The graph contract carries hub operations beside browser routes."""
+    graph = copy.deepcopy(example)
+    case = graph["cases"][0]
+    case["setup"].append({
+        "kind": "op",
+        "name": "decision.create",
+        "args": {"title": "A durable decision"},
+    })
+    case["trigger"] = {
+        "kind": "op",
+        "name": "decision.update",
+        "args": {"decision_id": "decision-1", "status": "decided"},
+    }
+    case["expected"]["observe_at"] = {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {"decision_id": "decision-1"},
+    }
+    case["expected"]["predicate"] = {
+        "kind": "op_field",
+        "path": "status",
+        "value": "decided",
+    }
+    case["expected"]["reads"] = [{
+        "kind": "op",
+        "name": "decision.read",
+        "args": {"decision_id": "decision-1"},
+    }]
+    assert validator_module.validate(graph, schema) == []
+
+
+def test_operation_capture_match_and_field_validate(schema, example):
+    """A collection capture can bind an item by its durable source identity."""
+    graph = copy.deepcopy(example)
+    graph["cases"][0]["setup"].append({
+        "kind": "op",
+        "name": "brief.latest",
+        "args": {},
+        "capture_as": "item_a",
+        "capture_path": "sections.decisions",
+        "capture_match": {"source_ref": "decision:{decision_a}"},
+        "capture_field": "id",
+    })
+    assert validator_module.validate(graph, schema) == []
+
+
 def test_worked_example_joins_phase1_records_and_api_pairs(example):
     """Section 8: Phase 1 references are inventory path plus record id, and
     API references are method and path.  The example must actually carry both

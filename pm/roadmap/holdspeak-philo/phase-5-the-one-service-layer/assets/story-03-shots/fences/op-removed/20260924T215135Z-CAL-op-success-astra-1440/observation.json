@@ -1,0 +1,109 @@
+{
+  "id": "obs-20260924T215135Z-CAL-op-success-astra-1440",
+  "run_id": "20260924T215135Z-CAL-op-success-astra-1440",
+  "case_id": "CAL-op-success",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "an operation creates a decision and a named read observes it",
+  "edge_ids": [
+    "cal:op-success"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50918,
+      "pid": 53744
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-removed/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:36.049735+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": null,
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50918",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.read",
+      "args": null
+    },
+    "op": {
+      "name": "decision.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:36.050816+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "placeholder(s) ['decision_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "BLOCKED: step kind 'op' is not in the rig's vocabulary ['api', 'boundary', 'check', 'cli', 'clock', 'fixture', 'ui']; nothing was fired"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "decision_id"
+  ],
+  "trigger_error": {
+    "step": {
+      "kind": "op",
+      "name": "decision.create",
+      "args": {
+        "title": "operation success"
+      },
+      "capture_as": "decision_id",
+      "capture_path": "id"
+    },
+    "error": "step kind 'op' is not in the rig's vocabulary ['api', 'boundary', 'check', 'cli', 'clock', 'fixture', 'ui']; nothing was fired"
+  }
+}

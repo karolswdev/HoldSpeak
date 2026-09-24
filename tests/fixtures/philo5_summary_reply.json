@@ -1,0 +1,26 @@
+{
+  "provider": "llamacpp",
+  "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+  "source_run_id": "20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440",
+  "source_kind": "parsed provider result read back from meeting",
+  "topics": [
+    "SQ local meeting ledger",
+    "Migration Plan",
+    "Summary retrieval after hub restart",
+    "Isolated rig tests"
+  ],
+  "action_items": [
+    {
+      "task": "Write the Migration Plan",
+      "owner": "Mayyachan",
+      "due": "Friday"
+    },
+    {
+      "task": "Test restart retrieval",
+      "owner": "Leo Martinez",
+      "due": "Tuesday"
+    }
+  ],
+  "summary": "The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday.",
+  "error": null
+}

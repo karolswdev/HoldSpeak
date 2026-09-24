@@ -498,6 +498,190 @@ def _collection_of(payload: Any, predicate: Any) -> str | None:
     return None
 
 
+def _op_pending(record: dict[str, Any]) -> bool:
+    """Whether an operation read still advertises an in-flight state."""
+    response = record.get("response") if isinstance(record, dict) else None
+    if not isinstance(response, dict):
+        return False
+    for key in ("state", "status", "intel_status", "transcription_status"):
+        value = response.get(key)
+        if isinstance(value, dict):
+            value = value.get("state") or value.get("status")
+        value = str(value or "").lower()
+        if value in {"queued", "running", "pending", "importing", "processing", "in_progress"}:
+            return True
+    return False
+
+
+# The rig's transport adapter is intentionally explicit.  These are the
+# operation names in ``holdspeak.operations`` and the existing MCP projection
+# each one already exposes.  The adapter is not a second catalogue: all calls
+# still enter the hub at POST /api/mcp and are dispatched by its registry.
+OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
+    "decision.create": {"kind": "tool", "name": "desk.create"},
+    "decision.update": {"kind": "tool", "name": "desk.update"},
+    "decision.read": {"kind": "tool", "name": "desk.get"},
+    "decision.list": {"kind": "tool", "name": "desk.list"},
+    "meeting.list": {"kind": "tool", "name": "meeting.list"},
+    "meeting.read": {"kind": "tool", "name": "meeting.get"},
+    "meeting.import": {"kind": "tool", "name": "meeting.import"},
+    "meeting.summary.run": {"kind": "tool", "name": "meeting.run_intelligence"},
+    "brief.generate": {"kind": "tool", "name": "monday_brief.generate"},
+    "brief.latest": {"kind": "tool", "name": "monday_brief.get"},
+    "brief.shelf.write": {"kind": "tool", "name": "monday_brief.shelf"},
+    "brief.shelf.read": {"kind": "tool", "name": "monday_brief.shelf_read"},
+    "thought.create": {"kind": "tool", "name": "thought.create"},
+    "thought.save": {"kind": "tool", "name": "thought.update_working"},
+    "thought.read": {"kind": "resource", "uri": "holdspeak://thoughts/{thought_id}"},
+    "thought.workbench.read": {
+        "kind": "resource", "uri": "holdspeak://thoughts/{thought_id}/workbench",
+    },
+    "thought.list": {"kind": "resource", "uri": "holdspeak://thoughts/unfinished"},
+}
+
+# An ``observe_at`` operation is a read of durable state.  A refusal predicate
+# reads the trigger's own refusal record (see ``exercise``), so it never
+# re-fires a mutating operation while polling.
+OP_READ_OBSERVATIONS = frozenset({
+    "decision.read", "decision.list",
+    "meeting.list", "meeting.read",
+    "brief.latest", "brief.shelf.read",
+    "thought.read", "thought.workbench.read", "thought.list",
+})
+
+
+def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
+    """Translate canonical operation arguments to the existing MCP envelope."""
+    if name == "decision.create":
+        return {"kind": "decisions", "data": args}
+    if name == "decision.update":
+        decision_id = args.get("decision_id")
+        return {
+            "kind": "decisions", "id": decision_id,
+            "data": {key: value for key, value in args.items()
+                      if key != "decision_id"},
+        }
+    if name == "decision.read":
+        return {"kind": "decisions", "id": args.get("decision_id")}
+    if name == "decision.list":
+        return {"kind": "decisions"}
+    if name == "meeting.summary.run":
+        # The existing MCP schema requires this envelope member even when the
+        # canonical operation deliberately uses an empty value for an
+        # empty/no-route refusal. The atlas must state that value explicitly;
+        # the rig never guesses or silently inserts a route hash.
+        if "expected_selection_hash" not in args:
+            raise Blocked(
+                "meeting.summary.run needs explicit expected_selection_hash "
+                "for the existing MCP envelope (use \"\" when the route is absent)"
+            )
+        return dict(args)
+    if name == "brief.latest":
+        # This projection is also used by the MCP client's generate=true
+        # compatibility path.  ``False`` preserves the latest-only operation.
+        return {"generate": False}
+    # meeting.import is deliberately passed through as the existing MCP path
+    # intake.  ``path`` is held by the hub; tmp_path/config/transcriber_factory
+    # never become operation arguments or rig inputs.
+    return dict(args)
+
+
+def _op_request(name: str, args: dict[str, Any], request_id: int) -> dict[str, Any]:
+    projection = OP_MCP_PROJECTIONS.get(name)
+    if projection is None:
+        raise Blocked(f"operation {name!r} is not in the rig's canonical MCP map")
+    # These projections have no place to carry the canonical pagination or
+    # filter arguments. Refuse them explicitly instead of claiming that the
+    # MCP call accepted data it silently discarded.
+    unsupported: dict[str, str] = {
+        "decision.list": "desk.list only exposes its established kind envelope",
+        "thought.list": "the unfinished resource URI has no pagination envelope",
+        "brief.latest": "monday_brief.get's latest projection takes no canonical args",
+    }
+    if name in unsupported and args:
+        raise Blocked(f"operation {name!r} cannot preserve args {sorted(args)}: "
+                      f"{unsupported[name]}")
+    if projection["kind"] == "resource":
+        allowed = {"thought_id"} if "{thought_id}" in projection.get("uri", "") else set()
+        extra = set(args) - allowed
+        if extra:
+            raise Blocked(f"resource projection for {name!r} cannot preserve args "
+                          f"{sorted(extra)}")
+    if projection["kind"] == "tool":
+        return {
+            "jsonrpc": "2.0", "id": request_id, "method": "tools/call",
+            "params": {"name": projection["name"],
+                       "arguments": _op_arguments(name, args)},
+        }
+    uri = substitute(projection["uri"], args)
+    return {
+        "jsonrpc": "2.0", "id": request_id, "method": "resources/read",
+        "params": {"uri": uri},
+    }
+
+
+def _decode_mcp_envelope(envelope: dict[str, Any]) -> tuple[Any, dict[str, Any] | None]:
+    """Return (domain response, named refusal) without losing the envelope."""
+    if not isinstance(envelope, dict):
+        return None, {"code": "invalid_mcp_envelope", "error": str(envelope)[:400]}
+    if "error" in envelope:
+        error = envelope.get("error") or {}
+        data = error.get("data") if isinstance(error, dict) else None
+        code = (data or {}).get("code") if isinstance(data, dict) else None
+        return None, {"code": code or (error.get("code") if isinstance(error, dict) else "mcp_error"),
+                      "error": error.get("message", str(error)) if isinstance(error, dict) else str(error),
+                      **(data if isinstance(data, dict) else {})}
+    result = envelope.get("result")
+    if not isinstance(result, dict):
+        return None, {"code": "invalid_mcp_result", "error": "MCP response has no result"}
+    # MCP tools return ``content``. MCP resources return ``contents``. Decode
+    # both real envelopes while retaining the original envelope in the op
+    # record so a projection cannot hide which surface answered.
+    content = result.get("content") or result.get("contents") or []
+    decoded: Any = None
+    if content and isinstance(content[0], dict):
+        text = content[0].get("text")
+        try:
+            decoded = json.loads(text) if isinstance(text, str) else text
+        except (TypeError, ValueError):
+            decoded = text
+    if result.get("isError"):
+        if isinstance(decoded, dict):
+            refusal = dict(decoded)
+            refusal.setdefault("error", str(decoded.get("message") or decoded.get("detail") or "MCP operation refused"))
+            refusal.setdefault("code", "mcp_refused")
+            return None, refusal
+        return None, {"code": "mcp_refused", "error": str(decoded or "MCP operation refused")}
+    return decoded, None
+
+
+def _op_call(hub: Any, name: str, args: dict[str, Any]) -> dict[str, Any]:
+    """Call one mapped operation and retain both decoded domain data and wire data."""
+    if hub is None or not callable(getattr(hub, "mcp", None)):
+        raise Blocked("an op step needs the owning hub's POST /api/mcp transport")
+    request_id = int(getattr(hub, "_mcp_request_id", 0)) + 1
+    try:
+        setattr(hub, "_mcp_request_id", request_id)
+    except Exception:  # pragma: no cover - a minimal test transport may be frozen
+        pass
+    request = _op_request(name, args, request_id)
+    started = time.monotonic()
+    envelope = hub.mcp(request)
+    if isinstance(envelope, dict) and int(envelope.get("http_status", 200)) >= 400:
+        raise Blocked(
+            f"POST /api/mcp answered HTTP {envelope.get('http_status')}; "
+            "transport failure is not a domain refusal"
+        )
+    elapsed = round(time.monotonic() - started, 3)
+    response, refusal = _decode_mcp_envelope(envelope)
+    return {
+        "name": name, "args": args, "request": request,
+        "response": response, "domain_response": response,
+        "refusal": refusal, "envelope": envelope,
+        "elapsed_s": elapsed,
+    }
+
+
 def brief_db_snapshot(hub: Any, brief_id: str) -> dict[str, Any]:
     """Retain a captured brief's durable rows before the walk HOME is removed.
 
@@ -531,12 +715,34 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     expected = case.get("expected", {})
     predicate = expected.get("predicate")
     target = protocol_target(expected.get("observe_at"))
-    raw = page.evaluate(
-        _SNAPSHOT_JS,
-        [None if target else expected.get("observe_at"),
-         expected.get("pending_marker"),
-         predicate.get("selector") if isinstance(predicate, dict) else None],
-    )
+    observe_at = expected.get("observe_at")
+    op_target = observe_at if isinstance(observe_at, dict) and observe_at.get("kind") == "op" else None
+    if page is None:
+        # Protocol and operation observations are transport observations.  A
+        # headless run may read them without constructing a browser; a face
+        # observation is recorded as refused and can never earn a face verdict.
+        if target is None and op_target is None:
+            raw = {
+                "target_present": False, "text": "", "attrs": {},
+                "visible": False, "url": getattr(hub, "url", ""),
+                "focus": None, "windows": [], "values": [],
+                "headless": True,
+                "headless_refusal": "headless mode cannot observe a face selector",
+            }
+        else:
+            raw = {
+                "target_present": True, "text": "", "attrs": {},
+                "visible": True, "url": getattr(hub, "url", ""),
+                "focus": None, "windows": [], "values": [],
+                "headless": True,
+            }
+    else:
+        raw = page.evaluate(
+            _SNAPSHOT_JS,
+            [None if target or op_target else observe_at,
+             expected.get("pending_marker"),
+             predicate.get("selector") if isinstance(predicate, dict) else None],
+        )
     raw["observe_at"] = expected.get("observe_at")
     if target is not None:
         method, path = target
@@ -561,6 +767,33 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
         raw["protocol_digest"] = {"status": status,
                                   "row_count": raw["protocol"]["row_count"],
                                   "payload_sha256": raw["protocol"]["payload_sha256"]}
+    if op_target is not None:
+        name = op_target.get("name")
+        raw_args = op_target.get("args")
+        args = raw_args or {}
+        if not isinstance(name, str) or (raw_args is not None and not isinstance(raw_args, dict)):
+            raise Blocked("op observe_at needs a name and an args object")
+        if name not in OP_READ_OBSERVATIONS:
+            raise Blocked(
+                f"op observe_at {name!r} is not a durable read; "
+                "mutating operations are observed through the trigger record"
+            )
+        if raw_args is None or unresolved({"name": name, "args": args}):
+            raw["op"] = {
+                "name": name, "args": args, "response": None,
+                "domain_response": None,
+                "refusal": {"code": "unresolved_arguments",
+                             "error": "op observation has unresolved arguments"},
+                "envelope": None, "elapsed_s": 0.0,
+            }
+        else:
+            raw["op"] = _op_call(hub, name, args)
+        op_value = raw["op"].get("response")
+        raw["op_digest"] = hashlib.sha256(
+            json.dumps({"response": op_value,
+                        "refusal": raw["op"].get("refusal")},
+                       sort_keys=True, default=str).encode()).hexdigest()
+        raw["pending_marker_present"] = _op_pending(raw["op"])
     body = raw.pop("body_text", "") or ""
     raw["document_text_sha256"] = hashlib.sha256(body.encode()).hexdigest()
     raw["document_text_len"] = len(body)
@@ -576,7 +809,28 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     reads = expected.get("reads") or []
     if reads and hub is not None:
         collected = []
+        op_collected = []
         for read in reads:
+            if isinstance(read, dict) and read.get("kind") == "op":
+                op_read = substitute(read, {})
+                op_name = op_read.get("name")
+                op_args = op_read.get("args")
+                if not isinstance(op_name, str) or (
+                    op_args is not None and not isinstance(op_args, dict)
+                ):
+                    raise Blocked("op read needs a name and an args object")
+                if op_name not in OP_READ_OBSERVATIONS:
+                    raise Blocked(
+                        f"op read {op_name!r} is not a durable read; mutating "
+                        "operations cannot be supplementary observations"
+                    )
+                if op_args is None or unresolved({"name": op_name, "args": op_args}):
+                    op_collected.append({"kind": "op", "name": op_name,
+                                         "args": op_args,
+                                         "skipped": "unresolved placeholder; not sent"})
+                else:
+                    op_collected.append({"kind": "op", **_op_call(hub, op_name, op_args)})
+                continue
             if unresolved(read["path"]):
                 collected.append({"method": read["method"], "path": read["path"],
                                   "skipped": "unresolved placeholder; not sent"})
@@ -590,6 +844,8 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
                 ).hexdigest(),
             })
         raw["api_reads"] = collected
+        if op_collected:
+            raw["op_reads"] = op_collected
     raw["at_utc"] = datetime.now(timezone.utc).isoformat()
     return raw
 
@@ -647,6 +903,10 @@ def _read_identity(page: Any, spec: dict[str, Any]) -> dict[str, Any] | None:
     if spec.get("from") != "selector":
         return {"from": spec.get("from"), "path": spec.get("path"), "value": None,
                 "read_from": "the trigger's response, not the page"}
+    if page is None:
+        return {"from": "selector", "selector": spec.get("selector"),
+                "attr": spec.get("attr"), "value": None,
+                "read_from": "headless mode refuses face selectors"}
     value = page.evaluate(
         """([selector, attr]) => {
             const el = document.querySelector(selector);
@@ -663,6 +923,7 @@ _DIFF_KEYS = (
     "target_present", "text", "attrs", "rect", "visible", "focus", "focus_label",
     "url", "windows", "document_text_sha256", "document_text_len",
     "replay_identity", "api_reads", "protocol_digest", "values", "field_value",
+    "op_digest", "op_reads",
 )
 
 
@@ -701,6 +962,71 @@ def check_predicate(
             "(e.g. {\"kind\": \"protocol_rows\", \"collection\": …, \"match\": …}).")
     kind = predicate.get("kind")
     text = after.get("text") or ""
+
+    # Headless is a transport proof mode.  A face predicate cannot silently
+    # become a pass because the page was absent; protocol and operation
+    # predicates remain fully decidable from their named response.
+    if after.get("headless") and not (isinstance(kind, str) and
+                                       (kind.startswith("protocol_") or kind.startswith("op_"))):
+        return False, "BLOCKED: headless mode refuses face/UI predicate evaluation"
+
+    if kind == "op_field":
+        operation = after.get("op") or {}
+        refusal = operation.get("refusal")
+        if refusal:
+            return False, (f"operation {operation.get('name')!r} refused by name: "
+                           f"{refusal.get('code')}: {refusal.get('error')}")
+        payload = operation.get("response")
+        found, value = _json_path(payload, predicate["path"])
+        if predicate.get("absent"):
+            return (not found), (f"{predicate['path']} "
+                                 f"{'is absent' if not found else f'is present ({value!r})'}")
+        if not found:
+            return False, f"{predicate['path']} is absent; wanted {predicate.get('value')!r}"
+        if predicate.get("nonempty"):
+            present = value not in (None, "", [], {})
+            if not present:
+                return False, f"{predicate['path']} is empty"
+        if "value" in predicate and value != predicate["value"]:
+            return False, f"{predicate['path']} = {value!r}, wanted {predicate['value']!r}"
+        if predicate.get("positive"):
+            positive = isinstance(value, (int, float)) and value > 0
+            if not positive:
+                return False, f"{predicate['path']} is {value!r}; wanted a positive number"
+        if predicate.get("restart_required"):
+            restart = after.get("restart") or {}
+            required = ("summary_retained", "receipt_retained",
+                        "meeting_identity_retained")
+            missing = [name for name in required if restart.get(name) is not True]
+            if missing:
+                return False, f"restart retention flags missing or false: {missing}"
+        if predicate.get("nonempty"):
+            return True, f"{predicate['path']} is non-empty"
+        if "value" in predicate:
+            return True, f"{predicate['path']} equals the declared value"
+        if predicate.get("positive"):
+            return True, f"{predicate['path']} is positive"
+        return True, f"{predicate['path']} is present in the operation response"
+
+    if kind == "op_refusal":
+        operation = after.get("op") or {}
+        refusal = operation.get("refusal")
+        if not refusal:
+            return False, "the operation returned no named refusal"
+        want_code = predicate.get("code") or predicate.get("refusal_code")
+        got_code = refusal.get("code")
+        if want_code is not None and got_code != want_code:
+            return False, f"refusal code is {got_code!r}, wanted {want_code!r}"
+        error = str(refusal.get("error") or refusal.get("detail") or "")
+        exact = predicate.get("error") or predicate.get("exact_error")
+        if exact is not None and error != exact:
+            return False, f"refusal error is {error!r}, wanted exact {exact!r}"
+        contains = predicate.get("error_contains", predicate.get("contains"))
+        wanted_parts = [contains] if isinstance(contains, str) else (contains or [])
+        missing = [part for part in wanted_parts if str(part) not in error]
+        if missing:
+            return False, f"refusal error {error!r} does not contain {missing!r}"
+        return True, f"operation refused by name {got_code!r}: {error}"
 
     if kind == "protocol_status":
         # The TRIGGER's own response. A refusal is a promised result: the rig
@@ -1106,6 +1432,7 @@ class Hub:
         self.db_path: str | None = None
         self.config_path: str | None = None
         self.lines: list[str] = []
+        self._mcp_request_id = 0
 
     def _drain(self) -> None:
         assert self.proc is not None and self.proc.stdout is not None
@@ -1199,6 +1526,30 @@ class Hub:
                     return resp.status, raw[:2000]
         except urllib.error.HTTPError as exc:
             return exc.code, exc.read().decode()[:2000]
+
+    def mcp(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Send one MCP JSON-RPC request to this hub's owning endpoint.
+
+        The operation adapter deliberately speaks the hub's transport.  It
+        does not import the operation registry or construct a service in the
+        rig process.  ``Authorization`` carries the same owner token the hub
+        wrote to its isolated config during boot.
+        """
+        body = json.dumps(request).encode()
+        req = urllib.request.Request(
+            f"{self.url}/api/mcp", data=body, method="POST",
+            headers={"Authorization": f"Bearer {self.token}",
+                     "Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=300) as response:
+                raw = response.read().decode()
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode(errors="replace")[:2000]
+            raise Blocked(
+                f"POST /api/mcp answered HTTP {exc.code}: {detail}"
+            ) from exc
 
     def upload(self, method: str, path: str, wav: Path, field: str,
                form: dict[str, Any] | None = None) -> tuple[int, Any]:
@@ -1591,6 +1942,14 @@ def _fresh_calibration_state() -> dict[str, Any]:
         "counts": {"needs_attention": 0, "unseen": 1, "acknowledged": 0, "receipts": 1},
         "person_sections_state": "unavailable",
         "nothing_here": None,
+        "op_decisions": [],
+        "op_next_decision": 1,
+        "op_meetings": {
+            "cal-never": {"id": "cal-never", "intel_status": {"state": "running"}},
+            "cal-restart": {"id": "cal-restart", "summary": "retained summary",
+                            "run_receipt": {"job_id": "cal-job"},
+                            "intel_status": {"state": "complete"}},
+        },
     }
 
 
@@ -1631,6 +1990,21 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
             return json.loads(self.rfile.read(length).decode())
         except Exception:  # noqa: BLE001
             return None
+
+    def _mcp_tool(self, request: dict[str, Any], value: Any,
+                  *, error: bool = False) -> None:
+        self._json(200, {
+            "jsonrpc": "2.0", "id": request.get("id"),
+            "result": {"content": [{"type": "text", "text": json.dumps(value)}],
+                        "isError": error},
+        })
+
+    def _mcp_resource(self, request: dict[str, Any], uri: str, value: Any) -> None:
+        self._json(200, {
+            "jsonrpc": "2.0", "id": request.get("id"),
+            "result": {"contents": [{"uri": uri, "mimeType": "application/json",
+                                        "text": json.dumps(value)}]},
+        })
 
     def do_GET(self) -> None:  # noqa: N802 — BaseHTTPRequestHandler's name
         if self.path.startswith("/echo"):
@@ -1676,6 +2050,59 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:  # noqa: N802
+        if self.path.split("?")[0] == "/api/mcp":
+            request = self._body() or {}
+            params = request.get("params") or {}
+            method = request.get("method")
+            state = _read_cal_state()
+            if method == "tools/call":
+                name = params.get("name")
+                args = params.get("arguments") or {}
+                if name == "desk.create":
+                    decision_id = f"cal-d-{state.get('op_next_decision', 1)}"
+                    state["op_next_decision"] = int(state.get("op_next_decision", 1)) + 1
+                    decision = {"id": decision_id, **(args.get("data") or {})}
+                    state.setdefault("op_decisions", []).append(decision)
+                    _write_cal_state(state)
+                    self._mcp_tool(request, decision)
+                    return
+                if name == "desk.get":
+                    decision_id = args.get("id")
+                    decision = next((row for row in state.get("op_decisions", [])
+                                     if row.get("id") == decision_id), None)
+                    if decision is None:
+                        self._mcp_tool(request, {"code": "not_found",
+                                                 "error": f"Unknown decision: {decision_id}"},
+                                       error=True)
+                    else:
+                        self._mcp_tool(request, decision)
+                    return
+                if name == "desk.update":
+                    if (args.get("data") or {}).get("status") == "bogus":
+                        self._mcp_tool(request, {"error": "invalid status: bogus"}, error=True)
+                        return
+                    self._mcp_tool(request, {"id": args.get("id"), **(args.get("data") or {})})
+                    return
+                if name == "meeting.get":
+                    meeting_id = args.get("meeting_id")
+                    meeting = state.get("op_meetings", {}).get(meeting_id)
+                    if meeting is None:
+                        self._mcp_tool(request, {"code": "not_found",
+                                                 "error": f"Unknown meeting: {meeting_id}"},
+                                       error=True)
+                    else:
+                        self._mcp_tool(request, meeting)
+                    return
+                self._mcp_tool(request, {"error": f"unsupported calibration tool: {name}"},
+                               error=True)
+                return
+            if method == "resources/read":
+                uri = params.get("uri", "")
+                self._mcp_resource(request, uri, {"items": []})
+                return
+            self._json(200, {"jsonrpc": "2.0", "id": request.get("id"),
+                             "error": {"code": -32601, "message": "method not found"}})
+            return
         if self.path.startswith("/refuse"):
             # An intelligible refusal, by name — the shape a 4xx case promises.
             self._json(422, {"error": "no engine is assigned for "
@@ -1805,6 +2232,12 @@ class CalibrationServer:
                 return exc.code, json.loads(raw)
             except Exception:  # noqa: BLE001
                 return exc.code, raw[:600]
+
+    def mcp(self, request: dict[str, Any]) -> dict[str, Any]:
+        status, body = self.api("POST", "/api/mcp", request)
+        if status >= 400:
+            raise Blocked(f"calibration POST /api/mcp answered HTTP {status}")
+        return body
 
     def upload(self, method: str, path: str, wav: Path, field: str,
                form: dict[str, Any] | None = None) -> tuple[int, Any]:
@@ -2367,13 +2800,117 @@ CALIBRATION_EXPECTED: dict[str, tuple[str, str]] = {
     "CAL-f-never-completes": ("fail", "incomplete"),
 }
 
+# Operation transport calibrations. These use the calibration server's MCP
+# envelope and are run with ``calibrate --headless``; they exercise the rig's
+# transport/evaluator seams only and are never product evidence.
+CALIBRATION_OP_CASES: list[dict[str, Any]] = [
+    {
+        "id": "CAL-op-success",
+        "job": "an operation creates a decision and a named read observes it",
+        "edge_ids": ["cal:op-success"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "op", "name": "decision.create",
+                    "args": {"title": "operation success"},
+                    "capture_as": "decision_id", "capture_path": "id"},
+        "expected": {
+            "observe_at": {"kind": "op", "name": "decision.read",
+                            "args": {"decision_id": "{decision_id}"}},
+            "predicate": {"kind": "op_field", "path": "id",
+                          "value": "{decision_id}"},
+        },
+        "completion_bound_s": 3, "viewports": [],
+    },
+    {
+        "id": "CAL-op-unresolved",
+        "job": "an unresolved operation argument blocks before dispatch",
+        "edge_ids": ["cal:op-unresolved"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "op", "name": "decision.read",
+                    "args": {"decision_id": "{never_captured}"}},
+        "expected": {"observe_at": None,
+                     "predicate": {"kind": "op_refusal",
+                                   "code": "unresolved_arguments"}},
+        "completion_bound_s": 1, "viewports": [],
+    },
+    {
+        "id": "CAL-op-refusal",
+        "job": "an operation refusal keeps its named error text",
+        "edge_ids": ["cal:op-refusal"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "op", "name": "decision.update",
+                    "args": {"decision_id": "missing", "status": "bogus"}},
+        "expected": {
+            "observe_at": {"kind": "op", "name": "decision.update",
+                            "args": {"decision_id": "missing", "status": "bogus"}},
+            "predicate": {"kind": "op_refusal", "error_contains": "invalid status"},
+        },
+        "completion_bound_s": 3, "viewports": [],
+    },
+    {
+        "id": "CAL-op-never-completes",
+        "job": "an operation read remains running past its completion bound",
+        "edge_ids": ["cal:op-never"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "op", "name": "meeting.read",
+                    "args": {"meeting_id": "cal-never"}},
+        "expected": {
+            "observe_at": {"kind": "op", "name": "meeting.read",
+                            "args": {"meeting_id": "cal-never"},},
+            "pending_marker": "intel_status.state",
+            "predicate": {"kind": "op_field", "path": "intel_status.state",
+                          "value": "complete"},
+        },
+        "completion_bound_s": 1, "late_grace_s": 0, "viewports": [],
+    },
+    {
+        "id": "CAL-op-headless-face-block",
+        "job": "headless operation mode refuses a face observation",
+        "edge_ids": ["cal:op-face"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "op", "name": "decision.create",
+                    "args": {"title": "face is not transport"}},
+        "expected": {"observe_at": "#face-only",
+                     "predicate": {"kind": "text_contains", "value": "saved"}},
+        "completion_bound_s": 1, "viewports": [],
+    },
+    {
+        "id": "CAL-op-restart-retains-read",
+        "job": "headless operation read retains meeting identity summary and receipt",
+        "edge_ids": ["cal:op-restart"], "state_id": "cal:op",
+        "applicability": "applicable", "preconditions": "the MCP fixture is up",
+        "setup": [],
+        "trigger": {"kind": "cli", "action": "restart_hub", "adapter": "process"},
+        "expected": {
+            "observe_at": {"kind": "op", "name": "meeting.read",
+                            "args": {"meeting_id": "cal-restart"}},
+            "predicate": {"kind": "op_field", "path": "summary",
+                          "value": "retained summary", "restart_required": True},
+        },
+        "completion_bound_s": 3, "viewports": [],
+    },
+]
+
+CALIBRATION_OP_EXPECTED: dict[str, tuple[str, str]] = {
+    "CAL-op-success": ("pass", "settled"),
+    "CAL-op-unresolved": ("blocked", "-"),
+    "CAL-op-refusal": ("pass", "settled"),
+    "CAL-op-never-completes": ("fail", "incomplete"),
+    "CAL-op-headless-face-block": ("blocked", "settled"),
+    "CAL-op-restart-retains-read": ("pass", "settled"),
+}
+
 
 # ───────────────────────────────────────────────────────── the steps ──
 
 
 #: The rig's CLOSED step vocabulary, beside `UI_ACTIONS`, so the atlas fence
 #: can import both and refuse a case the rig could never drive.
-STEP_KINDS = frozenset({"api", "ui", "fixture", "clock", "boundary", "cli", "check"})
+STEP_KINDS = frozenset({"api", "op", "ui", "fixture", "clock", "boundary", "cli", "check"})
 
 #: `{name}` — a value captured by an earlier step. Only an identifier matches,
 #: so JSON braces in a body are never mistaken for a placeholder.
@@ -2385,12 +2922,20 @@ _EXPECTED_READ_FIELDS = ("observe_at", "predicate", "reads", "pending_marker")
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
-                       "observe_at")
+                       "args", "observe_at")
 
 
-def substitute(value: Any, variables: dict[str, str]) -> Any:
-    """Fill `{name}` from the captured variables, anywhere in a structure."""
+def substitute(value: Any, variables: dict[str, Any]) -> Any:
+    """Fill placeholders, preserving raw JSON for an exact captured value.
+
+    An exact ``"{cursor}"`` is allowed to become the cursor object captured
+    from an operation response. Embedded placeholders remain string
+    interpolation for the existing API/path semantics.
+    """
     if isinstance(value, str):
+        exact = _PLACEHOLDER.fullmatch(value)
+        if exact and exact.group(1) in variables:
+            return variables[exact.group(1)]
         return _PLACEHOLDER.sub(
             lambda m: str(variables[m.group(1)]) if m.group(1) in variables
             else m.group(0), value)
@@ -2425,6 +2970,8 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked(
             f"ui action {action!r} is not in the rig's vocabulary "
             f"{sorted(UI_ACTIONS)}; nothing was fired")
+    if page is None:
+        raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))
     record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
     timeout = float(step.get("timeout_s", 10)) * 1000
@@ -2554,12 +3101,26 @@ def _restart_detail(snap: dict[str, Any]) -> dict[str, Any]:
     """
     protocol = snap.get("protocol") or {}
     payload = protocol.get("payload") or {}
+    operation = snap.get("op") or {}
+    if operation.get("name") == "meeting.read" and isinstance(operation.get("response"), dict):
+        payload = operation.get("response") or {}
+    for read in snap.get("op_reads") or []:
+        if read.get("name") == "meeting.read" and isinstance(read.get("response"), dict):
+            payload = read["response"]
+            break
     if not str(protocol.get("path", "")).startswith("/api/meetings/"):
         for read in snap.get("api_reads") or []:
             if str(read.get("path", "")).startswith("/api/meetings/"):
                 payload = read.get("payload") or {}
                 break
     intel = payload.get("intel") if isinstance(payload, dict) else None
+    if not isinstance(intel, dict) and isinstance(payload, dict):
+        # ``meeting.read`` is the operation projection of the same detail; its
+        # result may carry the intel object directly in a compatibility read.
+        direct_summary = payload.get("summary")
+        intel = direct_summary if isinstance(direct_summary, dict) else None
+        if isinstance(direct_summary, str):
+            intel = {"summary": direct_summary}
     return {
         "meeting_id": payload.get("id") if isinstance(payload, dict) else None,
         "summary": intel.get("summary") if isinstance(intel, dict) else None,
@@ -2608,10 +3169,113 @@ def producer_clock_advance(step: dict[str, Any], hub: Hub | None,
             "advance_days_total": total, "done": True}
 
 
+def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
+             *, variables: dict[str, Any]) -> dict[str, Any]:
+    """Run a canonical op through the owning hub's MCP HTTP transport."""
+    name = step.get("name")
+    raw_args = step.get("args")
+    args = {} if raw_args is None else raw_args
+    if not isinstance(name, str) or not name:
+        raise Blocked("op step needs a canonical operation name")
+    if not isinstance(args, dict):
+        raise Blocked(f"op {name!r} args must be an object")
+    # An import operation carries the same declared fixture path as the
+    # existing fixture step. Hash only repository or rig-home files; never
+    # open an arbitrary owner path merely to populate provenance.
+    if name == "meeting.import" and isinstance(args.get("path"), str):
+        candidate = Path(args["path"])
+        if not candidate.is_absolute():
+            candidate = REPO / candidate
+        candidate = candidate.resolve()
+        allowed_roots = [REPO.resolve()]
+        hub_home = getattr(hub, "home", None)
+        if hub_home:
+            allowed_roots.append(Path(hub_home).resolve())
+        if candidate.exists() and any(_under(candidate, root) for root in allowed_roots):
+            provenance["fixture_hashes"][args["path"]] = _sha256(candidate)
+        # Atlas fixtures stay repository-relative. The existing hub-owned MCP
+        # intake requires an absolute path, so resolve it at this rig seam.
+        args = {**args, "path": str(candidate)}
+    result = _op_call(hub, name, args)
+    record = {"kind": "op", "adapter": step.get("adapter", "mcp-http"), **result}
+    if result.get("refusal"):
+        record["named_refusal"] = result["refusal"]
+    capture_as = step.get("capture_as")
+    if capture_as:
+        where = step.get("capture_path", "id")
+        response = result.get("response")
+        capture_match = step.get("capture_match")
+        if capture_match is not None:
+            if not isinstance(capture_match, dict) or not capture_match:
+                raise Blocked(
+                    f"capture_as {capture_as!r}: capture_match must be a non-empty object"
+                )
+            if not isinstance(where, str) or not where:
+                raise Blocked(
+                    f"capture_as {capture_as!r}: capture_match needs a capture_path"
+                )
+            found, rows = _json_path(response, where)
+            if not found or not isinstance(rows, list):
+                raise Blocked(
+                    f"capture_as {capture_as!r}: capture_path {where!r} does not "
+                    "address a list"
+                )
+            matches = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                matches_row = True
+                for match_path, expected in capture_match.items():
+                    if not isinstance(match_path, str):
+                        raise Blocked(
+                            f"capture_as {capture_as!r}: capture_match keys "
+                            "must be simple or dotted paths"
+                        )
+                    has_value, actual = _json_path(row, match_path)
+                    if not has_value or actual != expected:
+                        matches_row = False
+                        break
+                if matches_row:
+                    matches.append(row)
+            if len(matches) != 1:
+                raise Blocked(
+                    f"capture_as {capture_as!r}: capture_match at {where!r} "
+                    f"matched {len(matches)} rows; exactly one is required"
+                )
+            capture_field = step.get("capture_field", "id")
+            if not isinstance(capture_field, str) or not capture_field:
+                raise Blocked(
+                    f"capture_as {capture_as!r}: capture_field must be a path"
+                )
+            found, value = _json_path(matches[0], capture_field)
+            if not found or value is None:
+                raise Blocked(
+                    f"capture_as {capture_as!r}: matched row has no value at "
+                    f"capture_field {capture_field!r}"
+                )
+            variables[capture_as] = value
+            record["captured"] = {
+                "name": capture_as,
+                "path": where,
+                "match": capture_match,
+                "field": capture_field,
+                "value": value,
+            }
+            return record
+        found, value = _json_path(response, where)
+        if not found or value is None:
+            raise Blocked(
+                f"capture_as {capture_as!r}: no value at {where!r} in the "
+                f"decoded response of operation {name!r}")
+        variables[capture_as] = value
+        record["captured"] = {"name": capture_as, "path": where, "value": value}
+    return record
+
+
 def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
              provenance: dict[str, Any], case: dict[str, Any] | None = None,
              *, allow_error: bool = False,
-             variables: dict[str, str] | None = None) -> dict[str, Any]:
+             variables: dict[str, Any] | None = None) -> dict[str, Any]:
     """One setup step or the trigger, by kind. Records the adapter it drove."""
     kind = step.get("kind")
     if kind not in STEP_KINDS:
@@ -2641,6 +3305,10 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 break
             if page is not None:
                 page.wait_for_timeout(300)
+            else:
+                # Headless checks poll the owning hub without a Page. Keep
+                # the bounded wait honest and avoid a busy loop on MCP reads.
+                time.sleep(0.3)
             waited = round(time.monotonic() - (deadline - float(step.get("timeout_s", 5))), 2)
         record = {"kind": "check", "observe_at": step.get("observe_at"),
                   "predicate": step.get("predicate"),
@@ -2654,6 +3322,8 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
 
     if kind == "ui":
         return _ui_step(page, step, hub)
+    if kind == "op":
+        return _op_step(step, hub, provenance, variables=variables)
     if kind == "api":
         if hub is None:
             raise Blocked("an api step needs a hub; this pass has none")
@@ -2736,10 +3406,24 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
         resolved_case = substitute(case or {}, variables)
-        before_restart = snapshot(page, resolved_case, hub) if page is not None else None
+        expected_restart = resolved_case.get("expected") or {}
+        restart_observe = expected_restart.get("observe_at")
+        transport_observation = (
+            protocol_target(restart_observe) is not None
+            or (isinstance(restart_observe, dict)
+                and restart_observe.get("kind") == "op")
+            or bool(expected_restart.get("reads"))
+        )
+        before_restart = (
+            snapshot(page, resolved_case, hub)
+            if page is not None or transport_observation else None
+        )
         record = {"kind": "cli", "action": "restart_hub",
                   "adapter": step.get("adapter", "process"), **hub.restart()}
-        after_restart = snapshot(page, resolved_case, hub) if page is not None else None
+        after_restart = (
+            snapshot(page, resolved_case, hub)
+            if page is not None or transport_observation else None
+        )
         record["hub_identity"] = {
             "url": hub.url,
             "port": hub.port,
@@ -2763,6 +3447,7 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
             record["meeting_identity_retained"] = (
                 record["meeting_before"].get("meeting_id") ==
                 record["meeting_after"].get("meeting_id")
+                and record["meeting_before"].get("meeting_id") is not None
             )
             name = step.get("capture_as")
             if name:
@@ -2916,7 +3601,7 @@ def case_predicate(case: dict[str, Any]) -> Any:
 
 def check_preconditions(case: dict[str, Any], page: Any, hub: Any,
                         recorder: Any = None,
-                        variables: dict[str, str] | None = None) -> list[dict[str, Any]]:
+                        variables: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Evaluate the case's preconditions after setup, before the before-capture.
 
     A precondition may be an executable step (any step kind, plus
@@ -2978,6 +3663,8 @@ def arm_replay_identity(page: Any, predicate: Any, before: dict[str, Any]) -> di
             "operation must REWRITE is an attribute (`#sel@data-rev`) or the "
             "trigger's own response (`trigger:<path>`); page text alone cannot "
             "prove which operation wrote it.")
+    if page is None:
+        raise Blocked("headless mode refuses a face replay identity selector")
     cleared = page.evaluate(
         """([selector, attr]) => {
             const el = document.querySelector(selector);
@@ -3113,6 +3800,12 @@ def _blank_unresolved(value: Any) -> Any:
     if isinstance(value, str):
         return None if unresolved(value) else value
     if isinstance(value, dict):
+        if value.get("kind") == "op" and unresolved(value.get("args")):
+            # Keep the operation observation scoped but make the entire args
+            # object unreadable before the trigger mints its identifier.  An
+            # intentional JSON null inside a real post-trigger args object is
+            # still preserved; this marker exists only in ``pre_case``.
+            return {**value, "args": None}
         return {k: _blank_unresolved(v) for k, v in value.items()}
     if isinstance(value, list):
         kept = [_blank_unresolved(v) for v in value]
@@ -3147,7 +3840,7 @@ class _UiResponseCapture:
     """
 
     def __init__(self, page: Any, step: dict[str, Any], case: dict[str, Any],
-                 variables: dict[str, str]) -> None:
+                 variables: dict[str, Any]) -> None:
         self.page = page
         route = step.get("trigger_route") or case.get("trigger_route")
         self.route = substitute(route, variables) if isinstance(route, dict) else None
@@ -3253,10 +3946,10 @@ def exercise(
 
     The verdict is the predicate's answer. The diff is recorded beside it.
     """
-    settle = _settle_fn()
+    settle = _settle_fn() if page is not None else (lambda _page: None)
     #: Values captured by setup steps (`capture_as`), filled into every later
     #: step and into the case's own `expected`. An unresolved one is blocked.
-    variables: dict[str, str] = {}
+    variables: dict[str, Any] = {}
     steps: list[dict[str, Any]] = []
     for step in case.get("setup", []):
         try:
@@ -3312,10 +4005,22 @@ def exercise(
     recorder.set(preconditions=checks)
 
     settle(page)
-    before = snapshot(page, pre_case, hub)
+    # A refusal predicate is about the operation that just ran.  If its
+    # observe_at names that same mutating operation, suppress that location
+    # before the trigger and later replace it with the trigger record.  This
+    # prevents polling from dispatching a second create/update/import.
+    refusal_observation = (isinstance(pre_predicate, dict)
+                           and pre_predicate.get("kind") == "op_refusal")
+    before_case = pre_case
+    if refusal_observation:
+        before_case = {**pre_case,
+                       "expected": {**(pre_case.get("expected") or {}),
+                                    "observe_at": None}}
+    before = snapshot(page, before_case, hub)
     if hub is not None and variables.get("first_brief_id"):
         before["brief_db"] = brief_db_snapshot(hub, variables["first_brief_id"])
-    page.screenshot(path=str(shots / "before.png"))
+    if page is not None:
+        page.screenshot(path=str(shots / "before.png"))
     recorder.set(before=_clean(before))
 
     # A replay identity must be produced by THIS operation. The rig records it
@@ -3386,9 +4091,25 @@ def exercise(
                            default=str).encode()).hexdigest(),
             "body": trigger_record.get("response"),
         }
+    elif trigger_record.get("kind") == "op":
+        trigger_response = {
+            "method": "POST", "path": "/api/mcp",
+            "status": 200 if not trigger_record.get("refusal") else 200,
+            "name": trigger_record.get("name"),
+            "body_sha256": hashlib.sha256(
+                json.dumps(trigger_record.get("response") or trigger_record.get("refusal"),
+                           sort_keys=True, default=str).encode()).hexdigest(),
+            "body": trigger_record.get("response") or trigger_record.get("refusal"),
+            "envelope": trigger_record.get("envelope"),
+        }
 
     def observe() -> dict[str, Any]:
-        snap = snapshot(page, case, hub)
+        observation_case = case
+        if refusal_observation:
+            observation_case = {**case,
+                                "expected": {**(case.get("expected") or {}),
+                                             "observe_at": None}}
+        snap = snapshot(page, observation_case, hub)
         if hub is not None and variables.get("first_brief_id"):
             snap["brief_db"] = brief_db_snapshot(hub, variables["first_brief_id"])
         answer = trigger_response
@@ -3397,6 +4118,16 @@ def exercise(
             recorder.record["trigger_response_capture"] = ui_capture.record()
         if answer is not None:
             snap["trigger_response"] = answer
+        if refusal_observation:
+            # ``op_refusal`` reads the already-recorded named refusal.  It is
+            # deliberately separate from an optional durable read observation
+            # and is never sent through MCP again during polling.
+            snap["op"] = trigger_record
+            snap["operation_trigger"] = trigger_record
+            snap["op_digest"] = hashlib.sha256(
+                json.dumps({"response": trigger_record.get("response"),
+                            "refusal": trigger_record.get("refusal")},
+                           sort_keys=True, default=str).encode()).hexdigest()
         if trigger.get("kind") == "cli" and trigger.get("action") == "restart_hub":
             snap["restart"] = trigger_record
         return snap
@@ -3412,7 +4143,10 @@ def exercise(
             first_satisfied_at = round(time.monotonic() - fired_at, 3)
 
     # initial feedback: what the face said within ~1s of the trigger.
-    page.wait_for_timeout(900)
+    if page is not None:
+        page.wait_for_timeout(900)
+    else:
+        time.sleep(0.9)
     initial = observe()
     initial_ok, initial_why = check_predicate(predicate, before, initial)
     stamp(initial_ok)
@@ -3432,7 +4166,10 @@ def exercise(
     while time.monotonic() - fired_at < bound:
         if satisfied and not hold:
             break
-        page.wait_for_timeout(400)
+        if page is not None:
+            page.wait_for_timeout(400)
+        else:
+            time.sleep(0.4)
         after = observe()
         satisfied, why = check_predicate(predicate, before, after)
         stamp(satisfied)
@@ -3457,7 +4194,10 @@ def exercise(
     if not satisfied and predicate is not None:
         grace_deadline = time.monotonic() + float(case.get("late_grace_s", 2.0))
         while time.monotonic() < grace_deadline:
-            page.wait_for_timeout(400)
+            if page is not None:
+                page.wait_for_timeout(400)
+            else:
+                time.sleep(0.4)
             late_snap = observe()
             late_ok, late_why = check_predicate(predicate, before, late_snap)
             if late_ok:
@@ -3485,7 +4225,8 @@ def exercise(
         "within_bound": bool(satisfied),
     }
     state = terminal["state"]
-    page.screenshot(path=str(shots / "after.png"))
+    if page is not None:
+        page.screenshot(path=str(shots / "after.png"))
     if ui_capture is not None:
         recorder.set(trigger_response_capture=ui_capture.record())
         ui_capture.close()
@@ -3501,7 +4242,8 @@ def exercise(
         terminal_outcome=terminal,
         diff=recorded_diff,
         verdict=verdict,
-        shots=[str(shots / "before.png"), str(shots / "after.png")],
+        shots=([str(shots / "before.png"), str(shots / "after.png")]
+               if page is not None else []),
     )
     framing = capture_framed_view(page, case, hub, shots)
     if framing is not None:
@@ -3550,6 +4292,10 @@ def capture_framed_view(page: Any, case: dict[str, Any], hub: Hub | None,
     selector = (case.get("expected") or {}).get("frame_selector")
     if not selector:
         return None
+    if page is None:
+        return {"selector": selector, "action": "scroll_into_view_center",
+                "done": False,
+                "error": "headless mode refuses face framing because no Page exists"}
     record: dict[str, Any] = {"selector": selector,
                               "action": "scroll_into_view_center", "done": False}
     try:
@@ -3601,70 +4347,89 @@ def observation_skeleton(
 
 
 def calibrate(out: Path, *, brain: str = "muaddib", viewport: int = 1440,
-              cases: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
-    """The six §7 calibration cases against the local static page. No hub.
+              cases: list[dict[str, Any]] | None = None,
+              headless: bool = False) -> list[dict[str, Any]]:
+    """The calibration cases against the local fixture server.
 
-    `cases` overrides the six (the scheduler-wait adapter is calibrated the
-    same way, through the same engine).
+    The original six use the static page. ``headless=True`` selects the
+    operation calibrations and never imports Playwright or opens a Page.
+    ``cases`` overrides either set, which keeps the old calibration cases
+    unchanged while allowing focused op controls.
     """
-    from playwright.sync_api import sync_playwright  # noqa: PLC0415
-
     out.mkdir(parents=True, exist_ok=True)
     state_path = out / "calibration-state.json"
     state_path.write_text(json.dumps(_fresh_calibration_state()))
     fixture = CalibrationServer(state_path).start()
     base = fixture.base + "/"
-    profile = Path(tempfile.mkdtemp(prefix="graph-walk-calib-profile-"))
+    profile = (Path(tempfile.mkdtemp(prefix="graph-walk-calib-profile-"))
+               if not headless else None)
     records: list[dict[str, Any]] = []
+    selected_cases = cases or (CALIBRATION_OP_CASES if headless else CALIBRATION_CASES)
+
+    def run_one(case: dict[str, Any], page: Any = None) -> None:
+        run_id = new_run_id(case["id"], brain, viewport)
+        shots = _run_dir(out, run_id)
+        provenance = base_provenance(engine_mode="none")
+        provenance["hub"] = {
+            "kind": "calibration fixture server (its own process)",
+            "port": fixture.port,
+            "pid": fixture.proc.pid if fixture.proc else None}
+        provenance["db_path"] = fixture.db_path
+        provenance["frontend_build"] = ({
+            "kind": "headless operation calibration (no Page)",
+        } if headless else {
+            "kind": "calibration page (not the product bundle)",
+            "sha256": _sha256(CALIBRATION_PAGE),
+        })
+        provenance["fixture_hashes"] = ({
+            "tests/fixtures/graph_walk_calibration.html": _sha256(CALIBRATION_PAGE)
+        } if not headless else {})
+        recorder = Recorder(
+            shots / "observation.json",
+            observation_skeleton(case, brain=brain, viewport=viewport,
+                                 run_id=run_id, provenance=provenance,
+                                 atlas="builtin:calibration"),
+        )
+        try:
+            if page is not None:
+                page.goto(base)
+            exercise(page, case, recorder=recorder, hub=fixture,
+                     provenance=provenance, shots=shots)
+        except Blocked as exc:
+            recorder.set(verdict="blocked")
+            recorder.note(f"BLOCKED: {exc}")
+        finally:
+            if page is not None:
+                page.close()
+            recorder.set(complete=True)
+            records.append(recorder.record)
+
     try:
-        with sync_playwright() as play:
-            context = play.chromium.launch_persistent_context(
-                user_data_dir=str(profile),
-                viewport={"width": viewport, "height": 900},
-                # a case's `goto "/"` resolves against the server under test
-                base_url=fixture.base,
-                args=["--use-fake-device-for-media-stream",
-                      "--use-fake-ui-for-media-stream"],
-            )
-            try:
-                for case in (cases or CALIBRATION_CASES):
-                    run_id = new_run_id(case["id"], brain, viewport)
-                    shots = _run_dir(out, run_id)
-                    provenance = base_provenance(engine_mode="none")
-                    provenance["hub"] = {
-                        "kind": "calibration fixture server (its own process)",
-                        "port": fixture.port,
-                        "pid": fixture.proc.pid if fixture.proc else None}
-                    provenance["db_path"] = fixture.db_path
-                    provenance["frontend_build"] = {
-                        "kind": "calibration page (not the product bundle)",
-                        "sha256": _sha256(CALIBRATION_PAGE)}
-                    provenance["fixture_hashes"] = {
-                        "tests/fixtures/graph_walk_calibration.html":
-                            _sha256(CALIBRATION_PAGE)}
-                    recorder = Recorder(
-                        shots / "observation.json",
-                        observation_skeleton(case, brain=brain, viewport=viewport,
-                                             run_id=run_id, provenance=provenance,
-                                             atlas="builtin:calibration"),
-                    )
-                    page = context.new_page()
-                    try:
-                        page.goto(base)
-                        exercise(page, case, recorder=recorder, hub=fixture,
-                                 provenance=provenance, shots=shots)
-                    except Blocked as exc:
-                        recorder.set(verdict="blocked")
-                        recorder.note(f"BLOCKED: {exc}")
-                    finally:
-                        page.close()
-                        recorder.set(complete=True)
-                        records.append(recorder.record)
-            finally:
-                context.close()
+        if headless:
+            for case in selected_cases:
+                run_one(case)
+        else:
+            # Import Playwright only for the original face calibrations.
+            from playwright.sync_api import sync_playwright  # noqa: PLC0415
+            assert profile is not None
+            with sync_playwright() as play:
+                context = play.chromium.launch_persistent_context(
+                    user_data_dir=str(profile),
+                    viewport={"width": viewport, "height": 900},
+                    # a case's `goto "/"` resolves against the server under test
+                    base_url=fixture.base,
+                    args=["--use-fake-device-for-media-stream",
+                          "--use-fake-ui-for-media-stream"],
+                )
+                try:
+                    for case in selected_cases:
+                        run_one(case, context.new_page())
+                finally:
+                    context.close()
     finally:
         fixture.stop()
-        shutil.rmtree(profile, ignore_errors=True)
+        if profile is not None:
+            shutil.rmtree(profile, ignore_errors=True)
     return records
 
 
@@ -3672,7 +4437,8 @@ def calibration_table(records: list[dict[str, Any]]) -> tuple[str, bool]:
     lines = [f"{'case':32} {'verdict':9} {'terminal':11} {'expected':9} {'ok'}"]
     ok = True
     for record in records:
-        want_verdict, want_state = CALIBRATION_EXPECTED[record["case_id"]]
+        expected = {**CALIBRATION_EXPECTED, **CALIBRATION_OP_EXPECTED}
+        want_verdict, want_state = expected[record["case_id"]]
         state = (record.get("terminal_outcome") or {}).get("state", "-")
         good = record["verdict"] == want_verdict and state == want_state
         ok = ok and good
@@ -3700,11 +4466,10 @@ def find_case(atlas: dict[str, Any], case_id: str) -> dict[str, Any]:
 def run_case(
     atlas_path: Path, case_id: str, *, brain: str, viewport: int,
     out: Path, engine: str = "none", token: str = TOKEN,
-    build: bool = True,
+    build: bool = True, headless: bool = False,
 ) -> dict[str, Any]:
     """ONE case, ONE hub, ONE observation directory (brief §7)."""
-    from playwright.sync_api import sync_playwright  # noqa: PLC0415
-
+    run_started = time.monotonic()
     atlas = load_atlas(atlas_path)
     case = find_case(atlas, case_id)
     run_id = new_run_id(case_id, brain, viewport)
@@ -3723,35 +4488,40 @@ def run_case(
 
     applicable, why_not = case_applicable(case)
     if not applicable:
-        recorder.set(verdict="not_applicable", complete=True)
+        recorder.set(verdict="not_applicable", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(f"NOT APPLICABLE: {why_not}")
         return recorder.record
     if viewport not in (case.get("viewports") or [viewport]):
-        recorder.set(verdict="not_applicable", complete=True)
+        recorder.set(verdict="not_applicable", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(f"the case declares viewports {case.get('viewports')}; "
                       f"{viewport} is not one of them")
         return recorder.record
 
     replay = case_engine_replay(case)
     if replay and engine != "replayed":
-        recorder.set(verdict="blocked", complete=True)
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(
             f"the case declares a provider replay at {replay!r}, but this run "
             f"was requested with --engine {engine!r}; replay is installed only "
             "for an explicit replayed run")
         return recorder.record
     if engine == "replayed" and not replay:
-        recorder.set(verdict="blocked", complete=True)
+        recorder.set(verdict="blocked", complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
         recorder.note(
             "--engine replayed was requested but the case declares no "
             "engine_reply boundary")
         return recorder.record
 
-    if build:
+    if build and not headless:
         _ensure_build()
 
     home = Path(tempfile.mkdtemp(prefix="graph-walk-home-"))
-    profile = Path(tempfile.mkdtemp(prefix="graph-walk-profile-"))
+    profile = (Path(tempfile.mkdtemp(prefix="graph-walk-profile-"))
+               if not headless else None)
     hub: Hub | None = None
     try:
         scheduler = case_needs_scheduler(case)
@@ -3775,39 +4545,51 @@ def run_case(
             provenance["engine_identity"] = _engine_identity()
         recorder.set(provenance=provenance)
 
-        with sync_playwright() as play:
-            context = play.chromium.launch_persistent_context(
-                user_data_dir=str(profile),
-                viewport={"width": viewport,
-                          "height": 900 if viewport >= 1000 else 852},
-                device_scale_factor=2,
-                # An atlas case says `goto "/"`. Without a base url Chromium
-                # answers "Cannot navigate to invalid URL"; with it the case
-                # reads the same on any port. An http(s) url stays absolute.
-                base_url=hub.url,
-                args=["--use-fake-device-for-media-stream",
-                      "--use-fake-ui-for-media-stream"],
-            )
-            page = context.new_page()
-            errors: list[str] = []
-            page.on("pageerror", lambda e: errors.append(repr(e)[:300]))
+        if headless:
             try:
-                page.goto(f"{hub.url}/?token={token}")
-                exercise(page, case, recorder=recorder, hub=hub,
+                exercise(None, case, recorder=recorder, hub=hub,
                          provenance=provenance, shots=shots)
             except Blocked as exc:
-                blocked_shot = shots / "blocked.png"
-                try:
-                    page.screenshot(path=str(blocked_shot))
-                except Exception as shot_error:  # noqa: BLE001 — retain the block
-                    recorder.note(f"blocked screenshot unavailable: {shot_error}")
-                else:
-                    recorder.set(shots=[str(blocked_shot)])
                 recorder.set(verdict="blocked")
                 recorder.note(f"BLOCKED: {exc}")
-            finally:
-                recorder.set(console_errors=errors[:20])
-                context.close()
+        else:
+            # Import Playwright only for a face walk.  Headless operation cases
+            # must be runnable when the browser package or bundle is absent.
+            from playwright.sync_api import sync_playwright  # noqa: PLC0415
+            assert profile is not None
+            with sync_playwright() as play:
+                context = play.chromium.launch_persistent_context(
+                    user_data_dir=str(profile),
+                    viewport={"width": viewport,
+                              "height": 900 if viewport >= 1000 else 852},
+                    device_scale_factor=2,
+                    # An atlas case says `goto "/"`. Without a base url Chromium
+                    # answers "Cannot navigate to invalid URL"; with it the case
+                    # reads the same on any port. An http(s) url stays absolute.
+                    base_url=hub.url,
+                    args=["--use-fake-device-for-media-stream",
+                          "--use-fake-ui-for-media-stream"],
+                )
+                page = context.new_page()
+                errors: list[str] = []
+                page.on("pageerror", lambda e: errors.append(repr(e)[:300]))
+                try:
+                    page.goto(f"{hub.url}/?token={token}")
+                    exercise(page, case, recorder=recorder, hub=hub,
+                             provenance=provenance, shots=shots)
+                except Blocked as exc:
+                    blocked_shot = shots / "blocked.png"
+                    try:
+                        page.screenshot(path=str(blocked_shot))
+                    except Exception as shot_error:  # noqa: BLE001 — retain the block
+                        recorder.note(f"blocked screenshot unavailable: {shot_error}")
+                    else:
+                        recorder.set(shots=[str(blocked_shot)])
+                    recorder.set(verdict="blocked")
+                    recorder.note(f"BLOCKED: {exc}")
+                finally:
+                    recorder.set(console_errors=errors[:20])
+                    context.close()
     finally:
         if hub is not None:
             if hub.producer_clock_path is not None:
@@ -3817,9 +4599,11 @@ def run_case(
                 recorder.set(provenance=provenance)
             recorder.set(hub_log=hub.lines[-40:])
             hub.stop()
-        shutil.rmtree(profile, ignore_errors=True)
+        if profile is not None:
+            shutil.rmtree(profile, ignore_errors=True)
         shutil.rmtree(home, ignore_errors=True)
-        recorder.set(complete=True)
+        recorder.set(complete=True,
+                     duration_s=round(time.monotonic() - run_started, 3))
     return recorder.record
 
 
@@ -3862,6 +4646,8 @@ def main(argv: list[str] | None = None) -> int:
     p_cal = sub.add_parser("calibrate", help="the six §7 calibration cases")
     p_cal.add_argument("--out", default=".tmp/graph-walk/calibration")
     p_cal.add_argument("--brain", default="muaddib", choices=("muaddib", "astra"))
+    p_cal.add_argument("--headless", action="store_true",
+                       help="run the operation calibration controls without a Page")
 
     p_run = sub.add_parser("run", help="ONE atlas case against a real hub")
     p_run.add_argument("--atlas", required=True)
@@ -3871,6 +4657,8 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--engine", default="none", choices=("real", "replayed", "none"))
     p_run.add_argument("--out", default=".tmp/graph-walk/live")
     p_run.add_argument("--no-build", action="store_true")
+    p_run.add_argument("--headless", action="store_true",
+                       help="run operation/protocol steps without opening a Page")
 
     p_serve = sub.add_parser("serve", help="(internal) the rig's hub subprocess")
     p_serve.add_argument("--port", type=int, default=0)
@@ -3901,7 +4689,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.mode == "calibrate":
-        records = calibrate(Path(args.out), brain=args.brain)
+        records = calibrate(Path(args.out), brain=args.brain,
+                            headless=bool(args.headless))
         table, ok = calibration_table(records)
         print(table)
         print(f"\nRIG {RIG_VERSION} calibration: {'OK' if ok else 'MISMATCH'}")
@@ -3910,6 +4699,7 @@ def main(argv: list[str] | None = None) -> int:
     record = run_case(
         Path(args.atlas), args.case, brain=args.brain, viewport=args.viewport,
         out=Path(args.out), engine=args.engine, build=not args.no_build,
+        headless=bool(args.headless),
     )
     print(report(record))
     return 0 if record["verdict"] in ("pass", "not_applicable") else 1

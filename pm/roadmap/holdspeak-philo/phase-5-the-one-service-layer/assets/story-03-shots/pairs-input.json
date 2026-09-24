@@ -1,0 +1,204 @@
+{
+  "pairs": [
+    {
+      "pair_id": "case.closure.chain.s1_import_complete",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210414Z-case.closure.chain.s1_import_complete-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T214328Z-case.closure.chain.s1_import_complete.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s2_summary_with_host",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/op/20260924T214440Z-case.closure.chain.s2_summary_with_host.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s2_summary_with_host.replayed",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/op/20260924T224812Z-case.closure.chain.s2_summary_with_host.op.replayed-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s3_same_summary_after_restart",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/op/20260924T214529Z-case.closure.chain.s3_same_summary_after_restart.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s3_same_summary_after_restart.replayed",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/op/20260924T225009Z-case.closure.chain.s3_same_summary_after_restart.op.replayed-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s4_decision_recorded",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213441Z-case.closure.chain.s4_decision_recorded-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/op/20260924T215223Z-case.closure.chain.s4_decision_recorded.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.a1.decision_face_create.opens_and_reopens",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T213830Z-case.a1.decision_face_create.opens_and_reopens-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T215349Z-case.a1.decision_face_create.opens_and_reopens.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.a3.brief_next_day.decision_on_the_face",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T215956Z-case.a3.brief_next_day.decision_on_the_face-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T220405Z-case.a3.brief_next_day.decision_on_the_face.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.a3.brief_next_day.new_id_with_the_decision",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220621Z-case.a3.brief_next_day.new_id_with_the_decision-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T221130Z-case.a3.brief_next_day.new_id_with_the_decision.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s5_next_day_brief_has_it",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221218Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/op/20260924T221418Z-case.closure.chain.s5_next_day_brief_has_it.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.closure.chain.s5_next_day_brief_with_breakage",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222649Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/op/20260924T224125Z-case.closure.chain.s5_next_day_brief_with_breakage.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.philo404.arrival_triaged_headline.all_handled",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222024Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T222228Z-case.philo404.arrival_triaged_headline.all_handled.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j11.thought_keep.receipt_time",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221628Z-case.j11.thought_keep.receipt_time-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T221950Z-case.j11.thought_keep.receipt_time.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j6.route_intelligence_run.refusal",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T222352Z-case.j6.route_intelligence_run.refusal.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j6.route_intelligence_run.no_assignment",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222425Z-case.j6.route_intelligence_run.no_assignment-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T222621Z-case.j6.route_intelligence_run.no_assignment.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j10.arrival_generate_again.same_day_idempotent",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223147Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440/observation.json",
+        "face_verdict": "pass"
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T224043Z-case.j10.arrival_generate_again.same_day_idempotent.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j10.route_generate_again.same_day_same_id",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224233Z-case.j10.route_generate_again.same_day_same_id-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T224308Z-case.j10.route_generate_again.same_day_same_id.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j10.brief_item_shelf.acknowledged",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T224402Z-case.j10.brief_item_shelf.acknowledged.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j10.brief_item_shelf.deferred",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224425Z-case.j10.brief_item_shelf.deferred-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T224500Z-case.j10.brief_item_shelf.deferred.op-astra-1440/observation.json"
+      }
+    },
+    {
+      "pair_id": "case.j10.brief_item_shelf.refused",
+      "browser": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224519Z-case.j10.brief_item_shelf.refused-astra-1440/observation.json",
+        "face_verdict": null
+      },
+      "op": {
+        "path": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/op/20260924T224604Z-case.j10.brief_item_shelf.refused.op-astra-1440/observation.json"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1017 @@
+{
+  "id": "obs-20260924T214328Z-case.closure.chain.s1_import_complete.op-astra-1440",
+  "run_id": "20260924T214328Z-case.closure.chain.s1_import_complete.op-astra-1440",
+  "case_id": "case.closure.chain.s1_import_complete.op",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import"
+  ],
+  "state_id": "state.meetings.capture.imported",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50301",
+      "port": 50301,
+      "pid": 49196,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5binfdtx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5binfdtx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:43:28.784292+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "3f7df5910aa99f4eb06d5c3533e4cfab4ff871b43d7989b2c437fff313dcdaba",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [],
+  "variables": {
+    "meeting_id": "0896b258"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "meeting.import",
+    "args": {
+      "path": "/Users/karol/dev/tools/wt-philo-5-03/tests/fixtures/philo3_architect_meeting.wav",
+      "title": "Architecture boundary review"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "tools/call",
+      "params": {
+        "name": "meeting.import",
+        "arguments": {
+          "path": "/Users/karol/dev/tools/wt-philo-5-03/tests/fixtures/philo3_architect_meeting.wav",
+          "title": "Architecture boundary review"
+        }
+      }
+    },
+    "response": {
+      "meeting_id": "0896b258",
+      "transcription_status": "importing"
+    },
+    "domain_response": {
+      "meeting_id": "0896b258",
+      "transcription_status": "importing"
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"meeting_id\": \"0896b258\", \"transcription_status\": \"importing\"}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.012,
+    "captured": {
+      "name": "meeting_id",
+      "path": "meeting_id",
+      "value": "0896b258"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "6e47a2c48dfd3fd1072ccaa2ba2d4a12b3366edb032c5bc3ba7a0e55106debc8"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "0896b258"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "0896b258"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T15:44:05.020991",
+            "formatted_duration": "00:34",
+            "id": "0896b258",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T15:43:30.345741",
+            "sync_modified_at": "2026-09-24T15:43:32.035804",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T15:44:05.020991",
+            "formatted_duration": "00:34",
+            "id": "0896b258",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T15:43:30.345741",
+            "sync_modified_at": "2026-09-24T15:43:32.035804",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T15:44:05.020991\", \"formatted_duration\": \"00:34\", \"id\": \"0896b258\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T15:43:30.345741\", \"sync_modified_at\": \"2026-09-24T15:43:32.035804\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50301",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": null
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      }
+    ],
+    "at_utc": "2026-09-24T21:43:30.333378+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50301",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "0896b258"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "0896b258"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "0896b258"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 34.67525,
+        "ended_at": "2026-09-24T15:44:05.020991",
+        "formatted_duration": "00:34",
+        "id": "0896b258",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+          },
+          {
+            "device_id": null,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+          }
+        ],
+        "started_at": "2026-09-24T15:43:30.345741",
+        "sync_modified_at": "2026-09-24T15:43:32.035804",
+        "tags": [],
+        "title": "Architecture boundary review",
+        "transcriptWords": 299,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 34.67525,
+        "ended_at": "2026-09-24T15:44:05.020991",
+        "formatted_duration": "00:34",
+        "id": "0896b258",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+          },
+          {
+            "device_id": null,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+          }
+        ],
+        "started_at": "2026-09-24T15:43:30.345741",
+        "sync_modified_at": "2026-09-24T15:43:32.035804",
+        "tags": [],
+        "title": "Architecture boundary review",
+        "transcriptWords": 299,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T15:44:05.020991\", \"formatted_duration\": \"00:34\", \"id\": \"0896b258\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T15:43:30.345741\", \"sync_modified_at\": \"2026-09-24T15:43:32.035804\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "6e47a2c48dfd3fd1072ccaa2ba2d4a12b3366edb032c5bc3ba7a0e55106debc8",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "0896b258"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "0896b258"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T15:44:05.020991",
+          "formatted_duration": "00:34",
+          "id": "0896b258",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T15:43:30.345741",
+          "sync_modified_at": "2026-09-24T15:43:32.035804",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T15:44:05.020991",
+          "formatted_duration": "00:34",
+          "id": "0896b258",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T15:43:30.345741",
+          "sync_modified_at": "2026-09-24T15:43:32.035804",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T15:44:05.020991\", \"formatted_duration\": \"00:34\", \"id\": \"0896b258\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS SS\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T15:43:30.345741\", \"sync_modified_at\": \"2026-09-24T15:43:32.035804\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-24T21:43:32.087877+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.import",
+      "body_sha256": "97d0a008ed6080cb291556207d991fb3b7ac4a00514eb0f1a6d3bb6c76c55bff",
+      "body": {
+        "meeting_id": "0896b258",
+        "transcription_status": "importing"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"0896b258\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50301",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "0896b258"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "0896b258"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "0896b258"
+          }
+        }
+      },
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 0.914787,
+        "ended_at": null,
+        "formatted_duration": "00:00",
+        "id": "0896b258",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "Preparing transcription\u2026",
+          "requested_at": null,
+          "state": "importing"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [],
+        "started_at": "2026-09-24T15:43:30.345741",
+        "sync_modified_at": "2026-09-24T15:43:30.345777",
+        "tags": [],
+        "title": "Architecture boundary review",
+        "transcriptWords": null,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "domain_response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 0.914787,
+        "ended_at": null,
+        "formatted_duration": "00:00",
+        "id": "0896b258",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "Preparing transcription\u2026",
+          "requested_at": null,
+          "state": "importing"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [],
+        "started_at": "2026-09-24T15:43:30.345741",
+        "sync_modified_at": "2026-09-24T15:43:30.345777",
+        "tags": [],
+        "title": "Architecture boundary review",
+        "transcriptWords": null,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 0.914787, \"ended_at\": null, \"formatted_duration\": \"00:00\", \"id\": \"0896b258\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"Preparing transcription\\u2026\", \"requested_at\": null, \"state\": \"importing\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-24T15:43:30.345741\", \"sync_modified_at\": \"2026-09-24T15:43:30.345777\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005
+    },
+    "op_digest": "7801c2e039a79e81cadd315fb4bc242e3a1c713abb62679af3f5e84143b16576",
+    "pending_marker_present": true,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "0896b258"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "0896b258"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 0.917424,
+          "ended_at": null,
+          "formatted_duration": "00:00",
+          "id": "0896b258",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "Preparing transcription\u2026",
+            "requested_at": null,
+            "state": "importing"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-24T15:43:30.345741",
+          "sync_modified_at": "2026-09-24T15:43:30.345777",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 0.917424,
+          "ended_at": null,
+          "formatted_duration": "00:00",
+          "id": "0896b258",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "Preparing transcription\u2026",
+            "requested_at": null,
+            "state": "importing"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [],
+          "started_at": "2026-09-24T15:43:30.345741",
+          "sync_modified_at": "2026-09-24T15:43:30.345777",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 0.917424, \"ended_at\": null, \"formatted_duration\": \"00:00\", \"id\": \"0896b258\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"Preparing transcription\\u2026\", \"requested_at\": null, \"state\": \"importing\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [], \"started_at\": \"2026-09-24T15:43:30.345741\", \"sync_modified_at\": \"2026-09-24T15:43:30.345777\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": null, \"transcription_status\": \"active\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-24T21:43:31.263711+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.import",
+      "body_sha256": "97d0a008ed6080cb291556207d991fb3b7ac4a00514eb0f1a6d3bb6c76c55bff",
+      "body": {
+        "meeting_id": "0896b258",
+        "transcription_status": "importing"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"0896b258\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "predicate_satisfied": false,
+    "reading": "transcription_status = 'active', wanted 'complete'",
+    "elapsed_s": 0.93
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "transcription_status equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 1.754,
+    "first_satisfied_at_s": 1.752,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: transcription_status equals the declared value"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "meeting_id"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5binfdtx/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5binfdtx/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50301"
+  ],
+  "duration_s": 3.481
+}

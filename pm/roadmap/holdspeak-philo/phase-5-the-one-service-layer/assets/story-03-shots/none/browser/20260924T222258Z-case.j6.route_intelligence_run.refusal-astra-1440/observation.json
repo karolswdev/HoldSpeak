@@ -1,0 +1,747 @@
+{
+  "id": "obs-20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440",
+  "run_id": "20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440",
+  "case_id": "case.j6.route_intelligence_run.refusal",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meeting_intelligence_run"
+  ],
+  "state_id": "state.engines.assignment_missing",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52620",
+      "port": 52620,
+      "pid": 70856,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vn7uj5m_",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vn7uj5m_/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo5_empty.vtt": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T22:22:58.334722+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "8e189dbc4a6a6349ec8c4e922248ba610dcddda0b0889c4e9963ba0c5ba89558",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo5_empty.vtt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "750e137f",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "750e137f"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/750e137f",
+        "fields": {
+          "/intel_status/state": "import_failed",
+          "/segments": []
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 2,
+        "elapsed_s": 0.515,
+        "payload": {
+          "id": "750e137f",
+          "started_at": "2026-09-24T16:23:02.216497",
+          "ended_at": null,
+          "duration": 0.515613,
+          "formatted_duration": "00:00",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-24T16:23:02.221599",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/intel_status/state": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a real imported meeting whose nonempty VTT parser failure persisted an empty row (MeetingService creates the placeholder before parsing; every invocation uses a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "750e137f"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/750e137f",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/segments",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/segments equals the declared value"
+    }
+  ],
+  "variables": {
+    "meeting_id": "750e137f"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/750e137f/intelligence/run",
+    "adapter": "http-route",
+    "status": 409,
+    "response": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}",
+    "response_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5"
+  },
+  "diff": {
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/750e137f",
+          "status": 200,
+          "payload": {
+            "id": "750e137f",
+            "started_at": "2026-09-24T16:23:02.216497",
+            "ended_at": null,
+            "duration": 2.200546,
+            "formatted_duration": "00:02",
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "tags": [],
+            "segments": [],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "import_failed",
+              "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "sync_modified_at": "2026-09-24T16:23:02.221599",
+            "devices": [],
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "52f7cceeaadc3fe39d11264bcf8e8a97af0170884f089bf63d859660144f9331"
+        },
+        {
+          "method": "GET",
+          "path": "/api/intel/jobs",
+          "status": 200,
+          "payload": {
+            "jobs": []
+          },
+          "body_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/750e137f",
+          "status": 200,
+          "payload": {
+            "id": "750e137f",
+            "started_at": "2026-09-24T16:23:02.216497",
+            "ended_at": null,
+            "duration": 3.341996,
+            "formatted_duration": "00:03",
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "tags": [],
+            "segments": [],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "import_failed",
+              "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "sync_modified_at": "2026-09-24T16:23:02.221599",
+            "devices": [],
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "ccc3d0ec11cc2c6bb5a8e5c5336132ba8ca42b46bd7fe6c1a1f28c63ca2edeb5"
+        },
+        {
+          "method": "GET",
+          "path": "/api/intel/jobs",
+          "status": 200,
+          "payload": {
+            "jobs": []
+          },
+          "body_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:52620/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5",
+      "rows": [],
+      "payload": {
+        "jobs": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+    },
+    "document_text_sha256": "432807bc7416fc01af76efcbabce7d81062ca9d978b12fef879f0dbfbf36cec2",
+    "document_text_len": 440,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/750e137f",
+        "status": 200,
+        "payload": {
+          "id": "750e137f",
+          "started_at": "2026-09-24T16:23:02.216497",
+          "ended_at": null,
+          "duration": 2.200546,
+          "formatted_duration": "00:02",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-24T16:23:02.221599",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "52f7cceeaadc3fe39d11264bcf8e8a97af0170884f089bf63d859660144f9331"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/jobs",
+        "status": 200,
+        "payload": {
+          "jobs": []
+        },
+        "body_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+      }
+    ],
+    "at_utc": "2026-09-24T22:23:04.418925+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:52620/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5",
+      "rows": [],
+      "payload": {
+        "jobs": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+    },
+    "document_text_sha256": "432807bc7416fc01af76efcbabce7d81062ca9d978b12fef879f0dbfbf36cec2",
+    "document_text_len": 440,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/750e137f",
+        "status": 200,
+        "payload": {
+          "id": "750e137f",
+          "started_at": "2026-09-24T16:23:02.216497",
+          "ended_at": null,
+          "duration": 3.341996,
+          "formatted_duration": "00:03",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-24T16:23:02.221599",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "ccc3d0ec11cc2c6bb5a8e5c5336132ba8ca42b46bd7fe6c1a1f28c63ca2edeb5"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/jobs",
+        "status": 200,
+        "payload": {
+          "jobs": []
+        },
+        "body_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+      }
+    ],
+    "at_utc": "2026-09-24T22:23:05.559992+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/750e137f/intelligence/run",
+      "status": 409,
+      "body_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5",
+      "body": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:52620/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5",
+      "rows": [],
+      "payload": {
+        "jobs": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+    },
+    "document_text_sha256": "432807bc7416fc01af76efcbabce7d81062ca9d978b12fef879f0dbfbf36cec2",
+    "document_text_len": 440,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/750e137f",
+        "status": 200,
+        "payload": {
+          "id": "750e137f",
+          "started_at": "2026-09-24T16:23:02.216497",
+          "ended_at": null,
+          "duration": 3.211808,
+          "formatted_duration": "00:03",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "No cues could be parsed from tmp108jlg6t.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-24T16:23:02.221599",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "d27009b5b68dd43d037cba011dda2c681041159d94d94157b68b62f9d1c2dfc5"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/jobs",
+        "status": 200,
+        "payload": {
+          "jobs": []
+        },
+        "body_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+      }
+    ],
+    "at_utc": "2026-09-24T22:23:05.430027+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/750e137f/intelligence/run",
+      "status": 409,
+      "body_sha256": "fa2ae8cac82ebb06a720300d1e8300b8fd01279a9e885759515eccbfa057d8f5",
+      "body": "{\"success\":false,\"error\":\"Meeting has no transcript\",\"plainReason\":\"Meeting has no transcript\",\"code\":\"empty\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":null,\"last_refusal\":null}"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/750e137f/intelligence/run answered 409, wanted 409 (body sha256 fa2ae8cac82e); response body contains the declared admission facts",
+    "elapsed_s": 0.912
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/750e137f/intelligence/run answered 409, wanted 409 (body sha256 fa2ae8cac82e); response body contains the declared admission facts",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.042,
+    "first_satisfied_at_s": 0.912,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/meetings/750e137f/intelligence/run answered 409, wanted 409 (body sha256 fa2ae8cac82e); response body contains the declared admission facts"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vn7uj5m_/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vn7uj5m_/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52620"
+  ],
+  "duration_s": 7.536
+}

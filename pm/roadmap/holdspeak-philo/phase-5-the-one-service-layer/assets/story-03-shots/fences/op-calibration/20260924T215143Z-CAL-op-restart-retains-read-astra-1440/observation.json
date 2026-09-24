@@ -1,0 +1,528 @@
+{
+  "id": "obs-20260924T215143Z-CAL-op-restart-retains-read-astra-1440",
+  "run_id": "20260924T215143Z-CAL-op-restart-retains-read-astra-1440",
+  "case_id": "CAL-op-restart-retains-read",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "headless operation read retains meeting identity summary and receipt",
+  "edge_ids": [
+    "cal:op-restart"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50921,
+      "pid": 53752
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:43.294927+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 53752,
+        "started_pid": 53828,
+        "downtime_s": 0.21,
+        "same_db_path": true,
+        "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+        "port": 50921,
+        "hub_identity": {
+          "url": "http://127.0.0.1:50921",
+          "port": 50921,
+          "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+          "stopped_pid": 53752,
+          "started_pid": 53828
+        },
+        "meeting_before": {
+          "meeting_id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "transcription_status": null,
+          "payload": {
+            "id": "cal-restart",
+            "summary": "retained summary",
+            "run_receipt": {
+              "job_id": "cal-job"
+            },
+            "intel_status": {
+              "state": "complete"
+            }
+          }
+        },
+        "meeting_after": {
+          "meeting_id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "transcription_status": null,
+          "payload": {
+            "id": "cal-restart",
+            "summary": "retained summary",
+            "run_receipt": {
+              "job_id": "cal-job"
+            },
+            "intel_status": {
+              "state": "complete"
+            }
+          }
+        },
+        "summary_retained": true,
+        "receipt_retained": true,
+        "meeting_identity_retained": true
+      }
+    ],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "cli",
+    "action": "restart_hub",
+    "adapter": "process",
+    "stopped_pid": 53752,
+    "started_pid": 53828,
+    "downtime_s": 0.21,
+    "same_db_path": true,
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "port": 50921,
+    "hub_identity": {
+      "url": "http://127.0.0.1:50921",
+      "port": 50921,
+      "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+      "stopped_pid": 53752,
+      "started_pid": 53828
+    },
+    "meeting_before": {
+      "meeting_id": "cal-restart",
+      "summary": "retained summary",
+      "run_receipt": {
+        "job_id": "cal-job"
+      },
+      "transcription_status": null,
+      "payload": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      }
+    },
+    "meeting_after": {
+      "meeting_id": "cal-restart",
+      "summary": "retained summary",
+      "run_receipt": {
+        "job_id": "cal-job"
+      },
+      "transcription_status": null,
+      "payload": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      }
+    },
+    "summary_retained": true,
+    "receipt_retained": true,
+    "meeting_identity_retained": true
+  },
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-restart"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "domain_response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-restart\", \"summary\": \"retained summary\", \"run_receipt\": {\"job_id\": \"cal-job\"}, \"intel_status\": {\"state\": \"complete\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "183a55a1f4f6595127471a4450de3163b41893758b37cbd67ff8da1b35d8131e",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:43.296711+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-restart"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "domain_response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-restart\", \"summary\": \"retained summary\", \"run_receipt\": {\"job_id\": \"cal-job\"}, \"intel_status\": {\"state\": \"complete\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "183a55a1f4f6595127471a4450de3163b41893758b37cbd67ff8da1b35d8131e",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:44.419421+00:00",
+    "restart": {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 53752,
+      "started_pid": 53828,
+      "downtime_s": 0.21,
+      "same_db_path": true,
+      "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+      "port": 50921,
+      "hub_identity": {
+        "url": "http://127.0.0.1:50921",
+        "port": 50921,
+        "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+        "stopped_pid": 53752,
+        "started_pid": 53828
+      },
+      "meeting_before": {
+        "meeting_id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "transcription_status": null,
+        "payload": {
+          "id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "intel_status": {
+            "state": "complete"
+          }
+        }
+      },
+      "meeting_after": {
+        "meeting_id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "transcription_status": null,
+        "payload": {
+          "id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "intel_status": {
+            "state": "complete"
+          }
+        }
+      },
+      "summary_retained": true,
+      "receipt_retained": true,
+      "meeting_identity_retained": true
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-restart"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-restart"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "domain_response": {
+        "id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "intel_status": {
+          "state": "complete"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-restart\", \"summary\": \"retained summary\", \"run_receipt\": {\"job_id\": \"cal-job\"}, \"intel_status\": {\"state\": \"complete\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "183a55a1f4f6595127471a4450de3163b41893758b37cbd67ff8da1b35d8131e",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:44.416997+00:00",
+    "restart": {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 53752,
+      "started_pid": 53828,
+      "downtime_s": 0.21,
+      "same_db_path": true,
+      "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+      "port": 50921,
+      "hub_identity": {
+        "url": "http://127.0.0.1:50921",
+        "port": 50921,
+        "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+        "stopped_pid": 53752,
+        "started_pid": 53828
+      },
+      "meeting_before": {
+        "meeting_id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "transcription_status": null,
+        "payload": {
+          "id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "intel_status": {
+            "state": "complete"
+          }
+        }
+      },
+      "meeting_after": {
+        "meeting_id": "cal-restart",
+        "summary": "retained summary",
+        "run_receipt": {
+          "job_id": "cal-job"
+        },
+        "transcription_status": null,
+        "payload": {
+          "id": "cal-restart",
+          "summary": "retained summary",
+          "run_receipt": {
+            "job_id": "cal-job"
+          },
+          "intel_status": {
+            "state": "complete"
+          }
+        }
+      },
+      "summary_retained": true,
+      "receipt_retained": true,
+      "meeting_identity_retained": true
+    },
+    "predicate_satisfied": true,
+    "reading": "summary equals the declared value",
+    "elapsed_s": 1.12
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "summary equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 1.123,
+    "first_satisfied_at_s": 1.12,
+    "completion_bound_s": 3.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: summary equals the declared value"
+  ],
+  "complete": true,
+  "shots": []
+}

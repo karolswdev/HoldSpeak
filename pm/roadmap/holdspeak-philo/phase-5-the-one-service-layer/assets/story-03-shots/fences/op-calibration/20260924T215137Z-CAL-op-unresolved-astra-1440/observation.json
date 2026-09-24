@@ -1,0 +1,86 @@
+{
+  "id": "obs-20260924T215137Z-CAL-op-unresolved-astra-1440",
+  "run_id": "20260924T215137Z-CAL-op-unresolved-astra-1440",
+  "case_id": "CAL-op-unresolved",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "an unresolved operation argument blocks before dispatch",
+  "edge_ids": [
+    "cal:op-unresolved"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50921,
+      "pid": 53752
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:37.344826+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": null,
+  "diff": {},
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:37.345647+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: unresolved placeholder(s) ['never_captured'] in the op step; nothing was sent. A `{name}` is filled by an earlier step's `capture_as`, never sent literally."
+  ],
+  "complete": true,
+  "trigger_error": {
+    "step": {
+      "kind": "op",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "{never_captured}"
+      }
+    },
+    "error": "unresolved placeholder(s) ['never_captured'] in the op step; nothing was sent. A `{name}` is filled by an earlier step's `capture_as`, never sent literally."
+  }
+}

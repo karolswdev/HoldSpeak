@@ -202,11 +202,70 @@
             "fixture",
             "boundary",
             "cli",
-            "check"
+            "check",
+            "op"
           ]
         }
       },
       "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name",
+            "args"
+          ],
+          "properties": {
+            "kind": {
+              "const": "op"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+            },
+            "args": {
+              "type": "object"
+            },
+            "adapter": {
+              "type": "string",
+              "minLength": 1
+            },
+            "why": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capture_as": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "capture_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capture_match": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "description": "When capture_path names a collection, select the member whose fields match these values before taking capture_field."
+            },
+            "capture_field": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The field to capture from the member selected by capture_match."
+            },
+            "wait_for": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
         {
           "additionalProperties": false,
           "required": [
@@ -604,6 +663,9 @@
                       {
                         "type": "object",
                         "additionalProperties": true
+                      },
+                      {
+                        "type": "array"
                       }
                     ]
                   }
@@ -762,9 +824,33 @@
               ]
             },
             "observe_at": {
-              "type": [
-                "string",
-                "null"
+              "oneOf": [
+                {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "name",
+                    "args"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "op"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "args": {
+                      "type": "object"
+                    }
+                  }
+                }
               ]
             },
             "why": {
@@ -847,9 +933,33 @@
                     ]
                   },
                   "observe_at": {
-                    "type": [
-                      "string",
-                      "null"
+                    "oneOf": [
+                      {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "kind",
+                          "name",
+                          "args"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "const": "op"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "args": {
+                            "type": "object"
+                          }
+                        }
+                      }
                     ]
                   },
                   "why": {
@@ -880,7 +990,8 @@
                   "boundary",
                   "cli",
                   "tool",
-                  "check"
+                  "check",
+                  "op"
                 ]
               },
               "adapter": {
@@ -912,7 +1023,8 @@
                 "boundary",
                 "cli",
                 "tool",
-                "check"
+                "check",
+                "op"
               ]
             },
             "adapter": {
@@ -958,17 +1070,42 @@
                     "readable_text",
                     "hit_target",
                     "unchanged",
-                    "window_titled"
+                    "window_titled",
+                    "op_field",
+                    "op_refusal"
                   ]
                 }
               }
             },
             "observe_at": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "description": "A CSS selector/testid for face cases, or 'protocol: METHOD /path' for protocol cases."
+              "oneOf": [
+                {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "name",
+                    "args"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "op"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "args": {
+                      "type": "object"
+                    }
+                  }
+                }
+              ]
             },
             "words": {
               "type": "string"
@@ -976,20 +1113,44 @@
             "reads": {
               "type": "array",
               "items": {
-                "type": "object",
-                "required": [
-                  "method",
-                  "path"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "method": {
-                    "type": "string"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "method",
+                      "path"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    }
                   },
-                  "path": {
-                    "type": "string"
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "name",
+                      "args"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "op"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "object"
+                      }
+                    }
                   }
-                }
+                ]
               }
             },
             "frame_selector": {
@@ -1066,7 +1227,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+              "pattern": "^case\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+(?:\\.(?:op(?:\\.replayed)?|replayed))?$"
             },
             "job": {
               "enum": [

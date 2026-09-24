@@ -1,0 +1,417 @@
+{
+  "id": "obs-20260924T215137Z-CAL-op-refusal-astra-1440",
+  "run_id": "20260924T215137Z-CAL-op-refusal-astra-1440",
+  "case_id": "CAL-op-refusal",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "an operation refusal keeps its named error text",
+  "edge_ids": [
+    "cal:op-refusal"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50921,
+      "pid": 53752
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:37.426875+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.update",
+    "args": {
+      "decision_id": "missing",
+      "status": "bogus"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.update",
+        "arguments": {
+          "kind": "decisions",
+          "id": "missing",
+          "data": {
+            "status": "bogus"
+          }
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "error": "invalid status: bogus",
+      "code": "mcp_refused"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"invalid status: bogus\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.001,
+    "named_refusal": {
+      "error": "invalid status: bogus",
+      "code": "mcp_refused"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": null,
+      "after": "58db8591ce079d9a407a3bdfe8696ad584f0066e0a94c19b5beb508ff69ab32e"
+    }
+  },
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:37.427704+00:00"
+  },
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:38.341271+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.update",
+      "body_sha256": "3e47e18a1f52fde240bcc9547cbcea118211a70d2472c0b3e142ed1005e80310",
+      "body": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.update",
+      "args": {
+        "decision_id": "missing",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "decisions",
+            "id": "missing",
+            "data": {
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.update",
+      "args": {
+        "decision_id": "missing",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "decisions",
+            "id": "missing",
+            "data": {
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      }
+    },
+    "op_digest": "58db8591ce079d9a407a3bdfe8696ad584f0066e0a94c19b5beb508ff69ab32e"
+  },
+  "initial_feedback": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:38.339097+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.update",
+      "body_sha256": "3e47e18a1f52fde240bcc9547cbcea118211a70d2472c0b3e142ed1005e80310",
+      "body": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.update",
+      "args": {
+        "decision_id": "missing",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "decisions",
+            "id": "missing",
+            "data": {
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.update",
+      "args": {
+        "decision_id": "missing",
+        "status": "bogus"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "decisions",
+            "id": "missing",
+            "data": {
+              "status": "bogus"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"invalid status: bogus\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "error": "invalid status: bogus",
+        "code": "mcp_refused"
+      }
+    },
+    "op_digest": "58db8591ce079d9a407a3bdfe8696ad584f0066e0a94c19b5beb508ff69ab32e",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'mcp_refused': invalid status: bogus",
+    "elapsed_s": 0.912
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'mcp_refused': invalid status: bogus",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.914,
+    "first_satisfied_at_s": 0.912,
+    "completion_bound_s": 3.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: operation refused by name 'mcp_refused': invalid status: bogus"
+  ],
+  "complete": true,
+  "shots": []
+}
