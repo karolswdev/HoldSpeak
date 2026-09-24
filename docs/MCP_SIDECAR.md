@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-225 tools across 41 families. The default non-owner discovery lists 34
+228 tools across 41 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -539,7 +539,7 @@ actions. The initial implementation and its limits are documented in the
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 225 tools across 41 families.
+**Registry totals:** 228 tools across 41 families.
 
 #### ask (4)
 
@@ -656,11 +656,12 @@ actions. The initial implementation and its limits are documented in the
 - `kb.list_members`
 - `kb.remove_member`
 
-#### meeting (8)
+#### meeting (9)
 
 - `meeting.delete`
 - `meeting.export`
 - `meeting.get`
+- `meeting.import`
 - `meeting.list`
 - `meeting.proposals`
 - `meeting.run_intelligence`
@@ -681,10 +682,12 @@ actions. The initial implementation and its limits are documented in the
 - `model_library.get`
 - `model_library.use_model_file`
 
-#### monday_brief (2)
+#### monday_brief (4)
 
 - `monday_brief.generate`
 - `monday_brief.get`
+- `monday_brief.shelf`
+- `monday_brief.shelf_read`
 
 #### nudge (2)
 
@@ -1000,7 +1003,7 @@ consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
 the palette. A client that lists tools through this filter sees 57 tools
-instead of 225.
+instead of 228.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

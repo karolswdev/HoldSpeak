@@ -241,11 +241,11 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                               code="mcp_invalid_params")
     svc = _service()
     if name == "thought.create":
-        return svc.create_thought(
-            principal, request_id=arguments.get("request_id"),
-            raw_text=arguments.get("raw_text"), source=arguments.get("source"),
-            initial_note=arguments.get("initial_note"),
-        )
+        return _ops().invoke(principal, "thought.create", {
+            "request_id": arguments.get("request_id"),
+            "raw_text": arguments.get("raw_text"), "source": arguments.get("source"),
+            "initial_note": arguments.get("initial_note"),
+        })
     if name == "thought.adopt_note":
         return svc.adopt_note(
             principal, request_id=arguments.get("request_id"),
@@ -330,11 +330,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             workspace_cursor=arguments.get("workspace_cursor"),
         ))
     if name == "thought.update_working":
-        return svc.update_working(
-            principal, **common, expected_working_revision=arguments.get("expected_working_revision"),
-            title=arguments.get("title"), body_markdown=arguments.get("body_markdown"),
-            tags=arguments.get("tags"), workspace_cursor=arguments.get("workspace_cursor"),
-        )
+        # A4's KEPT: the working-copy save (thought.save), not thought.complete.
+        return _ops().invoke(principal, "thought.save", {
+            **common, "expected_working_revision": arguments.get("expected_working_revision"),
+            "title": arguments.get("title"), "body_markdown": arguments.get("body_markdown"),
+            "tags": arguments.get("tags"), "workspace_cursor": arguments.get("workspace_cursor"),
+        })
     if name == "thought.complete":
         return svc.complete(
             principal, **common, request_id=arguments.get("request_id"),
@@ -358,3 +359,10 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
 def _service() -> RefinementApplicationService:
     """The hub's live service, else the bare composition above."""
     return runtime_service("refinement_service", _build_service)
+
+
+def _ops() -> Any:
+    """PHILO-5-02: the hub's bound contract; bare, one bound over :func:`_service`."""
+    from holdspeak import operations
+
+    return operations.for_runtime(refinement_service=_service)

@@ -78,6 +78,10 @@ class OperationDescriptor:
     #: The RuntimeServices field and method the hub binds this to.
     service: str
     method: str
+    #: Inputs the TRANSPORT holds and passes beside the arguments -- a file the
+    #: hub took custody of, a loaded configuration, a factory. No client can
+    #: send them; they are never arguments and never validated as data.
+    held: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -100,6 +104,7 @@ class OperationDescriptor:
             "refusals": list(self.refusals),
             "completion": self.completion,
             "exposure": list(self.exposure),
+            "held": list(self.held),
         }
 
 
@@ -225,10 +230,319 @@ DECISION_LIST = OperationDescriptor(
     method="list_decisions",
 )
 
+# ── PHILO-5-02: the rest of the loop ──────────────────────────────────────
+#
+# The same rule as the decision fields: a field is only as strict as BOTH
+# transports already were. Each transport keeps its own published schema
+# (FastAPI parameters, the MCP inputSchema, the closed-body checks of the
+# Thought routes); the service keeps its own named refusals. The descriptor
+# closes the argument NAMES and states the shapes the transports guarantee.
+
+_OWNER_PRINCIPAL = (
+    "derived by the transport (HTTP auth middleware; MCP auth resolver) and "
+    "passed to the service unchanged"
+)
+_NULLABLE_STRING = {"type": ["string", "null"]}
+
+MEETING_LIST = OperationDescriptor(
+    name="meeting.list",
+    version=1,
+    description="List or search the archived meetings, newest first, with optional filters. The empty object lists the first 50.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "query": {**_NULLABLE_STRING, "description": "Full-text search."},
+            "from_date": _NULLABLE_STRING,
+            "to_date": _NULLABLE_STRING,
+            "speaker": _NULLABLE_STRING,
+            "tag": _NULLABLE_STRING,
+            "has_open_actions": {"type": ["boolean", "null"]},
+            "limit": {"type": "integer", "description": "Clamped to 1..500; default 50."},
+            "cursor": {"type": ["string", "integer", "null"], "description": "An offset or the previous page's next_cursor."},
+        },
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="{meetings: [meeting summaries], total, next_cursor} (HTTP drops next_cursor; its offset is the cursor)",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/meetings", "mcp:meeting.list"),
+    service="meeting_service",
+    method="list_meetings",
+)
+
+MEETING_READ = OperationDescriptor(
+    name="meeting.read",
+    version=1,
+    description="Read one meeting: transcript, summary, intelligence job state, the planned route with its selection hash, and the run receipt. This is also how a summary run and an import are read back.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "meeting_id": {"type": "string"},
+            "include": {**_NULLABLE_STRING, "description": "Optional detail selector (MCP)."},
+        },
+        "required": ["meeting_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="the meeting detail (planned_route.selection_hash, intel, intel_status, run_receipt, segments ...)",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ValidationError: meeting id is required"),
+    completion="synchronous",
+    exposure=("http:GET /api/meetings/{meeting_id}", "mcp:meeting.get", "mcp-resource:holdspeak://meetings/{meeting_id}"),
+    service="meeting_service",
+    method="get_meeting",
+)
+
+MEETING_IMPORT = OperationDescriptor(
+    name="meeting.import",
+    version=1,
+    description="Import one recording or transcript file the hub already holds. Makes the visible importing meeting now and transcribes in the background.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "filename": {"type": "string", "description": "The original file name; its extension picks audio or transcript."},
+            "title": {**_NULLABLE_STRING, "description": "Defaults to the file name without its extension."},
+            "speaker": _NULLABLE_STRING,
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "occurred_at": {**_NULLABLE_STRING, "description": "ISO 8601 date and time the meeting happened; defaults to now."},
+        },
+        "required": ["filename"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL + "; the background transcription runs under that same principal",
+    effect="write",
+    result="{meeting_id, status: importing}",
+    refusals=_CONTRACT_REFUSALS + ("ValidationError: occurred_at is not an ISO 8601 date and time",),
+    completion="asynchronous; read meeting.read until intel_status leaves importing (import_failed carries the reason); one desk_changed frame (kind meeting, op update) when the worker ends",
+    exposure=("http:POST /api/meetings/import", "mcp:meeting.import"),
+    service="meeting_service",
+    method="import_held_file",
+    # Gap E: custody, configuration and the transcriber stay transport work.
+    held=("tmp_path", "config", "transcriber_factory"),
+)
+
+MEETING_SUMMARY_RUN = OperationDescriptor(
+    name="meeting.summary.run",
+    version=1,
+    description="Queue a fresh summary (meeting intelligence) run with the selection hash read from meeting.read. Refused when the hash is absent or stale, or the meeting has no transcript.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "meeting_id": {"type": "string"},
+            "expected_selection_hash": {"description": "planned_route.selection_hash from meeting.read."},
+        },
+        "required": ["meeting_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="{jobId, state: queued, host, drainer, expectedWithinSeconds, planned_route, run_receipt}",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ConflictError: empty | stale selection hash | reserved | running | ready (with planned_route, run_receipt, last_refusal)"),
+    completion="asynchronous; one runtime_queue frame on the hub bus when queued; read meeting.read for the job state, the summary and the run receipt",
+    exposure=("http:POST /api/meetings/{meeting_id}/intelligence/run", "mcp:meeting.run_intelligence"),
+    service="meeting_intel_service",
+    method="run_intelligence",
+)
+
+_EMPTY = {"type": "object", "properties": {}, "additionalProperties": False}
+
+BRIEF_GENERATE = OperationDescriptor(
+    name="brief.generate",
+    version=1,
+    description="Make today's brief from durable sources on the producer's clock. A second call on the same producer day returns that day's brief.",
+    args_schema=_EMPTY,
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="the brief (id, generated_at, period_start, period_end, sections with brief-scoped item ids, shelf)",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous; brief.latest returns it",
+    exposure=("http:POST /api/brief/generate", "mcp:monday_brief.generate", "mcp:monday_brief.get[generate=true]"),
+    service="monday_brief_service",
+    method="generate",
+)
+
+BRIEF_LATEST = OperationDescriptor(
+    name="brief.latest",
+    version=1,
+    description="Read the most recently made brief, or nothing when none exists.",
+    args_schema=_EMPTY,
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="the brief, or null",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/brief/latest", "mcp:monday_brief.get", "mcp-resource:holdspeak://briefs/latest"),
+    service="monday_brief_service",
+    method="get_latest",
+)
+
+BRIEF_SHELF_WRITE = OperationDescriptor(
+    name="brief.shelf.write",
+    version=1,
+    description="Set one brief item's triage state: acknowledged, deferred, or null to return it to untouched.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "item_id": {"type": "string"},
+            # The service names an unknown state ("Unknown shelf state: x");
+            # the contract does not pre-empt that refusal.
+            "state": {**_NULLABLE_STRING, "description": "acknowledged, deferred or null."},
+        },
+        "required": ["item_id", "state"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="{item_id, state}",
+    refusals=_CONTRACT_REFUSALS + ("LookupError: unknown brief item", "ValueError: unknown shelf state"),
+    completion="synchronous; brief.shelf.read returns the new state",
+    exposure=("http:POST /api/brief/items/{item_id}/shelf", "mcp:monday_brief.shelf"),
+    service="monday_brief_service",
+    method="shelve",
+)
+
+BRIEF_SHELF_READ = OperationDescriptor(
+    name="brief.shelf.read",
+    version=1,
+    description="Read the triage states of the latest brief's items.",
+    args_schema=_EMPTY,
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="{item_id: state} for the latest brief; {} when there is none",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/brief/shelf", "mcp:monday_brief.shelf_read"),
+    service="monday_brief_service",
+    method="shelf",
+)
+
+# The Thought fields stay type-permissive for the same reason as the decision
+# fields: the service names every bad value with its own code
+# (``thought_create_request_invalid``, ``revision_conflict`` ...), and a JSON
+# schema type error would replace that named refusal with a generic one.
+_ANY = {}
+
+THOUGHT_CREATE = OperationDescriptor(
+    name="thought.create",
+    version=1,
+    description="Make one durable Thought from raw text, with the hub's default AI context applied.",
+    args_schema={
+        "type": "object",
+        "properties": {"request_id": _ANY, "raw_text": _ANY, "source": _ANY, "initial_note": _ANY},
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="{thought, default_context_receipt}",
+    refusals=_CONTRACT_REFUSALS + ("ValidationError / ConflictError with the Thought service's own codes",),
+    completion="synchronous; thought.read returns it",
+    exposure=("http:POST /api/thoughts", "mcp:thought.create"),
+    service="refinement_service",
+    method="create_thought",
+)
+
+THOUGHT_SAVE = OperationDescriptor(
+    name="thought.save",
+    version=1,
+    description="Save the working copy of one Thought under its revision checks (KEPT). Never invokes a model and never completes the Thought.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "thought_id": {"type": "string"},
+            "expected_aggregate_revision": _ANY,
+            "expected_working_revision": _ANY,
+            "title": _ANY,
+            "body_markdown": _ANY,
+            "tags": _ANY,
+            "workspace_cursor": _ANY,
+        },
+        "required": ["thought_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="write",
+    result="{thought (working_note.last_modified moves), workbench}",
+    refusals=_CONTRACT_REFUSALS + ("ConflictError: revision_conflict | workspace_cursor_conflict (with the workbench)", "NotFound: unknown thought"),
+    completion="synchronous; thought.read and thought.workbench.read return the saved state",
+    exposure=("http:PATCH /api/thoughts/{thought_id}/working", "mcp:thought.update_working"),
+    service="refinement_service",
+    method="update_working",
+)
+
+THOUGHT_READ = OperationDescriptor(
+    name="thought.read",
+    version=1,
+    description="Read one Thought: its working note, revisions and lifecycle.",
+    args_schema={
+        "type": "object",
+        "properties": {"thought_id": {"type": "string"}},
+        "required": ["thought_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="the Thought",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown thought",),
+    completion="synchronous",
+    exposure=("http:GET /api/thoughts/{thought_id}", "mcp-resource:holdspeak://thoughts/{thought_id}"),
+    service="refinement_service",
+    method="get_thought",
+)
+
+THOUGHT_WORKBENCH_READ = OperationDescriptor(
+    name="thought.workbench.read",
+    version=1,
+    description="Read one Thought's workbench: the Thought, its context, its review state and the workspace cursor.",
+    args_schema={
+        "type": "object",
+        "properties": {"thought_id": {"type": "string"}},
+        "required": ["thought_id"],
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="the workbench",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown thought",),
+    completion="synchronous",
+    exposure=("http:GET /api/thoughts/{thought_id}/workbench", "mcp-resource:holdspeak://thoughts/{thought_id}/workbench"),
+    service="refinement_service",
+    method="get_workbench",
+)
+
+THOUGHT_LIST = OperationDescriptor(
+    name="thought.list",
+    version=1,
+    description="List the unfinished Thoughts, one page at a time.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "limit": {"type": "integer", "description": "Default 20."},
+            "cursor": _NULLABLE_STRING,
+        },
+        "additionalProperties": False,
+    },
+    principal=_OWNER_PRINCIPAL,
+    effect="read",
+    result="{thoughts, next_cursor}",
+    refusals=_CONTRACT_REFUSALS + ("ValidationError with the Thought service's own codes",),
+    completion="synchronous",
+    exposure=("http:GET /api/thoughts?state=unfinished", "mcp-resource:holdspeak://thoughts/unfinished"),
+    service="refinement_service",
+    method="list_unfinished",
+)
+
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
+    MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_SUMMARY_RUN,
+    BRIEF_GENERATE, BRIEF_LATEST, BRIEF_SHELF_WRITE, BRIEF_SHELF_READ,
+    THOUGHT_CREATE, THOUGHT_SAVE, THOUGHT_READ, THOUGHT_WORKBENCH_READ, THOUGHT_LIST,
 )
+
+#: The RuntimeServices / WebContext fields the catalogue binds to.
+BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
 
 
 # ── binding and invocation ────────────────────────────────────────────────
@@ -260,9 +574,27 @@ class OperationRegistry:
             raise OperationRefused("unknown_operation", name, f"Unknown operation: {name}")
         return bound
 
-    def invoke(self, principal: Any, name: str, args: Optional[Mapping[str, Any]] = None) -> Any:
-        """Validate *args* against the declaration, call the bound method, return its result."""
+    def invoke(
+        self,
+        principal: Any,
+        name: str,
+        args: Optional[Mapping[str, Any]] = None,
+        *,
+        held: Optional[Mapping[str, Any]] = None,
+    ) -> Any:
+        """Validate *args* against the declaration, call the bound method, return its result.
+
+        *held* carries the transport-held inputs the descriptor names in
+        ``held`` (PHILO-5-02, gap E) -- exactly those, or the call is a
+        transport bug and fails before the service runs.
+        """
         bound = self._bound(name)
+        given_held = dict(held or {})
+        if set(given_held) != set(bound.descriptor.held):
+            raise RuntimeError(
+                f"{name}: the transport must hold exactly {sorted(bound.descriptor.held)}, "
+                f"it passed {sorted(given_held)}"
+            )
         payload = {} if args is None else args
         if not isinstance(payload, Mapping):
             raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: expected an object")
@@ -279,7 +611,7 @@ class OperationRegistry:
             location = ".".join(str(part) for part in exc.absolute_path)
             detail = f"{location}: {exc.message}" if location else exc.message
             raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
-        return bound.call(principal, **dict(payload))
+        return bound.call(principal, **dict(payload), **given_held)
 
 
 def update_args(data: Mapping[str, Any], decision_id: str) -> dict[str, Any]:
@@ -319,33 +651,72 @@ def bind(services: Mapping[str, Any], descriptors: tuple[OperationDescriptor, ..
     return registry
 
 
-def for_context(ctx: Any) -> OperationRegistry:
+def bind_available(services: Mapping[str, Any]) -> OperationRegistry:
+    """Bind the descriptors whose service *services* holds (a partial composition).
+
+    For the two lawful partial cases only: a route test's partially wired
+    ``WebContext`` and a bare (non-hub) MCP composition. The hub binds the
+    whole catalogue through :func:`bind`, which fails on a missing service.
+    """
+    present = {name: target for name, target in services.items() if target is not None}
+    return bind(present, tuple(d for d in DESCRIPTORS if d.service in present))
+
+
+def _bare_primitives(ctx: Any) -> Any:
+    from holdspeak.db import get_database, get_observer
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    return PrimitiveService(get_database(), observer=get_observer())
+
+
+#: The bare builds a partially wired context may fall back to, by field name.
+#: Only services whose bare build is behaviourally identical off-hub (no
+#: callbacks, no runners) are here.
+_BARE: dict[str, Callable[[Any], Any]] = {
+    "primitive_service": _bare_primitives,
+}
+
+
+def for_context(ctx: Any, *bare: str, **fallbacks: Callable[[], Any]) -> OperationRegistry:
     """The registry a route reaches through its ``WebContext``.
 
-    In the hub this is ``ctx.operations``, bound at composition. A partially
-    wired context — a route test that builds a ``WebContext`` with only the
-    fields it exercises — gets a registry bound over its own (or a bare)
-    primitive service: lawful case 3 of ``composition.service``.
+    In the hub this is ``ctx.operations``, bound at composition, and nothing
+    is built. A partially wired context -- a route test that builds a
+    ``WebContext`` with only the fields it exercises -- gets a registry bound
+    over the services it carries, else the route's own *fallbacks* (field name
+    -> builder), else the bare builds it names in *bare*: lawful case 3 of
+    ``composition.service``.
     """
     registry = getattr(ctx, "operations", None)
     if registry is not None:
         return registry
-    primitives = getattr(ctx, "primitive_service", None)
-    if primitives is None:
-        from holdspeak.db import get_database, get_observer
-        from holdspeak.services.primitive_service import PrimitiveService
+    services: dict[str, Any] = {}
+    for name in BOUND_SERVICES:
+        target = getattr(ctx, name, None)
+        if target is None and name in fallbacks:
+            target = fallbacks[name]()
+        if target is None and name in bare:
+            target = _BARE[name](ctx)
+        services[name] = target
+    return bind_available(services)
 
-        primitives = PrimitiveService(get_database(), observer=get_observer())
-    return bind({"primitive_service": primitives})
 
+def for_runtime(
+    build_primitives: Optional[Callable[[], Any]] = None,
+    **builders: Callable[[], Any],
+) -> OperationRegistry:
+    """The registry the installed composition root holds, else one bound over the caller's builders.
 
-def for_runtime(build_primitives: Callable[[], Any]) -> OperationRegistry:
-    """The registry the installed composition root holds, else one bound over *build_primitives*.
-
-    MCP dispatch reads this. In the hub it is the same object the HTTP routes
-    reach; in a bare composition (a unit test) it binds over the caller's own
-    service, exactly as the caller's previous hand-wired path did.
+    MCP dispatch and the MCP resources read this. In the hub it is the same
+    object the HTTP routes reach and no builder runs; in a bare composition (a
+    unit test, the proxy-less diagnosis path) it binds over the caller's own
+    services, exactly as the caller's previous hand-wired path did.
     """
     from holdspeak.runtime.composition import service
 
-    return service("operations", lambda: bind({"primitive_service": build_primitives()}))
+    if build_primitives is not None:
+        builders["primitive_service"] = build_primitives
+    return service(
+        "operations",
+        lambda: bind_available({name: build() for name, build in builders.items()}),
+    )

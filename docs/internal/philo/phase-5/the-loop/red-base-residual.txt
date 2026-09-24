@@ -1,0 +1,12 @@
+# the built residual set checked against the BASE tree: uv run python scripts/residual_census.py --check --root <base>
+NEW residual identity (not in the set): ('http', 'holdspeak/web/routes/monday_brief.py::build_monday_brief_router', 'MondayBriefService')
+NEW residual identity (not in the set): ('mcp', 'meeting.get', '')
+NEW residual identity (not in the set): ('mcp', 'meeting.list', '')
+NEW residual identity (not in the set): ('mcp', 'meeting.run_intelligence', '')
+NEW residual identity (not in the set): ('mcp', 'monday_brief.generate', '')
+NEW residual identity (not in the set): ('mcp', 'monday_brief.get', '')
+NEW residual identity (not in the set): ('mcp', 'thought.create', '')
+NEW residual identity (not in the set): ('mcp', 'thought.update_working', '')
+PAID entry still listed (the tree no longer has it): ('http', 'holdspeak/web/routes/monday_brief.py::build_monday_brief_router.ops', 'MondayBriefService')
+RESIDUAL FENCE RED: 9 problem(s) against <base>
+# exit: 1

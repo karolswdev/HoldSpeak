@@ -56,7 +56,8 @@
         "http:POST /api/decisions",
         "mcp:desk.create[kind=decisions]",
         "mcp:desk.verb[verb_id=desk.create,kind=decisions]"
-      ]
+      ],
+      "held": []
     },
     {
       "name": "decision.update",
@@ -119,7 +120,8 @@
         "http:PUT /api/decisions/{decision_id}",
         "mcp:desk.update[kind=decisions]",
         "mcp:desk.verb[verb_id=desk.update,kind=decisions]"
-      ]
+      ],
+      "held": []
     },
     {
       "name": "decision.read",
@@ -150,7 +152,8 @@
       "exposure": [
         "http:GET /api/decisions/{decision_id}",
         "mcp:desk.get[kind=decisions]"
-      ]
+      ],
+      "held": []
     },
     {
       "name": "decision.list",
@@ -178,7 +181,506 @@
       "exposure": [
         "http:GET /api/decisions",
         "mcp:desk.list[kind=decisions]"
+      ],
+      "held": []
+    },
+    {
+      "name": "meeting.list",
+      "version": 1,
+      "description": "List or search the archived meetings, newest first, with optional filters. The empty object lists the first 50.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Full-text search."
+          },
+          "from_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "speaker": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_open_actions": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Clamped to 1..500; default 50."
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ],
+            "description": "An offset or the previous page's next_cursor."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "{meetings: [meeting summaries], total, next_cursor} (HTTP drops next_cursor; its offset is the cursor)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/meetings",
+        "mcp:meeting.list"
+      ],
+      "held": []
+    },
+    {
+      "name": "meeting.read",
+      "version": 1,
+      "description": "Read one meeting: transcript, summary, intelligence job state, the planned route with its selection hash, and the run receipt. This is also how a summary run and an import are read back.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "meeting_id": {
+            "type": "string"
+          },
+          "include": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional detail selector (MCP)."
+          }
+        },
+        "required": [
+          "meeting_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "the meeting detail (planned_route.selection_hash, intel, intel_status, run_receipt, segments ...)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown meeting",
+        "ValidationError: meeting id is required"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/meetings/{meeting_id}",
+        "mcp:meeting.get",
+        "mcp-resource:holdspeak://meetings/{meeting_id}"
+      ],
+      "held": []
+    },
+    {
+      "name": "meeting.import",
+      "version": 1,
+      "description": "Import one recording or transcript file the hub already holds. Makes the visible importing meeting now and transcribes in the background.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "The original file name; its extension picks audio or transcript."
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Defaults to the file name without its extension."
+          },
+          "speaker": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "occurred_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 8601 date and time the meeting happened; defaults to now."
+          }
+        },
+        "required": [
+          "filename"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged; the background transcription runs under that same principal",
+      "effect": "write",
+      "result": "{meeting_id, status: importing}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError: occurred_at is not an ISO 8601 date and time"
+      ],
+      "completion": "asynchronous; read meeting.read until intel_status leaves importing (import_failed carries the reason); one desk_changed frame (kind meeting, op update) when the worker ends",
+      "exposure": [
+        "http:POST /api/meetings/import",
+        "mcp:meeting.import"
+      ],
+      "held": [
+        "tmp_path",
+        "config",
+        "transcriber_factory"
       ]
+    },
+    {
+      "name": "meeting.summary.run",
+      "version": 1,
+      "description": "Queue a fresh summary (meeting intelligence) run with the selection hash read from meeting.read. Refused when the hash is absent or stale, or the meeting has no transcript.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "meeting_id": {
+            "type": "string"
+          },
+          "expected_selection_hash": {
+            "description": "planned_route.selection_hash from meeting.read."
+          }
+        },
+        "required": [
+          "meeting_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "write",
+      "result": "{jobId, state: queued, host, drainer, expectedWithinSeconds, planned_route, run_receipt}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown meeting",
+        "ConflictError: empty | stale selection hash | reserved | running | ready (with planned_route, run_receipt, last_refusal)"
+      ],
+      "completion": "asynchronous; one runtime_queue frame on the hub bus when queued; read meeting.read for the job state, the summary and the run receipt",
+      "exposure": [
+        "http:POST /api/meetings/{meeting_id}/intelligence/run",
+        "mcp:meeting.run_intelligence"
+      ],
+      "held": []
+    },
+    {
+      "name": "brief.generate",
+      "version": 1,
+      "description": "Make today's brief from durable sources on the producer's clock. A second call on the same producer day returns that day's brief.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "write",
+      "result": "the brief (id, generated_at, period_start, period_end, sections with brief-scoped item ids, shelf)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous; brief.latest returns it",
+      "exposure": [
+        "http:POST /api/brief/generate",
+        "mcp:monday_brief.generate",
+        "mcp:monday_brief.get[generate=true]"
+      ],
+      "held": []
+    },
+    {
+      "name": "brief.latest",
+      "version": 1,
+      "description": "Read the most recently made brief, or nothing when none exists.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "the brief, or null",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/brief/latest",
+        "mcp:monday_brief.get",
+        "mcp-resource:holdspeak://briefs/latest"
+      ],
+      "held": []
+    },
+    {
+      "name": "brief.shelf.write",
+      "version": 1,
+      "description": "Set one brief item's triage state: acknowledged, deferred, or null to return it to untouched.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "acknowledged, deferred or null."
+          }
+        },
+        "required": [
+          "item_id",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "write",
+      "result": "{item_id, state}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "LookupError: unknown brief item",
+        "ValueError: unknown shelf state"
+      ],
+      "completion": "synchronous; brief.shelf.read returns the new state",
+      "exposure": [
+        "http:POST /api/brief/items/{item_id}/shelf",
+        "mcp:monday_brief.shelf"
+      ],
+      "held": []
+    },
+    {
+      "name": "brief.shelf.read",
+      "version": 1,
+      "description": "Read the triage states of the latest brief's items.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "{item_id: state} for the latest brief; {} when there is none",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/brief/shelf",
+        "mcp:monday_brief.shelf_read"
+      ],
+      "held": []
+    },
+    {
+      "name": "thought.create",
+      "version": 1,
+      "description": "Make one durable Thought from raw text, with the hub's default AI context applied.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "request_id": {},
+          "raw_text": {},
+          "source": {},
+          "initial_note": {}
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "write",
+      "result": "{thought, default_context_receipt}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError / ConflictError with the Thought service's own codes"
+      ],
+      "completion": "synchronous; thought.read returns it",
+      "exposure": [
+        "http:POST /api/thoughts",
+        "mcp:thought.create"
+      ],
+      "held": []
+    },
+    {
+      "name": "thought.save",
+      "version": 1,
+      "description": "Save the working copy of one Thought under its revision checks (KEPT). Never invokes a model and never completes the Thought.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "thought_id": {
+            "type": "string"
+          },
+          "expected_aggregate_revision": {},
+          "expected_working_revision": {},
+          "title": {},
+          "body_markdown": {},
+          "tags": {},
+          "workspace_cursor": {}
+        },
+        "required": [
+          "thought_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "write",
+      "result": "{thought (working_note.last_modified moves), workbench}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ConflictError: revision_conflict | workspace_cursor_conflict (with the workbench)",
+        "NotFound: unknown thought"
+      ],
+      "completion": "synchronous; thought.read and thought.workbench.read return the saved state",
+      "exposure": [
+        "http:PATCH /api/thoughts/{thought_id}/working",
+        "mcp:thought.update_working"
+      ],
+      "held": []
+    },
+    {
+      "name": "thought.read",
+      "version": 1,
+      "description": "Read one Thought: its working note, revisions and lifecycle.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "thought_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "thought_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "the Thought",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown thought"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/thoughts/{thought_id}",
+        "mcp-resource:holdspeak://thoughts/{thought_id}"
+      ],
+      "held": []
+    },
+    {
+      "name": "thought.workbench.read",
+      "version": 1,
+      "description": "Read one Thought's workbench: the Thought, its context, its review state and the workspace cursor.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "thought_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "thought_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "the workbench",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown thought"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/thoughts/{thought_id}/workbench",
+        "mcp-resource:holdspeak://thoughts/{thought_id}/workbench"
+      ],
+      "held": []
+    },
+    {
+      "name": "thought.list",
+      "version": 1,
+      "description": "List the unfinished Thoughts, one page at a time.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Default 20."
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
+      "effect": "read",
+      "result": "{thoughts, next_cursor}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError with the Thought service's own codes"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/thoughts?state=unfinished",
+        "mcp-resource:holdspeak://thoughts/unfinished"
+      ],
+      "held": []
     }
   ]
 }

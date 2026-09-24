@@ -20,6 +20,7 @@ from holdspeak.services.desk_service import DeskService
 from holdspeak.services.dictation_service import DictationService
 from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.follow_through_service import FollowThroughService
+from holdspeak.services.meeting_intel_service import MeetingIntelService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
@@ -279,6 +280,19 @@ TOOLS.extend([
         },
         ["meeting_id", "format"],
     ),
+    # PHILO-5-02: the MCP import intake (meeting.import). The hub opens the
+    # file itself; the stdio proxy is loopback, so client and hub share the
+    # machine. Completion is read through meeting.get.
+    _mcp_tool(
+        "meeting.import",
+        "Import one recording or transcript file into a new meeting. The hub reads the file at path, keeps its own copy and transcribes it in the background; read meeting.get until transcription finishes.",
+        {
+            "path": {"type": "string", "description": "Absolute path to an audio or transcript file the hub process can read."},
+            "title": {"type": "string", "description": "Optional title; defaults to the file name."},
+            "occurred_at": {"type": "string", "description": "Optional ISO 8601 date and time the meeting happened; defaults to now."},
+        },
+        ["path"],
+    ),
     _mcp_tool(
         "meeting.run_intelligence",
         "Enqueue a fresh intelligence job using the disclosed summary route selection hash. Refuses when the hash is absent, stale, or the meeting has no transcript.",
@@ -434,6 +448,21 @@ TOOLS.extend([
     _mcp_tool(
         "monday_brief.generate",
         "Generate the current Monday Brief from durable sources. Repeated calls return the day's existing brief.",
+        {},
+    ),
+    # PHILO-5-02: the brief triage shelf (brief.shelf.write / brief.shelf.read).
+    _mcp_tool(
+        "monday_brief.shelf",
+        "Set one brief item's triage state: acknowledged or deferred. Null returns the item to untouched.",
+        {
+            "item_id": {"type": "string", "description": "A brief item id from monday_brief.get."},
+            "state": {"enum": ["acknowledged", "deferred", None], "description": "acknowledged, deferred, or null to clear."},
+        },
+        ["item_id", "state"],
+    ),
+    _mcp_tool(
+        "monday_brief.shelf_read",
+        "Read the triage states of the latest brief's items, keyed by item id.",
         {},
     ),
     _mcp_tool(
@@ -654,6 +683,58 @@ def _require_live_capture(tool: str, meetings: Any) -> None:
     )
 
 
+def _meeting_import(registry: operations.OperationRegistry, meetings: Any, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+    """The MCP import intake (PHILO-5-02): custody first, then ``meeting.import``.
+
+    The hub opens the caller's file and copies it into its own temporary file;
+    the import worker consumes (and deletes) that copy, never the caller's
+    file. The configuration and the transcriber are the same ones the HTTP
+    upload route passes (``web/routes/meeting_import.py``), read at call time.
+    """
+    import os
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from holdspeak.config import Config
+    from holdspeak.services.errors import ValidationError
+    from holdspeak.web.routes import meeting_import as import_route
+
+    path = Path(str(args.get("path") or ""))
+    if not path.is_absolute():
+        raise ValidationError(
+            f"meeting.import needs an absolute path; got {str(path)!r}", code="path_not_absolute"
+        )
+    if not path.is_file() or not os.access(path, os.R_OK):
+        raise ValidationError(
+            f"The hub cannot read a file at {path}", code="path_not_readable"
+        )
+    try:
+        meetings.validate_import(principal, path.name)
+    except ValidationError as exc:
+        raise ValidationError(exc.detail, code="unsupported_type") from exc
+    with tempfile.NamedTemporaryFile(suffix=path.suffix.lower() or ".wav", delete=False) as held, path.open("rb") as source:
+        shutil.copyfileobj(source, held)
+    held_path = Path(held.name)
+    if held_path.stat().st_size == 0:
+        held_path.unlink(missing_ok=True)
+        raise ValidationError(f"The file at {path} is empty", code="file_empty")
+    arguments: dict[str, Any] = {"filename": path.name}
+    for key in ("title", "occurred_at"):
+        if args.get(key) is not None:
+            arguments[key] = args[key]
+    try:
+        result = registry.invoke(principal, "meeting.import", arguments, held={
+            "tmp_path": held_path,
+            "config": Config.load(),
+            "transcriber_factory": import_route._transcriber_factory,
+        })
+    except Exception:
+        held_path.unlink(missing_ok=True)
+        raise
+    return {"meeting_id": result["meeting_id"], "transcription_status": result["status"]}
+
+
 def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
     """Call one day-one MCP tool and return JSON-serializable data."""
     args = arguments or {}
@@ -697,14 +778,25 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     follow_through = runtime_service("follow_through_service", lambda: FollowThroughService(db, observer=obs))
     recipes = RecipeService(db, observer=obs)
     events = EventQueryService(db)
-    monday_brief = MondayBriefService(db, observer=obs)
     desk = DeskService(db, observer=obs)
     records = DecisionRecordService(db, observer=obs)
-    # PHILO-5-01: the hub's bound contract (the object its HTTP routes reach);
-    # in a bare composition, one bound over the primitives above. Resolved
-    # only when a decisions call needs it.
+    # PHILO-5-01/02: the hub's bound contract (the object its HTTP routes
+    # reach). In the hub no builder below runs: meeting.* , the summary run,
+    # the brief (with the hub's producer clock, gap A) and the summary's
+    # runtime_queue notify (gap B) all come from the hub's one instances. In a
+    # bare composition it binds over the same services this dispatcher built
+    # before. Resolved only when a contract operation is called.
     def ops() -> operations.OperationRegistry:
-        return operations.for_runtime(lambda: primitives)
+        return operations.for_runtime(
+            lambda: primitives,
+            meeting_service=lambda: meetings,
+            meeting_intel_service=lambda: runtime_service(
+                "meeting_intel_service", lambda: MeetingIntelService(db, observer=obs)
+            ),
+            monday_brief_service=lambda: runtime_service(
+                "monday_brief_service", lambda: MondayBriefService(db, observer=obs)
+            ),
+        )
 
     if name == "desk.list":
         return _primitive_list(ops, primitives, principal, _kind(args.get("kind")))
@@ -783,9 +875,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return primitives.list_kb_members(principal, str(args.get("kb_id") or ""))
     if name == "meeting.list":
         allowed = ("query", "from_date", "to_date", "limit", "cursor", "speaker", "tag", "has_open_actions")
-        return meetings.list_meetings(principal, **{key: args[key] for key in allowed if key in args})
+        return ops().invoke(principal, "meeting.list", {key: args[key] for key in allowed if key in args})
     if name == "meeting.get":
-        return meetings.get_meeting(principal, meeting_id=str(args.get("meeting_id") or ""), include=args.get("include"))
+        return ops().invoke(principal, "meeting.read", {"meeting_id": str(args.get("meeting_id") or ""), "include": args.get("include")})
+    if name == "meeting.import":
+        return _meeting_import(ops(), meetings, principal, args)
     if name == "meeting.start_capture":
         config = args.get("config")
         if config is not None and not isinstance(config, dict):
@@ -896,13 +990,10 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             pass
         return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
     if name == "meeting.run_intelligence":
-        from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
-        intel_svc = _MIS(db, observer=obs)
-        return intel_svc.run_intelligence(
-            principal,
-            str(args.get("meeting_id") or ""),
-            expected_selection_hash=str(args.get("expected_selection_hash") or ""),
-        )
+        return ops().invoke(principal, "meeting.summary.run", {
+            "meeting_id": str(args.get("meeting_id") or ""),
+            "expected_selection_hash": str(args.get("expected_selection_hash") or ""),
+        })
     if name == "meeting.proposals":
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS
         pbs = _PBS(db)
@@ -981,14 +1072,18 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             due_at=args.get("due_at"),
         )
     if name == "monday_brief.get":
-        brief = monday_brief.generate(principal) if args.get("generate") else monday_brief.get_latest(principal)
+        brief = ops().invoke(principal, "brief.generate" if args.get("generate") else "brief.latest", {})
         if brief is None:
             return None
         result = asdict(brief)
         return _compose_brief_overlay_mcp(result, db, principal)
     if name == "monday_brief.generate":
-        result = asdict(monday_brief.generate(principal))
+        result = asdict(ops().invoke(principal, "brief.generate", {}))
         return _compose_brief_overlay_mcp(result, db, principal)
+    if name == "monday_brief.shelf":
+        return ops().invoke(principal, "brief.shelf.write", {"item_id": str(args.get("item_id") or ""), "state": args.get("state")})
+    if name == "monday_brief.shelf_read":
+        return ops().invoke(principal, "brief.shelf.read", {})
 
     # HS-136-02: scheduled recording CRUD + cancel-armed
     if name.startswith("scheduled_recording."):

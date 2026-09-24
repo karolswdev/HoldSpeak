@@ -71,6 +71,10 @@ class WebContext:
     # test or the graph-walk rig's own hub passes one, to reach the next
     # producer-day without moving the machine clock.
     brief_clock: Optional[Callable[[], Any]] = None
+    # PHILO-5-02 (gap A): the hub's ONE brief service, composed with the clock
+    # above by ``composition.install_from_web_context``; HTTP and MCP reach it
+    # through ``operations``.
+    monday_brief_service: Optional[Any] = None
 
     # HS-123-05: durable project and projection domain boundaries, composed once
     # by the server so their routes stay transport-only adapters.

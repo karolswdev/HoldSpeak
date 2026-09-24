@@ -4304,6 +4304,8 @@
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_01_atlas_contracts.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4333,7 +4335,9 @@
       "test_candidates": [
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/unit/test_brief_shelf.py",
-        "tests/unit/test_philo4_03_breakage_ids.py"
+        "tests/unit/test_philo4_03_breakage_ids.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -4367,6 +4371,8 @@
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4395,7 +4401,9 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/unit/test_brief_shelf.py",
-        "tests/unit/test_philo4_04_atlas_contracts.py"
+        "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8041,6 +8049,7 @@
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8109,6 +8118,7 @@
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8194,6 +8204,7 @@
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8259,7 +8270,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8288,7 +8300,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8353,7 +8366,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8422,7 +8436,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8451,7 +8466,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8480,7 +8496,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8509,7 +8526,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8538,7 +8556,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8567,7 +8586,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8638,7 +8658,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8667,7 +8688,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8732,7 +8754,8 @@
       "test_candidates": [
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
-        "tests/unit/test_philo5_one_decision.py"
+        "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_the_loop.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -17403,7 +17426,7 @@
             "GET"
           ],
           "symbol": "api_list_intel_jobs",
-          "line": 64,
+          "line": 68,
           "parameters": [
             {
               "name": "request",
@@ -17475,7 +17498,7 @@
             "POST"
           ],
           "symbol": "api_process_intel_jobs",
-          "line": 72,
+          "line": 76,
           "parameters": [
             {
               "name": "request",
@@ -17539,7 +17562,7 @@
             "POST"
           ],
           "symbol": "api_retry_intel_job",
-          "line": 78,
+          "line": 82,
           "parameters": [
             {
               "name": "meeting_id",
@@ -17609,7 +17632,7 @@
             "GET"
           ],
           "symbol": "api_intel_queue_summary",
-          "line": 68,
+          "line": 72,
           "parameters": [
             {
               "name": "request",
@@ -19207,6 +19230,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19375,7 +19400,7 @@
             "GET"
           ],
           "symbol": "api_list_meetings",
-          "line": 40,
+          "line": 46,
           "parameters": [
             {
               "name": "request",
@@ -19427,9 +19452,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops(ctx).invoke",
             "_principal",
-            "_service",
-            "_service(ctx).list_meetings",
             "log.error",
             "result.pop",
             "router.get",
@@ -19479,6 +19504,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19512,7 +19539,7 @@
             "GET"
           ],
           "symbol": "api_meeting_facets",
-          "line": 87,
+          "line": 92,
           "parameters": [
             {
               "name": "request",
@@ -19574,7 +19601,7 @@
             "POST"
           ],
           "symbol": "import_recording",
-          "line": 53,
+          "line": 54,
           "parameters": [
             {
               "name": "request",
@@ -19618,12 +19645,14 @@
             "Path(filename).suffix.lower",
             "_principal",
             "_service",
-            "_service().import_meeting",
             "_service().validate_import",
             "datetime.fromtimestamp",
             "datetime.now",
+            "operations.for_context",
+            "operations.for_context(ctx, meeting_service=_service).invoke",
             "router.post",
             "shutil.copyfileobj",
+            "started_at.isoformat",
             "tag.strip",
             "tempfile.NamedTemporaryFile",
             "tmp_path.stat",
@@ -19646,6 +19675,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19679,7 +19709,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_meeting",
-          "line": 136,
+          "line": 141,
           "parameters": [
             {
               "name": "meeting_id",
@@ -19746,6 +19776,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19779,7 +19811,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting",
-          "line": 96,
+          "line": 101,
           "parameters": [
             {
               "name": "meeting_id",
@@ -19799,9 +19831,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops(ctx).invoke",
             "_principal",
-            "_service",
-            "_service(ctx).get_meeting",
             "log.error",
             "router.get",
             "str"
@@ -19846,6 +19878,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19879,7 +19913,7 @@
             "PUT"
           ],
           "symbol": "api_rename_meeting",
-          "line": 109,
+          "line": 114,
           "parameters": [
             {
               "name": "meeting_id",
@@ -19952,6 +19986,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20048,6 +20084,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20148,6 +20186,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20249,6 +20289,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20279,7 +20321,7 @@
             "POST"
           ],
           "symbol": "api_recover_meeting_capture",
-          "line": 150,
+          "line": 155,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20344,6 +20386,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20376,7 +20420,7 @@
             "GET"
           ],
           "symbol": "api_export_meeting",
-          "line": 192,
+          "line": 197,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20449,6 +20493,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20549,6 +20595,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20647,6 +20695,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20740,6 +20790,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20772,7 +20824,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting_intel_recovery",
-          "line": 103,
+          "line": 110,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20835,6 +20887,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20867,7 +20921,7 @@
             "POST"
           ],
           "symbol": "api_retry_meeting_intel_recovery",
-          "line": 107,
+          "line": 114,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20933,6 +20987,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20965,7 +21021,7 @@
             "POST"
           ],
           "symbol": "api_skip_meeting_intel_recovery",
-          "line": 116,
+          "line": 123,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21028,6 +21084,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21060,7 +21118,7 @@
             "POST"
           ],
           "symbol": "api_run_meeting_intelligence",
-          "line": 87,
+          "line": 91,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21082,8 +21140,9 @@
             "_json_body",
             "_principal",
             "_svc",
-            "_svc(ctx).run_intelligence",
             "body.get",
+            "operations.for_context",
+            "operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx)).invoke",
             "router.post"
           ],
           "body_access_keys": [
@@ -21128,6 +21187,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21229,6 +21290,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21325,6 +21388,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21428,6 +21493,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21523,6 +21590,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21623,6 +21692,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21720,6 +21791,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21825,6 +21898,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21857,7 +21932,7 @@
             "GET"
           ],
           "symbol": "api_meeting_sync_conflicts",
-          "line": 160,
+          "line": 165,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21923,6 +21998,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21955,7 +22032,7 @@
             "POST"
           ],
           "symbol": "api_resolve_meeting_sync_conflict",
-          "line": 171,
+          "line": 176,
           "parameters": [
             {
               "name": "meeting_id",
@@ -22033,6 +22110,8 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -36000,7 +36079,7 @@
             "GET"
           ],
           "symbol": "list_unfinished",
-          "line": 69,
+          "line": 75,
           "parameters": [
             {
               "name": "request",
@@ -36016,11 +36095,11 @@
             "ValidationError",
             "_error",
             "int",
+            "ops",
+            "ops().invoke",
             "principal",
             "request.query_params.get",
-            "router.get",
-            "service",
-            "service().list_unfinished"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -36037,6 +36116,8 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36071,7 +36152,7 @@
             "POST"
           ],
           "symbol": "create",
-          "line": 52,
+          "line": 58,
           "parameters": [
             {
               "name": "request",
@@ -36089,9 +36170,9 @@
             "ValidationError",
             "_error",
             "_json_body",
-            "application",
-            "application().create_thought",
             "body.get",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
             "set"
@@ -36116,6 +36197,8 @@
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36150,7 +36233,7 @@
             "POST"
           ],
           "symbol": "adopt",
-          "line": 92,
+          "line": 98,
           "parameters": [
             {
               "name": "request",
@@ -36219,7 +36302,7 @@
             "GET"
           ],
           "symbol": "get_default_context",
-          "line": 110,
+          "line": 116,
           "parameters": [
             {
               "name": "request",
@@ -36277,7 +36360,7 @@
             "PUT"
           ],
           "symbol": "replace_default_context",
-          "line": 117,
+          "line": 123,
           "parameters": [
             {
               "name": "request",
@@ -36345,7 +36428,7 @@
             "GET"
           ],
           "symbol": "for_note",
-          "line": 85,
+          "line": 91,
           "parameters": [
             {
               "name": "note_id",
@@ -36407,7 +36490,7 @@
             "GET"
           ],
           "symbol": "get",
-          "line": 133,
+          "line": 139,
           "parameters": [
             {
               "name": "thought_id",
@@ -36425,10 +36508,10 @@
           "calls": [
             "JSONResponse",
             "_error",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service",
-            "service().get"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -36441,6 +36524,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36475,7 +36560,7 @@
             "POST"
           ],
           "symbol": "complete",
-          "line": 324,
+          "line": 328,
           "parameters": [
             {
               "name": "thought_id",
@@ -36521,6 +36606,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36555,7 +36642,7 @@
             "GET"
           ],
           "symbol": "list_context",
-          "line": 158,
+          "line": 162,
           "parameters": [
             {
               "name": "thought_id",
@@ -36592,6 +36679,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36626,7 +36715,7 @@
             "POST"
           ],
           "symbol": "mutate_context",
-          "line": 173,
+          "line": 177,
           "parameters": [
             {
               "name": "thought_id",
@@ -36678,6 +36767,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36712,7 +36803,7 @@
             "GET"
           ],
           "symbol": "original",
-          "line": 140,
+          "line": 146,
           "parameters": [
             {
               "name": "thought_id",
@@ -36746,6 +36837,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36780,7 +36873,7 @@
             "POST"
           ],
           "symbol": "reconcile",
-          "line": 209,
+          "line": 213,
           "parameters": [
             {
               "name": "thought_id",
@@ -36824,6 +36917,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36858,7 +36953,7 @@
             "POST"
           ],
           "symbol": "refine",
-          "line": 229,
+          "line": 233,
           "parameters": [
             {
               "name": "thought_id",
@@ -36905,6 +37000,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36939,7 +37036,7 @@
             "POST"
           ],
           "symbol": "stop_refinement",
-          "line": 250,
+          "line": 254,
           "parameters": [
             {
               "name": "thought_id",
@@ -36986,6 +37083,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37020,7 +37119,7 @@
             "POST"
           ],
           "symbol": "resume",
-          "line": 340,
+          "line": 344,
           "parameters": [
             {
               "name": "thought_id",
@@ -37064,6 +37163,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37098,7 +37199,7 @@
             "GET"
           ],
           "symbol": "review",
-          "line": 269,
+          "line": 273,
           "parameters": [
             {
               "name": "thought_id",
@@ -37136,6 +37237,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37170,7 +37273,7 @@
             "POST"
           ],
           "symbol": "answer_and_continue",
-          "line": 282,
+          "line": 286,
           "parameters": [
             {
               "name": "thought_id",
@@ -37221,6 +37324,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37255,7 +37360,7 @@
             "POST"
           ],
           "symbol": "review_action",
-          "line": 305,
+          "line": 309,
           "parameters": [
             {
               "name": "thought_id",
@@ -37311,6 +37416,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37345,7 +37452,7 @@
             "GET"
           ],
           "symbol": "workbench",
-          "line": 149,
+          "line": 155,
           "parameters": [
             {
               "name": "thought_id",
@@ -37363,8 +37470,8 @@
           "calls": [
             "JSONResponse",
             "_error",
-            "application",
-            "application().get_workbench",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.get"
           ],
@@ -37379,6 +37486,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37413,7 +37522,7 @@
             "PATCH"
           ],
           "symbol": "update",
-          "line": 192,
+          "line": 196,
           "parameters": [
             {
               "name": "thought_id",
@@ -37435,9 +37544,9 @@
             "ValidationError",
             "_error",
             "_json_body",
-            "application",
-            "application().update_working",
             "body.get",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.patch",
             "set"
@@ -37460,6 +37569,8 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -42470,6 +42581,8 @@
         "tests/unit/test_people_routes.py",
         "tests/unit/test_phase143_routing_authority_census.py",
         "tests/unit/test_phase143_surface_fallback_census.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_placement_resolver.py",
         "tests/unit/test_thought_workbench_backend.py",
         "tests/unit/test_web_routes_thoughts.py",

@@ -25,7 +25,6 @@ from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
-from holdspeak.services.refinement_thought_service import RefinementThoughtService
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services.inference_capability_service import InferenceCapabilityApplicationService
 from holdspeak.inference_capabilities import process_inference_capability_registry
@@ -431,6 +430,31 @@ def _contents(uri: str, mime_type: str, value: Any) -> dict[str, list[dict[str, 
     return {"contents": [{"uri": uri, "mimeType": mime_type, "text": text}]}
 
 
+def _ops() -> Any:
+    """PHILO-5-02 (gap D): the pilot resources read through the hub's bound contract.
+
+    In the hub no builder runs: the brief, meeting and Thought reads reach the
+    hub's one instances. Bare, the builds are what these reads made before.
+    """
+    from holdspeak import operations
+
+    return operations.for_runtime(
+        meeting_service=lambda: runtime_service(
+            "meeting_service", lambda: MeetingService(db_or(get_database))
+        ),
+        monday_brief_service=lambda: runtime_service(
+            "monday_brief_service", lambda: MondayBriefService(db_or(get_database))
+        ),
+        refinement_service=lambda: runtime_service(
+            "refinement_service",
+            lambda: RefinementApplicationService(
+                db_or(get_database),
+                coordinator=thought_family._runtime.coordinator if thought_family._runtime else None,
+            ),
+        ),
+    )
+
+
 def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[str, str]]]:
     """Read one static or templated resource as MCP resource contents."""
     if principal is None:
@@ -502,7 +526,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
             "overdue": [asdict(card) for card in board.overdue],
         })
     if uri == "holdspeak://briefs/latest":
-        brief = MondayBriefService(db_or(get_database)).get_latest(principal)
+        brief = _ops().invoke(principal, "brief.latest", {})
         return _contents(uri, _JSON_MIME, asdict(brief) if brief is not None else None)
     if uri == "pipeline://events/recent":
         return _contents(uri, _JSON_MIME, EventQueryService(db_or(get_database)).recent(principal))
@@ -515,16 +539,13 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
     if uri == "holdspeak://people/relationships":
         return _contents(uri, _JSON_MIME, people_family.list_relationships(principal))
     if uri == "holdspeak://thoughts/unfinished":
-        value = RefinementThoughtService(db_or(get_database)).list_unfinished(
-            principal, limit=50
-        )
+        value = _ops().invoke(principal, "thought.list", {"limit": 50})
         return _contents(uri, _JSON_MIME, value)
 
     if match := _THOUGHT_WORKBENCH_PATTERN.fullmatch(uri):
-        runtime = thought_family._runtime
-        value = RefinementApplicationService(
-            db_or(get_database), coordinator=runtime.coordinator if runtime else None
-        ).get_workbench(principal, thought_id=match.group(1))
+        # Gap D: the hub's application service (its coordinator), not the
+        # standalone family runtime's; bare, the Thought family's own build.
+        value = _ops().invoke(principal, "thought.workbench.read", {"thought_id": match.group(1)})
         return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_ORIGINAL_PATTERN.fullmatch(uri):
         value = RefinementApplicationService(
@@ -541,9 +562,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         )
         return _contents(uri, _JSON_MIME, value)
     if match := _THOUGHT_DETAIL_PATTERN.fullmatch(uri):
-        value = RefinementThoughtService(db_or(get_database)).get(
-            principal, match.group(1)
-        )
+        value = _ops().invoke(principal, "thought.read", {"thought_id": match.group(1)})
         return _contents(uri, _JSON_MIME, {"thought": value})
     if match := _PRIMITIVE_DETAIL_PATTERN.fullmatch(uri):
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
@@ -564,7 +583,7 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         value = PrimitiveService(db_or(get_database)).list_directory_members(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
-        value = MeetingService(db_or(get_database)).get_meeting(principal, match.group(1))
+        value = _ops().invoke(principal, "meeting.read", {"meeting_id": match.group(1)})
         return _contents(uri, _JSON_MIME, value)
     if match := _DECISION_RECORD_PATTERN.fullmatch(uri):
         value = DecisionRecordService(db_or(get_database)).get(principal, match.group(1))

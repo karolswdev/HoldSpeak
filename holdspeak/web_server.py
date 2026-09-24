@@ -930,7 +930,9 @@ class MeetingWebServer:
             meeting_service=meeting_service,
             meeting_service_factory=lambda: MeetingService(get_database(), observer=obs),
             meeting_intel_service=meeting_intel_service,
-            meeting_intel_service_factory=lambda: MeetingIntelService(get_database(), notify=notify, observer=obs),
+            # PHILO-5-02 (gap C): no summary factory. The HTTP summary routes
+            # and MCP reach the ONE instance above; a factory beside it made a
+            # second, so the two transports never shared object identity.
             meeting_aftercare_service=meeting_aftercare_service,
             meeting_aftercare_service_factory=lambda: MeetingAftercareService(get_database(), notify=notify, observer=obs),
             brief_clock=self._brief_clock,

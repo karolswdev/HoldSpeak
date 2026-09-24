@@ -38,14 +38,34 @@ def _runner_entrances() -> list[str]:
     call.  There are no other production ``.invoke`` expressions today, so an
     unexpected one fails closed instead of relying on a receiver-name heuristic.
     """
+    from holdspeak.operations import DESCRIPTORS
+
+    declared = {descriptor.name for descriptor in DESCRIPTORS}
+
+    def _names_an_operation(call: ast.Call) -> bool:
+        # PHILO-5-01/02: ``OperationRegistry.invoke(principal, "<operation>", ...)``
+        # is the application-operation contract, not the runner. It is told
+        # apart by its second argument: a DECLARED operation name (or a choice
+        # between two), which no InferenceRunner.invoke call takes.
+        if len(call.args) < 2:
+            return False
+        name = call.args[1]
+        options = [name.body, name.orelse] if isinstance(name, ast.IfExp) else [name]
+        return all(isinstance(o, ast.Constant) and o.value in declared for o in options)
+
     entries: list[str] = []
     for path in sorted(one_path.PRODUCTION.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         scopes = one_path._scope_index(tree)
         called = {id(node.func) for node in ast.walk(tree) if isinstance(node, ast.Call)}
+        contract = {
+            id(node.func) for node in ast.walk(tree)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "invoke" and _names_an_operation(node)
+        }
         relative = path.relative_to(one_path.REPO).as_posix()
         for node in ast.walk(tree):
-            if isinstance(node, ast.Attribute) and node.attr == "invoke":
+            if isinstance(node, ast.Attribute) and node.attr == "invoke" and id(node) not in contract:
                 kind = "call" if id(node) in called else "ref"
                 entries.append(f"{relative}:{node.lineno}|{scopes.get(id(node), '<module>')}|{kind}")
     return sorted(entries)
@@ -370,7 +390,9 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/projects.py:142|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
         "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
-    "holdspeak/mcp/tools.py:736|dispatch|run": ProposedRoute(
+    # PHILO-5-01/02: re-anchored after the operation contract moved dispatch
+    # down; the recipe.run branch itself is unchanged.
+    "holdspeak/mcp/tools.py:848|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

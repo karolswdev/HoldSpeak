@@ -201,12 +201,20 @@ def registry(tmp_path: Path):
     from holdspeak.db import Database
     from holdspeak.services.primitive_service import PrimitiveService
 
-    return operations.bind({"primitive_service": PrimitiveService(Database(tmp_path / "r.db"))})
+    # PHILO-5-02: the catalogue grew past decisions; bind only what this
+    # fixture holds (the lawful partial composition).
+    return operations.bind_available({"primitive_service": PrimitiveService(Database(tmp_path / "r.db"))})
 
 
-def test_the_catalogue_is_four_explicit_descriptors() -> None:
+def test_the_catalogue_is_explicit_descriptors() -> None:
     names = [d.name for d in operations.DESCRIPTORS]
-    assert names == ["decision.create", "decision.update", "decision.read", "decision.list"]
+    # PHILO-5-01's four, then PHILO-5-02's loop -- an explicit list, no framework.
+    assert names == [
+        "decision.create", "decision.update", "decision.read", "decision.list",
+        "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
+        "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
+        "thought.create", "thought.save", "thought.read", "thought.workbench.read", "thought.list",
+    ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).
     from jsonschema import Draft202012Validator
@@ -364,11 +372,16 @@ def test_the_residual_set_shrank_by_exactly_the_paid_decision_entries() -> None:
     paid = {census._key(e) for e in committed["paid"]}
     assert paid and not (paid & listed), "a paid entry is still listed"
     assert committed["baseline"]["residual_identities"] - len(paid) == len(listed)
-    assert all("decision" in key[2] or "decisions.py" in key[1] for key in paid)
-    # Two measurements, never one: the public catalogue did not change size.
+    story01 = {census._key(e) for e in committed["paid"] if e["story"] == "PHILO-5-01"}
+    assert len(story01) == 7
+    assert all("decision" in key[2] or "decisions.py" in key[1] for key in story01)
+    # Two measurements, never one: story 01 added no public tool; every tool a
+    # later story exposed is named in public_tools_added.
     from holdspeak.mcp.tools import TOOLS
 
-    assert len({t["name"] for t in TOOLS}) == committed["baseline"]["public_tools"]
+    added = committed.get("public_tools_added", [])
+    assert not [a for a in added if a["story"] == "PHILO-5-01"]
+    assert len({t["name"] for t in TOOLS}) == committed["baseline"]["public_tools"] + len(added)
 
 
 def test_the_residual_fence_names_a_new_identity_and_a_stale_one() -> None:

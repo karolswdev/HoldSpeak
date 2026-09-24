@@ -1,0 +1,2 @@
+# the built residual set checked against the built tree
+RESIDUAL FENCE GREEN: 320 identities match <wt>

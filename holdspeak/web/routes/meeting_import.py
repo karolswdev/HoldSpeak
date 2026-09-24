@@ -14,6 +14,7 @@ from typing import Optional
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
 
+from ... import operations
 from ...config import Config
 from ...services.errors import ValidationError
 
@@ -87,16 +88,24 @@ def build_meeting_import_router(ctx) -> APIRouter:
         )
         tag_list = [tag.strip() for tag in (tags or "").split(",") if tag.strip()]
         try:
-            result = _service().import_meeting(
+            # PHILO-5-02: the one post-custody call, shared with MCP's
+            # meeting.import intake. The upload, the configuration and the
+            # transcriber stay this transport's (gap E).
+            result = operations.for_context(ctx, meeting_service=_service).invoke(
                 _principal(request),
-                tmp_path=tmp_path,
-                filename=filename,
-                title=title,
-                speaker=speaker,
-                tags=tag_list,
-                started_at=started_at,
-                config=Config.load(),
-                transcriber_factory=_transcriber_factory,
+                "meeting.import",
+                {
+                    "filename": filename,
+                    "title": title,
+                    "speaker": speaker,
+                    "tags": tag_list,
+                    "occurred_at": started_at.isoformat(),
+                },
+                held={
+                    "tmp_path": tmp_path,
+                    "config": Config.load(),
+                    "transcriber_factory": _transcriber_factory,
+                },
             )
         except ValidationError as exc:
             tmp_path.unlink(missing_ok=True)

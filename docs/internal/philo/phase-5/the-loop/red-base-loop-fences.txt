@@ -1,0 +1,81 @@
+# RED on base 6e707ff3 (git archive copy): tests/unit/test_philo5_the_loop.py, the same file as built
+# cmd (cwd = the base copy; holdspeak imported from the copy): HOME=$(mktemp -d) <lane>/.venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo5_the_loop.py -rf --tb=line
+FFFFFFFFFFFFFFF..FF.F.F                                                  [100%]
+=================================== FAILURES ===================================
+E   holdspeak.operations.OperationRefused: Unknown operation: meeting.list
+<base>/holdspeak/operations.py:260: holdspeak.operations.OperationRefused: Unknown operation: meeting.list
+E   AssertionError: assert <function MeetingWebServer._create_app.<locals>.<lambda> at 0x113d9e980> is None
+     +  where <function MeetingWebServer._create_app.<locals>.<lambda> at 0x113d9e980> = WebContext(get_state=<MagicMock id='4627992256'>, broadcast=<function MeetingWebServer._create_app.<locals>.<lambda> a...at 0x112467890>, voice_session=None, mesh_requires_token=False, web_host='127.0.0.1', web_auth_token='philo5-02-token').meeting_intel_service_factory
+<base>/tests/unit/test_philo5_the_loop.py:207: AssertionError: assert <function MeetingWebServer._create_app.<locals>.<lambda> at 0x113d9e980> is None
+E   AttributeError: 'RuntimeServices' object has no attribute 'monday_brief_service'
+<base>/tests/unit/test_philo5_the_loop.py:218: AttributeError: 'RuntimeServices' object has no attribute 'monday_brief_service'
+E   AssertionError: assert [] == ['meeting.lis...meeting.read']
+      
+      Right contains 5 more items, first extra item: 'meeting.list'
+      Use -v to get more diff
+<base>/tests/unit/test_philo5_the_loop.py:238: AssertionError: assert [] == ['meeting.lis...meeting.read']
+E   AttributeError: 'RuntimeServices' object has no attribute 'monday_brief_service'
+<base>/tests/unit/test_philo5_the_loop.py:292: AttributeError: 'RuntimeServices' object has no attribute 'monday_brief_service'
+E   AssertionError: 2026-09-24T14:12:52.656866
+    assert False
+     +  where False = <built-in method startswith of str object at 0x116167230>('2026-10-13')
+     +    where <built-in method startswith of str object at 0x116167230> = '2026-09-24T14:12:52.656866'.startswith
+<base>/tests/unit/test_philo5_the_loop.py:314: AssertionError: 2026-09-24T14:12:52.656866
+E   AssertionError: []
+    assert 'runtime_queue' in []
+<base>/tests/unit/test_philo5_the_loop.py:362: AssertionError: []
+E   AssertionError: assert [] == ['meeting.sum....summary.run']
+      
+      Right contains 5 more items, first extra item: 'meeting.summary.run'
+      Use -v to get more diff
+<base>/tests/unit/test_philo5_the_loop.py:386: AssertionError: assert [] == ['meeting.sum....summary.run']
+E   AssertionError: {'error': 'Unknown tool: meeting.import'}
+    assert True is False
+<base>/tests/unit/test_philo5_the_loop.py:405: AssertionError: {'error': 'Unknown tool: meeting.import'}
+E   AssertionError: {'error': 'Unknown tool: meeting.import'}
+    assert True is False
+<base>/tests/unit/test_philo5_the_loop.py:431: AssertionError: {'error': 'Unknown tool: meeting.import'}
+E   KeyError: 'code'
+<base>/tests/unit/test_philo5_the_loop.py:448: KeyError: 'code'
+E   KeyError: 'code'
+<base>/tests/unit/test_philo5_the_loop.py:448: KeyError: 'code'
+E   KeyError: 'code'
+<base>/tests/unit/test_philo5_the_loop.py:448: KeyError: 'code'
+E   KeyError: 'code'
+<base>/tests/unit/test_philo5_the_loop.py:448: KeyError: 'code'
+E   KeyError: 'code'
+<base>/tests/unit/test_philo5_the_loop.py:448: KeyError: 'code'
+E   AssertionError: assert (True is True and 'Unknown brief item' in 'Unknown tool: monday_brief.shelf')
+<base>/tests/unit/test_philo5_the_loop.py:548: AssertionError: assert (True is True and 'Unknown brief item' in 'Unknown tool: monday_brief.shelf')
+E   assert True is False
+<base>/tests/unit/test_philo5_the_loop.py:589: assert True is False
+E   AssertionError: assert {'meeting.imp...f.shelf_read'} <= {'ask.cancel'...e.audit', ...}
+      
+      Extra items in the left set:
+      'monday_brief.shelf_read'
+      'meeting.import'
+      'monday_brief.shelf'
+<base>/tests/unit/test_philo5_the_loop.py:648: AssertionError: assert {'meeting.imp...f.shelf_read'} <= {'ask.cancel'...e.audit', ...}
+E   AttributeError: module 'holdspeak.operations' has no attribute 'bind_available'
+<base>/tests/unit/test_philo5_the_loop.py:676: AttributeError: module 'holdspeak.operations' has no attribute 'bind_available'
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_every_loop_operation_is_bound_once_to_the_hubs_instance
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_gap_c_the_hub_has_one_summary_instance_and_no_factory
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_gap_a_the_hubs_brief_service_carries_the_hub_clock
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+FAILED tests/unit/test_philo5_the_loop.py::test_durable_loop_state_survives_a_new_hub_over_the_same_database
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_a_an_mcp_brief_generate_uses_the_hubs_producer_clock
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_b_an_mcp_summary_run_fires_runtime_queue
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_b_http_and_mcp_summary_runs_reach_the_one_instance
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_an_mcp_audio_import_transcribes_with_the_shared_transcriber
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_the_mcp_intake_refuses_by_name_and_makes_no_meeting[relative]
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_the_mcp_intake_refuses_by_name_and_makes_no_meeting[missing]
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_the_mcp_intake_refuses_by_name_and_makes_no_meeting[directory]
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_the_mcp_intake_refuses_by_name_and_makes_no_meeting[unsupported]
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_the_mcp_intake_refuses_by_name_and_makes_no_meeting[empty]
+FAILED tests/unit/test_philo5_the_loop.py::test_phase4_breakage_ids_are_brief_scoped_across_two_mcp_briefs
+FAILED tests/unit/test_philo5_the_loop.py::test_phase4_mcp_shelf_writes_are_the_hubs_shelf
+FAILED tests/unit/test_philo5_the_loop.py::test_new_tools_are_classified_and_outside_the_chat_palette
+FAILED tests/unit/test_philo5_the_loop.py::test_the_intake_holds_custody_and_passes_exactly_the_held_inputs
+19 failed, 4 passed in 20.34s

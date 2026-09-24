@@ -51,13 +51,83 @@
       "transport": "mcp",
       "entry_point": "desk.verb",
       "discriminator": "verb_id=desk.update,kind=decisions"
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "meeting.get",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "meeting.list",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "meeting.run_intelligence",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "monday_brief.generate",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "monday_brief.get",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "thought.create",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-5-02",
+      "transport": "mcp",
+      "entry_point": "thought.update_working",
+      "discriminator": ""
+    }
+  ],
+  "public_tools_added": [
+    {
+      "story": "PHILO-5-02",
+      "tool": "meeting.import",
+      "operation": "meeting.import"
+    },
+    {
+      "story": "PHILO-5-02",
+      "tool": "monday_brief.shelf",
+      "operation": "brief.shelf.write"
+    },
+    {
+      "story": "PHILO-5-02",
+      "tool": "monday_brief.shelf_read",
+      "operation": "brief.shelf.read"
+    }
+  ],
+  "moved": [
+    {
+      "story": "PHILO-5-02",
+      "transport": "http",
+      "from": "holdspeak/web/routes/monday_brief.py::build_monday_brief_router",
+      "to": "holdspeak/web/routes/monday_brief.py::build_monday_brief_router.ops",
+      "discriminator": "MondayBriefService",
+      "why": "NOT paid. Before: the router built its own brief service at build time, in the hub too (a second instance beside nothing MCP could reach). After: in the hub the router builds nothing (ctx.operations, the composed clock-bearing service); the construction survives only as the partially wired context's fallback, kept in the route so the route tests' get_database/get_observer seams (test_brief_shelf, test_philo4_03_breakage_ids) hold unchanged. A syntactic census cannot tell the two apart, so it stays residual."
     }
   ],
   "measurements": {
-    "residual_identities": 327,
-    "residual_mcp": 263,
+    "residual_identities": 320,
+    "residual_mcp": 256,
     "residual_http": 64,
-    "http_constructions": 66
+    "http_constructions": 66,
+    "public_tools": 228
   },
   "entries": [
     {
@@ -686,25 +756,7 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "meeting.get",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "meeting.list",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "meeting.proposals",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "meeting.run_intelligence",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
@@ -767,18 +819,6 @@
       "entry_point": "model_library.use_model_file",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "monday_brief.generate",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "monday_brief.get",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "mcp",
@@ -1442,12 +1482,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "thought.create",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "thought.detach_context",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
@@ -1503,12 +1537,6 @@
     {
       "transport": "mcp",
       "entry_point": "thought.stop_refinement",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "thought.update_working",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
     },
@@ -1826,7 +1854,7 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/monday_brief.py::build_monday_brief_router",
+      "entry_point": "holdspeak/web/routes/monday_brief.py::build_monday_brief_router.ops",
       "discriminator": "MondayBriefService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
