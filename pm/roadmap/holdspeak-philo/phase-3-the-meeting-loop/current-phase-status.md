@@ -1,6 +1,6 @@
 # Phase 3 - The Meeting Loop
 
-**Last updated:** 2026-09-24 (closure chain on the rig; final summary; exits 2 and 4 flipped).
+**Last updated:** 2026-09-24 (exit 1 proved by the integrated PHILO-4-02 lane; owner sitting remains open).
 
 ## Goal
 
@@ -25,8 +25,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 ## Exit criteria (evidence required)
 
-- [ ] The end-to-end chain runs on the rig with retained observations at 1440 and 393: import completes → summary on the arrival with the actual host → the same summary after a restart → a decision recorded → the next producer-day's dated brief contains it. **Open by ruling (2026-09-23, "yes close and open"): steps 1–4 PASS; step 5 needs a detour. Closes only against the integrated evidence of [Phase 4 The Morning](../phase-4-the-morning/current-phase-status.md) exit 1 (one Generate, the decision readable, both widths).**
-  **Open (2026-09-24).** Steps 1–4 PASS at both widths (`assets/closure/`: 1 `20260924T011648Z`/`012020Z`, 2 `012038Z`/`012106Z`, 3 `012132Z`/`012202Z`, 4 `012742Z`/`012814Z`). Step 5 as written is BLOCKED at both widths (`013355Z`/`013440Z`): with yesterday's brief rows untriaged the Arrival draws no Generate verb (`ChairHome.tsx:1260`). After Ack on every row, the next-day brief has the decision under a new id (protocol), but the Arrival shows it only behind `1 more` (`013738Z`/`014018Z` FAIL); one more move shows it in the brief view (`014258Z`/`014339Z` PASS). Detail: [final summary](final-summary.md).
+- [x] The end-to-end chain runs on the rig with retained observations at 1440 and 393: import completes → summary on the arrival with the actual host → the same summary after a restart → a decision recorded → the next producer-day's dated brief contains it. **Paid by [Phase 4 The Morning](../phase-4-the-morning/current-phase-status.md) exit 1 on the PHILO-4-02 lane (2026-09-24): as-written step 5 `20260924T072614Z` at 1440 and `20260924T072514Z` at 393 PASS; one Generate, decision first and all nine row hit points owned; new id/date, old triage and cumulative restart proof retained. [Integrated evidence](../phase-4-the-morning/evidence-story-02.md). The PR remains open; no owner sitting is claimed.**
+  **Earlier closure (2026-09-24, before Phase 4).** Steps 1–4 PASS at both widths (`assets/closure/`: 1 `20260924T011648Z`/`012020Z`, 2 `012038Z`/`012106Z`, 3 `012132Z`/`012202Z`, 4 `012742Z`/`012814Z`). Step 5 as written is BLOCKED at both widths (`013355Z`/`013440Z`): with yesterday's brief rows untriaged the Arrival draws no Generate verb (`ChairHome.tsx:1260`). After Ack on every row, the next-day brief has the decision under a new id (protocol), but the Arrival shows it only behind `1 more` (`013738Z`/`014018Z` FAIL); one more move shows it in the brief view (`014258Z`/`014339Z` PASS). Detail: [final summary](final-summary.md).
 - [x] Every repaired seam has a fence that failed pre-fix. (Scope: the A1–A4 PRODUCT repairs, cited per story in final-summary.md; the closure's two rig-tooling edits have no dedicated fence and are ledgered there.)
   Per story, from the checks and evidence (not re-derived):
   A1 — `tests/unit/test_philo3_01_decision_route.py` against the pre-fix 500 from `git show 7ce95358` (`story-01-record-the-decision.md`:36); `philo301DecisionFace.test.tsx` 4/4 fail on the old head (story-01:42); `philo301DecisionNoLoss.test.tsx` and `philo301RetryKept.test.tsx` fail on the previous code (story-01:40; Astra r2 probes fail/pass); `tests/e2e/test_philo3_01_receipt_hits.py` pre-fix Chair bottom 866 vs 800, capture bar 777 vs dock 727, document 918 vs 852 (story-01:38).
@@ -58,6 +58,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-24 07:29 UTC: exit 1 proved on the integrated PHILO-4-02 lane by actual as-written closure walks at both widths, without the earlier triage/fold detour. [Phase 4 evidence](../phase-4-the-morning/evidence-story-02.md) retains real LAN summary/restart, unchanged day-one DB rows and an unobscured first decision row. Separate breakage variants also pass. The lane PR remains open for Muad'Dib. Exit 3 (the owner's sitting), ASR/summary usefulness and the other ledgered costs remain open.
 
 2026-09-24 01:45 UTC: CLOSURE CHAIN on the rig (Muad'Dib's lane; Astra's check owed). Actual LAN engine `Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf` at 192.168.1.43:8080; one hub and one fresh HOME per run; 24 observations kept, none selected. Steps 1–4 PASS at 1440 and 393. Step 5 is BLOCKED as written: no Generate verb while yesterday's brief has an untriaged row. With triage the dated brief has the decision, but the Arrival hides it behind `1 more`. Found: the next-day brief can answer 500 when a breakage row repeats (`monday_brief_service.py:546`, `:305`). Usefulness partial: SQLite, Maya Chen and Priya's action lost in 22/22 summaries; owners and due dates lost on the Arrival rows. Exits 2 and 4 flipped; 1 and 3 open. [Final summary](final-summary.md).
 

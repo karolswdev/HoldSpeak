@@ -8180,7 +8180,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1278,
+          "line": 1321,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -8199,7 +8199,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 522,
+          "line": 524,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -8230,7 +8230,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 713,
+          "line": 737,
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -8268,7 +8268,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 688,
+          "line": 712,
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -8287,7 +8287,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1189,
+          "line": 1247,
           "claim": "is_empty is true when no section holds an item"
         },
         {
@@ -8299,7 +8299,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "No changes",
-          "line": 341,
+          "line": 346,
           "claim": "the producer's headline for an empty brief is No changes"
         }
       ],
@@ -8318,13 +8318,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 114,
+          "line": 117,
           "claim": "is_empty is a field of the brief record"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 846,
+          "line": 874,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -8344,7 +8344,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1333,
+          "line": 1376,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -8365,13 +8365,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "untouched",
-          "line": 115,
+          "line": 118,
           "claim": "an absent shelf key is untouched work"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 849,
+          "line": 882,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -8421,7 +8421,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1117,
+          "line": 1171,
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -8484,13 +8484,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 198,
+          "line": 201,
           "claim": "the brief is keyed by the period_end date"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "_load_brief",
-          "line": 213,
+          "line": 216,
           "claim": "a second generate on the same date returns the existing brief"
         }
       ],
@@ -8516,13 +8516,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "self._clock()",
-          "line": 197,
+          "line": 200,
           "claim": "generate reads the producer's one clock when no now is passed"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 198,
+          "line": 201,
           "claim": "the brief's identity is its period_end date, so a new producer-day mints a new brief"
         }
       ],
@@ -8795,7 +8795,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2240,
+          "line": 2283,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -10489,13 +10489,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 626,
+          "line": 628,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 525,
+          "line": 527,
           "claim": "the brief read is one of those re-reads"
         }
       ],
@@ -10661,7 +10661,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 198,
+          "line": 201,
           "claim": "the brief's identity is its period_end date"
         },
         {

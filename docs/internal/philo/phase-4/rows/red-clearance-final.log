@@ -1,0 +1,315 @@
+{
+  "boundary": "browser API fixture; real built Chair and Generate",
+  "before": {
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 478,
+        "w": 369,
+        "h": 93
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 525,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 569,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 525,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 569,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 525,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 569,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 238,
+      "scroll_padding_bottom": "138px",
+      "end_margin_bottom": "138px"
+    }
+  },
+  "after": {
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 478,
+        "w": 369,
+        "h": 135
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 546,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 611,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 197,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 546,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 197,
+          "y": 611,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar > button.btn.btn--ghost"
+        },
+        {
+          "x": 379,
+          "y": 480,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 546,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 611,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        }
+      ],
+      "all_owned": false
+    },
+    "clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 238,
+      "scroll_padding_bottom": "138px",
+      "end_margin_bottom": "138px"
+    }
+  }
+}
+F
+=================================== FAILURES ===================================
+______ test_generate_replacement_row_is_owned_above_the_real_capture_bar _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-484/test_generate_replacement_row_0')
+
+    def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
+        tmp_path: Path,
+    ) -> None:
+        initial = _brief(
+            "brief-clearance-before",
+            text="Old short waiting row",
+            decision=False,
+        )
+        generated = _brief(
+            "brief-clearance-after",
+            text=(
+                "Review decision: Keep the generated decision readable after the "
+                "capture bar wraps at the owner phone width"
+            ),
+            decision=True,
+        )
+        needs = _needs_you()
+        hub = Hub(tmp_path / "home", token=TOKEN).start()
+        try:
+            from playwright.sync_api import sync_playwright
+    
+            browser_cache = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+            if not browser_cache:
+                browser_cache = str(Path(pwd.getpwuid(os.getuid()).pw_dir) / "Library/Caches/ms-playwright")
+                os.environ["PLAYWRIGHT_BROWSERS_PATH"] = browser_cache
+            with sync_playwright() as play:
+                browser = play.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": 393, "height": 852})
+                page.emulate_media(reduced_motion="reduce")
+                calls = {"generate": 0}
+    
+                def route_payload(route: Any) -> None:
+                    path = route.request.url.split("?", 1)[0].rsplit(hub.url, 1)[-1]
+                    if path == "/api/brief/latest":
+                        _fulfill(route, initial)
+                    elif path == "/api/brief/generate":
+                        calls["generate"] += 1
+                        _fulfill(route, generated)
+                    elif path == "/api/desk/needs-you":
+                        _fulfill(route, needs)
+                    elif path == "/api/door":
+                        _fulfill(route, {"board": {}, "counts": {}, "upcoming": [], "calendar_configured": False})
+                    elif path == "/api/inference/assignments":
+                        _fulfill(route, {"schema": "InferenceAssignmentSummary@1", "rows": [], "task_overrides": [], "issue_count": 0})
+                    else:
+                        route.fallback()
+    
+                page.route("**/api/**", route_payload)
+                page.goto(f"{hub.url}/?token={TOKEN}", wait_until="load")
+                continue_later = page.get_by_role("button", name="Continue later", exact=True)
+                try:
+                    continue_later.click(timeout=10_000)
+                except Exception:  # returning desk: the first-use gate is absent
+                    pass
+                page.get_by_test_id("arrival-capture-bar").wait_for(timeout=10_000)
+                page.get_by_test_id("arrival-brief-row").wait_for()
+                generate = page.get_by_test_id("arrival-brief-generate")
+                generate.wait_for()
+    
+                before = _hit_snapshot(page)
+                before_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
+                assert before_bar is not None
+                # Setup may leave the real Chair at a different scroll position.
+                # Place the existing short row two pixels above the measured bar;
+                # this is setup positioning, before Generate, never a post-click
+                # scroll or a synthetic DOM row.
+                page.evaluate(
+                    """() => {
+                      const chair = document.querySelector('[data-testid=chair]');
+                      const row = document.querySelector('[data-testid=arrival-brief-row]');
+                      const bar = document.querySelector('[data-testid=arrival-capture-bar]');
+                      if (!chair || !row || !bar) throw new Error('clearance setup nodes missing');
+                      const rowRect = row.getBoundingClientRect();
+                      const barRect = bar.getBoundingClientRect();
+                      chair.scrollTop += rowRect.bottom - barRect.top + 2;
+                    }"""
+                )
+                before = _hit_snapshot(page)
+                before_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
+                assert before_bar is not None
+                before_rect = before["hit_test"]["rect"]
+                assert before_rect["y"] + before_rect["h"] <= before_bar["y"] - 1, before
+                generate_box = generate.bounding_box()
+                assert generate_box is not None and generate_box["y"] >= 0 and generate_box["y"] + generate_box["height"] <= 852, generate_box
+    
+                generate.click()
+                page.get_by_text("Review decision: Keep the generated decision readable after the capture bar wraps at the owner phone width", exact=True).wait_for()
+                page.wait_for_timeout(100)
+                after = _hit_snapshot(page)
+                after_bar = page.get_by_test_id("arrival-capture-bar").bounding_box()
+                assert after_bar is not None
+                assert calls["generate"] == 1
+                assert after["text"] == generated["sections"]["decisions"][0]["text"] + "\nAck\nDefer"
+                after_rect = after["hit_test"]["rect"]
+                print(json.dumps({
+                    "boundary": "browser API fixture; real built Chair and Generate",
+                    "before": {"hit_test": before["hit_test"], "clearance": before["arrival_clearance"]},
+                    "after": {"hit_test": after["hit_test"], "clearance": after["arrival_clearance"]},
+                }, indent=2))
+                # Project the replacement's real rendered height at the old row's
+                # position. It must cross the real bar; the final observed row may
+                # be higher because the product's success seam clears it.
+                assert before_rect["y"] + after_rect["h"] > before_bar["y"], {
+                    "before": before,
+                    "after": after,
+                }
+                assert after_rect["w"] > 0 and after_rect["h"] > 0, after
+                assert after["hit_test"]["in_viewport"] is True, after
+>               assert after["hit_test"]["all_owned"] is True, after
+E               AssertionError: {'arrival_clearance': {'capture_bar': {'h': 138, 'w': 369, 'x': 12, 'y': 573}, 'chair': {'h': 746, 'w': 393, 'x': 0, '...ALK
+E                 Write a thought
+E                 Record meeting
+E                 Schedule
+E                 ◈
+E                 3
+E                 ◎
+E                 ▤
+E                 ⧉
+E                 ◌
+E                 Hide the menus
+E                 ▧
+E                 Places', 'field_value': None, ...}
+E               assert False is True
+
+tests/e2e/test_philo4_02_generated_clearance.py:229: AssertionError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo4_02_generated_clearance.py::test_generate_replacement_row_is_owned_above_the_real_capture_bar
+1 failed in 5.68s

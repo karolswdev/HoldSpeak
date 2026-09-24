@@ -1,0 +1,216 @@
+[
+  {
+    "run_id": "20260924T071241Z-case.closure.chain.s5_next_day_brief_has_it-astra-393",
+    "viewport": 393,
+    "verdict": "PASS",
+    "first_brief": {
+      "id": "brief-1a98ed480f8641948c6c72a6777ffa48",
+      "generated_at": "2026-09-24T01:13:14.178453",
+      "items": 3,
+      "shelf": {}
+    },
+    "new_brief": {
+      "id": "brief-baa294e3441a4c48ab498eb423f5b4b1",
+      "generated_at": "2026-09-25T01:13:16.422596"
+    },
+    "decision": {
+      "position": 1,
+      "text": "Review decision: Keep summary retrieval on the local desk",
+      "created_at": "2026-09-24T07:13:14Z",
+      "rect": {
+        "x": 12,
+        "y": 401,
+        "w": 369,
+        "h": 114
+      },
+      "in_viewport": true,
+      "all_owned": true
+    },
+    "old_brief_rows_and_triage_unchanged": true,
+    "summary_receipt_and_identity_retained_after_restart": true,
+    "breakage_rows": 0,
+    "breakage_proof": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 252,
+      "scroll_padding_bottom": "138px",
+      "end_margin_bottom": "138px"
+    },
+    "initial_feedback_s": 0.937,
+    "terminal_reading": "'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 401, 'w': 369, 'h': 114}"
+  },
+  {
+    "run_id": "20260924T071337Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440",
+    "viewport": 1440,
+    "verdict": "PASS",
+    "first_brief": {
+      "id": "brief-33e32ccfc8c248128093fa78a702c982",
+      "generated_at": "2026-09-24T01:14:05.770615",
+      "items": 3,
+      "shelf": {}
+    },
+    "new_brief": {
+      "id": "brief-cb8ebd5d0dab447db28ed1edf8582bbc",
+      "generated_at": "2026-09-25T01:14:07.824775"
+    },
+    "decision": {
+      "position": 1,
+      "text": "Review decision: Keep summary retrieval on the local desk",
+      "created_at": "2026-09-24T07:14:05Z",
+      "rect": {
+        "x": 256,
+        "y": 359,
+        "w": 928,
+        "h": 44
+      },
+      "in_viewport": true,
+      "all_owned": true
+    },
+    "old_brief_rows_and_triage_unchanged": true,
+    "summary_receipt_and_identity_retained_after_restart": true,
+    "breakage_rows": 0,
+    "breakage_proof": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 813,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "initial_feedback_s": 0.943,
+    "terminal_reading": "'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 359, 'w': 928, 'h': 44}"
+  },
+  {
+    "run_id": "20260924T071443Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-393",
+    "viewport": 393,
+    "verdict": "PASS",
+    "first_brief": {
+      "id": "brief-365ed5c5c40e41699108c7c3520fec53",
+      "generated_at": "2026-09-23T20:15:11.662802",
+      "items": 5,
+      "shelf": {}
+    },
+    "new_brief": {
+      "id": "brief-d304d3fc4bb449feb80753e37bddc1f3",
+      "generated_at": "2026-09-24T20:15:13.907839"
+    },
+    "decision": {
+      "position": 1,
+      "text": "Review decision: Keep summary retrieval on the local desk",
+      "created_at": "2026-09-24T07:15:11Z",
+      "rect": {
+        "x": 12,
+        "y": 401,
+        "w": 369,
+        "h": 114
+      },
+      "in_viewport": true,
+      "all_owned": true
+    },
+    "old_brief_rows_and_triage_unchanged": true,
+    "summary_receipt_and_identity_retained_after_restart": true,
+    "breakage_rows": 1,
+    "breakage_proof": {
+      "source_ref": "pipeline-event:34364731-0ec6-4a0a-a96f-ef61a6823e4c",
+      "day_one_id": "brief-break-pipeline-brief-365ed5c5c40e41699108c7c3520fec53-34364731-0ec6-4a0a-a96f-ef61a6823e4c",
+      "day_two_id": "brief-break-pipeline-brief-d304d3fc4bb449feb80753e37bddc1f3-34364731-0ec6-4a0a-a96f-ef61a6823e4c",
+      "process_timezone": "Etc/GMT+11"
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 372,
+      "scroll_padding_bottom": "138px",
+      "end_margin_bottom": "138px"
+    },
+    "initial_feedback_s": 0.941,
+    "terminal_reading": "'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 401, 'w': 369, 'h': 114}"
+  },
+  {
+    "run_id": "20260924T071600Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440",
+    "viewport": 1440,
+    "verdict": "PASS",
+    "first_brief": {
+      "id": "brief-4c290f3ee7914654836a39df024e8cce",
+      "generated_at": "2026-09-23T20:16:29.013697",
+      "items": 4,
+      "shelf": {}
+    },
+    "new_brief": {
+      "id": "brief-8a608e171ffd4a88bc5b1f0b48611b14",
+      "generated_at": "2026-09-24T20:16:31.047421"
+    },
+    "decision": {
+      "position": 1,
+      "text": "Review decision: Keep summary retrieval on the local desk",
+      "created_at": "2026-09-24T07:16:29Z",
+      "rect": {
+        "x": 256,
+        "y": 359,
+        "w": 928,
+        "h": 44
+      },
+      "in_viewport": true,
+      "all_owned": true
+    },
+    "old_brief_rows_and_triage_unchanged": true,
+    "summary_receipt_and_identity_retained_after_restart": true,
+    "breakage_rows": 1,
+    "breakage_proof": {
+      "source_ref": "pipeline-event:73136f1e-eed2-4160-926d-be9135ad01e4",
+      "day_one_id": "brief-break-pipeline-brief-4c290f3ee7914654836a39df024e8cce-73136f1e-eed2-4160-926d-be9135ad01e4",
+      "day_two_id": "brief-break-pipeline-brief-8a608e171ffd4a88bc5b1f0b48611b14-73136f1e-eed2-4160-926d-be9135ad01e4",
+      "process_timezone": "Etc/GMT+11"
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 843,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "initial_feedback_s": 0.932,
+    "terminal_reading": "'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 359, 'w': 928, 'h': 44}"
+  }
+]

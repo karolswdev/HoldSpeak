@@ -1,0 +1,41 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+    
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1189 no longer holds 'is_empty' (line reads 'detail=item["detail"],')
+E         state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:341 no longer holds 'No changes' (line reads 'counts = {section: len(items) for section, items in finalized_sections.items()}')
+E         state.briefs.item.deferred: holdspeak/services/monday_brief_service.py:1117 no longer holds 'SHELF_STATES' (line reads ').fetchone()')
+E       assert not ['state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1189 no longer holds \'is_empty\' (line rea....deferred: holdspeak/services/monday_brief_service.py:1117 no longer holds 'SHELF_STATES' (line reads ').fetchone()')"]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+1 failed, 1 passed, 69 deselected in 0.70s

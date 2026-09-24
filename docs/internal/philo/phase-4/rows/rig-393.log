@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 566495b076f8db7387f7e050be30d8065ee8841b dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-Dgg98rIX.js'] hub=http://127.0.0.1:51031 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-us4pdd0d/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-02-shots/20260924T065829Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-02-shots/20260924T065829Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/after.png']
+NOTE: predicate: a covering element owns hit points: [{'x': 14, 'y': 582, 'owned': False, 'owner': 'div#desk-next > div.chair > footer.arrival-capture-bar'}, {'x': 197, 'y': 582, 'owned': False, 'owner': 'div#desk-next > div.chair > footer.arrival-capture-bar'}, {'x': 379, 'y': 582, 'owned': False, 'owner': 'div#desk-next > div.chair > footer.arrival-capture-bar'}]
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'document_text_len', 'document_text_sha256', 'focus_label', 'rect', 'text']).

@@ -481,6 +481,7 @@
                     "unchanged",
                     "window_titled",
                     "text_nonempty",
+                    "readable_text",
                     "hit_target"
                   ]
                 }

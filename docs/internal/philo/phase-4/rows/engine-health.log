@@ -1,0 +1,18 @@
+*   Trying 192.168.1.43:8080...
+* Connected to 192.168.1.43 (192.168.1.43) port 8080
+> GET /health HTTP/1.1
+> Host: 192.168.1.43:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Keep-Alive: timeout=5, max=100
+< Content-Type: application/json; charset=utf-8
+< Server: llama.cpp
+< Content-Length: 15
+< Access-Control-Allow-Origin: 
+< 
+{ [15 bytes data]
+* Connection #0 to host 192.168.1.43 left intact
+{"status":"ok"}
