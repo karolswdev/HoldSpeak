@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (PHILO-4-04 built and verified; PR #627 open for counsel on built).
-**Current phase:** [phase-4-the-morning](phase-4-the-morning/current-phase-status.md)
-**Status:** Phases 1 and 2 delivered. Phase 3 closed by ruling; the morning closure is proved by Phase 4. Phase 4 stories 01–03 are merged. Story 04 is built and verified: the Arrival shows its current handling below the saved brief headline. PR #627 remains open for Muad'Dib's counsel on built. The owner waived the sitting; no owner observation is claimed. Summary usefulness remains partial. See the [Phase 4 proof](phase-4-the-morning/evidence-story-04.md) and [status](phase-4-the-morning/current-phase-status.md).
+**Last updated:** 2026-09-24 (Phase 4 closed).
+**Current phase:** none active — Phase 4 [closed](phase-4-the-morning/final-summary.md) 2026-09-24; Phase 5 The One Service Layer is a [parked draft](PHASE-5-CHARTER-DRAFT.md) awaiting the owner's word (D1–D3).
+**Status:** Phases 1–4 delivered and merged. Phase 3 closed by ruling with its sitting waived; Phase 4 The Morning closed 2026-09-24 (the next-day brief in one move, proven on the rig at both widths). Phase 5 The One Service Layer is a draft (r2, Astra's carried conditions in §12), not chartered.
 
 ## Vision
 
