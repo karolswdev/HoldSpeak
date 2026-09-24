@@ -1,0 +1,50 @@
+F...                                                                     [100%]
+=================================== FAILURES ===================================
+_________________________________ test_ratchet _________________________________
+
+    def test_ratchet():
+        """For every rule, the current hit count must be <= the ceiling count.
+    
+        Failure message names the rule, the delta, and the faces whose count
+        rose — so a developer sees exactly what to fix.
+        """
+        ceiling = json.loads(CEILING_PATH.read_text())
+        result = _get_scan()
+        totals = result["totals"]
+        face_rule_counts = result["face_rule_counts"]
+        ceiling_faces = ceiling.get("faces", {})
+    
+        regressions: list[str] = []
+        for rule, current in totals["per_rule"].items():
+            ceiling_val = ceiling["per_rule"].get(rule, 0)
+            if current > ceiling_val:
+                delta = current - ceiling_val
+                risen: list[str] = []
+                for face, counts in face_rule_counts.items():
+                    face_current = counts.get(rule, 0)
+                    face_ceiling = ceiling_faces.get(face, {}).get(rule, 0)
+                    if face_current > face_ceiling:
+                        risen.append(f"  {face}: {face_ceiling} -> {face_current}")
+                detail = "\n".join(risen) if risen else "  (no single face rose)"
+                regressions.append(
+                    f"{rule}: ceiling {ceiling_val} -> current {current} (+{delta})\n{detail}"
+                )
+    
+>       assert not regressions, (
+            "UX canon ratchet broken — new violations introduced:\n\n"
+            + "\n\n".join(regressions)
+            + "\n\nFix the violations, or if this is a deliberate trade-off, "
+            "run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json"
+        )
+E       AssertionError: UX canon ratchet broken — new violations introduced:
+E         
+E         A8: ceiling 25 -> current 26 (+1)
+E           ChairHome: 0 -> 1
+E         
+E         Fix the violations, or if this is a deliberate trade-off, run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json
+E       assert not ['A8: ceiling 25 -> current 26 (+1)\n  ChairHome: 0 -> 1']
+
+tests/unit/test_ux_canon_ratchet.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_ux_canon_ratchet.py::test_ratchet - AssertionError: UX...
+1 failed, 3 passed in 0.74s

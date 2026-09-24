@@ -1,0 +1,44 @@
+[
+  {
+    "session_id": "01a0d3b8-763d-7aa2-b84c-3e00105e73f6",
+    "rollout": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T08-01-16-01a0d3b8-763d-7aa2-b84c-3e00105e73f6.jsonl",
+    "contexts": [
+      {
+        "model": "gpt-5.6-luna",
+        "effort": "xhigh",
+        "cwd": "/Users/karol/dev/tools/HoldSpeak"
+      }
+    ],
+    "task": "headline_fences",
+    "worktree_used": "/Users/karol/dev/tools/wt-philo-4-04",
+    "note": "Runtime cwd is inherited. Worker commands explicitly used the assigned worktree."
+  },
+  {
+    "session_id": "01a0d3b9-3268-7570-afeb-d5c065f2a4df",
+    "rollout": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T08-02-04-01a0d3b9-3268-7570-afeb-d5c065f2a4df.jsonl",
+    "contexts": [
+      {
+        "model": "gpt-5.6-luna",
+        "effort": "xhigh",
+        "cwd": "/Users/karol/dev/tools/HoldSpeak"
+      }
+    ],
+    "task": "headline_atlas",
+    "worktree_used": "/Users/karol/dev/tools/wt-philo-4-04",
+    "note": "Runtime cwd is inherited. Worker commands explicitly used the assigned worktree."
+  },
+  {
+    "session_id": "01a0d3b9-b748-7092-9148-286648b82426",
+    "rollout": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T08-02-38-01a0d3b9-b748-7092-9148-286648b82426.jsonl",
+    "contexts": [
+      {
+        "model": "gpt-5.6-luna",
+        "effort": "xhigh",
+        "cwd": "/Users/karol/dev/tools/HoldSpeak"
+      }
+    ],
+    "task": "headline_storage",
+    "worktree_used": "/Users/karol/dev/tools/wt-philo-4-04",
+    "note": "Runtime cwd is inherited. Worker commands explicitly used the assigned worktree."
+  }
+]

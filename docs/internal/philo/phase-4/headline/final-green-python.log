@@ -1,0 +1,17 @@
+command: ['uv', 'run', '--no-sync', 'pytest', '-q', 'tests/unit/test_philo4_04_headline_storage.py', 'tests/unit/test_brief_shelf.py', 'tests/unit/test_philo_4_01_generate.py', 'tests/unit/test_philo4_04_atlas_contracts.py', 'tests/unit/test_philo_graph_atlas.py', 'tests/unit/test_ux_canon_ratchet.py', 'tests/unit/test_evidence_scratch_guard.py']
+cwd: /Users/karol/dev/tools/wt-philo-4-04
+exit: 0
+
+........................................................................ [ 80%]
+..................                                                       [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+90 passed, 2 warnings in 3.65s

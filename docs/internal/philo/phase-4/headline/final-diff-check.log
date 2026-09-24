@@ -1,0 +1,4 @@
+command: ['git', 'diff', '--check']
+cwd: /Users/karol/dev/tools/wt-philo-4-04
+exit: 0
+

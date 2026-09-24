@@ -1,0 +1,13 @@
+command: ['node_modules/.bin/vitest', 'run', 'src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx', 'src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx', 'src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx', 'src/desk/chair/__tests__/briefReceiptRendered202.test.tsx', 'src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx', 'src/desk/chair/__tests__/decisionRows.philo402.test.tsx', '--maxWorkers=2']
+cwd: /Users/karol/dev/tools/wt-philo-4-04/web
+exit: 0
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-04/web
+
+
+ Test Files  6 passed (6)
+      Tests  36 passed (36)
+   Start at  08:20:16
+   Duration  1.94s (transform 682ms, setup 273ms, import 1.41s, tests 731ms, environment 1.03s)
+

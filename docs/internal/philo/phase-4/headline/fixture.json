@@ -1,0 +1,63 @@
+{
+  "fixture": "story-01-canvas/harness/compose_headline.py:FIXTURES.day1",
+  "producer": "holdspeak.services.monday_brief_service.MondayBriefService._compose",
+  "provenance": "The six rows and headline are the real _compose acceptance fixture. Collector adapters preserve this canvas provenance for storage. The new atlas walk independently exercises full generation from two real desk decisions, without a due commitment. The THIS WEEK variant proves composition and Arrival count scope, not collection.",
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+  "total": 6,
+  "sections": {
+    "changed": [
+      {
+        "id": "m1",
+        "priority": 50,
+        "text": "Meeting recorded: Platform sync",
+        "source_ref": "meeting:m1"
+      }
+    ],
+    "waiting": [
+      {
+        "id": "o1",
+        "priority": 300,
+        "text": "Overdue: Send the vendor review notes",
+        "source_ref": "action_item:a1"
+      },
+      {
+        "id": "u1",
+        "priority": 200,
+        "text": "Unassigned: Draft the migration runbook",
+        "source_ref": "action_item:a2"
+      },
+      {
+        "id": "l1",
+        "priority": 100,
+        "text": "Open loop: Rate limits for the partner API",
+        "source_ref": "cadence_loop:l1"
+      }
+    ],
+    "decisions": [
+      {
+        "id": "c1",
+        "priority": 110,
+        "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+        "source_ref": "decision:dc1"
+      },
+      {
+        "id": "d2",
+        "priority": 200,
+        "text": "Review decision: Adopt the one desk bus",
+        "source_ref": "decision:d2"
+      }
+    ]
+  },
+  "arrival_today": ["m1", "o1", "u1", "l1", "c1", "d2"],
+  "this_week_variant": {
+    "row": {
+      "id": "tw1",
+      "section": "this_week",
+      "text": "1 commitment due this week",
+      "source_ref": "meeting_watch:commitments_due",
+      "priority": 50
+    },
+    "headline": "1 commitment due, 1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "total": 7
+  }
+}

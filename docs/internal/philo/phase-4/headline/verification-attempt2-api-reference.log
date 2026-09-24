@@ -1,0 +1,5 @@
+command: ['uv', 'run', '--no-sync', 'python', 'scripts/philo_api_reference.py', '--check']
+cwd: /Users/karol/dev/tools/wt-philo-4-04
+exit: 1
+
+API reference drift: docs/generated/api-reference.json

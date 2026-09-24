@@ -1,0 +1,5 @@
+command: ['uv', 'run', '--no-sync', 'python', 'scripts/philo_boundary_census.py', '--check']
+cwd: /Users/karol/dev/tools/wt-philo-4-04
+exit: 0
+
+Boundary candidate census checked

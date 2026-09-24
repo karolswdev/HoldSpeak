@@ -883,6 +883,19 @@ function Arrival() {
   const untriagedBrief = briefItems
     .filter((item) => !briefShelf[item.id])
     .filter((item) => !isRawId(item.text));
+  /* PHILO-4-04 (ratified board 7c): the stored headline remains the
+     producer's snapshot. Name the current Arrival triage only when every
+     Arrival item has a durable Ack or Defer shelf state. `briefItems` is the
+     Arrival projection above, so THIS WEEK is outside this count; raw-id
+     rows remain in it until shelved and therefore cannot claim completion
+     while hidden from the face. */
+  const handledBriefItems = briefItems.filter((item) => (
+    briefShelf[item.id] === "acknowledged" || briefShelf[item.id] === "deferred"
+  ));
+  const handledBriefCount = (
+    briefItems.length > 0 && handledBriefItems.length === briefItems.length
+  ) ? handledBriefItems.length : null;
+  const handledBriefLine = handledBriefCount === null ? null : `ALL ${handledBriefCount} HANDLED`;
 
   // Generate owns the only automatic move. Initial loads, failures and shelf
   // changes leave the owner's scroll position alone. The native nearest rule
@@ -1381,6 +1394,14 @@ function Arrival() {
               </span>
             ) : null}
             <BriefDate brief={brief} />
+            {handledBriefLine ? (
+              <span
+                className="surface-receipt-line"
+                data-testid="arrival-brief-handled"
+              >
+                {handledBriefLine}
+              </span>
+            ) : null}
             {briefKept ? (
               <span
                 className="surface-receipt-line"

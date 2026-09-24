@@ -1769,6 +1769,140 @@
       "completion_bound_s": 60
     },
     {
+      "id": "case.philo404.arrival_triaged_headline.all_handled",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.populated",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "two proposed desk decisions are created through POST /api/decisions, so the real brief producer returns two Arrival rows"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk triage headline Ack",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the production decisions route mints the first material item that MondayBriefService collects"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk triage headline Defer",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the production decisions route mints a second material item, so the walk uses both face shelf verbs"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "the Arrival Generate verb calls the real brief producer after its material exists"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-row]",
+          "adapter": "ui-pointer",
+          "why": "the producer's populated brief is rendered as Arrival rows"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "bind the generated brief id so the rig records its durable item and shelf state"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_headline",
+          "capture_path": "headline",
+          "adapter": "http-route",
+          "why": "bind the producer's stored headline before any shelf verb"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-row]:has-text('Review decision: Graph walk triage headline Ack') button:has-text('Ack')",
+          "adapter": "ui-pointer",
+          "why": "Ack the first populated Arrival row through the face; its shelf write is durable"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/headline",
+            "value": "{first_headline}"
+          },
+          "observe_at": "protocol: GET /api/brief/latest",
+          "why": "shelving a row must leave the producer's historical headline unchanged"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-brief-row]:has-text('Review decision: Graph walk triage headline Defer') button:has-text('Defer')",
+        "adapter": "ui-pointer",
+        "why": "Defer the remaining populated Arrival row through the face"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "ALL 2 HANDLED"
+        },
+        "observe_at": "[data-testid=arrival-brief-handled]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
+          }
+        ],
+        "words": "PHILO-4-04 board 7c: after the real producer creates two Arrival items, the owner Ack/Defer actions leave every Arrival row shelved. The quiet BRIEF keeps its stored headline and date and adds a readable static 'ALL 2 HANDLED' receipt; THIS WEEK is outside this count."
+      },
+      "completion_bound_s": 30
+    },
+    {
       "id": "case.closure.chain.s5_next_day_brief_has_it",
       "job": "j10",
       "edge_ids": [

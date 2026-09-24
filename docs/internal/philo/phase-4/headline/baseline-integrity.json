@@ -1,0 +1,21 @@
+{
+  "base": "6cfc64e01cb1514c17bccea0d9e886640f74c5b5",
+  "archive": "/Users/karol/dev/tools/wt-philo-4-04/.tmp/philo404-origin-main-20260924T0809Z",
+  "product_file": "web/src/desk/chair/ChairHome.tsx",
+  "product_sha256": "4b9bdbaa381df21cc6c6d6eff499ce1a4df65ccd0abe326e7ea0e7140d1eaaa1",
+  "product_matches_origin_main": true,
+  "test_inputs": [
+    {
+      "path": "web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx",
+      "archive_sha256": "b0d4fb33ea52652dcbddc906814c0bd2a4ed1d74ffd5cf82cae9f3869368d7f0",
+      "current_sha256": "b0d4fb33ea52652dcbddc906814c0bd2a4ed1d74ffd5cf82cae9f3869368d7f0",
+      "identical": true
+    },
+    {
+      "path": "docs/internal/philo/phase-4/headline/fixture.json",
+      "archive_sha256": "d06b5cccb6a1883b9ead0d17ce13b32d40575085223938fb0d8ee710d6ff1bbb",
+      "current_sha256": "d06b5cccb6a1883b9ead0d17ce13b32d40575085223938fb0d8ee710d6ff1bbb",
+      "identical": true
+    }
+  ]
+}

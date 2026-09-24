@@ -1,0 +1,1084 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-04/.tmp/philo404-origin-main-20260924T0809Z/web
+
+ × src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled 23ms
+   → Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line 6ms
+   → Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 commitment due, 1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged 6ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf 5ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count 5ms
+ × src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open 8ms
+   → Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-generating"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mGENERATING…[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure 7ms
+   → Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-failed"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"surface-receipt-line"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate-failed"[39m
+              [33mdata-tone[39m=[32m"danger"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mBRIEF DID NOT GENERATE · HTTP 500[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt 18ms
+   → Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-receipt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mBrief ready · 6 items · 5:40 PM[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHandledOrder src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:126:26
+    124|   const headline = screen.getByTestId("arrival-brief-headline");
+    125|   const date = screen.getByTestId("arrival-brief-date");
+    126|   const handled = screen.getByTestId("arrival-brief-handled");
+       |                          ^
+    127|   expect(headline.textContent).toBe(expectedHeadline);
+    128|   expect(date.textContent).toBe("SEP 21 – 23 · GENERATED SEP 23 17:40"…
+ ❯ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:158:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 commitment due, 1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHandledOrder src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:126:26
+    124|   const headline = screen.getByTestId("arrival-brief-headline");
+    125|   const date = screen.getByTestId("arrival-brief-date");
+    126|   const handled = screen.getByTestId("arrival-brief-handled");
+       |                          ^
+    127|   expect(headline.textContent).toBe(expectedHeadline);
+    128|   expect(date.textContent).toBe("SEP 21 – 23 · GENERATED SEP 23 17:40"…
+ ❯ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:184:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-generating"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mGENERATING…[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHandledOrder src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:126:26
+    124|   const headline = screen.getByTestId("arrival-brief-headline");
+    125|   const date = screen.getByTestId("arrival-brief-date");
+    126|   const handled = screen.getByTestId("arrival-brief-handled");
+       |                          ^
+    127|   expect(headline.textContent).toBe(expectedHeadline);
+    128|   expect(date.textContent).toBe("SEP 21 – 23 · GENERATED SEP 23 17:40"…
+ ❯ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:258:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-failed"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"surface-receipt-line"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate-failed"[39m
+              [33mdata-tone[39m=[32m"danger"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mBRIEF DID NOT GENERATE · HTTP 500[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHandledOrder src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:126:26
+    124|   const headline = screen.getByTestId("arrival-brief-headline");
+    125|   const date = screen.getByTestId("arrival-brief-date");
+    126|   const handled = screen.getByTestId("arrival-brief-handled");
+       |                          ^
+    127|   expect(headline.textContent).toBe(expectedHeadline);
+    128|   expect(date.textContent).toBe("SEP 21 – 23 · GENERATED SEP 23 17:40"…
+ ❯ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:273:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-handled"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-headline"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+          [36m>[39m
+            [0m1 thing changed, 3 things waiting, 2 decisions waiting.[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+          [36m>[39m
+            [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-receipt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mBrief ready · 6 items · 5:40 PM[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../../web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHandledOrder src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:126:26
+    124|   const headline = screen.getByTestId("arrival-brief-headline");
+    125|   const date = screen.getByTestId("arrival-brief-date");
+    126|   const handled = screen.getByTestId("arrival-brief-handled");
+       |                          ^
+    127|   expect(headline.textContent).toBe(expectedHeadline);
+    128|   expect(date.textContent).toBe("SEP 21 – 23 · GENERATED SEP 23 17:40"…
+ ❯ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:288:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  08:15:19
+   Duration  801ms (transform 327ms, setup 55ms, import 438ms, tests 78ms, environment 160ms)
+

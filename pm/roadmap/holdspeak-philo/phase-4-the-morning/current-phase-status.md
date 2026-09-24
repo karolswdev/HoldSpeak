@@ -1,6 +1,6 @@
 # Phase 4 - The Morning
 
-**Last updated:** 2026-09-24 (04 canvas ratified; sitting waived) (PHILO-4-02 built and checked; exits 1 and 2 proved on the lane; PR to remain open).
+**Last updated:** 2026-09-24 (PHILO-4-04 built and verified; PR #627 open for Muad'Dib's counsel on built).
 
 ## Goal
 
@@ -21,7 +21,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 ## Scope
 
 - **In:** the stories below; their fences (red pre-fix); the closure chain's step 5 re-run on the rig at 1440 and 393 as written (no detour) — `case.closure.chain.*` in `atlas-phase3.json`, re-pointed; the Phase 3 exit 1 language updated to cite this phase when it passes.
-- **Out (real costs, ledgered, not dependencies of the morning):** the brief view's own Generate limitation (`BriefView.tsx:297`); breakage titles carrying service/method/connector ids (Tenet 4 wording, `monday_brief_service.py:546`); owners and due dates lost on the Arrival rows; raw internals in the brief view; the decision window covering the BRIEF verbs at 1440 (normal window behaviour under UX-CANON.md:111, an observation not a repair); the decision row below the fold at 393 outside the newly generated first Arrival row proved by 02; the A4 receipt-line regression on the HS-201-12 fence; ASR instability; the aftercare overlap; exception-path queue wording; `1 WORDS`.
+- **Out (real costs, ledgered, not dependencies of the morning):** the brief view's own Generate limitation (`BriefView.tsx:297`); breakage titles carrying service/method/connector ids (Tenet 4 wording, `monday_brief_service.py:546`); the producer's HEADLINE SENTENCE itself (`MondayBriefService._compose`, `monday_brief_service.py:346-389`: "N things waiting, N decisions waiting." — prose, and after full triage it sits above `ALL n HANDLED` reading as current; with a THIS WEEK item the two counts differ) — Tenet 4 wording debt, recorded by Muad'Dib's counsel on story 04; owners and due dates lost on the Arrival rows; raw internals in the brief view; the decision window covering the BRIEF verbs at 1440 (normal window behaviour under UX-CANON.md:111, an observation not a repair); the decision row below the fold at 393 outside the newly generated first Arrival row proved by 02; the A4 receipt-line regression on the HS-201-12 fence; ASR instability; the aftercare overlap; exception-path queue wording; `1 WORDS`.
 
 ## Exit criteria (evidence required)
 
@@ -39,7 +39,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | PHILO-4-01 | Generate is always reachable | done | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | done | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-4-03 | A failure never collides with the next brief | done | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | in-progress | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
+| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | done | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Lanes
 
@@ -51,6 +51,20 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | The headline | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-4-04 | feat/philo-4-04-headline |
 
 ## Where we are
+
+2026-09-24: PHILO-4-04 **BUILT AND VERIFIED** on `feat/philo-4-04-headline`.
+After Ack/Defer on every Arrival row, the saved headline/date remain and
+`ALL n HANDLED` names the current triage. Empty/partial states stay honest;
+THIS WEEK is excluded. Final actual-atlas runs pass at 1440
+`20260924T142054Z` and 393 `20260924T142158Z`; DB and API readback retain
+historical counts/items. All three story acceptance boxes are paid; 90
+scoped Python and 36 rendered tests pass, as do generated-reference checks.
+The source-scanner guard and shifted atlas anchors were corrected in this
+commit. Stories 01–03 are merged; 04 is ready for Muad'Dib's counsel on
+built on PR #627. No merge by Astra. The owner waived the sitting; no owner
+observation is claimed. [Report](../../../../docs/internal/philo/phase-4/headline/lane-report.md),
+[evidence](evidence-story-04.md). Earlier entries below describe their own
+revisions; the prior pending-sitting language is superseded by the waiver.
 
 2026-09-24: PHILO-4-02 BUILT AND VERIFIED on `feat/philo-4-02-rows`, based on merged 01/03 (`566495b0`). Decisions lead, newest by persisted record timestamp; cap and count law retained. The phone row clears the measured capture bar and dock after Generate. Final as-written and real-breakage walks pass at both widths; exits 1 and 2 met on this lane. Muad'Dib RATIFY-WITH-CONDITIONS; conditions paid, with the pinned-inventory condition corrected by the checker. The gated PR remains open for the invoking brain; no merge. Story 04 is next. The owner's sitting and summary usefulness remain open.
 
@@ -72,6 +86,11 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | The id fix silently drops or moves a failure or its triage | medium | brief-scoped ids only; both briefs and the old triage read back; no `OR IGNORE`/`OR REPLACE`; no migration | a row or a triage record missing after generation |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — PHILO-4-04 follows ratified board 7c in every state; older
+  8a/8b/9 images establish status coexistence, not the alternative date
+  placement. No acceptance amendment. The source scanner's zero-counter
+  check now sees the guard beside label construction; its ceiling is unchanged.
 
 - 2026-09-24 — the owner RATIFIED the story 04 canvas ("good to go"): ask 1 the recommended board 7c (`ALL n HANDLED` under the existing date; headline and date unmoved); ask 2 the count = Arrival rows with an Ack/Defer, THIS WEEK excluded; ask 3 `No changes` stays bare. He WAIVED the sitting ("no sitting reqd..."): exit 4 closes as accepted-not-observed; Phase 3 exit 3 likewise. Build 04 (Astra lane) starts — Muad'Dib.
 
