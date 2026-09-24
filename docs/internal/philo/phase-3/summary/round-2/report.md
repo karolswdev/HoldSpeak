@@ -23,6 +23,12 @@ The original 60 observations, the six pre-integration round-two observations and
 The initial graph census invocation used system Python and could not import `holdspeak`; the corrected venv invocation reports zero new/removed/changed/stale/unread entries, with the inherited five miscited anchors and fourteen subtype conflicts. The worker's first calibration invocation lacked the browser-cache path; its retained rerun passes. These are invocation errors, not product failures or flake claims.
 
 
+## Post-push documentation check
+
+CI on PR #616 at `4f5fd691` failed its generated boundary-census check ([job](https://github.com/karolswdev/HoldSpeak/actions/runs/35936854087/job/107435694324), [retained failure excerpt](integration/docnav-ci.failure.log)). The same check fails locally ([red](integration/docnav-boundary-reproduce.raw.log)). Regeneration corrects **eight source line numbers**: one in `web/src/desk/api.ts`, six in `ChairHome.tsx`, one in `web/src/lib/primitives.ts`. All **897 candidates**, excerpts, kinds, hashes and the snapshot identity remain unchanged. This is **(a), stale generated metadata**, corrected in this lane, not inherited debt or a product change.
+
+The earlier full suite did not run this artifact-comparison CLI; its boundary unit test checks lexical patterns. The relevant existing unit test passes, and Astra now ran the **complete twelve-command Documentation Navigation CI sequence**, including nine navigation unittests, through DW capture **`2026-09-24T00:11:13Z`**, exit 0. [Complete raw output](integration/docnav-astra.raw.log), [capture receipt](integration/docnav-astra.capture.txt). No product or test source changed after the integrated build or the 22-test follow-up. Remote CI's next result remains separate from this local reproduction.
+
 ## First round-two gate checkpoint — retained history
 
 The sections below describe commit `9b036047` before main integration and the completed final full run above. Its pending language is historical.

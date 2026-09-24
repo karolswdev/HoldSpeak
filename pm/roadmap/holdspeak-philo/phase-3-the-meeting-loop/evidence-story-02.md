@@ -7270,3 +7270,81 @@ width = 393
 ......................                                                   [100%]
 22 passed in 43.18s
 ```
+
+### Captured run — 2026-09-24T00:11:13Z
+
+- **Command:** `uv run --no-sync python .tmp/philo3-r2-docnav.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** bb784c94553c3008adb502e35917df1d64312187
+
+```text
+$ python -m unittest discover -s tests/unit -p test_docs_navigation.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
+
+EXIT=0
+$ python scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+
+EXIT=0
+$ python scripts/check_docs.py docs/internal/philo/DELIVERY_ROADMAP.md docs/internal/philo/DESIGN_SPECIFICATION.md docs/internal/philo/EXTERNAL_RESEARCH.md docs/internal/philo/INITIAL_PLAN.md docs/internal/philo/README.md docs/internal/philo/SOURCE_HIERARCHY.md docs/internal/philo/SRS.md docs/internal/philo/initial-findings.md docs/internal/philo/source-checklist.md docs/internal/philo/adr/capability-evidence-ownership.md docs/internal/philo/adr/desktop-host.md docs/internal/philo/checks/accuracy-luna.md docs/internal/philo/checks/baseline-failures.md docs/internal/philo/checks/luna-audits.md docs/internal/philo/checks/plan-astra-response.md docs/internal/philo/checks/plan-muaddib-round2.md docs/internal/philo/checks/plan-muaddib.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/holdspeak-api-client/SKILL.md agent/skills/holdspeak-capability-verifier/SKILL.md agent/skills/holdspeak-connector-author/SKILL.md agent/skills/holdspeak-desk/SKILL.md agent/skills/holdspeak-dictation/SKILL.md agent/skills/holdspeak-doc-maintainer/SKILL.md agent/skills/holdspeak-kernel/SKILL.md agent/skills/holdspeak-meetings/SKILL.md agent/skills/holdspeak-model-routing/SKILL.md agent/skills/holdspeak-plugin-author/SKILL.md agent/skills/holdspeak-release-auditor/SKILL.md agent/skills/holdspeak-repo-navigator/SKILL.md agent/skills/holdspeak-security-review/SKILL.md agent/skills/holdspeak-troubleshooter/SKILL.md
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+
+EXIT=0
+$ python scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
+
+EXIT=0
+$ python scripts/philo_api_reference.py --check
+API reference checked
+
+EXIT=0
+$ python scripts/philo_boundary_census.py --check
+Boundary candidate census checked
+
+EXIT=0
+$ python scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+
+EXIT=0
+$ python scripts/philo_config_reference.py --check
+Configuration declaration reference is current
+
+EXIT=0
+$ python scripts/philo_graph_reference.py --check
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+
+EXIT=0
+$ python scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+
+EXIT=0
+$ python scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+
+EXIT=0
+$ python scripts/check_doc_coverage.py --check
+Documentation coverage checked.
+
+EXIT=0
+All 12 Documentation Navigation commands passed.
+```
