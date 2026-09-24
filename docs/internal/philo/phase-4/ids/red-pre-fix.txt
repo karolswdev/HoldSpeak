@@ -1,0 +1,526 @@
+# PHILO-4-03 fence, pre-fix: git archive origin/main @ 1c39294c9de932ae0352750b78e7a0a70b99a591 with tests/unit/test_philo4_03_breakage_ids.py overlaid
+# cmd: HOME=$(mktemp -d) uv run python -m pytest -q tests/unit/test_philo4_03_breakage_ids.py  (exit 1)
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+________ test_a_pipeline_failure_in_two_lookbacks_generates_both_briefs ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-430/test_a_pipeline_failure_in_two0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111cfb100>
+
+    def test_a_pipeline_failure_in_two_lookbacks_generates_both_briefs(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        clock = MovableClock(DAY_ONE)
+        client = _hub(db, monkeypatch, tmp_path, clock)
+    
+        # The REAL producer: a failing observed service call on the hub.
+        monkeypatch.setattr(
+            observer_module, "time", SimpleNamespace(time=lambda: FAILED_AT.timestamp())
+        )
+        failed = client.post(
+            "/api/brief/items/brief-item-missing/shelf", json={"state": "acknowledged"}
+        )
+        assert failed.status_code == 404
+        with db._connection() as conn:
+            events = conn.execute(
+                "SELECT event_id, service, method, error FROM pipeline_events"
+                " WHERE error IS NOT NULL"
+            ).fetchall()
+        assert len(events) == 1
+        assert (events[0]["service"], events[0]["method"]) == ("MondayBriefService", "shelve")
+        source_ref = f"pipeline-event:{events[0]['event_id']}"
+    
+>       day_one, day_two = _two_days(client, clock, db, source_ref)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_philo4_03_breakage_ids.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_philo4_03_breakage_ids.py:116: in _two_days
+    second = client.post("/api/brief/generate")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:546: in post
+    return super().post(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/anyio/from_thread.py:334: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/concurrent/futures/_base.py:450: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/concurrent/futures/_base.py:395: in __get_result
+    raise self._exception
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/anyio/from_thread.py:259: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/contextlib.py:162: in __exit__
+    self.gen.throw(value)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_philo4_03_breakage_ids.py:71: in owner
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:243: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/web/routes/monday_brief.py:116: in generate
+    result = asdict(service.generate(principal(request)))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/observer.py:177: in sync_wrapper
+    result = fn(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.services.monday_brief_service.MondayBriefService object at 0x111ddee40>
+principal = Principal(kind=<PrincipalKind.OWNER: 'owner'>, identity='test-owner', allowed_operations=frozenset(), authority_basis='')
+
+    def generate(
+        self, principal: Any, *, now: datetime.datetime | None = None
+    ) -> MondayBrief:
+        """Generate or return the existing brief for the current local date."""
+        # PHILO-3-03: the producer's day comes from its one clock.
+        period_start, period_end = self.compute_window(now or self._clock())
+        date_key = period_end.date().isoformat()
+        # HS-200-07 (C4): the needs-you half of the brief names what was
+        # NOT observed, so an empty brief cannot read as an all-clear over
+        # a source that failed.
+        waiting_items = self._collect_coverage_gaps(principal) + \
+            self._collect_waiting(principal)
+    
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM monday_briefs
+                   WHERE substr(period_end, 1, 10) = ?
+                   ORDER BY generated_at DESC, id DESC LIMIT 1""",
+                (date_key,),
+            ).fetchone()
+            if row is not None:
+                return self._load_brief(conn, row)
+    
+            human_changes, ledger = self._collect_changes(
+                period_start.isoformat(), period_end.isoformat()
+            )
+    
+            # HS-175-05 / counsel C11: the THIS WEEK half is the ruled
+            # forward window [now, Sunday 23:59] (Addendum 1, condition 2)
+            # -- never from Monday 00:00, so it cannot overlap the SINCE
+            # FRIDAY lookback.  ``compute_window`` is untouched.
+            #
+            # calendar_events.starts_at is stored as UTC ('...Z', see
+            # calendar_ingest.py:407), so the boundaries are normalised to UTC
+            # ISO before the string compare; a naive ``now`` (what the
+            # cadence and the route pass) is read as local time, the same
+            # convention compute_window keeps.  Dates (commitments' due_at)
+            # are compared as the owner's local dates.
+            ahead_start, ahead_end = self.compute_lookahead(period_end)
+            ahead_start_iso = self._utc_iso(ahead_start)
+            ahead_end_iso = self._utc_iso(ahead_end)
+            local_start = ahead_start if ahead_start.tzinfo else ahead_start.astimezone()
+            local_end = ahead_end if ahead_end.tzinfo else ahead_end.astimezone()
+            clock_tz = local_start.tzinfo
+    
+            # Last brief generated_at for "since last brief" filtering
+            last_brief_row = conn.execute(
+                "SELECT MAX(generated_at) AS latest FROM monday_briefs"
+            ).fetchone()
+            last_brief_at = str(last_brief_row["latest"]) if (
+                last_brief_row and last_brief_row["latest"]
+            ) else None
+    
+            # C11: dedup against the lookback's "Meeting recorded" rows --
+            # an occurrence already recorded is SINCE FRIDAY's, not THIS
+            # WEEK's.
+            recorded_event_ids = self._recorded_calendar_event_ids(
+                period_start.isoformat(), period_end.isoformat()
+            )
+    
+            # HS-175-05: new collectors (THIS WEEK section, forward-looking)
+            calendar_items = self._collect_calendar_events(
+                ahead_start_iso, ahead_end_iso, ahead_start_iso,
+                exclude_event_ids=recorded_event_ids,
+                clock_tz=clock_tz,
+            )
+            meeting_watch_items = self._collect_meeting_watch(
+                ahead_start_iso, ahead_end_iso, last_brief_at,
+                decisions_since=period_start.isoformat(),
+                due_from=local_start.date().isoformat(),
+                due_until=local_end.date().isoformat() + "T23:59:59",
+            )
+    
+            sections = {
+                "this_week": calendar_items + meeting_watch_items,
+                "changed": human_changes
+                + self._collect_meetings(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "broke": self._collect_breakage(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "waiting": waiting_items,
+                # C11 follow-up: a commitment is said once -- the ids THIS
+                # WEEK counts are dropped from the lookback's due items.
+                "decisions": self._collect_decisions(
+                    principal,
+                    {
+                        str(r["id"]) for r in self._commitments_due_rows(
+                            conn,
+                            local_start.date().isoformat(),
+                            local_end.date().isoformat() + "T23:59:59",
+                        )
+                    },
+                ),
+            }
+            headline, sections = self._compose(sections)
+            brief_id = f"brief-{uuid.uuid4().hex}"
+            generated_at = period_end.isoformat()
+            conn.execute(
+                """INSERT INTO monday_briefs
+                   (id, period_start, period_end, headline, generated_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    brief_id,
+                    period_start.isoformat(),
+                    period_end.isoformat(),
+                    headline,
+                    generated_at,
+                ),
+            )
+            items = [item for section in _SECTIONS for item in sections[section]]
+            for item in items:
+>               conn.execute(
+                    """INSERT INTO monday_brief_items
+                       (id, brief_id, section, text, detail, source_ref, priority)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        item.id,
+                        brief_id,
+                        item.section,
+                        item.text,
+                        item.detail,
+                        item.source_ref,
+                        item.priority,
+                    ),
+                )
+E               sqlite3.IntegrityError: UNIQUE constraint failed: monday_brief_items.id
+
+holdspeak/services/monday_brief_service.py:305: IntegrityError
+_______ test_a_connector_failure_in_two_lookbacks_generates_both_briefs ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-430/test_a_connector_failure_in_tw0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111f1e2c0>
+
+    def test_a_connector_failure_in_two_lookbacks_generates_both_briefs(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        clock = MovableClock(DAY_ONE)
+        client = _hub(db, monkeypatch, tmp_path, clock)
+    
+        run = db.activity.record_connector_run(
+            connector_id="github",
+            started_at=FAILED_AT,
+            finished_at=FAILED_AT + datetime.timedelta(minutes=1),
+            succeeded=False,
+            error="token expired",
+        )
+        source_ref = f"connector-run:{run.id}"
+    
+>       day_one, day_two = _two_days(client, clock, db, source_ref)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_philo4_03_breakage_ids.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/unit/test_philo4_03_breakage_ids.py:116: in _two_days
+    second = client.post("/api/brief/generate")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:546: in post
+    return super().post(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/anyio/from_thread.py:334: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/concurrent/futures/_base.py:450: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/concurrent/futures/_base.py:395: in __get_result
+    raise self._exception
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/anyio/from_thread.py:259: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/contextlib.py:162: in __exit__
+    self.gen.throw(value)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_utils.py:85: in collapse_excgroups
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_philo4_03_breakage_ids.py:71: in owner
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+/Users/karol/dev/tools/wt-philo-4-03/.venv/lib/python3.14/site-packages/fastapi/routing.py:243: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/web/routes/monday_brief.py:116: in generate
+    result = asdict(service.generate(principal(request)))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/observer.py:177: in sync_wrapper
+    result = fn(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.services.monday_brief_service.MondayBriefService object at 0x112090550>
+principal = Principal(kind=<PrincipalKind.OWNER: 'owner'>, identity='test-owner', allowed_operations=frozenset(), authority_basis='')
+
+    def generate(
+        self, principal: Any, *, now: datetime.datetime | None = None
+    ) -> MondayBrief:
+        """Generate or return the existing brief for the current local date."""
+        # PHILO-3-03: the producer's day comes from its one clock.
+        period_start, period_end = self.compute_window(now or self._clock())
+        date_key = period_end.date().isoformat()
+        # HS-200-07 (C4): the needs-you half of the brief names what was
+        # NOT observed, so an empty brief cannot read as an all-clear over
+        # a source that failed.
+        waiting_items = self._collect_coverage_gaps(principal) + \
+            self._collect_waiting(principal)
+    
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM monday_briefs
+                   WHERE substr(period_end, 1, 10) = ?
+                   ORDER BY generated_at DESC, id DESC LIMIT 1""",
+                (date_key,),
+            ).fetchone()
+            if row is not None:
+                return self._load_brief(conn, row)
+    
+            human_changes, ledger = self._collect_changes(
+                period_start.isoformat(), period_end.isoformat()
+            )
+    
+            # HS-175-05 / counsel C11: the THIS WEEK half is the ruled
+            # forward window [now, Sunday 23:59] (Addendum 1, condition 2)
+            # -- never from Monday 00:00, so it cannot overlap the SINCE
+            # FRIDAY lookback.  ``compute_window`` is untouched.
+            #
+            # calendar_events.starts_at is stored as UTC ('...Z', see
+            # calendar_ingest.py:407), so the boundaries are normalised to UTC
+            # ISO before the string compare; a naive ``now`` (what the
+            # cadence and the route pass) is read as local time, the same
+            # convention compute_window keeps.  Dates (commitments' due_at)
+            # are compared as the owner's local dates.
+            ahead_start, ahead_end = self.compute_lookahead(period_end)
+            ahead_start_iso = self._utc_iso(ahead_start)
+            ahead_end_iso = self._utc_iso(ahead_end)
+            local_start = ahead_start if ahead_start.tzinfo else ahead_start.astimezone()
+            local_end = ahead_end if ahead_end.tzinfo else ahead_end.astimezone()
+            clock_tz = local_start.tzinfo
+    
+            # Last brief generated_at for "since last brief" filtering
+            last_brief_row = conn.execute(
+                "SELECT MAX(generated_at) AS latest FROM monday_briefs"
+            ).fetchone()
+            last_brief_at = str(last_brief_row["latest"]) if (
+                last_brief_row and last_brief_row["latest"]
+            ) else None
+    
+            # C11: dedup against the lookback's "Meeting recorded" rows --
+            # an occurrence already recorded is SINCE FRIDAY's, not THIS
+            # WEEK's.
+            recorded_event_ids = self._recorded_calendar_event_ids(
+                period_start.isoformat(), period_end.isoformat()
+            )
+    
+            # HS-175-05: new collectors (THIS WEEK section, forward-looking)
+            calendar_items = self._collect_calendar_events(
+                ahead_start_iso, ahead_end_iso, ahead_start_iso,
+                exclude_event_ids=recorded_event_ids,
+                clock_tz=clock_tz,
+            )
+            meeting_watch_items = self._collect_meeting_watch(
+                ahead_start_iso, ahead_end_iso, last_brief_at,
+                decisions_since=period_start.isoformat(),
+                due_from=local_start.date().isoformat(),
+                due_until=local_end.date().isoformat() + "T23:59:59",
+            )
+    
+            sections = {
+                "this_week": calendar_items + meeting_watch_items,
+                "changed": human_changes
+                + self._collect_meetings(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "broke": self._collect_breakage(
+                    period_start.isoformat(), period_end.isoformat()
+                ),
+                "waiting": waiting_items,
+                # C11 follow-up: a commitment is said once -- the ids THIS
+                # WEEK counts are dropped from the lookback's due items.
+                "decisions": self._collect_decisions(
+                    principal,
+                    {
+                        str(r["id"]) for r in self._commitments_due_rows(
+                            conn,
+                            local_start.date().isoformat(),
+                            local_end.date().isoformat() + "T23:59:59",
+                        )
+                    },
+                ),
+            }
+            headline, sections = self._compose(sections)
+            brief_id = f"brief-{uuid.uuid4().hex}"
+            generated_at = period_end.isoformat()
+            conn.execute(
+                """INSERT INTO monday_briefs
+                   (id, period_start, period_end, headline, generated_at)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    brief_id,
+                    period_start.isoformat(),
+                    period_end.isoformat(),
+                    headline,
+                    generated_at,
+                ),
+            )
+            items = [item for section in _SECTIONS for item in sections[section]]
+            for item in items:
+>               conn.execute(
+                    """INSERT INTO monday_brief_items
+                       (id, brief_id, section, text, detail, source_ref, priority)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        item.id,
+                        brief_id,
+                        item.section,
+                        item.text,
+                        item.detail,
+                        item.source_ref,
+                        item.priority,
+                    ),
+                )
+E               sqlite3.IntegrityError: UNIQUE constraint failed: monday_brief_items.id
+
+holdspeak/services/monday_brief_service.py:305: IntegrityError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo4_03_breakage_ids.py::test_a_pipeline_failure_in_two_lookbacks_generates_both_briefs
+FAILED tests/unit/test_philo4_03_breakage_ids.py::test_a_connector_failure_in_two_lookbacks_generates_both_briefs
+2 failed in 1.91s

@@ -262,6 +262,10 @@ class MondayBriefService:
                 due_until=local_end.date().isoformat() + "T23:59:59",
             )
 
+            # PHILO-4-03: the brief id is minted before the collectors, so the
+            # breakage items can carry it -- a failure selected into two briefs
+            # (same event, overlapping lookbacks) gets one row per brief.
+            brief_id = f"brief-{uuid.uuid4().hex}"
             sections = {
                 "this_week": calendar_items + meeting_watch_items,
                 "changed": human_changes
@@ -269,7 +273,7 @@ class MondayBriefService:
                     period_start.isoformat(), period_end.isoformat()
                 ),
                 "broke": self._collect_breakage(
-                    period_start.isoformat(), period_end.isoformat()
+                    period_start.isoformat(), period_end.isoformat(), brief_id
                 ),
                 "waiting": waiting_items,
                 # C11 follow-up: a commitment is said once -- the ids THIS
@@ -286,7 +290,6 @@ class MondayBriefService:
                 ),
             }
             headline, sections = self._compose(sections)
-            brief_id = f"brief-{uuid.uuid4().hex}"
             generated_at = period_end.isoformat()
             conn.execute(
                 """INSERT INTO monday_briefs
@@ -513,8 +516,17 @@ class MondayBriefService:
             )
         return items
 
-    def _collect_breakage(self, window_start: str, window_end: str) -> list[BriefItem]:
-        """Gather errors and failures from the requested brief window."""
+    def _collect_breakage(
+        self, window_start: str, window_end: str, brief_id: str
+    ) -> list[BriefItem]:
+        """Gather errors and failures from the requested brief window.
+
+        PHILO-4-03: item ids are scoped to *brief_id*. The lookback starts at
+        the preceding business close, so one failure can be selected into two
+        briefs; a source-only id collided on the table-wide primary key
+        (``UNIQUE constraint failed: monday_brief_items.id``). ``source_ref``
+        still names the failure itself.
+        """
         start_timestamp = self._window_timestamp(window_start)
         end_timestamp = self._window_timestamp(window_end)
         items: list[BriefItem] = []
@@ -543,7 +555,7 @@ class MondayBriefService:
                 detail = f"{error_code}: {error}" if error_code else error
                 items.append(
                     BriefItem(
-                        id=f"brief-break-pipeline-{row['event_id']}",
+                        id=f"brief-break-pipeline-{brief_id}-{row['event_id']}",
                         section="broke",
                         text=f"{service}.{method} failed",
                         detail=detail,
@@ -572,7 +584,7 @@ class MondayBriefService:
                     seen_connectors.add(connector_id)
                     items.append(
                         BriefItem(
-                            id=f"brief-break-connector-{row['id']}",
+                            id=f"brief-break-connector-{brief_id}-{row['id']}",
                             section="broke",
                             text=f"Connector {connector_id} failed",
                             detail=str(row["error"] or "No error detail recorded."),

@@ -36,7 +36,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 |---|---|---|---|---|
 | PHILO-4-01 | Generate is always reachable | in-progress | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | - |
 | PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | backlog | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | - |
-| PHILO-4-03 | A failure never collides with the next brief | in-progress | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | - |
+| PHILO-4-03 | A failure never collides with the next brief | done | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | backlog | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
 
 ## Lanes
@@ -49,6 +49,8 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | The headline | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-4-04 | feat/philo-4-04-headline |
 
 ## Where we are
+
+2026-09-24: PHILO-4-03 built on `feat/philo-4-03-ids` — breakage ids are scoped to their brief (pipeline and connector); the fence (`tests/unit/test_philo4_03_breakage_ids.py`) was red pre-fix on the IntegrityError and is green; Astra's check on built is owed before merge. Exit criterion 2 is met on this branch once merged.
 
 2026-09-23 night: RATIFIED on his walk. Lanes 01 (Muad'Dib, `../wt-philo-4-01`, the library changes already on main) and 03 (Muad'Dib, `../wt-philo-4-03`) start; 02 (Astra) after 01 merges; 04 (Astra) after 02.
 
