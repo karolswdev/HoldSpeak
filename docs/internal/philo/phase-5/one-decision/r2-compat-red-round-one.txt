@@ -1,0 +1,212 @@
+# PHILO-5-01 round two: tests/unit/test_philo5_compat.py on 'git archive e4010fd4' (round one). Expected: red (500 rows; typed schema refuses base-accepted inputs; decision_id in update data accepted).
+FFFF.FFFF.F                                                              [100%]
+=================================== FAILURES ===================================
+_______________ test_http_list_limit_above_500_returns_every_row _______________
+
+client = <starlette.testclient.TestClient object at 0x111e406e0>
+
+    def test_http_list_limit_above_500_returns_every_row(client) -> None:
+        for i in range(501):
+            made = client.post("/api/decisions", json={"id": f"compat_{i}", "title": f"Decision {i}"})
+            assert made.status_code == 201, made.text
+>       assert len(client.get("/api/decisions?limit=501").json()["decisions"]) == 501
+E       AssertionError: assert 500 == 501
+E        +  where 500 = len([{'alternatives': [], 'consequences_markdown': '', 'context_markdown': '', 'created_at': '2026-09-24T19:26:26Z', ...},...lternatives': [], 'consequences_markdown': '', 'context_markdown': '', 'created_at': '2026-09-24T19:26:26Z', ...}, ...])
+
+tests/unit/test_philo5_compat.py:75: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['title']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x112c6c050>
+tool = 'desk.create', data = {'title': 123}, base = 'accepted', field = 'title'
+value = '123'
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.create: title: 123 is not of type 'string', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['decided_at']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x114538690>
+tool = 'desk.create', data = {'decided_at': 20260924}, base = 'accepted'
+field = 'decided_at', value = '20260924'
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.create: decided_at: 20260924 is not of type 'string', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['tags']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x115da8770>
+tool = 'desk.create', data = {'tags': 'one'}, base = 'accepted', field = 'tags'
+value = []
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.create: tags: 'one' is not of type 'array', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['deciders']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x117196690>
+tool = 'desk.create', data = {'deciders': 5}, base = 'accepted'
+field = 'deciders', value = []
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.create: deciders: 5 is not of type 'array', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['title']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x119918c00>
+tool = 'desk.update', data = {'title': 123}, base = 'accepted', field = 'title'
+value = '123'
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.update: title: 123 is not of type 'string', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decided_at']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x11ad1ce20>
+tool = 'desk.update', data = {'decided_at': 20260924}, base = 'accepted'
+field = 'decided_at', value = '20260924'
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.update: decided_at: 20260924 is not of type 'string', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['alternatives']:accepted] _
+
+client = <starlette.testclient.TestClient object at 0x11c0dc050>
+tool = 'desk.update', data = {'alternatives': 'a'}, base = 'accepted'
+field = 'alternatives', value = []
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+            assert is_error is True, result
+            return
+>       assert is_error is False, result
+E       AssertionError: {'error': "Invalid arguments for decision.update: alternatives: 'a' is not of type 'array', 'null'"}
+E       assert True is False
+
+tests/unit/test_philo5_compat.py:113: AssertionError
+_ test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decision_id']:refused] _
+
+client = <starlette.testclient.TestClient object at 0x11e915480>
+tool = 'desk.update', data = {'decision_id': 'other'}, base = 'refused'
+field = None, value = None
+
+    @pytest.mark.parametrize(("tool", "data", "base", "field", "value"), COMPATIBILITY_TABLE,
+                             ids=[f"{row[0]}:{sorted(row[1])}:{row[2]}" for row in COMPATIBILITY_TABLE])
+    def test_mcp_decision_inputs_keep_their_base_outcome(client, tool, data, base, field, value) -> None:
+        arguments: dict[str, Any] = {"kind": "decisions", "data": data}
+        if tool == "desk.update":
+            is_error, made = _mcp(client, "desk.create", {"kind": "decisions", "data": {"title": "Before"}})
+            assert is_error is False, made
+            arguments["id"] = made["id"]
+        is_error, result = _mcp(client, tool, arguments)
+        if base == "refused":
+>           assert is_error is True, result
+E           AssertionError: {'alternatives': [], 'consequences_markdown': '', 'context_markdown': '', 'created_at': '2026-09-24T19:26:32Z', ...}
+E           assert False is True
+
+tests/unit/test_philo5_compat.py:111: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['bogus', 'title']:refused]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['name']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_http_list_limit_above_500_returns_every_row
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['title']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['decided_at']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['tags']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['deciders']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['title']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decided_at']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['alternatives']:accepted]
+FAILED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decision_id']:refused]
+9 failed, 2 passed in 7.76s

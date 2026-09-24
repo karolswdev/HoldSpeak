@@ -10,66 +10,34 @@
         "type": "object",
         "properties": {
           "decision_id": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Optional; a new id is made when absent."
           },
           "title": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Text; defaults to 'New decision'."
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
             "description": "proposed, accepted, superseded or deprecated."
           },
           "deciders": {
-            "type": [
-              "array",
-              "null"
-            ]
+            "description": "A list of names."
           },
           "decided_at": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "A date, as text."
           },
           "context_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "decision_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "alternatives": {
-            "type": [
-              "array",
-              "null"
-            ],
             "description": "Objects with name and reason."
           },
           "consequences_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "tags": {
-            "type": [
-              "array",
-              "null"
-            ]
+            "description": "A list of tags."
           }
         },
         "additionalProperties": false
@@ -101,66 +69,34 @@
             "type": "string"
           },
           "title": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Text; defaults to 'New decision'."
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
             "description": "proposed, accepted, superseded or deprecated."
           },
           "deciders": {
-            "type": [
-              "array",
-              "null"
-            ]
+            "description": "A list of names."
           },
           "decided_at": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "A date, as text."
           },
           "context_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "decision_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "alternatives": {
-            "type": [
-              "array",
-              "null"
-            ],
             "description": "Objects with name and reason."
           },
           "consequences_markdown": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Markdown text."
           },
           "tags": {
-            "type": [
-              "array",
-              "null"
-            ]
+            "description": "A list of tags."
           },
           "superseded_by": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "The id of the decision that replaces this one."
           }
         },
         "required": [
@@ -219,10 +155,15 @@
     {
       "name": "decision.list",
       "version": 1,
-      "description": "List the desk decisions that are not deleted, most recently updated first.",
+      "description": "List the desk decisions that are not deleted, most recently updated first. The empty object lists up to 500; limit asks for 1 to 2000.",
       "args_schema": {
         "type": "object",
-        "properties": {},
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Clamped to 1..2000; default 500."
+          }
+        },
         "additionalProperties": false
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk decision service performs no principal check of its own",

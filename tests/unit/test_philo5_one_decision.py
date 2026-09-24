@@ -207,8 +207,13 @@ def registry(tmp_path: Path):
 def test_the_catalogue_is_four_explicit_descriptors() -> None:
     names = [d.name for d in operations.DESCRIPTORS]
     assert names == ["decision.create", "decision.update", "decision.read", "decision.list"]
-    empty = operations.DECISION_LIST.args_schema
-    assert dict(empty) == {"type": "object", "properties": {}, "additionalProperties": False}
+    # decision.list takes the empty object; its one optional argument is the
+    # HTTP limit (round two: it passes through instead of slicing 500 rows).
+    from jsonschema import Draft202012Validator
+
+    list_schema = dict(operations.DECISION_LIST.args_schema)
+    Draft202012Validator(list_schema).validate({})
+    assert set(list_schema["properties"]) == {"limit"} and list_schema["additionalProperties"] is False
     for descriptor in operations.DESCRIPTORS:
         assert descriptor.version == 1
         assert descriptor.effect in {"read", "write"}

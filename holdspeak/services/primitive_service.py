@@ -152,8 +152,10 @@ class PrimitiveService:
 
     # ── Decisions ────────────────────────────────────────────────────────
 
-    def list_decisions(self, principal: Principal) -> list[dict[str, Any]]:
-        return [d.to_dict() for d in self._db.desk_decisions.list()]
+    def list_decisions(self, principal: Principal, *, limit: int = 500) -> list[dict[str, Any]]:
+        # PHILO-5-01 r2: the caller's limit reaches the repository (it clamps
+        # to 1..2000); the default stays the repository's 500.
+        return [d.to_dict() for d in self._db.desk_decisions.list(limit=limit)]
 
     def get_decision(self, principal: Principal, decision_id: str) -> dict[str, Any]:
         decision = self._db.desk_decisions.get(decision_id)

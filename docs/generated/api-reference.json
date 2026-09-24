@@ -8039,6 +8039,7 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8106,6 +8107,7 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8190,6 +8192,7 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8407,6 +8410,7 @@
             "_ops().invoke",
             "_principal",
             "error_500",
+            "operations.update_args",
             "router.put",
             "str"
           ],

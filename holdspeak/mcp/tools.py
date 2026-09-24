@@ -578,7 +578,7 @@ def _primitive_create(ops: Callable[[], operations.OperationRegistry], service: 
 
 def _primitive_update(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
     if kind == "decision":
-        return ops().invoke(principal, "decision.update", {**data, "decision_id": item_id})
+        return ops().invoke(principal, "decision.update", operations.update_args(data, item_id))
     return getattr(service, f"update_{kind}")(principal, item_id, **data)
 
 

@@ -86,7 +86,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             decision = _ops().invoke(
-                _principal(request), "decision.update", {**body, "decision_id": decision_id})
+                _principal(request), "decision.update", operations.update_args(body, decision_id))
             return JSONResponse({"decision": decision})
         except NotFound:
             return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)

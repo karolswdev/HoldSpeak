@@ -119,18 +119,22 @@ _TRANSPORT_PRINCIPAL = (
     "the desk decision service performs no principal check of its own"
 )
 
-# Every field admits null: both transports passed null straight to the service
-# before this contract, and the repository treats it as "not supplied".
+# Every field is type-permissive (PHILO-5-01 r2, Astra's check on built): both
+# transports passed any value straight to the service before this contract, and
+# the service and repository coerce it (``title=123`` is stored as "123";
+# ``decided_at=20260924`` as "20260924"; a non-list ``tags`` as []). The
+# contract preserves every input the service accepted; it refuses only what was
+# already refused (an unknown field on create, once a Python ``TypeError``).
 _DECISION_FIELDS: dict[str, Any] = {
-    "title": {"type": ["string", "null"]},
-    "status": {"type": ["string", "null"], "description": "proposed, accepted, superseded or deprecated."},
-    "deciders": {"type": ["array", "null"]},
-    "decided_at": {"type": ["string", "null"]},
-    "context_markdown": {"type": ["string", "null"]},
-    "decision_markdown": {"type": ["string", "null"]},
-    "alternatives": {"type": ["array", "null"], "description": "Objects with name and reason."},
-    "consequences_markdown": {"type": ["string", "null"]},
-    "tags": {"type": ["array", "null"]},
+    "title": {"description": "Text; defaults to 'New decision'."},
+    "status": {"description": "proposed, accepted, superseded or deprecated."},
+    "deciders": {"description": "A list of names."},
+    "decided_at": {"description": "A date, as text."},
+    "context_markdown": {"description": "Markdown text."},
+    "decision_markdown": {"description": "Markdown text."},
+    "alternatives": {"description": "Objects with name and reason."},
+    "consequences_markdown": {"description": "Markdown text."},
+    "tags": {"description": "A list of tags."},
 }
 
 DECISION_CREATE = OperationDescriptor(
@@ -139,7 +143,7 @@ DECISION_CREATE = OperationDescriptor(
     description="Record one desk decision. Every field is optional; the title defaults to 'New decision' and the status to 'proposed'.",
     args_schema={
         "type": "object",
-        "properties": {"decision_id": {"type": ["string", "null"]}, **_DECISION_FIELDS},
+        "properties": {"decision_id": {"description": "Optional; a new id is made when absent."}, **_DECISION_FIELDS},
         "additionalProperties": False,
     },
     principal=_TRANSPORT_PRINCIPAL,
@@ -161,7 +165,7 @@ DECISION_UPDATE = OperationDescriptor(
         "properties": {
             "decision_id": {"type": "string"},
             **_DECISION_FIELDS,
-            "superseded_by": {"type": ["string", "null"]},
+            "superseded_by": {"description": "The id of the decision that replaces this one."},
         },
         "required": ["decision_id"],
         # Preserved on purpose: both transports passed any field through and
@@ -202,8 +206,14 @@ DECISION_READ = OperationDescriptor(
 DECISION_LIST = OperationDescriptor(
     name="decision.list",
     version=1,
-    description="List the desk decisions that are not deleted, most recently updated first.",
-    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    description="List the desk decisions that are not deleted, most recently updated first. The empty object lists up to 500; limit asks for 1 to 2000.",
+    args_schema={
+        "type": "object",
+        # PHILO-5-01 r2: HTTP's ``?limit=`` passes through (it was a slice of
+        # an already-limited result, so a limit above 500 lost rows).
+        "properties": {"limit": {"type": "integer", "description": "Clamped to 1..2000; default 500."}},
+        "additionalProperties": False,
+    },
     principal=_TRANSPORT_PRINCIPAL,
     effect="read",
     result="a list of decision records",
@@ -269,6 +279,22 @@ class OperationRegistry:
             detail = f"{location}: {exc.message}" if location else exc.message
             raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
         return bound.call(principal, **dict(payload))
+
+
+def update_args(data: Mapping[str, Any], decision_id: str) -> dict[str, Any]:
+    """``decision.update`` arguments from a transport's body and its path/tool id.
+
+    The id comes from the path (HTTP) or the tool's ``id`` (MCP). A body that
+    also carries ``decision_id`` was refused before this contract (a Python
+    ``TypeError``: "multiple values for argument 'decision_id'"); it stays
+    refused, now by name.
+    """
+    if "decision_id" in data:
+        raise OperationRefused(
+            "invalid_arguments", "decision.update",
+            "Invalid arguments for decision.update: decision_id comes from the path or the tool id, not the data",
+        )
+    return {**data, "decision_id": decision_id}
 
 
 def bind(services: Mapping[str, Any], descriptors: tuple[OperationDescriptor, ...] = DESCRIPTORS) -> OperationRegistry:
