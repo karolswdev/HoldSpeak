@@ -39,3 +39,4 @@
 ## Notes
 
 - 2026-09-23 — chartered from the Phase 3 closure run `20260924T013355Z` / `013440Z` (BLOCKED), `013738Z` / `014018Z` (FAIL behind "1 more"), `012420Z` (500).
+- 2026-09-23 — canvas round two after Astra's bounce: `assets/story-01-canvas/` (README, 11 boards × 1440/393 in `shots/`, `morning-brief.html`); artifact https://claude.ai/artifact/LHjuHKL1pVZuh4aK5J9qRU. The 12 px floor paid in the library (section head label, chip). UNRATIFIED.

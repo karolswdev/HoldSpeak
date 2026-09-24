@@ -1,23 +1,29 @@
 {
  "0-today-1440": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": null,
+   "chip_clipped": null
+  },
   "rows": [
    {
     "text": "Meeting recorded: Platform sync",
-    "top": 110,
-    "bottom": 154,
+    "top": 113,
+    "bottom": 157,
     "in_viewport": true
    },
    {
     "text": "Open loop: Rate limits for the partner API",
-    "top": 155,
-    "bottom": 199,
+    "top": 158,
+    "bottom": 202,
     "in_viewport": true
    },
    {
     "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
-    "top": 200,
-    "bottom": 244,
+    "top": 203,
+    "bottom": 247,
     "in_viewport": true
    }
   ],
@@ -28,7 +34,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -36,7 +45,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -44,7 +56,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -52,7 +67,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -60,7 +78,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -68,7 +89,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -76,7 +100,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -86,6 +113,75 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -93,6 +189,12 @@
  },
  "1-generate-reachable-1440": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
@@ -120,7 +222,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -128,7 +233,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -136,7 +244,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -144,7 +255,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -152,7 +266,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -160,7 +277,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -168,7 +288,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -176,7 +299,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -186,6 +312,85 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -193,6 +398,12 @@
  },
  "2a-generating-1440": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
@@ -220,7 +431,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -228,7 +442,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -236,7 +453,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -244,7 +464,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -252,7 +475,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -260,7 +486,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -268,7 +497,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -276,7 +508,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -291,6 +526,90 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -298,6 +617,12 @@
  },
  "2b-reading-1440": {
   "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [],
   "buttons": [
    {
@@ -306,7 +631,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -316,6 +644,30 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "READING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -323,6 +675,12 @@
  },
  "3a-did-not-generate-1440": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
@@ -350,7 +708,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -358,7 +719,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -366,7 +730,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -374,7 +741,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -382,7 +752,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -390,7 +763,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -398,7 +774,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -406,15 +785,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
-   },
-   {
-    "text": "Retry",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -429,6 +803,90 @@
     "tone": "danger"
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -436,6 +894,12 @@
  },
  "3b-did-not-load-1440": {
   "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [],
   "buttons": [
    {
@@ -444,7 +908,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Retry",
@@ -452,7 +919,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -462,6 +932,93 @@
     "tone": "danger"
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Retry",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "3c-generate-after-load-failure-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -469,6 +1026,12 @@
  },
  "4-next-day-one-decision-1440": {
   "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Ship the ingest API behind a flag",
@@ -496,7 +1059,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -504,7 +1070,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -512,7 +1081,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -520,7 +1092,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -528,7 +1103,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -536,7 +1114,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -544,7 +1125,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "3 more",
@@ -552,7 +1136,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -567,6 +1154,90 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Architecture review",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 6 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -574,6 +1245,12 @@
  },
  "5-next-day-several-decisions-1440": {
   "label": "BRIEF · 7 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Ship the ingest API behind a flag",
@@ -601,7 +1278,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -609,7 +1289,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -617,7 +1300,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -625,7 +1311,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -633,7 +1322,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -641,7 +1333,10 @@
     "w": 40,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -649,7 +1344,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "4 more",
@@ -657,7 +1355,10 @@
     "w": 928,
     "painted_h": 24,
     "halo_h": "auto",
-    "owns_44_band": false
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -672,6 +1373,205 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 7 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "4",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "6-null-brief-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No brief yet",
+    "px": 12,
+    "cls": "arrival-brief-empty"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "7-nothing-untriaged-1440": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Nothing material changed.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 928,
   "scrollW": 1440,
@@ -680,23 +1580,29 @@
  "console-errors-1440": [],
  "0-today-393": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": null,
+   "chip_clipped": null
+  },
   "rows": [
    {
     "text": "Meeting recorded: Platform sync",
-    "top": 106,
-    "bottom": 199,
+    "top": 109,
+    "bottom": 202,
     "in_viewport": true
    },
    {
     "text": "Open loop: Rate limits for the partner API",
-    "top": 200,
-    "bottom": 293,
+    "top": 203,
+    "bottom": 296,
     "in_viewport": true
    },
    {
     "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
-    "top": 294,
-    "bottom": 408,
+    "top": 297,
+    "bottom": 411,
     "in_viewport": true
    }
   ],
@@ -707,7 +1613,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -715,7 +1624,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -723,7 +1635,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -731,7 +1646,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -739,7 +1657,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -747,7 +1668,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -755,7 +1679,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -765,6 +1692,75 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -772,23 +1768,29 @@
  },
  "1-generate-reachable-393": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
-    "top": 143,
-    "bottom": 236,
+    "top": 144,
+    "bottom": 237,
     "in_viewport": true
    },
    {
     "text": "Meeting recorded: Platform sync",
-    "top": 237,
-    "bottom": 330,
+    "top": 238,
+    "bottom": 331,
     "in_viewport": true
    },
    {
     "text": "Open loop: Rate limits for the partner API",
-    "top": 331,
-    "bottom": 424,
+    "top": 332,
+    "bottom": 425,
     "in_viewport": true
    }
   ],
@@ -799,7 +1801,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -807,7 +1812,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -815,7 +1823,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -823,7 +1834,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -831,7 +1845,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -839,7 +1856,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -847,7 +1867,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -855,7 +1878,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -865,6 +1891,85 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -872,23 +1977,29 @@
  },
  "2a-generating-393": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
-    "top": 143,
-    "bottom": 236,
+    "top": 144,
+    "bottom": 237,
     "in_viewport": true
    },
    {
     "text": "Meeting recorded: Platform sync",
-    "top": 237,
-    "bottom": 330,
+    "top": 238,
+    "bottom": 331,
     "in_viewport": true
    },
    {
     "text": "Open loop: Rate limits for the partner API",
-    "top": 331,
-    "bottom": 424,
+    "top": 332,
+    "bottom": 425,
     "in_viewport": true
    }
   ],
@@ -899,7 +2010,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -907,7 +2021,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -915,7 +2032,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -923,7 +2043,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -931,7 +2054,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -939,7 +2065,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -947,7 +2076,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -955,7 +2087,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -970,6 +2105,90 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -977,6 +2196,12 @@
  },
  "2b-reading-393": {
   "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [],
   "buttons": [
    {
@@ -985,7 +2210,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -995,6 +2223,30 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "READING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -1002,23 +2254,29 @@
  },
  "3a-did-not-generate-393": {
   "label": "BRIEF · 4 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Adopt the one desk bus",
-    "top": 143,
-    "bottom": 236,
+    "top": 144,
+    "bottom": 237,
     "in_viewport": true
    },
    {
     "text": "Meeting recorded: Platform sync",
-    "top": 237,
-    "bottom": 330,
+    "top": 238,
+    "bottom": 331,
     "in_viewport": true
    },
    {
     "text": "Open loop: Rate limits for the partner API",
-    "top": 331,
-    "bottom": 424,
+    "top": 332,
+    "bottom": 425,
     "in_viewport": true
    }
   ],
@@ -1029,7 +2287,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1037,7 +2298,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1045,7 +2309,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1053,7 +2320,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1061,7 +2331,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1069,7 +2342,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1077,7 +2353,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "1 more",
@@ -1085,15 +2364,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
-   },
-   {
-    "text": "Retry",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -1108,6 +2382,90 @@
     "tone": "danger"
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 4 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Platform sync",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Open loop: Rate limits for the partner API",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "1",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "BRIEF DID NOT GENERATE · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -1115,6 +2473,12 @@
  },
  "3b-did-not-load-393": {
   "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [],
   "buttons": [
    {
@@ -1123,7 +2487,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Retry",
@@ -1131,7 +2498,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -1141,6 +2511,93 @@
     "tone": "danger"
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "BRIEF DID NOT LOAD · HTTP 500",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Retry",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "3c-generate-after-load-failure-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": true,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "GENERATING…",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "GENERATING…",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -1148,23 +2605,29 @@
  },
  "4-next-day-one-decision-393": {
   "label": "BRIEF · 6 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Ship the ingest API behind a flag",
-    "top": 143,
-    "bottom": 257,
+    "top": 144,
+    "bottom": 258,
     "in_viewport": true
    },
    {
     "text": "Review decision: Adopt the one desk bus",
-    "top": 258,
-    "bottom": 351,
+    "top": 259,
+    "bottom": 352,
     "in_viewport": true
    },
    {
     "text": "Meeting recorded: Architecture review",
-    "top": 352,
-    "bottom": 445,
+    "top": 353,
+    "bottom": 446,
     "in_viewport": true
    }
   ],
@@ -1175,7 +2638,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1183,7 +2649,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1191,7 +2660,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1199,7 +2671,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1207,7 +2682,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1215,7 +2693,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1223,7 +2704,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "3 more",
@@ -1231,7 +2715,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -1246,6 +2733,90 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 6 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Meeting recorded: Architecture review",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "3",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 6 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,
@@ -1253,23 +2824,29 @@
  },
  "5-next-day-several-decisions-393": {
   "label": "BRIEF · 7 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
   "rows": [
    {
     "text": "Review decision: Ship the ingest API behind a flag",
-    "top": 143,
-    "bottom": 257,
+    "top": 144,
+    "bottom": 258,
     "in_viewport": true
    },
    {
     "text": "Review decision: Keep one hub per desk",
-    "top": 258,
-    "bottom": 351,
+    "top": 259,
+    "bottom": 352,
     "in_viewport": true
    },
    {
     "text": "Review decision: Adopt the one desk bus",
-    "top": 352,
-    "bottom": 445,
+    "top": 353,
+    "bottom": 446,
     "in_viewport": true
    }
   ],
@@ -1280,7 +2857,10 @@
     "w": 76,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1288,7 +2868,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1296,7 +2879,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1304,7 +2890,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1312,7 +2901,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "Ack",
@@ -1320,7 +2912,10 @@
     "w": 44,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
    },
    {
     "text": "Defer",
@@ -1328,7 +2923,10 @@
     "w": 54,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
    },
    {
     "text": "4 more",
@@ -1336,7 +2934,10 @@
     "w": 369,
     "painted_h": 24,
     "halo_h": "44px",
-    "owns_44_band": true
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
    }
   ],
   "lines": [
@@ -1351,6 +2952,205 @@
     "tone": null
    }
   ],
+  "texts": [
+   {
+    "text": "BRIEF · 7 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Adopt the one desk bus",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "4",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "6-null-brief-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "No brief yet",
+    "px": 12,
+    "cls": "arrival-brief-empty"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "7-nothing-untriaged-393": {
+  "label": "BRIEF",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Nothing material changed.",
+    "px": 12,
+    "cls": "arrival-brief-headline"
+   },
+   {
+    "text": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
   "raw_buttons": 0,
   "width": 369,
   "scrollW": 393,

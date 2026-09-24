@@ -41,25 +41,34 @@
   "status": "READING…"
  },
  "3a-did-not-generate": {
-  "state": "Board 3a: generation failed; day-one rows untouched",
+  "state": "Board 3a: generation failed; day-one rows untouched; no Retry (the enabled head Generate repeats the same POST)",
   "verbs": [
    "Generate",
    "Ack",
    "Defer",
-   "1 more",
-   "Retry"
+   "1 more"
   ],
   "status": "BRIEF DID NOT GENERATE · HTTP 500",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
  },
  "3b-did-not-load": {
-  "state": "Board 3b: read failed",
+  "state": "Board 3b: read failed; Retry repeats the GET (a different action from Generate)",
   "head": "BRIEF",
   "verbs": [
    "Generate",
    "Retry"
   ],
   "status": "BRIEF DID NOT LOAD · HTTP 500"
+ },
+ "3c-generate-after-load-failure": {
+  "state": "Board 3c: Generate pressed from the 3b state; GENERATING… takes the one status slot (the read-failure line and its Retry go); Generate disabled",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "status": "GENERATING…",
+  "result": "success: the populated branch with the receipt (board 4 treatment); failure: BRIEF DID NOT GENERATE · <cause> in the status slot, Generate enabled (board 3a treatment)"
  },
  "4-next-day-one-decision": {
   "state": "Board 4: next-day brief after ONE Generate; new decision first",
@@ -100,5 +109,30 @@
   ],
   "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
   "receipt": "Brief ready · 7 items · 8:02 AM"
+ },
+ "6-null-brief": {
+  "state": "Board 6: no brief on the hub yet; Generate in the head",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "empty": "No brief yet",
+  "busy": "Generate disabled + GENERATING… in place of No brief yet (board 3c treatment)",
+  "failure": "BRIEF DID NOT GENERATE · <cause>, Generate enabled",
+  "result": "the populated branch with the receipt (board 4 treatment)"
+ },
+ "7-nothing-untriaged": {
+  "state": "Board 7: a brief exists, every row triaged; today this branch says Generate again (ChairHome.tsx:1304)",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "Nothing material changed.",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "busy": "Generate disabled + GENERATING… under the caption (board 2a treatment)",
+  "failure": "BRIEF DID NOT GENERATE · <cause> under the caption, Generate enabled (board 3a treatment)",
+  "result": "the populated branch with the receipt (board 4 treatment)"
  }
 }

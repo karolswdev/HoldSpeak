@@ -3,7 +3,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 OUT = Path(sys.argv[1]); OUT.mkdir(parents=True, exist_ok=True)
-BOARDS = ["0-today","1-generate-reachable","2a-generating","2b-reading","3a-did-not-generate","3b-did-not-load","4-next-day-one-decision","5-next-day-several-decisions"]
+BOARDS = ["0-today","1-generate-reachable","2a-generating","2b-reading","3a-did-not-generate","3b-did-not-load","3c-generate-after-load-failure","4-next-day-one-decision","5-next-day-several-decisions","6-null-brief","7-nothing-untriaged"]
+FLOOR = 12.0
 MEASURE = r"""() => {
   const root = document.querySelector('[data-testid=arrival-brief]');
   const r = root.getBoundingClientRect();
@@ -15,13 +16,32 @@ MEASURE = r"""() => {
     const pts = [[cx,cy],[bb.left+1,cy-21],[bb.right-1,cy-21],[bb.left+1,cy+21],[bb.right-1,cy+21]];
     const own = pts.map(([x,y]) => { const e = document.elementFromPoint(x,y); return !!e && (e===b || b.contains(e)); });
     return {text: b.textContent.trim(), disabled: b.disabled, w: Math.round(bb.width), painted_h: Math.round(bb.height),
-            halo_h: after.height, owns_44_band: own.every(Boolean)};
+            halo_h: after.height, owns_44_band: own.every(Boolean), text_w: (() => { const rg = document.createRange(); rg.selectNodeContents(b); return Math.round(rg.getBoundingClientRect().width); })(),
+            content_w: Math.round(b.clientWidth - parseFloat(getComputedStyle(b).paddingLeft) - parseFloat(getComputedStyle(b).paddingRight)),
+            text_fits: (() => { const rg = document.createRange(); rg.selectNodeContents(b); const t = rg.getBoundingClientRect(); return t.left >= bb.left - 0.5 && t.right <= bb.right + 0.5; })()};
   });
   const lines = [...root.querySelectorAll('.surface-receipt-line')].map(s => ({text: s.textContent.trim(), px: getComputedStyle(s).fontSize, tone: s.dataset.tone || null}));
   const rows = [...root.querySelectorAll('[data-testid=arrival-brief-row]')].map(e => { const b = e.getBoundingClientRect(); return {text: e.textContent.replace(/AckDefer$/,'').trim(), top: Math.round(b.top), bottom: Math.round(b.bottom), in_viewport: b.top >= 0 && b.bottom <= innerHeight}; });
+  // the 12 px floor: EVERY painted text node in the section, its computed font-size
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const texts = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n.textContent.trim(); if (!t) continue;
+    const el = n.parentElement; const cs = getComputedStyle(el);
+    const rg = document.createRange(); rg.selectNodeContents(n); const rr = rg.getBoundingClientRect();
+    if (cs.visibility === 'hidden' || cs.display === 'none' || rr.width === 0 || rr.height === 0) continue;
+    texts.push({text: t, px: parseFloat(cs.fontSize), cls: el.className || el.tagName.toLowerCase()});
+  }
+  const min_text_px = Math.min(...texts.map(x => x.px));
   const label = root.querySelector('.surface-section-head h3')?.textContent;
+  const h3 = root.querySelector('.surface-section-head h3');
+  const chip = root.querySelector('.gadget-chip');
+  const head = {label_lines: h3 ? Math.round(h3.getBoundingClientRect().height / parseFloat(getComputedStyle(h3).lineHeight || getComputedStyle(h3).fontSize)) : null,
+                label_h: h3 ? Math.round(h3.getBoundingClientRect().height) : null,
+                chip_h: chip ? Math.round(chip.getBoundingClientRect().height) : null,
+                chip_clipped: chip ? chip.scrollWidth > chip.clientWidth : null};
   const raw = [...root.querySelectorAll('button:not(.btn)')].length;
-  return {label, rows, buttons: btns, lines, raw_buttons: raw, width: Math.round(r.width), scrollW: document.documentElement.scrollWidth, vw: innerWidth};
+  return {label, head, rows, buttons: btns, lines, texts, min_text_px, floor_ok: min_text_px >= 12, raw_buttons: raw, width: Math.round(r.width), scrollW: document.documentElement.scrollWidth, vw: innerWidth};
 }"""
 facts = {}
 with sync_playwright() as p:
@@ -42,3 +62,5 @@ with sync_playwright() as p:
         ctx.close()
     br.close()
 print(json.dumps(facts, indent=1, ensure_ascii=False))
+under = [k for k, v in facts.items() if isinstance(v, dict) and v["min_text_px"] < FLOOR]
+assert not under, f"text under {FLOOR}px in: {under}"

@@ -78,11 +78,17 @@ const Caption = ({ text }: { text: string }) => (
 const Receipt = ({ text }: { text: string }) => (
   <span className="surface-receipt-line" role="status" data-testid="arrival-brief-receipt">{text}</span>
 );
-const Failed = ({ text, testid }: { text: string; testid: string }) => (
+/* retry: only the READ failure carries Retry (it repeats the GET). A
+ * GENERATE failure has no Retry: the enabled head Generate repeats the
+ * same POST, so a second verb would be a duplicate (Astra, round one). */
+const Failed = ({ text, testid, retry }: { text: string; testid: string; retry?: boolean }) => (
   <span className="arrival-brief-failed">
     <span className="surface-receipt-line" role="status" data-tone="danger" data-testid={testid}>{text}</span>
-    <Button variant="ghost" dense data-testid="arrival-brief-retry">Retry</Button>
+    {retry ? <Button variant="ghost" dense data-testid="arrival-brief-retry">Retry</Button> : null}
   </span>
+);
+const Generating = () => (
+  <span className="surface-receipt-line" role="status" data-testid="arrival-brief-generating">GENERATING…</span>
 );
 
 const DAY1_TODAY_ORDER = [M1, L1, C1, D2]; // today: changed, waiting, decisions LAST
@@ -93,8 +99,7 @@ const DAY2_SEVERAL = [NEW, D3, D2, D1, M2, L1, C1];
 const boards: Record<string, ReactNode> = {
   "0-today": (<><Rows items={DAY1_TODAY_ORDER} /><Caption text={DAY1} /></>),
   "1-generate-reachable": (<><Rows items={DAY1_ORDER} actions={<Verbs />} /><Caption text={DAY1} /></>),
-  "2a-generating": (<><Rows items={DAY1_ORDER} actions={<Verbs busy />} /><Caption text={DAY1} />
-    <span className="surface-receipt-line" role="status" data-testid="arrival-brief-generating">GENERATING…</span></>),
+  "2a-generating": (<><Rows items={DAY1_ORDER} actions={<Verbs busy />} /><Caption text={DAY1} /><Generating /></>),
   "2b-reading": (
     <SurfaceSection label="BRIEF" actions={<Verbs busy />}>
       <span className="surface-receipt-line" role="status" data-testid="arrival-brief-loading">READING…</span>
@@ -103,12 +108,30 @@ const boards: Record<string, ReactNode> = {
     <Failed text="BRIEF DID NOT GENERATE · HTTP 500" testid="arrival-brief-generate-failed" /></>),
   "3b-did-not-load": (
     <SurfaceSection label="BRIEF" actions={<Verbs />}>
-      <Failed text="BRIEF DID NOT LOAD · HTTP 500" testid="arrival-brief-load-failed" />
+      <Failed text="BRIEF DID NOT LOAD · HTTP 500" testid="arrival-brief-load-failed" retry />
+    </SurfaceSection>),
+  /* 3c: Generate pressed from the 3b state. One status slot: GENERATING…
+   * takes the place of the read-failure line and its Retry. */
+  "3c-generate-after-load-failure": (
+    <SurfaceSection label="BRIEF" actions={<Verbs busy />}>
+      <Generating />
     </SurfaceSection>),
   "4-next-day-one-decision": (<><Rows items={DAY2_ONE} actions={<Verbs />} /><Caption text={DAY2} />
     <Receipt text="Brief ready · 6 items · 8:02 AM" /></>),
   "5-next-day-several-decisions": (<><Rows items={DAY2_SEVERAL} actions={<Verbs />} /><Caption text={DAY2} />
     <Receipt text="Brief ready · 7 items · 8:02 AM" /></>),
+  /* 6: no brief on the hub yet (the A3 words), Generate in the head. */
+  "6-null-brief": (
+    <SurfaceSection label="BRIEF" actions={<Verbs />}>
+      <span className="arrival-brief-empty">No brief yet</span>
+    </SurfaceSection>),
+  /* 7: a brief exists and every row is triaged: today this branch says
+   * `Generate again` (ChairHome.tsx:1304); the one label is `Generate`. */
+  "7-nothing-untriaged": (
+    <SurfaceSection label="BRIEF" actions={<Verbs />}>
+      <span className="arrival-brief-headline" data-testid="arrival-brief-headline">Nothing material changed.</span>
+      <Caption text={DAY1} />
+    </SurfaceSection>),
 };
 
 const key = new URLSearchParams(location.search).get("board") ?? "1-generate-reachable";

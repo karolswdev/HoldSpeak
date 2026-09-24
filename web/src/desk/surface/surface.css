@@ -56,11 +56,18 @@
   border-top: 0;
   padding-top: 0;
 }
+/* PHILO-4-01: at the 12 px floor the head is tight at 393. The label
+   wraps; a head verb and the egress chip keep their width (a squeezed
+   Button paints its word over its own padding). */
+.surface-section-head > .btn,
+.surface-section-head > .gadget-chip {
+  flex-shrink: 0;
+}
 /* HS-111-01: section labels in mono — the system-label style */
 .surface-section-head h3 {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
