@@ -4301,6 +4301,7 @@
         "tests/unit/test_graph_walk_producer_clock.py",
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo3_03_brief_clock.py",
+        "tests/unit/test_philo4_01_atlas_contracts.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],

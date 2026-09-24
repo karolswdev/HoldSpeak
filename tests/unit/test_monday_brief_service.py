@@ -283,10 +283,10 @@ def test_compose_empty_brief_has_honest_headline(tmp_path):
 
     headline, sections = service._compose({})
 
-    assert headline == "Nothing material changed."
+    assert headline == "No changes"
     assert sections == {"this_week": [], "changed": [], "broke": [], "waiting": [], "decisions": []}
     brief = service.generate(None, now=datetime.datetime(2026, 8, 3, 9, 30))
-    assert brief.headline == "Nothing material changed."
+    assert brief.headline == "No changes"
     assert brief.is_empty is True
 
 

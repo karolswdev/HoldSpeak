@@ -341,7 +341,7 @@ class MondayBriefService:
         counts = {section: len(items) for section, items in finalized_sections.items()}
         total_items = sum(counts.values())
         if total_items == 0:
-            return "Nothing material changed.", finalized_sections
+            return "No changes", finalized_sections
 
         def phrase(count: int, singular: str, plural: str) -> str:
             return f"{count} {singular if count == 1 else plural}"
@@ -478,7 +478,7 @@ class MondayBriefService:
 
         HS-132-08: the observer's method markers (create/update/delete/…) never
         match the meeting lifecycle, so a week full of recorded meetings used to
-        read "Nothing material changed." Meetings are collected from their own
+        read as an empty brief. Meetings are collected from their own
         durable rows rather than from pipeline receipts, which is the honest
         source: a meeting exists whether or not an observed method ran.
         """

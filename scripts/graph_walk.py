@@ -1627,7 +1627,7 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
             state = _read_cal_state()
             state["generate_calls"] = int(state.get("generate_calls", 0)) + 1
             _write_cal_state(state)
-            self._json(200, {"id": "brief-7", "headline": "Nothing material changed."})
+            self._json(200, {"id": "brief-7", "headline": "No changes"})
             return
         if self.path.split("?")[0] == "/brief/generate-fresh":
             # a producer that mints a NEW brief the page never shows

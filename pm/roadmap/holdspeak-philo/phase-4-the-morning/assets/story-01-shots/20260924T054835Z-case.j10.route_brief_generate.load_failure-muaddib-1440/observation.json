@@ -1,0 +1,476 @@
+{
+  "id": "obs-20260924T054835Z-case.j10.route_brief_generate.load_failure-muaddib-1440",
+  "run_id": "20260924T054835Z-case.j10.route_brief_generate.load_failure-muaddib-1440",
+  "case_id": "case.j10.route_brief_generate.load_failure",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate"
+  ],
+  "state_id": "state.briefs.generation_failure",
+  "provenance": {
+    "revision": "8ff1e0a897dab90fbc11f3ac7263dfa538d98475",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "0502ee93b13073c84cf2cf881cf56dfb257c1c389a3967a5bc499142f3d1874a",
+      "assets": [
+        "index-CMAuckoZ.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64893",
+      "port": 64893,
+      "pid": 10198,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-skh0du79",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-skh0du79/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T05:48:35.210789+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the generate call refused: the browser boundary answers that one write with HTTP 500; every other read stays real",
+        "substitute": "http_fault",
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 500,
+        "times": 1
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "f9b719345f276c462c485079f99189aba47ecb55bc35845f75d43e5113a4a316",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "the generate call refused: the browser boundary answers that one write with HTTP 500; every other read stays real",
+      "substitute": "http_fault",
+      "adapter": "browser-boundary",
+      "origin": "http://127.0.0.1:64893",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 500,
+      "times": 1,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:64893/api/brief/generate"
+      ]
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the generate call refused",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "BRIEF DID NOT GENERATE \u00b7 HTTP 500"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-receipt-line",
+        "role": "status",
+        "data-tone": "danger",
+        "data-testid": "arrival-brief-generate-failed"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 256,
+        "y": 304,
+        "w": 246,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "01b7e1d86a080f7e7f9af1b9944dfae14849eb6037e3d492fa32c16917ae5264",
+      "after": "b368d337db6455d645317d5c9bb946ef3268fa036633039932d1aac58ef798c2"
+    },
+    "document_text_len": {
+      "before": 359,
+      "after": 380
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief-generate-failed]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:64893/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "01b7e1d86a080f7e7f9af1b9944dfae14849eb6037e3d492fa32c16917ae5264",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T05:48:41.103314+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief-generate-failed]",
+    "target_present": true,
+    "text": "BRIEF DID NOT GENERATE \u00b7 HTTP 500",
+    "attrs": {
+      "class": "surface-receipt-line",
+      "role": "status",
+      "data-tone": "danger",
+      "data-testid": "arrival-brief-generate-failed"
+    },
+    "rect": {
+      "x": 256,
+      "y": 304,
+      "w": 246,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 256,
+        "y": 304,
+        "w": 246,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 258,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 258,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:64893/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b368d337db6455d645317d5c9bb946ef3268fa036633039932d1aac58ef798c2",
+    "document_text_len": 380,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T05:48:42.254140+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "body": {
+        "error": "substituted hub fault"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64893) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief-generate-failed]",
+    "target_present": true,
+    "text": "BRIEF DID NOT GENERATE \u00b7 HTTP 500",
+    "attrs": {
+      "class": "surface-receipt-line",
+      "role": "status",
+      "data-tone": "danger",
+      "data-testid": "arrival-brief-generate-failed"
+    },
+    "rect": {
+      "x": 256,
+      "y": 304,
+      "w": 246,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 256,
+        "y": 304,
+        "w": 246,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 258,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 258,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 379,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 306,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 313,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        },
+        {
+          "x": 500,
+          "y": 320,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-failed > span.surface-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:64893/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b368d337db6455d645317d5c9bb946ef3268fa036633039932d1aac58ef798c2",
+    "document_text_len": 380,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T05:48:42.123916+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "body": {
+        "error": "substituted hub fault"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64893) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'BRIEF DID NOT GENERATE \u00b7 HTTP 500' in observe_at text",
+    "elapsed_s": 0.928
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'BRIEF DID NOT GENERATE \u00b7 HTTP 500' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.056,
+    "first_satisfied_at_s": 0.928,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'BRIEF DID NOT GENERATE \u00b7 HTTP 500' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64893) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 500,
+      "body_sha256": "f0e0965b710e6de2f4593f80898dc8e398d4329fbbedcf2362f01bc52302d38b",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:64893) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:64893) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 500,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-shots/20260924T054835Z-case.j10.route_brief_generate.load_failure-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-shots/20260924T054835Z-case.j10.route_brief_generate.load_failure-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-skh0du79/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64893"
+  ]
+}

@@ -1,0 +1,39 @@
+F...............F..                                                      [100%]
+=================================== FAILURES ===================================
+___________________ test_empty_brief_headline_is_no_changes ____________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-435/test_empty_brief_headline_is_n0')
+
+    def test_empty_brief_headline_is_no_changes(tmp_path):
+        service = MondayBriefService(Database(tmp_path / "brief.db"))
+    
+        headline, _sections = service._compose({})
+        brief = service.generate(None, now=datetime.datetime(2026, 9, 23, 17, 40))
+    
+>       assert headline == "No changes"
+E       AssertionError: assert 'Nothing material changed.' == 'No changes'
+E         
+E         - No changes
+E         + Nothing material changed.
+
+tests/unit/test_philo_4_01_generate.py:30: AssertionError
+_________________ test_compose_empty_brief_has_honest_headline _________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-435/test_compose_empty_brief_has_h0')
+
+    def test_compose_empty_brief_has_honest_headline(tmp_path):
+        service = MondayBriefService(Database(tmp_path / "brief.db"))
+    
+        headline, sections = service._compose({})
+    
+>       assert headline == "No changes"
+E       AssertionError: assert 'Nothing material changed.' == 'No changes'
+E         
+E         - No changes
+E         + Nothing material changed.
+
+tests/unit/test_monday_brief_service.py:286: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_4_01_generate.py::test_empty_brief_headline_is_no_changes
+FAILED tests/unit/test_monday_brief_service.py::test_compose_empty_brief_has_honest_headline
+2 failed, 17 passed in 3.50s

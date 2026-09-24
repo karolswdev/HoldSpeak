@@ -1,0 +1,108 @@
+..FFFFFF                                                                 [100%]
+=================================== FAILURES ===================================
+__________ test_no_active_case_expects_the_retired_words[atlas.json] ___________
+
+active_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_no_active_case_expects_the_retired_words(active_atlas: dict) -> None:
+        problems = [
+            f"{case['id']}: {predicate.get('value')!r} at {observe_at!r}"
+            for case in active_atlas["cases"]
+            for observe_at, predicate in _predicates(case)
+            if any(word in str(predicate.get("value", "")) for word in RETIRED_WORDS)
+        ]
+>       assert not problems, problems
+E       AssertionError: ["case.j10.arrival_generate_brief.generated_empty: 'Nothing material changed.' at '[data-testid=arrival-brief-headline...val-brief-headline]'", "case.j10.route_brief_generate.load_failure: 'Generate brief FAILED' at '.write-receipt-label'"]
+E       assert not ["case.j10.arrival_generate_brief.generated_empty: 'Nothing material changed.' at '[data-testid=arrival-brief-headline...val-brief-headline]'", "case.j10.route_brief_generate.load_failure: 'Generate brief FAILED' at '.write-receipt-label'"]
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:85: AssertionError
+__ test_no_brief_generation_case_observes_the_write_receipt_label[atlas.json] __
+
+active_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_no_brief_generation_case_observes_the_write_receipt_label(active_atlas: dict) -> None:
+        problems = [
+            f"{case['id']}: observes {observe_at!r}"
+            for case in active_atlas["cases"]
+            if _is_brief_generation(case)
+            for observe_at, _predicate in _predicates(case)
+            if ".write-receipt-label" in observe_at
+        ]
+>       assert not problems, problems
+E       AssertionError: ["case.j10.route_brief_generate.load_failure: observes '.write-receipt-label'"]
+E       assert not ["case.j10.route_brief_generate.load_failure: observes '.write-receipt-label'"]
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:96: AssertionError
+________________ test_the_empty_cases_expect_the_producer_words ________________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_the_empty_cases_expect_the_producer_words(atlas: dict) -> None:
+        assert 'return "No changes", finalized_sections' in PRODUCER.read_text()
+        for case_id in EMPTY_CASES:
+            expected = _case(atlas, case_id)["expected"]
+>           assert expected["predicate"] == {"kind": "text_contains", "value": "No changes"}, case_id
+E           AssertionError: case.j10.arrival_generate_brief.generated_empty
+E           assert {'kind': 'tex...ial changed.'} == {'kind': 'tex... 'No changes'}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Differing items:
+E             {'value': 'Nothing material changed.'} != {'value': 'No changes'}
+E             Use -v to get more diff
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:103: AssertionError
+____________ test_the_failure_case_observes_the_built_failure_line _____________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_the_failure_case_observes_the_built_failure_line(atlas: dict) -> None:
+        case = _case(atlas, FAILURE_CASE)
+        expected = case["expected"]
+>       assert expected["observe_at"] == f"[data-testid={FAILED_TESTID}]"
+E       AssertionError: assert '.write-receipt-label' == '[data-testid...erate-failed]'
+E         
+E         - [data-testid=arrival-brief-generate-failed]
+E         + .write-receipt-label
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:110: AssertionError
+_______________ test_the_empty_brief_claims_name_the_built_words _______________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_the_empty_brief_claims_name_the_built_words(atlas: dict) -> None:
+        for source in _state(atlas, "state.briefs.generated_empty")["sources"]:
+>           assert not any(word in source["claim"] for word in RETIRED_WORDS), source
+E           AssertionError: {'claim': 'the pull-out draws Nothing material changed for an empty brief', 'line': 304, 'path': 'web/src/desk/pullouts/views/BriefView.tsx', 'symbol': 'is_empty'}
+E           assert not True
+E            +  where True = any(<generator object test_the_empty_brief_claims_name_the_built_words.<locals>.<genexpr> at 0x10980e7a0>)
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:129: AssertionError
+_______________ test_the_reload_claim_points_at_the_quiet_branch _______________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_the_reload_claim_points_at_the_quiet_branch(atlas: dict) -> None:
+        lines = CHAIR.read_text().splitlines()
+        refs = [ref for ref in _state(atlas, "state.briefs.reload_persisted")["sources"]
+                if ref["path"] == "web/src/desk/chair/ChairHome.tsx"]
+        assert refs
+        for ref in refs:
+            window = "\n".join(lines[ref["line"] - 1: ref["line"] + 4])
+            # the quiet branch draws the brief's own headline; the untriaged
+            # branch (BriefSection rows) never does
+>           assert "arrival-brief-headline" in window, (ref, window)
+E           AssertionError: ({'claim': 'a brief with nothing untriaged still keeps its own section after a reload', 'line': 1300, 'path': 'web/src...riefSection
+E                         items={untriagedBrief}
+E                         busyId={busyBriefId}
+E                         onShelf={doBriefShelf}')
+E           assert 'arrival-brief-headline' in '        <div data-testid="arrival-brief">\n          <BriefSection\n            items={untriagedBrief}\n            busyId={busyBriefId}\n            onShelf={doBriefShelf}'
+
+/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py:141: AssertionError
+=========================== short test summary info ============================
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_no_active_case_expects_the_retired_words[atlas.json]
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_no_brief_generation_case_observes_the_write_receipt_label[atlas.json]
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_the_empty_cases_expect_the_producer_words
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_the_failure_case_observes_the_built_failure_line
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_the_empty_brief_claims_name_the_built_words
+FAILED ../../../../../private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/p401red/tests/unit/test_philo4_01_atlas_contracts.py::test_the_reload_claim_points_at_the_quiet_branch
+6 failed, 2 passed in 0.05s

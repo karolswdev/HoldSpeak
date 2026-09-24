@@ -4,7 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
@@ -514,9 +514,14 @@ function Arrival() {
   /* PHILO-3-03: a failed read is NOT an absent brief. `null` = the read
      answered (or has not failed); a string = the cause the face names. */
   const [briefLoadFailed, setBriefLoadFailed] = useState<string | null>(null);
+  /* PHILO-4-01 (ratified canvas, boards 3a, 6b, 8b): a failed generation
+     names its cause in the section's status slot. No Retry: the enabled
+     head Generate repeats the same POST. */
+  const [generateFailed, setGenerateFailed] = useState<string | null>(null);
   const readBrief = useCallback(() => {
     setBriefLoading(true);
     setBriefLoadFailed(null);
+    setGenerateFailed(null);
     void apiFetch<MondayBrief | null>("/api/brief/latest")
       .then((data) => setBrief(data))
       .catch((error) => setBriefLoadFailed(briefLoadCause(error)))
@@ -672,16 +677,55 @@ function Arrival() {
   const [briefKept, setBriefKept] = useState<string | null>(null);
   const generateBrief = async () => {
     setGenerating(true);
+    setGenerateFailed(null);
     try {
       const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
       setBrief(data);
+      setBriefLoadFailed(null);
       setBriefKept(briefReceipt(data as unknown as GeneratedBrief));
       clearWriteFailure();
     } catch (error) {
-      reportWriteFailure("Generate brief", error, () => void generateBrief());
+      setGenerateFailed(briefLoadCause(error));
     }
     finally { setGenerating(false); }
   };
+  /* PHILO-4-01 (ratified canvas, ask 1): the head verbs of the BRIEF
+     section in EVERY branch — the egress badge, then Generate. Disabled
+     only while a read or a generation is open. */
+  const briefVerbs = (
+    <>
+      {/* Article III / UX-CANON A.9 — the destination is named ON the
+          row, BEFORE the verb that reaches it. */}
+      <BriefEgress />
+      <Button
+        variant="ghost"
+        dense
+        disabled={generating || briefLoading}
+        onClick={() => void generateBrief()}
+        data-testid="arrival-brief-generate"
+      >
+        Generate
+      </Button>
+    </>
+  );
+  /* The one status line of a generation: open (GENERATING…, the READING…
+     idiom) or failed (BRIEF DID NOT GENERATE · <cause>). */
+  const generateStatus = generating ? (
+    <span className="surface-receipt-line" role="status" data-testid="arrival-brief-generating">
+      GENERATING…
+    </span>
+  ) : generateFailed ? (
+    <span className="arrival-brief-failed">
+      <span
+        className="surface-receipt-line"
+        role="status"
+        data-tone="danger"
+        data-testid="arrival-brief-generate-failed"
+      >
+        {`BRIEF DID NOT GENERATE · ${generateFailed}`}
+      </span>
+    </span>
+  ) : null;
 
   const roomItems = needsYou?.items ?? [];
 
@@ -1193,11 +1237,14 @@ function Arrival() {
         </div>
       ) : null}
 
-      {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ── */}
+      {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ──
+          PHILO-4-01 (ratified canvas): every branch carries the head verbs
+          (`briefVerbs`: the badge, then Generate) and one status slot. */}
       {briefLoading && !brief ? (
-        /* PHILO-3-03 (ratified canvas, state 2): the read is open. */
+        /* PHILO-3-03 (ratified canvas, state 2): the read is open.
+           PHILO-4-01 board 2b: Generate is in the head, disabled. */
         <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF">
+          <SurfaceSection label="BRIEF" actions={briefVerbs}>
             <span className="surface-receipt-line" role="status" data-testid="arrival-brief-loading">
               READING…
             </span>
@@ -1205,45 +1252,34 @@ function Arrival() {
         </div>
       ) : briefLoadFailed && !brief ? (
         /* PHILO-3-03 (ratified canvas, state 3): the read failed. Never
-           "No brief yet": that is a claim about the hub it did not make. */
+           "No brief yet": that is a claim about the hub it did not make.
+           PHILO-4-01 boards 3b, 3c: Generate in the head; while a
+           generation is open, or after it failed, its line takes the one
+           status slot (the read failure and its Retry go). */
         <div data-testid="arrival-brief">
-          <SurfaceSection label="BRIEF">
-            <span className="arrival-brief-failed">
-              <span
-                className="surface-receipt-line"
-                role="status"
-                data-tone="danger"
-                data-testid="arrival-brief-load-failed"
-              >
-                {`BRIEF DID NOT LOAD · ${briefLoadFailed}`}
+          <SurfaceSection label="BRIEF" actions={briefVerbs}>
+            {generateStatus ?? (
+              <span className="arrival-brief-failed">
+                <span
+                  className="surface-receipt-line"
+                  role="status"
+                  data-tone="danger"
+                  data-testid="arrival-brief-load-failed"
+                >
+                  {`BRIEF DID NOT LOAD · ${briefLoadFailed}`}
+                </span>
+                <Button variant="ghost" dense onClick={readBrief} data-testid="arrival-brief-retry">
+                  Retry
+                </Button>
               </span>
-              <Button variant="ghost" dense onClick={readBrief} data-testid="arrival-brief-retry">
-                Retry
-              </Button>
-            </span>
+            )}
           </SurfaceSection>
         </div>
       ) : !briefLoading && !brief ? (
+        /* PHILO-4-01 boards 6, 6b: GENERATING… or the failure line takes
+           the place of `No brief yet`. */
         <div data-testid="arrival-brief">
-          <SurfaceSection
-            label="BRIEF"
-            actions={
-              <>
-                {/* Article III / UX-CANON A.9 — the destination is named
-                    ON the row, BEFORE the verb that reaches it. */}
-                <BriefEgress />
-                <Button
-                  variant="ghost"
-                  dense
-                  disabled={generating}
-                  onClick={() => void generateBrief()}
-                  data-testid="arrival-brief-generate"
-                >
-                  {generating ? "Generating..." : "Generate"}
-                </Button>
-              </>
-            }
-          >
+          <SurfaceSection label="BRIEF" actions={briefVerbs}>
             {briefKept ? (
               <span
                 className="surface-receipt-line"
@@ -1252,17 +1288,21 @@ function Arrival() {
               >
                 {briefKept}
               </span>
-            ) : (
+            ) : generateStatus ?? (
               <span className="arrival-brief-empty">No brief yet</span>
             )}
           </SurfaceSection>
         </div>
       ) : !briefLoading && untriagedBrief.length > 0 ? (
+        /* PHILO-4-01 boards 1, 2a, 3a, 4: Generate in the head while rows
+           are untriaged. Generate never touches their triage: the next
+           brief has new item ids; this brief's shelf stays on it. */
         <div data-testid="arrival-brief">
           <BriefSection
             items={untriagedBrief}
             busyId={busyBriefId}
             onShelf={doBriefShelf}
+            actions={briefVerbs}
           />
           {brief ? <BriefDate brief={brief} /> : null}
           {/* HS-202-02 (Astra's counsel finding 2) — the receipt lived
@@ -1279,33 +1319,19 @@ function Arrival() {
               {briefKept}
             </span>
           ) : null}
+          {generateStatus}
         </div>
       ) : !briefLoading && brief ? (
         /* A brief with nothing untriaged still happened — tonight, or on a
            day before this reload. The section survives with the brief's own
-           words (its headline: "Nothing material changed." is a result, not
-           an absence), the receipt when this gesture made it, and the verb to
-           make another. The owner's first sitting (2026-09-21) met the
-           previous shape: Generate answered, the whole row vanished, and a
-           reload showed nothing at all — "one day later, still no brief". */
+           words (its headline: "No changes" is a result, not an absence),
+           the receipt when this gesture made it, and the verb to make
+           another. The owner's first sitting (2026-09-21) met the previous
+           shape: Generate answered, the whole row vanished, and a reload
+           showed nothing at all — "one day later, still no brief".
+           PHILO-4-01 boards 7a, 7b, 8a, 8b, 9. */
         <div data-testid="arrival-brief">
-          <SurfaceSection
-            label="BRIEF"
-            actions={
-              <>
-                <BriefEgress />
-                <Button
-                  variant="ghost"
-                  dense
-                  disabled={generating}
-                  onClick={() => void generateBrief()}
-                  data-testid="arrival-brief-generate"
-                >
-                  {generating ? "Generating..." : "Generate again"}
-                </Button>
-              </>
-            }
-          >
+          <SurfaceSection label="BRIEF" actions={briefVerbs}>
             {brief.headline ? (
               <span className="arrival-brief-headline" data-testid="arrival-brief-headline">
                 {brief.headline}
@@ -1321,6 +1347,7 @@ function Arrival() {
                 {briefKept}
               </span>
             ) : null}
+            {generateStatus}
           </SurfaceSection>
         </div>
       ) : null}
@@ -1981,10 +2008,13 @@ function BriefSection({
   items,
   busyId,
   onShelf,
+  actions,
 }: {
   items: BriefItem[];
   busyId: string | null;
   onShelf: (id: string, state: "acknowledged" | "deferred") => void;
+  /** PHILO-4-01: the head verbs (the badge, then Generate). */
+  actions?: ReactNode;
 }) {
   const visible = items.slice(0, BRIEF_CAP);
   const overflow = items.length - visible.length;
@@ -1992,6 +2022,7 @@ function BriefSection({
   return (
     <SurfaceSection
       label={`BRIEF · ${countToken(items.length, "THING WAITING", "THINGS WAITING") ?? ""}`}
+      actions={actions}
     >
       <SurfaceLedger count={null} cols="room">
         {visible.map((item) => (

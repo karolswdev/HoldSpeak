@@ -67,16 +67,16 @@ describe("Generate is badged before and receipted after (counsel 2)", () => {
   it("shows an empty brief's own words and keeps Generate after a reload", async () => {
     latest = {
       id: "brief-0",
-      headline: "Nothing material changed.",
+      headline: "No changes",
       generated_at: "2026-09-21T19:37:43",
       is_empty: true,
       sections: {},
     };
     render(<ChairHome />);
     const headline = await screen.findByTestId("arrival-brief-headline");
-    expect(headline.textContent).toBe("Nothing material changed.");
+    expect(headline.textContent).toBe("No changes");
     const again = screen.getByTestId("arrival-brief-generate");
-    expect(again.textContent).toBe("Generate again");
+    expect(again.textContent).toBe("Generate");
     expect(screen.queryByText("No brief yet")).toBeNull();
     // Pressing it makes another brief: the POST fires and the receipt lands.
     await act(async () => {

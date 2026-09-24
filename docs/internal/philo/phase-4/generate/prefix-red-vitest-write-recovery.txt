@@ -1,0 +1,367 @@
+
+ RUN  v4.1.9 <git archive origin/main 1c39294c + fence overlay>/web
+
+ ❯ src/desk/chair/ChairHome.test.tsx (1 test | 1 failed) 1138ms
+     × keeps a failed generation actionable and clears the receipt after retry 1137ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/ChairHome.test.tsx > Chair write recovery > keeps a failed generation actionable and clears the receipt after retry
+TestingLibraryElementError: Unable to find an element with the text: BRIEF DID NOT GENERATE · NO ANSWER. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--accent"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0m1 need you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-blocker"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mSETUP[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-blocker-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mCould not read setup[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--secondary btn--sm "[39m
+                    [33mdata-testid[39m=[32m"arrival-blocker-verb-unknown"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mTry again[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-empty"[39m
+          [36m>[39m
+            [0mNo brief yet[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"write-receipt"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"write-receipt-lamp"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"write-receipt-label"[39m
+        [33mtitle[39m=[32m"GENERATE BRIEF FAILED · WRITE REFUSED"[39m
+      [36m>[39m
+        [0mGENERATE BRIEF FAILED · WRITE REFUSED[0m
+      [36m</span>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn--ghost btn--sm write-receipt-retry"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn--ghost btn--sm write-receipt-dismiss"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mOK[0m
+      [36m</button>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--accent"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0m1 need you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-blocker"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mSETUP[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-blocker-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mCould not read setup[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--secondary btn--sm "[39m
+                    [33mdata-testid[39m=[32m"arrival-blocker-verb-unknown"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mTry again[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-empty"[39m
+          [36m>[39m
+            [0mNo brief yet[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"write-receipt"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"write-receipt-lamp"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"write-receipt-label"[39m
+        [33mtitle[39m=[32m"GENERATE BRIEF FAILED · WRITE REFUSED"[39m
+      [36m>[39m
+        [0mGENERATE BRIEF FAILED · WRITE REFUSED[0m
+      [36m</span>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn--ghost btn--sm write-receipt-retry"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn btn--ghost btn--sm write-receipt-dismiss"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mOK[0m
+      [36m</button>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/desk/chair/ChairHome.test.tsx:47:25
+     45|        in the BRIEF section's status slot, not the write-failure recei…
+     46|        and there is no Retry: the enabled Generate is the recovery. */
+     47|     expect(await screen.findByText("BRIEF DID NOT GENERATE · NO ANSWER…
+       |                         ^
+     48|     expect(screen.queryByText(/GENERATE BRIEF FAILED/)).not.toBeInTheD…
+     49|     expect(screen.queryByRole("button", { name: /retry/i })).not.toBeI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  23:30:39
+   Duration  1.93s (transform 339ms, setup 61ms, import 463ms, tests 1.14s, environment 193ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice

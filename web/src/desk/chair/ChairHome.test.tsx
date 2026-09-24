@@ -41,10 +41,15 @@ describe("Chair write recovery", () => {
     });
     render(<WithReceipt />);
     fireEvent.click(await screen.findByRole("button", { name: "Generate" }));
-    expect(await screen.findByText(/GENERATE BRIEF FAILED/)).toBeVisible();
+    /* PHILO-4-01 (ratified canvas, boards 3a, 6b, 8b): the failure is named
+       in the BRIEF section's status slot, not the write-failure receipt,
+       and there is no Retry: the enabled Generate is the recovery. */
+    expect(await screen.findByText("BRIEF DID NOT GENERATE · NO ANSWER")).toBeVisible();
+    expect(screen.queryByText(/GENERATE BRIEF FAILED/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
     await waitFor(() => expect(attempts).toBe(2));
-    await waitFor(() => expect(screen.queryByText(/GENERATE BRIEF FAILED/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("BRIEF DID NOT GENERATE · NO ANSWER")).not.toBeInTheDocument());
   });
 });
