@@ -25,3 +25,10 @@
 - **Red pre-fix** (`git archive origin/main` @ `1c39294c` + the fence overlaid): `docs/internal/philo/phase-4/ids/red-pre-fix.txt` — `2 failed`, both on `sqlite3.IntegrityError: UNIQUE constraint failed: monday_brief_items.id` at `holdspeak/services/monday_brief_service.py:305`.
 - **Green post-fix:** `docs/internal/philo/phase-4/ids/green-post-fix.txt` — `2 passed`.
 - **Rig:** not run. This story changes no face (ids only; the Arrival renders `item.text`); the closure-chain rig case belongs to the phase exit.
+
+
+## Astra's check on built (2026-09-24) — corrections to this record
+
+- The producer of the original closure crash is identified: `DecisionLifecycleService.get_decision failed` (event `95b68ac7-c11c-4b2e-8ad8-1713957b7886`, closure observation `20260924T012420Z…/observation.json:1194`); the fence's failing `shelve` exercises the same `@observe_service` → event-id → breakage-id mechanism.
+- Collector order, stated accurately: the brief id is minted before breakage collection (`:268`, passed at `:519`); same-day generation returns the existing brief before breakage collection and new inserts; coverage and waiting collectors (`:202`) run before that lookup today (inherited).
+- The rig proof for this story is assigned to the phase's exit 1 by scope amendment (story file, phase decision log).

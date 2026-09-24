@@ -68,6 +68,8 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — SCOPE AMENDMENT (Astra's check on built, story 03): story 03 changes no face; its rig proof is assigned to exit 1 (story 02's closure-chain run carries a breakage item in the lookback). Astra: RATIFY-WITH-CONDITIONS on #624, conditions paid — Muad'Dib.
+
 - 2026-09-23 — the owner RATIFIED the charter and the story 01 canvas with all six asks ("so... my walk says: yes!") — build order 01 ∥ 03 → 02 → 04.
 
 - 2026-09-23 — chartered on "yes close and open"; the service-layer draft renumbered to Phase 5 — Muad'Dib.

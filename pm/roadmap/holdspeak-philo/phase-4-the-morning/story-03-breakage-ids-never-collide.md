@@ -14,7 +14,7 @@ Breakage items get a fixed id (`brief-break-pipeline-{event_id}`, `holdspeak/ser
 
 ## Scope
 
-- **In:** the result below, its fence(s) red pre-fix, the rig case at 1440 and 393.
+- **In:** the result below, its fence(s) red pre-fix. SCOPE AMENDMENT (Astra's check on built, 2026-09-24, recorded in the phase decision log): this story changes no face, so its rig proof is assigned to the phase's exit 1 (the closure chain step 5 as written, run by story 02), where a real failure in the lookback is part of the fixture.
 - **Out:** everything the phase status lists as out.
 
 ## Acceptance criteria
@@ -32,10 +32,11 @@ Breakage items get a fixed id (`brief-break-pipeline-{event_id}`, `holdspeak/ser
 ## Test plan
 
 - **Unit:** fences that fail pre-fix for every repaired seam.
-- **Integration:** the rig case(s) named above through `scripts/graph_walk.py`, observations retained (rig `--out` under this phase's assets).
+- **Integration:** by scope amendment, the phase exit-1 rig run (story 02) carries a breakage item in the lookback; no story-level rig run.
 - **Manual / device:** the owner's sitting on the morning.
 
 ## Notes
 
-- 2026-09-24 — built (Muad'Dib lane, Opus 5.5 worker): brief-scoped breakage ids; fence red pre-fix through the real producers; the rig is not run for this story (no face change).
+- 2026-09-24 — built (Muad'Dib lane, Opus 5.5 worker): brief-scoped breakage ids; fence red pre-fix through the real producers; the rig is not run for this story (no face change; scope amendment above).
+- 2026-09-24 — Astra's check on built: RATIFY-WITH-CONDITIONS, paid: (a) the original producer of the Phase 3 closure crash IS identifiable — the closure observation (`…012420Z…/observation.json:1194`) retains `DecisionLifecycleService.get_decision failed`, event `95b68ac7-c11c-4b2e-8ad8-1713957b7886`, in the earlier brief; the fence's failing `shelve` covers the same mechanism (both services use `@observe_service`, the collector builds ids from the resulting event id); (b) collector-order wording: the brief id exists before BREAKAGE collection (`monday_brief_service.py:268` → `:519`), and same-day generation returns before breakage collection and new inserts — other collectors (coverage, waiting, `:202`) run before the existing-brief lookup; inherited, not a regression; (c) the scope amendment above.
 - 2026-09-23 — chartered from the Phase 3 closure run `20260924T013355Z` / `013440Z` (BLOCKED), `013738Z` / `014018Z` (FAIL behind "1 more"), `012420Z` (500).
