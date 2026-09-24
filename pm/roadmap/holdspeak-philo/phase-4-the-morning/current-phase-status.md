@@ -39,7 +39,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | PHILO-4-01 | Generate is always reachable | done | [story-01-generate-always-reachable](./story-01-generate-always-reachable.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-4-02 | The new decision is in the visible rows (order + a real recency source; the cap kept) | done | [story-02-decision-in-the-visible-rows](./story-02-decision-in-the-visible-rows.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-4-03 | A failure never collides with the next brief | done | [story-03-breakage-ids-never-collide](./story-03-breakage-ids-never-collide.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | backlog | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
+| PHILO-4-04 | The triaged headline (the generated snapshot vs the current triage state) | in-progress | [story-04-the-triaged-headline](./story-04-the-triaged-headline.md) | - |
 
 ## Lanes
 
