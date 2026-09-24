@@ -1,4 +1,4 @@
-# Phase 5 — The One Service Layer (CHARTER DRAFT r2, not ratified; renumbered from 4 on 2026-09-23 when the owner opened Phase 4 The Morning)
+# Phase 5 — The One Service Layer (CHARTER DRAFT r3 — the owner's D1–D3 RULED 2026-09-24; Astra r2 check owed; then charter)
 
 **r1** drafted 2026-09-23 by Muad'Dib. **Astra check r1: BOUNCE** (`.tmp/two-brains/20260923-190909-check/phase-4-charter-astra.md`, reviewed HEAD 46172fcf) — the inventory was loose, the owner's ruling and Muad'Dib's proposal were blurred, the existing descriptor was over-read, two composition gaps were unnamed, the ratchet counted aggregates, and story 06 asked the owner to learn operation names. **r2** (this file) pays most of that check; Astra (charter check of Phase 4, 2026-09-23) lists the CARRIED conditions in §12, so "paid" is not claimed. Astra's counter-proposal for the story list is adopted with amendments noted. The owner has not ruled. Nothing is built. Phase 3 closes first.
 
@@ -60,7 +60,7 @@ Tenet 1 and Tenet 3 cut both ways. The over-engineering already happened (a seco
 | PHILO-5-03 | The actual atlas proves the three paths | Headless `op` execution and observation in `graph_walk.py` against the owning isolated hub (never a second writer): setup, observation, waiting, restart evidence all charted for the no-page path. NAMED atlas pairs (listed in the story, not "cases that have both") where the durable outcome and refusals must agree between the `api`/`op` path and the browser path; face verdicts stay independent and browser-only; `api` steps stay for HTTP contracts. Duration measured and recorded, not promised. | 2–3 days |
 | PHILO-5-04 | The owner uses the loop | Rehearsed in isolation first. Then the owner asks for the meeting job in his normal way (his MCP client, his words) and finds the summary, the decision, the dated brief and the saved Thought on his Desk — he never operates operation names, arguments or test clocks. Both brains' technical verdicts; his usefulness judgment; his words close the phase. | his sitting |
 
-Dependency: 01 → 02 → 03 → 04.
+Dependency: 01 → 02 → 03 → 04. Story 04 under D3/proof mode: Astra's lane drives the loop from Codex against an isolated hub; the retained transcript + desk shots go to the owner; Muad'Dib counsels.
 
 ## 8. Exit criteria (evidence required)
 
@@ -70,7 +70,14 @@ Dependency: 01 → 02 → 03 → 04.
 - [ ] The named atlas pairs agree on durable outcome and refusals; the 1440/393 face walks are retained separately.
 - [ ] The owner's sitting: the loop from his client, results on his Desk, his words.
 
-## 9. Decisions for the owner (r2 — only what is his)
+## 9. The owner's rulings (2026-09-24, by AskUserQuestion — verbatim options chosen)
+
+- **D1 Pilot scope: the whole Phase 3+4 loop.** Import, summary run/read, decision create/read, brief generate/latest with the producer clock, Thought save/read (plus the Phase 4 seams: Generate in every state, the visible-row order, brief-scoped breakage ids, the handled line). Not decisions-only; not the desk-primitive family.
+- **D2 The stdio proxy: KEEP the thin proxy.** `holdspeak-mcp` keeps forwarding to the running hub; the leftover standalone mode that composes services locally and claims the owner lock (`mcp/server.py:459`) is RETIRED in this phase.
+- **D3 Access path for the closing use: CODEX (Astra's side).** The loop is driven from the other brain's client, proving the catalogue is client-neutral. Consequence: story 04's rehearsal runs on Astra's lane (Codex's MCP config pointed at an isolated hub), Muad'Dib counsels on built; the owner's own client is not required.
+- **Proof mode: REHEARSED, the owner skims shots.** A lane drives the loop from Codex in an isolated hub, retains the transcript and the desk shots at 1440 and 393; the owner looks at the shots; no live sitting. Recorded as "rehearsed, owner-reviewed shots", never as an observed sitting.
+
+## 9a. Decisions for the owner (r2 — as put; superseded by §9)
 
 - **D1 Pilot scope.** The complete bounded Phase 3 jobs incl. the Thought (recommended, both brains), or the decision slice only.
 - **D2 The stdio proxy.** Keep the thin proxy for his chosen client (recommended); standalone-mode local composition (`server.py:459`) retired.
@@ -88,7 +95,7 @@ Settled between the brains, not put to him: declaration style; effect handling (
 | Migration appetite swallows the phase | high | the pilot table is the whole scope | a story touches an op outside the table |
 | The owner is asked to operate the catalogue | medium | story 04 is his normal job request | a sitting step names an operation |
 
-## 11. Open, for Astra r2
+## 11. Open, for Astra r2 (the check that precedes the charter)
 
 - Exact pilot table (§6): confirm the Thought pair and the decision create/read pair against A1/A4's routes.
 - Whether `composition.service()` gains caching for pilot services or the hub composes them eagerly at startup.
@@ -100,3 +107,4 @@ Settled between the brains, not put to him: declaration style; effect handling (
 - NAMED atlas pairs for story 03 (not "cases that have both").
 - Explicit compatibility and palette preservation for migrated MCP entries.
 - Separate real-engine and replayed-provider evidence in story 03/04 acceptance.
+- With D3 = Codex: the Codex MCP configuration for an isolated hub (never the owner's desk) — is `scripts/astra` able to launch codex with a per-lane `.codex` config pointing `holdspeak-mcp` at a lane HOME? Name the seam.
