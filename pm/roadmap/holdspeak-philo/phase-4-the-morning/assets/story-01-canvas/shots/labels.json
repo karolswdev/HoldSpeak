@@ -1,0 +1,104 @@
+{
+ "0-today": {
+  "state": "TODAY (reference): populated, untriaged; no Generate; decisions last",
+  "head": "BRIEF · 4 THINGS WAITING",
+  "verbs": [
+   "Ack",
+   "Defer",
+   "1 more"
+  ],
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "1-generate-reachable": {
+  "state": "Board 1: populated, untriaged; Generate in the head verb slot",
+  "head": "BRIEF · 4 THINGS WAITING",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate",
+   "Ack",
+   "Defer",
+   "1 more"
+  ],
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "2a-generating": {
+  "state": "Board 2a: generation open; Generate disabled",
+  "verbs": [
+   "Generate (disabled)",
+   "Ack",
+   "Defer",
+   "1 more"
+  ],
+  "status": "GENERATING…",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "2b-reading": {
+  "state": "Board 2b: read open; Generate disabled",
+  "head": "BRIEF",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "status": "READING…"
+ },
+ "3a-did-not-generate": {
+  "state": "Board 3a: generation failed; day-one rows untouched",
+  "verbs": [
+   "Generate",
+   "Ack",
+   "Defer",
+   "1 more",
+   "Retry"
+  ],
+  "status": "BRIEF DID NOT GENERATE · HTTP 500",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "3b-did-not-load": {
+  "state": "Board 3b: read failed",
+  "head": "BRIEF",
+  "verbs": [
+   "Generate",
+   "Retry"
+  ],
+  "status": "BRIEF DID NOT LOAD · HTTP 500"
+ },
+ "4-next-day-one-decision": {
+  "state": "Board 4: next-day brief after ONE Generate; new decision first",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Ship the ingest API behind a flag",
+   "Review decision: Adopt the one desk bus",
+   "Meeting recorded: Architecture review"
+  ],
+  "rows_created_at": [
+   "SEP 24 07:58",
+   "SEP 22 11:30",
+   null
+  ],
+  "fold": "3 more",
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 6 items · 8:02 AM"
+ },
+ "5-next-day-several-decisions": {
+  "state": "Board 5: next-day brief, several older decisions; newest first",
+  "head": "BRIEF · 7 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Ship the ingest API behind a flag",
+   "Review decision: Keep one hub per desk",
+   "Review decision: Adopt the one desk bus"
+  ],
+  "rows_created_at": [
+   "SEP 24 07:58",
+   "SEP 23 16:10",
+   "SEP 22 11:30"
+  ],
+  "fold": "4 more",
+  "fold_holds": [
+   "Review decision: Use SQLite for the local store (SEP 21 09:05)",
+   "Meeting recorded: Architecture review",
+   "Open loop: Rate limits for the partner API",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana"
+  ],
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 7 items · 8:02 AM"
+ }
+}
