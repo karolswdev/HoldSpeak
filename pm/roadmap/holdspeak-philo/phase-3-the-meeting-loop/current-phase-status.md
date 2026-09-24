@@ -34,7 +34,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
   A3 — the pre-fix Chair source makes 5/6 new tests fail ([checks/story-03-built-astra.md](checks/story-03-built-astra.md):15); the recipe fence refuses every mutation (advance removed, moved, invalid; early empty generate) (`test_philo_graph_atlas.py`, r2 :41).
   A4 — 6/7 receipt tests and 3/4 floor tests fail on the parent ([checks/story-04-built-astra.md](checks/story-04-built-astra.md):13); the 600 px layout fence fails on the pre-fix CSS (:37).
   The closure's own rig changes (`_restart_detail` read fallback; no unfilled read is sent) are tooling and have no separate fence.
-- [ ] The owner's sitting on the finished chain, with his words as the phase's final summary; technical completion and usefulness reported separately.
+- [x] The owner's sitting on the finished chain, with his words as the phase's final summary; technical completion and usefulness reported separately. **WAIVED by the owner 2026-09-24 ("good to go, no sitting reqd..."): accepted, not observed; his words on usefulness are not claimed. The technical chain (exit 1, closed against Phase 4) stands as the record; usefulness stays PARTIAL as measured (`final-summary.md`).**
   **Open — his.** The technical record and the usefulness map are in [final-summary.md](final-summary.md); his words are not.
 - [x] (if D3 includes it) The thought's receipt on the face, canvas-ratified, both widths. (Evidence: the retained receipt walks `assets/story-04-shots/1440-*.png`, `393-*.png`; Astra's RATIFY r2 in `checks/story-04-built-astra.md`; the owner's canvas ratification recorded in merge `8c078662` of #614 — his original utterance is not in the tree.)
   D3 ruled A4 in. The owner ratified the canvas ([assets/story-04-canvas/](assets/story-04-canvas/README.md); merge `8c078662`, PR #614: "the owner ratified the canvas"); Astra r2 RATIFY ([checks/story-04-built-astra.md](checks/story-04-built-astra.md):42); rig `case.j11.thought_keep.receipt_time` at 1440 `20260923T060140Z` and 393 `20260923T060148Z` ([evidence-story-04](evidence-story-04.md)).
@@ -89,6 +89,8 @@ PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then q
 | Scope creep from the deferred list | high | the deferred list is explicit; a new story needs the owner's word | a fifth story appears |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — exit 3 (the owner's sitting) WAIVED by the owner ("no sitting reqd..."): accepted-not-observed; the phase's open items stay ledgered — Muad'Dib.
 
 - 2026-09-23 — Astra's closure check on #619: RATIFY-WITH-CONDITIONS on the record (conditions paid in the same commit: the phone face claim, the collision condition, box 2 scope, box 4 links); counsel: charter A5 (Generate reachable with untriaged rows; the decision inside the visible rows at both widths; no id collision across briefs; 1–2 days). The owner: "yes close and open" — Phase 3 closes with exits 1 and 3 open; the A5 set opens as Phase 4 The Morning — Muad'Dib.
 
