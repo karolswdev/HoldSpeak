@@ -32,9 +32,10 @@ and what turns it red:
 * **The Phase 4 invariants through MCP** -- decision rows lead by persisted
   ``created_at``; brief-scoped breakage ids across two MCP-made briefs with the
   old triage unchanged; the MCP shelf writes are the hub's shelf.
-* **The decision admission** -- a decision written through HTTP and through
-  MCP leaves the same documented absence: no kernel operation, no receipt
-  (``current-phase-status.md`` "Discovered missing admissions").
+* **The decision admission (CHARACTERIZATION ONLY)** -- a decision written
+  through HTTP and through MCP leaves the same zero: no kernel operation, no
+  receipt. Inherited Article XI debt, unruled (``current-phase-status.md``
+  "Discovered missing admissions"); parity, not exemption.
 """
 from __future__ import annotations
 
@@ -615,13 +616,17 @@ def _kernel_counts(db: Any) -> tuple[int, int, int]:
 
 
 def test_decision_writes_leave_the_same_documented_absence_on_both_transports(hub: Hub) -> None:
-    """Named, not certified: decision.create/update run no kernel operation and write no receipt.
+    """CHARACTERIZATION ONLY -- not an exemption, not a certification.
 
-    The ruling (PHILO-5-02, ``current-phase-status.md`` "Discovered missing
-    admissions"): a desk decision write is a local, owner-authored, reversible
-    record write -- none of Article XI.1's triggers -- so the kernel has no
-    lawful place for it today, as for every other desk-primitive write. If a
-    later ruling admits it, this fence goes red on BOTH transports at once.
+    It pins what IS: ``decision.create``/``decision.update`` leave no kernel
+    operation and no receipt through EITHER transport, the same zero on both.
+    That is INHERITED DEBT under Article XI (``current-phase-status.md``
+    "Discovered missing admissions"): whether a desk decision write "acts under
+    Article V" (filing) is UNRULED, and the debt is assigned to the owner's
+    ruling (``pm/roadmap/holdspeak/BACKLOG.md``, PHILO-5-02 follow-ups). Equal
+    absence proves parity between the transports, not that the absence is
+    lawful. When the debt is paid, this test goes red on BOTH transports at
+    once and is replaced by an admission fence.
     """
     start = _kernel_counts(hub.db)
     made = hub.client.post("/api/decisions", json={"title": "Over HTTP"})
@@ -633,8 +638,8 @@ def test_decision_writes_leave_the_same_documented_absence_on_both_transports(hu
     is_error, _ = hub.mcp("desk.update", {"kind": "decisions", "id": mcp_made["id"], "data": {"status": "accepted"}})
     assert is_error is False
     after_mcp = _kernel_counts(hub.db)
-    assert after_http == start, "HTTP decision writes began admitting; update the ruling and MCP together"
-    assert after_mcp == after_http, "MCP decision writes began admitting; update the ruling and HTTP together"
+    assert after_http == start, "HTTP decision writes began admitting; pay the Article XI debt record and MCP together"
+    assert after_mcp == after_http, "MCP decision writes began admitting; pay the Article XI debt record and HTTP together"
 
 
 # ── compatibility of the new tools' surface ──────────────────────────────
@@ -671,13 +676,17 @@ def test_palette_refusal_through_dispatch_for_the_new_tools() -> None:
 
 def test_the_intake_holds_custody_and_passes_exactly_the_held_inputs(tmp_path) -> None:
     from holdspeak.db import Database
+    from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.meeting_service import MeetingService
 
+    # r2: meeting.import is owner_only, so these checks run as the owner (a
+    # non-owner is refused before them: test_philo5_the_loop_r2.py).
+    owner = Principal(PrincipalKind.OWNER, "owner-session")
     registry = operations.bind_available({"meeting_service": MeetingService(Database(tmp_path / "h.db"))})
     with pytest.raises(RuntimeError, match="must hold exactly"):
-        registry.invoke(None, "meeting.import", {"filename": "a.txt"})
+        registry.invoke(owner, "meeting.import", {"filename": "a.txt"})
     with pytest.raises(operations.OperationRefused) as exc:
-        registry.invoke(None, "meeting.import", {"filename": "a.txt", "tmp_path": "/etc/passwd"},
+        registry.invoke(owner, "meeting.import", {"filename": "a.txt", "tmp_path": "/etc/passwd"},
                         held={"tmp_path": Path("x"), "config": None, "transcriber_factory": None})
     assert exc.value.code == "invalid_arguments"
     assert list(operations.MEETING_IMPORT.held) == ["tmp_path", "config", "transcriber_factory"]

@@ -1,0 +1,85 @@
+# Deliberate mutations on the round-two tree (PHILO-5-02 r2). Each is applied alone, its fences run, the file restored byte for byte (asserted).
+# runner: a one-off script (string replace -> python -m pytest -q --tb=line <fence> -> write the original bytes back). HOME isolated per run.
+# Each mutation runs TWO fences: the round-one state fence (stays GREEN -- Astra's finding 3) and the round-two traversal fence (goes RED).
+
+## M12 the MCP shelf write bypasses invoke (a direct call to the same composed service)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_phase4_mcp_shelf_writes_are_the_hubs_shelf
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.26s
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+# exit: 1
+E   AssertionError: MCP shelf left the registry: ['brief.shelf.read']
+    assert ['brief.shelf.read'] == ['brief.shelf...f.shelf.read']
+      At index 0 diff: 'brief.shelf.read' != 'brief.shelf.write'
+      Right contains one more item: 'brief.shelf.read'
+      Use -v to get more diff
+<wt>/tests/unit/test_philo5_the_loop_r2.py:360: AssertionError: MCP shelf left the registry: ['brief.shelf.read']
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+1 failed in 1.24s
+
+## M13 the HTTP shelf write bypasses invoke (a direct call to the same composed service)
+# file: holdspeak/web/routes/monday_brief.py
+# fence: tests/unit/test_philo5_the_loop.py::test_phase4_mcp_shelf_writes_are_the_hubs_shelf
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.28s
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+# exit: 1
+E   AssertionError: HTTP shelf left the registry: ['brief.shelf.read']
+    assert ['brief.shelf.read'] == ['brief.shelf...f.shelf.read']
+      At index 0 diff: 'brief.shelf.read' != 'brief.shelf.write'
+      Right contains one more item: 'brief.shelf.read'
+      Use -v to get more diff
+<wt>/tests/unit/test_philo5_the_loop_r2.py:354: AssertionError: HTTP shelf left the registry: ['brief.shelf.read']
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+1 failed in 1.25s
+
+## unmutated (restored) tree
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.26s
+
+# Deliberate mutations on the round-two tree (PHILO-5-02 r2). Each is applied alone, its fences run, the file restored byte for byte (asserted).
+# runner: a one-off script (string replace -> python -m pytest -q --tb=line <fence> -> write the original bytes back). HOME isolated per run.
+# Each mutation runs TWO fences: the round-one local-owner import fence (stays GREEN) and the round-two remote-credential fence (goes RED).
+
+## M14 the MCP intake checks the owner only inside invoke (after it has looked at and copied the file)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.22s
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+# exit: 1
+F                                                                        [100%]
+E   AssertionError: the hub touched the file for a remote agent: ['Path.is_file', 'os.access', 'Path.open']
+    assert ['Path.is_fil..., 'Path.open'] == []
+      Left contains 3 more items, first extra item: 'Path.is_file'
+      Use -v to get more diff
+<wt>/tests/unit/test_philo5_the_loop_r2.py:147: AssertionError: the hub touched the file for a remote agent: ['Path.is_file', 'os.access', 'Path.open']
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+1 failed in 1.21s
+
+## M15 meeting.import is not owner_only (round one's contract)
+# file: holdspeak/operations.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.29s
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+# exit: 1
+F                                                                        [100%]
+E   AssertionError: {'id': 1, 'jsonrpc': '2.0', 'result': {'content': [{'text': '{"meeting_id": "27c7ba31", "transcription_status": "importing"}', 'type': 'text'}], 'isError': False}}
+    assert False is True
+<wt>/tests/unit/test_philo5_the_loop_r2.py:144: AssertionError: {'id': 1, 'jsonrpc': '2.0', 'result': {'content': [{'text': '{"meeting_id": "27c7ba31", "transcription_status": "importing"}', 'type': 'text'}], 'isError': False}}
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+1 failed in 1.22s
+
+## unmutated (restored) tree
+# fence: tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+# exit: 0
+.                                                                        [100%]
+1 passed in 1.29s

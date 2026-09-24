@@ -57,7 +57,8 @@
         "mcp:desk.create[kind=decisions]",
         "mcp:desk.verb[verb_id=desk.create,kind=decisions]"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "decision.update",
@@ -121,7 +122,8 @@
         "mcp:desk.update[kind=decisions]",
         "mcp:desk.verb[verb_id=desk.update,kind=decisions]"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "decision.read",
@@ -153,7 +155,8 @@
         "http:GET /api/decisions/{decision_id}",
         "mcp:desk.get[kind=decisions]"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "decision.list",
@@ -182,7 +185,8 @@
         "http:GET /api/decisions",
         "mcp:desk.list[kind=decisions]"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "meeting.list",
@@ -256,7 +260,8 @@
         "http:GET /api/meetings",
         "mcp:meeting.list"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "meeting.read",
@@ -297,7 +302,8 @@
         "mcp:meeting.get",
         "mcp-resource:holdspeak://meetings/{meeting_id}"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "meeting.import",
@@ -349,6 +355,7 @@
         "unknown_operation",
         "invalid_arguments",
         "authority_in_arguments",
+        "owner_required",
         "ValidationError: occurred_at is not an ISO 8601 date and time"
       ],
       "completion": "asynchronous; read meeting.read until intel_status leaves importing (import_failed carries the reason); one desk_changed frame (kind meeting, op update) when the worker ends",
@@ -360,7 +367,8 @@
         "tmp_path",
         "config",
         "transcriber_factory"
-      ]
+      ],
+      "owner_only": true
     },
     {
       "name": "meeting.summary.run",
@@ -396,7 +404,8 @@
         "http:POST /api/meetings/{meeting_id}/intelligence/run",
         "mcp:meeting.run_intelligence"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "brief.generate",
@@ -421,7 +430,8 @@
         "mcp:monday_brief.generate",
         "mcp:monday_brief.get[generate=true]"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "brief.latest",
@@ -446,7 +456,8 @@
         "mcp:monday_brief.get",
         "mcp-resource:holdspeak://briefs/latest"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "brief.shelf.write",
@@ -487,7 +498,8 @@
         "http:POST /api/brief/items/{item_id}/shelf",
         "mcp:monday_brief.shelf"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "brief.shelf.read",
@@ -511,7 +523,8 @@
         "http:GET /api/brief/shelf",
         "mcp:monday_brief.shelf_read"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "thought.create",
@@ -541,7 +554,8 @@
         "http:POST /api/thoughts",
         "mcp:thought.create"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "thought.save",
@@ -580,7 +594,8 @@
         "http:PATCH /api/thoughts/{thought_id}/working",
         "mcp:thought.update_working"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "thought.read",
@@ -612,7 +627,8 @@
         "http:GET /api/thoughts/{thought_id}",
         "mcp-resource:holdspeak://thoughts/{thought_id}"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "thought.workbench.read",
@@ -644,7 +660,8 @@
         "http:GET /api/thoughts/{thought_id}/workbench",
         "mcp-resource:holdspeak://thoughts/{thought_id}/workbench"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     },
     {
       "name": "thought.list",
@@ -668,7 +685,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the service unchanged",
       "effect": "read",
-      "result": "{thoughts, next_cursor}",
+      "result": "{items, next_cursor}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -680,7 +697,8 @@
         "http:GET /api/thoughts?state=unfinished",
         "mcp-resource:holdspeak://thoughts/unfinished"
       ],
-      "held": []
+      "held": [],
+      "owner_only": false
     }
   ]
 }

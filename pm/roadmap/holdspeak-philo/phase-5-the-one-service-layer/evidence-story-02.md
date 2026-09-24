@@ -34,7 +34,19 @@
 ## Not claimed
 
 - No full suite (the orchestrator's job). No browser walk: no face changed; the rendered Phase 4 fences are the vitest chair suite. No real ASR: the audio import uses a stub transcriber through the same monkeypatch seam the HTTP import tests use. The Codex rehearsal is story 04.
-- The decision admission is RECORDED, not admitted (phase status, Decisions made 2026-09-24).
+- The decision admission is NOT resolved and NOT exempted (round two): INHERITED DEBT under Article XI, unruled, assigned to the owner's ruling (phase status "Decisions deferred"; `pm/roadmap/holdspeak/BACKLOG.md` "PHILO-5-02 follow-ups"). The `test_philo5_the_loop.py:618` test is characterization only.
+
+## Round two (Astra's check on built, BOUNCE — `checks/story-02-built-astra.md`)
+
+Retained under `docs/internal/philo/phase-5/the-loop/round-2/`.
+
+- **1. The owner boundary on `meeting.import` (P1).** The contract: `OperationDescriptor.owner_only` and `OperationRegistry.authorize` (`holdspeak/operations.py:355,609`), called first by `invoke`; the refusal is `OperationOwnerRequired` — a `ServiceError`, code `owner_required`, status 403 (the owner-only service idiom). The MCP intake calls `authorize` before it looks at the path (`holdspeak/mcp/tools.py:706`); the HTTP upload before it stores the body (`holdspeak/web/routes/meeting_import.py:66`). Fence `tests/unit/test_philo5_the_loop_r2.py:131`: remote MCP enabled through `PUT /api/settings/remote`, a DESK credential issued through `POST /api/settings/remote/credentials`, the call from client host `192.0.2.123` with ONLY the agent token -> `owner_required`, zero touches of the target (`Path.open`, `Path.is_file`, `Path.exists`, `os.access`, `open` all observed), no meeting; the same credential from loopback -> `owner_required`; the local owner then imports the same file and the observer sees its open (the zero is not vacuous). The HTTP route alone behind an agent principal -> 403 `owner_required`, no temp file (`:165`). RED on round one (`red-round-one.txt`): the remote DESK import succeeded (`{"meeting_id": "0e3f8bcb", "transcription_status": "importing"}` — Astra's `48a3fa11` reproduced) and the HTTP route stored the agent's upload (202). M14 (the intake checks the owner only inside `invoke`) -> red with `['Path.is_file', 'os.access', 'Path.open']`; M15 (`owner_only=False`) -> red, the agent import succeeds; the round-one local-owner fence stays green under both (`red-mutations.txt`).
+- **Filesystem audit of the registry.** Of the 17 descriptors, only `meeting.import` takes a transport-held file (`held`), and its only name-like argument is `filename` (the extension picks the format; the hub never opens by it). No other descriptor has a path argument or a held input; none spawns a process. The model call behind `meeting.summary.run` is queued work, not a caller-named path.
+- **2. `thought.list`'s declared shape (P2).** `result="{items, next_cursor}"` (`holdspeak/operations.py:560`); `docs/generated/operations.json` regenerated. Fence for the CLASS: every descriptor whose `result` declares a braced shape (8 of 17) runs its real producer through the hub's registry and must return the declared top-level keys (`test_philo5_the_loop_r2.py:333`; `brief.shelf.read` is a data-keyed map and is checked as one); a second test fails if a braced declaration has no producer in the fence (`:327`). RED on round one: `thought.list declares ['thoughts', 'next_cursor']; the producer returned ['items', 'next_cursor']`.
+- **3. Shelf writes traverse the registry (P2).** `test_philo5_the_loop_r2.py:348` records the hub's ONE `invoke` for the HTTP shelf write + read and the MCP `monday_brief.shelf` + `monday_brief.shelf_read`. M12 (MCP shelf write calls the composed service directly) -> `MCP shelf left the registry: ['brief.shelf.read']`; M13 (the same for HTTP) -> `HTTP shelf left the registry: ['brief.shelf.read']`; the round-one state fence `test_phase4_mcp_shelf_writes_are_the_hubs_shelf` stays GREEN under both — Astra's finding reproduced, now fenced. The implementation was already correct, so there is no round-one red for this fence; the mutations are its red.
+- **4. The admission wording.** Phase status "Decisions made" / "Decisions deferred" / "Discovered missing admissions" rewritten as INHERITED DEBT (Article XI), UNRULED on "acts under Article V" (filing), assigned (BACKLOG "PHILO-5-02 follow-ups"); the exemption claim is withdrawn; the test docstring at `test_philo5_the_loop.py:618` says CHARACTERIZATION ONLY.
+- **Line pin paid.** The four lines added to the MCP intake moved the `recipe.run` call `holdspeak/mcp/tools.py:848` -> `:852`; its pin in `tests/unit/test_phase143_inference_capability_census.py:395` is re-anchored; so are the three routing pins `holdspeak/mcp/tools.py:980/981/983` -> `:984/985/987` in `tests/unit/test_phase143_routing_authority_census.py:109,172,205` (the first round-two capture below is red on exactly that pin; the second is after the re-anchor).
+- **Not claimed.** The contract-level unit test (`test_the_contract_refuses_a_non_owner_before_anything_else`) is red on round one by an unavailable symbol — not claimed as a behavioural red. No full suite, no browser walk, no real Codex rehearsal in this round.
 
 ## Proof
 
@@ -199,4 +211,119 @@ bringing up nodes...
 ........................................................................ [ 97%]
 .....................                                                    [100%]
 885 passed in 73.40s (0:01:13)
+```
+
+### Captured run — 2026-09-24T20:43:48Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -p no:cacheprovider -n 8 $(cat docs/internal/philo/phase-5/the-loop/round-2/scoped-tests.txt)`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** b418e149876c382609fb2165d6c229b40a4aca7a
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 22%]
+........................................................................ [ 29%]
+........................................................................ [ 36%]
+........................................................................ [ 44%]
+.................................................................F...... [ 51%]
+........................................................................ [ 58%]
+........................................................................ [ 66%]
+........................................................................ [ 73%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...........................................                              [100%]
+=================================== FAILURES ===================================
+__ test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer ___
+[gw4] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-5-02/.venv/bin/python
+
+    def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() -> None:
+        definitions, references, pointers, profile_ids = _routing_ast_inventory(REPO)
+        assert definitions == ROUTING_RESOLVER_DEFINITIONS
+>       assert references == ROUTING_RESOLVER_REFERENCES
+E       AssertionError: assert {'holdspeak/d...acement', ...} == {'holdspeak/d...acement', ...}
+E
+E         Extra items in the left set:
+E         'holdspeak/mcp/tools.py:985:import:resolve_meeting_placement'
+E         Extra items in the right set:
+E         'holdspeak/mcp/tools.py:981:import:resolve_meeting_placement'
+E         Use -v to get more diff
+
+tests/unit/test_phase143_routing_authority_census.py:363: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+1 failed, 978 passed in 72.55s (0:01:12)
+```
+
+### Captured run — 2026-09-24T20:45:20Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q -p no:cacheprovider -n 8 $(cat docs/internal/philo/phase-5/the-loop/round-2/scoped-tests.txt)`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b418e149876c382609fb2165d6c229b40a4aca7a
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 22%]
+........................................................................ [ 29%]
+........................................................................ [ 36%]
+........................................................................ [ 44%]
+........................................................................ [ 51%]
+........................................................................ [ 58%]
+........................................................................ [ 66%]
+........................................................................ [ 73%]
+........................................................................ [ 80%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...........................................                              [100%]
+979 passed in 75.61s (0:01:15)
+```
+
+### Captured run — 2026-09-24T20:46:40Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); export HOME=$H; uv run python scripts/philo_api_reference.py --check && uv run python scripts/philo_boundary_census.py --check && uv run python scripts/gen_operations_json.py --check && uv run python scripts/philo_openapi_reference.py --check && uv run python scripts/philo_graph_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b418e149876c382609fb2165d6c229b40a4aca7a
+
+```text
+API reference checked
+Boundary candidate census checked
+OK docs/generated/operations.json
+OpenAPI: 569 paths
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+```
+
+### Captured run — 2026-09-24T20:46:48Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) .githooks/dw check holdspeak-philo`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b418e149876c382609fb2165d6c229b40a4aca7a
+
+```text
+dw check: ok
 ```

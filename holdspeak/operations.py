@@ -16,9 +16,11 @@ What this module is not:
 * not the model-tool projection (``services/tool_capability_service.py``) and
   not the kernel's ``OperationSpec`` (``kernel/model.py``) — those keep their
   narrower jobs;
-* not an authorizer. The principal comes from the transport (the HTTP auth
-  middleware, the MCP auth resolver); arguments can never carry authority, and
-  :meth:`OperationRegistry.invoke` refuses an argument that tries.
+* not an authorizer beyond one flag. The principal comes from the transport
+  (the HTTP auth middleware, the MCP auth resolver); arguments can never carry
+  authority, and :meth:`OperationRegistry.invoke` refuses an argument that
+  tries. A descriptor marked ``owner_only`` refuses every non-owner principal
+  by name (``owner_required``) before anything else runs.
 
 Service errors (``NotFound``, ``ValueError``) pass through unchanged, so every
 transport keeps its existing response mapping. Contract refusals raise
@@ -34,6 +36,9 @@ from typing import Any, Callable, Mapping, Optional
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
+
+from holdspeak.principals import PrincipalKind
+from holdspeak.services.errors import ServiceError
 
 #: Argument names that would let a caller claim authority. The principal is a
 #: transport fact; no operation accepts it as data.
@@ -51,6 +56,23 @@ class OperationRefused(ValueError):
         self.operation = operation
         self.detail = detail
         super().__init__(detail)
+
+
+class OperationOwnerRequired(ServiceError):
+    """``owner_required``: an owner-only operation called by any other principal.
+
+    The same idiom as the owner-only services (``ModelLibraryApplicationService
+    .require_owner``): a ``ServiceError`` with the code and a 403 status, so MCP
+    answers ``{error, code: owner_required}`` and HTTP answers 403.
+    """
+
+    def __init__(self, operation: str) -> None:
+        self.operation = operation
+        super().__init__(
+            "owner_required",
+            f"{operation} requires the owner. An agent or node credential cannot call it.",
+            context={"status": 403, "operation": operation},
+        )
 
 
 @dataclass(frozen=True)
@@ -82,6 +104,12 @@ class OperationDescriptor:
     #: hub took custody of, a loaded configuration, a factory. No client can
     #: send them; they are never arguments and never validated as data.
     held: tuple[str, ...] = ()
+    #: Only an OWNER principal may call it (PHILO-5-02 r2, Astra's check on
+    #: built finding 1). :meth:`OperationRegistry.authorize` refuses every other
+    #: principal with ``owner_required``, before any argument or held input is
+    #: read. A transport that touches the filesystem for the operation calls
+    #: ``authorize`` first.
+    owner_only: bool = False
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -105,6 +133,7 @@ class OperationDescriptor:
             "completion": self.completion,
             "exposure": list(self.exposure),
             "held": list(self.held),
+            "owner_only": self.owner_only,
         }
 
 
@@ -314,13 +343,16 @@ MEETING_IMPORT = OperationDescriptor(
     principal=_OWNER_PRINCIPAL + "; the background transcription runs under that same principal",
     effect="write",
     result="{meeting_id, status: importing}",
-    refusals=_CONTRACT_REFUSALS + ("ValidationError: occurred_at is not an ISO 8601 date and time",),
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "ValidationError: occurred_at is not an ISO 8601 date and time",),
     completion="asynchronous; read meeting.read until intel_status leaves importing (import_failed carries the reason); one desk_changed frame (kind meeting, op update) when the worker ends",
     exposure=("http:POST /api/meetings/import", "mcp:meeting.import"),
     service="meeting_service",
     method="import_held_file",
     # Gap E: custody, configuration and the transcriber stay transport work.
     held=("tmp_path", "config", "transcriber_factory"),
+    # r2 (Astra finding 1): the MCP intake opens a caller-named hub path; only
+    # the owner may make the hub read its own filesystem.
+    owner_only=True,
 )
 
 MEETING_SUMMARY_RUN = OperationDescriptor(
@@ -525,7 +557,7 @@ THOUGHT_LIST = OperationDescriptor(
     },
     principal=_OWNER_PRINCIPAL,
     effect="read",
-    result="{thoughts, next_cursor}",
+    result="{items, next_cursor}",
     refusals=_CONTRACT_REFUSALS + ("ValidationError with the Thought service's own codes",),
     completion="synchronous",
     exposure=("http:GET /api/thoughts?state=unfinished", "mcp-resource:holdspeak://thoughts/unfinished"),
@@ -574,6 +606,18 @@ class OperationRegistry:
             raise OperationRefused("unknown_operation", name, f"Unknown operation: {name}")
         return bound
 
+    def authorize(self, principal: Any, name: str) -> None:
+        """Refuse a non-owner principal for an ``owner_only`` operation.
+
+        :meth:`invoke` calls it first. A transport calls it itself before any
+        work it does ahead of ``invoke`` (the MCP import intake, before it opens
+        the caller's path; the HTTP upload, before it stores the body).
+        """
+        if not self._bound(name).descriptor.owner_only:
+            return
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired(name)
+
     def invoke(
         self,
         principal: Any,
@@ -589,6 +633,7 @@ class OperationRegistry:
         transport bug and fails before the service runs.
         """
         bound = self._bound(name)
+        self.authorize(principal, name)
         given_held = dict(held or {})
         if set(given_held) != set(bound.descriptor.held):
             raise RuntimeError(

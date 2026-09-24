@@ -60,6 +60,12 @@ def build_meeting_import_router(ctx) -> APIRouter:
         started_at_ms: Optional[int] = Form(None),
     ):
         filename = file.filename or "recording"
+        # r2: the owner boundary before the body is stored (the edge gate
+        # already requires the owner here; the operation says so too).
+        try:
+            operations.for_context(ctx, meeting_service=_service).authorize(_principal(request), "meeting.import")
+        except operations.OperationOwnerRequired as refused:
+            return JSONResponse({"error": refused.detail, "code": refused.code}, status_code=403)
         try:
             _service().validate_import(_principal(request), filename)
         except ValidationError as exc:

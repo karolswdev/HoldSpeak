@@ -700,6 +700,10 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
     from holdspeak.services.errors import ValidationError
     from holdspeak.web.routes import meeting_import as import_route
 
+    # r2 (Astra's check on built, finding 1): the owner boundary comes FIRST.
+    # A non-owner principal (a remote DESK credential, any agent or node) is
+    # refused with owner_required before the path is looked at, opened or copied.
+    registry.authorize(principal, "meeting.import")
     path = Path(str(args.get("path") or ""))
     if not path.is_absolute():
         raise ValidationError(

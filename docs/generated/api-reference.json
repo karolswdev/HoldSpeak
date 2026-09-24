@@ -4337,7 +4337,8 @@
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
         "tests/unit/test_philo5_loop_compat.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -4403,7 +4404,8 @@
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_loop_compat.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19232,6 +19234,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19506,6 +19509,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19633,6 +19637,7 @@
           "declared_responses": {},
           "literal_error_statuses": [
             400,
+            403,
             500
           ],
           "calls": [
@@ -19649,6 +19654,7 @@
             "datetime.fromtimestamp",
             "datetime.now",
             "operations.for_context",
+            "operations.for_context(ctx, meeting_service=_service).authorize",
             "operations.for_context(ctx, meeting_service=_service).invoke",
             "router.post",
             "shutil.copyfileobj",
@@ -19676,6 +19682,7 @@
         "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19778,6 +19785,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19880,6 +19888,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19988,6 +19997,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20086,6 +20096,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20188,6 +20199,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20291,6 +20303,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20388,6 +20401,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20495,6 +20509,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20597,6 +20612,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20697,6 +20713,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20792,6 +20809,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20889,6 +20907,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20989,6 +21008,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21086,6 +21106,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21189,6 +21210,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21292,6 +21314,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21390,6 +21413,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21495,6 +21519,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21592,6 +21617,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21694,6 +21720,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21793,6 +21820,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21900,6 +21928,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -22000,6 +22029,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -22112,6 +22142,7 @@
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -33649,6 +33680,7 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -33759,6 +33791,7 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34104,7 +34137,8 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
-        "tests/unit/test_hs174_reach_wire.py"
+        "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo5_the_loop_r2.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34170,7 +34204,8 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
-        "tests/unit/test_hs174_reach_wire.py"
+        "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo5_the_loop_r2.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34244,7 +34279,8 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
-        "tests/unit/test_hs174_reach_wire.py"
+        "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo5_the_loop_r2.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

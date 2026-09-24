@@ -1,0 +1,43 @@
+# Check — Astra, 2026-09-24, on built: PHILO-5-02 (PR #635 @ fca54146)
+
+VERDICT: BOUNCE — do not merge #635 at `fca54146` yet.
+
+FINDINGS:
+
+1. **P1 — The new import intake is reachable by a remote AGENT.** Its stated local-OWNER boundary is not enforced. I enabled remote MCP through the real route, issued a **DESK** credential, and called from a non-loopback test client. `meeting.import` imported an isolated synthetic owner file; `meeting.get` returned its contents. The durable meeting is `48a3fa11`. The intake opens the path without checking the principal at `holdspeak/mcp/tools.py:703`; the HTTP transport admits credentialed agents at `holdspeak/web/routes/mcp_http.py:143`. [Independent proof](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo502-check-0lehnqz0/remote-import-probe.json). **Ruling on 3:** an absolute caller path, copied into hub custody, is a lawful local-owner contract. No root restriction is necessary for that contract. Enforce the owner boundary before filesystem access; Tenet 1 favors that small correction. Article XI.4 does not equate agent and owner rights.
+
+2. **P2 — One declared result shape is false.** `thought.list` declares `{thoughts, next_cursor}` at `holdspeak/operations.py:528`. The real producer returns `{items, next_cursor}` at `holdspeak/services/refinement_thought_service.py:295`, confirmed through HTTP and the MCP resource. [Independent proof](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo502-check-0lehnqz0/thought-list-contract-probe.json). This fails Tenet 3 and Article VI.3: a client following the new declaration reads the wrong field.
+
+3. **P2 — The shelf-write registry invariant is not fenced.** I replaced MCP shelf dispatch with a direct call to the same composed service, bypassing `invoke`. **All 23 loop tests still passed.** The recording test omits shelf writes at `tests/unit/test_philo5_the_loop.py:240`; the shelf test checks state, not registry traversal, at `tests/unit/test_philo5_the_loop.py:581`. [Mutation proof](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo502-check-0lehnqz0/shelf-registry-mutation.txt). The current implementation is correct, but the claimed structural proof is incomplete. M2/M3 test import, not shelf. This fails the charter’s fence law and Article IX.3; under Tenets 2/3, a small missing assertion suffices.
+
+4. **The admission ruling cannot close the inherited debt as written.** `pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/current-phase-status.md:205` omits XI.1’s “acts under Article V” trigger. Locality, reversibility, and owner authorship do not alone establish exemption: Article V includes filing; XI.4 makes the owner’s gesture approval; XI.5 exempts computation without effect. See `docs/internal/CONSTITUTION.md:106` and `docs/internal/CONSTITUTION.md:167`. Other unadmitted lifecycle writes are precedent in implementation, not constitutional authority. **Ruling on 9:** retain the zero-count test as characterization, and retain the debt with an assigned follow-up. I do **not** require a new kernel implementation in this PR; Tenet 1 and the explicit scope support deferral, not the asserted exemption or “RESOLVED” closure.
+
+5. **The shared composition otherwise passes.** The 13 descriptors bind to the hub’s existing instances at `holdspeak/runtime/composition.py:496`. HTTP, MCP tools, and all five pilot resources use the registry; the old direct branches are replaced, with constructors retained only in fallbacks. Identity, producer-clock advancement through MCP, `runtime_queue`, and removal of the HTTP summary factory passed the scoped tests at `tests/unit/test_philo5_the_loop.py:191`, `tests/unit/test_philo5_the_loop.py:306`, and `tests/unit/test_philo5_the_loop.py:354`. **Ruling on 2E:** `held` is a proportionate internal custody mechanism. It keeps file/configuration/factory objects outside client arguments and enforces their exact names at `holdspeak/operations.py:591`. No replacement framework is warranted.
+
+6. **KEPT and the Phase 4 behavior are preserved.** The working-copy test verifies revision refusal parity, stale workspace cursor, moving `last_modified`, and unchanged lifecycle at `tests/unit/test_philo5_the_loop.py:461`. `thought.complete` is untouched. MCP decision ordering, brief-scoped breakage IDs, and shelf parity pass at `tests/unit/test_philo5_the_loop.py:513`, `tests/unit/test_philo5_the_loop.py:533`, and `tests/unit/test_philo5_the_loop.py:581`. The `web/` diff is empty. I read the CI log: all **15 Chair files / 89 tests**, including rendered receipts and handled-state tests, pass.
+
+7. **Compatibility and the new shelf surface pass within the tested scope.** I reproduced **58/58 compatibility tests on both archive base and built**, and compared the complete rosters: all **225 existing definitions are identical**, exactly three tools are added, and CHAT_PALETTE is unchanged. No additional narrowing was found. Default brief reads, `generate=true`, transport projections, and existing route tests pass. **Ruling on 8:** `state:null` is necessary parity with the existing clear toggle, not scope creep; its cross-transport behavior is tested at `tests/unit/test_philo5_the_loop.py:595`. Palette refusal is exercised through dispatch at `tests/unit/test_philo5_the_loop.py:657`.
+
+8. **The residual accounting is honest.** **327 → 320** pays seven MCP identities. The HTTP brief construction remains counted, explicitly moved rather than paid at `docs/internal/philo/phase-5/residual-set.json:115`. The remaining builders still serve partial contexts or non-pilot routes. **Ruling on 7:** lawful scope, not disguised payment. I reproduced the **nine-problem base red** and **320-identity built green**.
+
+9. **The census and atlas changes are lawful; the fence claim needs the qualification in finding 3.** The runner census excludes calls whose second argument names a declared operation, while retaining unknown names and method references at `tests/unit/test_phase143_inference_capability_census.py:45`. That maintains the guard for the actual runner signature. The atlas changes update moved clock ownership and source anchors; generated checks pass. I reproduced **19 failed / 4 passed** on base and read M1–M11’s retained failure evidence. I agree that “Unknown tool” and unavailable-symbol failures are **not** behavioral reds.
+
+10. **Verification is substantial, with two qualifications.** The scoped archive run produced **879 passes and six environment failures**: two required Git history, four required the built web shell. All six passed on isolated-HOME rerun in the worktree. Four generated checks, residual checks, roster drift tests, and `dw check` pass. The worktree remains clean, with no old-roadmap assets changed. However, `git diff --check 6e707ff3..HEAD` exits **2** for captured-output whitespace, including `docs/internal/philo/phase-5/the-loop/red-base-loop-fences.txt:13`; this is evidence-only, not a product blocker. GitHub reports mergeable. I read successful logs for [Web Quality](https://github.com/karolswdev/HoldSpeak/actions/runs/36054091065/job/107816628445), [G0](https://github.com/karolswdev/HoldSpeak/actions/runs/36054091065/job/107816628903), [Documentation](https://github.com/karolswdev/HoldSpeak/actions/runs/36054091065/job/107816628837), and [Linux Smoke](https://github.com/karolswdev/HoldSpeak/actions/runs/36054091065/job/107816628718).
+
+CONDITIONS:
+
+- Enforce the import intake’s OWNER boundary before accessing paths; prove remote-agent refusal through a genuinely issued credential while preserving local-owner import.
+- Correct `thought.list`’s result declaration and regenerate its export.
+- Fence HTTP and MCP shelf-write traversal; retain a red mutation that bypasses `invoke`.
+- Replace the admission-exemption claim and resolved status with explicit inherited debt, an assigned follow-up, and a characterization-only test explanation.
+
+MISSED:
+
+1. Remote DESK credentials inherit the new hub-filesystem intake.
+2. The published Thought-list contract names a nonexistent result field.
+3. Shelf writes can leave the registry without any loop fence failing.
+4. Equal absence of receipts proves parity, not constitutional exemption.
+
+TUESDAY: The local-owner loop is supported by service tests and unchanged Chair behavior; the complete ordinary-words Codex job still awaits stories 03–04.
+
+UNKNOWN: No fresh Codex rehearsal, real ASR/model execution, or 1440/393 walk was performed in this check. M1–M11 were read, not independently rerun. Heavy CI remained running or queued at last inspection. No full suite was run, and nothing in the reviewed tree was changed.
