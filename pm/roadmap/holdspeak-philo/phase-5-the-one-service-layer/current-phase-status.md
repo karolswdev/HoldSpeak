@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (chartered by the two brains; the owner's ratification owed).
+**Last updated:** 2026-09-24 (RATIFIED; 01 in progress).
 
 ## Goal
 
@@ -27,9 +27,7 @@ What went wrong (the brains' reading): "flow through services" was built as "the
 
 ## Status of this charter
 
-CHARTERED 2026-09-24 by the two brains (Astra r1 BOUNCE → r2 RATIFY-WITH-CONDITIONS, conditions paid here); the owner's ratification owed.
-
-Checks: [Astra r1](checks/charter-astra-r1.md) (BOUNCE, 2026-09-23, on the draft then numbered Phase 4), [Astra r2](checks/charter-astra-r2.md) (RATIFY-WITH-CONDITIONS, 2026-09-24, on draft r3 `3881301f`). The draft is parked at [assets/charter-draft-r3.md](assets/charter-draft-r3.md).
+RATIFIED by the owner 2026-09-24 (AskUserQuestion): "Ratify, build it" — the four sequential stories and the provisional 11–14 engineering days; and "Accept reopening" — for Phase 5 a fresh/reopened Desk read is accepted to see a brief changed through Codex; already-open refresh is NOT claimed and is not in scope. Build starts: story 01 (Muad'Dib lane), Astra checks on built.
 
 ## Scope
 
@@ -159,7 +157,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-5-01 | One decision through one contract (and the Codex path proved) | backlog | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | - |
+| PHILO-5-01 | One decision through one contract (and the Codex path proved) | in-progress | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | - |
 | PHILO-5-02 | The loop shares the contract | backlog | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | - |
 | PHILO-5-03 | The atlas proves the three paths | backlog | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | - |
 | PHILO-5-04 | The owner asks in his own words (rehearsed, owner-reviewed shots) | backlog | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | - |
@@ -174,6 +172,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+2026-09-24: RATIFIED by the owner; freshness ruled (reopening accepted). Story 01 starts on `../wt-philo-5-01` / `feat/philo-5-01-one-decision` (Muad'Dib, Opus 5.5 worker); its first proof is the Codex → proxy → isolated-hub loop.
 
 2026-09-24: CHARTERED by the two brains from draft r3 (the owner's D1–D3 and proof mode ruled) and Astra's r2 check (RATIFY-WITH-CONDITIONS); every condition is paid in this file and the four story files. Nothing is built. The owner's ratification is owed; then story 01 starts on `../wt-philo-5-01`.
 
@@ -195,6 +195,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | MISSED 5: inflated proof (old atlas counts, a replay presented as real-engine, reviewed shots presented as a sitting) | medium | counts pinned to `4b4f8d94`; real/replayed retained separately; the "rehearsed, owner-reviewed shots" wording | any evidence line calls a replay real or a review a sitting |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — the owner RATIFIED the charter ("Ratify, build it") and ruled brief freshness ("Accept reopening"). Story 01 in progress — Muad'Dib.
 
 - 2026-09-24 — Astra r3 (final) on the charter: RATIFY-WITH-CONDITIONS; the one condition (story 02: `generate=true` belongs to `monday_brief.get`, not `monday_brief.generate`) paid; the two owner questions Astra named (ratify the charter + 11–14 sequential days; accept reopening the Desk for a Codex-changed brief vs amend scope) put to the owner by AskUserQuestion — Muad'Dib.
 

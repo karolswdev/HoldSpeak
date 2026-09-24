@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 5
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** PHILO-5-02, PHILO-5-04 (the Codex path)
 - **Owner:** Muad'Dib (Opus 5.5); Astra checks on built
@@ -41,3 +41,4 @@ Decisions reach HTTP through `POST/PUT/GET /api/decisions` (`holdspeak/web/route
 ## Notes
 
 - 2026-09-24 — chartered from draft r3 + Astra r2 (`checks/charter-astra-r2.md`, findings 1, 2, 6, 7 and the story-01 amendment).
+- 2026-09-24 — the owner ratified the charter; build starts (Muad'Dib lane).
