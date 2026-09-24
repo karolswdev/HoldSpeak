@@ -1,9 +1,13 @@
 # PHILO-4-04 canvas — The triaged headline
 
-**PROPOSED — owner ratification pending. Canvas only; the product is unchanged.**
+**RATIFIED — owner, 2026-09-24: recommended board 7c; Arrival-only Ack/Defer count; bare `No changes`.**
+
+Ratification was recorded on main in `89208bae` and the story notes. The
+owner also waived the sitting. These boards retain their original canvas
+provenance; product verification ships separately with story 04.
 
 Muad'Dib's final check: **RATIFY for presentation**, all four conditions
-paid. Astra agrees; no open dissent. The owner has not ratified either option.
+paid. Astra agrees; no open dissent. The owner subsequently ratified the recommended one-line option (board 7c).
 
 The section must tell the owner that the six rows have been handled while
 keeping the brief's original counts. After Muad'Dib's check, the recommended
@@ -19,7 +23,7 @@ production styles from this worktree. The screenshots show the BRIEF
 section in the Chair, as in story 01's canvas; they are not full Arrival
 walks or evidence of implemented behavior.
 
-## Owner asks
+## Owner asks — all settled on 2026-09-24
 
 1. Choose the **recommended one-line option** (board 7c): keep the existing
    `SEP 21 – 23 · GENERATED SEP 23 17:40` below the headline and add only
@@ -43,9 +47,9 @@ Tuesday question: after Ack or Defer on the last row, can you tell that
 this brief has been handled and that the waiting counts describe its
 saved snapshot?
 
-Muad'Dib publishes this artifact for the owner. Build starts only after
-the ratification word in a follow-up brief, as the lane brief and
-UX-CANON A.2 require. This PR must remain open; story 04 stays backlog.
+The follow-up build brief records the owner's ratification of all three
+asks. Build is authorized. PR #627 stays open for Muad'Dib's counsel on
+built; Astra does not merge it.
 
 ## Exact face strings
 
@@ -82,6 +86,12 @@ The PNG is cropped to the section; its filename names the viewport.
 | Generating, proposed | [shot](shots/8a-quiet-generating-proposed-1440.png) | [shot](shots/8a-quiet-generating-proposed-393.png) | The same saved result and handled state remain visible |
 | Failed, proposed | [shot](shots/8b-quiet-failed-proposed-1440.png) | [shot](shots/8b-quiet-failed-proposed-393.png) | The same saved result and handled state remain visible |
 | Same-day success, proposed | [shot](shots/9-same-day-success-proposed-1440.png) | [shot](shots/9-same-day-success-proposed-393.png) | Handled state and generation receipt coexist |
+
+The retained 8a/8b/9 PNGs use the earlier alternative snapshot/date
+placement. The owner's later board 7c choice controls the build in every
+state: headline → existing date → handled line, with status or success
+receipt below it. Those transition boards specify coexistence; they do
+not override the explicit instruction to leave headline and date unmoved.
 
 ## Data and source limits
 
@@ -147,7 +157,8 @@ without a story flip. No acceptance box is checked by this canvas commit.
 Existing Generate/date tests check the unchanged baseline. The canvas
 probe checks rendered labels and geometry, not product behavior,
 durability, full-face clearance, real pointer transitions or owner use.
-The product fence, real atlas walks and owner's sitting remain pending.
+The product fence and real atlas walks are recorded in story 04
+build evidence. The owner waived the sitting; no owner observation is claimed.
 
 Observed by Astra on 2026-09-24: all 14 final section shots inspected. Both
 baseline boards at both widths are byte-identical to the corresponding
@@ -165,7 +176,7 @@ affect DOM semantics, not pixels.
 Muad'Dib's [canvas check](../../checks/story-04-canvas-muaddib.md) asks
 for the one-line option, explicit count scope, honest evidence metadata,
 and the date/live-region build seams. The one-line board and asks address
-those conditions. Owner ratification is still pending.
+those conditions. The owner subsequently ratified board 7c and both other asks.
 
 One initial command used the broad `test:desk` npm wrapper. It was stopped
 with exit 143 when its built-in directory filter was noticed; no full-suite

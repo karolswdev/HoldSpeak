@@ -1,0 +1,252 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-04
+
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled 3ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure 0ms
+   → document is not defined
+ × web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled 3ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure 0ms
+   → document is not defined
+ × .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt 0ms
+   → document is not defined
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:163:5
+    161|     latest = dayOneBrief();
+    162|     const expectedSections = structuredClone(COMPOSED_SECTIONS);
+    163|     render(<ChairHome />);
+       |     ^
+    164|     const section = await screen.findByTestId("arrival-brief");
+    165|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:191:5
+    189|     // shelf state and must not block or inflate the Arrival count.
+    190|     (latest as { shelf: Record<string, string> }).shelf = DAY_ONE_SHEL…
+    191|     render(<ChairHome />);
+       |     ^
+    192|     const section = await screen.findByTestId("arrival-brief");
+    193|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:202:5
+    200|     delete partialShelf.c1;
+    201|     latest = dayOneBrief({ shelf: partialShelf });
+    202|     render(<ChairHome />);
+       |     ^
+    203|     await screen.findByTestId("arrival-brief-row");
+    204|     expect(screen.queryByTestId("arrival-brief-handled")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:226:5
+    224|       shelf: DAY_ONE_SHELF,
+    225|     });
+    226|     render(<ChairHome />);
+       |     ^
+    227|     await screen.findByTestId("arrival-brief");
+    228|     await waitFor(() => expect(screen.queryByTestId("arrival-brief-dat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:235:5
+    233|   it("keeps No changes bare without a zero handled count", async () =>…
+    234|     latest = dayOneBrief({ id: "brief-empty", headline: "No changes", …
+    235|     render(<ChairHome />);
+       |     ^
+    236|     const section = await screen.findByTestId("arrival-brief");
+    237|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:247:5
+    245|     latest = dayOneBrief();
+    246|     generationGate = new Promise(() => undefined);
+    247|     render(<ChairHome />);
+       |     ^
+    248|     const section = await screen.findByTestId("arrival-brief");
+    249|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:260:5
+    258|     latest = dayOneBrief();
+    259|     generationFailure = new ApiError(500, "boom", null);
+    260|     render(<ChairHome />);
+       |     ^
+    261|     const section = await screen.findByTestId("arrival-brief");
+    262|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:275:5
+    273|     latest = dayOneBrief();
+    274|     generated = dayOneBrief();
+    275|     render(<ChairHome />);
+       |     ^
+    276|     const section = await screen.findByTestId("arrival-brief");
+    277|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:163:5
+    161|     latest = dayOneBrief();
+    162|     const expectedSections = structuredClone(COMPOSED_SECTIONS);
+    163|     render(<ChairHome />);
+       |     ^
+    164|     const section = await screen.findByTestId("arrival-brief");
+    165|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:191:5
+    189|     // shelf state and must not block or inflate the Arrival count.
+    190|     (latest as { shelf: Record<string, string> }).shelf = DAY_ONE_SHEL…
+    191|     render(<ChairHome />);
+       |     ^
+    192|     const section = await screen.findByTestId("arrival-brief");
+    193|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:202:5
+    200|     delete partialShelf.c1;
+    201|     latest = dayOneBrief({ shelf: partialShelf });
+    202|     render(<ChairHome />);
+       |     ^
+    203|     await screen.findByTestId("arrival-brief-row");
+    204|     expect(screen.queryByTestId("arrival-brief-handled")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:226:5
+    224|       shelf: DAY_ONE_SHELF,
+    225|     });
+    226|     render(<ChairHome />);
+       |     ^
+    227|     await screen.findByTestId("arrival-brief");
+    228|     await waitFor(() => expect(screen.queryByTestId("arrival-brief-dat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:235:5
+    233|   it("keeps No changes bare without a zero handled count", async () =>…
+    234|     latest = dayOneBrief({ id: "brief-empty", headline: "No changes", …
+    235|     render(<ChairHome />);
+       |     ^
+    236|     const section = await screen.findByTestId("arrival-brief");
+    237|     await waitFor(() => expect(screen.getByTestId("arrival-brief-headl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:247:5
+    245|     latest = dayOneBrief();
+    246|     generationGate = new Promise(() => undefined);
+    247|     render(<ChairHome />);
+       |     ^
+    248|     const section = await screen.findByTestId("arrival-brief");
+    249|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:260:5
+    258|     latest = dayOneBrief();
+    259|     generationFailure = new ApiError(500, "boom", null);
+    260|     render(<ChairHome />);
+       |     ^
+    261|     const section = await screen.findByTestId("arrival-brief");
+    262|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+ReferenceError: document is not defined
+ ❯ Proxy.render web/node_modules/@testing-library/react/dist/pure.js:256:5
+ ❯ .tmp/philo404-origin-main-20260924T0809Z/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx:275:5
+    273|     latest = dayOneBrief();
+    274|     generated = dayOneBrief();
+    275|     render(<ChairHome />);
+       |     ^
+    276|     const section = await screen.findByTestId("arrival-brief");
+    277|     const generateButton = await screen.findByTestId("arrival-brief-ge…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  16 failed (16)
+   Start at  08:08:09
+   Duration  750ms (transform 1.03s, setup 0ms, import 1.28s, tests 11ms, environment 0ms)
+

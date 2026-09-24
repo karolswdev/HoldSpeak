@@ -1,0 +1,6 @@
+Command: HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo4_04_headline_storage.py
+CWD: /Users/karol/dev/tools/wt-philo-4-04
+Exit code: 0
+
+..                                                                       [100%]
+2 passed in 0.58s

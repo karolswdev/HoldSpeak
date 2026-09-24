@@ -1,103 +1,131 @@
-# PHILO-4-04 — Astra canvas lane report
+# PHILO-4-04 — Astra build lane report
 
-LANE: PHILO-4-04, The triaged headline. Owner Astra; canvas worker
-`headline_canvas`, requested `gpt-5.6-luna` at `xhigh` through
-`spawn_agent`. Worktree `/Users/karol/dev/tools/wt-philo-4-04`, branch
-`feat/philo-4-04-headline`, base `280ee7ce` (main after PR #626).
-This report accompanies the canvas-only PR to main, which must remain open.
+LANE: PHILO-4-04, The triaged headline. Owner Astra; checker Muad'Dib.
+Worktree `/Users/karol/dev/tools/wt-philo-4-04`, branch
+`feat/philo-4-04-headline`, [PR #627](https://github.com/karolswdev/HoldSpeak/pull/627).
+Main `6cfc64e0` was merged first through the gate as `e4cf7d08`.
+Workers: `headline_fences`, `headline_atlas`, `headline_storage`, all
+`gpt-5.6-luna` at `xhigh` by actual rollout metadata in `worker-runtime.json`.
+The original canvas-only report is parked at `canvas-lane-report.md`.
 
-Brain check: Muad'Dib **RATIFY** for presentation, after all four initial
-conditions were paid; Astra **RATIFY** for presentation. No open dissent.
-Both rounds are recorded verbatim at the phase's
-`checks/story-04-canvas-muaddib.md`, session
-`db47ed2c-e168-44dc-83fd-d30e64bb7ddd`. This is not owner ratification.
-
-OUTCOME: **partial — canvas complete; build awaits owner ratification.**
-The proposal distinguishes the saved brief from current handling without
-changing its historical counts. No product file changed. Story 04 remains
-backlog with all acceptance criteria unchecked. This is the stop requested
-in Muad'Dib's lane brief, not a product completion claim.
-
-The review artifact and owner asks live in
-`pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-04-canvas/`:
-
-- `triaged-headline.html`: self-contained page for Muad'Dib to publish.
-- `triaged-headline.png` and `triaged-headline-393.png`: page overviews.
-- `shots/`: seven section boards at each of 1440 and 393; `facts.json`.
-- `README.md`: exact strings, three asks, provenance and build seams.
-- `validation.md`: unchanged DW command/output blocks; auto-created
-  done metadata corrected visibly to canvas-only.
-
-The recommended option adds only `ALL 6 HANDLED` below the existing
-`SEP 21 – 23 · GENERATED SEP 23 17:40`, keeping the original headline
-`1 thing changed, 3 things waiting, 2 decisions waiting.` and date positions.
-The initial `SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40` treatment
-remains alongside it as an alternative for the owner. The count names
-Arrival rows only, excluding THIS WEEK, and can be smaller than the
-headline's total. The state means Ack or Defer, not completed work.
-The timestamp belongs to generation; there is no invented triage time.
+OUTCOME: **built**. The saved headline/date remain in place; the quiet
+Arrival adds `ALL n HANDLED` below the date only when every Arrival row has
+an acknowledged/deferred shelf state and n is positive. THIS WEEK is
+excluded, including when the headline total is larger. `No changes`, a
+partial shelf and a hidden unshelved row do not acquire a handled line.
+Generating, failure and same-day receipt retain the line. No new control,
+API/schema change, stored-count rewrite or live-region announcement.
+Story 04 is done with paired captured evidence. PR #627 stays open for the
+invoking brain's counsel on built; Astra does not merge. The owner's
+sitting was waived, and no owner observation is claimed.
 
 PROOF:
 
-| Check | Observed result |
+| Acceptance box | Result and evidence |
 | --- | --- |
-| Focused existing Generate/date collection | 16 named vitest tests, two files; list captured |
-| Focused existing Generate/date run | `Test Files 2 passed (2)` / `Tests 16 passed (16)` |
-| Original `_compose` fixture | Real helper returns the required six-item headline unchanged; isolated HOME, no DB |
-| Canvas capture | 14 rendered boards pass label, geometry, 12 px floor, library-button, zero-counter and state assertions; no browser errors |
-| Astra visual review | All 14 section shots inspected; the final capture adds the one-line pair and leaves the original 12 PNGs unchanged |
-| Baseline identity | Empty/current-quiet PNGs at both widths are byte-identical to story 01's 7a/7b |
-| Roadmap lint | `dw check: ok` after parking the unflipped paired evidence |
-| Evidence churn | `git status --short` has no ` M` path under `pm/roadmap/holdspeak/` |
-| Product scope | `git diff --exit-code HEAD -- web holdspeak tests scripts` passes |
-| Full suite | Not run: lane brief requires scoped tests only |
-| Product red/green and atlas walk | Not run: face build is not yet authorized |
+| Snapshot versus current triage, stored counts retained | PASS. `ChairHome.tsx:886` derives the valid shelf state; `:1395` keeps headline/date/handled order. `triagedHeadline.philo404.test.tsx` checks six rows and a seven-row `_compose` variant with only six Arrival rows. `test_philo4_04_headline_storage.py` reads all six item fields, headline and dates unchanged after real shelf writes, same-day generation and a fresh service read. |
+| Canvas before build, owner ratification | PASS. Main ratification `89208bae`; story notes and `assets/story-04-canvas/README.md`. Board 7c was explicitly selected. Retained 8a/8b/9 PNGs use the earlier alternative placement; board 7c controls all built states. |
+| Intended-state red, no zero header, unchanged history | PASS. `rendered-red-origin-main-20260924T0818Z.md` records the archive/command. `baseline-integrity.json` verifies the archived product is byte-identical to `origin/main` and the final fence/fixture match both trees. Five positive cases fail on the missing line; three negative controls already pass. Final fences exclude `BRIEF · 0`, retain the three generation states, and preserve the empty result. Actual atlas and retained DB/API snapshots independently verify full production generation and shelf writes. |
 
-DW captures ran under story PHILO-4-04. Their original paired files are
-parked under `.tmp/philo404/`; the command/output blocks ship unchanged
-as canvas `validation.md`. Its auto-created `Status: done` header is
-corrected to canvas-only, as Muad'Dib required. PMO-CONTRACT rule 6 rejects a new
-paired evidence file without a story flip. The later build must capture
-fresh product evidence with its done-flip.
+Red, verbatim (`rendered-red-origin-main-20260924T0818Z.txt`):
+
+```text
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+```
+
+The five failures are six-row handled, THIS WEEK exclusion, generating,
+generation failure and same-day success. They fail on
+`Unable to find an element by: [data-testid="arrival-brief-handled"]`.
+The final new-fence green (`rendered-green-20260924T0824Z.txt`):
+
+```text
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+```
+
+Final orchestrator scoped verification, captured at `2026-09-24T14:20:09Z`
+through `dw evidence capture` using `verify_lane.py`:
+
+```text
+90 passed, 2 warnings in 3.65s
+ Test Files  6 passed (6)
+      Tests  36 passed (36)
+API reference checked
+Boundary candidate census checked
+```
+
+`final-collect-python.log` contains all 90 collected test names;
+`final-collect-rendered.log` contains all 36 rendered names. Run tails are
+`final-green-python.log` and `final-green-rendered.log`. The graph check
+passes with its 14 recorded pre-existing subtype-conflict notes
+(`final-philo_graph_reference.log`). `git diff --check` passes; evidence
+churn check reports no ` M` paths under `pm/roadmap/holdspeak/`.
+No full suite was run: the lane brief explicitly requires scoped tests.
+
+Actual atlas `case.philo404.arrival_triaged_headline.all_handled`, final
+production bundle `index-yOpsX1bz.js`:
+
+| Width | Run id | Verdict | Handled geometry |
+| --- | --- | --- | --- |
+| 1440 | `20260924T142054Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440` | PASS, settled | x256 y364 w928 h18 |
+| 393 | `20260924T142158Z-case.philo404.arrival_triaged_headline.all_handled-astra-393` | PASS, settled | x12 y371 w369 h18 |
+
+Each run uses one real isolated hub, two production-created decisions,
+Generate on the face, then row-scoped Ack and Defer. `readable_text`
+passes; all nine hit points belong to the line. The stored headline is
+`2 decisions waiting.` before and after; the after face shows it above
+`ALL 2 HANDLED` and the existing generation receipt. Zero browser errors.
+The before snapshot has no handled element; the final shelf response is
+POST 200 for the actual deferred item. `observation-proof.json` checks
+brief/item fields unchanged, both shelf states stored, and DB paths inside
+the isolated HOMEs. It was captured at `2026-09-24T14:22:40Z`.
+
+Astra inspected all final before/after PNGs beside board 7c. Shots and
+unaltered observations live under
+`pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-04-shots/<run-id>/`.
+Earlier passing runs `20260924T141351Z`/`20260924T141445Z` are retained;
+the final pair was rebuilt after the guard-only source correction.
+All commands ride in the same commit's `evidence-story-04.md`.
 
 LEDGER:
 
-- **a — incorrect canvas assumptions, paid before capture:** the empty
-  baseline uses main's `No changes`; same-day success uses real
-  `briefReceipt` and the saved 5:40 PM generation time. The six-row
-  fixture is explicitly `_compose` evidence, not full `generate` proof;
-  c1's THIS WEEK difference is already recorded by story 02.
-- **b — build risk, not an introduced regression:** quiet Arrival also
-  filters raw-id text. The later handled claim must require every
-  underlying Arrival item to be shelved; quiet alone proves nothing.
-  Home: canvas README, “Build seams after ratification”, within story 04.
-- **c — environment/verification interruption, no flake claim:** default
-  Homebrew Node lacks `libllhttp.9.3.dylib`; existing Node 22.21.0 works.
-  The first npm test wrapper included all of `src/desk`; Astra terminated
-  it (143) and reran only the two intended files (16 pass). Its aborted
-  capture remains in validation.md and is not a suite result.
+- **a — source verification corrections, paid here:** three live atlas
+  anchors moved with the insertion (`atlas-run.log`: 1 failed, 72 passed;
+  final atlas suite green). The A8 scanner initially could not see the
+  enclosing JSX guard (`verification-attempt1-green-python.log`: 1 failed,
+  89 passed). Guard and label now share a source line; the scanner and
+  ceiling are unchanged. API test references and boundary line anchors
+  were regenerated after the reference check named drift
+  (`verification-attempt2-api-reference.log`). All final checks pass.
+- **b — no unresolved product regression found.** A drafted direct-SQL
+  commitment fixture was rejected. The final six-row persistence proof
+  uses explicit collector adapters plus real compose/store/shelf/readback;
+  the two-decision atlas is full-generation proof. Neither claims the
+  current collectors put c1 in Arrival. The seventh-row variant uses the
+  real `_compose` string `1 commitment due`, correcting the draft's
+  hand-copied `1 commitment due this week` headline.
+- **c — verification/environment issues, no flake claim:** the first
+  archive invocation lacked jsdom config (`rendered-red-origin-main-20260924T0809Z.txt`);
+  its 16 errors are not product-red evidence. Final archive command is
+  correct. The first readback summarizer treated an absent DOM text as a
+  string; it now explicitly asserts absence. Two existing invalid-escape
+  warnings come from the scratch guard reading the unrelated HS-202-05
+  file. Node 22.21.0 was used. Intermediate duplicate attempts are parked
+  under `.tmp/philo404-build-attempts/`; required final red/green remain here.
 
-AMENDMENTS: none. The brief's timestamped handled line was an example;
-omitting a handled time avoids an API/schema addition for data the face
-does not receive. The canvas keeps the acceptance fixture and original
-counts, leaves all criteria open, and asks for the owner's word before
-implementation. No merge is authorized in this pass.
+AMENDMENTS: none. Owner ratification and sitting waiver stand. No source
+scanner ceiling was raised, no acceptance criterion was weakened, and no
+phase closure or merge is claimed. The capability-verifier skill's actual
+atlas procedure was followed; this story adds no catalogue capability or
+release/owner-observation claim.
 
-UNKNOWN: owner ratification and publication; implemented rendered
-transitions; stored headline/item preservation after real shelf writes;
-actual atlas cases, full Arrival clearance, pointer ownership and the
-owner's sitting. The static species harness proves none of those.
+UNKNOWN: Muad'Dib's counsel on built and PR CI after push are pending at
+handoff. Full suites and an owner sitting were not run under this brief.
+No build or verification blocker remains. The original six-row fixture is
+composition/persistence proof with named collector adapters; the actual
+atlas's full producer has two decisions. It does not exercise commitment
+collection or a model.
 
-## Owner asks to publish with the artifact
-
-1. Ratify the recommended one-line addition below the existing date,
-   or select the alternative snapshot/date placement shown alongside it.
-2. Ratify `ALL <n> HANDLED` for Ack/Defer with the same placement during
-   Generate and after success or failure. The count covers Arrival only,
-   excludes THIS WEEK, and can be smaller than the headline's total.
-3. Keep `No changes` without a handled count for an empty brief, and omit
-   a triage timestamp.
-
-Tuesday: can the owner tell that this brief is handled while its waiting
-counts describe the saved snapshot? Muad'Dib publishes; the owner's
-ratification word in a follow-up brief starts the build.
+TUESDAY: yes — after handling the last row, the owner can see that Arrival
+triage is complete while the saved headline still records its old counts.

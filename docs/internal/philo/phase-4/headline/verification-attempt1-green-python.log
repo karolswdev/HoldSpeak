@@ -1,0 +1,65 @@
+command: ['uv', 'run', '--no-sync', 'pytest', '-q', 'tests/unit/test_philo4_04_headline_storage.py', 'tests/unit/test_brief_shelf.py', 'tests/unit/test_philo_4_01_generate.py', 'tests/unit/test_philo4_04_atlas_contracts.py', 'tests/unit/test_philo_graph_atlas.py', 'tests/unit/test_ux_canon_ratchet.py', 'tests/unit/test_evidence_scratch_guard.py']
+cwd: /Users/karol/dev/tools/wt-philo-4-04
+exit: 1
+
+........................................................................ [ 80%]
+............F.....                                                       [100%]
+=================================== FAILURES ===================================
+_________________________________ test_ratchet _________________________________
+
+    def test_ratchet():
+        """For every rule, the current hit count must be <= the ceiling count.
+    
+        Failure message names the rule, the delta, and the faces whose count
+        rose — so a developer sees exactly what to fix.
+        """
+        ceiling = json.loads(CEILING_PATH.read_text())
+        result = _get_scan()
+        totals = result["totals"]
+        face_rule_counts = result["face_rule_counts"]
+        ceiling_faces = ceiling.get("faces", {})
+    
+        regressions: list[str] = []
+        for rule, current in totals["per_rule"].items():
+            ceiling_val = ceiling["per_rule"].get(rule, 0)
+            if current > ceiling_val:
+                delta = current - ceiling_val
+                risen: list[str] = []
+                for face, counts in face_rule_counts.items():
+                    face_current = counts.get(rule, 0)
+                    face_ceiling = ceiling_faces.get(face, {}).get(rule, 0)
+                    if face_current > face_ceiling:
+                        risen.append(f"  {face}: {face_ceiling} -> {face_current}")
+                detail = "\n".join(risen) if risen else "  (no single face rose)"
+                regressions.append(
+                    f"{rule}: ceiling {ceiling_val} -> current {current} (+{delta})\n{detail}"
+                )
+    
+>       assert not regressions, (
+            "UX canon ratchet broken — new violations introduced:\n\n"
+            + "\n\n".join(regressions)
+            + "\n\nFix the violations, or if this is a deliberate trade-off, "
+            "run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json"
+        )
+E       AssertionError: UX canon ratchet broken — new violations introduced:
+E         
+E         A8: ceiling 25 -> current 26 (+1)
+E           ChairHome: 0 -> 1
+E         
+E         Fix the violations, or if this is a deliberate trade-off, run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json
+E       assert not ['A8: ceiling 25 -> current 26 (+1)\n  ChairHome: 0 -> 1']
+
+tests/unit/test_ux_canon_ratchet.py:89: AssertionError
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/unit/test_ux_canon_ratchet.py::test_ratchet - AssertionError: UX...
+1 failed, 89 passed, 2 warnings in 3.71s

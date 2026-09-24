@@ -1,0 +1,17 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-04/web
+
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled 20ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line 7ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged 7ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf 3ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count 4ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open 7ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure 8ms
+ ✓ src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt 19ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  08:17:45
+   Duration  798ms (transform 329ms, setup 54ms, import 439ms, tests 76ms, environment 160ms)
+

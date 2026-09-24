@@ -1,0 +1,34 @@
+[
+  {
+    "name": "the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > withholds the line while one Arrival row is still untriaged",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > keeps No changes bare without a zero handled count",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > keeps the line in place while Generate is open",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > keeps the line after generation failure",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  },
+  {
+    "name": "the triaged Arrival headline > keeps the line beside the same-day success receipt",
+    "file": "/Users/karol/dev/tools/wt-philo-4-04/web/src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx"
+  }
+]

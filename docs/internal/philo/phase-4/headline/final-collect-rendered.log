@@ -1,0 +1,40 @@
+command: ['node_modules/.bin/vitest', 'list', 'src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx', 'src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx', 'src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx', 'src/desk/chair/__tests__/briefReceiptRendered202.test.tsx', 'src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx', 'src/desk/chair/__tests__/decisionRows.philo402.test.tsx']
+cwd: /Users/karol/dev/tools/wt-philo-4-04/web
+exit: 0
+
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate in the head while a day-one row is untriaged
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > disables Generate while the read is open
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says GENERATING… in the status slot and disables Generate while it runs
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > names a failed generation with no Retry and Generate enabled
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says NO ANSWER when the generation got no response
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps Retry on a failed read, with Generate in the head
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps the badge, the caption and the receipt through every transition
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > never touches the old rows' triage when it generates
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate on the quiet branch (every row triaged), not Generate again
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > puts a failed generation in the place of No brief yet
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > shows the newest decision first with an honest cap and fold
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > keeps the result ordered after Generate replaces an existing brief
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate is badged before and receipted after (counsel 2) > shows an empty brief's own words and keeps Generate after a reload
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate is badged before and receipted after (counsel 2) > names the destination on the row, before the press
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate is badged before and receipted after (counsel 2) > still shows the receipt after the brief arrives and fills the face
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate is badged before and receipted after (counsel 2) > keeps the receipt when the brief has nothing untriaged
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says No brief yet only when the read answered null
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says READING… while the read is open
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > names a failed read with its status and Retry reads again
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says NO ANSWER when the fetch got no response
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the period and the generated date under a populated brief
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the date under an empty brief's headline too
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > names the destination the hub actually uses
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > carries the local scope, not a bare chip
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > says nothing before the verb is pressed
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > names what was built and when
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > never counts zero (UX-CANON A.8)
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > states one item in the singular
