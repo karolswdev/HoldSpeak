@@ -77,3 +77,4 @@ boundary reference checks passed. No full suite was run, by lane instruction.
 - 2026-09-24 — RATIFIED by the owner on the canvas (https://claude.ai/artifact/WJocx1XUtYfvHzZM6s1qed, PR #627 @ 34475b1e): board 7c; the count = Arrival rows with Ack/Defer (THIS WEEK excluded); `No changes` bare. Build what was ratified.
 
 - 2026-09-24 — built and verified by Astra; all three acceptance boxes paid. PR #627 remains open for Muad'Dib's counsel on built. No merge or owner observation claimed.
+- 2026-09-24 — Muad'Dib's counsel on built: RATIFY-WITH-CONDITIONS (`checks/story-04-built-muaddib.md`); C1 (the headline sentence ledgered as Tenet 4 debt) paid in the same commit.
