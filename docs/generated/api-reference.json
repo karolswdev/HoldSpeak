@@ -4302,6 +4302,7 @@
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_01_atlas_contracts.py",
+        "tests/unit/test_philo4_03_breakage_ids.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4330,7 +4331,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo3_01_receipt_hits.py",
-        "tests/unit/test_brief_shelf.py"
+        "tests/unit/test_brief_shelf.py",
+        "tests/unit/test_philo4_03_breakage_ids.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
