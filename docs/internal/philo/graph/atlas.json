@@ -4931,10 +4931,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "Nothing material changed."
+          "value": "No changes"
         },
         "observe_at": "[data-testid=arrival-brief-headline]",
-        "words": "ASTRA round 2: the receipt only says a POST happened. The producer's own empty headline is 'Nothing material changed.' (holdspeak/services/monday_brief_service.py:330) and the Chair draws it at [data-testid=arrival-brief-headline] (ChairHome.tsx:1163). || ASTRA (A): the empty brief must SAY it happened. briefReceipt states 'Brief ready' with no count of zero (briefEgress.ts:51-54); the no-brief branch would say 'No brief yet'. || the brief exists with is_empty true and the face SAYS so ('Nothing material changed'); it does not fall back to the no-brief branch - this is the owner's sitting defect 2 [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "words": "ASTRA round 2: the receipt only says a POST happened. The producer's own empty headline is 'No changes' (holdspeak/services/monday_brief_service.py:341; ratified PHILO-4-01 ask 5, it replaces 'Nothing material changed.') and the Chair draws it at [data-testid=arrival-brief-headline] (ChairHome.tsx:1336). || ASTRA (A): the empty brief must SAY it happened. briefReceipt states 'Brief ready' with no count of zero (briefEgress.ts:51-54); the no-brief branch would say 'No brief yet'. || the brief exists with is_empty true and the face SAYS so ('No changes'); it does not fall back to the no-brief branch - this is the owner's sitting defect 2 [the audit's stated observation location: face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -4951,7 +4951,7 @@
       "state_id": "state.briefs.reload_persisted",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1136-1167) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1321-1352) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
       ],
       "setup": [
         {
@@ -5000,10 +5000,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "Nothing material changed."
+          "value": "No changes"
         },
         "observe_at": "[data-testid=arrival-brief-headline]",
-        "words": "ASTRA round 2: retention is the SAME content predicate after a reload step in setup, not the survival of a session receipt (the receipt does not survive a reload; the brief's own words must). || ASTRA (A): after the reload the section must be PRESENT with the brief's own verb (ChairHome.tsx:1157), not merely missing the no-brief line. || the brief section survives the reload with the brief's own words; the face does not read 'still no brief' one day later [the audit's stated observation location: face: [data-testid=arrival-brief]]"
+        "words": "ASTRA round 2: retention is the SAME content predicate after a reload step in setup, not the survival of a session receipt (the receipt does not survive a reload; the brief's own words must). || ASTRA (A): after the reload the section must be PRESENT with the brief's own words and its head verb Generate (ChairHome.tsx:1334-1336), not merely missing the no-brief line. || the brief section survives the reload with the brief's own words; the face does not read 'still no brief' one day later [the audit's stated observation location: face: [data-testid=arrival-brief]]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -5635,9 +5635,16 @@
         },
         {
           "kind": "boundary",
-          "substitutes": "POST /api/brief/generate",
-          "label": "playwright route interception failing that one write; every other read stays real",
-          "substitute": "route_failure"
+          "label": "the generate call refused: the browser boundary answers that one write with HTTP 500; every other read stays real",
+          "substitute": "http_fault",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "status": 500,
+          "body": {
+            "error": "substituted hub fault"
+          },
+          "times": 1,
+          "adapter": "browser-boundary"
         }
       ],
       "trigger": {
@@ -5649,10 +5656,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "Generate brief FAILED"
+          "value": "BRIEF DID NOT GENERATE · HTTP 500"
         },
-        "observe_at": ".write-receipt-label",
-        "words": "the desk states the failure with a retry (the write-failure channel), never a silent no-op [the audit's stated observation location: face: the desk's write-failure line]"
+        "observe_at": "[data-testid=arrival-brief-generate-failed]",
+        "words": "RE-POINTED by PHILO-4-01 round two (ratified canvas board 6b): a refused generation is named in the BRIEF section's own status slot, 'BRIEF DID NOT GENERATE · HTTP 500' (ChairHome.tsx:718-726, the cause from briefLoadCause :152), and Generate stays in the section head (briefVerbs :695); it is never a silent no-op and never the old desk write-failure toast [the audit's stated observation location: face: the BRIEF section's failure line]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -8287,7 +8294,13 @@
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "is_empty",
           "line": 304,
-          "claim": "the pull-out draws Nothing material changed for an empty brief"
+          "claim": "the pull-out draws No changes for an empty brief"
+        },
+        {
+          "path": "holdspeak/services/monday_brief_service.py",
+          "symbol": "No changes",
+          "line": 341,
+          "claim": "the producer's headline for an empty brief is No changes"
         }
       ],
       "reachable_by": [
@@ -8331,8 +8344,8 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1300,
-          "claim": "a brief with nothing untriaged still keeps its own section after a reload"
+          "line": 1333,
+          "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
       "reachable_by": [
