@@ -1,0 +1,100 @@
+# Deliberate mutations on the built tree (PHILO-5-02). Each is applied alone, its fence run, the file restored byte for byte (asserted).
+# runner: a one-off script (string replace -> uv run pytest -q --tb=line <fence> -> write the original bytes back). HOME isolated per run.
+
+## M1 bind a fresh MeetingService in install_from_web_context
+# file: holdspeak/runtime/composition.py
+# fence: tests/unit/test_philo5_the_loop.py::TestOneInstance::test_every_loop_operation_is_bound_once_to_the_hubs_instance
+# exit: 1
+E   AssertionError: meeting.list
+<wt>/tests/unit/test_philo5_the_loop.py:196: AssertionError: meeting.list
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_every_loop_operation_is_bound_once_to_the_hubs_instance
+1 failed in 1.18s
+
+## M2 the MCP intake calls the service by hand (bypasses invoke)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+# exit: 1
+E   AssertionError: assert (['meeting.import'] == ['meeting.import']
+<wt>/tests/unit/test_philo5_the_loop.py:408: AssertionError: assert (['meeting.import'] == ['meeting.import']
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+1 failed in 1.19s
+
+## M3 the MCP intake hands the caller's own file to the worker (no custody copy)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+# exit: 1
+E   FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_gap_e_http_and_mcp_import0/architect meeting.txt'
+<python>/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/test_gap_e_http_and_mcp_import0/architect meeting.txt'
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings
+1 failed in 1.22s
+
+## M4 the meeting resource builds its own MeetingService (gap D)
+# file: holdspeak/mcp/resources.py
+# fence: tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+# exit: 1
+E   AssertionError: assert ['meeting.lis...meeting.read'] == ['meeting.lis...meeting.read']
+<wt>/tests/unit/test_philo5_the_loop.py:238: AssertionError: assert ['meeting.lis...meeting.read'] == ['meeting.lis...meeting.read']
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+1 failed in 1.20s
+
+## M5 the workbench resource builds its own application service (gap D)
+# file: holdspeak/mcp/resources.py
+# fence: tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+# exit: 1
+E   AssertionError: assert ['thought.cre....create', ...] == ['thought.cre....create', ...]
+<wt>/tests/unit/test_philo5_the_loop.py:275: AssertionError: assert ['thought.cre....create', ...] == ['thought.cre....create', ...]
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+1 failed in 1.25s
+
+## M6 the HTTP summary _svc prefers a factory again (gap C)
+# file: holdspeak/web/routes/meetings/intel.py
+# fence: tests/unit/test_philo5_the_loop.py::TestOneInstance::test_gap_c_the_hub_has_one_summary_instance_and_no_factory
+# exit: 1
+E   AssertionError: assert <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x112526ad0> is <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x111c66cf0>
+<wt>/tests/unit/test_philo5_the_loop.py:208: AssertionError: assert <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x112526ad0> is <holdspeak.services.meeting_intel_service.MeetingIntelService object at 0x111c66cf0>
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_gap_c_the_hub_has_one_summary_instance_and_no_factory
+1 failed in 1.18s
+
+## M7 thought.update_working over MCP calls the service by hand
+# file: holdspeak/mcp/families/thought.py
+# fence: tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+# exit: 1
+E   AssertionError: assert ['thought.cre....create', ...] == ['thought.cre....create', ...]
+<wt>/tests/unit/test_philo5_the_loop.py:275: AssertionError: assert ['thought.cre....create', ...] == ['thought.cre....create', ...]
+FAILED tests/unit/test_philo5_the_loop.py::TestOneInstance::test_http_mcp_and_resources_all_go_through_invoke
+1 failed in 1.25s
+
+## M8 the brief's MCP generate builds a clockless service (gap A)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_a_an_mcp_brief_generate_uses_the_hubs_producer_clock
+# exit: 1
+E   AssertionError: 2026-09-24T14:03:40.722212
+<wt>/tests/unit/test_philo5_the_loop.py:314: AssertionError: 2026-09-24T14:03:40.722212
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_a_an_mcp_brief_generate_uses_the_hubs_producer_clock
+1 failed in 1.26s
+
+## M9 the MCP summary run builds an unwired service (gap B)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_philo5_the_loop.py::test_gap_b_an_mcp_summary_run_fires_runtime_queue
+# exit: 1
+E   AssertionError: []
+<wt>/tests/unit/test_philo5_the_loop.py:362: AssertionError: []
+FAILED tests/unit/test_philo5_the_loop.py::test_gap_b_an_mcp_summary_run_fires_runtime_queue
+1 failed in 1.22s
+
+## M10 an undeclared name through .invoke (a runner-shaped call)
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+# exit: 1
+E   AssertionError: Phase 143 runner-entrance census changed; register the new public InferenceRunner.invoke caller with capability provenance and source owner.
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+1 failed in 3.76s
+
+## M11 a variable operation name through .invoke
+# file: holdspeak/mcp/tools.py
+# fence: tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+# exit: 1
+E   AssertionError: Phase 143 runner-entrance census changed; register the new public InferenceRunner.invoke caller with capability provenance and source owner.
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+1 failed in 3.82s
+

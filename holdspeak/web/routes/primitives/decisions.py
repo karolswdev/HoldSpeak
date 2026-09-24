@@ -28,7 +28,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _ops() -> operations.OperationRegistry:
-        return operations.for_context(ctx)
+        return operations.for_context(ctx, "primitive_service")
 
     def _svc() -> Any:
         # The instance the contract is bound to -- in the hub, the ONE composed

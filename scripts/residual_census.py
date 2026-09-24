@@ -85,6 +85,12 @@ def _mcp(root: Path) -> list[dict[str, str]]:
     return entries
 
 
+def _public_tools(root: Path) -> int:
+    out = subprocess.run([sys.executable, "-c", _MCP_PROBE, str(root)], cwd=str(root),
+                         check=True, capture_output=True, text=True).stdout
+    return len(json.loads(out.strip().splitlines()[-1])["tools"])
+
+
 def _enclosing(tree: ast.AST) -> dict[int, str]:
     names: dict[int, str] = {}
 
@@ -127,7 +133,7 @@ def census(root: Path) -> dict[str, object]:
     for entry in http:
         reason = entry["reason"]
         constructions += int(reason.rsplit("(", 1)[1].split()[0]) if reason.endswith("constructions)") else 1
-    return {"entries": mcp + http, "http_constructions": constructions}
+    return {"entries": mcp + http, "http_constructions": constructions, "public_tools": _public_tools(root)}
 
 
 def _key(entry: dict[str, str]) -> tuple[str, str, str]:
@@ -157,11 +163,17 @@ def main(argv: list[str]) -> int:
                          "holdspeak/web/routes, keyed by module::function"),
             "baseline": current.get("baseline", {}),
             "paid": current.get("paid", []),
+            # PHILO-5-02: a newly exposed tool raises the public count while
+            # the residual set shrinks -- two measurements, reported apart.
+            "public_tools_added": current.get("public_tools_added", []),
+            # An identity that changed name without being paid (its reason says why).
+            "moved": current.get("moved", []),
             "measurements": {
                 "residual_identities": len(result["entries"]),  # type: ignore[arg-type]
                 "residual_mcp": sum(1 for e in result["entries"] if e["transport"] == "mcp"),  # type: ignore[union-attr]
                 "residual_http": sum(1 for e in result["entries"] if e["transport"] == "http"),  # type: ignore[union-attr]
                 "http_constructions": result["http_constructions"],
+                "public_tools": result["public_tools"],
             },
             "entries": result["entries"],
         }

@@ -48,6 +48,12 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
+    def ops() -> Any:
+        """PHILO-5-02: the Thought operations through the hub's bound contract."""
+        from .... import operations
+
+        return operations.for_context(ctx, refinement_service=application)
+
     @router.post("/api/thoughts")
     async def create(request: Request) -> Any:
         body = await _json_body(request)
@@ -56,11 +62,11 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         try:
             if set(body) - {"request_id", "raw_text", "source", "initial_note"}:
                 raise ValidationError("thought create schema is closed", code="thought_create_request_invalid")
-            result = application().create_thought(
-                principal(request), request_id=body.get("request_id"),
-                raw_text=body.get("raw_text"), source=body.get("source"),
-                initial_note=body.get("initial_note"),
-            )
+            result = ops().invoke(principal(request), "thought.create", {
+                "request_id": body.get("request_id"),
+                "raw_text": body.get("raw_text"), "source": body.get("source"),
+                "initial_note": body.get("initial_note"),
+            })
             return JSONResponse(result, status_code=201)
         except ServiceError as exc:
             return _error(exc)
@@ -74,7 +80,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
             raw_limit = request.query_params.get("limit", "20")
             try: limit = int(raw_limit)
             except ValueError: raise ValidationError("limit must be an integer", code="thought_list_limit_invalid")
-            page = service().list_unfinished(principal(request), limit=limit, cursor=request.query_params.get("cursor"))
+            page = ops().invoke(principal(request), "thought.list", {"limit": limit, "cursor": request.query_params.get("cursor")})
             return JSONResponse(page)
         except ServiceError as exc:
             return _error(exc)
@@ -132,7 +138,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/thoughts/{thought_id}")
     async def get(thought_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"thought": service().get(principal(request), thought_id)})
+            return JSONResponse({"thought": ops().invoke(principal(request), "thought.read", {"thought_id": thought_id})})
         except ServiceError as exc:
             return _error(exc)
 
@@ -148,9 +154,7 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/thoughts/{thought_id}/workbench")
     async def workbench(thought_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(application().get_workbench(
-                principal(request), thought_id=thought_id
-            ))
+            return JSONResponse(ops().invoke(principal(request), "thought.workbench.read", {"thought_id": thought_id}))
         except ServiceError as exc:
             return _error(exc)
 
@@ -196,12 +200,12 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         try:
             if set(body) - {"expected_aggregate_revision","expected_working_revision","title","body_markdown","tags","workspace_cursor"}:
                 raise ValidationError("working update schema is closed", code="thought_update_request_invalid")
-            return JSONResponse(application().update_working(
-                principal(request), thought_id=thought_id,
-                expected_aggregate_revision=body.get("expected_aggregate_revision"),
-                expected_working_revision=body.get("expected_working_revision"),
-                title=body.get("title"), body_markdown=body.get("body_markdown"),
-                tags=body.get("tags"), workspace_cursor=body.get("workspace_cursor")))
+            return JSONResponse(ops().invoke(principal(request), "thought.save", {
+                "thought_id": thought_id,
+                "expected_aggregate_revision": body.get("expected_aggregate_revision"),
+                "expected_working_revision": body.get("expected_working_revision"),
+                "title": body.get("title"), "body_markdown": body.get("body_markdown"),
+                "tags": body.get("tags"), "workspace_cursor": body.get("workspace_cursor")}))
         except ServiceError as exc:
             return _error(exc)
 

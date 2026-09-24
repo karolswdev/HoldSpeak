@@ -1,0 +1,24 @@
+# RED on round one fca54146 (git archive copy; the round-two fence file copied in; holdspeak imported from the copy)
+# cmd (cwd = the round-one copy): HOME=$(mktemp -d) <lane>/.venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo5_the_loop_r2.py -rf --tb=line
+# NOT claimed as the required red: test_the_contract_refuses_a_non_owner_before_anything_else (an unavailable symbol on round one).
+FFF.......F..                                                            [100%]
+=================================== FAILURES ===================================
+E   AssertionError: {'id': 1, 'jsonrpc': '2.0', 'result': {'content': [{'text': '{"meeting_id": "2d511413", "transcription_status": "importing"}', 'type': 'text'}], 'isError': False}}
+    assert False is True
+<r1>/tests/unit/test_philo5_the_loop_r2.py:144: AssertionError: {'id': 1, 'jsonrpc': '2.0', 'result': {'content': [{'text': '{"meeting_id": "2d511413", "transcription_status": "importing"}', 'type': 'text'}], 'isError': False}}
+E   AssertionError: {"meeting_id":"c57268ed","status":"importing"}
+    assert 202 == 403
+     +  where 202 = <Response [202 Accepted]>.status_code
+<r1>/tests/unit/test_philo5_the_loop_r2.py:197: AssertionError: {"meeting_id":"c57268ed","status":"importing"}
+E   AttributeError: module 'holdspeak.operations' has no attribute 'OperationOwnerRequired'
+<r1>/tests/unit/test_philo5_the_loop_r2.py:214: AttributeError: module 'holdspeak.operations' has no attribute 'OperationOwnerRequired'
+E   AssertionError: thought.list declares ['thoughts', 'next_cursor']; the producer returned ['items', 'next_cursor']
+    assert not ['thoughts']
+<r1>/tests/unit/test_philo5_the_loop_r2.py:342: AssertionError: thought.list declares ['thoughts', 'next_cursor']; the producer returned ['items', 'next_cursor']
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_http_upload_refuses_a_non_owner_before_storing_the_body
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else
+FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[thought.list]
+4 failed, 9 passed in 7.81s
+# exit: 1

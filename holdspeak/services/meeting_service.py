@@ -225,6 +225,46 @@ class MeetingService:
         worker.start()
         return {"meeting_id": meeting_id, "status": "importing"}
 
+    def import_held_file(
+        self,
+        principal: Principal,
+        *,
+        tmp_path: Path,
+        config: Config,
+        transcriber_factory: Callable[[Config], Any],
+        filename: str,
+        title: str | None = None,
+        speaker: str | None = None,
+        tags: list[str] | None = None,
+        occurred_at: str | None = None,
+    ) -> dict[str, str]:
+        """``meeting.import`` (PHILO-5-02): import a file the transport already holds.
+
+        The transport keeps custody (the multipart upload or the MCP intake's
+        own copy), the configuration and the transcriber; this is the one
+        post-custody call both reach. The worker consumes *tmp_path*.
+        """
+        if occurred_at:
+            try:
+                started_at = datetime.fromisoformat(str(occurred_at).replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValidationError(
+                    f"occurred_at is not an ISO 8601 date and time: {occurred_at}"
+                ) from exc
+        else:
+            started_at = datetime.now()
+        return self.import_meeting(
+            principal,
+            tmp_path=tmp_path,
+            filename=filename,
+            title=title,
+            speaker=speaker,
+            tags=list(tags or []),
+            started_at=started_at,
+            config=config,
+            transcriber_factory=transcriber_factory,
+        )
+
     def _run_import_job(
         self,
         *,

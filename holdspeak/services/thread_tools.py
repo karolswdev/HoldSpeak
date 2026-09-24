@@ -91,6 +91,10 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
     "monday_brief.generate":  ("candidate_builder", False),
+    # PHILO-5-02: the shelf tools; classified, not in CHAT_PALETTE (as
+    # monday_brief.generate is not).
+    "monday_brief.shelf":      ("effect_proposal",   False),
+    "monday_brief.shelf_read": ("evidence_read",     False),
     # --- scheduled recording ---
     "scheduled_recording.list":         ("evidence_read",     False),
     "scheduled_recording.create":       ("effect_proposal",   False),
@@ -114,6 +118,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "concierge.download": ("effect_proposal", False),
     "desk.needs_you":     ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
+    "meeting.import": ("effect_proposal", False),  # PHILO-5-02: the MCP import intake
     # --- coder family ---
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),

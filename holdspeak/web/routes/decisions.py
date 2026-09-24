@@ -42,7 +42,7 @@ def build_decisions_router(ctx: Any) -> APIRouter:
     # GET /api/decisions/{id}. Its desk-decision branches are the contract's
     # decision.list / decision.read, bound to the hub's one PrimitiveService.
     from ... import operations
-    def desk_ops() -> Any: return operations.for_context(ctx)
+    def desk_ops() -> Any: return operations.for_context(ctx, "primitive_service")
     # HS-131-13: the route holds no engine and no `run_prompt` callable. Drafting
     # is the admitted Decision promotion child inside the service (HS-131-07);
     # a second route-side model seam would be a second, unadmitted Decision path.

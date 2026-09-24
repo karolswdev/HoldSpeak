@@ -94,6 +94,8 @@ class RuntimeServices:
     meeting_service: Optional[Any] = None
     meeting_intel_service: Optional[Any] = None      # notify= -> the /ws bus
     meeting_aftercare_service: Optional[Any] = None  # notify= -> the /ws bus
+    # PHILO-5-02 (gap A): the brief's producer clock (``WebContext.brief_clock``).
+    monday_brief_service: Optional[Any] = None
 
     # --- project rooms ---------------------------------------------------
     project_service: Optional[Any] = None          # delta_service= (mutual)
@@ -362,6 +364,7 @@ def services_from_web_context(
         "meeting_service",
         "meeting_intel_service",
         "meeting_aftercare_service",
+        "monday_brief_service",
         "project_service",
         "project_delta_service",
         "project_update_service",
@@ -431,9 +434,12 @@ def install_from_web_context(
        root's ``desk_changed`` broadcast, and put them on both the context and
        the root, so the primitive HTTP routes and MCP dispatch resolve the SAME
        instance,
-    3. bind the application-operation contract (``holdspeak.operations``) to
+    3. put the loop's services (meetings, the summary, the clock-bearing brief,
+       the Thought application service) on both the context and the root,
+       composing the brief service here with the hub's producer clock,
+    4. bind the application-operation contract (``holdspeak.operations``) to
        those same live instances and put it on both the context and the root,
-    4. install it as this process's root.
+    5. install it as this process's root.
     """
     from holdspeak.db.core import get_database, get_observer
     from holdspeak.services.primitive_service import PrimitiveService
@@ -472,11 +478,51 @@ def install_from_web_context(
     services.ask_service = build_ask_service(ctx)
     services.plugin_job_service = PluginJobService(resolved_db, observer=resolved_observer)
 
-    # PHILO-5-01: the contract binds to the instances composed above -- never
-    # to a fresh one -- so an HTTP route and an MCP call reach one object.
+    # PHILO-5-02: the rest of the loop's services. The hub composes every one
+    # of them itself (``MeetingWebServer._create_app``); the brief service is
+    # composed HERE, once, with the hub's producer clock (gap A). A partially
+    # wired context (a fence's stand-in) gets the same bare builds its routes
+    # would make, put on BOTH the context and the root so the two still share
+    # one instance.
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+    from holdspeak.services.meeting_service import MeetingService
+    from holdspeak.services.monday_brief_service import MondayBriefService
+    from holdspeak.services.refinement_application_service import RefinementApplicationService
+
+    def _intel_notify(topic: str, value: Any) -> None:
+        if services.broadcast is not None:
+            services.broadcast(topic, value)
+
+    builders: dict[str, Callable[[], Any]] = {
+        "meeting_service": lambda: MeetingService(resolved_db, observer=resolved_observer),
+        "meeting_intel_service": lambda: MeetingIntelService(
+            resolved_db, notify=_intel_notify, observer=resolved_observer
+        ),
+        "monday_brief_service": lambda: MondayBriefService(
+            resolved_db, observer=resolved_observer,
+            clock=getattr(ctx, "brief_clock", None),
+        ),
+        "refinement_service": lambda: RefinementApplicationService(
+            resolved_db, coordinator=getattr(ctx, "refinement_coordinator", None)
+        ),
+    }
+    for name, build in builders.items():
+        instance = getattr(services, name, None)
+        if instance is None:
+            instance = getattr(ctx, name, None)
+        if instance is None:
+            instance = build()
+        setattr(services, name, instance)
+        try:
+            setattr(ctx, name, instance)
+        except AttributeError:  # pragma: no cover - a non-dataclass stand-in
+            pass
+
+    # PHILO-5-01/02: the contract binds to the instances composed above --
+    # never to a fresh one -- so an HTTP route and an MCP call reach one object.
     from holdspeak import operations
 
-    registry = operations.bind({"primitive_service": primitives})
+    registry = operations.bind({name: getattr(services, name) for name in operations.BOUND_SERVICES})
     services.operations = registry
     try:
         ctx.operations = registry

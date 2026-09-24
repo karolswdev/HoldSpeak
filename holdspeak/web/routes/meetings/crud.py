@@ -10,6 +10,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 
+from .... import operations
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.meeting_service import MeetingService
@@ -27,6 +28,11 @@ def _service(ctx: WebContext) -> MeetingService:
     service = MeetingService(get_database(), observer=get_observer())  # _service composition
     ctx.meeting_service = service
     return service
+
+
+def _ops(ctx: WebContext) -> operations.OperationRegistry:
+    """PHILO-5-02: meeting.list / meeting.read through the hub's bound contract."""
+    return operations.for_context(ctx, meeting_service=lambda: _service(ctx))
 
 
 def _principal(request: Request):
@@ -63,17 +69,16 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 status_code=422,
             )
         try:
-            result = _service(ctx).list_meetings(
-                _principal(request),
-                query=search,
-                from_date=date_from,
-                to_date=date_to,
-                limit=limit,
-                cursor=offset,
-                speaker=speaker,
-                tag=tag,
-                has_open_actions=has_open_actions,
-            )
+            result = _ops(ctx).invoke(_principal(request), "meeting.list", {
+                "query": search,
+                "from_date": date_from,
+                "to_date": date_to,
+                "limit": limit,
+                "cursor": offset,
+                "speaker": speaker,
+                "tag": tag,
+                "has_open_actions": has_open_actions,
+            })
             # The legacy endpoint was offset-based and did not expose cursors.
             result.pop("next_cursor", None)
             return JSONResponse(result)
@@ -96,7 +101,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
     async def api_get_meeting(meeting_id: str, request: Request) -> Any:
         """Get meeting details from database."""
         try:
-            return JSONResponse(_service(ctx).get_meeting(_principal(request), meeting_id))
+            return JSONResponse(_ops(ctx).invoke(_principal(request), "meeting.read", {"meeting_id": meeting_id}))
         except NotFound:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:

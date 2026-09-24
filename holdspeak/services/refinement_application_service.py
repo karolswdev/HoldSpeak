@@ -266,3 +266,12 @@ class RefinementApplicationService:
                 context={"status": 503},
             )
         return self._coordinator
+
+    def get_thought(self, principal: Principal, *, thought_id: str) -> dict[str, Any]:
+        """``thought.read`` (PHILO-5-02): one Thought, through this hub's one instance."""
+        return self._thoughts.get(principal, thought_id)
+
+    def list_unfinished(self, principal: Principal, *, limit: int = 20,
+                        cursor: str | None = None) -> dict[str, Any]:
+        """``thought.list`` (PHILO-5-02): the unfinished Thoughts, one page."""
+        return self._thoughts.list_unfinished(principal, limit=limit, cursor=cursor)

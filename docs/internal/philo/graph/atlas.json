@@ -8174,7 +8174,7 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "return None",
-          "line": 108,
+          "line": 117,
           "claim": "GET /api/brief/latest answers null when no brief exists"
         },
         {
@@ -8396,7 +8396,7 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "write_shelf",
-          "line": 127,
+          "line": 137,
           "claim": "POST /api/brief/items/{item_id}/shelf writes it"
         }
       ],
@@ -8440,7 +8440,7 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "person_sections",
-          "line": 85,
+          "line": 86,
           "claim": "a ready overlay merges person_sections into the response"
         }
       ],
@@ -8459,7 +8459,7 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "person_sections_state",
-          "line": 88,
+          "line": 89,
           "claim": "an unavailable people store is stated, not hidden"
         },
         {
@@ -8508,10 +8508,10 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "holdspeak/web/routes/monday_brief.py",
+          "path": "holdspeak/runtime/composition.py",
           "symbol": "brief_clock",
-          "line": 100,
-          "claim": "the route's producer takes the clock the composition wires (None = the wall clock)"
+          "line": 503,
+          "claim": "the hub's one brief service (HTTP and MCP, PHILO-5-02) takes the clock the composition wires (None = the wall clock)"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
@@ -10665,10 +10665,10 @@
           "claim": "the brief's identity is its period_end date"
         },
         {
-          "path": "holdspeak/web/routes/monday_brief.py",
+          "path": "holdspeak/runtime/composition.py",
           "symbol": "brief_clock",
-          "line": 100,
-          "claim": "the route's producer clock is injectable; the rig's own hub moves it (clock.python_wall, producer-clock)"
+          "line": 503,
+          "claim": "the hub's brief service's producer clock is injectable; the rig's own hub moves it for HTTP and MCP alike (clock.python_wall, producer-clock)"
         }
       ],
       "reachable_by": [
@@ -10686,13 +10686,13 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "_period_label",
-          "line": 27,
+          "line": 28,
           "claim": "the period label is derived from generated_at's weekday"
         },
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "days_since_monday",
-          "line": 35,
+          "line": 36,
           "claim": "Monday is the boundary it measures from"
         }
       ],
@@ -10770,7 +10770,7 @@
     {
       "id": "clock.python_wall",
       "source": "datetime.datetime.now() inside the hub process; for the brief producer it is MondayBriefService's one clock (holdspeak/services/monday_brief_service.py:142, read by generate at :197)",
-      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the brief router (holdspeak/web/routes/monday_brief.py:100). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub; the machine clock, other producers (heartbeat, cadence, SQL datetime('now')) and the MCP sidecar are not moved.",
+      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the hub's one brief service (holdspeak/runtime/composition.py:503; PHILO-5-02: the brief routes and MCP both reach it through holdspeak/operations.py). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub, for HTTP and for MCP calls that reach that hub; the machine clock and other producers (heartbeat, cadence, SQL datetime('now')) are not moved.",
       "status": "available",
       "used_by": [
         "case.j10.arrival_generate_again.next_day"

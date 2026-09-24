@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from .... import operations
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.errors import ConflictError, NotFound, ValidationError
@@ -14,10 +15,13 @@ log = get_logger("web.routes.meetings")
 
 def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
 def _svc(ctx: WebContext) -> MeetingIntelService:
-    factory = getattr(ctx, "meeting_intel_service_factory", None)
-    if factory is not None: return factory()
+    # PHILO-5-02 (gap C): the composed instance FIRST. The hub composes one
+    # (with its runtime_queue notify); a factory is only a partial context's
+    # stand-in (a route test), never a second instance beside the hub's.
     service = getattr(ctx, "meeting_intel_service", None)
     if isinstance(service, MeetingIntelService): return service
+    factory = getattr(ctx, "meeting_intel_service_factory", None)
+    if factory is not None: return factory()
     from ....db import get_database, get_observer
     service = MeetingIntelService(get_database(), notify=lambda topic, value: ctx.broadcast(topic, value) if ctx.broadcast else None, observer=get_observer())  # _svc composition
     ctx.meeting_intel_service = service
@@ -92,7 +96,10 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
         """
         try:
             body = await _json_body(request)
-            result = _svc(ctx).run_intelligence(_principal(request), meeting_id, expected_selection_hash=body.get("expected_selection_hash"))
+            result = operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx)).invoke(
+                _principal(request), "meeting.summary.run",
+                {"meeting_id": meeting_id, "expected_selection_hash": body.get("expected_selection_hash")},
+            )
             return JSONResponse(result)
         except ConflictError as exc:
             return _conflict_response(_svc(ctx), meeting_id, exc)
