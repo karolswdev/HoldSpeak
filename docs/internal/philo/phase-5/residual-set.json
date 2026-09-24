@@ -1,0 +1,2026 @@
+{
+  "pinned_at": "4b4f8d94",
+  "counting": "mcp: every assembled tool dispatched by hand, desk.* split by kind and desk.verb by verb and kind, minus the identities an operation descriptor exposes; http: every syntactic *Service(...) construction in holdspeak/web/routes, keyed by module::function",
+  "baseline": {
+    "at": "4b4f8d94",
+    "residual_identities": 334,
+    "residual_mcp": 269,
+    "residual_http": 65,
+    "http_constructions": 67,
+    "public_tools": 225
+  },
+  "paid": [
+    {
+      "story": "PHILO-5-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/decisions.py::build_desk_decisions_router._svc",
+      "discriminator": "PrimitiveService"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=decisions"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=decisions"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=decisions"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=decisions"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=decisions"
+    },
+    {
+      "story": "PHILO-5-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=decisions"
+    }
+  ],
+  "measurements": {
+    "residual_identities": 327,
+    "residual_mcp": 263,
+    "residual_http": 64,
+    "http_constructions": 66
+  },
+  "entries": [
+    {
+      "transport": "mcp",
+      "entry_point": "ask.cancel",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/ask.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "ask.keep",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/ask.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "ask.resolve_grounding",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/ask.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "ask.run",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/ask.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.apply_closeout",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.audit",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.brief",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.closeout",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.get_loop",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.history",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.loops",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.run_now",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.set_status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.snooze",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "cadence.status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "coder.audit",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "coder.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "coder.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "concierge.apply",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "concierge.detect",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "concierge.download",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "concierge.probe",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "concierge.propose",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "connection.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "connection.recheck",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision.supersede",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision_record.create_from_desk",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision_record.create_from_meeting",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision_record.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision_record.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "decision_record.search",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=decisions",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.needs_you",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.snapshot",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=notes",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=decisions",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=kbs",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=directories",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=workflows",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=chains",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=workbench.add_item",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=workbench.run",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "dictation.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "dictation.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "door.add_item",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/door.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "door.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/door.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "event.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "follow_through.board",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "follow_through.commit_decision",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "follow_through.complete",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "heartbeat.notify_test",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/heartbeat.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "heartbeat.run_now",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/heartbeat.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "heartbeat.set",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/heartbeat.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "heartbeat.status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/heartbeat.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference.cancel_model_acquisition",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference_assignment.clear",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference_assignments.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference_assignment.editor",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference_assignments.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference_assignment.preview_use_default",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference_assignments.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference_assignment.set",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference_assignments.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "inference_assignment.summary",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/inference_assignments.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "interview.change_section",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/interview.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "interview.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/interview.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "interview.record_fact",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/interview.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "interview.suggest",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/interview.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "kb.add_member",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "kb.list_members",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "kb.remove_member",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.delete",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.export",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.proposals",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.run_intelligence",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.start_capture",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "meeting.stop_capture",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "memory.search",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/memory.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.add_to_library",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.connect_hosted_model",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.connect_paired_device",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.define_endpoint",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.download",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "model_library.use_model_file",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/model_library.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "monday_brief.generate",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "monday_brief.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "nudge.dismiss",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "nudge.send",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.agenda.add",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.calendar.link",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.calendar.unlink",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.commitment.transition",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.grounding.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.note.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.one_on_one.brief",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.one_on_one.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.owner_alias.link",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.owner_alias.unlink",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.readiness",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.relationship.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.relationship.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.relationship.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.request.accept",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.request.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "people.resolve",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "pipeline.events",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "plugin_job.cancel",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/plugin_job.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "plugin_job.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/plugin_job.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "plugin_job.retry",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/plugin_job.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "plugin_job.summary",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/plugin_job.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "practice_recipe.compile",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "practice_recipe.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "practice_recipe.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.accept_review",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.add_suggested_source",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.archive",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.configure_steward",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.decide_proposal",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.dismiss_suggested_source",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.draft_update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.get_delta",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.get_room",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.get_steward_run",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.link",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.list_updates",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.open_review",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.publish_update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.restore",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.run_steward",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.answer",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.clarify_jira_scope",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.clarify_repo_scope",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.deselect_proposal",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.finalize",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.resume",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.select_proposal",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.start",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.suggest",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.setup.test_proposal",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.steward.trigger",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.stop_steward",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.suggested_sources",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.unlink",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.update_draft",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.evaluate",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.inspect",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.pause",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.resume",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.retire",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.set_rules",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "project.watch.test",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "proposal.confirm",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "proposal.dismiss",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.confluence_connections",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.confluence_discover",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.confluence_validate_space",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.github_connection",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.github_discover",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.github_validate_repo",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_add_connection",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_connection",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_connections",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_discover",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_search",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.jira_validate_scope",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "provider.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "reaction.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "reaction.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "reaction.presets",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "reaction.process",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "reaction.set_enabled",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "recipe.chat",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "recipe.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "recipe.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "recipe.run",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "scheduled_recording.cancel_armed",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "scheduled_recording.create",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "scheduled_recording.delete",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "scheduled_recording.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "scheduled_recording.update",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "sequence.cancel",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "sequence.run",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "settings.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/settings.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "settings.hub",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "settings.update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/settings.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "steward.nudges",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.accept_review",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.adopt_note",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.answer_and_continue",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.answer_review",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.attach_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.complete",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.detach_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.get_default_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.list_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.reconcile",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.refine",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.refresh_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.reject_review",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.replace_default_context",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.resume",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.stop_refinement",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thought.update_working",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thought.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "thread.set_status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/thread.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "watch.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "watch.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "watch.preview",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "watch.refresh",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "watch.set_enabled",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.add_item",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.create",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.delete",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.delete_item",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.get",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.list",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.list_runs",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.run",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.update",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workbench.update_item",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workflow.cancel",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "workflow.run",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "zone.file",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "zone.list_members",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "zone.unfile",
+      "discriminator": "",
+      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/_thread_factory.py::thread_service_from_ctx",
+      "discriminator": "ThreadService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/candidates.py::_svc",
+      "discriminator": "ActivityMeetingCandidateService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/enrichment.py::_svc",
+      "discriminator": "ActivityEnrichmentService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/ledger.py::_svc",
+      "discriminator": "ActivityLedgerService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/nudges.py::_svc",
+      "discriminator": "ActivityNudgeService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/plugin_jobs.py::_svc",
+      "discriminator": "PluginJobService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/activity/rules.py::_svc",
+      "discriminator": "ActivityRulesService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router",
+      "discriminator": "ReactionService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router",
+      "discriminator": "ResourcefulService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router._project_service",
+      "discriminator": "ProjectService",
+      "reason": "route builds its own service instance instead of the hub's bound one (2 constructions)"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/cadence.py::build_cadence_router",
+      "discriminator": "CadenceService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/core.py::build_core_router.health",
+      "discriminator": "DeskService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/decision_records.py::build_decision_records_router.service",
+      "discriminator": "DecisionRecordService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/decisions.py::build_decisions_router.service",
+      "discriminator": "DecisionLifecycleService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/delivery_dossiers.py::build_delivery_dossiers_router._service",
+      "discriminator": "DossierService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/delivery_prs.py::build_delivery_prs_router._service",
+      "discriminator": "PrReceiptsService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/delivery_prs.py::build_delivery_prs_router.api_delivery_pr_draft_review",
+      "discriminator": "InferenceParentRouteBundleService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/delivery_terminal.py::build_delivery_terminal_router",
+      "discriminator": "DeliveryService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/delivery_terminal.py::build_delivery_terminal_router._stream",
+      "discriminator": "TerminalStreamService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/desk_seed.py::build_desk_seed_router._svc",
+      "discriminator": "DeskService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/dictation/pipeline.py::build_pipeline_router",
+      "discriminator": "DictationService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/follow_through.py::_enrich_board",
+      "discriminator": "PeopleService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/follow_through.py::build_follow_through_router",
+      "discriminator": "FollowThroughService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/front_door.py::build_front_door_router.get_topology",
+      "discriminator": "InferenceAssignmentService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/meetings/aftercare.py::_svc",
+      "discriminator": "MeetingAftercareService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/meetings/crud.py::_service",
+      "discriminator": "MeetingService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/meetings/intel.py::_svc",
+      "discriminator": "MeetingIntelService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/meetings/live.py::_service",
+      "discriminator": "MeetingService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/memory.py::build_memory_router.recall_memory",
+      "discriminator": "RecallService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/monday_brief.py::_compose_overlay",
+      "discriminator": "FollowThroughService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/monday_brief.py::_compose_overlay",
+      "discriminator": "PeopleService",
+      "reason": "route builds its own service instance instead of the hub's bound one (2 constructions)"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/monday_brief.py::build_monday_brief_router",
+      "discriminator": "MondayBriefService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/people.py::build_people_router.projects",
+      "discriminator": "ProjectService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/people.py::build_people_router.workbenches",
+      "discriminator": "WorkbenchService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/ask.py::build_ask_service",
+      "discriminator": "AskService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/chains.py::build_chains_router._svc",
+      "discriminator": "PrimitiveService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/chains.py::build_chains_router.run",
+      "discriminator": "SequenceWorkflowService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/directories.py::build_directories_router._svc",
+      "discriminator": "PrimitiveService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/kbs.py::build_kbs_router._svc",
+      "discriminator": "PrimitiveService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/model_profiles.py::build_model_profiles_router._service",
+      "discriminator": "ModelProfileService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/notes.py::build_notes_router._svc",
+      "discriminator": "PrimitiveService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/profiles.py::build_profiles_router._svc",
+      "discriminator": "ProfileService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/recipes.py::build_recipes_router._svc",
+      "discriminator": "RecipeService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/thoughts.py::build_thoughts_router.application",
+      "discriminator": "RefinementApplicationService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/thoughts.py::build_thoughts_router.service",
+      "discriminator": "RefinementThoughtService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/workbenches.py::build_workbenches_router._svc",
+      "discriminator": "WorkbenchService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/workflows.py::build_workflows_router.run",
+      "discriminator": "SequenceWorkflowService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/workflows.py::build_workflows_router.svc",
+      "discriminator": "PrimitiveService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router._build_needs_you",
+      "discriminator": "HeartbeatService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_add_suggested_source",
+      "discriminator": "SuggestedSourceService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_dismiss_suggested_source",
+      "discriminator": "SuggestedSourceService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_suggested_sources",
+      "discriminator": "SuggestedSourceService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/proposals.py::_service",
+      "discriminator": "ProposalBridgeService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/scheduled_recordings.py::_service",
+      "discriminator": "ScheduledRecordingService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/sync.py::build_sync_router",
+      "discriminator": "SyncService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/coder_steering_routes.py::build_coder_steering_router",
+      "discriminator": "CoderService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/coders.py::build_coders_router._service",
+      "discriminator": "CoderService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_heartbeat_get",
+      "discriminator": "HeartbeatService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_heartbeat_put",
+      "discriminator": "HeartbeatService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_heartbeat_run_now",
+      "discriminator": "HeartbeatService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_heartbeat_run_now",
+      "discriminator": "WatchService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/system/settings.py::build_settings_router.api_settings_hub",
+      "discriminator": "HeartbeatService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/threads.py::build_threads_router.api_interview_command",
+      "discriminator": "InterviewService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/threads.py::build_threads_router.api_interview_promotions",
+      "discriminator": "InterviewService",
+      "reason": "route builds its own service instance instead of the hub's bound one"
+    }
+  ]
+}

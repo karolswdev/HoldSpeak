@@ -1,0 +1,8 @@
+NEW residual identity (not in the set): ('http', 'holdspeak/web/routes/primitives/decisions.py::build_desk_decisions_router._svc', 'PrimitiveService')
+NEW residual identity (not in the set): ('mcp', 'desk.create', 'kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.get', 'kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.list', 'kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.update', 'kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.verb', 'verb_id=desk.create,kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.verb', 'verb_id=desk.update,kind=decisions')
+RESIDUAL FENCE RED: 7 problem(s) against /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/mainco

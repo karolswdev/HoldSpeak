@@ -36,9 +36,8 @@ layer over a file another process is checkpointing, and it makes the tool
 catalogue mean something different depending on who is running, which the
 palettes deliberately avoid. The sidecar is now a CLIENT of the hub: it
 discovers the hub through this lock's JSON body and forwards each JSON-RPC
-message to ``POST /api/mcp``. Its only lawful claim on this lock is the
-``HOLDSPEAK_MCP_STANDALONE=1`` diagnosis hatch, which claims it under the label
-``holdspeak-mcp`` so the next ``holdspeak web`` refuses by name.
+message to ``POST /api/mcp``. It never claims this lock: its standalone
+diagnosis hatch (``HOLDSPEAK_MCP_STANDALONE=1``) is retired (PHILO-5-01).
 """
 
 from __future__ import annotations

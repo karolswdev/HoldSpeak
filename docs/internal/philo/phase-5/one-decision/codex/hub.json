@@ -1,0 +1,16 @@
+{
+  "at": "start",
+  "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe",
+  "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.local/share/holdspeak/holdspeak.db",
+  "config_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.config/holdspeak/config.json",
+  "port": 59823,
+  "pid": 57030,
+  "lock": {
+    "pid": 57030,
+    "process_start": "2026-09-24T13:02:26.998695",
+    "port": 59823,
+    "host": "127.0.0.1",
+    "label": "holdspeak web",
+    "alive": true
+  }
+}

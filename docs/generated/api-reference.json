@@ -8039,6 +8039,8 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8071,7 +8073,7 @@
             "GET"
           ],
           "symbol": "api_list_desk_decisions",
-          "line": 36,
+          "line": 42,
           "parameters": [
             {
               "name": "request",
@@ -8084,9 +8086,9 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_decisions",
             "error_500",
             "router.get"
           ],
@@ -8105,6 +8107,8 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8137,7 +8141,7 @@
             "POST"
           ],
           "symbol": "api_create_decision",
-          "line": 43,
+          "line": 49,
           "parameters": [
             {
               "name": "request",
@@ -8153,9 +8157,9 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().create_decision",
             "body.get",
             "error_500",
             "list",
@@ -8188,6 +8192,8 @@
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
+        "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8220,7 +8226,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_decision",
-          "line": 92,
+          "line": 99,
           "parameters": [
             {
               "name": "decision_id",
@@ -8252,7 +8258,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8280,7 +8287,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8312,7 +8320,7 @@
             "GET"
           ],
           "symbol": "api_get_desk_decision",
-          "line": 68,
+          "line": 73,
           "parameters": [
             {
               "name": "decision_id",
@@ -8331,9 +8339,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().get_decision",
             "error_500",
             "router.get"
           ],
@@ -8344,7 +8352,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8376,7 +8385,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision",
-          "line": 77,
+          "line": 83,
           "parameters": [
             {
               "name": "decision_id",
@@ -8397,10 +8406,11 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().update_decision",
             "error_500",
+            "operations.update_args",
             "router.put",
             "str"
           ],
@@ -8411,7 +8421,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8439,7 +8450,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8467,7 +8479,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8495,7 +8508,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8523,7 +8537,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8551,7 +8566,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8583,7 +8599,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision_status",
-          "line": 102,
+          "line": 109,
           "parameters": [
             {
               "name": "decision_id",
@@ -8621,7 +8637,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8649,7 +8666,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8681,7 +8699,7 @@
             "POST"
           ],
           "symbol": "api_supersede_decision",
-          "line": 119,
+          "line": 126,
           "parameters": [
             {
               "name": "decision_id",
@@ -8713,7 +8731,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_decision_records.py",
-        "tests/unit/test_philo3_01_decision_route.py"
+        "tests/unit/test_philo3_01_decision_route.py",
+        "tests/unit/test_philo5_one_decision.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

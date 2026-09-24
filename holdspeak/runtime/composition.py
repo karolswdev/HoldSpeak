@@ -21,9 +21,9 @@ The arrangement now:
   bare one through :func:`service`, which is lawful only in the cases that
   function's docstring names.
 * Outside a hub, :func:`current` raises :class:`NoRuntimeError` naming the
-  owner and the remedy — unless standalone mode is explicit
-  (``HOLDSPEAK_MCP_STANDALONE=1``), the diagnosis hatch described in
-  ``docs/MCP_SIDECAR.md``.
+  owner and the remedy. The MCP sidecar's standalone hatch
+  (``HOLDSPEAK_MCP_STANDALONE=1``) is RETIRED (PHILO-5-01, the owner's D2):
+  the sidecar is a proxy to the hub and nothing else.
 
 The module holds *no* construction logic of its own beyond the bare database
 accessor: what a service needs to be built correctly is knowledge that belongs
@@ -33,20 +33,12 @@ to the composition root that owns the wiring, not to the registry.
 from __future__ import annotations
 
 import dataclasses
-import os
 import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar
 
 T = TypeVar("T")
-
-#: Run the MCP sidecar as its own composition root against the database
-#: directly — the pre-HS-200-45 behaviour. A diagnosis hatch, never the daily
-#: path: in this mode the sidecar CLAIMS the owner lock, so a hub started
-#: afterwards refuses loudly and names the sidecar's pid.
-STANDALONE_ENV = "HOLDSPEAK_MCP_STANDALONE"
-
 
 class NoRuntimeError(RuntimeError):
     """No composition root is installed and none may be improvised here."""
@@ -60,7 +52,7 @@ class RuntimeServices:
     needs. The named service fields are the hub's LIVE instances — the ones
     ``MeetingWebServer._create_app`` composes with wiring a bare constructor
     cannot reproduce. They are ``Optional`` because a bare composition (tests,
-    the standalone hatch, a CLI command) holds none of them; a caller that
+    a CLI command) holds none of them; a caller that
     finds ``None`` builds its own through :func:`service`.
 
     The field list was enumerated from ``holdspeak/web_server.py`` (the
@@ -75,8 +67,7 @@ class RuntimeServices:
     #: in a BARE composition, and that ``None`` is load-bearing: it means "this
     #: root shares no database handle; open the one your own accessor names".
     #: The ~40 MCP unit tests that monkeypatch ``<module>.get_database`` depend
-    #: on that, and so does the standalone hatch, which is by definition the old
-    #: one-root-per-process behaviour.
+    #: on that.
     db: Any = None
     observer: Any = None
     broadcast: Optional[Callable[[str, Any], None]] = None
@@ -88,6 +79,13 @@ class RuntimeServices:
     # made the write knew about it, because it refreshed itself.
     primitive_service: Optional[Any] = None
     workbench_service: Optional[Any] = None
+
+    # --- the application-operation contract (PHILO-5-01) -----------------
+    # ``holdspeak.operations.OperationRegistry`` bound to the live instances
+    # above, once, by :func:`install_from_web_context`. HTTP routes reach it
+    # through ``WebContext.operations``; MCP dispatch through this field. The
+    # same object in both places is the identity fence.
+    operations: Optional[Any] = None
 
     # --- meetings --------------------------------------------------------
     # ``meeting_service`` carries ``bind_lifecycle`` (on_start / on_stop /
@@ -222,11 +220,6 @@ def installed() -> Optional[RuntimeServices]:
     return _installed
 
 
-def standalone_enabled() -> bool:
-    """Whether the standalone diagnosis hatch is explicitly on."""
-    return os.environ.get(STANDALONE_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
 def bare(db: Any = None, *, label: str = "bare") -> RuntimeServices:
     """A composition root that shares nothing — it opens NO database.
 
@@ -236,9 +229,8 @@ def bare(db: Any = None, *, label: str = "bare") -> RuntimeServices:
     free of side effects: nothing is opened, nothing is written, no
     ``holdspeak.db`` is created.
 
-    That is what makes it usable as the test root and as the standalone
-    hatch's root: it *permits* composition in this process without dictating
-    which database handle the composition uses.
+    That is what makes it usable as the test root: it *permits* composition in
+    this process without dictating which database handle the composition uses.
     """
     return RuntimeServices(db=db, observer=None, bare_root=True, label=label)
 
@@ -264,17 +256,14 @@ def no_runtime_message() -> str:
 def current() -> RuntimeServices:
     """This process's composition root.
 
-    In the hub this is the instance ``_create_app`` installed. Outside a hub it
-    is a bare composition ONLY when standalone mode is explicit; otherwise this
-    raises :class:`NoRuntimeError`, because improvising a second root over a
-    database another process owns is exactly the multi-writer arrangement
+    In the hub this is the instance ``_create_app`` installed. Outside a hub
+    this raises :class:`NoRuntimeError`, because improvising a second root over
+    a database another process owns is exactly the multi-writer arrangement
     ``runtime_lock.py``'s C10 forbids.
     """
     root = _installed
     if root is not None:
         return root
-    if standalone_enabled():
-        return install(bare(label="standalone"))
     raise NoRuntimeError(no_runtime_message())
 
 
@@ -283,12 +272,11 @@ def db_or(fallback: Callable[[], Any]) -> Any:
 
     *fallback* is the CALLING module's own ``get_database`` symbol. Reading it
     through the caller rather than importing it here is deliberate: it is the
-    seam the MCP unit tests monkeypatch per module, and it is the seam the
-    standalone hatch relies on. When a hub installed the root there is one
+    seam the MCP unit tests monkeypatch per module. When a hub installed the root there is one
     shared handle and *fallback* is never called — which is the whole point of
     the story: the hub and MCP stop being two writers.
 
-    Calling this outside a hub, with standalone mode off, raises
+    Calling this outside a hub raises
     :class:`NoRuntimeError` before any database is opened.
     """
     root = current()
@@ -312,8 +300,7 @@ def service(name: str, build: Callable[[], T]) -> T:
     Falling back to *build* is lawful in exactly three situations, and in no
     others:
 
-    1. **A bare composition** — a unit test on an isolated HOME, or the
-       standalone diagnosis hatch. There is no hub, so there is no live
+    1. **A bare composition** — a unit test on an isolated HOME. There is no hub, so there is no live
        instance to borrow and nothing to race.
     2. **A service the hub does not compose at all.** Several services are
        built per-request by their own HTTP routes too (they carry no callbacks
@@ -444,7 +431,9 @@ def install_from_web_context(
        root's ``desk_changed`` broadcast, and put them on both the context and
        the root, so the primitive HTTP routes and MCP dispatch resolve the SAME
        instance,
-    3. install it as this process's root.
+    3. bind the application-operation contract (``holdspeak.operations``) to
+       those same live instances and put it on both the context and the root,
+    4. install it as this process's root.
     """
     from holdspeak.db.core import get_database, get_observer
     from holdspeak.services.primitive_service import PrimitiveService
@@ -482,4 +471,15 @@ def install_from_web_context(
 
     services.ask_service = build_ask_service(ctx)
     services.plugin_job_service = PluginJobService(resolved_db, observer=resolved_observer)
+
+    # PHILO-5-01: the contract binds to the instances composed above -- never
+    # to a fresh one -- so an HTTP route and an MCP call reach one object.
+    from holdspeak import operations
+
+    registry = operations.bind({"primitive_service": primitives})
+    services.operations = registry
+    try:
+        ctx.operations = registry
+    except AttributeError:  # pragma: no cover - a non-dataclass stand-in
+        pass
     return install(services)

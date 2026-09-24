@@ -1104,6 +1104,7 @@ class Hub:
         self.url = f"http://127.0.0.1:{self.port}"
         self.proc: subprocess.Popen[str] | None = None
         self.db_path: str | None = None
+        self.config_path: str | None = None
         self.lines: list[str] = []
 
     def _drain(self) -> None:
@@ -1112,6 +1113,8 @@ class Hub:
             self.lines.append(line.rstrip())
             if line.startswith("DB_PATH "):
                 self.db_path = line.split(" ", 1)[1].strip()
+            elif line.startswith("CONFIG_PATH "):
+                self.config_path = line.split(" ", 1)[1].strip()
             elif line.startswith("ENGINE_REPLAY "):
                 self.engine_replay = line.split(" ", 1)[1].strip()
             elif line.startswith("WIRING "):
@@ -1129,6 +1132,7 @@ class Hub:
         # a restart re-reads them from the new process; never trust the old
         self.lines = []
         self.db_path = None
+        self.config_path = None
         self.engine_replay = None
         self.producer_clock = None
         self.wiring = {}
@@ -1465,6 +1469,22 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     database = get_database()
     print(f"DB_PATH {database.db_path}", flush=True)
 
+    # PHILO-5-01 (the Codex seam): the stdio MCP proxy authenticates with the
+    # token it reads from `meeting.web_auth_token` in the config FILE under
+    # HOME (holdspeak/mcp/server.py `_owner_token`). Persist THIS hub's token
+    # there -- the isolated config path, guarded like the database -- so a
+    # client pointed at this HOME reaches this hub and no other.
+    import holdspeak.config as config_facade
+    from holdspeak.config import Config
+
+    config_path = guard_path(Path(config_facade.CONFIG_FILE), "the hub config file")
+    if not _under(config_path, Path(os.environ["HOME"]).resolve()):
+        raise Refused(f"the hub config file {config_path} is not under the run's HOME")
+    config = Config.load()
+    config.meeting.web_auth_token = token
+    config.save()
+    print(f"CONFIG_PATH {config_path}", flush=True)
+
     has: list[str] = ["MeetingWebServer routes"]
     lacks: list[str] = [
         "AudioRecorder (the microphone is forbidden to this rig)",
@@ -1491,9 +1511,12 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     else:
         lacks.append("the brief producer clock seam (not requested; the wall clock)")
 
-    lock = claim_database(Path(str(database.db_path)))
+    # PHILO-5-01 (the Codex seam): publish the loopback endpoint in the lock
+    # body through the product's own lock producer, so `discover_hub()`
+    # (holdspeak/mcp/server.py) finds this hub. Without a port it refuses.
+    lock = claim_database(Path(str(database.db_path)), port=port, host=host)
     if lock.held:
-        has.append("the database owner lock")
+        has.append("the database owner lock (port published)")
     else:
         print("OWNER_LOCK_REFUSED "
               + refusal_message(Path(str(database.db_path)), lock.owner()),

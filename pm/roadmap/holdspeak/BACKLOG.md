@@ -1189,3 +1189,10 @@ The scoped fixture scan found eight e2e `setup` methods that call `_boot` withou
 Story 08's daily fixture records actual plugin structured output but supplies artifact type, title, status, confidence and sources as fixture envelope values; it writes no plugin-run row and bypasses `synthesize_meeting_artifacts`. Re-prove plugin-run persistence → synthesis → recording → bridge as one chain when the parked entry returns. Day-2 faces that read envelope fields see fixture values. The e2e-to-unit fixture import is an existing coupling pattern; moving plugin_dispatch_rig will also affect this e2e walk. No current owner creation path is proven by this rig.
 
 **Evidence churn:** every full run rewrites hundreds of tracked shots. The remote-settings post-revoke shot also leaves two new PNGs in closed Phase 174. Point that rig at story-08 output or make shot writing opt-in in its next change. Story 08 restores unrelated tracked outputs with `git show` and parks new files; this cosmetic follow-up does not change the verified runtime inputs.
+
+## PHILO-5-01 follow-ups — 2026-09-24 (Astra's check on built, finding 8)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The Info-window rename of a decision does nothing: the face sends `name` (`web/src/desk/components/InfoWindow.tsx:31`), `decision.update` ignores it, and the title stays (fenced as observed: `tests/unit/test_philo5_one_decision.py:155`, `tests/unit/test_philo5_compat.py:96`). Fix: send `title` for a decision, or map `name` to `title` for that kind. | bug (Tenet 3; UX-CANON A11) | `holdspeak-philo/phase-5-the-one-service-layer/checks/story-01-built-astra.md` finding 8 | parked; ledger line in the phase's "Decisions deferred" |
+| The admission gap: a real Codex `desk.create kind=decisions` write made the decision and ZERO kernel operations and ZERO receipts (Astra's `admission-proof.json`). `decision.create`/`decision.update` over HTTP and MCP admit nothing. Inherited Article XI debt, not made by the contract. | admission debt (Article XI) | same check, finding 8 | named in the phase's "Discovered missing admissions"; resolution in PHILO-5-02's effects acceptance |

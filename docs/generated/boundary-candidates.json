@@ -3771,7 +3771,7 @@
     },
     {
       "path": "holdspeak/mcp/server.py",
-      "line": 187,
+      "line": 186,
       "kinds": [
         "http_client"
       ],
@@ -3781,7 +3781,7 @@
     },
     {
       "path": "holdspeak/mcp/server.py",
-      "line": 192,
+      "line": 191,
       "kinds": [
         "http_client"
       ],
@@ -6013,7 +6013,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 190,
+      "line": 194,
       "kinds": [
         "websocket"
       ],
@@ -6023,7 +6023,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 240,
+      "line": 244,
       "kinds": [
         "websocket"
       ],

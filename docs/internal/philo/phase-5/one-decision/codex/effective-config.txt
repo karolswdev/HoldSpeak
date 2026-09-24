@@ -1,0 +1,28 @@
+$ codex mcp get holdspeak --json -c mcp_servers.holdspeak.command=... -c mcp_servers.holdspeak.cwd=... -c mcp_servers.holdspeak.env.HOME=...
+codex-cli 0.155.1
+{
+  "name": "holdspeak",
+  "enabled": true,
+  "disabled_reason": null,
+  "transport": {
+    "type": "stdio",
+    "command": "/Users/karol/dev/tools/wt-philo-5-01/.venv/bin/holdspeak-mcp",
+    "args": [],
+    "env": {
+      "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe"
+    },
+    "env_vars": [],
+    "cwd": "/Users/karol/dev/tools/wt-philo-5-01"
+  },
+  "enabled_tools": null,
+  "disabled_tools": null,
+  "startup_timeout_sec": null,
+  "tool_timeout_sec": null
+}
+
+# what that HOME resolves to, read by the lane's own code with HOME=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe:
+DEFAULT_DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.local/share/holdspeak/holdspeak.db
+CONFIG_FILE /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.config/holdspeak/config.json
+LOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.local/share/holdspeak/holdspeak.db.owner.lock
+discover_hub {'host': '127.0.0.1', 'port': 59823, 'pid': 57030, 'db_path': '/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.local/share/holdspeak/holdspeak.db', 'bound_host': '127.0.0.1', 'label': 'holdspeak web'}
+token_present True

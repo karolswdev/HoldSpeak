@@ -465,33 +465,3 @@ def test_process_registry_is_one_frozen_composition_and_installed_plugins_are_bo
     expected_ids.add(f"meeting.plugin.{detector.id}")
     assert expected_ids <= set(first.capability_ids)
     assert first.require(f"meeting.plugin.{detector.id}").plugin_definition_revision == detector.version
-
-
-def test_mcp_sidecar_composes_capability_registry_before_initialize(
-    monkeypatch: pytest.MonkeyPatch, tmp_path,
-) -> None:
-    """A bad census is a process-start failure, not a lazy read error.
-
-    HS-200-45: this is asserted on ``serve_standalone`` now. The default
-    ``serve`` is a proxy that composes NOTHING in this process -- it forwards
-    every message to the hub, which is where the registry is composed and
-    where a bad census fails the start. Keeping the assertion on ``serve``
-    would be asserting that the proxy still builds a service layer.
-    """
-    from holdspeak import inference_capabilities
-    from holdspeak.db import core as db_core
-    from holdspeak.mcp import server
-    from holdspeak.runtime_lock import release_database
-
-    def fail_composition() -> InferenceCapabilityRegistry:
-        raise RuntimeError("registry composition failed")
-
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "census.db")
-    monkeypatch.setattr(inference_capabilities, "process_inference_capability_registry", fail_composition)
-    try:
-        with pytest.raises(RuntimeError, match="registry composition failed"):
-            server.serve_standalone(
-                StringIO('{"jsonrpc":"2.0","id":1,"method":"initialize"}\n'), StringIO()
-            )
-    finally:
-        release_database()

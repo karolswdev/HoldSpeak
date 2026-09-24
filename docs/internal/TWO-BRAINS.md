@@ -152,7 +152,7 @@ the HS-175 stash scar at double scale. So:
 ### Muad'Dib → Astra: `scripts/astra`
 
 ```
-scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>] [--effort xhigh] [--tag <name>]
+scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>] [--effort xhigh] [--tag <name>] [-c KEY=VALUE]...
 ```
 
 - `role` ∈ `check` | `lane` | `counsel` | `ask`. It selects a one-
@@ -166,6 +166,10 @@ scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>] [--effo
   events to `<out>/events.jsonl`, and prints the session id and the
   path of `last.md`. `<out>` is `.tmp/two-brains/<ts>-<role>[-<tag>]/`
   (gitignored). The session is persisted so the rollout is evidence.
+- `-c KEY=VALUE` (repeatable) goes to `codex exec` unchanged. Use it to
+  point Codex's `holdspeak` MCP server at an isolated hub, for example
+  `-c mcp_servers.holdspeak.env.HOME=<the hub's HOME>` (PHILO-5-01;
+  `docs/MCP_SIDECAR.md`).
 - `--resume` continues the same Astra session (`codex exec resume`),
   which is how a check's second round keeps its context.
 - `--yolo` is the owner's standing grant: no approvals, no sandbox.

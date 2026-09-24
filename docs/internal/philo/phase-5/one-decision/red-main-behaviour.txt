@@ -1,0 +1,116 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___ test_a_rig_hub_is_found_and_accepted_by_the_real_proxy_across_a_restart ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_a_rig_hub_is_found_and_ac0')
+
+    @pytest.mark.timeout(420)
+    def test_a_rig_hub_is_found_and_accepted_by_the_real_proxy_across_a_restart(tmp_path: Path) -> None:
+        walk = _load_script("graph_walk")
+        home = (tmp_path / "rig-home")
+        home.mkdir()
+        hub = walk.Hub(home, token=TOKEN).start()
+        try:
+            # (a) the port is published through the product's own lock producer.
+            from holdspeak.runtime_lock import read_owner
+            from holdspeak.mcp.server import discover_hub
+    
+            db_path = Path(hub.db_path)
+            assert db_path.is_relative_to(home.resolve()), db_path
+            owner = read_owner(db_path)
+            assert owner and owner.get("alive"), owner
+>           assert owner.get("port") == hub.port, f"the rig hub published no port: {owner}"
+E           AssertionError: the rig hub published no port: {'pid': 54000, 'process_start': '2026-09-24T12:56:49.908076', 'port': None, 'host': None, 'label': 'holdspeak web', 'alive': True}
+E           assert None == 59416
+E            +  where None = <built-in method get of dict object at 0x112eeacc0>('port')
+E            +    where <built-in method get of dict object at 0x112eeacc0> = {'alive': True, 'host': None, 'label': 'holdspeak web', 'pid': 54000, ...}.get
+E            +  and   59416 = <graph_walk.Hub object at 0x112e7de80>.port
+
+tests/unit/test_philo5_codex_seams.py:74: AssertionError
+______ test_the_retired_standalone_hatch_still_refuses_and_opens_nothing _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_the_retired_standalone_ha0')
+
+    @pytest.mark.timeout(240)
+    def test_the_retired_standalone_hatch_still_refuses_and_opens_nothing(tmp_path: Path) -> None:
+        """PHILO-5-01 (the owner's D2): the proxy is the only mode.
+    
+        Pre-fix, ``HOLDSPEAK_MCP_STANDALONE=1`` composed services in the sidecar,
+        created ``holdspeak.db`` and claimed the owner lock. Now the variable is
+        ignored: no hub means the named JSON-RPC refusal and nothing on disk.
+        """
+        home = tmp_path / "home"
+        home.mkdir()
+    
+        proc = _sidecar(home, [
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+             "params": {"name": "desk.list", "arguments": {"kind": "decisions"}}},
+        ], standalone=True)
+    
+>       assert not list(home.rglob("holdspeak.db")), proc.stderr[-2000:]
+E       AssertionError: 
+E       assert not [PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_the_retired_standalone_ha0/home/.local/share/holdspeak/holdspeak.db')]
+E        +  where [PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_the_retired_standalone_ha0/home/.local/share/holdspeak/holdspeak.db')] = list(<map object at 0x112b4ed00>)
+E        +    where <map object at 0x112b4ed00> = rglob('holdspeak.db')
+E        +      where rglob = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_the_retired_standalone_ha0/home').rglob
+
+tests/integration/test_phase200_one_composition_root_processes.py:130: AssertionError
+___ TestNoRuntimeRefusal.test_the_retired_standalone_env_improvises_no_root ____
+
+self = <tests.unit.test_phase200_one_composition_root.TestNoRuntimeRefusal object at 0x10cfd0770>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x112ea7d10>
+
+    def test_the_retired_standalone_env_improvises_no_root(self, monkeypatch) -> None:
+        """PHILO-5-01 (the owner's D2): the standalone hatch is retired.
+    
+        Pre-fix, ``HOLDSPEAK_MCP_STANDALONE=1`` made ``current()`` install a
+        bare root outside any hub. Now the variable changes nothing.
+        """
+        monkeypatch.setenv("HOLDSPEAK_MCP_STANDALONE", "1")
+        composition.uninstall()
+        opened: list[str] = []
+        try:
+>           with pytest.raises(composition.NoRuntimeError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE <class 'holdspeak.runtime.composition.NoRuntimeError'>
+
+tests/unit/test_phase200_one_composition_root.py:427: Failed
+______________ test_proxy_serve_owns_no_runtime_and_opens_nothing ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x112ef2be0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-523/test_proxy_serve_owns_no_runti0')
+
+    def test_proxy_serve_owns_no_runtime_and_opens_nothing(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+        """The default path composes nothing: no runtime, no database, no lock."""
+        events: list[str] = []
+    
+        class FakeRuntime:
+            def start(self) -> None: events.append("start")
+            def close(self) -> None: events.append("close")
+    
+        import holdspeak.db.core as db_core
+    
+        db_path = tmp_path / "never-opened.db"
+        monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", db_path)
+        # PHILO-5-01: the standalone hatch is retired; its variable changes nothing.
+        monkeypatch.setenv("HOLDSPEAK_MCP_STANDALONE", "1")
+        monkeypatch.setattr("holdspeak.mcp.refinement_runtime.SidecarRefinementRuntime", FakeRuntime)
+        monkeypatch.setattr(thought_family, "configure_runtime", lambda value: events.append("bind" if value else "unbind"))
+    
+        stdin = io.StringIO('{"jsonrpc":"2.0","id":1,"method":"ping"}\n')
+        stdout = io.StringIO()
+        assert server.serve(stdin, stdout) == 0
+>       assert events == []
+E       AssertionError: assert ['start', 'bi...ind', 'close'] == []
+E         
+E         Left contains 4 more items, first extra item: 'start'
+E         Use -v to get more diff
+
+tests/unit/test_mcp_thoughts.py:293: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_codex_seams.py::test_a_rig_hub_is_found_and_accepted_by_the_real_proxy_across_a_restart
+FAILED tests/integration/test_phase200_one_composition_root_processes.py::test_the_retired_standalone_hatch_still_refuses_and_opens_nothing
+FAILED tests/unit/test_phase200_one_composition_root.py::TestNoRuntimeRefusal::test_the_retired_standalone_env_improvises_no_root
+FAILED tests/unit/test_mcp_thoughts.py::test_proxy_serve_owns_no_runtime_and_opens_nothing
+4 failed in 3.09s

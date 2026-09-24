@@ -51,6 +51,10 @@ class WebContext:
     # ``desk_changed`` frame on /ws whoever made it.
     primitive_service: Optional[Any] = None
     workbench_service: Optional[Any] = None
+    # PHILO-5-01: the application-operation contract bound to the instances
+    # above at composition (``holdspeak.operations``); the MCP root holds the
+    # same object.
+    operations: Optional[Any] = None
     # HS-122-04: transport-neutral meeting archive and lifecycle boundary.
     # The runtime-owned callbacks above remain bound into this service at app
     # composition, keeping the service itself independent of the web layer.

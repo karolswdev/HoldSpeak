@@ -1,0 +1,16 @@
+# PHILO-5-01 round two: tests/unit/test_philo5_compat.py on 'git archive 5580a0da' (main, the base). Expected: green (the base outcomes).
+...........                                                              [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/unit/test_philo5_compat.py::test_http_list_limit_above_500_returns_every_row
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['title']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['decided_at']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['tags']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['bogus', 'title']:refused]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.create:['deciders']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['title']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decided_at']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['alternatives']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['name']:accepted]
+PASSED tests/unit/test_philo5_compat.py::test_mcp_decision_inputs_keep_their_base_outcome[desk.update:['decision_id']:refused]
+11 passed in 7.59s

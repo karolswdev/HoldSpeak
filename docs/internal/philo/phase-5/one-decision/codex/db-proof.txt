@@ -1,0 +1,2 @@
+# isolated DB, read after the rig stopped: sqlite3 -readonly <HOME>/.local/share/holdspeak/holdspeak.db
+decision_32e0c6ba0eea|PHILO-5-01 Codex proof decision|accepted|2026-09-24T19:03:02Z

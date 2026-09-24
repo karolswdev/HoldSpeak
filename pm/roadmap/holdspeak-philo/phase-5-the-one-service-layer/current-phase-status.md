@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (RATIFIED; 01 in progress).
+**Last updated:** 2026-09-24 (01 round two on `feat/philo-5-01-one-decision` after Astra's BOUNCE on built; Astra re-checks).
 
 ## Goal
 
@@ -157,7 +157,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-5-01 | One decision through one contract (and the Codex path proved) | in-progress | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | - |
+| PHILO-5-01 | One decision through one contract (and the Codex path proved) | done | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-5-02 | The loop shares the contract | backlog | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | - |
 | PHILO-5-03 | The atlas proves the three paths | backlog | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | - |
 | PHILO-5-04 | The owner asks in his own words (rehearsed, owner-reviewed shots) | backlog | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | - |
@@ -172,6 +172,10 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+2026-09-24: PHILO-5-01 ROUND TWO after Astra's check on built (`checks/story-01-built-astra.md`, BOUNCE on two compatibility regressions). Paid: `GET /api/decisions?limit=501` answers 501 rows again (the caller's `limit` passes through `decision.list` to the repository; round one sliced a 500-row result); the create/update fields are type-permissive again, so every input main accepted is accepted (`title=123`, `decided_at=20260924`, `tags="one"` ...), and a `decision_id` in update data stays refused. Fence: `tests/unit/test_philo5_compat.py` — green on main, red on round one (9 of 11), green now. One narrowing stays on purpose (the settled Effects position): an authority field in `decision.update` data, accepted and ignored on main, is refused. Homes given: the Info-window rename bug (below, deferred + BACKLOG) and the admission gap (below, "Discovered missing admissions"). Next: Astra's re-check on built.
+
+2026-09-24: PHILO-5-01 BUILT (`feat/philo-5-01-one-decision`). The descriptor module `holdspeak/operations.py` holds `decision.create/update/read/list`, bound once at hub composition to the hub's `PrimitiveService`; the decision routes and the MCP `kind="decisions"` branch call `invoke`; the standalone MCP mode is retired; `docs/generated/operations.json` and the residual set (334 -> 327 identities; public tools 225 -> 225) are drift-guarded. The Codex path is PROVED: a fresh `codex exec` session through `scripts/astra -c ...` discovered the rig's isolated hub, wrote `decision_32e0c6ba0eea`, read it back, and read it again after a rig restart (evidence `evidence-story-01.md`). Found: in the hub the project-decisions router answers the decision GETs first; its desk branches now use the contract. Next: Astra's check on built, then story 02.
 
 2026-09-24: RATIFIED by the owner; freshness ruled (reopening accepted). Story 01 starts on `../wt-philo-5-01` / `feat/philo-5-01-one-decision` (Muad'Dib, Opus 5.5 worker); its first proof is the Codex → proxy → isolated-hub loop.
 
@@ -196,6 +200,12 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — Astra r2 on story 01: RATIFY-WITH-CONDITIONS, paid; the authority-field narrowing in `decision.update` RATIFIED as an explicit compatibility exception (eight fields accepted-and-ignored on main → refused; `principal` already failed on main). Merged on the fast CI jobs + both brains' verdicts per the owner's ruling — Muad'Dib.
+
+- 2026-09-24 — PHILO-5-01: the published MCP tool schemas stay byte-identical (no per-kind conditional schemas); the decisions branch's effective schema is the descriptor's, enforced by `invoke` and fenced through dispatch — Muad'Dib lane (Opus 5.5).
+- 2026-09-24 — PHILO-5-01 round two: the descriptor's decision fields are type-permissive (they were typed in round one and refused inputs main accepted); `decision.list` takes an optional `limit`; a `decision_id` in update data stays refused; the one kept narrowing is the authority refusal on update (settled Effects position) — Muad'Dib lane (Opus 5.5), after Astra's BOUNCE on built.
+- 2026-09-24 — PHILO-5-01: `decision.update` keeps `additionalProperties: true` because both transports passed unknown fields through before (the desk rename sends `name`); `decision.create` is closed — Muad'Dib lane (Opus 5.5).
+
 - 2026-09-24 — the owner RATIFIED the charter ("Ratify, build it") and ruled brief freshness ("Accept reopening"). Story 01 in progress — Muad'Dib.
 
 - 2026-09-24 — Astra r3 (final) on the charter: RATIFY-WITH-CONDITIONS; the one condition (story 02: `generate=true` belongs to `monday_brief.get`, not `monday_brief.generate`) paid; the two owner questions Astra named (ratify the charter + 11–14 sequential days; accept reopening the Desk for a Codex-changed brief vs amend scope) put to the owner by AskUserQuestion — Muad'Dib.
@@ -209,6 +219,11 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Decisions deferred
 
+- The Info-window rename of a decision (the face sends `name`; `decision.update` ignores it; `web/src/desk/components/InfoWindow.tsx:31`) — a real bug, fenced as observed in 01, not fixed there; parked in `pm/roadmap/holdspeak/BACKLOG.md` (PHILO-5-01 follow-ups).
 - The owner's ratification of this charter.
 - The MCP import intake's client contract (settled between the brains before story 02's worker brief; a raw `tmp_path`, configuration object or transcriber factory is not a client contract).
 - Any stronger brief-freshness promise than a fresh/reopened Desk read (needs a named scope amendment).
+
+## Discovered missing admissions
+
+- 2026-09-24 (Astra's check on built, PHILO-5-01 finding 8): `decision.create` and `decision.update`, over HTTP and over MCP, run no kernel operation and write no receipt. A real Codex decision write made the row and ZERO kernel operations and ZERO receipts (Astra's `admission-proof.json`). Inherited Article XI debt, older than the contract. Named here for resolution in PHILO-5-02's effects acceptance; not fixed in 01, not certified.
