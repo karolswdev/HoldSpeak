@@ -1,4 +1,12 @@
-"""Desk-authored Architecture Decision Record CRUD — thin adapter (HS-122-01)."""
+"""Desk-authored Architecture Decision Record CRUD — thin adapter (HS-122-01).
+
+PHILO-5-01: create, update, read and list are calls to the application-operation
+contract (``holdspeak.operations``), bound at hub composition to the hub's one
+live ``PrimitiveService``. Each route maps its request onto the operation's
+arguments and maps the result back exactly as before. Delete, status and
+supersede are not on the contract yet; they use the SAME instance the contract
+is bound to.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -6,9 +14,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from .... import operations
 from ....logging_config import get_logger
 from ....services.errors import NotFound
-from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
@@ -19,15 +27,13 @@ log = get_logger("web.routes.primitives")
 def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _svc() -> PrimitiveService:
-        # HS-200-45: the hub's ONE composed instance (it carries the
-        # ``on_changed`` hook that puts a ``desk_changed`` frame on the bus).
-        # A bare instance is built only for a partially-wired context -- a
-        # route test that supplies just the fields it exercises.
-        if getattr(ctx, "primitive_service", None) is not None:
-            return ctx.primitive_service
-        from ....db import get_database, get_observer
-        return PrimitiveService(get_database(), observer=get_observer())
+    def _ops() -> operations.OperationRegistry:
+        return operations.for_context(ctx)
+
+    def _svc() -> Any:
+        # The instance the contract is bound to -- in the hub, the ONE composed
+        # PrimitiveService carrying the ``desk_changed`` hook (HS-200-45).
+        return _ops().target("decision.read")
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
@@ -35,7 +41,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/decisions")
     async def api_list_desk_decisions(request: Request) -> Any:
         try:
-            return JSONResponse({"decisions": _svc().list_decisions(_principal(request))})
+            return JSONResponse({"decisions": _ops().invoke(_principal(request), "decision.list", {})})
         except Exception as exc:
             return error_500(exc, log, "Failed to list decisions")
 
@@ -45,19 +51,18 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            decision = _svc().create_decision(
-                _principal(request),
-                decision_id=str(body.get("id") or "") or None,
-                title=str(body.get("title") or "New decision"),
-                status=str(body.get("status") or "proposed"),
-                deciders=list(body.get("deciders") or []),
-                decided_at=body.get("decided_at"),
-                context_markdown=str(body.get("context_markdown") or ""),
-                decision_markdown=str(body.get("decision_markdown") or ""),
-                alternatives=list(body.get("alternatives") or []),
-                consequences_markdown=str(body.get("consequences_markdown") or ""),
-                tags=list(body.get("tags") or []),
-            )
+            decision = _ops().invoke(_principal(request), "decision.create", {
+                "decision_id": str(body.get("id") or "") or None,
+                "title": str(body.get("title") or "New decision"),
+                "status": str(body.get("status") or "proposed"),
+                "deciders": list(body.get("deciders") or []),
+                "decided_at": body.get("decided_at"),
+                "context_markdown": str(body.get("context_markdown") or ""),
+                "decision_markdown": str(body.get("decision_markdown") or ""),
+                "alternatives": list(body.get("alternatives") or []),
+                "consequences_markdown": str(body.get("consequences_markdown") or ""),
+                "tags": list(body.get("tags") or []),
+            })
             return JSONResponse({"decision": decision}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
@@ -67,7 +72,8 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/decisions/{decision_id}")
     async def api_get_desk_decision(decision_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"decision": _svc().get_decision(_principal(request), decision_id)})
+            return JSONResponse({"decision": _ops().invoke(
+                _principal(request), "decision.read", {"decision_id": decision_id})})
         except NotFound:
             return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)
         except Exception as exc:
@@ -79,7 +85,8 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            decision = _svc().update_decision(_principal(request), decision_id, **body)
+            decision = _ops().invoke(
+                _principal(request), "decision.update", {**body, "decision_id": decision_id})
             return JSONResponse({"decision": decision})
         except NotFound:
             return JSONResponse({"error": f"Unknown decision: {decision_id}"}, status_code=404)

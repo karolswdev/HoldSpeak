@@ -393,7 +393,6 @@ class TestNoRuntimeRefusal:
     """Improvising a second root is what made the sidecar a second writer."""
 
     def test_current_refuses_with_no_root_and_no_standalone(self, monkeypatch) -> None:
-        monkeypatch.delenv(composition.STANDALONE_ENV, raising=False)
         composition.uninstall()
         try:
             with pytest.raises(composition.NoRuntimeError) as excinfo:
@@ -406,7 +405,6 @@ class TestNoRuntimeRefusal:
         assert "holdspeak web" in message or "owns" in message
 
     def test_db_or_never_opens_a_database_when_it_refuses(self, monkeypatch) -> None:
-        monkeypatch.delenv(composition.STANDALONE_ENV, raising=False)
         composition.uninstall()
         opened: list[str] = []
         try:
@@ -416,20 +414,23 @@ class TestNoRuntimeRefusal:
             composition.install(composition.bare(label="pytest"))
         assert opened == []
 
-    def test_standalone_env_permits_a_bare_root_that_shares_no_handle(
-        self, monkeypatch
-    ) -> None:
-        monkeypatch.setenv(composition.STANDALONE_ENV, "1")
+    def test_the_retired_standalone_env_improvises_no_root(self, monkeypatch) -> None:
+        """PHILO-5-01 (the owner's D2): the standalone hatch is retired.
+
+        Pre-fix, ``HOLDSPEAK_MCP_STANDALONE=1`` made ``current()`` install a
+        bare root outside any hub. Now the variable changes nothing.
+        """
+        monkeypatch.setenv("HOLDSPEAK_MCP_STANDALONE", "1")
         composition.uninstall()
+        opened: list[str] = []
         try:
-            root = composition.current()
-            assert root.bare_root is True
-            assert root.db is None
-            # Each module keeps its own accessor — the pre-fix behaviour, which
-            # is what a diagnosis session wants.
-            assert composition.db_or(lambda: "module-handle") == "module-handle"
+            with pytest.raises(composition.NoRuntimeError):
+                composition.current()
+            with pytest.raises(composition.NoRuntimeError):
+                composition.db_or(lambda: opened.append("opened"))
         finally:
             composition.install(composition.bare(label="pytest"))
+        assert opened == []
 
 
 # ── the honest refusals (R6) ────────────────────────────────────────────

@@ -5,15 +5,14 @@ snapshot fetcher reads from a JSON file (HOLDSPEAK_TEST_SNAPSHOT_FILE)
 instead of calling the gh CLI.  The subprocess boundary, JSON-RPC
 protocol, auth, tool dispatch, and service composition are all real.
 
-HS-200-45: the sidecar proxies to a running hub by default, so this walk runs
-it under ``HOLDSPEAK_MCP_STANDALONE=1`` -- the diagnosis hatch, in which the
-sidecar is its own composition root and claims the owner lock for the isolated
-HOME's database. That keeps the walk's "the subprocess boundary, JSON-RPC
-protocol, auth, tool dispatch, and service composition are all real" claim
-true, and it is one writer rather than a silent second one.
+PHILO-5-01: the production sidecar is a proxy only (its standalone hatch is
+retired). This TEST harness therefore composes the service layer itself, in
+its own process, over the isolated HOME's database: a bare composition root,
+the capability registry and the Thought refinement runtime, then the real
+in-process JSON-RPC handler. It is the only process that opens that HOME's
+database, so it is one writer.
 
 Usage:
-    HOLDSPEAK_MCP_STANDALONE=1 \
     HOLDSPEAK_TEST_SNAPSHOT_FILE=/path/to/snapshot.json \
         uv run python -m tests.integration._mcp_walk_server
 """
@@ -49,7 +48,6 @@ def main() -> int:
     import holdspeak.services.watch_sources as ws_mod
     import holdspeak.mcp.families.project as proj_fam
     from holdspeak.services.watch_service import WatchService
-    from holdspeak.mcp.server import serve
 
     # Patch the module-level _watch_service factory to inject the
     # fixture fetcher into every WatchService instance it creates.
@@ -62,7 +60,22 @@ def main() -> int:
 
     proj_fam._watch_service = _patched_watch_service
 
-    return serve()
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from holdspeak.mcp.families import thought
+    from holdspeak.mcp.refinement_runtime import SidecarRefinementRuntime
+    from holdspeak.mcp.server import _pump, handle_message_locally
+    from holdspeak.runtime import composition
+
+    composition.install(composition.bare(label="hs165-walk"))
+    process_inference_capability_registry()
+    runtime = SidecarRefinementRuntime()
+    runtime.start()
+    thought.configure_runtime(runtime)
+    try:
+        return _pump(sys.stdin, sys.stdout, handle_message_locally)
+    finally:
+        thought.configure_runtime(None)
+        runtime.close()
 
 
 if __name__ == "__main__":

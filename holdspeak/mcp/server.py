@@ -33,10 +33,10 @@ open handle on a file another process is checkpointing. Proxying keeps ONE
 writer, ONE composition root, and a tool catalogue that means the same thing
 wherever it is called from.
 
-**The standalone hatch.** ``HOLDSPEAK_MCP_STANDALONE=1`` restores the old
-one-root-per-process behaviour for a diagnosis session -- and in that mode the
-sidecar CLAIMS the owner lock, so a hub started afterwards refuses loudly and
-names ``holdspeak-mcp pid N``. Never the daily path.
+**Proxy only (PHILO-5-01, the owner's D2).** The standalone hatch
+(``HOLDSPEAK_MCP_STANDALONE=1``), which composed the service layer in this
+process and claimed the owner lock, is retired. The variable is ignored: with
+or without it, this process composes nothing and opens no database.
 """
 from __future__ import annotations
 
@@ -168,8 +168,7 @@ def no_hub_message(db_path: Optional[Path] = None) -> str:
     return (
         f"No running HoldSpeak hub owns {path}; start `holdspeak web`, then retry. "
         "The MCP sidecar is a client of the hub and never opens the database "
-        "itself (set HOLDSPEAK_MCP_STANDALONE=1 for a diagnosis session that "
-        "does, claiming the owner lock)."
+        "itself."
     )
 
 
@@ -331,9 +330,9 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
 
 
 #: The in-process handler, kept under an explicit name. It composes against
-#: whatever composition root this process holds, so it is reached only from the
-#: standalone hatch, from :func:`handle_message_via_hub`'s local handshake
-#: answers, and from the unit tests that drive dispatch directly.
+#: whatever composition root this process holds, so it is reached only from
+#: :func:`handle_message_via_hub`'s local handshake answers and from the tests
+#: that drive dispatch directly.
 handle_message_locally = handle_message
 
 
@@ -456,60 +455,12 @@ def _pump(
     return 0
 
 
-def serve_standalone(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
-    """The diagnosis hatch: one composition root in THIS process.
-
-    This is the pre-HS-200-45 behaviour, and it is honest about being a
-    writer: it claims the database owner lock first, so a ``holdspeak web``
-    started afterwards refuses loudly and names this pid instead of silently
-    becoming a second writer. If a hub already owns the database, this refuses
-    rather than opening the file.
-    """
-    from holdspeak.inference_capabilities import process_inference_capability_registry
-    from holdspeak.runtime import composition
-    from holdspeak.runtime_lock import claim_database, refusal_message
-    from .families import thought
-    from .refinement_runtime import SidecarRefinementRuntime
-
-    db_path = _default_db_path()
-    lock = claim_database(db_path, port=None, label="holdspeak-mcp")
-    if not lock.held:
-        from holdspeak.runtime_lock import read_owner
-
-        stdout.write(
-            json.dumps(_error(None, -32002, refusal_message(db_path, read_owner(db_path)))) + "\n"
-        )
-        stdout.flush()
-        return 1
-
-    # The standalone root shares no handle: every MCP module falls back to its
-    # own ``get_database``, which is exactly what this mode is for.
-    composition.install(composition.bare(label="standalone"))
-
-    # Compose the immutable semantic registry before the sidecar announces any
-    # capability. A bad census/plugin/schema is a process-start failure, not
-    # a lazy resource-read error after MCP initialization.
-    process_inference_capability_registry()
-    runtime = SidecarRefinementRuntime()
-    runtime.start()
-    thought.configure_runtime(runtime)
-    try:
-        return _pump(stdin, stdout, handle_message_locally)
-    finally:
-        thought.configure_runtime(None)
-        runtime.close()
-
-
 def serve(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout) -> int:
-    """Run the stdio server until the client closes its input pipe.
+    """Run the stdio proxy until the client closes its input pipe.
 
-    Proxy mode by default: nothing is composed here and the database is never
-    opened. ``HOLDSPEAK_MCP_STANDALONE=1`` selects the diagnosis hatch.
+    The only mode: nothing is composed here and the database is never opened;
+    every message goes to the hub that owns the database.
     """
-    from holdspeak.runtime import composition
-
-    if composition.standalone_enabled():
-        return serve_standalone(stdin, stdout)
     return _pump(stdin, stdout, handle_message_via_hub)
 
 

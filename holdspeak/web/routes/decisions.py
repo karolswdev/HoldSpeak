@@ -36,18 +36,27 @@ def _error(exc: ServiceError) -> JSONResponse:
     return JSONResponse(payload,status_code=int(payload.pop("status",400 if exc.code == "validation_error" else 409)))
 
 def build_decisions_router(ctx: Any) -> APIRouter:
-    del ctx
     router=APIRouter(prefix="/api/decisions",tags=["decisions"])
+    # PHILO-5-01: this router is included BEFORE the primitives router
+    # (web_server.py), so in the hub it answers GET /api/decisions and
+    # GET /api/decisions/{id}. Its desk-decision branches are the contract's
+    # decision.list / decision.read, bound to the hub's one PrimitiveService.
+    from ... import operations
+    def desk_ops() -> Any: return operations.for_context(ctx)
     # HS-131-13: the route holds no engine and no `run_prompt` callable. Drafting
     # is the admitted Decision promotion child inside the service (HS-131-07);
     # a second route-side model seam would be a second, unadmitted Decision path.
     def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
     @router.get("")
     async def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0) -> Any:
+        if not any((project_id, project_key, meeting_id, lifecycle)):
+            return JSONResponse({"decisions": desk_ops().invoke(_principal(request), "decision.list", {})[:max(1, min(int(limit), 2000))]})
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))
         except ServiceError as exc: return _error(exc)
     @router.get("/{decision_id}")
     async def get_decision(decision_id: str,request: Request) -> Any:
+        try: return JSONResponse({"decision": desk_ops().invoke(_principal(request), "decision.read", {"decision_id": decision_id})})
+        except NotFound: pass  # not a desk decision: the lifecycle record, with lineage
         try: return JSONResponse(service().get_decision(_principal(request),decision_id))
         except ServiceError as exc: return _error(exc)
     @router.get("/{decision_id}/moment")

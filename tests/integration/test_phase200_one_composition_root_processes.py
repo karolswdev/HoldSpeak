@@ -111,23 +111,30 @@ def test_sidecar_with_no_hub_refuses_and_opens_no_database(tmp_path: Path) -> No
 
 
 @pytest.mark.timeout(240)
-def test_the_standalone_hatch_claims_the_owner_lock(tmp_path: Path) -> None:
-    """The diagnosis hatch is honest about being a writer."""
+def test_the_retired_standalone_hatch_still_refuses_and_opens_nothing(tmp_path: Path) -> None:
+    """PHILO-5-01 (the owner's D2): the proxy is the only mode.
+
+    Pre-fix, ``HOLDSPEAK_MCP_STANDALONE=1`` composed services in the sidecar,
+    created ``holdspeak.db`` and claimed the owner lock. Now the variable is
+    ignored: no hub means the named JSON-RPC refusal and nothing on disk.
+    """
     home = tmp_path / "home"
     home.mkdir()
 
     proc = _sidecar(home, [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+         "params": {"name": "desk.list", "arguments": {"kind": "decisions"}}},
     ], standalone=True)
 
-    locks = sorted(home.rglob("*.owner.lock"))
-    assert locks, (
-        "standalone mode opens the database, so it must claim the owner lock "
-        f"-- nothing was claimed. stderr: {proc.stderr[-2000:]}"
-    )
-    body = json.loads(locks[0].read_text())
-    assert body["label"] == "holdspeak-mcp", body
-    assert body["pid"]
+    assert not list(home.rglob("holdspeak.db")), proc.stderr[-2000:]
+    assert not list(home.rglob("*.owner.lock")), proc.stderr[-2000:]
+    responses = _responses(proc)
+    assert len(responses) >= 2, proc.stdout + proc.stderr
+    refusal = responses[1]
+    assert "error" in refusal, refusal
+    assert "No running HoldSpeak hub owns" in refusal["error"]["message"]
+    assert "holdspeak web" in refusal["error"]["message"]
 
 
 # ── (d) the sidecar with a hub ──────────────────────────────────────────

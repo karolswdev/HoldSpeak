@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5 ratified; story 01 in build).
+**Last updated:** 2026-09-24 (Phase 5: story 01 built — one decision through one contract; the Codex path proved; awaiting Astra's check on built).
 **Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — chartered 2026-09-24 by the two brains, unratified (the owner's ratification owed).
 **Status:** Phases 1–4 delivered and merged. Phase 3 closed by ruling with its sitting waived; Phase 4 The Morning closed 2026-09-24 (the next-day brief in one move, proven on the rig at both widths). Phase 5 The One Service Layer chartered 2026-09-24 (the owner's D1–D3 and proof mode ruled; Astra r1 BOUNCE → r2 RATIFY-WITH-CONDITIONS, conditions paid); nothing built; the owner's ratification owed.
 

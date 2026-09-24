@@ -1,0 +1,243 @@
+{
+  "source": "holdspeak/operations.py",
+  "regenerate": "uv run python scripts/gen_operations_json.py",
+  "operations": [
+    {
+      "name": "decision.create",
+      "version": 1,
+      "description": "Record one desk decision. Every field is optional; the title defaults to 'New decision' and the status to 'proposed'.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "proposed, accepted, superseded or deprecated."
+          },
+          "deciders": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "decided_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "alternatives": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Objects with name and reason."
+          },
+          "consequences_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk decision service performs no principal check of its own",
+      "effect": "write",
+      "result": "the decision record (id, title, status, deciders, decided_at, the three markdown fields, alternatives, superseded_by, tags, created_at, updated_at, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValueError: invalid decision status"
+      ],
+      "completion": "synchronous; the returned id reads back through decision.read; one desk_changed frame (kind decision, op create) on the hub bus",
+      "exposure": [
+        "http:POST /api/decisions",
+        "mcp:desk.create[kind=decisions]",
+        "mcp:desk.verb[verb_id=desk.create,kind=decisions]"
+      ]
+    },
+    {
+      "name": "decision.update",
+      "version": 1,
+      "description": "Change fields of one desk decision. Only the supplied fields change; null leaves a field as it is; unknown fields are ignored.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "proposed, accepted, superseded or deprecated."
+          },
+          "deciders": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "decided_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "alternatives": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Objects with name and reason."
+          },
+          "consequences_markdown": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "superseded_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "additionalProperties": true
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk decision service performs no principal check of its own",
+      "effect": "write",
+      "result": "the updated decision record",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown decision",
+        "ValueError: invalid decision status"
+      ],
+      "completion": "synchronous; decision.read returns the new state; one desk_changed frame (kind decision, op update) on the hub bus",
+      "exposure": [
+        "http:PUT /api/decisions/{decision_id}",
+        "mcp:desk.update[kind=decisions]",
+        "mcp:desk.verb[verb_id=desk.update,kind=decisions]"
+      ]
+    },
+    {
+      "name": "decision.read",
+      "version": 1,
+      "description": "Read one desk decision by id.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk decision service performs no principal check of its own",
+      "effect": "read",
+      "result": "the decision record",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown decision"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/decisions/{decision_id}",
+        "mcp:desk.get[kind=decisions]"
+      ]
+    },
+    {
+      "name": "decision.list",
+      "version": 1,
+      "description": "List the desk decisions that are not deleted, most recently updated first.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk decision service performs no principal check of its own",
+      "effect": "read",
+      "result": "a list of decision records",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/decisions",
+        "mcp:desk.list[kind=decisions]"
+      ]
+    }
+  ]
+}

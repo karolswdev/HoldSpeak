@@ -1,0 +1,4 @@
+DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.tr7sKCsWOe/.config/holdspeak/config.json
+WIRING {"has": ["MeetingWebServer routes", "the database owner lock (port published)", "the intelligence queue drainer"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyListener (no native keystrokes)", "voice_session / device registry", "transcriber warm-up", "the deferred plugin-queue thread", "the Cadence Engine tick", "the brief producer clock seam (not requested; the wall clock)", "the heartbeat conductor loop (not requested by the case)"]}
+HUB_READY http://127.0.0.1:59823

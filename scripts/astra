@@ -4,6 +4,7 @@
 #
 #   scripts/astra <role> <brief.md | -> [--resume <session-id>] [--cd <dir>]
 #                 [--effort xhigh] [--tag <name>] [--model gpt-6-astra]
+#                 [-c KEY=VALUE]...   (each passed to codex exec as -c)
 #
 # role ∈ check | lane | counsel | ask. Prints the session id and the path of
 # the final message; the full event stream lands beside it under
@@ -12,13 +13,16 @@
 set -euo pipefail
 
 ROLE="${1:-}"; BRIEF="${2:-}"
-[[ -n "$ROLE" && -n "$BRIEF" ]] || { sed -n 2,9p "$0" | sed 's/^# \{0,1\}//'; exit 64; }
+[[ -n "$ROLE" && -n "$BRIEF" ]] || { sed -n 2,10p "$0" | sed 's/^# \{0,1\}//'; exit 64; }
 shift 2
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 CD="$REPO"; EFFORT="xhigh"; MODEL="gpt-6-astra"; TAG=""; RESUME=""
+OVERRIDES=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -c) [[ -n "${2:-}" ]] || { echo "astra: -c needs KEY=VALUE" >&2; exit 64; }
+        OVERRIDES+=(-c "$2"); shift 2;;
     --resume) RESUME="$2"; shift 2;;
     --cd) CD="$2"; shift 2;;
     --effort) EFFORT="$2"; shift 2;;
@@ -47,7 +51,7 @@ printf '%s\n\n%s\n' "$PREAMBLE" "$BODY" > "$OUT/brief.md"
 
 # `--yolo` is the undocumented alias of --dangerously-bypass-approvals-and-sandbox;
 # `exec resume` takes neither --yolo nor -C, so the resume path cd's instead.
-COMMON=(--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -c "model_reasoning_effort=\"$EFFORT\"" --json -o "$OUT/last.md")
+COMMON=(--dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -c "model_reasoning_effort=\"$EFFORT\"" ${OVERRIDES[@]+"${OVERRIDES[@]}"} --json -o "$OUT/last.md")
 if [[ -n "$RESUME" ]]; then
   cd "$CD"
   CMD=(codex exec resume "$RESUME" "${COMMON[@]}" -)

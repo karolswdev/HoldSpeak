@@ -44,13 +44,34 @@ process is checkpointing, and it makes the tool catalogue mean something
 different depending on who is running it. Proxying keeps one writer, one
 composition root, and one meaning per tool.
 
-**The diagnosis hatch.** `HOLDSPEAK_MCP_STANDALONE=1` restores the old
-behaviour, in which this process composes its own service layer and opens the
-database. It claims the owner lock while doing so, under the label
-`holdspeak-mcp`, so a `holdspeak web` started afterwards refuses loudly and
-names the sidecar's pid instead of quietly becoming a second writer. If a hub
-already owns the database, standalone mode refuses rather than opening the
-file. It exists for a diagnosis session, never for daily use.
+**Proxy only.** The sidecar has one mode. The old diagnosis hatch
+(`HOLDSPEAK_MCP_STANDALONE=1`) is retired (PHILO-5-01). The sidecar ignores
+that variable: it composes no services, opens no database and claims no lock.
+
+**Point a client at an isolated hub.** The sidecar finds the hub through the
+database path under `$HOME`, and it reads the token from
+`$HOME/.config/holdspeak/config.json`. To use a hub that runs under another
+HOME, set `HOME` in the client's server entry. For Codex:
+
+```
+codex exec \
+  -c mcp_servers.holdspeak.command=/abs/path/.venv/bin/holdspeak-mcp \
+  -c mcp_servers.holdspeak.cwd=/abs/path \
+  -c mcp_servers.holdspeak.env.HOME=/abs/path/to/the/hub/home ...
+```
+
+`scripts/astra` passes each `-c KEY=VALUE` to `codex exec`.
+
+### Decisions go through the operation contract
+
+For `kind="decisions"`, `desk.list`, `desk.get`, `desk.create` and
+`desk.update` call the application operations `decision.list`,
+`decision.read`, `decision.create` and `decision.update`
+(`holdspeak/operations.py`). The HTTP routes `GET/POST /api/decisions` and
+`GET/PUT /api/decisions/{id}` call the same operations. The hub binds them
+once, to its one live service. The export is `docs/generated/operations.json`.
+The contract refuses unknown fields on create, and it refuses a field that
+names a principal. The transport gives the principal.
 
 ### A write reaches the open desk
 

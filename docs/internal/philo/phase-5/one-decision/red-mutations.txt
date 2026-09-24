@@ -1,0 +1,77 @@
+MUTATION m1-fresh-instance: holdspeak/runtime/composition.py
+- registry = operations.bind({"primitive_service": primitives})
++ registry = operations.bind({"primitive_service": PrimitiveService(resolved_db, observer=resolved_observer)})
+E           AssertionError: decision.create
+E           assert <holdspeak.services.primitive_service.PrimitiveService object at 0x10fd20a50> is <holdspeak.services.primitive_service.PrimitiveService object at 0x10fcef770>
+E            +  where <holdspeak.services.primitive_service.PrimitiveService object at 0x10fd20a50> = target('decision.create')
+E            +    where target = OperationRegistry(operations={'decision.create': BoundOperation(descriptor=OperationDescriptor(name='decision.create',...ervice object at 0x10fd20a50>>, target=<holdspeak.services.primitive_service.PrimitiveService object at 0x10fd20a50>)}).target
+E            +      where OperationRegistry(operations={'decision.create': BoundOperation(descriptor=OperationDescriptor(name='decision.create',...ervice object at 0x10fd20a50>>, target=<holdspeak.services.primitive_service.PrimitiveService object at 0x10fd20a50>)}) = RuntimeServices(db=<holdspeak.db.core.Database object at 0x10fa752b0>, observer=<holdspeak.services.sqlite_observer.SQ...None, mesh_requires_token=False, web_host='127.0.0.1', web_auth_token='philo5-01-token'), bare_root=False, label='hub').operations
+E            +  and   <holdspeak.services.primitive_service.PrimitiveService object at 0x10fcef770> = RuntimeServices(db=<holdspeak.db.core.Database object at 0x10fa752b0>, observer=<holdspeak.services.sqlite_observer.SQ...None, mesh_requires_token=False, web_host='127.0.0.1', web_auth_token='philo5-01-token'), bare_root=False, label='hub').primitive_service
+/Users/karol/dev/tools/wt-philo-5-01/tests/unit/test_philo5_one_decision.py:98: AssertionError
+FAILED tests/unit/test_philo5_one_decision.py::TestOneInstanceInTheHub::test_both_transports_hold_the_one_registry_bound_to_the_hubs_instance
+1 failed in 1.35s
+MUTATION m2-http-bypass: holdspeak/web/routes/primitives/decisions.py
+- decision = _ops().invoke(_principal(request), "decision.create", {
++ decision = (lambda a: _svc().create_decision(_principal(request), **a))({
+E       AssertionError: assert ['decision.up...ecision.list'] == ['decision.cr...ecision.list']
+E         
+E         At index 0 diff: 'decision.update' != 'decision.create'
+E         Right contains one more item: 'decision.list'
+E         Use -v to get more diff
+/Users/karol/dev/tools/wt-philo-5-01/tests/unit/test_philo5_one_decision.py:127: AssertionError
+FAILED tests/unit/test_philo5_one_decision.py::TestOneInstanceInTheHub::test_every_decision_call_over_http_and_mcp_goes_through_invoke
+1 failed in 1.33s
+MUTATION m3-mcp-bypass: holdspeak/mcp/tools.py
+-         return ops().invoke(principal, "decision.create", data)
++         return service.create_decision(principal, **data)
+        failed as a Python ``TypeError``; now the descriptor refuses it by name.
+        from holdspeak.mcp.tools import ToolError, dispatch
+        with pytest.raises(ValueError) as exc:
+error = 'TypeError("PrimitiveService.create_decision() got an unexpected keyword argument \'bogus\'")'
+E           TypeError: PrimitiveService.create_decision() got an unexpected keyword argument 'bogus'
+holdspeak/services/observer.py:177: TypeError
+E       AssertionError: assert ['decision.up...ecision.list'] == ['decision.cr...ecision.list']
+E         
+E         At index 0 diff: 'decision.update' != 'decision.create'
+E         Right contains one more item: 'decision.list'
+E         Use -v to get more diff
+/Users/karol/dev/tools/wt-philo-5-01/tests/unit/test_philo5_one_decision.py:139: AssertionError
+MUTATION m4-new-residual: holdspeak/web/routes/primitives/decisions.py
+-     def _principal(request: Request) -> Any:
++     def _stray() -> Any:
+        from ....services.primitive_service import PrimitiveService
+        return PrimitiveService(None)
+
+    def _principal(request: Request) -> Any:
+E       assert ["NEW residua...iveService')"] == []
+E         
+E         Left contains one more item: "NEW residual identity (not in the set): ('http', 'holdspeak/web/routes/primitives/decisions.py::build_desk_decisions_router._stray', 'PrimitiveService')"
+E         Use -v to get more diff
+/Users/karol/dev/tools/wt-philo-5-01/tests/unit/test_philo5_one_decision.py:350: AssertionError
+FAILED tests/unit/test_philo5_one_decision.py::test_the_residual_set_equals_the_trees_census
+1 failed in 1.34s
+MUTATION m5-no-token: scripts/graph_walk.py
+-     config.meeting.web_auth_token = token
+    config.save()
++     pass
+E           AssertionError: assert '' == 'philo5-01-token'
+E             
+E             - philo5-01-token
+tests/unit/test_philo5_codex_seams.py:80: AssertionError
+FAILED tests/unit/test_philo5_codex_seams.py::test_a_rig_hub_is_found_and_accepted_by_the_real_proxy_across_a_restart
+1 failed in 2.20s
+MUTATION m6-no-authority-check: holdspeak/operations.py
+-         claimed = sorted(AUTHORITY_FIELDS & set(payload))
++         claimed = []
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+error = 'TypeError("PrimitiveService.update_decision() got multiple values for argument \'principal\'")'
+E           TypeError: PrimitiveService.update_decision() got multiple values for argument 'principal'
+holdspeak/services/observer.py:177: TypeError
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+E           holdspeak.services.errors.NotFound: Unknown decision: d
+FAILED tests/unit/test_philo5_one_decision.py::test_an_authority_field_in_the_arguments_is_refused[actor]

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+from holdspeak import operations
 
 import asyncio
 from collections.abc import Callable
@@ -551,19 +552,33 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
         InferenceAssignmentService._require_owner(principal)
 
 
-def _primitive_list(service: PrimitiveService, principal: Principal, kind: str) -> Any:
+# PHILO-5-01: kind="decisions" is the application-operation contract
+# (holdspeak.operations), bound to the hub's live PrimitiveService. The generic
+# getattr path below serves the other authorable kinds only; delete stays
+# generic for every kind (decision.delete is not on the contract yet).
+
+
+def _primitive_list(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str) -> Any:
+    if kind == "decision":
+        return ops().invoke(principal, "decision.list", {})
     return getattr(service, f"list_{kind}s" if kind != "kb" else "list_kbs")(principal)
 
 
-def _primitive_get(service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
+def _primitive_get(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
+    if kind == "decision":
+        return ops().invoke(principal, "decision.read", {"decision_id": item_id})
     return getattr(service, f"get_{kind}")(principal, item_id)
 
 
-def _primitive_create(service: PrimitiveService, principal: Principal, kind: str, data: dict[str, Any]) -> Any:
+def _primitive_create(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, data: dict[str, Any]) -> Any:
+    if kind == "decision":
+        return ops().invoke(principal, "decision.create", data)
     return getattr(service, f"create_{kind}")(principal, **data)
 
 
-def _primitive_update(service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
+def _primitive_update(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
+    if kind == "decision":
+        return ops().invoke(principal, "decision.update", {**data, "decision_id": item_id})
     return getattr(service, f"update_{kind}")(principal, item_id, **data)
 
 
@@ -685,19 +700,24 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     monday_brief = MondayBriefService(db, observer=obs)
     desk = DeskService(db, observer=obs)
     records = DecisionRecordService(db, observer=obs)
+    # PHILO-5-01: the hub's bound contract (the object its HTTP routes reach);
+    # in a bare composition, one bound over the primitives above. Resolved
+    # only when a decisions call needs it.
+    def ops() -> operations.OperationRegistry:
+        return operations.for_runtime(lambda: primitives)
 
     if name == "desk.list":
-        return _primitive_list(primitives, principal, _kind(args.get("kind")))
+        return _primitive_list(ops, primitives, principal, _kind(args.get("kind")))
     if name == "desk.get":
-        return _primitive_get(primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
+        return _primitive_get(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
     if name == "desk.create":
-        return _primitive_create(primitives, principal, _kind(args.get("kind")), _data(args.get("data")))
+        return _primitive_create(ops, primitives, principal, _kind(args.get("kind")), _data(args.get("data")))
     if name == "desk.update":
-        return _primitive_update(primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""), _data(args.get("data")))
+        return _primitive_update(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""), _data(args.get("data")))
     if name == "desk.delete":
         return _primitive_delete(primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
     if name == "desk.verb":
-        return _dispatch_verb(args, principal, primitives, workbenches)
+        return _dispatch_verb(args, principal, primitives, workbenches, ops)
     if name == "workbench.run":
         return _run(workbenches.run(principal, str(args.get("workbench_id") or "")))
     if name == "workbench.add_item":
@@ -1017,14 +1037,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     raise ToolError(f"Unknown tool: {name}")
 
 
-def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: PrimitiveService, workbenches: WorkbenchService) -> Any:
+def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: PrimitiveService, workbenches: WorkbenchService, ops: Callable[[], operations.OperationRegistry]) -> Any:
     verb_id = str(args.get("verb_id") or "")
     verb_args = _data(args.get("arguments"))
     if verb_id in _UI_ONLY_VERBS or verb_id.startswith(("go.", "window.", "system.")):
         return {"status": "ui_only", "verb_id": verb_id, "reason": "Opens a local surface"}
     server_verbs: dict[str, Callable[[dict[str, Any]], Any]] = {
-        "desk.create": lambda value: _primitive_create(primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
-        "desk.update": lambda value: _primitive_update(primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
+        "desk.create": lambda value: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
+        "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "desk.delete": lambda value: _primitive_delete(primitives, principal, _kind(value.get("kind")), str(value.get("id") or "")),
         "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
         "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),

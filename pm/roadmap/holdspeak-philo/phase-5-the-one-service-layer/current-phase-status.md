@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (RATIFIED; 01 in progress).
+**Last updated:** 2026-09-24 (01 built on `feat/philo-5-01-one-decision`; Astra checks on built).
 
 ## Goal
 
@@ -157,7 +157,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-5-01 | One decision through one contract (and the Codex path proved) | in-progress | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | - |
+| PHILO-5-01 | One decision through one contract (and the Codex path proved) | done | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-5-02 | The loop shares the contract | backlog | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | - |
 | PHILO-5-03 | The atlas proves the three paths | backlog | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | - |
 | PHILO-5-04 | The owner asks in his own words (rehearsed, owner-reviewed shots) | backlog | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | - |
@@ -172,6 +172,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+2026-09-24: PHILO-5-01 BUILT (`feat/philo-5-01-one-decision`). The descriptor module `holdspeak/operations.py` holds `decision.create/update/read/list`, bound once at hub composition to the hub's `PrimitiveService`; the decision routes and the MCP `kind="decisions"` branch call `invoke`; the standalone MCP mode is retired; `docs/generated/operations.json` and the residual set (334 -> 327 identities; public tools 225 -> 225) are drift-guarded. The Codex path is PROVED: a fresh `codex exec` session through `scripts/astra -c ...` discovered the rig's isolated hub, wrote `decision_32e0c6ba0eea`, read it back, and read it again after a rig restart (evidence `evidence-story-01.md`). Found: in the hub the project-decisions router answers the decision GETs first; its desk branches now use the contract. Next: Astra's check on built, then story 02.
 
 2026-09-24: RATIFIED by the owner; freshness ruled (reopening accepted). Story 01 starts on `../wt-philo-5-01` / `feat/philo-5-01-one-decision` (Muad'Dib, Opus 5.5 worker); its first proof is the Codex → proxy → isolated-hub loop.
 
@@ -195,6 +197,9 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | MISSED 5: inflated proof (old atlas counts, a replay presented as real-engine, reviewed shots presented as a sitting) | medium | counts pinned to `4b4f8d94`; real/replayed retained separately; the "rehearsed, owner-reviewed shots" wording | any evidence line calls a replay real or a review a sitting |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — PHILO-5-01: the published MCP tool schemas stay byte-identical (no per-kind conditional schemas); the decisions branch's effective schema is the descriptor's, enforced by `invoke` and fenced through dispatch — Muad'Dib lane (Opus 5.5).
+- 2026-09-24 — PHILO-5-01: `decision.update` keeps `additionalProperties: true` because both transports passed unknown fields through before (the desk rename sends `name`); `decision.create` is closed — Muad'Dib lane (Opus 5.5).
 
 - 2026-09-24 — the owner RATIFIED the charter ("Ratify, build it") and ruled brief freshness ("Accept reopening"). Story 01 in progress — Muad'Dib.
 

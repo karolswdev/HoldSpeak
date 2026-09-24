@@ -300,10 +300,9 @@ flag is on. That is the path the stdio MCP sidecar uses.
 It discovers the running hub through the owner lock beside the database file
 and forwards each JSON-RPC message to the hub's loopback `POST /api/mcp` with
 the owner token; the hub is the only process that writes. With no hub running
-the sidecar refuses by name and opens nothing. The sole exception is the
-`HOLDSPEAK_MCP_STANDALONE=1` diagnosis hatch, which opens the database **and
-claims the owner lock** under the label `holdspeak-mcp`, so the arrangement is
-never silent. Previously the sidecar inherited `$HOME` from its MCP client,
+the sidecar refuses by name and opens nothing. There is no exception: the
+`HOLDSPEAK_MCP_STANDALONE=1` diagnosis hatch is retired (PHILO-5-01), and the
+sidecar ignores that variable. Previously the sidecar inherited `$HOME` from its MCP client,
 opened the owner's live database as a second unlocked writer, and ran a schema
 reconcile on every start.
 
