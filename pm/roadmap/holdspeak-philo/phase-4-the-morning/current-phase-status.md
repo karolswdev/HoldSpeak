@@ -29,7 +29,7 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
   **Proof:** as-written `case.closure.chain.s5_next_day_brief_has_it` passes at 1440 `20260924T072614Z` and 393 `20260924T072514Z`. First decision row owns all nine hit points, has positive in-viewport geometry; new id/date and old DB rows/shelf verified. Before/after shots inspected. Separate breakage variants `20260924T072814Z`/`20260924T072722Z` pay the story-03 amendment. [Lane report](../../../../docs/internal/philo/phase-4/rows/lane-report.md), [evidence](evidence-story-02.md), [built counsel](checks/rows-built-muaddib.md).
 - [x] A lookback with a breakage item generates the next brief with 200 (fence red pre-fix on the id collision).
   **Proof:** the separately named real-failure variants `20260924T072814Z` (1440) and `20260924T072722Z` (393) both return 200, retain one failure source in both briefs with different item ids, and leave the old rows/shelf unchanged. [Checked DB proof](../../../../docs/internal/philo/phase-4/rows/closure-proof.json); `test_philo4_03_breakage_ids.py` also passes in the 92-test capture.
-- [ ] Every repaired seam has a fence that failed pre-fix.
+- [x] Every repaired seam has a fence that failed pre-fix. (Per story, in `final-summary.md` "Fences that failed pre-fix": 01 rendered 13/7 + pytest 2/17 + atlas 6/2; 02 producer 3, rendered 2, readable 3/5, transition 1; 03 IntegrityError 2; 04 rendered 5/3 — reds retained under `docs/internal/philo/phase-4/{generate,rows,ids,headline}/`.)
 - [x] The owner's sitting on the morning (his Phase 3 sitting extends to it). **WAIVED by the owner 2026-09-24 ("good to go, no sitting reqd..."): accepted, not observed — no walk is claimed; the retained rig evidence of exits 1–2 stands as the phase's proof.**
 
 ## Story status
@@ -51,6 +51,8 @@ RATIFIED by the owner, 2026-09-23 ("so... my walk says: yes!") on the story 01 c
 | The headline | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-4-04 | feat/philo-4-04-headline |
 
 ## Where we are
+
+2026-09-24: PHASE CLOSED. Four stories merged (#625, #626, #624, #627); exits 1–4 flipped (1–3 on retained evidence, 4 waived by the owner, accepted-not-observed); `final-summary.md` written. Phase 3's exit 1 closed against this phase. What remains is ledgered there. Phase 5 The One Service Layer is a parked draft awaiting the owner's word on its D1–D3.
 
 2026-09-24: PHILO-4-04 **BUILT AND VERIFIED** on `feat/philo-4-04-headline`.
 After Ack/Defer on every Arrival row, the saved headline/date remain and
@@ -86,6 +88,8 @@ revisions; the prior pending-sitting language is superseded by the waiver.
 | The id fix silently drops or moves a failure or its triage | medium | brief-scoped ids only; both briefs and the old triage read back; no `OR IGNORE`/`OR REPLACE`; no migration | a row or a triage record missing after generation |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — CLOSED: exit 3 flipped on the per-story pre-fix reds; the final summary written; both brains' verdicts recorded per story — Muad'Dib.
 
 - 2026-09-24 — PHILO-4-04 follows ratified board 7c in every state; older
   8a/8b/9 images establish status coexistence, not the alternative date
