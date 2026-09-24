@@ -17,12 +17,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Policy glass needs Playwright")
 
 TOKEN = "hs173-policy-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots")
 
 
 # ── Boot / helpers ──────────────────────────────────────────────────

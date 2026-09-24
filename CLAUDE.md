@@ -103,6 +103,12 @@ disagrees with one of these, canon wins:
   (pytest-timeout, thread method), so a hanging test dies with a stack
   trace naming it instead of stalling the run at 98% forever. A test that
   legitimately needs longer declares `@pytest.mark.timeout(...)`.
+- Evidence shots: tests write screenshots and outputs to `.tmp/evidence-shots/`
+  by default (`tests/_evidence.py`, fenced by
+  `tests/unit/test_evidence_scratch_guard.py`).
+  When a story ships its shots, set `HOLDSPEAK_EVIDENCE_WRITE=1` on the command
+  under `.githooks/dw evidence capture`; only then do tests write `pm/roadmap/`.
+  The tree is clean after any run: no restore of tracked evidence is needed.
 - Web-unit inherited baseline:
   `uv run python scripts/check_web_baseline.py --run` — runs the desk
   vitest suite and diffs its failures against

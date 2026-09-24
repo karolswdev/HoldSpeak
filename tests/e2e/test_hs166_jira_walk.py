@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Jira walk needs Playwright")
 
@@ -63,7 +64,7 @@ pytestmark = pytest.mark.skipif(bool(_ACLI_SKIP_REASON), reason=_ACLI_SKIP_REASO
 
 TOKEN = "hs166-jira-walk"
 REPO = Path(__file__).resolve().parents[2]
-PHASE_DIR = REPO / "pm/roadmap/holdspeak/phase-166-the-jira-parity"
+PHASE_DIR = evidence_dir("pm/roadmap/holdspeak/phase-166-the-jira-parity")
 SHOTS = PHASE_DIR / "assets/story-05-shots"
 TRANSCRIPT_JSON = PHASE_DIR / "assets/story-05-transcript.json"
 

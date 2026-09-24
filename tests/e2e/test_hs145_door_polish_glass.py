@@ -12,13 +12,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
 from .glass_infra import seed_meeting_engines
 
-SHOT_DIR = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots"
+SHOT_DIR = evidence_dir("pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots")
 TOKEN = "hs145-door-polish"
 
 

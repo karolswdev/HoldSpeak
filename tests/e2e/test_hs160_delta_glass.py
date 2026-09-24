@@ -25,12 +25,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build, _api_text
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Delta glass needs Playwright")
 
 TOKEN = "hs160-delta-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots")
 
 
 # -- Boot / helpers ------------------------------------------------

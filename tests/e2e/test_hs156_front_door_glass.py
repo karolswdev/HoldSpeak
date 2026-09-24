@@ -16,13 +16,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs156-door-glass"
-SHOTS_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots"
-SHOTS_06_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots"
+SHOTS_DIR = evidence_dir("pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots")
+SHOTS_06_DIR = evidence_dir("pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots")
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -502,7 +503,7 @@ def test_topology_add_node(hub: dict) -> None:
 
 # ----------------------------------------------------------------- HS-156-08 beauty legs
 
-SHOTS_08_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-08-shots"
+SHOTS_08_DIR = evidence_dir("pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-08-shots")
 
 
 def _save_shot_08(page: Any, name: str, width: int) -> None:

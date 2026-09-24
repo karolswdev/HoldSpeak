@@ -27,15 +27,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 # ── Constants ────────────────────────────────────────────────────────
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TRANSCRIPT_PATH = (
-    REPO_ROOT
-    / "pm/roadmap/holdspeak/phase-165-the-mcp-family/assets"
-    / "story-05-transcript.json"
-)
+TRANSCRIPT_PATH = evidence_dir("pm/roadmap/holdspeak/phase-165-the-mcp-family/assets") / "story-05-transcript.json"
 
 # Snapshot fixtures (same shape as the glass rig)
 _BASELINE_ENTITIES = [

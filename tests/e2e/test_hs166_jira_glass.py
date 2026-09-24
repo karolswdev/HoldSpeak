@@ -32,12 +32,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot as _conftest_boot, _api, _api_allow_error, _assert_clean, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Jira glass needs Playwright")
 
 TOKEN = "hs166-jira-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-166-the-jira-parity/assets/story-04-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-166-the-jira-parity/assets/story-04-shots")
 
 OUTCOME_TEXT = "Track Jira project delivery across two sites"
 SIGNALS_TEXT = "Stale issues, blocked work items, overdue tasks"

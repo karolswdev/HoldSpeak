@@ -24,13 +24,11 @@ from .glass_infra import (
     _ensure_build,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Room glass needs Playwright")
 
-SHOTS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots")
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "hs169-room"

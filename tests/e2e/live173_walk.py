@@ -27,6 +27,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, parse_qs
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tests._evidence import evidence_dir  # noqa: E402
+
 # -- pytest collection guard --
 collect_ignore_glob = ["live173_walk.py"]
 
@@ -68,7 +71,7 @@ def _write_allowed(operation: str | None, context: dict[str, Any] | None = None)
 
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT = REPO / "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots"
+DEFAULT_OUT = evidence_dir("pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-06-shots")
 
 VIEWPORTS = [
     {"width": 1440, "height": 900, "suffix": "1440"},

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
@@ -24,7 +25,7 @@ pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependenc
 # `test_hs141_thought_workbench_glass.py` at 1440 and 393.
 pytestmark = pytest.mark.skip(reason="superseded by the Thought Workbench real-path glass")
 
-ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a"
+ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a")
 TOKEN = "hs14105a-default-context-glass"
 EVERYDAY = "knowledge:hs-seed-everyday-context"
 

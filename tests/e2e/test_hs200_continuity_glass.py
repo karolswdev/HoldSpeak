@@ -51,10 +51,11 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Continuity glass needs Playwright")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-13-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-13-shots")
 WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
 
 TOKEN = "hs200-continuity"

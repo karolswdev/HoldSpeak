@@ -55,10 +55,11 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="HS-202 glass needs Playwright")
 
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots")
 TOKEN = "hs202-species"
 NOTE_TITLE = "Species rail note"
 

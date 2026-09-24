@@ -41,13 +41,11 @@ from .glass_infra import (
     _normal_chair,
     _settle,    seed_meeting_engines,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Attention glass needs Playwright")
 
-SHOTS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-15-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-15-shots")
 #: Shots are tracked evidence: a plain suite run never rewrites them.  Set
 #: HOLDSPEAK_WRITE_SHOTS=1 to (re)take them (counsel P1-7).
 WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
