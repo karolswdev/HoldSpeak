@@ -132,3 +132,59 @@ suites are assigned to PR CI by the lane brief; only scoped suites run
 locally. Muad'Dib's built verdict is RATIFY-WITH-CONDITIONS, all paid;
 his C2 reply is RATIFY. The final PR remains open for the invoking brain.
 No merge is authorized.
+
+## PR delivery follow-up — 2026-09-24
+
+PR [626](https://github.com/karolswdev/HoldSpeak/pull/626) is open on
+`feat/philo-4-02-rows`. The implementation commit is `44cc8521`; its gate
+passed all seven rules and history verification passed. The working tree
+was clean after the push. The PR remains unmerged.
+
+The first [CI Documentation Navigation job](https://github.com/karolswdev/HoldSpeak/actions/runs/35971254436/job/107541264055) found `API reference drift:
+docs/generated/api-reference.json`. Regeneration adds exactly four literal
+route test candidates for `test_philo4_02_generated_clearance.py`; it does
+not change a transport field or the pinned schema inventory. The complete
+documentation job command chain passes locally (`ci-documentation.log`,
+paired DW capture `2026-09-24T07:48:14Z`; commands match the Documentation
+Navigation job in `.github/workflows/test.yml`), including nine navigation tests,
+all generated-reference checks, architecture and coverage. The follow-up
+commit ships this generated-file correction and its evidence. Product code
+and the four final glass runs are unchanged. Broader PR CI remains pending.
+
+The API reference check was absent from the earlier local check chain. The
+complete doc-CI script now runs before every further commit in this lane.
+
+## Check — Muad’Dib, CI correction, 2026-09-24
+
+Claude session `ca18f694-e6e1-45f1-83e5-0ba438442be0`.
+
+**VERDICT: RATIFY**
+
+**FINDINGS**
+
+1. **The drift is exactly what Astra says it is.** Comparing the committed reference against the regenerated one, four routes gained one test candidate each, all naming the new e2e fence: `/api/brief/generate` POST, `/api/brief/latest` GET, `/api/desk/needs-you` GET, `/api/inference/assignments` GET. No API field, snapshot, or schema census changed. The generator reads test candidates from the current working tree (`scripts/philo_api_reference.py:58`, `rglob('test_*.py')`) and labels them "literal route mentions, not inspected assertion or passing-test evidence" (`:71`). The e2e fence's route stubs are those literal mentions.
+
+2. **The root cause was a missing check in the shipped commit's chain, not a wrong artifact.** `final-census.log` shows only the boundary census and the graph check; the API reference check that CI runs (`.github/workflows/test.yml:31`) was not part of the pre-commit verification. The lane added a test file that mentions routes, so the reference moved. Bookkeeping, not product.
+
+3. **The captured verification is the real CI chain.** `.tmp/philo402-doc-ci.sh` is line for line the Documentation Navigation job (`test.yml:26-38`), run under an isolated HOME with exit 0, and captured through the evidence file (run `2026-09-24T07:48:14Z`, index tree `29420dac`). Every step reports checked or verified, including the API reference and the pinned census, which stayed at five outputs verified.
+
+4. **A second gated commit under PHILO-4-02 is the right shape.** The story is already done (`story-02…md:5`); the commit flips nothing, touches one generated file and the story's evidence file, and evidence neither appears nor disappears orphaned. That is the "bookkeeping commit that flips nothing" TWO-BRAINS exempts from a full check, yet Astra asked anyway. Consistent with the PHILO-4-01 pattern where the generated reference was regenerated in a follow-up commit (`5fcf6409`).
+
+**CONDITIONS**
+
+- Stage exactly `docs/generated/api-reference.json`, the evidence file, `ci-documentation.log`, and the lane-report addendum; `dw contract new --story PHILO-4-02 --tests-capture <evidence path>#2026-09-24T07:48:14Z`; certify the boxes on the captured run's output, not on memory.
+- The lane-report addendum names the cause in one line: the API reference check was absent from the local chain; the doc-CI script now runs before every commit in this lane.
+- No other file in the commit. The `.tmp` script stays untracked.
+
+**MISSED**
+
+1. Low: the same omission will recur on any lane that adds a test file mentioning a literal route. Worth one line in the lane brief template, not this commit.
+2. Nil otherwise.
+
+**TUESDAY:** Unchanged. This commit touches nothing the owner sees.
+
+**UNKNOWN:** I did not run the doc-CI script myself; I read its captured output and matched it against the workflow. I did not preflight `dw gate` on the unstaged tree since staging is the author's act.
+
+Astra disposition: all conditions paid. Exactly the four named files ship;
+the script stays in `.tmp`. The full captured output was read before
+certifying the follow-up contract. No story flips in this commit.

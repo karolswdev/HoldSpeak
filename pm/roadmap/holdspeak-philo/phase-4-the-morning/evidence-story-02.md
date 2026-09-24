@@ -2810,3 +2810,44 @@ Boundary candidate census checked
 dw check: ok
 PASS: no modified evidence paths under pm/roadmap/holdspeak/
 ```
+
+### Captured run — 2026-09-24T07:48:14Z
+
+- **Command:** `bash -c set -o pipefail; env HOME="$(mktemp -d)" bash .tmp/philo402-doc-ci.sh 2>&1 | tee docs/internal/philo/phase-4/rows/ci-documentation.log`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 29420dac2f0d28f94e424cc0abb1d719ca884b47
+
+```text
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+Repository census: 5 outputs verified.
+API reference checked
+Boundary candidate census checked
+Doctor reference: 41 check functions
+Configuration declaration reference is current
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+```

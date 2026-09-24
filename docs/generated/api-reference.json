@@ -4298,6 +4298,7 @@
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
+        "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_graph_walk_producer_clock.py",
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo3_03_brief_clock.py",
@@ -4361,6 +4362,7 @@
       "test_candidates": [
         "tests/e2e/test_graph_walk_smoke.py",
         "tests/e2e/test_hs175_rhythm_brief_glass.py",
+        "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_hs175_week_brief.py",
         "tests/unit/test_philo3_03_brief_clock.py",
@@ -10979,6 +10981,7 @@
         "tests/e2e/test_hs200_continuity_glass.py",
         "tests/e2e/test_hs200_coverage_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_hs170_faces_wire.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -16518,6 +16521,7 @@
         "tests/e2e/test_hs156_front_door_glass.py",
         "tests/e2e/test_hs201_09_connect_engine_glass.py",
         "tests/e2e/test_hs201_one_thing_glass.py",
+        "tests/e2e/test_philo4_02_generated_clearance.py",
         "tests/unit/test_phase143_transport_parity.py",
         "tests/unit/test_web_inference_assignment_routes.py"
       ],
