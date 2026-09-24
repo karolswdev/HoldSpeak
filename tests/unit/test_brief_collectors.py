@@ -128,7 +128,7 @@ def test_breakage_pipeline_event_with_error_appears(tmp_path):
     service = _service(tmp_path)
     _breakage_event(service, event_id="evt-failed", timestamp=datetime(2026, 8, 1, 12))
 
-    items = service._collect_breakage(*_breakage_window())
+    items = service._collect_breakage(*_breakage_window(), "brief-test")
 
     assert len(items) == 1
     assert items[0].section == "broke"
@@ -147,7 +147,7 @@ def test_breakage_successful_events_do_not_appear(tmp_path):
         error_code=None,
     )
 
-    assert service._collect_breakage(*_breakage_window()) == []
+    assert service._collect_breakage(*_breakage_window(), "brief-test") == []
 
 
 def test_breakage_repeated_service_method_failures_deduplicate(tmp_path):
@@ -160,7 +160,7 @@ def test_breakage_repeated_service_method_failures_deduplicate(tmp_path):
         error="retry exhausted",
     )
 
-    items = service._collect_breakage(*_breakage_window())
+    items = service._collect_breakage(*_breakage_window(), "brief-test")
 
     assert len(items) == 1
     assert items[0].source_ref == "pipeline-event:evt-latest"
@@ -172,13 +172,13 @@ def test_breakage_events_outside_window_are_excluded(tmp_path):
     _breakage_event(service, event_id="evt-before", timestamp=datetime(2026, 8, 1, 8, 59))
     _breakage_event(service, event_id="evt-after", timestamp=datetime(2026, 8, 1, 17, 1))
 
-    assert service._collect_breakage(*_breakage_window()) == []
+    assert service._collect_breakage(*_breakage_window(), "brief-test") == []
 
 
 def test_breakage_empty_window_has_no_items(tmp_path):
     service = _service(tmp_path)
 
-    assert service._collect_breakage(*_breakage_window()) == []
+    assert service._collect_breakage(*_breakage_window(), "brief-test") == []
 
 
 # Owner-decision collectors ---------------------------------------------------
@@ -371,7 +371,7 @@ def test_breakage_failed_connector_run_appears(tmp_path):
                VALUES ('github', '2026-08-01T12:00:00', '2026-08-01T12:01:00', 0, 'token expired')"""
         )
 
-    items = service._collect_breakage(*_breakage_window())
+    items = service._collect_breakage(*_breakage_window(), "brief-test")
 
     assert len(items) == 1
     assert items[0].text == "Connector github failed"

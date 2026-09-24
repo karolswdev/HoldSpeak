@@ -1,0 +1,4 @@
+# PHILO-4-03 fence, post-fix: branch feat/philo-4-03-ids (worktree)
+# cmd: HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo4_03_breakage_ids.py  (exit 0)
+..                                                                       [100%]
+2 passed in 0.94s

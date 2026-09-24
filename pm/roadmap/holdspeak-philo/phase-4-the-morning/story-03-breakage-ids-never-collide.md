@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 4
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** the morning in one move
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -14,16 +14,16 @@ Breakage items get a fixed id (`brief-break-pipeline-{event_id}`, `holdspeak/ser
 
 ## Scope
 
-- **In:** the result below, its fence(s) red pre-fix, the rig case at 1440 and 393.
+- **In:** the result below, its fence(s) red pre-fix. SCOPE AMENDMENT (Astra's check on built, 2026-09-24, recorded in the phase decision log): this story changes no face, so its rig proof is assigned to the phase's exit 1 (the closure chain step 5 as written, run by story 02), where a real failure in the lookback is part of the fixture.
 - **Out:** everything the phase status lists as out.
 
 ## Acceptance criteria
 
-- [ ] Fix shape settled (Astra's in-memory probe on the real table declarations): BRIEF-SCOPED ids for BOTH pipeline and connector items (`monday_brief_service.py:546,575`), retaining `source_ref` and the cause; NOT `INSERT OR IGNORE` (the new brief silently loses the row) and NOT `INSERT OR REPLACE` (the old brief loses its row and, with foreign keys on, its triage — `schema.py:2440`). No schema migration.
-- [ ] A lookback containing a breakage item already stored in an earlier brief generates the next brief with 200; BOTH briefs read back with their rows; the old brief's triage is preserved; same-day regeneration stays idempotent (same id).
-- [ ] The overlapping failure is minted through its REAL producer (a failed pipeline run selected into two briefs), never a hand-inserted row.
-- [ ] Fence red pre-fix: two generations across a producer-day advance with one breakage in the lookback; today's code raises IntegrityError.
-- [ ] Words unchanged by this story: breakage titles today carry service/method or connector ids (`:546`) and the Arrival renders `item.text` (`ChairHome.tsx:2000`); an id fix does not change the face. The Tenet 4 wording debt is ledgered in the phase status, not claimed here.
+- [x] Fix shape settled (Astra's in-memory probe on the real table declarations): BRIEF-SCOPED ids for BOTH pipeline and connector items (`monday_brief_service.py:546,575`), retaining `source_ref` and the cause; NOT `INSERT OR IGNORE` (the new brief silently loses the row) and NOT `INSERT OR REPLACE` (the old brief loses its row and, with foreign keys on, its triage — `schema.py:2440`). No schema migration. — built: `brief-break-pipeline-{brief_id}-{event_id}` / `brief-break-connector-{brief_id}-{run_id}` (`monday_brief_service.py:558,587`), brief id minted before the collectors (`:268`), `source_ref` and cause unchanged, plain INSERT kept (`:309`), no schema change.
+- [x] A lookback containing a breakage item already stored in an earlier brief generates the next brief with 200; BOTH briefs read back with their rows; the old brief's triage is preserved; same-day regeneration stays idempotent (same id). — `tests/unit/test_philo4_03_breakage_ids.py:93-137` (day two 200; both briefs read back; day-one Ack preserved `:135`; same-day same brief and ids `:109-112`).
+- [x] The overlapping failure is minted through its REAL producer (a failed pipeline run selected into two briefs), never a hand-inserted row. — pipeline: a failing `MondayBriefService.shelve` on the hub through `@observe_service` + `SQLiteObserver` (`:145-160`, the observer's clock pinned to Wed 18:00); connector: `db.activity.record_connector_run` (`:173`).
+- [x] Fence red pre-fix: two generations across a producer-day advance with one breakage in the lookback; today's code raises IntegrityError. — `docs/internal/philo/phase-4/ids/red-pre-fix.txt` (origin/main `1c39294c`: 2 failed, `sqlite3.IntegrityError: UNIQUE constraint failed: monday_brief_items.id`); green `green-post-fix.txt`.
+- [x] Words unchanged by this story: breakage titles today carry service/method or connector ids (`:546`) and the Arrival renders `item.text` (`ChairHome.tsx:2000`); an id fix does not change the face. The Tenet 4 wording debt is ledgered in the phase status, not claimed here. — titles and details unchanged (`:164-165`, `:184-185` of the fence assert them); no web file changed.
 
 ## Effort (council-style estimate, not a promise)
 
@@ -32,9 +32,11 @@ Breakage items get a fixed id (`brief-break-pipeline-{event_id}`, `holdspeak/ser
 ## Test plan
 
 - **Unit:** fences that fail pre-fix for every repaired seam.
-- **Integration:** the rig case(s) named above through `scripts/graph_walk.py`, observations retained (rig `--out` under this phase's assets).
+- **Integration:** by scope amendment, the phase exit-1 rig run (story 02) carries a breakage item in the lookback; no story-level rig run.
 - **Manual / device:** the owner's sitting on the morning.
 
 ## Notes
 
+- 2026-09-24 — built (Muad'Dib lane, Opus 5.5 worker): brief-scoped breakage ids; fence red pre-fix through the real producers; the rig is not run for this story (no face change; scope amendment above).
+- 2026-09-24 — Astra's check on built: RATIFY-WITH-CONDITIONS, paid: (a) the original producer of the Phase 3 closure crash IS identifiable — the closure observation (`…012420Z…/observation.json:1194`) retains `DecisionLifecycleService.get_decision failed`, event `95b68ac7-c11c-4b2e-8ad8-1713957b7886`, in the earlier brief; the fence's failing `shelve` covers the same mechanism (both services use `@observe_service`, the collector builds ids from the resulting event id); (b) collector-order wording: the brief id exists before BREAKAGE collection (`monday_brief_service.py:268` → `:519`), and same-day generation returns before breakage collection and new inserts — other collectors (coverage, waiting, `:202`) run before the existing-brief lookup; inherited, not a regression; (c) the scope amendment above.
 - 2026-09-23 — chartered from the Phase 3 closure run `20260924T013355Z` / `013440Z` (BLOCKED), `013738Z` / `014018Z` (FAIL behind "1 more"), `012420Z` (500).
