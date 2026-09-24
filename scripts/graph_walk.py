@@ -505,7 +505,11 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     raw["observe_at"] = expected.get("observe_at")
     if target is not None:
         method, path = target
-        status, payload = (hub.api(method, path) if hub is not None else (0, None))
+        # A `{name}` not yet bound is never sent literally (PHILO-3 closure:
+        # a restart snapshot read GET /api/decisions/{decision_id} before the
+        # id existed, and the hub recorded the failed read as a breakage).
+        status, payload = ((hub.api(method, path) if not unresolved(path) else (0, None))
+                           if hub is not None else (0, None))
         collection = _collection_of(payload, predicate)
         rows = payload.get(collection) if (collection and isinstance(payload, dict)) else []
         raw["protocol"] = {
@@ -538,6 +542,10 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     if reads and hub is not None:
         collected = []
         for read in reads:
+            if unresolved(read["path"]):
+                collected.append({"method": read["method"], "path": read["path"],
+                                  "skipped": "unresolved placeholder; not sent"})
+                continue
             status, payload = hub.api(read["method"], read["path"])
             collected.append({
                 "method": read["method"], "path": read["path"], "status": status,
@@ -2458,8 +2466,19 @@ def scheduler_wait(step: dict[str, Any], case: dict[str, Any] | None, page: Any,
 
 
 def _restart_detail(snap: dict[str, Any]) -> dict[str, Any]:
-    """Retain the useful meeting material around a real hub restart."""
-    payload = (snap.get("protocol") or {}).get("payload") or {}
+    """Retain the useful meeting material around a real hub restart.
+
+    A protocol case reads the meeting at its `observe_at`; a face case (the
+    PHILO-3 closure chain) names it in `expected.reads` instead, so the
+    meeting detail read there is used when no protocol payload was taken.
+    """
+    protocol = snap.get("protocol") or {}
+    payload = protocol.get("payload") or {}
+    if not str(protocol.get("path", "")).startswith("/api/meetings/"):
+        for read in snap.get("api_reads") or []:
+            if str(read.get("path", "")).startswith("/api/meetings/"):
+                payload = read.get("payload") or {}
+                break
     intel = payload.get("intel") if isinstance(payload, dict) else None
     return {
         "meeting_id": payload.get("id") if isinstance(payload, dict) else None,

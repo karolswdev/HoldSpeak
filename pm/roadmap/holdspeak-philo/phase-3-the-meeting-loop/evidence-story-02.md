@@ -7348,3 +7348,523 @@ Documentation coverage checked.
 EXIT=0
 All 12 Documentation Navigation commands passed.
 ```
+
+### Captured run — 2026-09-24T01:16:48Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s1_import_complete --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:52735 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-8q9slrhk/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T011648Z-case.closure.chain.s1_import_complete-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T011648Z-case.closure.chain.s1_import_complete-muaddib-1440/after.png']
+NOTE: placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: /meetings/0/id equals the declared value
+```
+
+### Captured run — 2026-09-24T01:17:51Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:52841 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bh0lvv3o/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T011751Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-1440/blocked.png']
+NOTE: BLOCKED: ui step click on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first
+```
+
+### Captured run — 2026-09-24T01:19:37Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:52973 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iv_xbv0q/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T011937Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-1440/blocked.png']
+NOTE: BLOCKED: ui step click on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first
+    - locator resolved to <button type="button" class="btn btn--ghost btn--sm "
+```
+
+### Captured run — 2026-09-24T01:20:20Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s1_import_complete --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53062 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o_i5qnlm/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012020Z-case.closure.chain.s1_import_complete-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012020Z-case.closure.chain.s1_import_complete-muaddib-393/after.png']
+NOTE: placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: /meetings/0/id equals the declared value
+```
+
+### Captured run — 2026-09-24T01:20:38Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s2_summary_with_host --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53120 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kd0xh02v/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012038Z-case.closure.chain.s2_summary_with_host-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012038Z-case.closure.chain.s2_summary_with_host-muaddib-1440/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012038Z-case.closure.chain.s2_summary_with_host-muaddib-1440/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: '192.168.1.43' in observe_at text
+```
+
+### Captured run — 2026-09-24T01:21:05Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s2_summary_with_host --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53205 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lg64j2af/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012106Z-case.closure.chain.s2_summary_with_host-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012106Z-case.closure.chain.s2_summary_with_host-muaddib-393/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012106Z-case.closure.chain.s2_summary_with_host-muaddib-393/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: '192.168.1.43' in observe_at text
+```
+
+### Captured run — 2026-09-24T01:21:32Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s3_same_summary_after_restart --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53284 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iahl6srv/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j7
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012132Z-case.closure.chain.s3_same_summary_after_restart-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012132Z-case.closure.chain.s3_same_summary_after_restart-muaddib-1440/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012132Z-case.closure.chain.s3_same_summary_after_restart-muaddib-1440/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is 'The team decided to use SQ like for the local meeting ledger, keep summary retrieval on the local desk after a hub restart, and use a recorded provider reply for isolated rig tests. Action items were assigned to Mayyachan, Leo Martinez, and Priya Shah.', wanted 'The team decided to use SQ like for the local meeting ledger, keep summary retrieval on the local desk after a hub restart, and use a recorded provider reply for isolated rig tests. Action items were assigned to Mayyachan, Leo Martinez, and Priya Shah.'
+```
+
+### Captured run — 2026-09-24T01:22:02Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s3_same_summary_after_restart --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53366 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o7a1y6xt/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j7
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012202Z-case.closure.chain.s3_same_summary_after_restart-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012202Z-case.closure.chain.s3_same_summary_after_restart-muaddib-393/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012202Z-case.closure.chain.s3_same_summary_after_restart-muaddib-393/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is 'The meeting covered three decisions: Mayyachan is responsible for writing the migration plan by Friday, Leo Martinez will test restart retrieval on Tuesday, and Priya Shah is assigned to use a recorded provider reply for isolated rig tests.', wanted 'The meeting covered three decisions: Mayyachan is responsible for writing the migration plan by Friday, Leo Martinez will test restart retrieval on Tuesday, and Priya Shah is assigned to use a recorded provider reply for isolated rig tests.'
+```
+
+### Captured run — 2026-09-24T01:22:31Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s4_decision_recorded --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53448 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jepsgcol/.local/share/holdspeak/holdspeak.db engine=real
+JOB: a1
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012231Z-case.closure.chain.s4_decision_recorded-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012231Z-case.closure.chain.s4_decision_recorded-muaddib-1440/after.png']
+NOTE: predicate: /decisions/0/title equals the declared value
+```
+
+### Captured run — 2026-09-24T01:23:04Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s4_decision_recorded --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53539 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yy095gt5/.local/share/holdspeak/holdspeak.db engine=real
+JOB: a1
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012305Z-case.closure.chain.s4_decision_recorded-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012305Z-case.closure.chain.s4_decision_recorded-muaddib-393/after.png']
+NOTE: predicate: /decisions/0/title equals the declared value
+```
+
+### Captured run — 2026-09-24T01:23:39Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53635 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kuhmlbea/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012339Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-393/blocked.png']
+NOTE: BLOCKED: ui step click on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first
+```
+
+### Captured run — 2026-09-24T01:24:20Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:53723 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-9yi59891/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012420Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012420Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_len', 'document_text_sha256', 'focus_label']).
+```
+
+### Captured run — 2026-09-24T01:27:42Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s4_decision_recorded --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:54769 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y47i3ps3/.local/share/holdspeak/holdspeak.db engine=real
+JOB: a1
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012742Z-case.closure.chain.s4_decision_recorded-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012742Z-case.closure.chain.s4_decision_recorded-muaddib-1440/after.png']
+NOTE: predicate: /decisions/0/title equals the declared value
+```
+
+### Captured run — 2026-09-24T01:28:14Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s4_decision_recorded --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:54862 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-e7yjbzu4/.local/share/holdspeak/holdspeak.db engine=real
+JOB: a1
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012814Z-case.closure.chain.s4_decision_recorded-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012814Z-case.closure.chain.s4_decision_recorded-muaddib-393/after.png']
+NOTE: predicate: /decisions/0/title equals the declared value
+```
+
+### Captured run — 2026-09-24T01:28:48Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:54953 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lad45uxz/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012848Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T012848Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-1440/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'rect', 'target_present', 'text', 'visible']).
+```
+
+### Captured run — 2026-09-24T01:31:21Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:55997 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus_label', 'rect', 'target_present', 'text', 'visible']).
+```
+
+### Captured run — 2026-09-24T01:33:55Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:57014 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-w29c_1hz/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013355Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-1440/blocked.png']
+NOTE: BLOCKED: ui step click on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first
+```
+
+### Captured run — 2026-09-24T01:34:40Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:57132 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vtj95gwv/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013440Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-393/blocked.png']
+NOTE: BLOCKED: ui step click on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first
+```
+
+### Captured run — 2026-09-24T01:35:58Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_more_opened --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:57228 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-u3s28dyx/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: blocked terminal=None
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013558Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-1440/blocked.png']
+NOTE: BLOCKED: ui step wait_for on '[data-testid=arrival-brief-generate]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-testid=arrival-brief-generate]").first to be visible
+```
+
+### Captured run — 2026-09-24T01:36:40Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_more_opened --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:57312 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-78nwq8mk/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013640Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013640Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-393/after.png']
+NOTE: predicate: 'Keep summary retrieval on the local desk' in observe_at text
+```
+
+### Captured run — 2026-09-24T01:37:38Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:57399 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3atuq86c/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013738Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013738Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-1440/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'rect', 'target_present', 'text', 'visible']).
+```
+
+### Captured run — 2026-09-24T01:40:18Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_after_triage --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:58437 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-qfir7dkm/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: fail terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014018Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014018Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus_label', 'rect', 'target_present', 'text', 'visible']).
+```
+
+### Captured run — 2026-09-24T01:42:58Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_more_opened --brain muaddib --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:59459 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3z_ypqhs/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014258Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014258Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-1440/after.png']
+NOTE: predicate: 'Keep summary retrieval on the local desk' in observe_at text
+```
+
+### Captured run — 2026-09-24T01:43:39Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_more_opened --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+PASS: live
+BRAIN: muaddib
+SOURCE: 46172fcf756397b2dc8c6e4dc83d0b0af27842f9 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:59546 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cc7gucjq/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014339Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T014339Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-393/after.png']
+NOTE: predicate: 'Keep summary retrieval on the local desk' in observe_at text
+```
+
+### Captured run — 2026-09-24T01:45:07Z
+
+- **Command:** `sh -c set -o pipefail; uv run --no-sync pytest -q -p no:cacheprovider tests/unit/test_philo_graph_atlas.py tests/unit/test_philo3_summary_rig.py tests/unit/test_graph_walk_calibration.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_graph_walk_http_fault.py && uv run --no-sync python scripts/philo_graph_reference.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+........................................................................ [ 46%]
+........................................................................ [ 92%]
+...........                                                              [100%]
+155 passed in 96.73s (0:01:36)
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+```
+
+### Captured run — 2026-09-24T01:48:47Z
+
+- **Command:** `.githooks/dw check holdspeak-philo`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 16750f57a09505797db62a34ad5786b9556b9b8f
+
+```text
+dw check: ok
+```

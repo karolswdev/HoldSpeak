@@ -1,0 +1,3332 @@
+{
+  "id": "obs-20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393",
+  "run_id": "20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393",
+  "case_id": "case.closure.chain.s5_next_day_brief_after_triage",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_generate",
+    "edge.route.brief_generate",
+    "edge.route.brief_latest"
+  ],
+  "state_id": "state.briefs.next_day_window",
+  "provenance": {
+    "revision": "46172fcf756397b2dc8c6e4dc83d0b0af27842f9",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1cd6b691cb0828d1c31bd5bfa97507272c5d47ce884d633a646423a34911fcac",
+      "assets": [
+        "index-G7189zzm.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55997",
+      "port": 55997,
+      "pid": 83832,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T01:31:22.034629+00:00",
+      "mechanism": "the rig's own hub runs MeetingWebServer(brief_clock=) with the wall clock plus an offset file in the run's HOME; this step writes advance_days=1; the machine clock is not moved",
+      "scheduler_thread": false,
+      "clock": "clock.python_wall",
+      "adapter": "producer-clock",
+      "producer_clock_file": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/graph-walk-producer-clock.json",
+      "advance_days": 1,
+      "machine_clock_moved": false,
+      "producer_clock_reads": [
+        "advance_days=0 now=2026-09-23T19:31:49",
+        "advance_days=1 now=2026-09-24T19:31:52"
+      ]
+    },
+    "engine_mode": "real",
+    "engine_identity": {
+      "endpoint": "http://192.168.1.43:8080",
+      "models_url": "http://192.168.1.43:8080/v1/models",
+      "expected_model_prefix": "Qwen3.6-35B",
+      "status": 200,
+      "models": [
+        {
+          "id": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "owned_by": "llamacpp"
+        }
+      ],
+      "expected_model_seen": true
+    },
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 83832,
+        "started_pid": 84108,
+        "downtime_s": 1.54,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+        "port": 55997,
+        "hub_identity": {
+          "url": "http://127.0.0.1:55997",
+          "port": 55997,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 83832,
+          "started_pid": 84108
+        },
+        "meeting_before": {
+          "meeting_id": "4406c468",
+          "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.",
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "transcription_status": "complete",
+          "payload": {
+            "id": "4406c468",
+            "started_at": "2026-09-23T19:31:29.362649",
+            "ended_at": "2026-09-23T19:32:04.037899",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": {
+              "timestamp": 34.67525,
+              "topics": [
+                "Synthetic Architect Meeting",
+                "Migration Plan",
+                "Local Ledger",
+                "Restart Retrieval",
+                "Isolated Rig Tests"
+              ],
+              "action_items": [
+                {
+                  "id": "action_cdc5c9a068381ca088ee233d",
+                  "task": "Write the Migration Plan",
+                  "owner": "Mayyachan",
+                  "due": "Friday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "action_f1570867a8a3bbad0e649cfd",
+                  "task": "Test restart retrieval",
+                  "owner": "Leo Martinez",
+                  "due": "Tuesday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                }
+              ],
+              "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+            },
+            "intel_status": {
+              "state": "ready",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-09-23T19:31:40.098888",
+              "completed_at": "2026-09-23T19:31:45.167257"
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "sync_modified_at": "2026-09-23T19:31:45.167257",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": {
+              "attempts": [
+                {
+                  "host": "192.168.1.43",
+                  "leg_ordinal": 1,
+                  "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                  "outcome": "succeeded"
+                }
+              ],
+              "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+              "meeting_id": "4406c468",
+              "outcome": "succeeded",
+              "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+            },
+            "last_refusal": null,
+            "intel_job": {
+              "status": "succeeded",
+              "attempts": 1,
+              "requested_at": "2026-09-23T19:31:40.102527",
+              "updated_at": "2026-09-23T19:31:45.167257",
+              "last_error": null,
+              "retry_scheduled": false,
+              "next_retry_at": null
+            },
+            "intel_model_host": "192.168.1.43",
+            "intel_duration_s": 5
+          }
+        },
+        "meeting_after": {
+          "meeting_id": "4406c468",
+          "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.",
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "transcription_status": "complete",
+          "payload": {
+            "id": "4406c468",
+            "started_at": "2026-09-23T19:31:29.362649",
+            "ended_at": "2026-09-23T19:32:04.037899",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": {
+              "timestamp": 34.67525,
+              "topics": [
+                "Synthetic Architect Meeting",
+                "Migration Plan",
+                "Local Ledger",
+                "Restart Retrieval",
+                "Isolated Rig Tests"
+              ],
+              "action_items": [
+                {
+                  "id": "action_cdc5c9a068381ca088ee233d",
+                  "task": "Write the Migration Plan",
+                  "owner": "Mayyachan",
+                  "due": "Friday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "action_f1570867a8a3bbad0e649cfd",
+                  "task": "Test restart retrieval",
+                  "owner": "Leo Martinez",
+                  "due": "Tuesday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                }
+              ],
+              "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+            },
+            "intel_status": {
+              "state": "ready",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-09-23T19:31:40.098888",
+              "completed_at": "2026-09-23T19:31:45.167257"
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "sync_modified_at": "2026-09-23T19:31:45.167257",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": {
+              "attempts": [
+                {
+                  "host": "192.168.1.43",
+                  "leg_ordinal": 1,
+                  "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                  "outcome": "succeeded"
+                }
+              ],
+              "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+              "meeting_id": "4406c468",
+              "outcome": "succeeded",
+              "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+            },
+            "last_refusal": null,
+            "intel_job": {
+              "status": "succeeded",
+              "attempts": 1,
+              "requested_at": "2026-09-23T19:31:40.102527",
+              "updated_at": "2026-09-23T19:31:45.167257",
+              "last_error": null,
+              "retry_scheduled": false,
+              "next_retry_at": null
+            },
+            "intel_model_host": "192.168.1.43",
+            "intel_duration_s": 5
+          }
+        },
+        "summary_retained": true,
+        "receipt_retained": true,
+        "meeting_identity_retained": true,
+        "page_reloaded": true
+      }
+    ],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "2f4bbe9c64a10ba15157da7eba2b471593e5e69a6d234da6b8e8c6bd90d140b0",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the brief producer clock seam (wall clock + the run's offset file)",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "4406c468",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "4406c468"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/4406c468",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 19,
+        "elapsed_s": 9.235,
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:38.405944",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-summary-text]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/meetings/4406c468",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "4406c468",
+        "started_at": "2026-09-23T19:31:29.362649",
+        "ended_at": "2026-09-23T19:32:04.037899",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [],
+        "segments": [
+          {
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": {
+          "timestamp": 34.67525,
+          "topics": [
+            "Synthetic Architect Meeting",
+            "Migration Plan",
+            "Local Ledger",
+            "Restart Retrieval",
+            "Isolated Rig Tests"
+          ],
+          "action_items": [
+            {
+              "id": "action_cdc5c9a068381ca088ee233d",
+              "task": "Write the Migration Plan",
+              "owner": "Mayyachan",
+              "due": "Friday",
+              "status": "pending",
+              "review_state": "pending",
+              "reviewed_at": null,
+              "source_timestamp": null,
+              "created_at": "2026-09-23T19:31:45",
+              "completed_at": null,
+              "delegated_at": null
+            },
+            {
+              "id": "action_f1570867a8a3bbad0e649cfd",
+              "task": "Test restart retrieval",
+              "owner": "Leo Martinez",
+              "due": "Tuesday",
+              "status": "pending",
+              "review_state": "pending",
+              "reviewed_at": null,
+              "source_timestamp": null,
+              "created_at": "2026-09-23T19:31:45",
+              "completed_at": null,
+              "delegated_at": null
+            }
+          ],
+          "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+        },
+        "intel_status": {
+          "state": "ready",
+          "detail": "Meeting intelligence ready.",
+          "requested_at": "2026-09-23T19:31:40.098888",
+          "completed_at": "2026-09-23T19:31:45.167257"
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 76,
+        "sync_modified_at": "2026-09-23T19:31:45.167257",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "192.168.1.43",
+              "boundary": "lan",
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "192.168.1.43",
+              "leg_ordinal": 1,
+              "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+          "meeting_id": "4406c468",
+          "outcome": "succeeded",
+          "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+          "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "succeeded",
+          "attempts": 1,
+          "requested_at": "2026-09-23T19:31:40.102527",
+          "updated_at": "2026-09-23T19:31:45.167257",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null
+        },
+        "intel_model_host": "192.168.1.43",
+        "intel_duration_s": 5
+      },
+      "response_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55",
+      "captured": {
+        "name": "persisted_summary",
+        "path": "intel.summary",
+        "value": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/4406c468",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/run_receipt/attempts/0/host",
+        "value": "192.168.1.43"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/run_receipt/attempts/0/host equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 83832,
+      "started_pid": 84108,
+      "downtime_s": 1.54,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+      "port": 55997,
+      "hub_identity": {
+        "url": "http://127.0.0.1:55997",
+        "port": 55997,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 83832,
+        "started_pid": 84108
+      },
+      "meeting_before": {
+        "meeting_id": "4406c468",
+        "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.",
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "192.168.1.43",
+              "leg_ordinal": 1,
+              "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+          "meeting_id": "4406c468",
+          "outcome": "succeeded",
+          "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+          "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+        },
+        "transcription_status": "complete",
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "Synthetic Architect Meeting",
+              "Migration Plan",
+              "Local Ledger",
+              "Restart Retrieval",
+              "Isolated Rig Tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_cdc5c9a068381ca088ee233d",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_f1570867a8a3bbad0e649cfd",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-23T19:31:40.098888",
+            "completed_at": "2026-09-23T19:31:45.167257"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:45.167257",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-23T19:31:40.102527",
+            "updated_at": "2026-09-23T19:31:45.167257",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 5
+        }
+      },
+      "meeting_after": {
+        "meeting_id": "4406c468",
+        "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.",
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "192.168.1.43",
+              "leg_ordinal": 1,
+              "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+          "meeting_id": "4406c468",
+          "outcome": "succeeded",
+          "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+          "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+        },
+        "transcription_status": "complete",
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "Synthetic Architect Meeting",
+              "Migration Plan",
+              "Local Ledger",
+              "Restart Retrieval",
+              "Isolated Rig Tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_cdc5c9a068381ca088ee233d",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_f1570867a8a3bbad0e649cfd",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-23T19:31:40.098888",
+            "completed_at": "2026-09-23T19:31:45.167257"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:45.167257",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-23T19:31:40.102527",
+            "updated_at": "2026-09-23T19:31:45.167257",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 5
+        }
+      },
+      "summary_retained": true,
+      "receipt_retained": true,
+      "meeting_identity_retained": true,
+      "page_reloaded": true
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=meeting-summary-text]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[data-testid=meeting-summary-text]",
+      "predicate": {
+        "kind": "text_equals",
+        "value": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "observe_at text is 'The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.', wanted 'The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.'"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-9ae6ae8c464940598f83289e175fb3c7",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T19:31:49.924135",
+        "headline": "1 thing changed, 2 things waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [
+            {
+              "id": "brief-item-c0e08ccfdd684cca838add5d3b085c76",
+              "section": "changed",
+              "text": "MeetingIntelService.run_intelligence",
+              "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+              "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+              "priority": 0
+            }
+          ],
+          "broke": [],
+          "waiting": [
+            {
+              "id": "brief-item-012240b2405141a787f60dc643b1ecf0",
+              "section": "waiting",
+              "text": "Unassigned: Test restart retrieval",
+              "detail": "Due Tuesday",
+              "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+              "priority": 200
+            },
+            {
+              "id": "brief-item-033b4b2f36b343b590839f076b7366c2",
+              "section": "waiting",
+              "text": "Unassigned: Write the Migration Plan",
+              "detail": "Due Friday",
+              "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+              "priority": 200
+            }
+          ],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T19:31:49.924135",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 19:31",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "c4869e6f82cfdfb089ec059617f9cb1e96adaef0ffe9cbf6637fa453ac9d5932",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-9ae6ae8c464940598f83289e175fb3c7"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-desk.new-decision']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-decision-card textarea[aria-label=Decision]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "decisions": [
+          {
+            "id": "decision_8da1ddd37892",
+            "title": "New decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-24T01:31:50Z",
+            "updated_at": "2026-09-24T01:31:50Z",
+            "deleted": false
+          }
+        ]
+      },
+      "response_sha256": "cbdda98b09645723ca6b061c7f9053e56e7462822ecf180b38d84286648b8f9b",
+      "captured": {
+        "name": "decision_id",
+        "path": "decisions.0.id",
+        "value": "decision_8da1ddd37892"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Done",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-label='Close Keep summary retrieval on the local desk']",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions/decision_8da1ddd37892",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decision.title",
+        "value": "Keep summary retrieval on the local desk"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decision.title equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-9ae6ae8c464940598f83289e175fb3c7",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T19:31:49.924135",
+        "headline": "1 thing changed, 2 things waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [
+            {
+              "id": "brief-item-c0e08ccfdd684cca838add5d3b085c76",
+              "section": "changed",
+              "text": "MeetingIntelService.run_intelligence",
+              "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+              "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+              "priority": 0
+            }
+          ],
+          "broke": [],
+          "waiting": [
+            {
+              "id": "brief-item-012240b2405141a787f60dc643b1ecf0",
+              "section": "waiting",
+              "text": "Unassigned: Test restart retrieval",
+              "detail": "Due Tuesday",
+              "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+              "priority": 200
+            },
+            {
+              "id": "brief-item-033b4b2f36b343b590839f076b7366c2",
+              "section": "waiting",
+              "text": "Unassigned: Write the Migration Plan",
+              "detail": "Due Friday",
+              "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+              "priority": 200
+            }
+          ],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T19:31:49.924135",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 19:31",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "c4869e6f82cfdfb089ec059617f9cb1e96adaef0ffe9cbf6637fa453ac9d5932"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/brief/latest",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/sections/decisions",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/sections/decisions equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row] button",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row] button",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "clock",
+      "adapter": "producer-clock",
+      "clock": "clock.python_wall",
+      "advance_days": 1,
+      "advance_days_total": 1,
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "4406c468",
+    "persisted_summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests.",
+    "first_brief_id": "brief-9ae6ae8c464940598f83289e175fb3c7",
+    "decision_id": "decision_8da1ddd37892"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Meeting recorded: Architecture boundary review\nAck\nDefer\nUnassigned: Write the Migration Plan\nAck\nDefer\nUnassigned: Test restart retrieval\nAck\nDefer"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-ledger",
+        "data-cols": "room"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 12,
+        "y": 90,
+        "w": 369,
+        "h": 291
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n07:31 PM\n2 need you\n",
+      "after": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n07:33 PM\n2 need you\n"
+    },
+    "document_text_sha256": {
+      "before": "b5df43065e976a4b947bc40942010d755d05dfffe1f7a1aaa137af75f7f80e3e",
+      "after": "c1778ab6414b1615d871d31aea29981d761687c0475644eb43df35910a631dfd"
+    },
+    "document_text_len": {
+      "before": 1002,
+      "after": 1115
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-9ae6ae8c464940598f83289e175fb3c7",
+            "period_start": "2026-09-22T17:00:00",
+            "period_end": "2026-09-23T19:31:49.924135",
+            "headline": "1 thing changed, 2 things waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [
+                {
+                  "id": "brief-item-c0e08ccfdd684cca838add5d3b085c76",
+                  "section": "changed",
+                  "text": "MeetingIntelService.run_intelligence",
+                  "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+                  "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+                  "priority": 0
+                }
+              ],
+              "broke": [],
+              "waiting": [
+                {
+                  "id": "brief-item-012240b2405141a787f60dc643b1ecf0",
+                  "section": "waiting",
+                  "text": "Unassigned: Test restart retrieval",
+                  "detail": "Due Tuesday",
+                  "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+                  "priority": 200
+                },
+                {
+                  "id": "brief-item-033b4b2f36b343b590839f076b7366c2",
+                  "section": "waiting",
+                  "text": "Unassigned: Write the Migration Plan",
+                  "detail": "Due Friday",
+                  "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+                  "priority": 200
+                }
+              ],
+              "decisions": []
+            },
+            "generated_at": "2026-09-23T19:31:49.924135",
+            "is_empty": false,
+            "shelf": {
+              "brief-item-012240b2405141a787f60dc643b1ecf0": "acknowledged",
+              "brief-item-033b4b2f36b343b590839f076b7366c2": "acknowledged"
+            },
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 21 \u2013 23",
+            "generated_label": "GENERATED SEP 23 19:31",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "9b3f3098f0ee864786b17543d1c2de98a2a773f1627a959a9ffdc2e553fd854f"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_8da1ddd37892",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_8da1ddd37892",
+              "title": "Keep summary retrieval on the local desk",
+              "status": "proposed",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "Source: Architecture boundary review (imported meeting)",
+              "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-24T01:31:50Z",
+              "updated_at": "2026-09-24T01:31:51Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "27508e078959d48346fba5801fa4522d8ff6ad5952a6e629265242b3de7b872e"
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/4406c468",
+          "status": 200,
+          "payload": {
+            "id": "4406c468",
+            "started_at": "2026-09-23T19:31:29.362649",
+            "ended_at": "2026-09-23T19:32:04.037899",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": {
+              "timestamp": 34.67525,
+              "topics": [
+                "Synthetic Architect Meeting",
+                "Migration Plan",
+                "Local Ledger",
+                "Restart Retrieval",
+                "Isolated Rig Tests"
+              ],
+              "action_items": [
+                {
+                  "id": "action_cdc5c9a068381ca088ee233d",
+                  "task": "Write the Migration Plan",
+                  "owner": "Mayyachan",
+                  "due": "Friday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "action_f1570867a8a3bbad0e649cfd",
+                  "task": "Test restart retrieval",
+                  "owner": "Leo Martinez",
+                  "due": "Tuesday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                }
+              ],
+              "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+            },
+            "intel_status": {
+              "state": "ready",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-09-23T19:31:40.098888",
+              "completed_at": "2026-09-23T19:31:45.167257"
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "sync_modified_at": "2026-09-23T19:31:45.167257",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": {
+              "attempts": [
+                {
+                  "host": "192.168.1.43",
+                  "leg_ordinal": 1,
+                  "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                  "outcome": "succeeded"
+                }
+              ],
+              "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+              "meeting_id": "4406c468",
+              "outcome": "succeeded",
+              "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+            },
+            "last_refusal": null,
+            "intel_job": {
+              "status": "succeeded",
+              "attempts": 1,
+              "requested_at": "2026-09-23T19:31:40.102527",
+              "updated_at": "2026-09-23T19:31:45.167257",
+              "last_error": null,
+              "retry_scheduled": false,
+              "next_retry_at": null
+            },
+            "intel_model_host": "192.168.1.43",
+            "intel_duration_s": 5
+          },
+          "body_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-1626a4edf8f24aa8bfa8932e3b19052f",
+            "period_start": "2026-09-23T17:00:00",
+            "period_end": "2026-09-24T19:31:52.547500",
+            "headline": "2 things changed, 2 things waiting, 1 decision waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [
+                {
+                  "id": "brief-item-ba03e237d9634700bdd9cc2952460d14",
+                  "section": "changed",
+                  "text": "Meeting recorded: Architecture boundary review",
+                  "detail": "1 min \u00b7 2 action items",
+                  "source_ref": "meeting:4406c468",
+                  "priority": 50
+                },
+                {
+                  "id": "brief-item-0f7e04da4b1146a28d9a08c1f18b1d1d",
+                  "section": "changed",
+                  "text": "MeetingIntelService.run_intelligence",
+                  "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+                  "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+                  "priority": 0
+                }
+              ],
+              "broke": [],
+              "waiting": [
+                {
+                  "id": "brief-item-3e6b979f52714faaa01ce5e821c7bb8c",
+                  "section": "waiting",
+                  "text": "Unassigned: Write the Migration Plan",
+                  "detail": "Due Friday",
+                  "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+                  "priority": 200
+                },
+                {
+                  "id": "brief-item-8dd2bf42c8da4bf595721a936892e1e2",
+                  "section": "waiting",
+                  "text": "Unassigned: Test restart retrieval",
+                  "detail": "Due Tuesday",
+                  "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+                  "priority": 200
+                }
+              ],
+              "decisions": [
+                {
+                  "id": "brief-item-8a1e14df603047f2aa420bdc61cf56fb",
+                  "section": "decisions",
+                  "text": "Review decision: Keep summary retrieval on the local desk",
+                  "detail": null,
+                  "source_ref": "decision:decision_8da1ddd37892",
+                  "priority": 200
+                }
+              ]
+            },
+            "generated_at": "2026-09-24T19:31:52.547500",
+            "is_empty": false,
+            "shelf": {},
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 21 \u2013 24",
+            "generated_label": "GENERATED SEP 24 19:31",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "a3c26f028397f087f076aba5cc0d0564dd70fde2e7ab98165f8e9b384b734a8b"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_8da1ddd37892",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_8da1ddd37892",
+              "title": "Keep summary retrieval on the local desk",
+              "status": "proposed",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "Source: Architecture boundary review (imported meeting)",
+              "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-24T01:31:50Z",
+              "updated_at": "2026-09-24T01:31:51Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "27508e078959d48346fba5801fa4522d8ff6ad5952a6e629265242b3de7b872e"
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/4406c468",
+          "status": 200,
+          "payload": {
+            "id": "4406c468",
+            "started_at": "2026-09-23T19:31:29.362649",
+            "ended_at": "2026-09-23T19:32:04.037899",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": {
+              "timestamp": 34.67525,
+              "topics": [
+                "Synthetic Architect Meeting",
+                "Migration Plan",
+                "Local Ledger",
+                "Restart Retrieval",
+                "Isolated Rig Tests"
+              ],
+              "action_items": [
+                {
+                  "id": "action_cdc5c9a068381ca088ee233d",
+                  "task": "Write the Migration Plan",
+                  "owner": "Mayyachan",
+                  "due": "Friday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "action_f1570867a8a3bbad0e649cfd",
+                  "task": "Test restart retrieval",
+                  "owner": "Leo Martinez",
+                  "due": "Tuesday",
+                  "status": "pending",
+                  "review_state": "pending",
+                  "reviewed_at": null,
+                  "source_timestamp": null,
+                  "created_at": "2026-09-23T19:31:45",
+                  "completed_at": null,
+                  "delegated_at": null
+                }
+              ],
+              "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+            },
+            "intel_status": {
+              "state": "ready",
+              "detail": "Meeting intelligence ready.",
+              "requested_at": "2026-09-23T19:31:40.098888",
+              "completed_at": "2026-09-23T19:31:45.167257"
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "sync_modified_at": "2026-09-23T19:31:45.167257",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": {
+              "attempts": [
+                {
+                  "host": "192.168.1.43",
+                  "leg_ordinal": 1,
+                  "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                  "outcome": "succeeded"
+                }
+              ],
+              "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+              "meeting_id": "4406c468",
+              "outcome": "succeeded",
+              "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+              "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+            },
+            "last_refusal": null,
+            "intel_job": {
+              "status": "succeeded",
+              "attempts": 1,
+              "requested_at": "2026-09-23T19:31:40.102527",
+              "updated_at": "2026-09-23T19:31:45.167257",
+              "last_error": null,
+              "retry_scheduled": false,
+              "next_retry_at": null
+            },
+            "intel_model_host": "192.168.1.43",
+            "intel_duration_s": 5
+          },
+          "body_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n07:31 PM\n2 need you\n",
+    "url": "http://127.0.0.1:55997/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b5df43065e976a4b947bc40942010d755d05dfffe1f7a1aaa137af75f7f80e3e",
+    "document_text_len": 1002,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-9ae6ae8c464940598f83289e175fb3c7",
+          "period_start": "2026-09-22T17:00:00",
+          "period_end": "2026-09-23T19:31:49.924135",
+          "headline": "1 thing changed, 2 things waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-c0e08ccfdd684cca838add5d3b085c76",
+                "section": "changed",
+                "text": "MeetingIntelService.run_intelligence",
+                "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+                "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+                "priority": 0
+              }
+            ],
+            "broke": [],
+            "waiting": [
+              {
+                "id": "brief-item-012240b2405141a787f60dc643b1ecf0",
+                "section": "waiting",
+                "text": "Unassigned: Test restart retrieval",
+                "detail": "Due Tuesday",
+                "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+                "priority": 200
+              },
+              {
+                "id": "brief-item-033b4b2f36b343b590839f076b7366c2",
+                "section": "waiting",
+                "text": "Unassigned: Write the Migration Plan",
+                "detail": "Due Friday",
+                "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+                "priority": 200
+              }
+            ],
+            "decisions": []
+          },
+          "generated_at": "2026-09-23T19:31:49.924135",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-012240b2405141a787f60dc643b1ecf0": "acknowledged",
+            "brief-item-033b4b2f36b343b590839f076b7366c2": "acknowledged"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 23",
+          "generated_label": "GENERATED SEP 23 19:31",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "9b3f3098f0ee864786b17543d1c2de98a2a773f1627a959a9ffdc2e553fd854f"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8da1ddd37892",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_8da1ddd37892",
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "Source: Architecture boundary review (imported meeting)",
+            "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-24T01:31:50Z",
+            "updated_at": "2026-09-24T01:31:51Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "27508e078959d48346fba5801fa4522d8ff6ad5952a6e629265242b3de7b872e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/4406c468",
+        "status": 200,
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "Synthetic Architect Meeting",
+              "Migration Plan",
+              "Local Ledger",
+              "Restart Retrieval",
+              "Isolated Rig Tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_cdc5c9a068381ca088ee233d",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_f1570867a8a3bbad0e649cfd",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-23T19:31:40.098888",
+            "completed_at": "2026-09-23T19:31:45.167257"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:45.167257",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-23T19:31:40.102527",
+            "updated_at": "2026-09-23T19:31:45.167257",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 5
+        },
+        "body_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55"
+      }
+    ],
+    "at_utc": "2026-09-24T01:31:52.459904+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Meeting recorded: Architecture boundary review\nAck\nDefer\nUnassigned: Write the Migration Plan\nAck\nDefer\nUnassigned: Test restart retrieval\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 12,
+      "y": 90,
+      "w": 369,
+      "h": 291
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 90,
+        "w": 369,
+        "h": 291
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 14,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 197,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 379,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n07:33 PM\n2 need you\n",
+    "url": "http://127.0.0.1:55997/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c1778ab6414b1615d871d31aea29981d761687c0475644eb43df35910a631dfd",
+    "document_text_len": 1115,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-1626a4edf8f24aa8bfa8932e3b19052f",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T19:31:52.547500",
+          "headline": "2 things changed, 2 things waiting, 1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-ba03e237d9634700bdd9cc2952460d14",
+                "section": "changed",
+                "text": "Meeting recorded: Architecture boundary review",
+                "detail": "1 min \u00b7 2 action items",
+                "source_ref": "meeting:4406c468",
+                "priority": 50
+              },
+              {
+                "id": "brief-item-0f7e04da4b1146a28d9a08c1f18b1d1d",
+                "section": "changed",
+                "text": "MeetingIntelService.run_intelligence",
+                "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+                "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+                "priority": 0
+              }
+            ],
+            "broke": [],
+            "waiting": [
+              {
+                "id": "brief-item-3e6b979f52714faaa01ce5e821c7bb8c",
+                "section": "waiting",
+                "text": "Unassigned: Write the Migration Plan",
+                "detail": "Due Friday",
+                "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+                "priority": 200
+              },
+              {
+                "id": "brief-item-8dd2bf42c8da4bf595721a936892e1e2",
+                "section": "waiting",
+                "text": "Unassigned: Test restart retrieval",
+                "detail": "Due Tuesday",
+                "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+                "priority": 200
+              }
+            ],
+            "decisions": [
+              {
+                "id": "brief-item-8a1e14df603047f2aa420bdc61cf56fb",
+                "section": "decisions",
+                "text": "Review decision: Keep summary retrieval on the local desk",
+                "detail": null,
+                "source_ref": "decision:decision_8da1ddd37892",
+                "priority": 200
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T19:31:52.547500",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 19:31",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "a3c26f028397f087f076aba5cc0d0564dd70fde2e7ab98165f8e9b384b734a8b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8da1ddd37892",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_8da1ddd37892",
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "Source: Architecture boundary review (imported meeting)",
+            "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-24T01:31:50Z",
+            "updated_at": "2026-09-24T01:31:51Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "27508e078959d48346fba5801fa4522d8ff6ad5952a6e629265242b3de7b872e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/4406c468",
+        "status": 200,
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "Synthetic Architect Meeting",
+              "Migration Plan",
+              "Local Ledger",
+              "Restart Retrieval",
+              "Isolated Rig Tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_cdc5c9a068381ca088ee233d",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_f1570867a8a3bbad0e649cfd",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-23T19:31:40.098888",
+            "completed_at": "2026-09-23T19:31:45.167257"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:45.167257",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-23T19:31:40.102527",
+            "updated_at": "2026-09-23T19:31:45.167257",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 5
+        },
+        "body_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55"
+      }
+    ],
+    "at_utc": "2026-09-24T01:33:52.936384+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "599721627b822aed3af39304dc6b3b2f67ca9582ae3e84a54d24307cd174efb5",
+      "body": {
+        "id": "brief-1626a4edf8f24aa8bfa8932e3b19052f",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T19:31:52.547500",
+        "headline": "2 things changed, 2 things waiting, 1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [
+            {
+              "id": "brief-item-ba03e237d9634700bdd9cc2952460d14",
+              "section": "changed",
+              "text": "Meeting recorded: Architecture boundary review",
+              "detail": "1 min \u00b7 2 action items",
+              "source_ref": "meeting:4406c468",
+              "priority": 50
+            },
+            {
+              "id": "brief-item-0f7e04da4b1146a28d9a08c1f18b1d1d",
+              "section": "changed",
+              "text": "MeetingIntelService.run_intelligence",
+              "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+              "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+              "priority": 0
+            }
+          ],
+          "broke": [],
+          "waiting": [
+            {
+              "id": "brief-item-3e6b979f52714faaa01ce5e821c7bb8c",
+              "section": "waiting",
+              "text": "Unassigned: Write the Migration Plan",
+              "detail": "Due Friday",
+              "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+              "priority": 200
+            },
+            {
+              "id": "brief-item-8dd2bf42c8da4bf595721a936892e1e2",
+              "section": "waiting",
+              "text": "Unassigned: Test restart retrieval",
+              "detail": "Due Tuesday",
+              "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+              "priority": 200
+            }
+          ],
+          "decisions": [
+            {
+              "id": "brief-item-8a1e14df603047f2aa420bdc61cf56fb",
+              "section": "decisions",
+              "text": "Review decision: Keep summary retrieval on the local desk",
+              "detail": null,
+              "source_ref": "decision:decision_8da1ddd37892",
+              "priority": 200
+            }
+          ]
+        },
+        "generated_at": "2026-09-24T19:31:52.547500",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 2,
+          "since": "1790213510.062969"
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 19:31",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Meeting recorded: Architecture boundary review\nAck\nDefer\nUnassigned: Write the Migration Plan\nAck\nDefer\nUnassigned: Test restart retrieval\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 12,
+      "y": 90,
+      "w": 369,
+      "h": 291
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 90,
+        "w": 369,
+        "h": 291
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 14,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 14,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 197,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 197,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 92,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 379,
+          "y": 236,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 379,
+          "y": 379,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n07:31 PM\n2 need you\n",
+    "url": "http://127.0.0.1:55997/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ca3b9a7ef9f22d2b8e15ddf7528f08384387ffaa37c081addba5e64227b715a5",
+    "document_text_len": 1115,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-1626a4edf8f24aa8bfa8932e3b19052f",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T19:31:52.547500",
+          "headline": "2 things changed, 2 things waiting, 1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-ba03e237d9634700bdd9cc2952460d14",
+                "section": "changed",
+                "text": "Meeting recorded: Architecture boundary review",
+                "detail": "1 min \u00b7 2 action items",
+                "source_ref": "meeting:4406c468",
+                "priority": 50
+              },
+              {
+                "id": "brief-item-0f7e04da4b1146a28d9a08c1f18b1d1d",
+                "section": "changed",
+                "text": "MeetingIntelService.run_intelligence",
+                "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+                "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+                "priority": 0
+              }
+            ],
+            "broke": [],
+            "waiting": [
+              {
+                "id": "brief-item-3e6b979f52714faaa01ce5e821c7bb8c",
+                "section": "waiting",
+                "text": "Unassigned: Write the Migration Plan",
+                "detail": "Due Friday",
+                "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+                "priority": 200
+              },
+              {
+                "id": "brief-item-8dd2bf42c8da4bf595721a936892e1e2",
+                "section": "waiting",
+                "text": "Unassigned: Test restart retrieval",
+                "detail": "Due Tuesday",
+                "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+                "priority": 200
+              }
+            ],
+            "decisions": [
+              {
+                "id": "brief-item-8a1e14df603047f2aa420bdc61cf56fb",
+                "section": "decisions",
+                "text": "Review decision: Keep summary retrieval on the local desk",
+                "detail": null,
+                "source_ref": "decision:decision_8da1ddd37892",
+                "priority": 200
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T19:31:52.547500",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 19:31",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "a3c26f028397f087f076aba5cc0d0564dd70fde2e7ab98165f8e9b384b734a8b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8da1ddd37892",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_8da1ddd37892",
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "Source: Architecture boundary review (imported meeting)",
+            "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-24T01:31:50Z",
+            "updated_at": "2026-09-24T01:31:51Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "27508e078959d48346fba5801fa4522d8ff6ad5952a6e629265242b3de7b872e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/4406c468",
+        "status": 200,
+        "payload": {
+          "id": "4406c468",
+          "started_at": "2026-09-23T19:31:29.362649",
+          "ended_at": "2026-09-23T19:32:04.037899",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "Synthetic Architect Meeting",
+              "Migration Plan",
+              "Local Ledger",
+              "Restart Retrieval",
+              "Isolated Rig Tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_cdc5c9a068381ca088ee233d",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_f1570867a8a3bbad0e649cfd",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-23T19:31:45",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The Synthetic Architect Meeting concluded with three decisions: Mayyachan to write a migration plan by Friday using SQ for the local ledger, Leo Martinez to test restart retrieval on Tuesday, and Priya Shah to use a recorded provider reply for isolated rig tests."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-23T19:31:40.098888",
+            "completed_at": "2026-09-23T19:31:45.167257"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-23T19:31:45.167257",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_3cb87be17c434a94a32f17b7ea0073a3",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_fa8641de1b0a983e58c5224730de9e4e0efc30ea703b6e553b7fb396c1d2bdbd",
+            "meeting_id": "4406c468",
+            "outcome": "succeeded",
+            "receipt_id": "rr_1a17def034490779f74c6544a21ca803",
+            "selection_hash": "sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-23T19:31:40.102527",
+            "updated_at": "2026-09-23T19:31:45.167257",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 5
+        },
+        "body_sha256": "28bb382d2bdffe53d359a2963bc9343832863e48955ff58528ed7e8146c8ee55"
+      }
+    ],
+    "at_utc": "2026-09-24T01:31:53.467060+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "599721627b822aed3af39304dc6b3b2f67ca9582ae3e84a54d24307cd174efb5",
+      "body": {
+        "id": "brief-1626a4edf8f24aa8bfa8932e3b19052f",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T19:31:52.547500",
+        "headline": "2 things changed, 2 things waiting, 1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [
+            {
+              "id": "brief-item-ba03e237d9634700bdd9cc2952460d14",
+              "section": "changed",
+              "text": "Meeting recorded: Architecture boundary review",
+              "detail": "1 min \u00b7 2 action items",
+              "source_ref": "meeting:4406c468",
+              "priority": 50
+            },
+            {
+              "id": "brief-item-0f7e04da4b1146a28d9a08c1f18b1d1d",
+              "section": "changed",
+              "text": "MeetingIntelService.run_intelligence",
+              "detail": "{\"meeting_id\":\"4406c468\",\"expected_selection_hash\":\"sha256:a5bed5c9e8dcfe8acbe091f3637b23c535373e8bdecaf71f0c50ee0c5807854e\"}",
+              "source_ref": "pipeline:8fc35b40-939c-43a3-bb15-8ffafbc7be4b",
+              "priority": 0
+            }
+          ],
+          "broke": [],
+          "waiting": [
+            {
+              "id": "brief-item-3e6b979f52714faaa01ce5e821c7bb8c",
+              "section": "waiting",
+              "text": "Unassigned: Write the Migration Plan",
+              "detail": "Due Friday",
+              "source_ref": "action_item:action_cdc5c9a068381ca088ee233d",
+              "priority": 200
+            },
+            {
+              "id": "brief-item-8dd2bf42c8da4bf595721a936892e1e2",
+              "section": "waiting",
+              "text": "Unassigned: Test restart retrieval",
+              "detail": "Due Tuesday",
+              "source_ref": "action_item:action_f1570867a8a3bbad0e649cfd",
+              "priority": 200
+            }
+          ],
+          "decisions": [
+            {
+              "id": "brief-item-8a1e14df603047f2aa420bdc61cf56fb",
+              "section": "decisions",
+              "text": "Review decision: Keep summary retrieval on the local desk",
+              "detail": null,
+              "source_ref": "decision:decision_8da1ddd37892",
+              "priority": 200
+            }
+          ]
+        },
+        "generated_at": "2026-09-24T19:31:52.547500",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 2,
+          "since": "1790213510.062969"
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 19:31",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "predicate_satisfied": false,
+    "reading": "'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text",
+    "elapsed_s": 0.94
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 120.407,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 120.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: 'Review decision: Keep summary retrieval on the local desk' NOT in observe_at text",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus_label', 'rect', 'target_present', 'text', 'visible'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/generate",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "599721627b822aed3af39304dc6b3b2f67ca9582ae3e84a54d24307cd174efb5",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/generate",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/4406c468",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/closure/20260924T013121Z-case.closure.chain.s5_next_day_brief_after_triage-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/.local/share/holdspeak/holdspeak.db",
+    "PRODUCER_CLOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uzr84b3y/graph-walk-producer-clock.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the brief producer clock seam (wall clock + the run's offset file)\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55997",
+    "PRODUCER_CLOCK_READ advance_days=0 now=2026-09-23T19:31:49",
+    "PRODUCER_CLOCK_READ advance_days=1 now=2026-09-24T19:31:52"
+  ]
+}
