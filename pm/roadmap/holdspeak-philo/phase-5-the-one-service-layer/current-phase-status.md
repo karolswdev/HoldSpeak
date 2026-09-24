@@ -218,6 +218,8 @@ face limitations are recorded under Decisions deferred for PHILO-5-04.
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — Muad'Dib's counsel on story 03: RATIFY-WITH-CONDITIONS, paid; the `op` tier is trusted (registry inside the owning hub via `/api/mcp`; headless; 18 pairs; durable-state comparator); three defects the lane found carried into story 04 as work (SAVED on `import_failed`; S4 blank at 393; two broke rows for one cause) — Muad'Dib.
+
 - 2026-09-24 — Astra r2 on story 02: RATIFY-WITH-CONDITIONS, paid (the import tool advertises "Owner only."; the merge record states the owner boundary and the inherited, unruled admission debt). Merged on both brains' verdicts + the fast CI jobs — Muad'Dib.
 
 - 2026-09-24 — PHILO-5-02 round two (Astra's check on built, finding 4, which replaced the round-one text): INHERITED DEBT (Article XI): decision.create/update leave no kernel operation and no receipt through either transport; whether a desk decision write 'acts under Article V' (filing) is UNRULED; retained as debt with an assigned follow-up: `pm/roadmap/holdspeak/BACKLOG.md` "PHILO-5-02 follow-ups" and the line in "Decisions deferred" below, assigning it to the owner's ruling / a later phase; the test at `tests/unit/test_philo5_the_loop.py:618` is CHARACTERIZATION ONLY (both transports leave the same zero) and is labelled so in its docstring. The round-one text claimed that a desk decision write meets none of XI.1's triggers; it omitted "acts under Article V", so that claim is withdrawn. This phase adds no kernel admission (Scope; Tenet 1) — Muad'Dib lane (Opus 5.5), on Astra's ruling on 9.
