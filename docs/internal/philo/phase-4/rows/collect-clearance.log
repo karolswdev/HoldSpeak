@@ -1,0 +1,3 @@
+tests/e2e/test_philo4_02_generated_clearance.py::test_generate_replacement_row_is_owned_above_the_real_capture_bar
+
+1 test collected in 0.03s

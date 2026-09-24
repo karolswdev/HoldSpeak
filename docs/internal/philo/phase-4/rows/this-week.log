@@ -1,0 +1,31 @@
+{
+  "decision_id": "dec-cb7f735b7f4fb465996e",
+  "commitment_id": "commitment-372827a350fe47e8a46ef11121d0730b",
+  "days": [
+    {
+      "producer_day": "2026-09-23T17:40:00",
+      "brief_id": "brief-48585f91336141a394dc702defd8f5b5",
+      "this_week": {
+        "text": "1 commitment due this week",
+        "detail": "Send the Q4 plan to Dana | 2026-09-25"
+      },
+      "decisions": [],
+      "without_this_week_exclusion": [
+        "Commitment due 2026-09-25: Send the Q4 plan to Dana"
+      ]
+    },
+    {
+      "producer_day": "2026-09-24T08:02:00",
+      "brief_id": "brief-6b33bfd6b380405e93ae1e263bc77104",
+      "this_week": {
+        "text": "1 commitment due this week",
+        "detail": "Send the Q4 plan to Dana | 2026-09-25"
+      },
+      "decisions": [],
+      "without_this_week_exclusion": [
+        "Commitment due 2026-09-25: Send the Q4 plan to Dana"
+      ]
+    }
+  ],
+  "verdict": "PASS: c1 belongs to THIS WEEK"
+}

@@ -1,0 +1,2 @@
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > shows the newest decision first with an honest cap and fold
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > keeps the result ordered after Generate replaces an existing brief

@@ -94,6 +94,9 @@ class BriefItem:
     detail: str | None = None
     source_ref: str | None = None
     priority: int = 0
+    # Decision rows carry the source record's real creation timestamp.  Other
+    # sections leave this unset and keep their existing priority order.
+    created_at: str | None = None
 
 
 @dataclass
@@ -307,8 +310,9 @@ class MondayBriefService:
             for item in items:
                 conn.execute(
                     """INSERT INTO monday_brief_items
-                       (id, brief_id, section, text, detail, source_ref, priority)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                       (id, brief_id, section, text, detail, source_ref, priority,
+                        created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         item.id,
                         brief_id,
@@ -317,6 +321,7 @@ class MondayBriefService:
                         item.detail,
                         item.source_ref,
                         item.priority,
+                        item.created_at,
                     ),
                 )
             row = conn.execute(
@@ -332,10 +337,7 @@ class MondayBriefService:
     ) -> tuple[str, dict[str, list[BriefItem]]]:
         """Compose an honest, deterministic headline and ordered fixed sections."""
         finalized_sections = {
-            section: sorted(
-                sections.get(section, []),
-                key=lambda item: (-item.priority, item.source_ref or "", item.id),
-            )
+            section: self._sort_section(section, sections.get(section, []))
             for section in _SECTIONS
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
@@ -388,6 +390,41 @@ class MondayBriefService:
                 phrase(counts["decisions"], "decision waiting", "decisions waiting")
             )
         return ", ".join(headline_parts) + ".", finalized_sections
+
+    @staticmethod
+    def _sort_section(section: str, items: list[BriefItem]) -> list[BriefItem]:
+        if section == "decisions":
+            # A decision's record timestamp is the recency source.  Priority
+            # remains a property of the row but cannot move an older decision
+            # ahead of a newer one.
+            return sorted(
+                items,
+                key=lambda item: (
+                    MondayBriefService._created_at_sort_value(item.created_at),
+                    item.source_ref or "",
+                    item.id,
+                ),
+                reverse=True,
+            )
+        return sorted(
+            items,
+            key=lambda item: (-item.priority, item.source_ref or "", item.id),
+        )
+
+    @staticmethod
+    def _created_at_sort_value(created_at: str | None) -> float:
+        if not created_at:
+            return float("-inf")
+        try:
+            # The desk stores UTC with Z; meeting projection timestamps are
+            # native local ISO values.  datetime.timestamp() applies the
+            # producer's local timezone to the latter, so both forms share one
+            # chronology while the original string is retained on the item.
+            return datetime.datetime.fromisoformat(
+                str(created_at).replace("Z", "+00:00")
+            ).timestamp()
+        except (TypeError, ValueError, OverflowError):
+            return float("-inf")
 
     def _collect_changes(
         self, window_start: str, window_end: str
@@ -756,7 +793,8 @@ class MondayBriefService:
         excluded_commitments = exclude_commitment_ids or set()
 
         # A proposed actuator cannot cross the egress boundary until its owner
-        # grants authorization, so it always leads the decision queue.
+        # grants authorization. It enters the decision queue with its own
+        # durable creation timestamp.
         for proposal in self._db.actuators.list_pending_proposals():
             items.append(
                 BriefItem(
@@ -765,6 +803,7 @@ class MondayBriefService:
                     text=f"Authorize {proposal.target} {proposal.action}: {proposal.preview}",
                     source_ref=f"actuator_proposal:{proposal.id}",
                     priority=300,
+                    created_at=proposal.created_at,
                 )
             )
 
@@ -781,6 +820,7 @@ class MondayBriefService:
                     text=f"Review decision: {title}",
                     source_ref=f"decision:{decision.id}",
                     priority=200,
+                    created_at=decision.created_at,
                 )
             )
         for decision in self._db.decisions.list(lifecycle="recorded"):
@@ -791,16 +831,17 @@ class MondayBriefService:
                     text=f"Review decision: {decision.text}",
                     source_ref=f"decision:{decision.id}",
                     priority=200,
+                    created_at=decision.created_at,
                 )
             )
 
-        # Open, due-soon commitments require attention, but they never outrank
-        # an authorization or an unresolved decision review.
+        # Open, due-soon commitments require attention. Their source decision's
+        # creation timestamp keeps their row aligned with the decision queue.
         today = self._clock().date()
         horizon = today + datetime.timedelta(days=7)
         with self._db._connection() as conn:
             commitments = conn.execute(
-                """SELECT dc.id, dc.decision_id, dc.due_at, d.text
+                """SELECT dc.id, dc.decision_id, dc.due_at, d.text, d.created_at
                    FROM decision_commitments AS dc
                    JOIN decisions AS d ON d.id = dc.decision_id
                    WHERE dc.status = 'open' AND dc.due_at IS NOT NULL
@@ -825,10 +866,11 @@ class MondayBriefService:
                     text=f"Commitment due {due_date.isoformat()}: {commitment['text']}",
                     source_ref=f"decision:{commitment['decision_id']}",
                     priority=120 if due_date <= today else 110,
+                    created_at=str(commitment["created_at"]),
                 )
             )
 
-        return sorted(items, key=lambda item: (-item.priority, item.source_ref or ""))
+        return self._sort_section("decisions", items)
 
     # ── HS-175-05: calendar events + meeting watch collectors ─────────
 
@@ -1175,7 +1217,7 @@ class MondayBriefService:
     def _load_brief(conn: Any, row: Any) -> MondayBrief:
         sections: dict[str, list[BriefItem]] = {section: [] for section in _SECTIONS}
         for item in conn.execute(
-            """SELECT id, section, text, detail, source_ref, priority
+            """SELECT id, section, text, detail, source_ref, priority, created_at
                FROM monday_brief_items WHERE brief_id = ?
                ORDER BY priority DESC, id ASC""",
             (row["id"],),
@@ -1189,8 +1231,12 @@ class MondayBriefService:
                     detail=item["detail"],
                     source_ref=item["source_ref"],
                     priority=int(item["priority"]),
+                    created_at=item["created_at"],
                 )
             )
+        sections["decisions"] = MondayBriefService._sort_section(
+            "decisions", sections["decisions"]
+        )
         return MondayBrief(
             id=str(row["id"]),
             period_start=str(row["period_start"]),

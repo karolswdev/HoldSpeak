@@ -1,0 +1,434 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-02/.tmp/philo402-main/web
+
+ ❯ src/desk/chair/__tests__/decisionRows.philo402.test.tsx (2 tests | 2 failed) 1052ms
+     × shows the newest decision first with an honest cap and fold 26ms
+     × keeps the result ordered after Generate replaces an existing brief 1025ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > shows the newest decision first with an honest cap and fold
+AssertionError: expected [ …(3) ] to deeply equal [ StringContaining{…}, …(2) ]
+
+- Expected
++ Received
+
+  [
+-   StringContaining "Review decision: Newest decision",
+-   StringContaining "Review decision: Old decision one",
+-   StringContaining "Review decision: Old decision two",
++   "Meeting recorded: Older meetingAckDefer",
++   "Older breakageAckDefer",
++   "Open loop: Older loopAckDefer",
+  ]
+
+ ❯ expectDecisionRows src/desk/chair/__tests__/decisionRows.philo402.test.tsx:111:46
+    109|   const rows = screen.getAllByTestId("arrival-brief-row");
+    110|   expect(rows).toHaveLength(3);
+    111|   expect(rows.map((row) => row.textContent)).toEqual([
+       |                                              ^
+    112|     expect.stringContaining("Review decision: Newest decision"),
+    113|     expect.stringContaining("Review decision: Old decision one"),
+ ❯ src/desk/chair/__tests__/decisionRows.philo402.test.tsx:131:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > keeps the result ordered after Generate replaces an existing brief
+TestingLibraryElementError: Unable to find an element with the text: Review decision: Newest decision. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 7 THINGS WAITING[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mMeeting recorded: Older meeting[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mOlder breakage[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"-1"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mOpen loop: Older loop[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+            [33mdata-testid[39m=[32m"arrival-brief-more"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m4[0m
+            [0m more[0m
+          [36m</button>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 24 · GENERATED SEP 24 08:02[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-receipt"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mBrief ready · 7 items · 8:02 AM[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"chair"[39m
+        [33mdata-testid[39m=[32m"chair"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"arrival-headline"[39m
+          [33mdata-testid[39m=[32m"arrival-headline"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+            [33mdata-testid[39m=[32m"arrival-display"[39m
+          [36m>[39m
+            [0mNothing needs you[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-brief"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBRIEF · 7 THINGS WAITING[0m
+              [36m</h3>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                [33mdata-scope[39m=[32m"local"[39m
+                [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+              [36m>[39m
+                [0mTHIS DEVICE[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGenerate[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger"[39m
+              [33mdata-cols[39m=[32m"room"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-count"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mMeeting recorded: Older meeting[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"-1"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mOlder breakage[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"-1"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mOpen loop: Older loop[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-bri...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/desk/chair/__tests__/decisionRows.philo402.test.tsx:142:11
+    140|       screen.getByTestId("arrival-brief-generate").click();
+    141|     });
+    142|     await waitFor(() => {
+       |           ^
+    143|       expect(screen.getByText("Review decision: Newest decision")).toB…
+    144|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  00:43:13
+   Duration  1.79s (transform 328ms, setup 55ms, import 445ms, tests 1.05s, environment 167ms)
+

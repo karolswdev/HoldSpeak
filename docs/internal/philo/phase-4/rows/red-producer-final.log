@@ -1,0 +1,130 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+___________ test_generate_carries_created_at_on_every_decision_item ____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-474/test_generate_carries_created_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e4236f0>
+
+    def test_generate_carries_created_at_on_every_decision_item(tmp_path, monkeypatch):
+        db = Database(tmp_path / "brief.db")
+        service = MondayBriefService(db, clock=lambda: NOW)
+        _upsert_desk_decision(
+            db,
+            decision_id="decision-z-old",
+            title="Old decision one",
+            created_at="2026-08-01T08:45:00",
+        )
+        _upsert_desk_decision(
+            db,
+            decision_id="decision-a-new",
+            title="Newest decision",
+            created_at="2026-08-04T08:45:00",
+        )
+        monkeypatch.setattr(
+            brief_module,
+            "uuid",
+            SimpleNamespace(uuid4=_fixed_uuid4("f" * 32, "0" * 32, "1" * 32)),
+        )
+    
+        generated = service.generate(None, now=NOW)
+        reloaded = service.get_latest(None)
+        assert reloaded is not None
+        assert generated.id == reloaded.id
+>       assert [item.created_at for item in reloaded.sections["decisions"]] == [
+                ^^^^^^^^^^^^^^^
+            "2026-08-04T08:45:00",
+            "2026-08-01T08:45:00",
+        ]
+E       AttributeError: 'BriefItem' object has no attribute 'created_at'
+
+tests/unit/test_philo4_02_decision_rows.py:65: AttributeError
+________ test_generate_and_reload_sorts_decisions_by_record_created_at _________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-474/test_generate_and_reload_sorts0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e6008a0>
+
+    def test_generate_and_reload_sorts_decisions_by_record_created_at(tmp_path, monkeypatch):
+        db = Database(tmp_path / "brief.db")
+        service = MondayBriefService(db, clock=lambda: NOW)
+        _upsert_desk_decision(
+            db,
+            decision_id="decision-z-old",
+            title="Old decision one",
+            created_at="2026-08-01T08:45:00",
+        )
+        _upsert_desk_decision(
+            db,
+            decision_id="decision-m-old",
+            title="Old decision two",
+            created_at="2026-08-02T08:45:00",
+        )
+        _upsert_desk_decision(
+            db,
+            decision_id="decision-a-new",
+            title="Newest decision",
+            created_at="2026-08-04T08:45:00",
+        )
+        # The generated item ids are fixed only to make the pre-fix reload order
+        # deterministic. The assertion below uses the record timestamps/text.
+        monkeypatch.setattr(
+            brief_module,
+            "uuid",
+            SimpleNamespace(uuid4=_fixed_uuid4("f" * 32, "0" * 32, "1" * 32, "2" * 32)),
+        )
+    
+        service.generate(None, now=NOW)
+        reloaded = service.get_latest(None)
+        assert reloaded is not None
+>       assert [item.text for item in reloaded.sections["decisions"]] == [
+            "Review decision: Newest decision",
+            "Review decision: Old decision two",
+            "Review decision: Old decision one",
+        ]
+E       AssertionError: assert ['Review deci...est decision'] == ['Review deci...decision one']
+E         
+E         At index 0 diff: 'Review decision: Old decision one' != 'Review decision: Newest decision'
+E         Use -v to get more diff
+
+tests/unit/test_philo4_02_decision_rows.py:104: AssertionError
+______ test_generate_carries_created_at_from_meeting_decision_projection _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-474/test_generate_carries_created_1')
+
+    def test_generate_carries_created_at_from_meeting_decision_projection(tmp_path):
+        db = Database(tmp_path / "brief.db")
+        db.meetings.save_meeting(
+            MeetingState(
+                id="meeting-decision-source",
+                title="Decision fixture",
+                started_at=datetime.datetime(2026, 8, 3, 8),
+                ended_at=datetime.datetime(2026, 8, 3, 8, 30),
+            )
+        )
+        db.plugins.record_artifact(
+            artifact_id="decision-artifact",
+            meeting_id="meeting-decision-source",
+            artifact_type="decisions",
+            title="Decision fixture",
+            structured_json={"decisions": [{"decision": "Use the local desk"}]},
+            plugin_id="decision_capture",
+        )
+        decision = db.decisions.list(lifecycle="recorded")[0]
+    
+        service = MondayBriefService(db, clock=lambda: NOW)
+        service.generate(None, now=NOW)
+        reloaded = service.get_latest(None)
+        assert reloaded is not None
+        item = next(
+            item for item in reloaded.sections["decisions"]
+            if item.text == "Review decision: Use the local desk"
+        )
+>       assert item.created_at == decision.created_at
+               ^^^^^^^^^^^^^^^
+E       AttributeError: 'BriefItem' object has no attribute 'created_at'
+
+tests/unit/test_philo4_02_decision_rows.py:139: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo4_02_decision_rows.py::test_generate_carries_created_at_on_every_decision_item
+FAILED tests/unit/test_philo4_02_decision_rows.py::test_generate_and_reload_sorts_decisions_by_record_created_at
+FAILED tests/unit/test_philo4_02_decision_rows.py::test_generate_carries_created_at_from_meeting_decision_projection
+3 failed in 1.29s

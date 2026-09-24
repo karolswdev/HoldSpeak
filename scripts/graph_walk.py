@@ -107,6 +107,9 @@ Partial records survive a stopped run: the file is flushed at every stage.
 PREDICATES (`expected.predicate.kind`):
 
   text_contains / text_equals / text_absent {value}
+  readable_text {value}       the named face text is visible, has positive
+                              geometry, is inside the viewport, and owns
+                              nine interior hit-test points
   attr_equals {attr, value}
   window_titled {value}          a window with that title, absent before
   presentation_change {fields}   focus | geometry | windows — a valid
@@ -184,6 +187,7 @@ import pwd
 import re
 import shutil
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -430,6 +434,9 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
     visible: !!(w.offsetWidth || w.offsetHeight || w.getClientRects().length),
   }));
   const active = document.activeElement;
+  const chair = document.querySelector('[data-testid=chair]');
+  const captureBar = chair?.querySelector('[data-testid=arrival-capture-bar]');
+  const beforeBar = captureBar?.previousElementSibling;
   return {
     observe_at: selector,
     target_present: !!el,
@@ -438,6 +445,12 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
     rect: el ? box(el) : null,
     visible: el ? !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length) : null,
     hit_test: hitTest(el),
+    arrival_clearance: chair && captureBar ? {
+      chair: box(chair), capture_bar: box(captureBar),
+      scroll_top: chair.scrollTop,
+      scroll_padding_bottom: getComputedStyle(chair).scrollPaddingBottom,
+      end_margin_bottom: beforeBar ? getComputedStyle(beforeBar).marginBottom : null,
+    } : null,
     values,
     field_value: valueSelector
       ? {selector: valueSelector, present: !!field,
@@ -483,6 +496,28 @@ def _collection_of(payload: Any, predicate: Any) -> str | None:
             if isinstance(value, list):
                 return key
     return None
+
+
+def brief_db_snapshot(hub: Any, brief_id: str) -> dict[str, Any]:
+    """Retain a captured brief's durable rows before the walk HOME is removed.
+
+    Read only the rig-owned database, never a product singleton or owner DB.
+    Comparing these records before/after Generate proves old triage survives
+    even though the HTTP shelf route reads only the latest brief.
+    """
+    hub._verify_paths()
+    path = Path(hub.db_path).resolve()
+    with sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True) as conn:
+        conn.row_factory = sqlite3.Row
+        brief = conn.execute("SELECT * FROM monday_briefs WHERE id = ?", (brief_id,)).fetchone()
+        items = conn.execute(
+            "SELECT * FROM monday_brief_items WHERE brief_id = ? ORDER BY id", (brief_id,)
+        ).fetchall()
+        shelf = conn.execute(
+            "SELECT * FROM monday_brief_item_shelf WHERE brief_id = ? ORDER BY item_id", (brief_id,)
+        ).fetchall()
+    return {"brief": dict(brief) if brief else None,
+            "items": [dict(row) for row in items], "shelf": [dict(row) for row in shelf]}
 
 
 def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[str, Any]:
@@ -807,6 +842,28 @@ def check_predicate(
         return True, (
             f"control owns all 9 hit points in viewport "
             f"{hit.get('viewport')} with rect {rect}")
+
+    if kind == "readable_text":
+        want = predicate.get("value", "")
+        if not after.get("target_present") or not after.get("visible"):
+            return False, "the named text scope is absent or hidden"
+        if want not in text:
+            return False, f"{want!r} NOT in observe_at text"
+        hit = after.get("hit_test") or {}
+        if not hit.get("in_viewport"):
+            return False, f"the text scope is outside the viewport: {hit.get('viewport')}"
+        if not hit.get("all_owned"):
+            covered = [sample for sample in hit.get("samples", [])
+                       if not sample.get("owned")]
+            return False, f"a covering element owns hit points: {covered[:3]}"
+        rect = hit.get("rect") or after.get("rect") or {}
+        width = float(rect.get("w", 0))
+        height = float(rect.get("h", 0))
+        if width <= 0 or height <= 0:
+            return False, f"text scope geometry is not positive: {rect!r}"
+        return True, (
+            f"{want!r} is readable in viewport {hit.get('viewport')} "
+            f"with rect {rect}")
 
     if kind == "protocol_rows":
         gained_before = match_rows(before, predicate)
@@ -3233,6 +3290,8 @@ def exercise(
 
     settle(page)
     before = snapshot(page, pre_case, hub)
+    if hub is not None and variables.get("first_brief_id"):
+        before["brief_db"] = brief_db_snapshot(hub, variables["first_brief_id"])
     page.screenshot(path=str(shots / "before.png"))
     recorder.set(before=_clean(before))
 
@@ -3307,6 +3366,8 @@ def exercise(
 
     def observe() -> dict[str, Any]:
         snap = snapshot(page, case, hub)
+        if hub is not None and variables.get("first_brief_id"):
+            snap["brief_db"] = brief_db_snapshot(hub, variables["first_brief_id"])
         answer = trigger_response
         if answer is None and ui_capture is not None:
             answer = ui_capture.chosen()

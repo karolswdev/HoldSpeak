@@ -4,7 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
@@ -135,6 +135,7 @@ interface BriefItem {
   detail?: string | null;
   source_ref?: string | null;
   priority: number;
+  created_at?: string | null;
 }
 
 interface MondayBrief {
@@ -518,6 +519,7 @@ function Arrival() {
      names its cause in the section's status slot. No Retry: the enabled
      head Generate repeats the same POST. */
   const [generateFailed, setGenerateFailed] = useState<string | null>(null);
+  const generatedBriefScrollPending = useRef(false);
   const readBrief = useCallback(() => {
     setBriefLoading(true);
     setBriefLoadFailed(null);
@@ -675,11 +677,33 @@ function Arrival() {
      this exact POST and the screen said nothing either way
      (03-interaction-walk.md finding 4). */
   const [briefKept, setBriefKept] = useState<string | null>(null);
+
+  // The capture bar wraps at the phone width. Keep its measured height on the
+  // existing Chair so the narrow scroll well can reserve the actual clearance
+  // without making the face depend on a viewport-specific constant.
+  useLayoutEffect(() => {
+    const chair = document.querySelector<HTMLElement>('[data-testid="chair"]');
+    const captureBar = chair?.querySelector<HTMLElement>('[data-testid="arrival-capture-bar"]');
+    if (!chair || !captureBar) return undefined;
+
+    const measure = () => {
+      const height = Math.ceil(captureBar.getBoundingClientRect().height);
+      if (height > 0) chair.style.setProperty("--arrival-capture-clearance", `${height}px`);
+      else chair.style.removeProperty("--arrival-capture-clearance");
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(measure);
+    observer.observe(captureBar);
+    return () => observer.disconnect();
+  }, []);
+
   const generateBrief = async () => {
     setGenerating(true);
     setGenerateFailed(null);
     try {
       const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
+      generatedBriefScrollPending.current = true;
       setBrief(data);
       setBriefLoadFailed(null);
       setBriefKept(briefReceipt(data as unknown as GeneratedBrief));
@@ -842,14 +866,33 @@ function Arrival() {
   const next = nextLine(nextPayload);
 
   // ── brief items (untriaged only) ──
-  const briefSections = ["changed", "broke", "waiting", "decisions"] as const;
+  const sortDecisionItems = (items: BriefItem[]) => [...items].sort((a, b) => {
+    const aTime = a.created_at ? Date.parse(a.created_at) : Number.NEGATIVE_INFINITY;
+    const bTime = b.created_at ? Date.parse(b.created_at) : Number.NEGATIVE_INFINITY;
+    return bTime - aTime;
+  });
   const briefItems: BriefItem[] = brief && !brief.is_empty
-    ? briefSections.flatMap((s) => brief.sections[s] ?? [])
+    ? [
+      ...sortDecisionItems(brief.sections.decisions ?? []),
+      ...(brief.sections.changed ?? []),
+      ...(brief.sections.broke ?? []),
+      ...(brief.sections.waiting ?? []),
+    ]
     : [];
   const briefShelf = brief?.shelf ?? {};
   const untriagedBrief = briefItems
     .filter((item) => !briefShelf[item.id])
     .filter((item) => !isRawId(item.text));
+
+  // Generate owns the only automatic move. Initial loads, failures and shelf
+  // changes leave the owner's scroll position alone. The native nearest rule
+  // moves the result without adding a focus change of its own.
+  useLayoutEffect(() => {
+    if (!generatedBriefScrollPending.current) return;
+    generatedBriefScrollPending.current = false;
+    const firstRow = document.querySelector<HTMLElement>('[data-testid="arrival-brief-row"]');
+    firstRow?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
+  }, [brief]);
 
   // ── shelf verbs ──
   const [busyBriefId, setBusyBriefId] = useState<string | null>(null);

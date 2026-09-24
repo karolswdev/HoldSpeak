@@ -955,6 +955,7 @@
                     "text_contains",
                     "text_equals",
                     "text_nonempty",
+                    "readable_text",
                     "hit_target",
                     "unchanged",
                     "window_titled"

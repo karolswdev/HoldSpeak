@@ -3,6 +3,7 @@
    sections compose from the surface library. */
 
 .chair {
+  --arrival-capture-clearance: 112px;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -614,6 +615,12 @@
   .chair {
     padding: var(--space-3);
     gap: var(--space-4);
+    /* dock.css reserves padding below the sticky bar for the wrapped dock.
+       Native nearest scrolling must clear that band as well as the bar. */
+    scroll-padding-bottom: calc(
+      var(--arrival-capture-clearance) + var(--space-4) +
+      max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
+    );
   }
   /* HS-175 C5: Unlink visible at the phone width (viewport fallback). */
   .arrival-meeting-verbs {
@@ -632,7 +639,7 @@
      follows; the section before it clears the bar's height so nothing
      sits under it at the end of the scroll. */
   .chair > :nth-last-child(2) {
-    margin-bottom: 112px;
+    margin-bottom: max(112px, var(--arrival-capture-clearance));
   }
   /* HS-200-15 (counsel P0-2): the @container block above cannot reach the
      chair (it is the container ancestor), so the 393 row grammar lives

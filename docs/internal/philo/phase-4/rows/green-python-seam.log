@@ -1,0 +1,23 @@
+...............F........................................................ [ 78%]
+....................                                                     [100%]
+=================================== FAILURES ===================================
+__________ test_atlas_validates_against_its_schema[atlas-phase3.json] __________
+
+every_atlas = {'atlas_version': 'phase3-closure', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 60, 'edge_ids': ['...k/db/intel.py:1215-1243 selects the claimable queued rows)', 'status': 'available', ...}], 'council_readings': [], ...}
+schema = {'$defs': {'case': {'additionalProperties': False, 'allOf': [{'if': {'properties': {...}, 'required': [...]}, 'then': ...raph/atlas.schema.json', '$schema': 'https://json-schema.org/draft/2020-12/schema', 'additionalProperties': False, ...}
+
+    def test_atlas_validates_against_its_schema(every_atlas: dict, schema: dict) -> None:
+        errors = sorted(
+            Draft202012Validator(schema).iter_errors(every_atlas),
+            key=lambda e: list(e.absolute_path),
+        )
+>       assert not errors, "\n".join(
+            f"{'/'.join(str(p) for p in e.absolute_path)}: {e.message}" for e in errors[:20]
+        )
+E       AssertionError: cases/14/setup/24: {'kind': 'api', 'method': 'GET', 'path': '/api/decisions/philo402-deliberately-absent', 'expect_status': 404, 'adapter': 'http-route', 'why': 'the real DecisionLifecycleService observer records this failed read before day-one Generate; no brief row is triaged'} is not valid under any of the given schemas
+E       assert not [<ValidationError: "{'kind': 'api', 'method': 'GET', 'path': '/api/decisions/philo402-deliberately-absent', 'expect_st...ords this failed read before day-one Generate; no brief row is triaged'} is not valid under any of the given schemas">]
+
+tests/unit/test_philo_graph_atlas.py:148: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_atlas_validates_against_its_schema[atlas-phase3.json]
+1 failed, 91 passed in 4.08s

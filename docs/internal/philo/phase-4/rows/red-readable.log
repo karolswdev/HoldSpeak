@@ -1,0 +1,48 @@
+F.....FF                                                                 [100%]
+=================================== FAILURES ===================================
+____ test_readable_text_uses_element_from_point_and_rejects_a_covering_dock ____
+
+    def test_readable_text_uses_element_from_point_and_rejects_a_covering_dock():
+        """A visible row is readable only when all sampled hit points are owned."""
+        predicate = {"kind": "readable_text", "value": "Review decision: New"}
+        uncovered = _snapshot(covered=False)
+        covered = _snapshot(covered=True)
+    
+        ok, reading = rig.check_predicate(predicate, {}, uncovered)
+>       assert ok, reading
+E       AssertionError: unknown predicate kind 'readable_text'
+E       assert False
+
+tests/unit/test_philo4_02_readable_rows.py:61: AssertionError
+_______ test_atlas_declares_readable_text_for_the_as_written_chain_case ________
+
+    def test_atlas_declares_readable_text_for_the_as_written_chain_case():
+        atlas = json.loads(ATLAS.read_text())
+        case = next(case for case in atlas["cases"] if case["id"] == CASE_ID)
+        expected = case["expected"]
+    
+>       assert expected["observe_at"] == "[data-testid=arrival-brief-row]"
+E       AssertionError: assert '[data-testid...urface-ledger' == '[data-testid...al-brief-row]'
+E         
+E         - [data-testid=arrival-brief-row]
+E         ?                             ---
+E         + [data-testid=arrival-brief] .surface-ledger
+E         ?                           ++++++++++ +++++
+
+tests/unit/test_philo4_02_readable_rows.py:94: AssertionError
+____________ test_readable_text_is_in_the_shared_schema_vocabulary _____________
+
+    def test_readable_text_is_in_the_shared_schema_vocabulary():
+        for path in (SCHEMA, GRAPH_SCHEMA):
+            schema = json.loads(path.read_text())
+            predicate = schema["$defs"]["case"]["properties"]["expected"]["properties"]["predicate"]
+>           assert "readable_text" in predicate["properties"]["kind"]["enum"], path
+E           AssertionError: PosixPath('/Users/karol/dev/tools/wt-philo-4-02/.tmp/philo402-main/docs/internal/philo/graph/atlas.schema.json')
+E           assert 'readable_text' in ['attr_equals', 'input_value', 'presentation_change', 'protocol_field', 'protocol_rows', 'protocol_rows_gone', ...]
+
+tests/unit/test_philo4_02_readable_rows.py:115: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_uses_element_from_point_and_rejects_a_covering_dock
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_atlas_declares_readable_text_for_the_as_written_chain_case
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_is_in_the_shared_schema_vocabulary
+3 failed, 5 passed in 5.13s

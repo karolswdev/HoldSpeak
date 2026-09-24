@@ -2444,7 +2444,8 @@ CREATE TABLE IF NOT EXISTS monday_brief_items (
     text TEXT NOT NULL,
     detail TEXT,
     source_ref TEXT,
-    priority INTEGER NOT NULL DEFAULT 0
+    priority INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_monday_brief_items_brief ON monday_brief_items(brief_id);
 

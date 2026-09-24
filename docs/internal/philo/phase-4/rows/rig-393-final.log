@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 566495b076f8db7387f7e050be30d8065ee8841b dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-Y37FyLq1.js'] hub=http://127.0.0.1:53099 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5vptmjpa/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-02-shots/20260924T072514Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-02-shots/20260924T072514Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 356, 'w': 369, 'h': 114}
