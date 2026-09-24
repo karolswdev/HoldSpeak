@@ -15,16 +15,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
 TOKEN = "hs146-snapshot-glass"
 
-SNAPSHOT_ASSETS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-146-multiple-calendars/assets/story-07-shots"
-)
+SNAPSHOT_ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-146-multiple-calendars/assets/story-07-shots")
 
 
 def _tiny_png() -> bytes:

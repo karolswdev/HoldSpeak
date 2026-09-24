@@ -28,12 +28,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Interview glass needs Playwright")
 
 TOKEN = "hs159-interview-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-159-the-interview/assets/story-06-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-159-the-interview/assets/story-06-shots")
 
 OUTCOME_TEXT = "Ship the Q4 Payments Platform on time with zero incidents"
 SIGNALS_TEXT = "Missed sprint commitments, overdue action items, stale decisions"

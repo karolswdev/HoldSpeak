@@ -29,13 +29,11 @@ from .glass_infra import (
     _settle,
     REPO,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Speak glass needs Playwright")
 
-SHOTS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots")
 SHOTS.mkdir(parents=True, exist_ok=True)
 
 TOKEN = "hs170-speak"

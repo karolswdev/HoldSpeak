@@ -15,14 +15,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
 from .glass_infra import seed_meeting_engines
 
-DOOR_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots"
-RAIL_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots"
+DOOR_ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots")
+RAIL_ASSETS = evidence_dir("pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots")
 TOKEN = "hs144-door-glass"
 
 

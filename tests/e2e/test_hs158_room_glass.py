@@ -19,12 +19,13 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Room glass needs Playwright")
 
 TOKEN = "hs158-room-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-158-the-room/assets/story-05-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-158-the-room/assets/story-05-shots")
 
 
 def _init_desk(page: Any, url: str) -> None:

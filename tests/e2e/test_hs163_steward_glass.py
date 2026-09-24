@@ -30,20 +30,15 @@ from typing import Any
 import pytest
 
 from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Steward glass needs Playwright")
 
 TOKEN = "hs163-steward-glass"
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots"
-STOPWATCH_JSON = (
-    REPO / "pm/roadmap/holdspeak/phase-163-the-stewards-hand"
-    / "assets/story-06-stopwatch.json"
-)
-EFFECT_INVENTORY_JSON = (
-    REPO / "pm/roadmap/holdspeak/phase-163-the-stewards-hand"
-    / "assets/story-06-effect-inventory.json"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots")
+STOPWATCH_JSON = evidence_dir("pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets") / "story-06-stopwatch.json"
+EFFECT_INVENTORY_JSON = evidence_dir("pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets") / "story-06-effect-inventory.json"
 
 _RAW_ID_RE = re.compile(r"p[a-z]+_[0-9a-f]{16,}")
 

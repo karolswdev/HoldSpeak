@@ -30,11 +30,12 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 from tests.e2e.test_hs202_05_button_hit_ownership import OWNERSHIP_JS, PROBES, _overlap
+from tests._evidence import evidence_dir
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
 
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits"
+SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits")
 
 _spec = importlib.util.spec_from_file_location("graph_walk_receipt_hits", REPO / "scripts/graph_walk.py")
 gw = importlib.util.module_from_spec(_spec)

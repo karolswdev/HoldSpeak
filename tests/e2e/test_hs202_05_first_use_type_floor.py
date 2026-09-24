@@ -38,11 +38,12 @@ from .glass_infra import (
 )
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs202_05_button_hit_ownership import OWNERSHIP_JS
+from tests._evidence import evidence_dir
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
 
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-05-shots")
 TOKEN = "hs202-05-type-floor"
 MEETING_ID = "m-hs202-05"
 MEETING_TITLE = "First recorded meeting"

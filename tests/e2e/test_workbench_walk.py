@@ -14,10 +14,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="walk needs Playwright + a browser")
 
-ASSETS_DIR = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-116-the-workbench/assets/hs-116-15"
+ASSETS_DIR = evidence_dir("pm/roadmap/holdspeak/phase-116-the-workbench/assets/hs-116-15")
 HUB_URL = os.environ.get("HOLDSPEAK_HUB_URL", "http://localhost:8778")
 
 

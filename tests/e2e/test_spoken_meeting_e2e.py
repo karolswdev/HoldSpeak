@@ -34,6 +34,7 @@ from types import SimpleNamespace
 from urllib.parse import urlparse
 
 import pytest
+from tests._evidence import evidence_dir
 
 pytestmark = [pytest.mark.spoken_e2e, pytest.mark.slow]
 
@@ -45,7 +46,7 @@ if not os.environ.get("HOLDSPEAK_SPOKEN_E2E"):
 
 # The spoken e2e is a living demo; its screenshot lands in the active plugin
 # phase's evidence dir (Phase 28 — it now exercises the Phase-28 plugins too).
-EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-28-plugin-rollout-ii/evidence"
+EVIDENCE_DIR = evidence_dir("pm/roadmap/holdspeak/phase-28-plugin-rollout-ii/evidence")
 
 # A *natural* product conversation — nobody reads out a requirements list. The
 # need is implied, clarified back and forth, and decisions/owners emerge in
@@ -315,7 +316,7 @@ def test_spoken_meeting_end_to_end(tmp_path):
 #   - cross-cutting risks                             → risk_heatmap
 #   - a shareable headline + highlights/risks/next   → stakeholder_update_drafter
 #   - decisions to announce, with audience            → decision_announcement_drafter
-INCIDENT_EVIDENCE_DIR = "pm/roadmap/holdspeak/phase-35-plugin-frontier/evidence"
+INCIDENT_EVIDENCE_DIR = evidence_dir("pm/roadmap/holdspeak/phase-35-plugin-frontier/evidence")
 
 INCIDENT_SCRIPT: list[tuple[str, str, str]] = [
     ("Priya", "Samantha",
@@ -524,9 +525,7 @@ def test_spoken_incident_retro_end_to_end(tmp_path):
 # Assertions are deliberately LOOSE/noise-tolerant (>=1 artifact, no fatal error, no
 # exact-type/wording pins): the job here is to *expose* what the old routing drops, not
 # to assert richness (that's HS-36-05's bar).
-DYNAMIC_EVIDENCE_DIR = (
-    "pm/roadmap/holdspeak/phase-36-meeting-artifact-experience/evidence"
-)
+DYNAMIC_EVIDENCE_DIR = evidence_dir("pm/roadmap/holdspeak/phase-36-meeting-artifact-experience/evidence")
 
 # A genuinely messy meeting: real substance (a product decision, an architecture aside,
 # a prod incident, action items, a risk, a comms plan) is *buried* in small talk,

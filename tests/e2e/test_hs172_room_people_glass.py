@@ -33,13 +33,11 @@ from .glass_infra import (
     _ensure_build,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="Room people glass needs Playwright")
 
-SHOTS = (
-    Path(__file__).resolve().parents[2]
-    / "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-07-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-07-shots")
 #: Shots are tracked evidence: a plain suite run never rewrites them
 #: (HS-200-14, counsel P2-iv; the 388-PNG scar).  HOLDSPEAK_WRITE_SHOTS=1
 #: to (re)take them.

@@ -49,14 +49,12 @@ from .glass_infra import (
     _normal_chair,
     _settle,
 )
+from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="TaskResume glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
-SHOTS = (
-    REPO
-    / "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots")
 TOKEN = "hs200-41-glass"
 
 pytestmark = [pytest.mark.e2e]

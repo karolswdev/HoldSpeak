@@ -48,12 +48,11 @@ from .glass_infra import (
     seed_meeting_engines,
     SUMMARY_CAPABILITY,
 )
+from tests._evidence import evidence_dir
 
 pytestmark = pytest.mark.timeout(600, method="thread")
 
-SHOTS = Path(__file__).resolve().parents[2] / (
-    "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots"
-)
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots")
 TOKEN = "hs201-04-face"
 OWNER = Principal(PrincipalKind.OWNER, "hs201-owner")
 WIDTHS = (1440, 393)
@@ -550,9 +549,7 @@ def _assert_no_overlap(page) -> None:
 
 IMPORT_TOKEN = "hs201-10-import"
 FIXTURE_WAV = Path(__file__).resolve().parents[1] / "fixtures" / "core_path_smoke_16k.wav"
-SHOTS_10 = Path(__file__).resolve().parents[2] / (
-    "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots"
-)
+SHOTS_10 = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots")
 
 
 class _FixtureImportTranscriber:

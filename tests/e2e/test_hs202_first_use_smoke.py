@@ -27,6 +27,7 @@ from .glass_infra import (
 from .test_hs201_09_connect_engine_glass import _StubHandler
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label
+from tests._evidence import evidence_dir
 
 TOKEN = "hs202-first-use"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
@@ -34,7 +35,7 @@ WORDS = "The quick brown fox jumps over the lazy dog."
 NOTE_TITLE = "Fence architecture note"
 NOTE_BODY = "Review the service boundary with the team on Tuesday."
 MEETING_TITLE = "Fence fixture meeting"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence"
+SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence")
 KNOWN = {
     1440: {"thought-door", "save-confirmation", "import-refresh", "record-refresh", "notes-query"},
     393: {
