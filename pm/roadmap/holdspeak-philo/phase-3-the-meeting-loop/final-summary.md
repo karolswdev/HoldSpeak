@@ -91,6 +91,8 @@ New in this closure (not repaired here):
 
 Carried from the council ([COUNCIL.md](../../../../docs/internal/philo/graph/COUNCIL.md), "Deferred, explicitly"): first-value recovery destinations; capture recovery's face and Talk's dropped words; receipt targets and restore; Recall's refresh after a write; Rhythm/Settings local time; the arrival's Record feedback; the Concierge download and cloud Check; Thread's Keep-as-note; raw controls on touched faces. Microphone capture and voice typing into another app stay his sitting.
 
+Found by CI on main, not by the rig (Muad'Dib, 2026-09-23): A4's receipt lines (`KEPT · <time>`, `IN INBOX`, both `role=status` inside the Thought region) break the HS-201-12 thought-note glass fence at both widths with a strict-mode locator violation (`tests/e2e/test_hs201_12_thought_note_glass.py`, four cases; main run at `497d90f3`, unchanged by #618 and #616). The fence's `get_by_role("region", name="Thought")` now matches more than one node. A fence repair or a role change on the receipt lines is owed; the face is as ratified.
+
 Carried from the A2 ledger ([deferred-ledger.md](../../../../docs/internal/philo/phase-3/summary/round-2/deferred-ledger.md)): the aftercare panel covers controls (seen again, `20260924T012106Z/after.png`); ASR instability; the lost cross-layer overlap probe; exception-path failures still print queue wording (`intel_queue.py:557`, `:642`); `1 WORDS` has no singular (`web/src/pages/cores/history/TranscriptWell.tsx:74`). Also: the supersede route shadowed with no change callbacks (A1); `.surface-footer-readiness` at 10 px (A4); the Floor/list view at 393 with the receipt row standing (A1 unknown).
 
 ## Open ledger
