@@ -80,7 +80,9 @@ describe("the BRIEF section: absent, loading, did not load, dated", () => {
     expect(loading.textContent).toBe("READING…");
     expect(loading.classList.contains("surface-receipt-line")).toBe(true);
     expect(screen.queryByText("No brief yet")).toBeNull();
-    expect(screen.queryByTestId("arrival-brief-generate")).toBeNull();
+    // PHILO-4-01 board 2b (supersedes "no Generate while reading"): the
+    // head verb is there, disabled while the read is open.
+    expect((screen.getByTestId("arrival-brief-generate") as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("names a failed read with its status and Retry reads again", async () => {
@@ -96,7 +98,9 @@ describe("the BRIEF section: absent, loading, did not load, dated", () => {
     expect(failed.getAttribute("data-tone")).toBe("danger");
     expect(failed.classList.contains("surface-receipt-line")).toBe(true);
     expect(screen.queryByText("No brief yet")).toBeNull();
-    expect(screen.queryByTestId("arrival-brief-generate")).toBeNull();
+    // PHILO-4-01 board 3b (supersedes "no Generate after a failed read"):
+    // Generate in the head, enabled; Retry still reads again.
+    expect((screen.getByTestId("arrival-brief-generate") as HTMLButtonElement).disabled).toBe(false);
 
     const retry = screen.getByRole("button", { name: "Retry" });
     expect(retry.getAttribute("data-testid")).toBe("arrival-brief-retry");
@@ -129,7 +133,7 @@ describe("the BRIEF section: absent, loading, did not load, dated", () => {
   });
 
   it("puts the date under an empty brief's headline too", async () => {
-    answers = [async () => ({ ...POPULATED, is_empty: true, sections: {}, headline: "Nothing material changed." })];
+    answers = [async () => ({ ...POPULATED, is_empty: true, sections: {}, headline: "No changes" })];
     render(<ChairHome />);
     await screen.findByTestId("arrival-brief-headline");
     expect(screen.getByTestId("arrival-brief-date").textContent).toBe(

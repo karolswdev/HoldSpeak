@@ -383,7 +383,7 @@ class TestBriefHumanVsLedger:
 
         assert brief.is_empty is True
         assert brief.ledger.operations == 10
-        assert brief.headline == "Nothing material changed."
+        assert brief.headline == "No changes"
 
     def test_human_service_items_are_preserved(self, tmp_path):
         """Items from human services appear in the changed section."""

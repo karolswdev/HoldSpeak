@@ -85,5 +85,5 @@ def test_walk_generates_and_delivers_all_four_sections(db: Database) -> None:
 def test_walk_empty_window_is_honest(db: Database) -> None:
     brief = MondayBriefService(db).generate(OWNER, now=NOW)
 
-    assert brief.headline == "Nothing material changed."
+    assert brief.headline == "No changes"
     assert brief.is_empty is True

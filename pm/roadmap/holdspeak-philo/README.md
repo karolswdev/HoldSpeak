@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 3 closure chain on the rig; final summary; exits 2 and 4 flipped, 1 and 3 open).
+**Last updated:** 2026-09-24 (PHILO-4-01 Generate is always reachable: built, fences red pre-fix, step 5 reaches Generate on the rig).
 **Current phase:** [phase-4-the-morning](phase-4-the-morning/current-phase-status.md)
 **Status:** Phases 1 and 2 delivered. Phase 3: all four stories merged (#613 #614 #615 #616); the closure chain ran on the rig — steps 1–4 pass at both widths, step 5 blocked on the face (no Generate verb while yesterday's brief has an untriaged row). Usefulness partial. The owner's sitting remains. See the [final summary](phase-3-the-meeting-loop/final-summary.md).
 

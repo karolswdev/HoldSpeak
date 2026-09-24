@@ -1,0 +1,14 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-4-01/web
+
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  23:30:26
+   Duration  1.09s (transform 1.04s, setup 210ms, import 1.52s, tests 432ms, environment 649ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice

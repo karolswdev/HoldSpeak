@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 4
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** the morning in one move
 - **Owner:** unassigned (two-brains: one owner brain, the other counsels on built)
@@ -19,12 +19,12 @@
 
 ## Acceptance criteria
 
-- [ ] Scope: the Arrival's BRIEF section ONLY (`ChairHome.tsx:1260,1283`). The brief view's own limitation (`BriefView.tsx:297`, Generate only when there is no brief) is retained and ledgered, not repaired here.
-- [ ] The Generate verb is the existing library Button, present on the BRIEF section whether or not day-one rows are untriaged; placed on the canvas at 1440 and 393 with its loading / failed-read / generating states (reachable never means concurrently enabled: disabled while a read or a generation is open) and RATIFIED by the owner before build.
-- [ ] The egress badge, the period/generated date caption and the receipt survive the rendered transition unchanged (A3's caption law).
-- [ ] Generating with untriaged rows keeps those rows' triage state on the old brief's durable shelf (nothing is silently acknowledged or deferred); read back after generation.
-- [ ] Fence: a rendered BRIEF section with one untriaged day-one row HAS the Generate Button (the fence asserts presence; today it is absent, and that absence is the recorded pre-fix red).
-- [ ] Rig: closure chain step 5 as written reaches Generate without the acknowledgement detour, both widths.
+- [x] Scope: the Arrival's BRIEF section ONLY (`ChairHome.tsx:1260,1283`). The brief view's own limitation (`BriefView.tsx:297`, Generate only when there is no brief) is retained and ledgered, not repaired here. — built in `web/src/desk/chair/ChairHome.tsx` only; `BriefView.tsx` changed only its empty label to `No changes` (ask 5), its Generate limitation untouched.
+- [x] The Generate verb is the existing library Button, present on the BRIEF section whether or not day-one rows are untriaged; placed on the canvas at 1440 and 393 with its loading / failed-read / generating states (reachable never means concurrently enabled: disabled while a read or a generation is open) and RATIFIED by the owner before build. — `briefVerbs` (ChairHome.tsx, `<BriefEgress/>` + library `Button`, `disabled={generating || briefLoading}`) passed as `actions` in all five branches; ratified 2026-09-23; fence `generateAlwaysReachable.philo401.test.tsx` (every button in the section has `.btn`).
+- [x] The egress badge, the period/generated date caption and the receipt survive the rendered transition unchanged (A3's caption law). — vitest "keeps the badge, the caption and the receipt through every transition" (success → open → failure).
+- [x] Generating with untriaged rows keeps those rows' triage state on the old brief's durable shelf (nothing is silently acknowledged or deferred); read back after generation. — `tests/unit/test_philo_4_01_generate.py::test_next_day_generate_keeps_the_old_brief_triage` (real service, read back); vitest "never touches the old rows' triage" (no `/shelf` call); rig observations at both widths hold zero `/shelf` requests.
+- [x] Fence: a rendered BRIEF section with one untriaged day-one row HAS the Generate Button (the fence asserts presence; today it is absent, and that absence is the recorded pre-fix red). — "draws Generate in the head while a day-one row is untriaged"; red on origin/main 1c39294c (`Unable to find an element by: [data-testid="arrival-brief-generate"]`, `docs/internal/philo/phase-4/generate/prefix-red-vitest.txt`).
+- [x] Rig: closure chain step 5 as written reaches Generate without the acknowledgement detour, both widths. — runs `20260924T053019Z` (1440) and `20260924T053350Z` (393): one click on the head `Generate`, no Ack, POST 200, a new brief id with the decision in `sections.decisions`. The case predicate (the decision text inside the visible ledger) is FAIL at both widths: the decision is folded behind `1 more` (story 02).
 
 ## Effort (council-style estimate, not a promise)
 
@@ -37,6 +37,8 @@
 - **Manual / device:** the owner's sitting on the morning.
 
 ## Notes
+
+- 2026-09-24 — BUILT (Muad'Dib lane, Opus 5.5 worker): the head verbs in every branch, `GENERATING…`, `BRIEF DID NOT GENERATE · <cause>` with no Retry, `No changes`. Superseded fences moved in the same commit: `briefReceiptRendered202.test.tsx:79` (`Generate again` → `Generate`), `briefLoadAndDate.philo303.test.tsx` (Generate absent while reading / after a failed read → present, disabled / enabled), `ChairHome.test.tsx` write recovery (the write-failure receipt and its Retry → the status line and Generate). Atlas `state.briefs.*` source lines re-pointed. Rig step 5: Generate reached at both widths; the face predicate fails on the fold (story 02).
 
 - 2026-09-23 — RATIFIED by the owner on the round-six canvas ("so... my walk says: yes!"): all six asks. Build what was ratified: the boards in `assets/story-01-canvas/` are the spec; `No changes` (ask 5) is in this story's scope with its wording fences.
 

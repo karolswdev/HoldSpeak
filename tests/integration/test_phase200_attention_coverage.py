@@ -3,7 +3,7 @@
 Real Database, real ProjectService Room reads, real MondayBriefService:
 a Room whose needs-you read fails leaves a coverage record with its
 repair path, its last-known items survive, and the brief says what was
-not observed instead of "Nothing material changed."
+not observed instead of "No changes".
 
 Run:
     HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider \\
@@ -161,7 +161,7 @@ def test_the_brief_names_what_was_not_observed(tmp_path):
     assert gaps, [item.text for item in waiting]
     assert gaps[0].text == "Not observed: Governance"
     assert "READ FAILED" in (gaps[0].detail or "")
-    assert brief.headline != "Nothing material changed.", brief.headline
+    assert brief.headline != "No changes", brief.headline
 
 
 def test_a_healthy_desk_adds_no_coverage_rows_to_the_brief(tmp_path):

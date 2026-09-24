@@ -302,7 +302,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       actionLabel={generating ? "Generating..." : "Generate"}
     />
   ) : brief.is_empty ? (
-    <SurfaceState empty emptyLabel="Nothing material changed" />
+    <SurfaceState empty emptyLabel="No changes" />
   ) : (
     <>
       {/* ── HEAD: period (display, ONCE) + generated (caption) ──

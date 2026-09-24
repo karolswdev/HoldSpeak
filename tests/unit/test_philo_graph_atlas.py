@@ -1149,7 +1149,7 @@ def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: di
 
     # The rig's own verdict on this predicate.
     check = _rig().check_predicate
-    shown = "Nothing material changed."
+    shown = "No changes"
     before = {"text": shown, "attrs": {}}
 
     def after(returned: str | None, displayed: str | None) -> dict:
@@ -1321,7 +1321,7 @@ def test_the_populated_brief_predicate_needs_the_minted_row(atlas: dict) -> None
     check = _rig().check_predicate
     assert not check(predicate, {"text": ""}, {"text": ""})[0], "an empty element passed"
     assert not check(predicate, {"text": ""},
-                     {"text": "Nothing material changed."})[0], "the empty brief passed"
+                     {"text": "No changes"})[0], "the empty brief passed"
     assert check(predicate, {"text": ""},
                  {"text": f"{predicate['value']} Ack Defer"})[0]
 
@@ -1380,7 +1380,7 @@ def test_same_day_same_id_fails_a_different_id_by_machine(atlas: dict) -> None:
     def after(returned_id: str, status: int = 200) -> dict:
         return {"trigger_response": {"method": "POST", "path": "/api/brief/generate",
                                      "status": status, "body": {"id": returned_id,
-                                     "headline": "Nothing material changed."}}}
+                                     "headline": "No changes"}}}
 
     assert rig.check_predicate(bound, {}, after("brief-first"))[0]
     ok, why = rig.check_predicate(bound, {}, after("brief-second"))
@@ -1421,7 +1421,7 @@ def test_j10_retention_is_proven_after_another_reload(atlas: dict) -> None:
     face = _case(atlas, RETAINED_FACE)
     assert face["expected"]["observe_at"] == BRIEF_HEADLINE
     assert sorted(face["viewports"]) == [393, 1440]
-    shown = "Nothing material changed."
+    shown = "No changes"
     fp = rig.substitute(face["expected"]["predicate"], {"second_headline": shown})
     assert rig.check_predicate(fp, {}, {"text": shown, "target_present": True})[0]
     ok, why = rig.check_predicate(fp, {}, {"text": "", "target_present": False})

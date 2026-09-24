@@ -1,0 +1,1213 @@
+
+ RUN  v4.1.9 <git archive origin/main 1c39294c + fence overlay>/web
+
+ ❯ src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx (6 tests | 2 failed) 47ms
+     × says READING… while the read is open 7ms
+     × names a failed read with its status and Retry reads again 6ms
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx (4 tests | 1 failed) 60ms
+     × shows an empty brief's own words and keeps Generate after a reload 24ms
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx (10 tests | 10 failed) 1078ms
+     × draws Generate in the head while a day-one row is untriaged 24ms
+     × disables Generate while the read is open 5ms
+     × says GENERATING… in the status slot and disables Generate while it runs 5ms
+     × names a failed generation with no Retry and Generate enabled 5ms
+     × says NO ANSWER when the generation got no response 5ms
+     × keeps Retry on a failed read, with Generate in the head 5ms
+     × keeps the badge, the caption and the receipt through every transition 4ms
+     × never touches the old rows' triage when it generates 4ms
+     × draws Generate on the quiet branch (every row triaged), not Generate again 6ms
+     × puts a failed generation in the place of No brief yet 1014ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says READING… while the read is open
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-line"[39m
+            [33mdata-testid[39m=[32m"arrival-brief-loading"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mREADING…[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx:85:20
+     83|     // PHILO-4-01 board 2b (supersedes "no Generate while reading"): t…
+     84|     // head verb is there, disabled while the read is open.
+     85|     expect((screen.getByTestId("arrival-brief-generate") as HTMLButton…
+       |                    ^
+     86|   });
+     87|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > names a failed read with its status and Retry reads again
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-failed"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"surface-receipt-line"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-load-failed"[39m
+              [33mdata-tone[39m=[32m"danger"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mBRIEF DID NOT LOAD · HTTP 500[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-retry"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRetry[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx:103:20
+    101|     // PHILO-4-01 board 3b (supersedes "no Generate after a failed rea…
+    102|     // Generate in the head, enabled; Retry still reads again.
+    103|     expect((screen.getByTestId("arrival-brief-generate") as HTMLButton…
+       |                    ^
+    104|
+    105|     const retry = screen.getByRole("button", { name: "Retry" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate is badged before and receipted after (counsel 2) > shows an empty brief's own words and keeps Generate after a reload
+AssertionError: expected 'Generate again' to be 'Generate' // Object.is equality
+
+Expected: "Generate"
+Received: "Generate again"
+
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx:79:31
+     77|     expect(headline.textContent).toBe("No changes");
+     78|     const again = screen.getByTestId("arrival-brief-generate");
+     79|     expect(again.textContent).toBe("Generate");
+       |                               ^
+     80|     expect(screen.queryByText("No brief yet")).toBeNull();
+     81|     // Pressing it makes another brief: the POST fires and the receipt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate in the head while a day-one row is untriaged
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<header[39m
+  [33mclass[39m=[32m"surface-section-head"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mBRIEF · 1 THING WAITING[0m
+  [36m</h3>[39m
+[36m</header>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHeadVerbs src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:105:44
+    103|   expect(head).toBeTruthy();
+    104|   const chip = head!.querySelector(".gadget-chip-egress");
+    105|   const verb = within(head as HTMLElement).getByTestId("arrival-brief-…
+       |                                            ^
+    106|   expect(chip?.textContent).toBe("THIS DEVICE");
+    107|   expect(verb.textContent).toBe("Generate");
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:133:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > disables Generate while the read is open
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<header[39m
+  [33mclass[39m=[32m"surface-section-head"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mBRIEF[0m
+  [36m</h3>[39m
+[36m</header>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHeadVerbs src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:105:44
+    103|   expect(head).toBeTruthy();
+    104|   const chip = head!.querySelector(".gadget-chip-egress");
+    105|   const verb = within(head as HTMLElement).getByTestId("arrival-brief-…
+       |                                            ^
+    106|   expect(chip?.textContent).toBe("THIS DEVICE");
+    107|   expect(verb.textContent).toBe("Generate");
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:143:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says GENERATING… in the status slot and disables Generate while it runs
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 1 THING WAITING[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mReview decision: Adopt the one desk bus[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ generateButton src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:97:37
+     95| }
+     96|
+     97| const generateButton = () => screen.getByTestId("arrival-brief-generat…
+       |                                     ^
+     98|
+     99| /** The head carries the badge, then Generate, both inside the section…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:156:7
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:155:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > names a failed generation with no Retry and Generate enabled
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 1 THING WAITING[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mReview decision: Adopt the one desk bus[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ generateButton src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:97:37
+     95| }
+     96|
+     97| const generateButton = () => screen.getByTestId("arrival-brief-generat…
+       |                                     ^
+     98|
+     99| /** The head carries the badge, then Generate, both inside the section…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:188:7
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:187:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says NO ANSWER when the generation got no response
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 1 THING WAITING[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mReview decision: Adopt the one desk bus[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ generateButton src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:97:37
+     95| }
+     96|
+     97| const generateButton = () => screen.getByTestId("arrival-brief-generat…
+       |                                     ^
+     98|
+     99| /** The head carries the badge, then Generate, both inside the section…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:215:7
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:214:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps Retry on a failed read, with Generate in the head
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<header[39m
+  [33mclass[39m=[32m"surface-section-head"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mBRIEF[0m
+  [36m</h3>[39m
+[36m</header>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ expectHeadVerbs src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:105:44
+    103|   expect(head).toBeTruthy();
+    104|   const chip = head!.querySelector(".gadget-chip-egress");
+    105|   const verb = within(head as HTMLElement).getByTestId("arrival-brief-…
+       |                                            ^
+    106|   expect(chip?.textContent).toBe("THIS DEVICE");
+    107|   expect(verb.textContent).toBe("Generate");
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:234:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps the badge, the caption and the receipt through every transition
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 1 THING WAITING[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mReview decision: Adopt the one desk bus[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ generateButton src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:97:37
+     95| }
+     96|
+     97| const generateButton = () => screen.getByTestId("arrival-brief-generat…
+       |                                     ^
+     98|
+     99| /** The head carries the badge, then Generate, both inside the section…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:267:7
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:266:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > never touches the old rows' triage when it generates
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF · 1 THING WAITING[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mReview decision: Adopt the one desk bus[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mAck[0m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mDefer[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-receipt-line"[39m
+          [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+        [36m>[39m
+          [0mSEP 21 – 23 · GENERATED SEP 23 17:40[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ generateButton src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:97:37
+     95| }
+     96|
+     97| const generateButton = () => screen.getByTestId("arrival-brief-generat…
+       |                                     ^
+     98|
+     99| /** The head carries the badge, then Generate, both inside the section…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:302:7
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:301:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate on the quiet branch (every row triaged), not Generate again
+AssertionError: expected 'Generate again' to be 'Generate' // Object.is equality
+
+Expected: "Generate"
+Received: "Generate again"
+
+ ❯ expectHeadVerbs src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:107:28
+    105|   const verb = within(head as HTMLElement).getByTestId("arrival-brief-…
+    106|   expect(chip?.textContent).toBe("THIS DEVICE");
+    107|   expect(verb.textContent).toBe("Generate");
+       |                            ^
+    108|   // badge BEFORE the verb (UX-CANON A.9)
+    109|   expect(chip!.compareDocumentPosition(verb) & Node.DOCUMENT_POSITION_…
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:319:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > puts a failed generation in the place of No brief yet
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-brief-generate-failed"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-empty"[39m
+          [36m>[39m
+            [0mNo brief yet[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-empty"[39m
+          [36m>[39m
+            [0mNo brief yet[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx:336:26
+    334|       generateButton().click();
+    335|     });
+    336|     expect((await screen.findByTestId("arrival-brief-generate-failed")…
+       |                          ^
+    337|       "BRIEF DID NOT GENERATE · HTTP 500",
+    338|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  13 failed | 7 passed (20)
+   Start at  23:26:01
+   Duration  2.09s (transform 1.02s, setup 295ms, import 1.53s, tests 1.18s, environment 935ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
