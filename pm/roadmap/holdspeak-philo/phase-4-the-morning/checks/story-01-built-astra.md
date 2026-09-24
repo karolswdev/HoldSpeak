@@ -26,4 +26,29 @@ MISSED:
 
 TUESDAY: He can Generate without acknowledging yesterday’s rows; he still cannot read the new decision directly in the morning view.
 
-UNKNOWN: The claimed **422-test** run is absent from the named evidence pack. Full-suite/CI results and built failure-state geometry were not independently verified. Retained walks identify base revision `1c39294c`, dirty; their capture index is the base tree, so it does not bind the unstaged build exactly to HEAD. No rig or real-desk run performed; the worktree remains unchanged.
+UNKNOWN: The claimed **422-test** run is absent from the named evidence pack. Full-suite/CI results and built failure-state geometry were not independently verified. Retained walks identify base revision `1c39294c`, dirty; their capture index is the base tree, so it does not bind the unstaged build exactly to HEAD. No rig or real-desk run performed; the worktree remains unchanged.# Check — Astra, 2026-09-24, round two on built: PHILO-4-01 (PR #625 @ 50ffb79e)
+
+VERDICT: BOUNCE — do not merge #625 at `50ffb79e` yet. The r1 corrections pass; two other generated references are stale.
+
+FINDINGS:
+
+1. **Blocking: API reference drift introduced by the new fence.** `python3 scripts/philo_api_reference.py --check` exits 1. The generated result adds exactly one test candidate, `test_philo4_01_atlas_contracts.py`, under POST `/api/brief/generate`; `docs/generated/api-reference.json:4297` lacks it. [PR CI fails here](https://github.com/karolswdev/HoldSpeak/actions/runs/35961694525/job/107511458443); [the same job passed on base `1c39294c`](https://github.com/karolswdev/HoldSpeak/actions/runs/35959499473/job/107504828508). **Tenet 3; Article IX.3.**
+
+2. **Blocking: boundary census drift follows it.** `python3 scripts/philo_boundary_census.py --check` also exits 1. `docs/generated/boundary-candidates.json:6755` retains six old ChairHome line anchors: `817→861`, `968→1012`, `1481→1508`, `1763→1790`, `1817→1844`, `1876→1903`. No candidate content changed. Base CI passed this check too. **Tenet 3; Article IX.3.**
+
+3. **The r1 atlas and graph blockers are paid.** I collected all eight `tests/unit/test_philo4_01_atlas_contracts.py:78`, reproduced **6 failed / 2 passed** against the archived `8ff1e0a8` atlas outside the tree, then **8 passed** against HEAD. The broader scoped run passed **98 tests**. The corrected claims match the producer and quiet branch. Graph `--check` exits 0 with 14 subtype notes; validation passes with `uv run --extra dev python`. Requiring that dependency environment is not a defect. Sealed passes, earlier observations and `atlas-phase3.json` remain unchanged.
+
+4. **The six retained runs support the corrected contracts.** I opened every requested `after.png` and read the observations: all six are PASS/settled, use isolated HOME/DB paths, and carry the current atlas hash. Results are visible and unobscured at both widths: `pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-shots/20260924T054807Z-case.j10.arrival_generate_brief.generated_empty-muaddib-393/after.png`, `pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-shots/20260924T054825Z-case.j10.arrival_reload.reload_persisted-muaddib-393/after.png`, `pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-shots/20260924T054842Z-case.j10.route_brief_generate.load_failure-muaddib-393/after.png`. The failure runs record one fulfilled browser-boundary POST fault; they prove the face’s response to HTTP 500. The `pm/roadmap/holdspeak-philo/phase-4-the-morning/evidence-story-01.md:201` is now present, and the canvas status says RATIFIED.
+
+CONDITIONS:
+
+Regenerate the API reference and boundary census, retain green checks for both, and complete the normal CI comparison before merge. Record this r2 check. No further product-code repair identified.
+
+MISSED:
+
+1. **Inherited thought-case tooling debt:** `.write-receipt-label` remains correct—`web/src/desk/newThought.ts:38` still reports through that channel. However, `docs/internal/philo/graph/atlas.json:6116` requests unsupported `route_failure`, which `scripts/graph_walk.py:2732` blocks. This case is unchanged from main: ledger it separately; do not claim it runnable.
+2. **Nonblocking prose debt:** `docs/internal/philo/graph/atlas.json:5023`, `:5211`, and `docs/internal/philo/graph/atlas-phase3.json:2522` describe retired restrictions. These are not executable predicates; correct them during atlas maintenance.
+
+TUESDAY: He can Generate without acknowledging yesterday’s rows and see success or failure; reading the new decision directly still depends on story 02.
+
+UNKNOWN: No rig or full-suite run performed. Remaining CI results were unfinished. Retained walks name `8ff1e0a8`, dirty, with `--no-build`; current atlas hashes match, but exact bundle-to-HEAD provenance remains unproven. The worktree is unchanged.
