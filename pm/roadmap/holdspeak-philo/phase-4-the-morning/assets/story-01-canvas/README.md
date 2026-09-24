@@ -1,10 +1,26 @@
 # PHILO-4-01 canvas: Generate is always reachable (with the PHILO-4-02 row order)
 
-**Status: UNRATIFIED, round two.** Astra checked round one and bounced it (six findings). This round pays them. The owner has not seen these boards. Build nothing until he ratifies them (UX-CANON A.2).
+**Status: UNRATIFIED, round three.** Astra checked round one and bounced it (six findings); round two paid them. Astra checked round two: RATIFY-WITH-CONDITIONS (four conditions). Round three pays them. The owner has not seen these boards. Build nothing until he ratifies them (UX-CANON A.2).
 
 **Canvas:** https://claude.ai/artifact/LHjuHKL1pVZuh4aK5J9qRU
 
-`morning-brief.html` is one self-contained page, with the shots inlined and no fetch. `morning-brief.png` shows the page at 1440 and `morning-brief-393.png` shows it at 393. Each board has its own PNG in `shots/` at `<board>-1440.png` and `<board>-393.png`, taken at device scale 2 from the `[data-testid=arrival-brief]` element. `shots/labels.json` lists the exact strings for each board. `shots/facts.json` holds the facts measured in the rendered DOM for each shot.
+`morning-brief.html` is one self-contained page (rebuilt in round three with all 16 boards and the two library probes), with the shots inlined and no fetch. `morning-brief.png` shows the page at 1440 and `morning-brief-393.png` shows it at 393. Each board has its own PNG in `shots/` at `<board>-1440.png` and `<board>-393.png`, taken at device scale 2 from the `[data-testid=arrival-brief]` element. `shots/labels.json` lists the exact strings for each board. `shots/facts.json` holds the facts measured in the rendered DOM for each shot.
+
+## Round three: what changed
+
+1. **Board 7 split** (condition 1). The producer writes `Nothing material changed.` only when the brief has zero items (`holdspeak/services/monday_brief_service.py:340-341`). Triage writes the shelf (`shelve`, `:1110-1139`, into `monday_brief_item_shelf`); it does not rewrite the stored headline. So "empty" and "fully triaged" are two faces:
+   - **7a, empty brief.** Zero items. Today the headline is the producer's sentence. UX-CANON A.3 applies to it (it is product copy, not the owner's data). **Proposed: `No changes`.** The build changes the producer string and its wording fences in the same commit, or the owner keeps the sentence. The fences that name the sentence today: `holdspeak/services/monday_brief_service.py`, `web/src/desk/chair/ChairHome.tsx`, `web/src/desk/pullouts/views/BriefView.tsx`, `web/src/desk/chair/__tests__/briefReceiptRendered202.test.tsx`, `web/src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx`, `tests/unit/test_monday_brief_service.py`, `tests/unit/test_walk_monday_brief_126.py`, `tests/unit/test_hs171_aggregate_notify.py`, `tests/unit/test_philo_graph_atlas.py`, `tests/integration/test_phase200_attention_coverage.py`, `tests/fixtures/graph_walk_calibration.html`.
+   - **7b, fully triaged.** The day-one brief (4 items), every row Ack'd or Defer'd. `untriagedBrief` is empty (`ChairHome.tsx:806-808`), so the quiet branch renders (`:1286-1328`): the rows leave the Arrival, the head label is `BRIEF` with no count, the **stored headline** shows (`1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.`, composed at `monday_brief_service.py:346-387`), then the caption. Today the verb is `Generate again`; proposed `Generate`. **Observation, not a proposal:** that headline still counts the four items the owner has triaged. It is a sentence, and its counts are stale after triage. The owner decides whether it stays.
+2. **The missing compositions** (condition 2): `6b` (no brief yet, the generation failed: the failure line takes the place of `No brief yet`, Generate enabled, no Retry), `8a` (the quiet branch while generating: `GENERATING…` under the caption, Generate disabled), `8b` (the quiet branch after a failed generation: the danger line under the caption, Generate enabled, no Retry) and `9` (a successful Generate that made an empty brief: the quiet branch holds the receipt, `ChairHome.tsx:1315`). 8a and 8b are drawn on 7b; on 7a only the headline line differs, so they have no second shot.
+3. **The `0 items` ruling** (condition 2, board 9). `0 items` is a counter of zero (UX-CANON: no counters of zero). The product already drops it: `briefReceipt` pushes the count only when it is above 0 (`web/src/desk/chair/briefEgress.tsx:51-56`). Board 9 shows `Brief ready · 8:02 AM`. There is no change to make.
+4. **Library containment** (condition 3), in the species:
+   - `web/src/desk/surface/surface.css:72-74` `.surface-section-head h3`: `min-width: 0` and `overflow-wrap: anywhere` (new). A long single word breaks inside the label; it does not push the head wider than its section.
+   - `web/src/desk/surface/surface.css:59-67`: the head no-shrink rule adds `.surface-section-head > .quiet`. With the label able to shrink, flex squeezed the `123 members` fact onto two lines; now the fact keeps its width.
+   - `web/src/desk/surface/gadgets.css:830-851` `.gadget-chip`: `display: inline-flex; align-items: center` → `display: inline-block; vertical-align: middle`, plus `max-width: 32ch; overflow: hidden; text-overflow: ellipsis`, and `font: 600 12px / 1` → `600 12px / 16px` (16 px line + the 1 px border keeps the 18 px chip). An ellipsis paints only in a block container, so the chip is inline-block now (the same shape `.surface-record-id > .gadget-chip` already uses, `surface.css:487-493`). A `max-width` in percent does not help here: the Jira action row is content-sized (`connections.css:72-78`, `flex-shrink: 0`), so a percentage is cyclic and ignored for its width. `32ch` is a length.
+   - **Proof (rendered, Playwright, 393):** two probes render the REAL `DirectoryPullout` and the REAL `ConnectionsPane` (a stubbed `fetch`): `shots/lib-directory-393.png`, `shots/lib-jira-chip-393.png`, facts in `shots/facts.json` (`lib-directory-393`, `lib-jira-chip-393`). `shoot.py` fails the run on horizontal overflow, a probe outside the viewport, or a Button whose text leaves its box. **Before the fix both probes FAILED** (Directory head 413 px in a 365 px section, right edge 413 > 393; Jira row 435 px in a 365 px group, the chip 344 px wide). **After:** Directory head 365 px, label 268 px on 2 lines, no overflowing element; Jira row 365 px, chip 230 px with `text-overflow: ellipsis` (scroll 342 > client 228), `Recheck` 68 px with its 50 px word inside its box.
+   - **The Directory probe uses a longer name** than Astra's (`ArchitectureDecisionReviewWorkspace2026PlatformGuild`). Inside a pullout, the head label is **10 px**, not 12 px: `web/src/desk/components/window-chrome.css:207-216` (`.desk-next .desk-pullout-body h3`) overrides the species. At 10 px Astra's 39-character name fits at 393 today (257 px), so the probe needs a longer word to fail without containment. The 10 px pullout label is in the ledger below.
+   - **The 20 shots of the ten unchanged boards are byte-identical to round two** (git sees no change in them): the chip and label changes move no pixel on the BRIEF section.
+5. **Healed floor allowances removed** (condition 4): `tests/e2e/test_hs202_05_first_use_type_floor.py` `FLOOR_LEDGER`: 24 entries deleted (every `h3@10px` and every `.gadget-chip.gadget-chip-egress@10px`, at 393 and 1440). A regression to 10 px is now `M7 NEW` and fails (`:710-715` after the deletion: `if sig not in FLOOR_LEDGER` → `M7 NEW`). The other residue stays. I did not run that e2e test (it boots the product).
 
 ## Round two: what changed
 
@@ -24,12 +40,13 @@
 
 ## What the measurements prove, and what they do not
 
-- **The 12 px floor.** `shoot.py` walks EVERY painted text node inside `[data-testid=arrival-brief]` and reads its computed `font-size` (`facts.json` `texts`, `min_text_px`, `floor_ok`). It fails the run if any shot is under 12 px. Result: `min_text_px: 12` on all 22 shots. It reads text nodes only; it does not read `::before`/`::after` content.
+- **The 12 px floor.** `shoot.py` walks EVERY painted text node inside `[data-testid=arrival-brief]` and reads its computed `font-size` (`facts.json` `texts`, `min_text_px`, `floor_ok`). It fails the run if any shot is under 12 px. Result: `min_text_px: 12` on all 32 brief shots (round three). It reads text nodes only; it does not read `::before`/`::after` content.
 - **The hit probe.** For each Button, `elementFromPoint` at the center and at four points 1 px inside the left and right edges, 21 px above and below the center (`owns_44_band`). It does not probe edge midpoints, and it is not a real pointer. Result: `true` for every Button at 393; `false` at 1440, where the halo is not applied (the same as round one).
 - **The head.** `head.label_lines`, `head.chip_h`, and for each Button `w`, `content_w`, `text_w` and `text_fits` (the text range inside the Button box).
 - **Scope of the render.** The harness renders only the BRIEF section inside `Chair`, not the full Arrival. So the viewport numbers (`rows[].in_viewport`) do not prove clearance from the real Arrival footer or the sections above. That clearance is for the build to prove on the real face.
 - **Order.** The `created_at` values of boards 4 and 5 live only in code comments in `harness/main.tsx` and in `labels.json`. The harness shows the proposed order; it does not prove that the producer or a reload keeps that order. Story 02 proves it.
 - Also on every shot: `raw_buttons: 0`, no horizontal scroll (`scrollW` = `vw`), no console errors.
+- **The library probes** (round three) measure `scrollWidth` against `clientWidth` on every element inside the probe (a truncated chip with `text-overflow: ellipsis` is not counted as overflow), the probe's box against the viewport, and each Button's text range against its box. jsdom cannot measure layout, so this is a Playwright check, not a vitest test. The probe widths come from the real pullout body at a 393 viewport (14 px padding, a 365 px section); a pullout window narrower than the viewport is not probed.
 
 ## The one placement
 
@@ -37,7 +54,7 @@ Generate goes in the BRIEF section's **head verb slot**, after the egress badge 
 
 The rule for every branch: the head has the badge and Generate. Generate is **disabled while a read or a generation is open**, and enabled in all other states. The status slot under the section holds one line: the open request (`READING…`, `GENERATING…`) or the last failure.
 
-## The boards (11 boards × 2 widths = 22 shots)
+## The boards (16 boards × 2 widths = 32 shots, plus 2 library probes at 393)
 
 | # | Board | 1440 | 393 | What it shows |
 |---|---|---|---|---|
@@ -50,10 +67,17 @@ The rule for every branch: the head has the badge and Generate. Generate is **di
 | 3c | Generate after a load failure | `shots/3c-generate-after-load-failure-1440.png` | `shots/3c-generate-after-load-failure-393.png` | `Generate` pressed from 3b: `GENERATING…` takes the status slot (the read-failure line and its Retry go), `Generate` disabled. Success: the populated branch with the receipt (board 4). Failure: `BRIEF DID NOT GENERATE · <cause>`, `Generate` enabled (board 3a) |
 | 4 | Next day, one Generate | `shots/4-next-day-one-decision-1440.png` | `shots/4-next-day-one-decision-393.png` | The new decision is row 1 at both widths; caption `SEP 21 – 24 · GENERATED SEP 24 08:02`; the badge does not change; `3 more` = 6 − 3 |
 | 5 | Next day, several decisions | `shots/5-next-day-several-decisions-1440.png` | `shots/5-next-day-several-decisions-393.png` | Decisions newest first (illustrated `created_at`: SEP 24 07:58, SEP 23 16:10, SEP 22 11:30 visible; SEP 21 09:05 in the fold); `4 more` = 7 − 3 |
-| 6 | No brief yet | `shots/6-null-brief-1440.png` | `shots/6-null-brief-393.png` | No brief on the hub: `No brief yet` (A3) and `Generate` in the head. Busy: `GENERATING…` takes the place of `No brief yet`, `Generate` disabled (the 3c treatment). Failure: `BRIEF DID NOT GENERATE · <cause>`, `Generate` enabled. Result: the populated branch with the receipt (board 4) |
-| 7 | Nothing untriaged | `shots/7-nothing-untriaged-1440.png` | `shots/7-nothing-untriaged-393.png` | A brief with every row triaged: headline `Nothing material changed.`, caption, `Generate` (today: `Generate again`). Busy: `GENERATING…` under the caption (the 2a treatment). Failure: the danger line under the caption, `Generate` enabled (the 3a treatment). Result: the populated branch with the receipt |
+| 6 | No brief yet | `shots/6-null-brief-1440.png` | `shots/6-null-brief-393.png` | No brief on the hub: `No brief yet` (A3) and `Generate` in the head. Busy: the 3c composition (`GENERATING…` in place of `No brief yet`). Failure: board 6b. Result: the populated branch with the receipt (board 4), or board 9 when the brief is empty |
+| 6b | No brief yet, did not generate | `shots/6b-null-brief-did-not-generate-1440.png` | `shots/6b-null-brief-did-not-generate-393.png` | `BRIEF DID NOT GENERATE · HTTP 500` in place of `No brief yet`; `Generate` enabled; no Retry |
+| 7a | Empty brief (zero items) | `shots/7a-empty-brief-1440.png` | `shots/7a-empty-brief-393.png` | **Proposed** headline `No changes` (today `Nothing material changed.`), the caption, `Generate` |
+| 7b | Fully triaged | `shots/7b-fully-triaged-1440.png` | `shots/7b-fully-triaged-393.png` | Day-one brief, all rows Ack'd/Defer'd: no rows, head `BRIEF`, the stored headline (it still counts the four items), the caption, `Generate` (today `Generate again`) |
+| 8a | Quiet branch, generating | `shots/8a-quiet-generating-1440.png` | `shots/8a-quiet-generating-393.png` | 7b while the generation is open: `GENERATING…` under the caption, `Generate` disabled |
+| 8b | Quiet branch, did not generate | `shots/8b-quiet-did-not-generate-1440.png` | `shots/8b-quiet-did-not-generate-393.png` | 7b after a failed generation: `BRIEF DID NOT GENERATE · HTTP 500` under the caption, `Generate` enabled, no Retry |
+| 9 | Empty brief, receipt | `shots/9-empty-success-receipt-1440.png` | `shots/9-empty-success-receipt-393.png` | A successful Generate that made zero items: `No changes`, the caption, `Brief ready · 8:02 AM` (no `0 items`) |
+| lib | Directory head | — | `shots/lib-directory-393.png` | The real `DirectoryPullout`: a long one-word name wraps inside the label; `123 members` on one line |
+| lib | Jira chip | — | `shots/lib-jira-chip-393.png` | The real `ConnectionsPane` Jira row: the host chip ends in `…` at 32ch; `Recheck` keeps its width |
 
-Boards 6 and 7 show their resting state. Their busy, failure and result states use the same treatment as boards 2a, 3a, 3c and 4 (named in each row above); they have no shot of their own.
+Every state of every branch now has its own shot, except where two states are identical (8a and 8b on 7a differ from 7b only in the headline).
 
 Triage across the Generate (boards 1 to 4): the new brief has new item ids, so its rows start untriaged. The day-one rows keep their triage state on the day-one brief's shelf: nothing is acknowledged or deferred by the Generate. The Arrival shows only the latest brief, so that shelf is not on this face. The build proves it by reading the old brief back (story 01 acceptance 4).
 
@@ -68,7 +92,8 @@ The fold count is honest: `N more` = rows − 3. It shows only when N > 0 (`Chai
 | `BRIEF · <n> THINGS WAITING` / `BRIEF · 1 THING WAITING` | head label | kept |
 | `BRIEF` | head label when there are no rows | kept |
 | `No brief yet` | no brief on the hub | kept (A3) |
-| `Nothing material changed.` | the brief's own headline, nothing untriaged | kept (the brief's words) |
+| `No changes` | the headline of a brief with zero items (boards 7a, 9) | **proposed**; replaces the producer's `Nothing material changed.` (`monday_brief_service.py:341`), with its fences, or the owner keeps the sentence |
+| `<n> <thing> …, <n> <thing> ….` | the stored headline of a populated brief, shown when every row is triaged (7b, 8a, 8b) | kept (the producer's words); observation: its counts are stale after triage |
 | `Ack` · `Defer` · `<n> more` | row verbs, fold | kept |
 | `GENERATING…` | status slot while the generation is open | new (READING… idiom); replaces the Button label `Generating...` |
 | `READING…` | read open | kept (PHILO-3-03) |
@@ -76,7 +101,7 @@ The fold count is honest: `N more` = rows − 3. It shows only when N > 0 (`Chai
 | `BRIEF DID NOT LOAD · HTTP <n>` / `… · NO ANSWER` | read failed | kept (PHILO-3-03) |
 | `Retry` | after a READ failure only | kept |
 | `<period_label> · <generated_label>` e.g. `SEP 21 – 24 · GENERATED SEP 24 08:02` | caption | kept (A3 law) |
-| `Brief ready · <n> items · <time>` | receipt after the click | kept (`briefReceipt`) |
+| `Brief ready · <n> items · <time>` / `Brief ready · <time>` | receipt after the click; the count is dropped at 0 (`briefEgress.tsx:51-56`) | kept (`briefReceipt`) |
 
 **Wording fence.** `web/src/desk/chair/__tests__/briefReceiptRendered202.test.tsx:79` expects `Generate again`. The build changes that assertion to `Generate` in the same commit that changes the label.
 
@@ -89,6 +114,8 @@ The fold count is honest: `N more` = rows − 3. It shows only when N > 0 (`Chai
 - Story 02 (Astra's lane): `:801` puts `decisions` first; decision items carry the decision record's `created_at` and sort newest first; the other sections keep their order.
 
 ## Readable text still under 12 px (ledger, not fixed here)
+
+- `desk/components/window-chrome.css:210` 10px `.desk-next .desk-pullout-body h3` (round three: overrides the 12 px section-head label inside every pullout; found by the Directory probe)
 
 From `web/src/desk/surface/*.css` and `web/src/styles/global.css` (file:line, size, selector). Some are glyphs (a mic, a dot, an arrow, a fold marker); a glyph may go below the floor when a word carries its meaning (UX-CANON, the 12 px floor). One line each; each is a species fix for its own story.
 
@@ -170,4 +197,6 @@ From `web/src/desk/surface/*.css` and `web/src/styles/global.css` (file:line, si
 1. **Placement:** is `Generate` in the BRIEF head (after `THIS DEVICE`) right, present in every state and disabled only while a read or generation is open (boards 1, 2a, 2b, 3c, 6, 7)? One label, `Generate`, in place of `Generate again`.
 2. **Order and cap:** do we keep three rows with decisions first, newest first by when each decision was recorded, and the rest behind `N more` (boards 4, 5)?
 3. **Scope:** do we fix the Arrival only, and leave the brief window's Generate (`BriefView.tsx:297`) for later?
-4. **One verb on a generate failure** (board 3a): Retry removed; the enabled `Generate` is the recovery. Paid this round on Astra's check; shown for your word.
+4. **One verb on a generate failure** (boards 3a, 6b, 8b): Retry removed; the enabled `Generate` is the recovery. Paid on Astra's round-one check; shown for your word.
+5. **`No changes`** (boards 7a, 9): do we replace the producer's `Nothing material changed.` with `No changes` (the build changes the producer string and its fences together), or keep the sentence?
+6. **The fully-triaged headline** (board 7b): the stored headline still counts rows you triaged. Keep it, or ask for a later story?

@@ -118,21 +118,90 @@
    "Generate"
   ],
   "empty": "No brief yet",
-  "busy": "Generate disabled + GENERATING… in place of No brief yet (board 3c treatment)",
-  "failure": "BRIEF DID NOT GENERATE · <cause>, Generate enabled",
+  "busy": "Generate disabled + GENERATING… in place of No brief yet (the board 3c composition: same head label, same one line)",
+  "failure": "board 6b",
   "result": "the populated branch with the receipt (board 4 treatment)"
  },
- "7-nothing-untriaged": {
-  "state": "Board 7: a brief exists, every row triaged; today this branch says Generate again (ChairHome.tsx:1304)",
+ "6b-null-brief-did-not-generate": {
+  "state": "Board 6b: no brief yet; the generation failed; the failure line takes the place of No brief yet",
   "head": "BRIEF",
   "egress": "THIS DEVICE",
   "verbs": [
    "Generate"
   ],
-  "headline": "Nothing material changed.",
+  "status": "BRIEF DID NOT GENERATE · HTTP 500",
+  "retry": null
+ },
+ "7a-empty-brief": {
+  "state": "Board 7a: a brief generated with ZERO items (ChairHome.tsx:1286-1328 quiet branch)",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "No changes",
+  "headline_today": "Nothing material changed. (monday_brief_service.py:340-341)",
+  "headline_status": "PROPOSED: the build changes the producer string and its wording fences together, or the owner keeps the sentence",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "7b-fully-triaged": {
+  "state": "Board 7b: the day-one brief (4 items), all four rows Ack'd/Defer'd; untriagedBrief is empty, so the quiet branch renders (ChairHome.tsx:1286-1328); the rows are gone from the Arrival",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "verbs_today": [
+   "Generate again"
+  ],
+  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+  "headline_source": "the stored headline (monday_brief_service.py:346-387); triage does not rewrite it",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+ },
+ "8a-quiet-generating": {
+  "state": "Board 8a: the quiet branch (7a and 7b share it) while the generation is open; drawn on 7b, on 7a only the headline differs",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate (disabled)"
+  ],
+  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
-  "busy": "Generate disabled + GENERATING… under the caption (board 2a treatment)",
-  "failure": "BRIEF DID NOT GENERATE · <cause> under the caption, Generate enabled (board 3a treatment)",
-  "result": "the populated branch with the receipt (board 4 treatment)"
+  "status": "GENERATING…"
+ },
+ "8b-quiet-did-not-generate": {
+  "state": "Board 8b: the quiet branch after a failed generation; no Retry, the enabled Generate repeats the POST",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "1 commitment due, 1 thing changed, 1 thing waiting, 1 decision waiting.",
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "status": "BRIEF DID NOT GENERATE · HTTP 500"
+ },
+ "9-empty-success-receipt": {
+  "state": "Board 9: a successful generation that produced an empty brief; the quiet branch holds the receipt (ChairHome.tsx:1315)",
+  "head": "BRIEF",
+  "egress": "THIS DEVICE",
+  "verbs": [
+   "Generate"
+  ],
+  "headline": "No changes",
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 8:02 AM",
+  "receipt_rule": "no counter of zero: briefReceipt drops the count when it is 0 (web/src/desk/chair/briefEgress.tsx:51-56); never `Brief ready · 0 items · 8:02 AM`"
+ },
+ "lib-directory": {
+  "state": "Library probe: the REAL DirectoryPullout at 393, a long single-word directory name",
+  "head": "ARCHITECTUREDECISIONREVIEWWORKSPACE2026PLATFORMGUILD (wraps inside the label)",
+  "fact": "123 members (one line)"
+ },
+ "lib-jira-chip": {
+  "state": "Library probe: the REAL ConnectionsPane Jira row at 393 (stubbed wire), a long site host",
+  "verbs": [
+   "Recheck"
+  ],
+  "egress": "ARCHITECTURE-PLATFORM-PRO… (full: ARCHITECTURE-PLATFORM-PROD.ATLASSIAN.NET; truncated at 32ch with an ellipsis)"
  }
 }

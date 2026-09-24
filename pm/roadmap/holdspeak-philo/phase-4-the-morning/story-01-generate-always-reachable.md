@@ -40,3 +40,4 @@
 
 - 2026-09-23 — chartered from the Phase 3 closure run `20260924T013355Z` / `013440Z` (BLOCKED), `013738Z` / `014018Z` (FAIL behind "1 more"), `012420Z` (500).
 - 2026-09-23 — canvas round two after Astra's bounce: `assets/story-01-canvas/` (README, 11 boards × 1440/393 in `shots/`, `morning-brief.html`); artifact https://claude.ai/artifact/LHjuHKL1pVZuh4aK5J9qRU. The 12 px floor paid in the library (section head label, chip). UNRATIFIED.
+- 2026-09-23 — canvas round three after Astra's r2 RATIFY-WITH-CONDITIONS: board 7 split into 7a (empty brief, `No changes` proposed) and 7b (fully triaged); new boards 6b, 8a, 8b, 9 (16 boards × 1440/393); `0 items` ruled a counter of zero (the receipt already drops it); library containment for dynamic section-head labels and chips, proved by two Playwright probes (`shots/lib-directory-393.png`, `shots/lib-jira-chip-393.png`); 24 healed allowances removed from the HS-202-05 floor ledger. UNRATIFIED.
