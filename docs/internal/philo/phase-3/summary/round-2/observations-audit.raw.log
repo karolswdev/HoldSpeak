@@ -1,0 +1,8 @@
+('case.j6.run_summary.intel_failed', 1440) pass 77 words 0.928 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.intel_failed', 393) pass 77 words 0.926 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.retrying', 1440) pass 299 words 0.926 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T15:41:37.845513'}
+('case.j6.run_summary.retrying', 393) pass 299 words 0.929 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T15:42:33.992113'}
+('case.j6.run_summary.summary_text', 1440) pass 114 words 7.082 seconds real LAN engine
+('case.j6.run_summary.summary_text', 393) pass 78 words 6.676 seconds real LAN engine
+Six actual case/width pairs pass; all shots retained; import completion, single Run, closed setup window, plain causes, settled counts and real ready-engine identity verified.
+Astra also inspected all before/after/framed shots. Fold defaults and refresh continuity are rendered-fence evidence; owner usefulness remains partial.

@@ -1,0 +1,35 @@
+{
+  "artifact": "PHILO-3-02 synthetic architect meeting",
+  "source_text": "tests/fixtures/philo3_architect_meeting.txt",
+  "source_sha256": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc",
+  "wav": "tests/fixtures/philo3_architect_meeting.wav",
+  "wav_sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+  "format": {
+    "codec": "pcm_s16le",
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "bits_per_sample": 16,
+    "duration_seconds": 34.675250
+  },
+  "generation": {
+    "speech_synthesizer": "/usr/bin/say",
+    "voice": "Samantha",
+    "rate_words_per_minute": 165,
+    "intermediate_format": "AIFF",
+    "converter": "/opt/homebrew/bin/ffmpeg 8.1",
+    "conversion": "ffmpeg -i <source>.aiff -ac 1 -ar 16000 -sample_fmt s16 <target>.wav",
+    "input": "local source text only",
+    "microphone": false,
+    "keychain": false
+  },
+  "planted_items": {
+    "decisions": 3,
+    "owners": ["Maya Chen", "Leo Martinez", "Priya Shah"],
+    "actions": [
+      "Maya Chen will write the migration plan by Friday",
+      "Leo Martinez will test restart retrieval on Tuesday",
+      "Priya Shah will add the named failure fence before ship"
+    ],
+    "marker": "HoldSpeak synthetic architect three"
+  }
+}

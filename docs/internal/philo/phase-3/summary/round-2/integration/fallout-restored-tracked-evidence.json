@@ -1,0 +1,142 @@
+[
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/after-restart-1440.png",
+    "test_sha256": "1a349f678a2a57e3c283e3b5e132dab90b35b00915dabe2bd01a7daf7e50f4bc",
+    "restored_sha256": "7129ba82a38f6efa6de89d5caa2764ade1f0235b394bc3a41a3cc628f15d5291"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/after-restart-393.png",
+    "test_sha256": "0ac80dcaec878282d9bd5e1269be06447b65912272542633145c95fc537cc602",
+    "restored_sha256": "302e73686aa32cdc4eb14047d3828fb8646bb9e23e777ddcc0f0207e86327bbd"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/ledger-retry-1440.png",
+    "test_sha256": "63b12c07ec9e2e68431b952904fdb7de4f0819d863cdb651ffc6fa3ce63a38fb",
+    "restored_sha256": "61dff399ab70dc35bd7ebdf07ed1bd7410876e7acc09cf053bf30528ce8cf0cc"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/ledger-retry-393.png",
+    "test_sha256": "696e5dfac100547210237df498f8ac9692d7f0d6de1944acb41fcece2b06a0b2",
+    "restored_sha256": "855b4cce8fb6d29e360e27721bad410af74001a1233eaf6d1d3668fa8615f091"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/meetings-chip-1440.png",
+    "test_sha256": "b98b901a577426f05836471ee9ee650ee80ebe324db29263d842f45e0318d524",
+    "restored_sha256": "2ce4dbb6e994920738b7c1d49bb1d522148d150be1af63fc54076d76eb84b419"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/meetings-chip-393.png",
+    "test_sha256": "05d6ed65a0608c5b332a6466077af90424fd297f53d94eb53a40adb614876fa3",
+    "restored_sha256": "bff251ee9f50627b38b9bd1a52aa95011d219ae7081dfb30aa590b004b70a884"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/record-after-run-1440.png",
+    "test_sha256": "9ef84f495a2398436e745957fe84cbe2ddcf7787867cb21692a5abcbcfca231b",
+    "restored_sha256": "7d2c22afcb67252e791870ee938888c557537641be7578807d694029a079ebb7"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/record-after-run-393.png",
+    "test_sha256": "e51e789843d1b831c2d88be9eef0496a740b35e04de8ceefb9196cccb61bedee",
+    "restored_sha256": "279471d4c3954a516147321fd4238185233f3195657c42768c108dee1b57963d"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/record-before-run-1440.png",
+    "test_sha256": "e64572483f1ce8d845d5f70599c120d90847965f8a92c9b276637434f2ff6ccf",
+    "restored_sha256": "79ea5aae2330a7f64144eb0fec1b343fb5cef37c4d8ac65e7d81b7a1e90a1c81"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/record-before-run-393.png",
+    "test_sha256": "54f8340ef29f73ca160ce27e7a037f5e0a0279874424622777f93e62d4934930",
+    "restored_sha256": "93e6f0f1511dee42605d1fb496754fd19b2ad1928f9887068232daa80dcaf978"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/refusal-stale-hash-1440.png",
+    "test_sha256": "b68de7cdd34567872da0b160b0772d885fdf51031f4168167581c5027ce1dd45",
+    "restored_sha256": "a223baf05b29420bd56e5b1bf3907dfffe64f6a04ce1dca2da8d8d4e88129e24"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/refusal-stale-hash-393.png",
+    "test_sha256": "35aa95cd8d22a1a12834a58948c423a5c0b5c7f5321c1dea3a2338ab0a1e11dc",
+    "restored_sha256": "be2a018d115679872515e6cb7978d2dd227d551eefaea7d5fa8ce689d4bb3226"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/review-not-run-1440.png",
+    "test_sha256": "162b7ba7be79fba63dc366403b11fd1fc39f597549cc63f62a1d2c21e28cb15d",
+    "restored_sha256": "5460f9ab678f4ac67639cd2a1b7277f014e23fc183ffa9e7dc6968a024ab4056"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/review-not-run-393.png",
+    "test_sha256": "25775db2199e9ebb65ed3e70729edd37a6e20670c0a96d16907440b147cfb89b",
+    "restored_sha256": "a7fe453e9c550e7ddfcb7499832338a033c5c85f82757695856c2b5b984ad17c"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-after-run-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-after-run-1440.png",
+    "test_sha256": "74c5af30745bdb4a2b34cca876d26934b958d8b6579896252310c72bb4543592",
+    "restored_sha256": "0dbe997cc6f9acd281aab182cf9d9da510312b50dc862e6ce11568d81df8fd3c"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-after-run-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-after-run-393.png",
+    "test_sha256": "4471a5fbc705ab62edda79d19d442b8b61ebcc53caca0c73f7be25e24f0491f2",
+    "restored_sha256": "305b51ba2f4d93885e4848d9485c6b5b3450d015975bb13f98bb2a434a3bf3d7"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-done-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-done-1440.png",
+    "test_sha256": "7553b7167d4ab94a3cb1bdf2c710555be595713ae91a0cd9ef3c2516f14c3f54",
+    "restored_sha256": "0f3582620b36d8396415cb520cad8d82ccebccdf84aedeccfe7b36ec629fb717"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-done-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-done-393.png",
+    "test_sha256": "76bb13db1093a36e16cee9c41f5b7a61fd591a2fed20f20189fc8df660f62e81",
+    "restored_sha256": "d2341e0c65ff0e6ef021cb2e33cb7c214523903b6ca47733c48299d44d475873"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-row-length-1440.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-row-length-1440.png",
+    "test_sha256": "9ff2426701699306f7c60b595c454df7fa2b1d4be58809be9e5c057621145644",
+    "restored_sha256": "64fd322cb74b740431f57085e5566252dd5c692dd4e79da6adb39aaa2ee4bf0b"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-row-length-393.png",
+    "status_before": " M",
+    "retained_shot": "docs/internal/philo/phase-3/summary/round-2/integration/fallout-shots/import-row-length-393.png",
+    "test_sha256": "7f920251fbf4f72ce9481b149507353ed0d5a76cec8c8109f03b6fed31a9fa3d",
+    "restored_sha256": "5293d8d75c6e74eef7be654ca8aa435d51bdd6067cce3bedbf27e824387a8386"
+  }
+]

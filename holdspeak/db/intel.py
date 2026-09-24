@@ -1463,6 +1463,7 @@ class IntelRepository(BaseRepository):
                         "meeting_deferred_plugin_plan_invalid",
                         f"Installed plugin planning refused: {type(exc).__name__}",
                     )
+                    setattr(refusal, "_holdspeak_queue_meeting_id", meeting_id)
                     setattr(
                         refusal,
                         "_holdspeak_queue_advanced",
@@ -1544,6 +1545,7 @@ class IntelRepository(BaseRepository):
                 try:
                     prepare(job, command_ids)
                 except Exception as exc:
+                    setattr(exc, "_holdspeak_queue_meeting_id", meeting_id)
                     setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                     raise
                 conn.execute("BEGIN IMMEDIATE")
@@ -1614,6 +1616,7 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 if callable(discard):
                     discard(job_id)
+                setattr(exc, "_holdspeak_queue_meeting_id", meeting_id)
                 setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                 raise
             required = {"parent_operation_id", "bundle_id", "bundle_sha256"}
@@ -1848,7 +1851,7 @@ class IntelRepository(BaseRepository):
             terminal = terminal_outcome is not None or (max_attempts > 0 and attempt >= max_attempts)
             if terminal:
                 outcome = str(terminal_outcome or "terminal_failure")
-                detail = error if terminal_outcome else (
+                audit_detail = error if terminal_outcome else (
                     f"Deferred intel failed after {attempt} attempt(s): {error}"
                 )
                 changed = conn.execute(
@@ -1856,7 +1859,7 @@ class IntelRepository(BaseRepository):
                        updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
                        AND executor_lease_epoch=? AND status IN ('claimed','running')
                        AND executor_lease_expires_at>?""",
-                    (now.isoformat(), detail, str(job.job_id), str(job.executor_lease_token),
+                    (now.isoformat(), error, str(job.job_id), str(job.executor_lease_token),
                      int(job.executor_lease_epoch), time.time()),
                 ).rowcount
                 if changed:
@@ -1864,13 +1867,13 @@ class IntelRepository(BaseRepository):
                         """UPDATE meetings SET intel_status='error',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
-                        (detail, now.isoformat(), meeting_id),
+                        (error, now.isoformat(), meeting_id),
                     )
                     conn.execute(
                         """INSERT INTO intel_job_attempts (
                             meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
                         ) VALUES (?,?,'attempt',?,?,?,NULL,?)""",
-                        (meeting_id, str(job.job_id), attempt, outcome, detail, now.isoformat()),
+                        (meeting_id, str(job.job_id), attempt, outcome, audit_detail, now.isoformat()),
                     )
                 conn.commit()
                 return bool(changed)
@@ -1879,11 +1882,6 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 return False
             retry_at_iso = retry_at.isoformat()
-            retry_label = retry_at.replace(microsecond=0).isoformat()
-            detail = (
-                f"Deferred intel attempt {attempt}/{max_attempts} failed: {error} "
-                f"Retrying at {retry_label}."
-            )
             changed = conn.execute(
                 """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
                     updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
@@ -1932,7 +1930,7 @@ class IntelRepository(BaseRepository):
             conn.execute(
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                     intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
-                (detail, now.isoformat(), meeting_id),
+                (error, now.isoformat(), meeting_id),
             )
             conn.commit()
             return True

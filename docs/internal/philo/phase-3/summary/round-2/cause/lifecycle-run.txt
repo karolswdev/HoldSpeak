@@ -1,0 +1,13 @@
+Commands:
+HOME=$(mktemp -d) uv run --no-sync pytest --collect-only -q tests/unit/test_intel_queue.py tests/unit/test_meeting_deferred_admission.py
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_intel_queue.py tests/unit/test_meeting_deferred_admission.py
+
+Collection tail:
+53 tests collected in 0.39s
+
+Run tail:
+.....................................................                    [100%]
+53 passed in 15.53s
+
+The lifecycle check includes retry settlement, executor lease takeover,
+provider returned-error sanitization, receipt recovery, and deferred admission.

@@ -1,0 +1,316 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+ ❯ src/desk/chair/arrivalSummaryCompletion.test.tsx (11 tests | 1 failed | 10 skipped) 351ms
+     × clicks Run once, then follows desk_changed to a ready summary and durable receipt 349ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > clicks Run once, then follows desk_changed to a ready summary and durable receipt
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-run-intel"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+          [33mdata-testid[39m=[32m"arrival-display"[39m
+        [36m>[39m
+          [0mNothing needs you[0m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-brief"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mBRIEF[0m
+            [36m</h3>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+              [33mdata-scope[39m=[32m"local"[39m
+              [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+            [36m>[39m
+              [0mTHIS DEVICE[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+              [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mGenerate[0m
+            [36m</button>[39m
+          [36m</header>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-brief-empty"[39m
+          [36m>[39m
+            [0mNo brief yet[0m
+          [36m</span>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"arrival-meetings"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"surface-section"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"surface-section-head"[39m
+          [36m>[39m
+            [36m<h3>[39m
+              [0mMEETINGS 1[0m
+            [36m</h3>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-ledger"[39m
+            [33mdata-cols[39m=[32m"room"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"surface-ledger-count"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<li[39m
+              [33mclass[39m=[32m"surface-ledger-row"[39m
+              [33mdata-open[39m=[32m"true"[39m
+              [33mdata-wrap[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-line"[39m
+                [33mdata-has-trailing[39m=[32m"true"[39m
+                [33mdata-testid[39m=[32m"arrival-meeting-row"[39m
+                [33mrole[39m=[32m"button"[39m
+                [33mtabindex[39m=[32m"0"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-time"[39m
+                [36m>[39m
+                  [0mAUG 10[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-primary"[39m
+                [36m>[39m
+                  [0mArchitecture boundary review[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"arrival-meeting-duration"[39m
+                [36m>[39m
+                  [0m35 S[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"arrival-meeting-duration"[39m
+                [36m>[39m
+                  [0m16 WORDS[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33maria-label[39m=[32m"RAN"[39m
+                  [33mclass[39m=[32m"surface-state-chip"[39m
+                  [33mdata-state[39m=[32m"success"[39m
+                  [33mrole[39m=[32m"status"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"surface-state-chip-icon"[39m
+                  [36m>[39m
+                    [0m●[0m
+                  [36m</span>[39m
+                  [0mRAN[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"summary-route"[39m
+                  [33mdata-testid[39m=[32m"arrival-attempts"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                    [33mdata-scope[39m=[32m"local"[39m
+                    [33mtitle[39m=[32m"The route for this face is not set."[39m
+                  [36m>[39m
+                    [0mTHIS DEVICE[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0mOpen[0m
+                  [36m</button>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-open"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-well"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"surface-well-head"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"summary-well-head"[39m
+                    [36m>[39m
+                      [36m<span>[39m
+                        [0mSUMMARY[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"summary-route"[39m
+                        [33mdata-testid[39m=[32m"summary-record-attempts"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                          [33mdata-scope[39m=[32m"local"[39m
+                          [33mtitle[39m=[32m"The route for this face is not set."[39m
+                        [36m>[39m
+                          [0mTHIS DEVICE[0m
+                        [36m</span>[39m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"surface-well-body"[39m
+                  [36m>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"summary-text"[39m
+                      [33mdata-testid[39m=[32m"meeting-summary-text"[39m
+                    [36m>[39m
+                      [0mThe team reviewed the budget.[0m
+                    [36m</p>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"summary-topics"[39m
+                      [33mdata-testid[39m=[32m"meeting-summary-topics"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"surface-token"[39m
+                        [33mdata-chip[39m=[32m"true"[39m
+                      [36m>[39m
+                        [0mBUDGET[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"arrival-meeting-status-facts"[39m
+                      [33mdata-testid[39m=[32m"arrival-summary-status"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"arrival-meeting-status-fact"[39m
+                      [36m>[39m
+                        [0mLAST ATTEMPT · THIS DEVICE[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-well"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"surface-well-head"[39m
+                  [36m>[39m
+                    [0mTRANSCRIPT 2[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"surface-well-body"[39m
+                  [36m>[39m
+                    [36m<ol[39m
+                      [33mclass[39m=[32m"transcript-list"[39m
+                    [36m>[39m
+                      [36m<li[39m
+                        [33mid[39m=[32m"transcript-m-run-success-0"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"transcript-speaker"[39m
+                          [33mdata-testid[39m=[32m"transcript-speaker"[39m
+                        [36m>[39m
+                          [0mRECORDING[0m
+                        [36m</span>[39m
+                        [36m<p>[39m
+                          [0mWe will ship the boundary change on Tuesday.[0m
+                        [36m</p>[39m
+                      [36m</li>[39m
+                      [36m<li[39m
+                        [33mid[39m=[32m"transcript-m-run-success-1"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"transcript-speaker"[39m
+                          [33mdata-testid[39m=[32m"transcript-speaker"[39m
+                        [36m>[39m
+                          [0mRECORDING[0m
+                        [36m</span>[39m
+                        [36m<p>[39m
+                          [0mWe will ship the boundary change on Tuesday.[0m
+                        [36m</p>[39m
+                      [36m</li>[39m
+                    [36m</ol>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</li>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<footer[39m
+        [33mclass[39m=[32m"arrival-capture-bar"[39m
+        [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"arrival-capture-talk"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWrite a thought[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost "[39m
+          [33mdata-testid[39m=[32m"arrival-schedule"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSchedule[0m
+        [36m</button>[39m
+      [36m</footer>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/desk/chair/arrivalSummaryCompletion.test.tsx:328:19
+    326|     ));
+    327|     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("…
+    328|     expect(screen.getAllByTestId("arrival-run-intel")).toHaveLength(0);
+       |                   ^
+    329|     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).e…
+    330|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  09:47:10
+   Duration  1.10s (transform 345ms, setup 55ms, import 462ms, tests 351ms, environment 163ms)
+

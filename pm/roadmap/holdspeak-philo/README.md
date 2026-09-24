@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-22 (PHILO-2-05 independent live seal).
+**Last updated:** 2026-09-23 (PHILO-3-02 technical completion; usefulness partial).
 **Current phase:** [phase-3-the-meeting-loop](phase-3-the-meeting-loop/current-phase-status.md)
-**Status:** Phase 1 delivered and merged (PR #589); Phase 2 active. PHILO-2-05 seals Astra’s independent live audit; cross-check follows all four sealed outputs. This is an audit delivery, not a claim that the owner jobs all pass.
+**Status:** Phases 1 and 2 delivered; ratified Phase 3 active. A1 and A4 merged; A2 built with technical evidence and partial usefulness. A3 and the owner's sitting remain. See the current phase for counsel and merge status.
 
 ## Vision
 
@@ -35,5 +35,5 @@ Do not edit the main HoldSpeak project's current phase or Phase 201 status.
 
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
-| 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | active | [phase-2-the-graph](./phase-2-the-graph/) |
-| 3 | One imported meeting, its summary arriving on the arrival with the actual host, found again after a restart, one decision recorded from it, seen in the next day's dated brief; plus the thought's receipt, pending the owner's D3. | not-started | [phase-3-the-meeting-loop](./phase-3-the-meeting-loop/) |
+| 2 | Audit the platform as one graph, edges to interfaces to connections to actions, both brains on both passes, a council rules, the outcome is Phase 3. | done | [phase-2-the-graph](./phase-2-the-graph/) |
+| 3 | One imported meeting, its summary arriving on the arrival with the actual host, found again after a restart, one decision recorded from it, seen in the next day's dated brief; plus the ratified thought's receipt. | active | [phase-3-the-meeting-loop](./phase-3-the-meeting-loop/) |

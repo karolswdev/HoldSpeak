@@ -1,0 +1,5 @@
+# Terminal-read recipe correction
+
+The actual 1440 ready run `20260923T165713Z-case.j6.run_summary.intel_ready-astra-1440` was interrupted by Astra after diagnosing an impossible recipe predicate, before its 600-second bound. SIGINT was ineffective; SIGTERM stopped only the identified rig process and its hub (PIDs 6538 and 6545); both exits were verified, and DW retained exit 143. The original observation remains `complete: false`, `verdict: not_run`, with its before shot. It is not counted as a passed or timed-out run. The real job succeeded at 10:57:29.918237, but `/api/intel/jobs` returns only active/failed current jobs; a succeeded job is absent. Read-only inspection of that run’s isolated DB found meeting `39edb140`, admitted leaf `ij_9895f02d99ae29b2cdf79b54dd6c1e5e4849fabb0e7580cd6ad536f49947c4c4`, status `succeeded`, attempts 1, no error.
+
+The ready and actual-host cases now read the durable meeting detail (`intel_job.status` and `run_receipt.attempts[0].host`). The two recipe fences failed before correction; all 82 rig/atlas checks passed afterwards. The original observation is unedited; corrected actual runs carry distinct paths.

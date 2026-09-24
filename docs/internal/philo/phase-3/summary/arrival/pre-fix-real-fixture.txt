@@ -1,0 +1,37 @@
+PHILO-3-02 Arrival frontend fence — pre-fix producer-wire run
+Date: 2026-09-23
+Baseline: /tmp/philo302-main-baseline.K2pmnh (immutable origin/main archive)
+Fixture: tests/fixtures/philo3_summary_wire.json (copied into the isolated baseline)
+Test: src/desk/chair/arrivalSummaryCompletion.test.tsx
+Command: PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm ./node_modules/.bin/vitest run src/desk/chair/arrivalSummaryCompletion.test.tsx --maxWorkers=1
+
+Result: FAIL — 8 tests failed.
+
+Raw tail:
+
+    FAIL  src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders imported duration and transcript from the producer detail
+    TypeError: fromWireMeeting is not a function
+     ❯ meetingFor src/desk/chair/arrivalSummaryCompletion.test.tsx:33:19
+         31|
+         32| function meetingFor(candidate: SummaryCase) {
+         33|   const meeting = fromWireMeeting(candidate.list);
+           |                   ^
+         34|   if (!meeting) throw new Error(`Invalid summary wire list: ${candidate.state}`);
+         35|   return meeting;
+     ❯ seat src/desk/chair/arrivalSummaryCompletion.test.tsx:64:50
+
+    Test Files  1 failed (1)
+         Tests  8 failed (8)
+
+The isolated baseline used a test-only export shim for the old private mapper,
+so this run reached the old Chair rendering. The old Chair/API failed all
+eight rendered fences: no `35 S`, no summary well, no RETRYING/FAILED cause,
+the three-read fence, stale generation, named identity error, or the
+desk_changed running-to-ready transition. The old run also showed `1 MIN` for
+the producer's 34.67525-second meeting and rendered a planned `THIS DEVICE`
+disclosure in the pre-fix row. Its ready row could show a receipt from the
+existing list adapter, but no summary/wells or transition refresh landed.
+
+The first baseline attempt, before the test-only export shim, is retained in
+the command output history as seven `TypeError: fromWireMeeting is not a
+function` failures. The second run above is the behavior-level pre-fix proof.

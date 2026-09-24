@@ -1,0 +1,35 @@
+RECORDED meeting=240d6203 spare=ca4e73b1 segments=1
+PLANNED host=same_device hash=sha256:c86961ddf9c634b2adb653c0d79fb6c77d35706871d1e7c626488f07569c7982
+ROW 240d6203 MeetingSEP 23 · OFFSEP 23·1 S·3 WORDS·OFFTHIS DEVICERun summary
+CANON primaries=['Run summary'] zeros=[] run_verbs_in_rail=['Run summary', 'Run summary']
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png
+RUN POST {'path': '/api/meetings/240d6203/intelligence/run', 'body': '{"expected_selection_hash":"sha256:c86961ddf9c634b2adb653c0d79fb6c77d35706871d1e7c626488f07569c7982"}'}
+RECEIPT {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_af0b8f0be3de463283f879090a7f74cf', 'outcome': 'succeeded'}], 'job_id': 'ij_60b88f577a2d5a6e6b5d30381f8546c8aefe236cedb344903d8458a3c91e540f', 'meeting_id': '240d6203', 'outcome': 'succeeded', 'receipt_id': 'rr_3e39277df8bdc635786112b41759d2f7', 'selection_hash': 'sha256:c86961ddf9c634b2adb653c0d79fb6c77d35706871d1e7c626488f07569c7982'}
+ROW 240d6203 MeetingSEP 23 · RANSEP 23·1 S·3 WORDS·RANTHIS DEVICEOpen
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png
+REVIEW 'PROPOSALS · NOT RUN'
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png
+FAILED job attempts=1 state=failed
+ROW 0a5a71e6 MeetingSEP 23 · FAILEDSEP 23·1 S·3 WORDS·FAILEDTHIS DEVICEFAILEDTHIS DEVICERetry
+FACTS width=237 of row=366
+REFUSAL REFUSED · ROUTE CHANGED
+AFTER REFUSAL run_receipt={'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_497091eecaaf42238883b6dfd6a69477', 'outcome': 'failed'}], 'job_id': 'ij_94d174ad3ed3d1c4da39d6382122ee06b1e178c6e3a8147f378bc02c0af06f04', 'meeting_id': '0a5a71e6', 'outcome': 'failed', 'receipt_id': 'rr_661cac834bdac94f7eeb6f0caa4a862b', 'selection_hash': 'sha256:c86961ddf9c634b2adb653c0d79fb6c77d35706871d1e7c626488f07569c7982'}
+AFTER REFUSAL last_refusal={'attempts': [], 'job_id': 'ij_146f577b197c1d69301b6d51f416d0e6afb26896f5a1c3f89efd95b982f98e73', 'meeting_id': '0a5a71e6', 'outcome': 'refused', 'receipt_id': 'rr_f49a3f2b0b205fa3cfeec5529aefdbff', 'selection_hash': 'sha256:c86961ddf9c634b2adb653c0d79fb6c77d35706871d1e7c626488f07569c7982'}
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-393.png
+CANON primaries=['Retry'] zeros=[] run_verbs_in_rail=['Retry', 'Run summary']
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-393.png
+RETRY POST {'path': '/api/meetings/0a5a71e6/intelligence/run', 'body': '{"expected_selection_hash":"sha256:ef6cd8c55a9f3dc4a7995bd83d7a8ef8dd2307926a056c0e08e829e3d962e8be"}'}
+FOOTER CHIP 'THIS DEVICE'
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-393.png
+FOUND AFTER RESTART moves=1
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-393.png
+.
+1 passed in 18.37s
+FOCUSED_E2E_EXIT=0

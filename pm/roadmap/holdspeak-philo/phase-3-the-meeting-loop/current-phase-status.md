@@ -1,6 +1,6 @@
 # Phase 3 - The Meeting Loop
 
-**Last updated:** 2026-09-23.
+**Last updated:** 2026-09-23 (A2 second counsel).
 
 ## Goal
 
@@ -35,7 +35,7 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-3-01 | Record the decision (A1) | done | [story-01-record-the-decision](./story-01-record-the-decision.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-3-02 | See and find the summary (A2) | backlog | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | - |
+| PHILO-3-02 | See and find the summary (A2) | done | [story-02-see-and-find-the-summary](./story-02-see-and-find-the-summary.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-3-03 | Read the dated brief with that decision (A3) | done | [story-03-read-the-dated-brief](./story-03-read-the-dated-brief.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-3-04 | The thought's receipt (A4) | done | [story-04-the-thoughts-receipt](./story-04-the-thoughts-receipt.md) | [evidence-story-04](./evidence-story-04.md) |
 
@@ -50,6 +50,10 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 ## Where we are
 
+2026-09-23 18:30: A2 second Muad'Dib counsel on Astra's round two (PR #616 @ 0624a6a3): RATIFY-WITH-CONDITIONS, both paid in the same commit (the glass-probe wording corrected and its lost cross-layer coverage ledgered; main merged). Every round-one condition verified paid with pre-fix reds reproduced: plain PROVIDER FAILED cause, the queue count seam, refresh continuity, the transcript fold on the library Disclosure, no raw ids. Ledgered for closure: exception-path failures still carry queue wording; aftercare covers the fold at 393; ASR instability; `1 WORDS`. Merge on green CI.
+
+2026-09-23: **A2 BUILT, technical completion verified**. One completed synthetic import → one Run → actual LAN host and summary on Arrival → identical summary/receipt after restart, at both widths. Full web green; Python fallout fixed or reproduced on main and classified. [Lane record](summary-lane-record.md) separates this from **partial usefulness** and the pending owner sitting. Muad'Dib's [recorded counsel on built](checks/story-02-built-muaddib.md) is RATIFY-WITH-CONDITIONS. Round-two corrections and twelve new walks pass across the pre-integration and integrated builds. A3/main is integrated through `5de5d0c3`. Full web: 2,813 tests pass; full Python: 11,559 pass / 12 fail, with nine inherited failures reproduced on main and three old lane expectations/probes corrected by an independent 22-test green capture. Evidence is appended without re-flipping A2. The branch is pushed for Muad'Dib's re-read; his verdict is not presumed. The post-push generated boundary-census drift is corrected and the complete local documentation CI sequence passes. The phase exit stays open.
+
 2026-09-23 19:05: A3 BUILT on the ratified canvas — a brief load failure is named with Retry, READING… while the read is open, No brief yet only on null, the period and generated date on the face; the producer-clock seam (`MondayBriefService(clock=)`, wired through the web server) lets the rig advance the brief's day without touching the machine clock; the next-day brief contains the recorded decision with a new id at both widths; the old J10 next-day case is applicable again. Astra counsel next. A2 (Astra) finishing its proof chain.
 
 2026-09-23: A4 BUILT on the ratified canvas — the Thought foot shows KEPT · time / SAVING… / DID NOT SAVE · cause + Retry / CHANGED ELSEWHERE + Reload with the filing line below; every state shot on a real hub at both widths; the library receipt line raised to the 12 px floor. A1 on PR #613 (Astra counsel). A2 (Astra) in flight.
@@ -60,16 +64,20 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 
 Chartered 2026-09-23 by the council; RATIFIED by the owner the same day (D1–D4). Lanes 01 (Muad'Dib) and 02 (Astra) start in parallel; 04's canvas is drawn in parallel; 03 follows 01 and 02.
 
+PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then queue as `a28c19f9`, both through the gate without closing a story. The independent base install from fresh source/HOME/venv passes; 17 install/client and 77 queue tests pass, with pre-fix failures retained. The corrected [eight canvas boards](assets/story-02-canvas/README.md), with four additional phone footer views, were published by Muad'Dib and OWNER RATIFIED on 2026-09-23 ("Ratify, build it"). The Arrival and actual-atlas proof seams are building. Technical summary completion and owner usefulness remain separately unverified. See [lane record](summary-lane-record.md) and [check record](checks/summary-design-muaddib.md).
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 |---|---|---|---|
 | The summary is technically complete but useless to the owner | medium | synthetic material with planted decisions; usefulness reported separately; his sitting decides | he says it is not useful |
-| The documented install lacks the model client | unknown | reproduce the install in isolation first (D2) | the isolated install fails the first summary |
+| The documented install lacks the model client | corrected at package boundary | D2 before/after install retained; `794f07ff` includes endpoint client in core | real summary still requires the later LAN rig proof |
 | The producer-clock boundary needs product change | medium | the smallest mechanism that moves the producer's date under test; never the machine clock | no mechanism without touching production code paths beyond a seam |
 | Scope creep from the deferred list | high | the deferred list is explicit; a new story needs the owner's word | a fifth story appears |
 
 ## Decisions made (this phase)
+
+- 2026-09-23 — owner ruled summary open, transcript collapsed by default, word count on the existing fold, one click to open; applied in A2 round two. Aftercare obstruction and ASR instability are ledgered, not repaired in A2.
 
 - 2026-09-23 — chartered from the council's decision page; A1–A3 per Astra's counter-draft, A4 per Muad'Dib's ruling, D3 open — the two brains.
 

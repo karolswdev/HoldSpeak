@@ -1,0 +1,23 @@
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > sends the disclosed selection hash, and shows the host first
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > withholds Run and says the reason when no route resolves
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > shows a 409 as ONE short refusal fact, the reason on its title
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > opens the meeting with the `meeting:<id>` grammar History parses
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders imported duration and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the ready summary and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a failed lineage as RETRYING after its scheduled time and names the producer cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the terminal producer failure and keeps the named cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a persisted summary visible with a later producer failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > reads only the top three visible meeting details per desk refresh
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > drops a stale response when the visible meeting identity changes
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > names a response whose identity does not match the requested meeting
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > clicks Run once, then follows desk_changed to a ready summary and durable receipt
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps the durable receipt and producer cause through retry to terminal failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > refreshes running to ready to retry to failed from desk_changed and keeps durable receipts
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with an ABSENT drainer reads NOT DRAINING
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with a RUNNING drainer reads QUEUED
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > no frame is UNKNOWN, never reported as absent
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > re-reads the desk when a frame arrives from another caller
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > collapses a burst into ONE re-read
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > extends the window when a frame lands during the wait
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > ignores every other frame type
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > does not re-read after unmount

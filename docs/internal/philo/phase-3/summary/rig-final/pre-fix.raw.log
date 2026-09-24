@@ -1,0 +1,591 @@
+FFFFF.FF.F.FFFFFFFFFFFFFFFF                                              [100%]
+=================================== FAILURES ===================================
+______ test_import_completion_rejects_a_successful_but_malformed_payload _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109351480>
+
+    def test_import_completion_rejects_a_successful_but_malformed_payload(monkeypatch):
+        monkeypatch.setattr(rig.time, "sleep", lambda _seconds: None)
+        clock = iter([0.0, 0.0, 1.0, 1.0])
+        monkeypatch.setattr(rig.time, "monotonic", lambda: next(clock))
+        hub = _Hub([(200, {"id": "meeting-1", "segments": []})] * 2)
+>       result = rig.wait_for_fixture_completion(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            hub,
+            {
+                "method": "GET",
+                "path": "/api/meetings/meeting-1",
+                "fields": {
+                    "/transcription_status": "complete",
+                    "/duration": {"positive": True},
+                    "/segments": {"min_items": 1},
+                },
+                "timeout_s": 0.1,
+                "poll_s": 0,
+            },
+            {},
+        )
+E       AttributeError: module 'philo3_summary_rig' has no attribute 'wait_for_fixture_completion'
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:40: AttributeError
+_________ test_import_completion_rejects_successful_nonobject_payloads _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109351a70>
+
+    def test_import_completion_rejects_successful_nonobject_payloads(monkeypatch):
+        """A 2xx list/string is not a completed meeting read."""
+        monkeypatch.setattr(rig.time, "sleep", lambda _seconds: None)
+        clock = iter([0.0, 0.0, 0.0, 0.0, 1.0, 1.0])
+        monkeypatch.setattr(rig.time, "monotonic", lambda: next(clock))
+        hub = _Hub([(200, []), (200, "still working"), (200, "still working")])
+>       result = rig.wait_for_fixture_completion(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            hub,
+            {
+                "method": "GET",
+                "path": "/api/meetings/meeting-1",
+                "fields": {"/transcription_status": "complete"},
+                "timeout_s": 0.1,
+                "poll_s": 0,
+            },
+            {},
+        )
+E       AttributeError: module 'philo3_summary_rig' has no attribute 'wait_for_fixture_completion'
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:65: AttributeError
+___________ test_fixture_boundary_enforces_declared_admission_status ___________
+
+    def test_fixture_boundary_enforces_declared_admission_status():
+>       with pytest.raises(rig.Blocked, match="wanted 202"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'philo3_summary_rig.Blocked'>
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:81: Failed
+________ test_admission_response_requires_queued_state_and_job_identity ________
+
+    def test_admission_response_requires_queued_state_and_job_identity():
+        predicate = {
+            "kind": "protocol_status",
+            "method": "POST",
+            "path": "/api/meetings/meeting-1/intelligence/run",
+            "status": 200,
+            "body_contains": '"state": "queued"',
+            "body_fields": {"jobId": {"nonempty": True}},
+        }
+        good = {
+            "trigger_response": {
+                "method": "POST",
+                "path": "/api/meetings/meeting-1/intelligence/run",
+                "status": 200,
+                "body": {"jobId": "job-1", "state": "queued"},
+            }
+        }
+        ok, _reading = rig.check_predicate(predicate, {}, good)
+        assert ok
+        stale = {
+            "trigger_response": {
+                "method": "POST",
+                "path": "/api/meetings/meeting-1/intelligence/run",
+                "status": 200,
+                "body": {"jobId": "job-old", "state": "claimed"},
+            }
+        }
+        ok, _reading = rig.check_predicate(predicate, {}, stale)
+        assert not ok
+        missing_identity = {
+            "trigger_response": {
+                **good["trigger_response"],
+                "body": {"state": "queued"},
+            }
+        }
+        ok, _reading = rig.check_predicate(predicate, {}, missing_identity)
+>       assert not ok
+E       assert not True
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:131: AssertionError
+_____ test_hit_target_requires_all_interior_points_and_phone_sized_control _____
+
+    def test_hit_target_requires_all_interior_points_and_phone_sized_control():
+        before = {}
+        after = {
+            "target_present": True,
+            "visible": True,
+            "hit_test": {
+                "viewport": {"width": 393, "height": 852},
+                "rect": {"x": 20, "y": 40, "w": 120, "h": 44},
+                "in_viewport": True,
+                "all_owned": True,
+                "samples": [{"owned": True}] * 9,
+            },
+        }
+        ok, reading = rig.check_predicate(
+            {"kind": "hit_target", "min_width": 44, "min_height": 44},
+            before,
+            after,
+        )
+>       assert ok, reading
+E       AssertionError: unknown predicate kind 'hit_target'
+E       assert False
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:152: AssertionError
+______ test_phone_target_requires_44_pixels_without_changing_desktop_size ______
+
+    def test_phone_target_requires_44_pixels_without_changing_desktop_size():
+        predicate = {"kind": "hit_target", "min_height": 24,
+                     "min_height_by_viewport": {"393": 44}}
+        observation = {
+            "target_present": True, "visible": True,
+            "hit_test": {"in_viewport": True, "all_owned": True,
+                         "viewport": {"width": 393}, "rect": {"w": 97, "h": 24}},
+        }
+        assert not rig.check_predicate(predicate, {}, observation)[0]
+        observation["hit_test"]["rect"]["h"] = 44
+>       assert rig.check_predicate(predicate, {}, observation)[0]
+E       assert False
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:202: AssertionError
+_____ test_scheduler_wait_keeps_a_producer_state_already_reached_in_setup ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1093b7bf0>
+
+    def test_scheduler_wait_keeps_a_producer_state_already_reached_in_setup(monkeypatch):
+        clock = {"now": 0.0}
+        monkeypatch.setattr(rig.time, "monotonic", lambda: clock["now"])
+        monkeypatch.setattr(rig.time, "sleep", lambda seconds: clock.update(now=clock["now"] + seconds))
+        monkeypatch.setattr(rig, "snapshot", lambda *_args: {
+            "protocol": {"payload": {"jobs": [{"status": "claimed"}]},
+                         "payload_sha256": "claimed-state"},
+        })
+        result = rig.scheduler_wait(
+            {"adapter": "scheduler-wait", "poll_s": 0.1, "max_wait_s": 0.2},
+            {"completion_bound_s": 0.2, "expected": {
+                "observe_at": "protocol: GET /api/intel/jobs",
+                "predicate": {"kind": "protocol_field", "path": "/jobs/0/status",
+                              "value": "claimed"},
+            }}, None, _Hub([]), {"clock": {}},
+        )
+>       assert result["polls"] == 0
+E       assert 2 == 0
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:224: AssertionError
+_ test_restart_predicate_rejects_each_missing_retention_flag_and_changed_summary _
+
+    def test_restart_predicate_rejects_each_missing_retention_flag_and_changed_summary():
+        predicate = {
+            "kind": "protocol_field",
+            "path": "/intel/summary",
+            "value": "kept",
+            "nonempty": True,
+            "restart_required": True,
+        }
+        for missing in ("summary_retained", "receipt_retained", "meeting_identity_retained"):
+            restart = {
+                "summary_retained": True,
+                "receipt_retained": True,
+                "meeting_identity_retained": True,
+            }
+            restart[missing] = False
+            ok, _reading = rig.check_predicate(
+                predicate,
+                {},
+                {"protocol": {"payload": {"intel": {"summary": "kept"}}},
+                 "restart": restart},
+            )
+>           assert not ok
+E           assert not True
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py:272: AssertionError
+_________ test_summary_cases_use_the_retained_architect_import_fixture _________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_cases_use_the_retained_architect_import_fixture(atlas: dict) -> None:
+        """A2's meeting material enters through the real multipart import boundary.
+    
+        J4's microphone cases stay separate: their browser-device boundary is a
+        lawful blocked proof, while every imported meeting used by J4-J7 must use
+        the retained synthetic architect WAV. The old smoke WAV made a transport
+        pass look like useful meeting material.
+        """
+        expected = "tests/fixtures/philo3_architect_meeting.wav"
+        problems: list[str] = []
+        for case in _summary_cases(atlas):
+            imports = [
+                step for step in _acts(case)
+                if step.get("kind") == "fixture"
+                and step.get("route", {}).get("path") == "/api/meetings/import"
+            ]
+            if imports and any(step.get("path") != expected for step in imports):
+                problems.append(f"{case['id']}: imported material is not {expected}")
+>       assert not problems, problems
+E       AssertionError: ['case.j4.meetings_import.imported: imported material is not tests/fixtures/philo3_architect_meeting.wav', 'case.j5.me...ing.wav', 'case.j6.run_summary.intel_ready: imported material is not tests/fixtures/philo3_architect_meeting.wav', ...]
+E       assert not ['case.j4.meetings_import.imported: imported material is not tests/fixtures/philo3_architect_meeting.wav', 'case.j5.me...ing.wav', 'case.j6.run_summary.intel_ready: imported material is not tests/fixtures/philo3_architect_meeting.wav', ...]
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:521: AssertionError
+_________________ test_summary_run_cases_have_one_run_trigger __________________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_run_cases_have_one_run_trigger(atlas: dict) -> None:
+        """The real Arrival Run gesture is the one trigger; setup never re-runs it."""
+        problems: list[str] = []
+        for case in atlas["cases"]:
+            if not case["id"].startswith("case.j6.run_summary."):
+                continue
+            steps = _acts(case)
+            clicks = [
+                step for step in steps
+                if step.get("kind") == "ui"
+                and step.get("action") == "click"
+                and "arrival-run-intel" in step.get("selector", "")
+            ]
+            api_runs = [
+                step for step in steps
+                if step.get("kind") == "api"
+                and step.get("method") == "POST"
+                and "/intelligence/run" in step.get("path", "")
+            ]
+            if len(clicks) != 1 or api_runs:
+                problems.append(
+                    f"{case['id']}: Run clicks={len(clicks)}, API run steps={len(api_runs)}"
+                )
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.intel_running: Run clicks=1, API run steps=1', 'case.j6.run_summary.intel_ready: Run clicks=1, API run steps=1', 'case.j6.run_summary.summary_text: Run clicks=2, API run steps=0']
+E       assert not ['case.j6.run_summary.intel_running: Run clicks=1, API run steps=1', 'case.j6.run_summary.intel_ready: Run clicks=1, API run steps=1', 'case.j6.run_summary.summary_text: Run clicks=2, API run steps=0']
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:547: AssertionError
+____________ test_summary_running_reads_the_claimed_job_wire_status ____________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_running_reads_the_claimed_job_wire_status(atlas: dict) -> None:
+        """The producer exposes a claimed current row while execution is live."""
+        case = next(
+            case for case in _summary_cases(atlas)
+            if case["id"] == "case.j6.run_summary.intel_running"
+        )
+        predicate = case["expected"]["predicate"]
+>       assert predicate == {
+            "kind": "protocol_field",
+            "path": "/jobs/0/status",
+            "value": "claimed",
+        }
+E       AssertionError: assert {'collection'... 'min_new': 1} == {'kind': 'pro...e': 'claimed'}
+E         
+E         Differing items:
+E         {'kind': 'protocol_rows'} != {'kind': 'protocol_field'}
+E         Left contains 3 more items:
+E         {'collection': 'jobs', 'match': {'status': 'running'}, 'min_new': 1}
+E         Right contains 2 more items:
+E         {'path': '/jobs/0/status', 'value': 'claimed'}
+E         Use -v to get more diff
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:557: AssertionError
+_____________ test_summary_queued_reads_the_run_admission_response _____________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_queued_reads_the_run_admission_response(atlas: dict) -> None:
+        case = next(
+            case for case in _summary_cases(atlas)
+            if case["id"] == "case.j6.run_summary.intel_queued"
+        )
+        trigger = case["trigger"]
+        predicate = case["expected"]["predicate"]
+>       assert trigger.get("trigger_route") == {
+            "method": "POST",
+            "path": "/api/meetings/{meeting_id}/intelligence/run",
+        }
+E       AssertionError: assert None == {'method': 'POST', 'path': '/api/meetings/{meeting_id}/intelligence/run'}
+E        +  where None = <built-in method get of dict object at 0x10952cf40>('trigger_route')
+E        +    where <built-in method get of dict object at 0x10952cf40> = {'action': 'click', 'adapter': 'ui-pointer', 'kind': 'ui', 'selector': '[data-testid=arrival-run-intel]'}.get
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:571: AssertionError
+____ test_summary_preconditions_do_not_require_future_or_consumed_run_state ____
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_preconditions_do_not_require_future_or_consumed_run_state(atlas: dict) -> None:
+        for case in _summary_cases(atlas):
+            setup_run = any(
+                step.get("action") == "click"
+                and "arrival-run-intel" in step.get("selector", "")
+                for step in case["setup"]
+            )
+            checks = _checks(case)
+            if setup_run:
+>               assert not any(
+                    entry.get("observe_at") == "[data-testid=arrival-run-intel]"
+                    for entry in checks
+E                   AssertionError: case.j6.run_summary.intel_running
+E                   assert not True
+E                    +  where True = any(<generator object test_summary_preconditions_do_not_require_future_or_consumed_run_state.<locals>.<genexpr> at 0x109417ac0>)
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:592: AssertionError
+______ test_summary_state_reads_do_not_require_a_new_row_after_setup_run _______
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_state_reads_do_not_require_a_new_row_after_setup_run(atlas: dict) -> None:
+        for suffix in ("intel_running", "intel_ready"):
+            case = next(c for c in _summary_cases(atlas)
+                        if c["id"] == f"case.j6.run_summary.{suffix}")
+>           assert case["expected"]["predicate"]["kind"] == "protocol_field"
+E           AssertionError: assert 'protocol_rows' == 'protocol_field'
+E             
+E             - protocol_field
+E             + protocol_rows
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:607: AssertionError
+_____ test_summary_manual_retry_requires_failed_producer_and_current_route _____
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_manual_retry_requires_failed_producer_and_current_route(atlas: dict) -> None:
+        case = next(c for c in _summary_cases(atlas)
+                    if c["id"] == "case.j6.run_summary.intel_retry")
+>       assert any(entry.get("predicate", {}).get("path") == "/intel_job/status"
+                   and entry["predicate"].get("value") == "failed"
+                   for entry in _checks(case))
+E       assert False
+E        +  where False = any(<generator object test_summary_manual_retry_requires_failed_producer_and_current_route.<locals>.<genexpr> at 0x109057300>)
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:614: AssertionError
+____ test_summary_planned_host_cases_check_real_text_and_control_ownership _____
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_planned_host_cases_check_real_text_and_control_ownership(atlas: dict) -> None:
+        for suffix in ("route_disclosed", "planned_host_disclosed"):
+            case = next(c for c in _summary_cases(atlas)
+                        if c["id"] == f"case.j5.meeting_open.{suffix}")
+>           assert case["expected"]["predicate"] == {
+                "kind": "text_contains", "value": "192.168.1.43 · LAN",
+            }
+E           AssertionError: assert {'attr': 'dat...rrival-route'} == {'kind': 'tex...8.1.43 · LAN'}
+E             
+E             Differing items:
+E             {'kind': 'attr_equals'} != {'kind': 'text_contains'}
+E             {'value': 'arrival-route'} != {'value': '192.168.1.43 · LAN'}
+E             Left contains 1 more item:
+E             {'attr': 'data-testid'}
+E             Use -v to get more diff
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:628: AssertionError
+_______ test_summary_failure_cases_retain_reply_at_the_provider_boundary _______
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_failure_cases_retain_reply_at_the_provider_boundary(atlas: dict) -> None:
+        """Failure replay is a tree artifact and the rig's real provider seam."""
+        expected = "tests/fixtures/philo3_summary_failure_reply.json"
+        problems: list[str] = []
+        for case in atlas["cases"]:
+            if case["id"] not in {
+                "case.j6.run_summary.intel_failed",
+                "case.j6.run_summary.intel_retry",
+                "case.j6.run_summary.retrying",
+            }:
+                continue
+            boundaries = [step for step in _acts(case) if step.get("kind") == "boundary"]
+            replies = [step for step in boundaries if step.get("substitute") == "engine_reply"]
+            if len(boundaries) != 1 or len(replies) != 1:
+                problems.append(f"{case['id']}: expected one engine_reply boundary")
+                continue
+            boundary = replies[0]
+            if (boundary.get("reply") != expected or "reply_path" in boundary
+                    or boundary.get("adapter") != "labelled-substitution"):
+                problems.append(
+                    f"{case['id']}: boundary must use reply={expected!r} and "
+                    "adapter='labelled-substitution'"
+                )
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.intel_failed: expected one engine_reply boundary', "case.j6.run_summary.intel_retry: boundary must use reply='tests/fixtures/philo3_summary_failure_reply.json' and adapter='labelled-substitution'"]
+E       assert not ['case.j6.run_summary.intel_failed: expected one engine_reply boundary', "case.j6.run_summary.intel_retry: boundary must use reply='tests/fixtures/philo3_summary_failure_reply.json' and adapter='labelled-substitution'"]
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:660: AssertionError
+________ test_summary_imports_wait_for_real_completion_and_retain_title ________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_imports_wait_for_real_completion_and_retain_title(atlas: dict) -> None:
+        """A 202 upload is only the start of the real ASR import."""
+        expected = "tests/fixtures/philo3_architect_meeting.wav"
+        problems: list[str] = []
+        for case in _summary_cases(atlas):
+            for step in _acts(case):
+                if step.get("kind") != "fixture" or step.get("route", {}).get("path") != "/api/meetings/import":
+                    continue
+                wait = step.get("wait_for") or {}
+                fields = wait.get("fields") or {}
+                if step.get("path") != expected:
+                    problems.append(f"{case['id']}: import does not use {expected}")
+                if step.get("expect_status") != 202:
+                    problems.append(f"{case['id']}: import must require HTTP 202")
+                if wait.get("method") != "GET" or wait.get("path") != "/api/meetings/{meeting_id}":
+                    problems.append(f"{case['id']}: import has no meeting-detail completion wait")
+                if fields.get("/transcription_status") != "complete":
+                    problems.append(f"{case['id']}: completion wait does not require transcription_status=complete")
+                if not isinstance(fields.get("/duration"), dict) or not fields["/duration"].get("positive"):
+                    problems.append(f"{case['id']}: completion wait does not require positive duration")
+                if not isinstance(fields.get("/segments"), dict) or fields["/segments"].get("min_items") != 1:
+                    problems.append(f"{case['id']}: completion wait does not require transcript segments")
+                if (step.get("form") or {}).get("title") != "Architecture boundary review":
+                    problems.append(f"{case['id']}: import does not carry the readable meeting title")
+>       assert not problems, problems
+E       AssertionError: ['case.j4.meetings_import.imported: import does not use tests/fixtures/philo3_architect_meeting.wav', 'case.j4.meeting...uire positive duration', 'case.j4.meetings_import.imported: completion wait does not require transcript segments', ...]
+E       assert not ['case.j4.meetings_import.imported: import does not use tests/fixtures/philo3_architect_meeting.wav', 'case.j4.meeting...uire positive duration', 'case.j4.meetings_import.imported: completion wait does not require transcript segments', ...]
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:687: AssertionError
+__________ test_summary_arrival_observations_name_the_rendered_states __________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> None:
+        """Rendered proof reads Arrival's summary/error surfaces, not old wrappers."""
+        wanted = {
+            "case.j6.run_summary.summary_text": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+            "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_contains"),
+            "case.j7.arrival_load.reload_persisted": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+        }
+        problems: list[str] = []
+        for case_id, (selector, kind) in wanted.items():
+            case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+            expected = case["expected"]
+            predicate = expected.get("predicate") or {}
+            if expected.get("observe_at") != selector or predicate.get("kind") != kind:
+                problems.append(f"{case_id}: expected {kind} at {selector}")
+            words = expected.get("words", "")
+            if "HOLDSPEAK-SYNTH-1" in words or ".desk-window .surface-material" in words:
+                problems.append(f"{case_id}: retains the old summary marker or wrapper")
+        failed = next(case for case in _summary_cases(atlas) if case["id"] == "case.j6.run_summary.intel_failed")
+        if failed["expected"]["predicate"].get("value") != "LAST ERROR":
+            problems.append("case.j6.run_summary.intel_failed: does not assert LAST ERROR")
+>       assert not problems, problems
+E       AssertionError: ['case.j6.run_summary.summary_text: expected text_nonempty at [data-testid=meeting-summary-text]', 'case.j6.run_summar...d text_nonempty at [data-testid=meeting-summary-text]', 'case.j6.run_summary.intel_failed: does not assert LAST ERROR']
+E       assert not ['case.j6.run_summary.summary_text: expected text_nonempty at [data-testid=meeting-summary-text]', 'case.j6.run_summar...d text_nonempty at [data-testid=meeting-summary-text]', 'case.j6.run_summary.intel_failed: does not assert LAST ERROR']
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:710: AssertionError
+____________ test_summary_models_window_closes_before_arrival_steps ____________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_models_window_closes_before_arrival_steps(atlas: dict) -> None:
+        problems: list[str] = []
+        for case in _summary_cases(atlas):
+            setup = case.get("setup", [])
+            for index, step in enumerate(setup):
+                if (step.get("kind") != "ui" or step.get("action") != "click"
+                        or step.get("selector") != "[data-testid=concierge-add-submit]"):
+                    continue
+                following = setup[index + 1] if index + 1 < len(setup) else {}
+                if not (following.get("kind") == "ui"
+                        and following.get("action") == "wait_for"
+                        and following.get("state") == "hidden"
+                        and following.get("selector") == "#surface-concierge .desk-window-title"):
+                    problems.append(f"{case['id']}: Models is not closed before the next Arrival step")
+>       assert not problems, problems
+E       AssertionError: ['case.j5.meeting_open.route_disclosed: Models is not closed before the next Arrival step', 'case.j6.run_summary.intel...fore the next Arrival step', 'case.j6.run_summary.intel_retry: Models is not closed before the next Arrival step', ...]
+E       assert not ['case.j5.meeting_open.route_disclosed: Models is not closed before the next Arrival step', 'case.j6.run_summary.intel...fore the next Arrival step', 'case.j6.run_summary.intel_retry: Models is not closed before the next Arrival step', ...]
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:727: AssertionError
+_______ test_summary_restart_proof_retains_summary_receipt_and_identity ________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_restart_proof_retains_summary_receipt_and_identity(atlas: dict) -> None:
+        case = next(case for case in _summary_cases(atlas) if case["id"] == "case.j7.hub_restart.intel_retained")
+        trigger = case["trigger"]
+        predicate = case["expected"]["predicate"]
+        assert trigger.get("kind") == "cli" and trigger.get("action") == "restart_hub"
+>       assert trigger.get("capture_as") == "before_summary"
+E       AssertionError: assert None == 'before_summary'
+E        +  where None = <built-in method get of dict object at 0x1094d78c0>('capture_as')
+E        +    where <built-in method get of dict object at 0x1094d78c0> = {'action': 'restart_hub', 'adapter': 'process', 'kind': 'cli'}.get
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:735: AssertionError
+________ test_summary_microphone_cases_keep_the_lawful_blocked_boundary ________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_microphone_cases_keep_the_lawful_blocked_boundary(atlas: dict) -> None:
+        case = next(case for case in _summary_cases(atlas) if case["id"] == "case.j4.record_start.capture_recording")
+        boundaries = [step for step in case["setup"] if step.get("kind") == "boundary"]
+        assert boundaries and boundaries[0].get("substitute") == "browser_audio_device"
+        assert not [step for step in _acts(case) if step.get("kind") == "fixture"]
+        record_only = next(
+            case for case in _summary_cases(atlas)
+            if case["id"] == "case.j4.record_only.no_speech_head"
+        )
+        record_boundaries = [step for step in _acts(record_only) if step.get("kind") == "boundary"]
+>       assert record_boundaries and record_boundaries[0].get("substitute") == "browser_audio_device"
+E       assert ([])
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:753: AssertionError
+_______________ test_summary_cases_do_not_claim_the_old_pangram ________________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_cases_do_not_claim_the_old_pangram(atlas: dict) -> None:
+>       assert not any(
+            token in json.dumps(case)
+            for case in _summary_cases(atlas)
+            for token in ("HOLDSPEAK-SYNTH-1", "core_path_smoke_16k.wav")
+        )
+E       assert not True
+E        +  where True = any(<generator object test_summary_cases_do_not_claim_the_old_pangram.<locals>.<genexpr> at 0x1090dac50>)
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:758: AssertionError
+____________ test_summary_stop_cases_require_a_real_active_meeting _____________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_summary_stop_cases_require_a_real_active_meeting(atlas: dict) -> None:
+        """A fresh idle hub cannot turn POST /api/meeting/stop into capture proof."""
+        for case_id in (
+            "case.j4.meeting_stop.capture_finalized",
+            "case.j4.meeting_stop.transcription_absent",
+        ):
+            case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+            checks = [
+                step for step in case.get("preconditions", [])
+                if isinstance(step, dict) and step.get("kind") == "check"
+            ]
+>           assert any(
+                step.get("observe_at") == "protocol: GET /api/runtime/status"
+                and step.get("predicate", {}).get("kind") == "protocol_field"
+                and step.get("predicate", {}).get("path") == "/meeting_active"
+                and step.get("predicate", {}).get("value") is True
+                for step in checks
+            ), case_id
+E           AssertionError: case.j4.meeting_stop.capture_finalized
+E           assert False
+E            +  where False = any(<generator object test_summary_stop_cases_require_a_real_active_meeting.<locals>.<genexpr> at 0x10900d000>)
+
+.tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py:776: AssertionError
+=========================== short test summary info ============================
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_import_completion_rejects_a_successful_but_malformed_payload
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_import_completion_rejects_successful_nonobject_payloads
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_fixture_boundary_enforces_declared_admission_status
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_admission_response_requires_queued_state_and_job_identity
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_hit_target_requires_all_interior_points_and_phone_sized_control
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_phone_target_requires_44_pixels_without_changing_desktop_size
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_scheduler_wait_keeps_a_producer_state_already_reached_in_setup
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo3_summary_rig.py::test_restart_predicate_rejects_each_missing_retention_flag_and_changed_summary
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_cases_use_the_retained_architect_import_fixture
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_run_cases_have_one_run_trigger
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_running_reads_the_claimed_job_wire_status
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_queued_reads_the_run_admission_response
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_preconditions_do_not_require_future_or_consumed_run_state
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_state_reads_do_not_require_a_new_row_after_setup_run
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_planned_host_cases_check_real_text_and_control_ownership
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_failure_cases_retain_reply_at_the_provider_boundary
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_imports_wait_for_real_completion_and_retain_title
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_arrival_observations_name_the_rendered_states
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_models_window_closes_before_arrival_steps
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_restart_proof_retains_summary_receipt_and_identity
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_microphone_cases_keep_the_lawful_blocked_boundary
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_cases_do_not_claim_the_old_pangram
+FAILED .tmp/philo3-prefix-rig/tests/unit/test_philo_graph_atlas.py::test_summary_stop_cases_require_a_real_active_meeting
+24 failed, 3 passed, 47 deselected in 0.31s

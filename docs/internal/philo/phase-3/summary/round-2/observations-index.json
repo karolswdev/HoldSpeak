@@ -1,0 +1,180 @@
+[
+  {
+    "case": "case.j6.run_summary.intel_failed",
+    "width": 1440,
+    "run": "20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440",
+    "meeting_id": "dabca5a2",
+    "words": 77,
+    "first_satisfied_s": 0.928,
+    "queue_counts": {
+      "total_jobs": 1,
+      "queued_jobs": 0,
+      "running_jobs": 0,
+      "failed_jobs": 1,
+      "queued_due_jobs": 0,
+      "scheduled_retry_jobs": 0,
+      "next_retry_at": null
+    },
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440/observation.json",
+        "sha256": "411f19fb5747da56590f8f0d61a6e16081503b3e236c34bde326ab4e9f8124c7"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440/before.png",
+        "sha256": "5f51875435a39433feedf4bbef276a04da8ec6a8dc8b35880cfb018ff0e6602f"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213753Z-case.j6.run_summary.intel_failed-astra-1440/after.png",
+        "sha256": "63c1483f60f36937c336f2fa5b8fe39960e11e4142fcfe9c025d952421411019"
+      }
+    ]
+  },
+  {
+    "case": "case.j6.run_summary.intel_failed",
+    "width": 393,
+    "run": "20260923T213842Z-case.j6.run_summary.intel_failed-astra-393",
+    "meeting_id": "ec544ba5",
+    "words": 77,
+    "first_satisfied_s": 0.926,
+    "queue_counts": {
+      "total_jobs": 1,
+      "queued_jobs": 0,
+      "running_jobs": 0,
+      "failed_jobs": 1,
+      "queued_due_jobs": 0,
+      "scheduled_retry_jobs": 0,
+      "next_retry_at": null
+    },
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213842Z-case.j6.run_summary.intel_failed-astra-393/observation.json",
+        "sha256": "ef1884603f682a9ebb8dc83f8e61bf7789896ea828e61bc7bc9410dc83618e09"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213842Z-case.j6.run_summary.intel_failed-astra-393/before.png",
+        "sha256": "dec19fbe227dc48dc3c3d5f67c9ace8ed7c3ea7adb818dcc194475f755ca2284"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213842Z-case.j6.run_summary.intel_failed-astra-393/after.png",
+        "sha256": "83587d59e23a5fb16ad3d30dcfb5f27815982c43da7c04a1074e23f1a5848942"
+      }
+    ]
+  },
+  {
+    "case": "case.j6.run_summary.retrying",
+    "width": 1440,
+    "run": "20260923T213924Z-case.j6.run_summary.retrying-astra-1440",
+    "meeting_id": "730d9be6",
+    "words": 299,
+    "first_satisfied_s": 0.926,
+    "queue_counts": {
+      "total_jobs": 1,
+      "queued_jobs": 1,
+      "running_jobs": 0,
+      "failed_jobs": 0,
+      "queued_due_jobs": 0,
+      "scheduled_retry_jobs": 1,
+      "next_retry_at": "2026-09-23T15:41:37.845513"
+    },
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213924Z-case.j6.run_summary.retrying-astra-1440/observation.json",
+        "sha256": "d62b4ee0112b0224487489f678e09ca23ab3cf570fbed3d4a21909738a9d4d3c"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213924Z-case.j6.run_summary.retrying-astra-1440/before.png",
+        "sha256": "f6154802093c21f62058780f1fc8d760d7a691a4626b35e8e4407e3227312177"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T213924Z-case.j6.run_summary.retrying-astra-1440/after.png",
+        "sha256": "adb5182f211a3455504cbdfd2e2937a4d25d3a57a354bc4c332170abba62a95d"
+      }
+    ]
+  },
+  {
+    "case": "case.j6.run_summary.retrying",
+    "width": 393,
+    "run": "20260923T214019Z-case.j6.run_summary.retrying-astra-393",
+    "meeting_id": "dd67fdf0",
+    "words": 299,
+    "first_satisfied_s": 0.929,
+    "queue_counts": {
+      "total_jobs": 1,
+      "queued_jobs": 1,
+      "running_jobs": 0,
+      "failed_jobs": 0,
+      "queued_due_jobs": 0,
+      "scheduled_retry_jobs": 1,
+      "next_retry_at": "2026-09-23T15:42:33.992113"
+    },
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214019Z-case.j6.run_summary.retrying-astra-393/observation.json",
+        "sha256": "1e19e03d1598b9f020531f0eb18b6578e5ed71ae0b5c2ca0d092616c33a8b07e"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214019Z-case.j6.run_summary.retrying-astra-393/before.png",
+        "sha256": "d1b060598dcc10e40420e09bce48fd1c66b317f9ad7df6e1c50f126d1801eb7e"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214019Z-case.j6.run_summary.retrying-astra-393/after.png",
+        "sha256": "f090d6c564ca6e357ec4d0c763c384cdd793b21d932d206a26edca39f80b7821"
+      }
+    ]
+  },
+  {
+    "case": "case.j6.run_summary.summary_text",
+    "width": 1440,
+    "run": "20260923T214120Z-case.j6.run_summary.summary_text-astra-1440",
+    "meeting_id": "e2f212d4",
+    "words": 114,
+    "first_satisfied_s": 7.082,
+    "queue_counts": null,
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/observation.json",
+        "sha256": "dce1d379cd61472685315ff4eeb6a21e603bea1eb35aea76fcb0c5aa41beb708"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/before.png",
+        "sha256": "03574d76c175c9664e364a6867960c96b073650ececa09a4ae6e277df6473133"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/after.png",
+        "sha256": "310472553154274efacab6bb8d706376b2f849050c7e07414c17fc9c9d8586c6"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214120Z-case.j6.run_summary.summary_text-astra-1440/framed.png",
+        "sha256": "310472553154274efacab6bb8d706376b2f849050c7e07414c17fc9c9d8586c6"
+      }
+    ]
+  },
+  {
+    "case": "case.j6.run_summary.summary_text",
+    "width": 393,
+    "run": "20260923T214213Z-case.j6.run_summary.summary_text-astra-393",
+    "meeting_id": "a0d33ae9",
+    "words": 78,
+    "first_satisfied_s": 6.676,
+    "queue_counts": null,
+    "artifacts": [
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/observation.json",
+        "sha256": "bbe892662399cc746026ca222f5161d130b270be3c2491c02fa907b806ef0f1b"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/before.png",
+        "sha256": "d12a29d43b6894650b5b3968efa154955bf0c31daac67776c8d23e2500e1d37d"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/after.png",
+        "sha256": "95fecfd20448ba284f4aca52c14a9fd7188bf3564ff7c84d0f3c29481b212bbf"
+      },
+      {
+        "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2/20260923T214213Z-case.j6.run_summary.summary_text-astra-393/framed.png",
+        "sha256": "c1f9fe6b938ddab8e551c8993b40c3c400b5847435a5a6318bb448f96459b5fa"
+      }
+    ]
+  }
+]

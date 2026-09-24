@@ -2112,7 +2112,8 @@
         "meeting persistence"
       ],
       "docs": [
-        "docs/MEETING_ARCHITECTURE.md"
+        "docs/MEETING_ARCHITECTURE.md",
+        "docs/internal/philo/phase-3/summary/usefulness.md"
       ],
       "domain": "meeting",
       "egress": "Deferred intelligence may cross its configured model boundary; source audio is read and not retained by the import path.",
@@ -2121,7 +2122,7 @@
         "holdspeak/meeting_import.py::import_meeting",
         "holdspeak/meeting_import.py::import_transcript"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "unsupported_audio_format",
@@ -2185,7 +2186,7 @@
         }
       ],
       "status": "experimental",
-      "status_reason": "Audio and transcript import share the normal MeetingState persistence tail; source audio disposal and decoder limits are explicit.",
+      "status_reason": "Audio and transcript import persist a meeting; PHILO-3-02 observed completed synthetic WAV import and Arrival duration/transcript. Speech quality varies and is not owner-verified.",
       "surfaces": [
         "audio import",
         "transcript import"
@@ -2212,6 +2213,17 @@
           },
           "node": "test_imported_meeting_is_indistinguishable_downstream",
           "path": "tests/integration/test_meeting_import_parity.py"
+        },
+        {
+          "assertion": "Real import and admitted queue producers supply the detail wire; a later real assignment change does not rewrite the executed host receipt. ASR and model execution are substituted in this unit fence.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/detail/astra-final-fixture-run.txt",
+            "run": "Astra final producer fixture verification",
+            "status": "passed"
+          },
+          "node": "test_summary_wire_fixture_matches_real_producer_states",
+          "path": "tests/unit/test_philo3_summary_detail.py"
         }
       ],
       "trust_boundary": "Import reads local source material, creates a normal meeting record, and can later send only the saved transcript to admitted intelligence."
@@ -2230,7 +2242,9 @@
         "LLM provider"
       ],
       "docs": [
-        "docs/MEETING_INTELLIGENCE.md"
+        "docs/MEETING_INTELLIGENCE.md",
+        "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/summary-lane-record.md",
+        "docs/internal/philo/phase-3/summary/usefulness.md"
       ],
       "domain": "meeting",
       "egress": "Model dispatch may egress according to the frozen destination; external actuators are separate opt-in registrations.",
@@ -2240,7 +2254,7 @@
         "holdspeak/plugins/builtin/__init__.py::register_builtin_plugins",
         "holdspeak/plugins/host.py::PluginHost.execute"
       ],
-      "evidence_level": "source_and_assertions_inspected",
+      "evidence_level": "tests_executed",
       "exposure": "user",
       "failure_states": [
         "blocked",
@@ -2264,7 +2278,8 @@
       ],
       "limitations": [
         "Schema success does not prove semantic correctness.",
-        "No queue worker or model call was run."
+        "PHILO-3-02 queue fences execute the real admission and drain with a substituted provider. Real LAN completion, Arrival and restart proof are recorded separately in the lane evidence; the owner has not observed the result.",
+        "The retained synthetic meeting loses or corrupts planted facts: SQLite and Maya Chen are misheard; the named failure-fence action is omitted or replaced. At 393, an existing aftercare card can overlap the last summary line; scrolling is recorded separately."
       ],
       "model_requirements": [
         "LLM capability for every registered built-in plugin"
@@ -2292,7 +2307,7 @@
         "linux_x11": "supported_with_setup",
         "macos": "supported_with_setup"
       },
-      "purpose": "Run admitted profile-selected analysis plugins over a saved meeting and persist typed artifacts with lineage.",
+      "purpose": "Summarize a saved meeting and retain its summary, route receipt, and analysis artifacts.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -2314,13 +2329,26 @@
           "line": 252,
           "path": "holdspeak/plugins/host.py",
           "symbol": "PluginHost.execute"
+        },
+        {
+          "claim": "The deferred queue announces a meeting change after durable running and settled transitions through the existing desk bus.",
+          "line": 81,
+          "path": "holdspeak/intel_queue.py",
+          "symbol": "_notify_queue_meeting_changed"
+        },
+        {
+          "claim": "Meeting detail and recovery share durable queue state, last error and retry facts; scheduled retry is established by its failed predecessor, not by time alone.",
+          "line": 42,
+          "path": "holdspeak/services/meeting_intel_service.py",
+          "symbol": "project_intel_job"
         }
       ],
       "status": "experimental",
-      "status_reason": "The registry, host gate, schemas, idempotency, and deferred persistence are implemented; semantic quality remains model-dependent.",
+      "status_reason": "PHILO-3-02 observed one Run, automatic Arrival summary and actual-host receipt, retry/failure cause, and exact restart retention with the real LAN Qwen3.6-35B engine. Planted-fact recovery is partial; no owner sitting is claimed.",
       "surfaces": [
         "meeting artifacts",
-        "meeting analysis"
+        "meeting analysis",
+        "Arrival meeting row"
       ],
       "tests": [
         {
@@ -2355,6 +2383,61 @@
           },
           "node": "test_partial_intel_names_retained_work_and_supports_retry_or_skip",
           "path": "tests/integration/test_meeting_intel_recovery.py"
+        },
+        {
+          "assertion": "A real admitted job announces running and success after persisted state and receipt writes.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/queue/report.md",
+            "run": "Astra focused queue verification",
+            "status": "passed"
+          },
+          "node": "test_real_admitted_success_notifies_after_running_and_receipt",
+          "path": "tests/unit/test_philo3_summary_queue.py"
+        },
+        {
+          "assertion": "A real provider failure announces its persisted retry successor and contacted receipt.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/queue/report.md",
+            "run": "Astra focused queue verification",
+            "status": "passed"
+          },
+          "node": "test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt",
+          "path": "tests/unit/test_philo3_summary_queue.py"
+        },
+        {
+          "assertion": "A terminal real-queue failure announces persisted failed state and receipt.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/queue/report.md",
+            "run": "Astra focused queue verification",
+            "status": "passed"
+          },
+          "node": "test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt",
+          "path": "tests/unit/test_philo3_summary_queue.py"
+        },
+        {
+          "assertion": "Removing the real assignment after admission yields a durable refusal and meeting notification.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/queue/report.md",
+            "run": "Astra focused queue verification",
+            "status": "passed"
+          },
+          "node": "test_real_admission_refusal_notifies_after_durable_refusal_receipt",
+          "path": "tests/unit/test_philo3_summary_queue.py"
+        },
+        {
+          "assertion": "Real import and admitted queue producers supply the detail wire; a later real assignment change does not rewrite the executed host receipt. ASR and model execution are substituted in this unit fence.",
+          "execution": {
+            "cases": 1,
+            "record": "docs/internal/philo/phase-3/summary/detail/astra-final-fixture-run.txt",
+            "run": "Astra final producer fixture verification",
+            "status": "passed"
+          },
+          "node": "test_summary_wire_fixture_matches_real_producer_states",
+          "path": "tests/unit/test_philo3_summary_detail.py"
         }
       ],
       "trust_boundary": "A saved transcript enters host-issued model dispatch; generated artifacts retain plugin and transcript-window lineage."

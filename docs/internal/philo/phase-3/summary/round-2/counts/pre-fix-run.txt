@@ -1,0 +1,19 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo3_summary_counts.py
+
+Result before the producer fix:
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_terminal_failure_is_not_still_queued_in_runtime_frame __________
+E       assert emitted
+E       assert []
+____________ test_scheduled_retry_is_counted_as_queued_and_retrying ____________
+E       assert emitted
+E       assert []
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo3_summary_counts.py::test_terminal_failure_is_not_still_queued_in_runtime_frame
+FAILED tests/unit/test_philo3_summary_counts.py::test_scheduled_retry_is_counted_as_queued_and_retrying
+2 failed in 1.12s
+
+The real durable frame builder was already truthful in both cases; the
+failure was that no `runtime_queue` frame was emitted after the real drain.

@@ -245,10 +245,11 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
 
             # ── station 3: the record AFTER the run: the text and the hosts ──
             open_meetings(first_id)
-            summary_text = page.get_by_test_id("meeting-summary-text")
+            meetings_surface = page.locator("#surface-meetings")
+            summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = page.get_by_test_id("summary-record-attempts")
+            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
             attempts.wait_for()
             for attempt in receipt["attempts"]:
                 assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
@@ -272,7 +273,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
             print(f"REVIEW {not_run.text_content()!r}")
             _shot(page, "review-not-run")
             page.get_by_role("tab", name="Outcomes").click()
-            page.get_by_test_id("meeting-summary-text").wait_for(timeout=15_000)
+            page.locator("#surface-meetings").get_by_test_id(
+                "meeting-summary-text"
+            ).wait_for(timeout=15_000)
 
             # ── station 4: a FAILED record, its slab, and a STALE refusal ──
             # The producer refuses once, with retries exhausted, so the
@@ -436,7 +439,9 @@ def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatc
                     break
             assert opened, "no Open verb on the Chair after the restart"
             moves += 1
-            found = page.get_by_test_id("meeting-summary-text")
+            found = page.locator("#surface-meetings").get_by_test_id(
+                "meeting-summary-text"
+            )
             try:
                 found.wait_for(timeout=10_000)
             except Exception:
@@ -507,11 +512,14 @@ def _assert_no_overlap(page) -> None:
     """
     overlap = page.evaluate(
         """() => {
-            const footer = document.querySelector('.surface-footer');
+            const meetingsWindow = document.querySelector('#surface-meetings')
+              ?.closest('.desk-surface-window');
+            if (!meetingsWindow) return ['Meetings window not found'];
+            const footer = meetingsWindow.querySelector('.surface-footer');
             const bad = [];
             const hits = (a, b) =>
               a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right;
-            for (const surface of document.querySelectorAll(
+            for (const surface of meetingsWindow.querySelectorAll(
                 '.surface-state-error, [data-testid$="-refusal"],' +
                 ' .meeting-intel-recovery-facts')) {
               const a = surface.getBoundingClientRect();
@@ -524,7 +532,7 @@ def _assert_no_overlap(page) -> None:
                 const w = win.getBoundingClientRect();
                 if (a.right > w.right + 1) bad.push('out of window: ' + (surface.textContent || ''));
               }
-              for (const verb of document.querySelectorAll('button')) {
+              for (const verb of meetingsWindow.querySelectorAll('button')) {
                 const b = verb.getBoundingClientRect();
                 if (b.width === 0) continue;
                 if (hits(a, b)) bad.push(verb.textContent || 'verb');
@@ -784,10 +792,11 @@ def test_import_transcribes_and_stops_then_the_summary_is_asked_for(
             page.get_by_test_id(f"meeting-row-{imported.id}").locator(
                 ".meetings-stream-row-body"
             ).click()
-            summary_text = page.get_by_test_id("meeting-summary-text")
+            meetings_surface = page.locator("#surface-meetings")
+            summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
             summary_text.wait_for(timeout=15_000)
             assert (summary_text.text_content() or "").strip() == engine.result.summary
-            attempts = page.get_by_test_id("summary-record-attempts")
+            attempts = meetings_surface.get_by_test_id("summary-record-attempts")
             attempts.wait_for(timeout=15_000)
             for attempt in receipt["attempts"]:
                 assert _chip_label(attempt["host"]) in (attempts.text_content() or "")

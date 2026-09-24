@@ -1,0 +1,104 @@
+/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-before-e_v42msc/holdspeak/__init__.py
+...FF...F.                                                               [100%]
+=================================== FAILURES ===================================
+_ test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-392/test_scheduled_retry_projects_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d4c7ce0>
+
+    def test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued(
+        tmp_path: Path, monkeypatch: Any
+    ) -> None:
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-detail-retry")
+        _admit(db, state.id)
+        engine.error = "provider unavailable"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job(retry_base_seconds=60) is True
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE intel_jobs SET requested_at=? WHERE meeting_id=? AND status='queued'",
+                ("2020-01-01T00:00:00", state.id),
+            )
+    
+        reads = _reads(db, state.id)
+        producer_error = db.intel.get_latest_intel_job(state.id).last_error
+        assert producer_error
+>       assert producer_error == "provider unavailable"
+E       AssertionError: assert 'Deferred int...d not publish' == 'provider unavailable'
+E         
+E         - provider unavailable
+E         + Deferred intel failed: bound analysis did not publish
+
+tests/unit/test_philo3_summary_detail.py:497: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:132 Deferred intel failed for meeting m-philo3-detail-retry (attempt 1/6): retrying in 60s
+__________ test_real_producer_terminal_failure_projects_failed_cause ___________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-392/test_real_producer_terminal_fa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d456140>
+
+    def test_real_producer_terminal_failure_projects_failed_cause(
+        tmp_path: Path, monkeypatch: Any
+    ) -> None:
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-detail-failed")
+        _admit(db, state.id)
+        engine.error = "recorded provider failure at the endpoint boundary"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job(retry_max_attempts=1) is True
+        reads = _reads(db, state.id)
+        producer_error = db.intel.get_latest_intel_job(state.id).last_error
+        assert producer_error
+>       _assert_plain_provider_cause(producer_error, RETAINED_PROVIDER_CAUSE)
+
+tests/unit/test_philo3_summary_detail.py:538: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cause = 'Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish'
+expected = 'recorded provider failure at the endpoint boundary'
+
+    def _assert_plain_provider_cause(cause: Any, expected: str) -> None:
+        """The Arrival receives the provider cause, without queue implementation text."""
+>       assert cause == expected
+E       AssertionError: assert 'Deferred int...d not publish' == 'recorded pro...oint boundary'
+E         
+E         - recorded provider failure at the endpoint boundary
+E         + Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish
+
+tests/unit/test_philo3_summary_detail.py:39: AssertionError
+__ test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-392/test_real_admitted_terminal_fa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e01a4e0>
+
+    def test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt(
+        tmp_path, monkeypatch
+    ):
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        state = _meeting(db, "m-philo3-terminal")
+        observations = _observe_notifications(db, monkeypatch)
+        _admit(db, state.id)
+        engine.error = "provider unavailable"
+    
+        from holdspeak.intel_queue import process_next_intel_job
+    
+        assert process_next_intel_job(retry_max_attempts=1) is True
+        assert [item["meeting_status"] for item in observations] == ["running", "error"]
+        assert observations[1]["job_status"] == "failed"
+>       assert db.intel.get_latest_intel_job(state.id).last_error == "provider unavailable"
+E       AssertionError: assert 'Deferred int...d not publish' == 'provider unavailable'
+E         
+E         - provider unavailable
+E         + Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish
+
+tests/unit/test_philo3_summary_queue.py:125: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo3_summary_detail.py::test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued
+FAILED tests/unit/test_philo3_summary_detail.py::test_real_producer_terminal_failure_projects_failed_cause
+FAILED tests/unit/test_philo3_summary_queue.py::test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt
+3 failed, 7 passed in 4.45s

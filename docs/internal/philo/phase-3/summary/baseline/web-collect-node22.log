@@ -1,0 +1,12 @@
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > sends the disclosed selection hash, and shows the host first
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > withholds Run and says the reason when no route resolves
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > shows a 409 as ONE short refusal fact, the reason on its title
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > opens the meeting with the `meeting:<id>` grammar History parses
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > re-reads the desk when a frame arrives from another caller
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > collapses a burst into ONE re-read
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > extends the window when a frame lands during the wait
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > ignores every other frame type
+src/desk/__tests__/deskChangedRefresh.test.tsx > desk_changed -> refresh > does not re-read after unmount
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with an ABSENT drainer reads NOT DRAINING
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with a RUNNING drainer reads QUEUED
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > no frame is UNKNOWN, never reported as absent

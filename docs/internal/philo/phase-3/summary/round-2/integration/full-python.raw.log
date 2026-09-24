@@ -1,0 +1,1704 @@
+...........ssssssssssssssssssssss.........ssssss............s..s........ [  0%]
+..................ssssssssssss....sssssssss......................ssss... [  1%]
+.ssssss........................F........................................ [  1%]
+........................................................................ [  2%]
+......................F..................xxxx.......F..........F........ [  3%]
+...........FF....FF..........................F.......................... [  3%]
+ssssssssss.s............................................................ [  4%]
+........................................................................ [  4%]
+.....................s...............sss................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+....................................ss....................ss............ [  9%]
+..........................................................s............. [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 14%]
+......ss..........s..................................................... [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 27%]
+............................................................s........... [ 28%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 30%]
+........................................................s............... [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 32%]
+....................................s........ss...ss.................... [ 33%]
+......s......sssss...................................................... [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+..................ss.................................................... [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+............................s........................................... [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+....................................................s..sss.............. [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+..........................................F............................. [ 65%]
+....................................FF.................................. [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+.......................................................s................ [ 80%]
+........................................................................ [ 80%]
+....................................................s................... [ 81%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 94%]
+................................................s....................... [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+.............................................s.......................... [ 99%]
+........................................................................ [ 99%]
+...................                                                      [100%]
+=================================== FAILURES ===================================
+_____________________ TestMeetingsGlass.test_meetings_face _____________________
+
+self = <tests.e2e.test_hs170_meetings_glass.TestMeetingsGlass object at 0x109979450>
+
+    def test_meetings_face(self) -> None:
+        from playwright.sync_api import sync_playwright, expect
+    
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+    
+            for width in (1440, 393):
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda err: errors.append(str(err)))
+    
+                # Navigate with auth token
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+                _normal_chair(page)
+    
+                # Open the meetings surface
+                _open_surface(page, "review-meetings")
+                found = _wait_for_surface_window(page, timeout=12000)
+                assert found, f"Meetings surface window did not open at {width}"
+    
+                # Wait for data to render (headline is the signal)
+                headline = page.locator("[data-testid='meetings-headline']")
+                headline.wait_for(timeout=8_000)
+                _settle(page)
+    
+                # ── Assert: headline ──
+                headline_text = headline.text_content() or ""
+                assert "1" in headline_text and "summary" in headline_text.lower(), (
+                    f"Headline at {width}: expected '1 ... summary', got '{headline_text}'"
+                )
+    
+                # ── Assert: Run summary on OFF-with-words row ──
+                run_btns = page.locator("[data-testid='run-intelligence-btn']")
+                expect(run_btns.first).to_be_visible(timeout=5_000)
+                assert run_btns.count() == 1, (
+                    f"Expected exactly 1 'Run summary' at {width}, got {run_btns.count()}"
+                )
+    
+                # ── Assert: NO TRANSCRIPT renders ──
+                no_transcript = page.locator("[data-testid='no-transcript-token']")
+                expect(no_transcript.first).to_be_visible(timeout=3_000)
+    
+                # ── Assert: 0 SEG never appears ──
+                win = page.locator(".desk-surface-window")
+                page_text = win.text_content() or ""
+                assert "0 SEG" not in page_text, (
+                    f"'0 SEG' found in page at {width}"
+                )
+    
+                # ── Assert: INTERRUPTED renders for dead capture, REC never does ──
+                assert "INTERRUPTED" in page_text, (
+                    f"'INTERRUPTED' not found at {width} for dead capture"
+                )
+                state_tokens_text = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return '';
+                    const tokens = body.querySelectorAll('[data-testid="state-token"]');
+                    return Array.from(tokens).map(t => t.textContent).join('|');
+                }""")
+                assert "REC" not in state_tokens_text.split("|"), (
+                    f"'REC' state token found at {width}: {state_tokens_text}"
+                )
+    
+                # ── Assert: no raw <button> in the face body ──
+                raw_buttons = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return [];
+                    const all = body.querySelectorAll('button');
+                    const raw = [];
+                    for (const b of all) {
+                        // .btn = library Button; .desk-mic = library MicButton
+                        if (!b.classList.contains('btn') && !b.classList.contains('btn--chrome') && !b.classList.contains('desk-mic')) {
+                            raw.push((b.textContent || '').trim().slice(0, 40));
+                        }
+                    }
+                    return raw;
+                }""")
+                assert len(raw_buttons) == 0, (
+                    f"Raw buttons at {width}: {raw_buttons}"
+                )
+    
+                # ── Assert: HS-170-04 restored doors ──
+                if width == 1440:
+                    # Search StringGadget with mic in the list head
+                    search_input = page.locator(".meetings-search .gadget-string input")
+                    expect(search_input).to_be_visible(timeout=3_000)
+    
+                    # Facet token toggles on the caption row
+                    facet_area = page.locator("[data-testid='meetings-facets']")
+>                   expect(facet_area).to_be_visible(timeout=3_000)
+E                   AssertionError: Locator expected to be visible
+E                   Actual value: None
+E                   Error: element(s) not found 
+E                   Call log:
+E                     - Expect "to_be_visible" with timeout 3000ms
+E                     - waiting for locator("[data-testid='meetings-facets']")
+
+tests/e2e/test_hs170_meetings_glass.py:318: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____________________ TestAttentionGlass.test_long_row_393 _____________________
+
+self = <tests.e2e.test_hs200_attention_glass.TestAttentionGlass object at 0x109ab9d00>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1447c66d0>
+
+    def test_long_row_393(self, tmp_path, monkeypatch) -> None:
+>       _run_long_row(tmp_path, monkeypatch, 393)
+
+tests/e2e/test_hs200_attention_glass.py:733: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1447c66d0>
+width = 393
+
+    def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        """Counsel P0-2: nothing extends past the viewport; one primary on the
+        whole face; the sources disclosure opens with an Open per projection."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 1100})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _arrive(page, url)
+                _seed_long_row(page)
+                _reload_arrival(page)
+                wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+                first = wire["items"][0]
+                assert first["title"].startswith("KAN-7") and first["dedupCount"] == 2, first
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+                _settle(page)
+                page.mouse.move(2, 2)
+    
+                row = page.locator("[data-testid='arrival-needs-you-row']").first
+                assert LONG_TITLE in (row.text_content() or "")
+                project = row.locator(".surface-project-button")
+                assert project.count() == 1
+                assert (project.get_attribute("aria-label") or "") == f"Open the Project: {LONG_PROJECT}"
+                _no_horizontal_scroll(page, width)
+                # The verb sits on the SAME line as the meta, at its right.
+                boxes = page.evaluate("""() => {
+                    const row = document.querySelector('[data-testid="arrival-needs-you-row"]');
+                    const meta = row.querySelector('.arrival-needs-you-meta').getBoundingClientRect();
+                    const verb = row.querySelector('.surface-ledger-trailing .btn').getBoundingClientRect();
+                    const name = row.querySelector('.surface-ledger-primary').getBoundingClientRect();
+                    return {metaTop: meta.top, metaBottom: meta.bottom, verbTop: verb.top, verbBottom: verb.bottom,
+                            verbRight: verb.right, nameBottom: name.bottom, rowRight: row.getBoundingClientRect().right};
+                }""")
+                assert boxes["verbRight"] <= width + 0.5, boxes
+                if width <= 480:
+                    assert boxes["verbTop"] >= boxes["nameBottom"] - 1, f"the verb is under the name at 393: {boxes}"
+                    assert boxes["verbTop"] < boxes["metaBottom"] and boxes["verbBottom"] > boxes["metaTop"], \
+                        f"the verb shares the meta line at 393: {boxes}"
+                assert len(_primaries(page)) == 1, _primaries(page)
+    
+                _shot(page, "long-row", width)
+    
+                trigger = row.locator(".surface-disclosure-trigger").first
+                trigger.click()
+                _settle(page)
+                opens = page.get_by_test_id("arrival-source-open")
+                assert opens.count() == 2, "every projection keeps its own Open"
+                titles = [t.text_content() for t in page.locator(".arrival-source-title").all()]
+                assert titles == [f"KAN-7 {LONG_TITLE}", LONG_TITLE], titles
+                _no_horizontal_scroll(page, width)
+                assert len(_primaries(page)) == 1, _primaries(page)
+                _shot(page, "long-row-sources", width)
+    
+                # The selected filter token is never the filled primary.
+                page.get_by_role("group", name="Ranking").get_by_role("button", name="OVERDUE").click()
+                _settle(page)
+                assert len(_primaries(page)) == 1, _primaries(page)
+    
+                if width <= 480:
+                    # Counsel P1-8: scrolled to the end, the last section clears the
+                    # capture bar.
+                    page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+                    page.wait_for_timeout(200)
+                    _settle(page)
+                    clear = page.evaluate("""() => {
+                        const bar = document.querySelector('.arrival-capture-bar').getBoundingClientRect();
+                        const sections = [...document.querySelectorAll('.chair > [data-testid^="arrival-"]')]
+                            .filter(el => !el.classList.contains('arrival-capture-bar'));
+                        const last = sections[sections.length - 1].getBoundingClientRect();
+                        return {barTop: bar.top, lastBottom: last.bottom, lastId: sections[sections.length - 1].getAttribute('data-testid')};
+                    }""")
+>                   assert clear["lastBottom"] <= clear["barTop"] + 0.5, clear
+E                   AssertionError: {'barTop': 821, 'lastBottom': 1004.296875, 'lastId': 'arrival-meetings'}
+E                   assert 1004.296875 <= (821 + 0.5)
+
+tests/e2e/test_hs200_attention_glass.py:659: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ test_running_then_kept_brief_with_claims_and_not_read[393] __________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_running_then_kept_brief_w1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x148c13d90>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+                assert page.get_by_role("button", name="Stop", exact=True).count() == 1
+                _shot_room(page, f"prepare-running-{width}")
+    
+                page.get_by_test_id("prepare-document").wait_for(timeout=60000)
+                _settle(page)
+                assert len(llm.posts) == 1, llm.requests
+                assert "read replica" in llm.posts[0]["body"], "the decision travelled in the prompt"
+                assert page.get_by_test_id("prepare-head-name").inner_text().strip() == "Brief ready"
+                assert _chip_words(page.get_by_test_id("prepare-lifecycle")) == "DRAFT"
+                assert page.get_by_test_id("prepare-manifest-token").inner_text().strip() == "MANIFEST · REV 1"
+                assert _chip_words(page.get_by_test_id("prepare-coverage")) == "COVERAGE · 2 OF 4"
+                assert page.get_by_test_id("prepare-prepared").inner_text().strip().startswith("PREPARED ")
+    
+                # The document is the bounded outline, in caption-step headings;
+                # the superseded decision is NOT a line of it (P1-2).
+                doc = page.get_by_test_id("prepare-document").inner_text()
+                assert "DECIDE TODAY" in doc and "ASK THEM" in doc, doc
+                assert "Sprint velocity improved" in doc
+                assert "full freeze" not in doc, doc
+                assert "Extra priority" not in doc, doc
+    
+                captions = _section_captions(page)
+                assert "CLAIMS 5" in captions and "SUPERSEDED 1" in captions and "NOT READ 2" in captions, captions
+    
+                # The carried decision keeps its axes; the model's own prose is
+                # LINKED at best; the uncited sentence is UNSUPPORTED (C2).
+                kinds = _texts(page, "prepare-claim-kind")
+                assert kinds == ["DECISION", "INFERENCE", "INFERENCE", "INFERENCE", "INFERENCE"], kinds
+                support = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-support").all()]
+                assert support == ["SUPPORTED", "LINKED", "LINKED", "LINKED", "UNSUPPORTED"], support
+                acceptance = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-acceptance").all()]
+                assert acceptance == ["ACCEPTED", "UNREVIEWED", "UNREVIEWED", "UNREVIEWED", "UNREVIEWED"], acceptance
+                unknowns = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-unknown").all()]
+                assert "DEADLINE 2026-12-31 · NO SOURCE" in unknowns, unknowns
+                assert "NUMBER 95% · NO SOURCE" in unknowns, unknowns
+                # The NAME rule: no known person on this desk, no false NAME chip.
+                assert not [u for u in unknowns if u.startswith("NAME ")], unknowns
+                # No raw id on the face (162's law): the ref chip names the source.
+                ref_chips = _texts(page, "prepare-claim-ref")
+                assert ref_chips[0].startswith("DEC "), ref_chips
+                assert ref_chips[1].lower() == "karolswdev/holdspeak", ref_chips
+                assert not any("decrec" in r.lower() or "w_gh" in r.lower() for r in ref_chips), ref_chips
+                # No source, no source chip: `NO SOURCE` + `Find support`, and no
+                # `Open source` that opens nothing.
+                assert page.get_by_test_id("prepare-claim-no-source").count() == 1
+                assert page.get_by_test_id("prepare-claim-find").count() == 1
+                assert page.get_by_test_id("prepare-claim-open").count() == 4
+                assert page.get_by_role("button", name="Write it myself").count() == 0
+    
+                # P1-2: the superseded citation, its successor linked.
+                assert page.get_by_test_id("prepare-superseded-row").count() == 1
+                assert _chip_words(page.get_by_test_id("prepare-superseded-chip")).startswith("SUPERSEDED BY DEC ")
+                assert page.get_by_test_id("prepare-superseded-open").count() == 1
+    
+                # P1-3: what the bound left out is named, with why.
+                page.get_by_role("button", name="NOT INCLUDED 2").click()
+>               page.get_by_test_id("prepare-not-included").wait_for(timeout=5000)
+
+tests/e2e/test_hs200_preparation_brief_glass.py:706: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x149464250>
+cb = <function Channel.send.<locals>.<lambda> at 0x13ce9c720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 5000ms exceeded.
+E           Call log:
+E             - waiting for get_by_test_id("prepare-not-included") to be visible
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+____________ test_saved_ask_draws_the_ratified_unfinished_row[393] _____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_saved_ask_draws_the_ratif1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13edb70e0>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_saved_ask_draws_the_ratified_unfinished_row(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """`UNFINISHED 1`: purpose, `SAVED HH:MM`, custody, one `Resume`."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        purpose = "Whether the Q4 platform migration can land before the freeze"
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(
+                    viewport={"width": width, "height": 900 if width >= 1440 else 852}
+                )
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                _init_desk(page, url)
+                project_id = _create_project(page, "Q4 platform", "hs200-41-saved")
+                task = _save_ask(page, project_id, purpose)
+                assert task["state"] == "saved", task
+                assert task["purpose"] == purpose
+    
+                _open_room(page, project_id)
+                page.get_by_test_id("room-unfinished").wait_for(timeout=15000)
+                assert _rows(page).count() == 1, "expected exactly one unfinished row"
+    
+                # The caption carries the count the design ratified. F5 moved it:
+                # the list is a Room SECTION now, so the count rides the section
+                # label rather than a caption inside the composer's sticky foot.
+                section = _rows(page).first.locator(
+                    "xpath=ancestor::section[contains(@class,'surface-section')][1]"
+                )
+                caption = section.locator(".surface-section-head h3").first.inner_text().strip()
+                assert caption == "UNFINISHED 1", caption
+                # F5: and it is NOT inside the sticky ask container.
+                assert page.evaluate(
+                    """() => !document.querySelector('.room-ask-container')
+                       .contains(document.querySelector('[data-testid="room-unfinished"]'))"""
+                ), "the unfinished list must live in the Room body, not the sticky foot"
+    
+                # F5 tail — AT THE ROOM'S OPENING SCROLL POSITION, not only at
+                # full scroll. Filed as the trailing section, UNFINISHED was the
+                # one the sticky foot reached: the Room opened with the single row
+                # he came back for sitting under the composer, its verb hidden.
+                # It is placed directly after NEEDS YOU now, so the foot never
+                # reaches it at rest.
+                order = page.evaluate(
+                    """() => Array.from(document.querySelectorAll(
+                         '.room-body .surface-section-head h3')).map(el => el.textContent.trim())"""
+                )
+                print(f"[hs200-41] section order at rest: {order}")
+                unfinished_at = [i for i, name in enumerate(order)
+                                 if name.startswith("UNFINISHED")]
+                assert unfinished_at, order
+                if "NEEDS YOU" in order:
+                    assert unfinished_at[0] == order.index("NEEDS YOU") + 1, (
+                        f"UNFINISHED belongs directly after NEEDS YOU: {order}"
+                    )
+                if "SOURCES" in order:
+                    assert unfinished_at[0] < order.index("SOURCES"), order
+                clear = page.evaluate(
+                    """() => {
+                        const body = document.querySelector('.desk-surface-body');
+                        const top = body ? body.scrollTop : 0;
+                        const well = document.querySelector('.room-ask-container')
+                          .getBoundingClientRect();
+                        const rows = Array.from(document.querySelectorAll(
+                          '[data-testid="room-unfinished"] .surface-task-resume'));
+                        const covered = rows.filter(row => {
+                          const r = row.getBoundingClientRect();
+                          return r.bottom > well.top + 1 && r.top < well.bottom - 1;
+                        }).length;
+                        // The row's ONE verb must be whole, not a sliver above
+                        // the composer's edge.
+                        const verb = document.querySelector(
+                          '[data-testid="room-unfinished"] .surface-task-resume-verbs button');
+                        const v = verb.getBoundingClientRect();
+                        return {scrollTop: top, covered,
+                                verbClear: Math.round(well.top - v.bottom)};
+                    }"""
+                )
+                print(f"[hs200-41] at rest: {json.dumps(clear)}")
+                assert clear["scrollTop"] == 0, "this is meant to measure the RESTING Room"
+>               assert clear["covered"] == 0, (
+                    f"the row he came back for opens under the composer: {clear}"
+                )
+E               AssertionError: the row he came back for opens under the composer: {'scrollTop': 0, 'covered': 1, 'verbClear': -101}
+E               assert 1 == 0
+
+tests/e2e/test_hs200_task_resume_glass.py:288: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[hs200-41] section order at rest: ['NEEDS YOU', 'UNFINISHED 1', 'SOURCES', 'RECEIPTS 4', 'SINCE CREATED']
+[hs200-41] at rest: {"scrollTop": 0, "covered": 1, "verbClear": -101}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________________ test_thought_note_is_one_clean_note[1440] ___________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_thought_note_is_one_clean0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x148959a90>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+    
+        server, url, provider, engine = _boot(tmp_path, monkeypatch)
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        errors: list[str] = []
+        console_errors: list[str] = []
+        responses: list[tuple[str, int]] = []
+        try:
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.emulate_media(reduced_motion="reduce")
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+                page.on("response", lambda response: responses.append((response.url, response.status)) if "/api/thoughts/" in response.url else None)
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+                thought = _seed(page, OWNER_TITLE, OWNER_BODY)
+                note_id = thought["working_note"]["id"]
+                page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
+    
+                workspace = page.get_by_role("region", name="Thought", exact=True)
+                workspace.wait_for(timeout=15000)
+                band = page.get_by_role("region", name="One question", exact=True)
+                band.wait_for(timeout=15000)
+    
+                # ── Band 3 is folded to one row; nothing else is on the screen ──
+                assert band.get_by_role("button", name="Ask", exact=True).is_visible()
+                assert page.get_by_role("textbox", name="Your answer").count() == 0
+                assert workspace.get_by_role("toolbar", name="Markdown formatting").count() == 0
+                assert workspace.get_by_role("button", name="Info", exact=True).count() == 0
+                assert workspace.get_by_role("button", name="Add tag", exact=True).count() == 0
+                assert workspace.get_by_role("region", name="Interview", exact=True).count() == 0
+                assert page.get_by_text("Filed", exact=True).count() == 0
+                assert page.get_by_text("Saved", exact=True).count() == 0
+                _no_empty_heading(page)
+                _no_horizontal_escape(page)
+                # Every verb is a library species: btn (Button), or a library
+                # control's own element (the desk mic, the in-place editor).
+                assert workspace.evaluate(
+                    "el => [...el.querySelectorAll('button')].filter(node => "
+                    "!node.matches('.btn, [class*=\"desk-\"], [class*=\"surface-\"], [class*=\"gadget-\"]')).length"
+                ) == 0
+                assert workspace.locator(".btn--primary:visible").count() == 1
+                assert workspace.locator(".btn--primary:visible").inner_text().strip() == "Finish"
+    
+                # The title wraps: every character of it is drawn, never clipped.
+                title = workspace.locator(".thought-note-title")
+                assert title.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
+                assert title.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert OWNER_TITLE[-12:] in title.inner_text()
+    
+                # The context fact is said ONCE, in the Reads line of the foot.
+                reads = workspace.locator(".thought-note-reads")
+                assert reads.count() == 1
+                assert page.get_by_text("Attached", exact=False).count() == 0
+                page.screenshot(path=str(SHOTS / f"after-{width}.png"), full_page=False)
+    
+                # ── Change: an in-window well, and the Reads line is the receipt ──
+                change = workspace.get_by_role("button", name="Change", exact=True)
+                change.click()
+                well = page.get_by_role("region", name="What the AI reads")
+                well.wait_for(timeout=10000)
+                assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
+                assert well.evaluate(
+                    "el => [...el.querySelectorAll('button')].filter(node => "
+                    "!node.matches('.btn, [class*=\"desk-\"], [class*=\"surface-\"], [class*=\"gadget-\"]')).length"
+                ) == 0
+                token = well.get_by_role("checkbox").first
+                token.wait_for(timeout=10000)
+                chosen = token.get_attribute("aria-label")
+                assert chosen, "the well drew a control with no name"
+                # The token variant's own face takes the click (the input is its
+                # state, not its target) — the owner presses the named token.
+                well.locator("label.gadget-check-token").first.click()
+                page.wait_for_function(
+                    "name => document.querySelector('.thought-note-reads')?.textContent?.includes(name)",
+                    arg=chosen,
+                    timeout=10000,
+                )
+                # The receipt is said ONCE, and it is never clipped at either width.
+                assert workspace.locator(".thought-note-reads").count() == 1
+                assert workspace.locator(".thought-note-reads").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                # …and the kept state keeps its own place beside it (the foot
+                # stacks at 393 rather than pushing a fact off the glass).
+                kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+>               assert kept.inner_text().strip() == "KEPT"
+                       ^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_hs201_12_thought_note_glass.py:233: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:17093: in inner_text
+    self._sync(self._impl_obj.inner_text(timeout=timeout))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:476: in inner_text
+    return await self._frame.inner_text(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:712: in inner_text
+    return await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x13a10c450>
+cb = <function Channel.send.<locals>.<lambda> at 0x145894400>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Locator.inner_text: Error: strict mode violation: get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line") resolved to 2 elements:
+E               1) <span role="status" class="surface-footer-receipt-line">KEPT · 5:05 PM</span> aka get_by_text("KEPT · 5:05 PM")
+E               2) <span data-line="filing" class="surface-footer-receipt-line">IN INBOX</span> aka get_by_text("IN INBOX")
+E           
+E           Call log:
+E             - waiting for get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line")
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___________________ test_thought_note_is_one_clean_note[393] ___________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_thought_note_is_one_clean1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x148791240>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+    
+        server, url, provider, engine = _boot(tmp_path, monkeypatch)
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        errors: list[str] = []
+        console_errors: list[str] = []
+        responses: list[tuple[str, int]] = []
+        try:
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.emulate_media(reduced_motion="reduce")
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+                page.on("response", lambda response: responses.append((response.url, response.status)) if "/api/thoughts/" in response.url else None)
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+                thought = _seed(page, OWNER_TITLE, OWNER_BODY)
+                note_id = thought["working_note"]["id"]
+                page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
+    
+                workspace = page.get_by_role("region", name="Thought", exact=True)
+                workspace.wait_for(timeout=15000)
+                band = page.get_by_role("region", name="One question", exact=True)
+                band.wait_for(timeout=15000)
+    
+                # ── Band 3 is folded to one row; nothing else is on the screen ──
+                assert band.get_by_role("button", name="Ask", exact=True).is_visible()
+                assert page.get_by_role("textbox", name="Your answer").count() == 0
+                assert workspace.get_by_role("toolbar", name="Markdown formatting").count() == 0
+                assert workspace.get_by_role("button", name="Info", exact=True).count() == 0
+                assert workspace.get_by_role("button", name="Add tag", exact=True).count() == 0
+                assert workspace.get_by_role("region", name="Interview", exact=True).count() == 0
+                assert page.get_by_text("Filed", exact=True).count() == 0
+                assert page.get_by_text("Saved", exact=True).count() == 0
+                _no_empty_heading(page)
+                _no_horizontal_escape(page)
+                # Every verb is a library species: btn (Button), or a library
+                # control's own element (the desk mic, the in-place editor).
+                assert workspace.evaluate(
+                    "el => [...el.querySelectorAll('button')].filter(node => "
+                    "!node.matches('.btn, [class*=\"desk-\"], [class*=\"surface-\"], [class*=\"gadget-\"]')).length"
+                ) == 0
+                assert workspace.locator(".btn--primary:visible").count() == 1
+                assert workspace.locator(".btn--primary:visible").inner_text().strip() == "Finish"
+    
+                # The title wraps: every character of it is drawn, never clipped.
+                title = workspace.locator(".thought-note-title")
+                assert title.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
+                assert title.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert OWNER_TITLE[-12:] in title.inner_text()
+    
+                # The context fact is said ONCE, in the Reads line of the foot.
+                reads = workspace.locator(".thought-note-reads")
+                assert reads.count() == 1
+                assert page.get_by_text("Attached", exact=False).count() == 0
+                page.screenshot(path=str(SHOTS / f"after-{width}.png"), full_page=False)
+    
+                # ── Change: an in-window well, and the Reads line is the receipt ──
+                change = workspace.get_by_role("button", name="Change", exact=True)
+                change.click()
+                well = page.get_by_role("region", name="What the AI reads")
+                well.wait_for(timeout=10000)
+                assert well.evaluate("el => el.closest('.thought-workspace-window') !== null")
+                assert well.evaluate(
+                    "el => [...el.querySelectorAll('button')].filter(node => "
+                    "!node.matches('.btn, [class*=\"desk-\"], [class*=\"surface-\"], [class*=\"gadget-\"]')).length"
+                ) == 0
+                token = well.get_by_role("checkbox").first
+                token.wait_for(timeout=10000)
+                chosen = token.get_attribute("aria-label")
+                assert chosen, "the well drew a control with no name"
+                # The token variant's own face takes the click (the input is its
+                # state, not its target) — the owner presses the named token.
+                well.locator("label.gadget-check-token").first.click()
+                page.wait_for_function(
+                    "name => document.querySelector('.thought-note-reads')?.textContent?.includes(name)",
+                    arg=chosen,
+                    timeout=10000,
+                )
+                # The receipt is said ONCE, and it is never clipped at either width.
+                assert workspace.locator(".thought-note-reads").count() == 1
+                assert workspace.locator(".thought-note-reads").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                # …and the kept state keeps its own place beside it (the foot
+                # stacks at 393 rather than pushing a fact off the glass).
+                kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+>               assert kept.inner_text().strip() == "KEPT"
+                       ^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_hs201_12_thought_note_glass.py:233: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:17093: in inner_text
+    self._sync(self._impl_obj.inner_text(timeout=timeout))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:476: in inner_text
+    return await self._frame.inner_text(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:712: in inner_text
+    return await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x1457ed950>
+cb = <function Channel.send.<locals>.<lambda> at 0x1464d7920>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Locator.inner_text: Error: strict mode violation: get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line") resolved to 2 elements:
+E               1) <span role="status" class="surface-footer-receipt-line">KEPT · 5:05 PM</span> aka get_by_text("KEPT · 5:05 PM")
+E               2) <span data-line="filing" class="surface-footer-receipt-line">IN INBOX</span> aka get_by_text("IN INBOX")
+E           
+E           Call log:
+E             - waiting for get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line")
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________ test_thought_note_long_context_and_open_well_never_clip[1440] _________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_thought_note_long_context0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x145389240>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_thought_note_long_context_and_open_well_never_clip(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Astra finding 5: a long context name pushed Finish off the window."""
+        from playwright.sync_api import sync_playwright
+    
+        server, url, _provider, _engine = _boot(tmp_path, monkeypatch)
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        try:
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.emulate_media(reduced_motion="reduce")
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+                _api(page, "POST", "/api/notes", {"title": LONG_CONTEXT, "body_markdown": "The freeze holds.", "tags": []})
+                thought = _seed(page, OWNER_TITLE, OWNER_BODY)
+                page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
+    
+                workspace = page.get_by_role("region", name="Thought", exact=True)
+                workspace.wait_for(timeout=15000)
+                workspace.get_by_role("button", name="Change", exact=True).click()
+                well = page.get_by_role("region", name="What the AI reads")
+                well.wait_for(timeout=10000)
+    
+                # The well SEARCHES the desk, not just six recent notes.
+                find = well.get_by_role("textbox", name="Find a note")
+                find.fill("standing decisions")
+                token = well.locator("label.gadget-check-token", has_text="standing decisions")
+                token.first.wait_for(timeout=10000)
+                token.first.click()
+                page.wait_for_function(
+                    "name => document.querySelector('.thought-note-reads')?.title?.includes(name)",
+                    arg="standing decisions",
+                    timeout=10000,
+                )
+    
+                window_box = workspace.bounding_box()
+                assert window_box
+                # Nothing the owner must press leaves the window…
+                for name in ("Change", "Finish"):
+                    box = workspace.get_by_role("button", name=name, exact=True).bounding_box()
+                    assert box, name
+                    assert box["x"] + box["width"] <= window_box["x"] + window_box["width"] + 1, (name, box, window_box)
+                    _in_frame(box, window_box, name)
+                # …the kept state keeps its width…
+                kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+>               kept_box = kept.bounding_box()
+                           ^^^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_hs201_12_thought_note_glass.py:524: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15485: in bounding_box
+    self._sync(self._impl_obj.bounding_box(timeout=timeout))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:132: in bounding_box
+    return await self._with_element(
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:113: in _with_element
+    handle = await self.element_handle(timeout=timeout)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:319: in element_handle
+    handle = await self._frame.wait_for_selector(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x145f5a150>
+cb = <function Channel.send.<locals>.<lambda> at 0x14a035580>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Locator.bounding_box: Error: strict mode violation: get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line") resolved to 2 elements:
+E               1) <span role="status" class="surface-footer-receipt-line">KEPT · 5:05 PM</span> aka get_by_text("KEPT · 5:05 PM")
+E               2) <span data-line="filing" class="surface-footer-receipt-line">IN INBOX</span> aka get_by_text("IN INBOX")
+E           
+E           Call log:
+E             - waiting for get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line")
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ test_thought_note_long_context_and_open_well_never_clip[393] _________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_thought_note_long_context1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x14aba3380>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.requires_meeting
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_thought_note_long_context_and_open_well_never_clip(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    ) -> None:
+        """Astra finding 5: a long context name pushed Finish off the window."""
+        from playwright.sync_api import sync_playwright
+    
+        server, url, _provider, _engine = _boot(tmp_path, monkeypatch)
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        try:
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.emulate_media(reduced_motion="reduce")
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+                _api(page, "POST", "/api/notes", {"title": LONG_CONTEXT, "body_markdown": "The freeze holds.", "tags": []})
+                thought = _seed(page, OWNER_TITLE, OWNER_BODY)
+                page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
+    
+                workspace = page.get_by_role("region", name="Thought", exact=True)
+                workspace.wait_for(timeout=15000)
+                workspace.get_by_role("button", name="Change", exact=True).click()
+                well = page.get_by_role("region", name="What the AI reads")
+                well.wait_for(timeout=10000)
+    
+                # The well SEARCHES the desk, not just six recent notes.
+                find = well.get_by_role("textbox", name="Find a note")
+                find.fill("standing decisions")
+                token = well.locator("label.gadget-check-token", has_text="standing decisions")
+                token.first.wait_for(timeout=10000)
+                token.first.click()
+                page.wait_for_function(
+                    "name => document.querySelector('.thought-note-reads')?.title?.includes(name)",
+                    arg="standing decisions",
+                    timeout=10000,
+                )
+    
+                window_box = workspace.bounding_box()
+                assert window_box
+                # Nothing the owner must press leaves the window…
+                for name in ("Change", "Finish"):
+                    box = workspace.get_by_role("button", name=name, exact=True).bounding_box()
+                    assert box, name
+                    assert box["x"] + box["width"] <= window_box["x"] + window_box["width"] + 1, (name, box, window_box)
+                    _in_frame(box, window_box, name)
+                # …the kept state keeps its width…
+                kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+>               kept_box = kept.bounding_box()
+                           ^^^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_hs201_12_thought_note_glass.py:524: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:15485: in bounding_box
+    self._sync(self._impl_obj.bounding_box(timeout=timeout))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:132: in bounding_box
+    return await self._with_element(
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:113: in _with_element
+    handle = await self.element_handle(timeout=timeout)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:319: in element_handle
+    handle = await self._frame.wait_for_selector(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x145f59250>
+cb = <function Channel.send.<locals>.<lambda> at 0x14b59aac0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Locator.bounding_box: Error: strict mode violation: get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line") resolved to 2 elements:
+E               1) <span role="status" class="surface-footer-receipt-line">KEPT · 5:05 PM</span> aka get_by_text("KEPT · 5:05 PM")
+E               2) <span data-line="filing" class="surface-footer-receipt-line">IN INBOX</span> aka get_by_text("IN INBOX")
+E           
+E           Call log:
+E             - waiting for get_by_role("region", name="Thought", exact=True).locator(".thought-note-foot .surface-footer-receipt-line")
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___________ test_the_summary_is_asked_for_disclosed_and_found_again ____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_the_summary_is_asked_for_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1133147c0>
+
+    def test_the_summary_is_asked_for_disclosed_and_found_again(tmp_path, monkeypatch):
+        from holdspeak.db import get_database
+        from playwright.sync_api import sync_playwright
+    
+        monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(tmp_path / "people-keys.json"))
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        db = get_database()
+        _configure(db)
+        engine = FakeIntel()
+        monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kw: engine)
+        monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+        monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda: db)
+        monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+        monkeypatch.setattr(
+            "holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: FakeHost(())
+        )
+        monkeypatch.setattr(
+            "holdspeak.plugins.router.preview_route_from_transcript", lambda **kw: _Route(())
+        )
+        # Both halves of the meeting path on one local profile: speech becomes
+        # text, and text becomes a summary (glass_infra.seed_meeting_engines).
+        seed_meeting_engines()
+    
+        # Astra's counsel round 2: TWO summary-ready meetings, so the canon
+        # probe measures a rail that can draw more than one run verb. Only the
+        # lead row may wear the filled species.
+        spare_id = _record_fixture_meeting(monkeypatch)
+        first_id = _record_fixture_meeting(monkeypatch)
+        saved = db.meetings.get_meeting(first_id)
+        assert saved is not None and saved.segments, "the fixture WAV produced no transcript"
+        assert saved.intel is None, "recording must not run a summary"
+        print(f"RECORDED meeting={first_id} spare={spare_id} segments={len(saved.segments)}")
+    
+        try:
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                errors: list[str] = []
+                requests: list[dict] = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                page.on(
+                    "request",
+                    lambda request: requests.append(
+                        {
+                            "path": request.url.split("?")[0].replace(url, ""),
+                            "body": request.post_data or "",
+                        }
+                    )
+                    if request.method == "POST"
+                    else None,
+                )
+    
+                def open_meetings(meeting_id: str | None = None) -> None:
+                    """The Meetings window, with one record open when asked."""
+                    page.evaluate(
+                        """() => {
+                            localStorage.removeItem('hs.desk.workspace.v1');
+                            sessionStorage.setItem('hs.desk.staged-surface-open',
+                                JSON.stringify({key:'review-meetings'}));
+                        }"""
+                    )
+                    page.reload(wait_until="load")
+                    _normal_chair(page)
+                    if meeting_id is None:
+                        page.locator(".meetings-stream-rows").wait_for(timeout=15_000)
+                        return
+                    row = page.get_by_test_id(f"meeting-row-{meeting_id}")
+                    row.wait_for(timeout=15_000)
+                    print(f"ROW {meeting_id} {row.text_content()}")
+                    row.locator(".meetings-stream-row-body").click()
+                    page.locator(".meetings-detail-head").wait_for(timeout=15_000)
+    
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+    
+                # ── the disclosed route, read before any click ──
+                page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                detail = _api(page, "GET", f"/api/meetings/{first_id}", token=TOKEN)
+                planned = detail["planned_route"]
+                assert planned["status"] == "ready", planned
+                assert planned["legs"], planned
+                host = planned["legs"][0]["host"]
+                print(f"PLANNED host={host} hash={planned['selection_hash']}")
+    
+                # ── station 1: the record BEFORE the run ──
+                open_meetings(first_id)
+                route_chip = page.get_by_test_id("detail-route")
+                route_chip.wait_for(timeout=15_000)
+                assert _chip_label(host) in (route_chip.text_content() or ""), (
+                    route_chip.text_content()
+                )
+                page.get_by_test_id("detail-run-intelligence-btn").wait_for()
+                _assert_canon(page)
+                _shot(page, "record-before-run")
+    
+                # ── station 2: the first summary, from the verb, with the hash ──
+                requests.clear()
+                page.get_by_test_id("detail-run-intelligence-btn").click()
+                page.wait_for_timeout(600)
+                run_post = _run_posts(requests)[-1]
+                assert run_post["path"] == f"/api/meetings/{first_id}/intelligence/run"
+                assert json.loads(run_post["body"])["expected_selection_hash"] == (
+                    planned["selection_hash"]
+                ), run_post
+                print(f"RUN POST {run_post}")
+    
+                _drain(db, first_id)
+                produced = db.meetings.get_meeting(first_id)
+                assert produced.intel is not None, "no summary was produced"
+                assert produced.intel.summary == engine.result.summary
+                receipt = _api(
+                    page, "GET", f"/api/meetings/{first_id}/intel-recovery", token=TOKEN
+                )["run_receipt"]
+                assert receipt["outcome"] == "succeeded", receipt
+                assert receipt["attempts"], receipt
+                assert receipt["selection_hash"] == planned["selection_hash"], receipt
+                print(f"RECEIPT {receipt}")
+    
+                # ── station 3: the record AFTER the run: the text and the hosts ──
+                open_meetings(first_id)
+                meetings_surface = page.locator("#surface-meetings")
+                summary_text = meetings_surface.get_by_test_id("meeting-summary-text")
+                summary_text.wait_for(timeout=15_000)
+                assert (summary_text.text_content() or "").strip() == engine.result.summary
+                attempts = meetings_surface.get_by_test_id("summary-record-attempts")
+                attempts.wait_for()
+                for attempt in receipt["attempts"]:
+                    assert _chip_label(attempt["host"]) in (attempts.text_content() or "")
+                # The parked proposal chain never says a counter of zero.
+                body = page.locator(".desk-surface-window").first.text_content() or ""
+                assert "0 PROPOSALS" not in body.upper(), body
+                _shot(page, "record-after-run")
+    
+                # ── the Review wing after a real run (Astra's counsel finding 3) ──
+                # A disclosed summary request runs ANALYSIS only. Review must say
+                # the proposal chain did NOT run — never `EXTRACTED <time>`, whose
+                # stamp is the summary's own completion, and never the bare
+                # "Nothing to review" that claims it looked.
+                page.get_by_role("tab", name="Review").click()
+                not_run = page.get_by_test_id("review-not-run")
+                not_run.wait_for(timeout=15_000)
+                assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+                review_words = (page.locator(".desk-surface-window").first.text_content() or "")
+                assert "EXTRACTED" not in review_words.upper(), review_words
+                assert "Nothing to review" not in review_words, review_words
+                print(f"REVIEW {not_run.text_content()!r}")
+                _shot(page, "review-not-run")
+                page.get_by_role("tab", name="Outcomes").click()
+                page.locator("#surface-meetings").get_by_test_id(
+                    "meeting-summary-text"
+                ).wait_for(timeout=15_000)
+    
+                # ── station 4: a FAILED record, its slab, and a STALE refusal ──
+                # The producer refuses once, with retries exhausted, so the
+                # record carries a real FAILED summary and its recovery slab.
+                second_id = _record_fixture_meeting(monkeypatch)
+                second_route = _api(page, "GET", f"/api/meetings/{second_id}", token=TOKEN)[
+                    "planned_route"
+                ]
+                engine.error = "the producer refused"
+                queued = _api(
+                    page,
+                    "POST",
+                    f"/api/meetings/{second_id}/intelligence/run",
+                    {"expected_selection_hash": second_route["selection_hash"]},
+                    token=TOKEN,
+                )
+                assert queued["state"] == "queued", queued
+                for _ in range(60):
+                    job = db.intel.get_latest_intel_job(second_id)
+                    if job is not None and job.status == "failed":
+                        break
+                    process_next_intel_job(retry_max_attempts=1)
+                    time.sleep(0.05)
+                engine.error = None
+                failed_job = db.intel.get_latest_intel_job(second_id)
+                assert failed_job is not None and failed_job.status == "failed", failed_job
+                print(f"FAILED job attempts={failed_job.attempts} state={failed_job.status}")
+    
+                open_meetings(second_id)
+                slab = page.locator(".meeting-intel-recovery")
+                slab.wait_for(timeout=15_000)
+                slab_retry = slab.get_by_role("button", name="Retry", exact=True)
+                slab_retry.wait_for(timeout=15_000)
+                assert _chip_label(host) in (
+                    page.get_by_test_id("recovery-route").text_content() or ""
+                )
+                assert _chip_label(host) in (
+                    page.get_by_test_id("recovery-attempts").text_content() or ""
+                )
+                # Audit defect 6: the facts span the row, never a 7-character column.
+                _assert_facts_span_the_row(page)
+    
+                # The face holds the hash it disclosed; the assignment moves
+                # under it, so the hub refuses BEFORE any provider is contacted.
+                stale = _api(page, "GET", f"/api/meetings/{second_id}", token=TOKEN)[
+                    "planned_route"
+                ]["selection_hash"]
+                engine_profile("hs201-second-engine")
+                assign_engine(SUMMARY_CAPABILITY, 3, profile_id="hs201-second-engine")
+                moved = _api(page, "GET", f"/api/meetings/{second_id}", token=TOKEN)[
+                    "planned_route"
+                ]["selection_hash"]
+                assert moved != stale, (stale, moved)
+                requests.clear()
+                slab_retry.click()
+                refusal = page.get_by_test_id("recovery-refusal")
+                refusal.wait_for(timeout=15_000)
+                refusal_words = refusal.text_content() or ""
+                assert "REFUSED" in refusal_words, refusal_words
+                print(f"REFUSAL {refusal_words}")
+                stale_post = _recovery_posts(requests)[-1]
+                assert stale_post["path"] == (
+                    f"/api/meetings/{second_id}/intel-recovery/retry"
+                )
+                assert json.loads(stale_post["body"])["expected_selection_hash"] == stale
+                assert db.meetings.get_meeting(second_id).intel is None, (
+                    "a refused run must publish no summary"
+                )
+                # The first meeting's receipt is untouched by the refusal, and
+                # the failed run's own attempts are still on the record.
+                assert _api(
+                    page, "GET", f"/api/meetings/{first_id}/intel-recovery", token=TOKEN
+                )["run_receipt"] == receipt
+                # Lane A's follow-up (`a07d4bb5`): a refusal no longer replaces
+                # the receipt of the run that really happened. `run_receipt` is
+                # the last EXECUTED receipt and the no-call refusal is served
+                # beside it as `last_refusal` (holdspeak/db/intel.py:2352, :2363).
+                after_refusal = _api(
+                    page, "GET", f"/api/meetings/{second_id}/intel-recovery", token=TOKEN
+                )
+                print(f"AFTER REFUSAL run_receipt={after_refusal.get('run_receipt')}")
+                print(f"AFTER REFUSAL last_refusal={after_refusal.get('last_refusal')}")
+                executed = after_refusal["run_receipt"]
+                durable = after_refusal["last_refusal"]
+                # The executed receipt is the FAILED run of station 4 — the
+                # producer refused, so the host was contacted and the attempt
+                # stands. A route refusal does not erase it any more.
+                assert executed["outcome"] == "failed", executed
+                assert executed["attempts"], executed
+                assert executed["attempts"][0]["host"] == host, executed
+                # …and the no-call refusal is beside it, with no attempt at all.
+                assert durable is not None, after_refusal
+                assert durable["outcome"] == "refused", durable
+                assert durable["attempts"] == [], durable
+                assert durable["receipt_id"] != executed["receipt_id"], (durable, executed)
+                # The face shows the executed destinations from the HUB now, not
+                # from anything this client remembered.
+                assert _chip_label(host) in (
+                    page.get_by_test_id("recovery-attempts").text_content() or ""
+                )
+                # The route the NEXT run will use is still disclosed beside the verb.
+                assert _chip_label(host) in (
+                    page.get_by_test_id("recovery-route").text_content() or ""
+                )
+                # Audit defect 7: no refusal surface overlaps a verb or the footer.
+>               _assert_no_overlap(page)
+
+tests/e2e/test_hs201_summary_face_glass.py:385: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:65364/'>
+
+    def _assert_no_overlap(page) -> None:
+        """Standing rule: no surface overlaps a verb or the window footer.
+    
+        Covers the refusal token, any error surface, and the summary slab's
+        fact line (audit defect 7; the first 201-04 shot caught the fact line
+        running under Retry/Skip).
+        """
+        overlap = page.evaluate(
+            """() => {
+                const footer = document.querySelector('.surface-footer');
+                const bad = [];
+                const hits = (a, b) =>
+                  a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right;
+                for (const surface of document.querySelectorAll(
+                    '.surface-state-error, [data-testid$="-refusal"],' +
+                    ' .meeting-intel-recovery-facts')) {
+                  const a = surface.getBoundingClientRect();
+                  if (a.width === 0) continue;
+                  if (footer && hits(a, footer.getBoundingClientRect())) bad.push('footer');
+                  // …and nothing may run out of its own window's right edge
+                  // (UX-CANON A.6: a window's wings never leave the window).
+                  const win = surface.closest('.desk-surface-window');
+                  if (win) {
+                    const w = win.getBoundingClientRect();
+                    if (a.right > w.right + 1) bad.push('out of window: ' + (surface.textContent || ''));
+                  }
+                  for (const verb of document.querySelectorAll('button')) {
+                    const b = verb.getBoundingClientRect();
+                    if (b.width === 0) continue;
+                    if (hits(a, b)) bad.push(verb.textContent || 'verb');
+                  }
+                }
+                return bad;
+            }"""
+        )
+>       assert overlap == [], overlap
+E       AssertionError: ['▸TRANSCRIPT3 WORDS', '▸TRANSCRIPT3 WORDS']
+E       assert ['▸TRANSCRIPT...CRIPT3 WORDS'] == []
+E         
+E         Left contains 2 more items, first extra item: '▸TRANSCRIPT3 WORDS'
+E         Use -v to get more diff
+
+tests/e2e/test_hs201_summary_face_glass.py:542: AssertionError
+----------------------------- Captured stdout call -----------------------------
+RECORDED meeting=f368f406 spare=0ec7f1fe segments=1
+PLANNED host=same_device hash=sha256:755b851c02561f6bdf17bfb67abce01f353caceb27ed4e54524dc0cf8a8e0e15
+ROW f368f406 MeetingSEP 23 · OFFSEP 23·1 S·3 WORDS·OFFTHIS DEVICERun summary
+CANON primaries=['Run summary'] zeros=[] run_verbs_in_rail=['Run summary', 'Run summary']
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png
+RUN POST {'path': '/api/meetings/f368f406/intelligence/run', 'body': '{"expected_selection_hash":"sha256:755b851c02561f6bdf17bfb67abce01f353caceb27ed4e54524dc0cf8a8e0e15"}'}
+RECEIPT {'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_72580c916c36459aa97b84a296a95b5f', 'outcome': 'succeeded'}], 'job_id': 'ij_1925ce9c0c19d30febcf8730c7dfde9f8160596cb428b422b313f4d107a3f1e8', 'meeting_id': 'f368f406', 'outcome': 'succeeded', 'receipt_id': 'rr_2432a2eedf9a198f2c904c1616398b32', 'selection_hash': 'sha256:755b851c02561f6bdf17bfb67abce01f353caceb27ed4e54524dc0cf8a8e0e15'}
+ROW f368f406 MeetingSEP 23 · RANSEP 23·1 S·3 WORDS·RANTHIS DEVICEOpen
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png
+REVIEW 'PROPOSALS · NOT RUN'
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png
+SHOT /Users/karol/dev/tools/wt-philo-3-02/pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png
+FAILED job attempts=1 state=failed
+ROW 6f105939 MeetingSEP 23 · FAILEDSEP 23·1 S·3 WORDS·FAILEDTHIS DEVICEFAILEDTHIS DEVICERetry
+FACTS width=237 of row=366
+REFUSAL REFUSED · ROUTE CHANGED
+AFTER REFUSAL run_receipt={'attempts': [{'host': 'same_device', 'leg_ordinal': 1, 'operation_id': 'op_1fd7353c0e3a4e56bc7eeacfa9f152bb', 'outcome': 'failed'}], 'job_id': 'ij_61afe33369208d205ca3dcd9ba5b34fe47485def5d27ba19b165aef6706ac4d5', 'meeting_id': '6f105939', 'outcome': 'failed', 'receipt_id': 'rr_57034079b8e29a93d9d52cbcc6f79cd5', 'selection_hash': 'sha256:755b851c02561f6bdf17bfb67abce01f353caceb27ed4e54524dc0cf8a8e0e15'}
+AFTER REFUSAL last_refusal={'attempts': [], 'job_id': 'ij_f0103e30b8a41babb9d086effdb87cca19ab473c0f1987ffe23ce828aef979cd', 'meeting_id': '6f105939', 'outcome': 'refused', 'receipt_id': 'rr_4b45398ce736a2293b0d84b97eeda329', 'selection_hash': 'sha256:755b851c02561f6bdf17bfb67abce01f353caceb27ed4e54524dc0cf8a8e0e15'}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+______________ test_the_last_known_observation_survives_a_restart ______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_the_last_known_observatio0')
+
+    def test_the_last_known_observation_survives_a_restart(tmp_path: Path) -> None:
+        """HS-200-15 left `LastKnownStore` process-local; a failed source after a
+        restart replayed nothing.  With the durable store a fresh process still
+        carries the last observation, marked as such."""
+        db = _db(tmp_path)
+        _seed_room(db)
+        observed = "2026-09-07T08:41:00"
+        items = [{"id": "p-q4:commitment:x", "projectId": "p-q4", "title": "Priya confirms the freeze window",
+                  "source": "commitment", "why": "DUE TODAY", "severity": "warning", "since": observed}]
+        LastKnownStore(db_factory=lambda: db).remember("project:p-q4", items=items, observed_at=observed,
+                                                       label="Q4 Platform", project_id="p-q4")
+    
+        fresh = LastKnownStore(db_factory=lambda: Database(tmp_path / "continuity.db"))
+        recalled = fresh.recall("project:p-q4")
+>       assert recalled is not None and recalled["observed_at"] == observed
+E       assert (None is not None)
+
+tests/unit/test_phase200_continuity.py:423: AssertionError
+__ test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_a_failing_provider_retrie0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1599aa580>
+
+    def test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face(tmp_path, monkeypatch):
+        """Ruling 5. The fake is the PROVIDER (``engine.analyze`` returns an
+        errored ``IntelResult``), never a status field.  Everything the
+        assertions read — attempts, ``requested_at``, ``last_error``, the
+        terminal status, and ``list_jobs`` (the face's own data) — is written by
+        production code.
+        """
+        from holdspeak.intel_queue import start_intel_queue_worker
+    
+        # A routed plugin chain: the shape a real meeting claim has.  With an
+        # EMPTY chain the claim planner re-freezes the descriptor on every claim
+        # and resets `attempts` to 0 -- the ceiling is then unreachable.  That is
+        # a pre-existing `db/intel.py` defect, reported with HS-200-42 and NOT
+        # papered over here; this test asserts the ladder the product must have.
+        db, _broker, engine, _host, _requests = _queue_rig(
+            tmp_path, monkeypatch,
+            plugins=("decision_capture",), chain=("decision_capture",),
+        )
+        engine.error = "provider exploded"
+        _queued_meeting(db, "m-retry")
+    
+        started = datetime.now()
+        worker = start_intel_queue_worker(
+            None,
+            retry_base_seconds=1,
+            retry_max_seconds=2,
+            retry_max_attempts=2,
+            poll_seconds=5.0,
+        )
+        try:
+            def terminal() -> bool:
+                jobs = db.intel.list_intel_jobs(status="all")
+                return any(j.status == "failed" and int(j.attempts) >= 2 for j in jobs)
+    
+            assert _wait(terminal, timeout=60.0, nudge=worker.wake), [
+                (j.job_id[:10], j.status, j.attempts) for j in db.intel.list_intel_jobs(status="all")
+            ]
+        finally:
+            worker.stop()
+    
+        # The whole row chain, not the head: the ladder lives across rows.
+        rows = _rows(db, "intel_jobs")
+        ladder = sorted(int(r["attempts"]) for r in rows if r["status"] == "failed")
+        assert ladder == [1, 2], rows
+        # Backoff: the retry was scheduled into the FUTURE, not re-run immediately.
+        successors = [r for r in rows if int(r["attempts"]) == 2]
+        assert successors, rows
+        assert datetime.fromisoformat(successors[0]["requested_at"]) > started, (
+            "the retry did not move requested_at forward"
+        )
+        assert all(r["last_error"] for r in rows if r["status"] == "failed")
+        # The ceiling's own sentence, written by the repository.
+>       assert any(
+            "after 2 attempt(s)" in str(r["last_error"]) for r in rows if r["status"] == "failed"
+        ), rows
+E       AssertionError: [{'attempts': 0, 'bundle_id': None, 'bundle_sha256': None, 'claim_id': None, ...}, {'attempts': 1, 'bundle_id': 'iprb_...9f276c1f36cf176f82af3abfe611', 'claim_id': 'ic_ca7a53c5212425b22fde468ceee46b8806f607e0e0c8d4a6edc25eedd2b8591b', ...}]
+E       assert False
+E        +  where False = any(<generator object test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face.<locals>.<genexpr> at 0x15cc35540>)
+
+tests/unit/test_phase200_intel_drain.py:373: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting m-retry (attempt 1/2): retrying in 1s
+______ test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_a_failing_job_with_no_rou0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1599a89f0>
+
+    def test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling(tmp_path, monkeypatch):
+        """The runaway the drainer made reachable — fenced.
+    
+        PRE-FIX STATE, measured on this exact rig (``retry_max_attempts=2``,
+        empty plugin chain), one line per drain round::
+    
+            0 1 [('ij_345bbb','superseded',0), ('ij_68683b','failed',1), ('ij_fa05e7','queued',1)]
+            2 1 [... ('ij_fa05e7','superseded',1), ('ij_1d58bc','failed',1), ('ij_6c0b46','queued',1)]
+            4 1 [... ('ij_6c0b46','superseded',1), ('ij_b86cc3','failed',1), ('ij_dfa9a3','queued',1)]
+            6 1 [... ('ij_dfa9a3','superseded',1), ('ij_784e80','failed',1), ('ij_2c4eaf','queued',1)]
+    
+        ``attempts`` never leaves 1, the ceiling is unreachable, a ``queued``
+        survivor is always present, and ``intel_jobs`` grows by TWO rows every
+        retry — forever, on a 15s hub poll.  The cause was in claim planning
+        (``db/intel.py``): ``_frozen_plugin_members`` is falsy whenever the routed
+        chain is empty, so every claim superseded a descriptor identical to the
+        one it minted and inserted the replacement with ``attempts`` reset to 0.
+    
+        Every assertion below fails on that pre-fix tree.
+        """
+        from holdspeak.intel_queue import start_intel_queue_worker
+    
+        # No plugins, no chain: the owner's ordinary meeting.
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        engine.error = "provider exploded"
+        _queued_meeting(db, "m-nochain")
+    
+        worker = start_intel_queue_worker(
+            None,
+            retry_base_seconds=1,
+            retry_max_seconds=2,
+            retry_max_attempts=2,
+            poll_seconds=5.0,
+        )
+        try:
+            def terminal() -> bool:
+                rows = _rows(db, "intel_jobs")
+                return any(
+                    r["status"] == "failed" and int(r["attempts"]) >= 2 for r in rows
+                )
+    
+            assert _wait(terminal, timeout=60.0, nudge=worker.wake), [
+                (r["job_id"][:9], r["status"], r["attempts"]) for r in _rows(db, "intel_jobs")
+            ]
+            # The loop must also STOP: give it several more poll-and-wake rounds
+            # and the row count must not move.
+            settled = len(_rows(db, "intel_jobs"))
+            for _ in range(20):
+                worker.wake()
+                time.sleep(0.1)
+            assert len(_rows(db, "intel_jobs")) == settled, _rows(db, "intel_jobs")
+        finally:
+            worker.stop()
+    
+        rows = _rows(db, "intel_jobs")
+        # Terminal, with the repository's own ceiling sentence.
+>       assert any(
+            r["status"] == "failed"
+            and int(r["attempts"]) == 2
+            and "after 2 attempt(s)" in str(r["last_error"])
+            for r in rows
+        ), rows
+E       AssertionError: [{'attempts': 0, 'bundle_id': None, 'bundle_sha256': None, 'claim_id': None, ...}, {'attempts': 1, 'bundle_id': 'iprb_...e3c27550c618f07a8e1a209a3b9e', 'claim_id': 'ic_25390c31385dd18358a74d2bdf7bb7c648ed761a06f52460ecadcbc681e1f23c', ...}]
+E       assert False
+E        +  where False = any(<generator object test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling.<locals>.<genexpr> at 0x16aeee420>)
+
+tests/unit/test_phase200_intel_drain.py:451: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting m-nochain (attempt 1/2): retrying in 1s
+=========================== short test summary info ============================
+SKIPPED [1] tests/e2e/test_dictation_learning_digest_spoken_e2e.py:33: opt-in: set HOLDSPEAK_SPOKEN_DICTATION_E2E=1 to run the spoken-dictation learning-digest e2e (uses macOS `say` + the Whisper base model)
+SKIPPED [1] tests/e2e/test_hs141_models_setup_glass.py:21: HS-170: Settings -> Models module PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge (web/src/features/concierge/ConciergeCore.tsx, open-concierge window)
+SKIPPED [1] tests/e2e/test_hs142_model_acquisition_glass.py:26: HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_assignments_glass.py:17: HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs143_model_library_glass.py:19: HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_spoken_meeting_e2e.py:41: opt-in: set HOLDSPEAK_SPOKEN_E2E=1 to run the spoken-meeting e2e
+SKIPPED [1] tests/e2e/test_workbench_walk.py:46: no hub listening at http://localhost:8778
+SKIPPED [1] tests/unit/test_mesh_discovery.py:21: could not import 'zeroconf': No module named 'zeroconf'
+SKIPPED [1] tests/e2e/test_dictation_enrichment_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation enrichment e2e
+SKIPPED [1] tests/e2e/test_dictation_journal_e2e.py:57: set HOLDSPEAK_DICTATION_E2E_BASE_URL + HOLDSPEAK_DICTATION_E2E_MODEL to a reachable OpenAI-compatible endpoint to run the real dictation journal e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:44: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:52: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [12] tests/e2e/test_dogfood_plumbing_e2e.py:66: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [1] tests/e2e/test_dogfood_plumbing_e2e.py:85: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [3] tests/e2e/test_dogfood_plumbing_e2e.py:95: set HOLDSPEAK_DOGFOOD=1 to run the dogfood plumbing e2e
+SKIPPED [2] tests/e2e/test_hs14104_refinement_glass.py:58: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105_context_glass.py:109: superseded by the Thought Workbench real-path glass
+SKIPPED [2] tests/e2e/test_hs14105a_default_context_glass.py:99: superseded by the Thought Workbench real-path glass
+SKIPPED [1] tests/e2e/test_hs145_door_polish_glass.py:181: HS-170: door-board scroll-hint PARKED (HS-170-04); the arrival has no horizontal-scroll viewport -- capability intentionally gone
+SKIPPED [1] tests/e2e/test_hs147_one_tap_glass.py:160: HS-170: door-rail one-tap arm PARKED (HS-170-04); per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:552: HS-170: front-door pack cards PARKED (HS-170-03); capability now at the Concierge's FOUND section (ConciergeCore.tsx)
+SKIPPED [1] tests/e2e/test_hs156_front_door_glass.py:618: HS-170: front-door candidate picker PARKED (HS-170-03); capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:171: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs158_room_glass.py:232: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs158_room_glass.py:281: HS-169-07 retired the 158 Room (identity band, counters, focus block); see test_hs169_room_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs159_interview_glass.py:149: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:396: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:461: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py
+SKIPPED [1] tests/e2e/test_hs159_interview_glass.py:554: HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:270: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:521: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:673: HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing
+SKIPPED [2] tests/e2e/test_hs161_github_glass.py:921: HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [1] tests/e2e/test_hs161_github_glass.py:1090: gh CLI not authenticated or not installed (skip-clean)
+SKIPPED [2] tests/e2e/test_hs166_jira_glass.py:327: HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs166_jira_walk.py:1636: acli jira auth status failed (exit 1): ✗ Error: unauthorized: use 'acli jira auth login' to authenticate
+SKIPPED [2] tests/e2e/test_hs168_connections_glass.py:318: gh auth status failed (exit 1): You are not logged into any GitHub hosts. To log in, run: gh auth login
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:281: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:367: HS-169-02 retired the Sources step (ProgressPlan, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig
+SKIPPED [10] tests/e2e/test_meeting_transcription.py: Mock meeting fixture not found: /Users/karol/dev/tools/wt-philo-3-02/tests/fixtures/mock_meeting.wav
+SKIPPED [1] tests/e2e/test_mermaid_renders.py:118: mermaid renderer unavailable in this env: core/lib/esm/puppeteer/node/BrowserLauncher.js:55:28)
+    at async run (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:862:19)
+    at async cli (file:///Users/karol/.npm/_npx/668c188756b835f3/node_modules/@mermaid-js/mermaid-cli/src/index.js:374:3)
+SKIPPED [1] tests/integration/test_dictation_llama_cpp_e2e.py:72: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Dq3mBOa80k/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:35: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:54: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_grounding_rails_live.py:71: holdspeak not in the project map on this machine
+SKIPPED [1] tests/integration/test_rails_observer_live.py:37: no rail events on this machine to summarize
+SKIPPED [1] tests/integration/test_rails_observer_live.py:72: no rail events on this machine
+SKIPPED [1] tests/integration/test_runtime_llama_cpp.py:38: llama-cpp-python and /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Dq3mBOa80k/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf are required for this integration test
+SKIPPED [1] tests/integration/test_runtime_mlx.py:38: mlx-lm + outlines + /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Dq3mBOa80k/Models/mlx/Qwen3.5-8B-MLX-4bit are required for this integration test
+SKIPPED [1] tests/integration/test_update_drafter_live_43.py:110: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (runs a real model call on the LAN endpoint)
+SKIPPED [1] tests/uat/test_induction_integration_43.py:107: live .43 model proof is opt-in: set HOLDSPEAK_UAT_LIVE_43=1 (it runs a real extraction on the LAN model and takes minutes)
+SKIPPED [1] tests/uat/test_induction_integration_43.py:118: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [1] tests/uat/test_mesh_dispatch.py:85: the UAT node harness cannot pair a mesh worker: since HS-131-16 `mesh serve` requires an imported node pairing (hub pin + node token) and refuses the owner token, but nodes.py still spawns it with --token-env HOLDSPEAK_HUB_TOKEN and never pairs
+SKIPPED [1] tests/unit/test_delta_schema.py:640: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_dictation_grammars.py:91: could not import 'llama_cpp': No module named 'llama_cpp'
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:497: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:924: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:993: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1175: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:1196: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2242: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2494: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2534: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [2] tests/unit/test_dictation_session_admission.py:2548: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_dictation_session_admission.py:2588: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_github_provider.py:526: gh CLI not authenticated or not installed
+SKIPPED [1] tests/unit/test_github_provider.py:537: gh CLI not authenticated or not installed
+SKIPPED [1] tests/unit/test_hs166_walk_fixes.py:183: No proposals generated
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:84: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:139: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:169: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_phase143_speech_lifecycle_adoption.py:207: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_watch_graduation_schema.py:493: Owner's real DB not found (CI or isolated HOME)
+SKIPPED [1] tests/unit/test_web_runtime.py:269: this machine resolves the llama_cpp dictation engine but 'llama_cpp' is not installed (it is an optional extra)
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_review_proposals_stay_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[1440-1200] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+XFAIL tests/e2e/test_hs200_meeting_outcomes_glass.py::test_meeting_partial_chain_retry_stays_live_under_amendment[393-900] - HS-201 ratified analysis-only summary amendment; parked proposal pipeline
+FAILED tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face
+FAILED tests/e2e/test_hs200_attention_glass.py::TestAttentionGlass::test_long_row_393
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+FAILED tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[393]
+FAILED tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again
+FAILED tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart
+FAILED tests/unit/test_phase200_intel_drain.py::test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face
+FAILED tests/unit/test_phase200_intel_drain.py::test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling
+12 failed, 11559 passed, 116 skipped, 4 xfailed in 5678.77s (1:34:38)

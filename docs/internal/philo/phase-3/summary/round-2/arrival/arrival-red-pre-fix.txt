@@ -1,0 +1,25 @@
+PHILO-3-02 Arrival round 2 red proof
+Captured 2026-09-23 before the producer fixture/cause correction.
+
+Command:
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npm_config_cache=/Users/karol/.npm npm exec -- vitest run src/desk/chair/arrivalSummaryCompletion.test.tsx --maxWorkers=1
+
+Result:
+Test Files  1 failed (1)
+Tests       4 failed | 8 passed (12)
+
+The four failing fences were the retry, terminal failure, persisted-summary
+failure, and run-to-failure cause checks. Each matched the producer's current
+wire cause, then failed the display fence because the rendered text still
+contained the queue/wrapper terms:
+
+  Deferred intel failed: bound analysis did not publish
+  Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish
+
+The failing assertion was:
+
+  expect(status.textContent ?? "").not.toMatch(/ATTEMPT\(S\)|DEFERRED INTEL|BOUND ANALYSIS|PUBLISH/i)
+
+This is the intentional red state for the real producer fixture. The same run
+also passed the transcript default-fold/one-click and refresh-retention
+fences (8 passing tests).

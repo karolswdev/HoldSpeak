@@ -1,0 +1,14 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo3_summary_detail.py tests/unit/test_philo3_summary_queue.py
+
+Result:
+...FF...F.                                                               [100%]
+3 failed, 7 passed in 3.94s
+
+Producer-fence failures:
+- retry producer cause was "Deferred intel failed: bound analysis did not publish"; expected "PROVIDER FAILED".
+- terminal producer cause was "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish"; expected "PROVIDER FAILED" from the retained provider-boundary fixture.
+- queue terminal producer cause was "Deferred intel failed after 1 attempt(s): Deferred intel failed: bound analysis did not publish"; expected "PROVIDER FAILED".
+
+This is the intentional pre-fix red. The real MeetingIntelService admission and
+production queue drain completed; only the new cause-word fences failed.

@@ -60,7 +60,7 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
 
   api       {method, path, body?, expect_status?}   HTTP against the hub
   ui        {action: goto|click|click_role|fill|press|wait_for, ...}
-  fixture   {path, route:{method,path}, field?}     the WAV at the documented
+  fixture   {path, route:{method,path}, field?, expect_status?} the WAV at the documented
             input boundary — never a microphone
   cli       {action: "restart_hub", adapter}
             The rig owns the hub process, so it stops it (SIGTERM, then
@@ -149,6 +149,10 @@ PREDICATES (`expected.predicate.kind`):
   input_value {selector, contains | equals}
                                  a form control's `.value` (a draft lives
                                  there, not in the DOM text).
+  text_nonempty                 rendered material exists at the named face
+  hit_target {min_width, min_height}
+                                 the named control is visible, in the viewport,
+                                 and owns nine interior hit-test points
 
 A predicate written in PROSE is not read: the run is recorded in full and the
 verdict is `blocked`, naming the structure the rig needs.
@@ -195,6 +199,14 @@ from pathlib import Path
 from typing import Any
 
 RIG_VERSION = "1.2.0"
+
+# PHILO-3-02's real engine is supplied by the LAN endpoint configured through
+# the normal Concierge field.  The URL and model are provenance inputs for a
+# run; they are never secrets and are safe to retain in an observation.
+ENGINE_URL_ENV = "PHILO3_ENGINE_URL"
+ENGINE_URL_DEFAULT = "http://192.168.1.43:8080"
+ENGINE_MODEL_ENV = "PHILO3_ENGINE_MODEL"
+ENGINE_MODEL_DEFAULT = "Qwen3.6-35B"
 
 REPO = Path(__file__).resolve().parents[1]
 CALIBRATION_PAGE = REPO / "tests/fixtures/graph_walk_calibration.html"
@@ -307,11 +319,51 @@ def base_provenance(*, engine_mode: str) -> dict[str, Any]:
             "mechanism": "none — the real clock; no case may claim an advance",
         },
         "engine_mode": engine_mode,
+        "engine_identity": None,
         "boundary_substitutions": [],
         "restarts": [],
         "rig_version": RIG_VERSION,
         "brief_sha256": _sha256(BRIEF) if BRIEF.exists() else None,
     }
+
+
+def _engine_identity() -> dict[str, Any]:
+    """Read the configured OpenAI-compatible endpoint's model identity.
+
+    The response is deliberately reduced to model ids and owners.  Provider
+    credentials, if any, never enter the run record.
+    """
+    base = os.environ.get(ENGINE_URL_ENV, ENGINE_URL_DEFAULT).rstrip("/")
+    models_url = f"{base}/models" if base.endswith("/v1") else f"{base}/v1/models"
+    expected = os.environ.get(ENGINE_MODEL_ENV, ENGINE_MODEL_DEFAULT)
+    result: dict[str, Any] = {
+        "endpoint": base,
+        "models_url": models_url,
+        "expected_model_prefix": expected,
+    }
+    request = urllib.request.Request(models_url, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            raw = response.read().decode()
+            payload = json.loads(raw)
+            rows = payload.get("data", []) if isinstance(payload, dict) else []
+            if not rows and isinstance(payload, dict):
+                rows = payload.get("models", [])
+            result["status"] = response.status
+            result["models"] = [
+                {"id": row.get("id"), "owned_by": row.get("owned_by")}
+                for row in rows if isinstance(row, dict)
+            ]
+            result["expected_model_seen"] = any(
+                str(row.get("id") or "").startswith(expected)
+                for row in result["models"]
+            )
+    except Exception as exc:  # noqa: BLE001 — provenance survives a bad endpoint
+        result["status"] = None
+        result["models"] = []
+        result["expected_model_seen"] = False
+        result["error"] = f"{type(exc).__name__}: {exc}"[:400]
+    return result
 
 
 # ───────────────────────────────────────────────────── the observation ──
@@ -337,6 +389,31 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
     return {x: Math.round(r.x), y: Math.round(r.y),
             w: Math.round(r.width), h: Math.round(r.height)};
   };
+  const hitTest = (node) => {
+    if (!node) return null;
+    const r = node.getBoundingClientRect();
+    const insetX = Math.min(2, Math.max(0, r.width / 4));
+    const insetY = Math.min(2, Math.max(0, r.height / 4));
+    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
+    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const samples = [];
+    for (const x of xs) for (const y of ys) {
+      const owner = document.elementFromPoint(x, y);
+      samples.push({
+        x: Math.round(x), y: Math.round(y),
+        owned: !!owner && (owner === node || node.contains(owner)),
+        owner: owner ? path(owner) : null,
+      });
+    }
+    return {
+      viewport: {width: window.innerWidth, height: window.innerHeight},
+      rect: box(node),
+      in_viewport: r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight
+        && r.right <= window.innerWidth,
+      samples,
+      all_owned: samples.every((sample) => sample.owned),
+    };
+  };
   const el = selector ? document.querySelector(selector) : null;
   const attrs = {};
   if (el) for (const a of el.attributes) attrs[a.name] = a.value;
@@ -360,6 +437,7 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
     attrs: el ? attrs : null,
     rect: el ? box(el) : null,
     visible: el ? !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length) : null,
+    hit_test: hitTest(el),
     values,
     field_value: valueSelector
       ? {selector: valueSelector, present: !!field,
@@ -463,6 +541,7 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
             status, payload = hub.api(read["method"], read["path"])
             collected.append({
                 "method": read["method"], "path": read["path"], "status": status,
+                "payload": payload,
                 "body_sha256": hashlib.sha256(
                     json.dumps(payload, sort_keys=True, default=str).encode()
                 ).hexdigest(),
@@ -612,9 +691,24 @@ def check_predicate(
             # what is missing. The recorded body is read; the call is not
             # fired a second time.
             want_text = predicate["body_contains"]
-            return (want_text in body), (
-                f"{reading}; {want_text!r} "
-                f"{'in' if want_text in body else 'NOT in'} the response body")
+            if want_text not in body:
+                return False, (
+                    f"{reading}; {want_text!r} NOT in the response body")
+        body_fields = predicate.get("body_fields") or {}
+        for field, wanted in body_fields.items():
+            found, value = _json_path(answer.get("body"), field)
+            if isinstance(wanted, dict) and wanted.get("nonempty"):
+                holds = found and value not in (None, "", [], {})
+            else:
+                holds = found and value == wanted
+            if not holds:
+                return False, (
+                    f"{reading}; body field {field!r} = {value!r}, "
+                    f"wanted {wanted!r}")
+        if "body_contains" in predicate or body_fields:
+            return True, (
+                f"{reading}; response body contains the declared admission "
+                "facts")
         return True, reading
 
     if kind == "protocol_rows_gone":
@@ -639,6 +733,33 @@ def check_predicate(
                                  f"{'is absent' if not found else f'is present ({value!r})'}")
         if not found:
             return False, f"{predicate['path']} is absent; wanted {predicate.get('value')!r}"
+        if predicate.get("nonempty"):
+            present = value not in (None, "", [], {})
+            if not present:
+                return False, f"{predicate['path']} is empty"
+        if "value" in predicate:
+            equal = value == predicate["value"]
+            if not equal:
+                return False, (
+                    f"{predicate['path']} = {value!r}, "
+                    f"wanted {predicate['value']!r}"
+                )
+        if predicate.get("restart_required"):
+            restart = after.get("restart") or {}
+            required = ("summary_retained", "receipt_retained",
+                        "meeting_identity_retained")
+            missing = [name for name in required if restart.get(name) is not True]
+            if missing:
+                return False, f"restart retention flags missing or false: {missing}"
+        if predicate.get("nonempty"):
+            return True, f"{predicate['path']} is non-empty"
+        if "value" in predicate:
+            return True, f"{predicate['path']} equals the declared value"
+        if predicate.get("positive"):
+            positive = isinstance(value, (int, float)) and value > 0
+            return positive, (
+                f"{predicate['path']} is {value!r}; wanted a positive number"
+            )
         return value == predicate.get("value"), (
             f"{predicate['path']} = {value!r}, wanted {predicate.get('value')!r}")
 
@@ -654,6 +775,30 @@ def check_predicate(
         want = predicate.get("contains", "")
         return want in value, (
             f"{want!r} {'in' if want in value else 'NOT in'} the field value {value!r}")
+
+    if kind == "hit_target":
+        hit = after.get("hit_test") or {}
+        if not after.get("target_present") or not after.get("visible"):
+            return False, "the named control is absent or hidden"
+        if not hit.get("in_viewport"):
+            return False, f"the control is outside the viewport: {hit.get('viewport')}"
+        if not hit.get("all_owned"):
+            covered = [sample for sample in hit.get("samples", [])
+                       if not sample.get("owned")]
+            return False, f"a covering element owns hit points: {covered[:3]}"
+        rect = hit.get("rect") or {}
+        min_width = float(predicate.get("min_width", 0))
+        height_by_viewport = predicate.get("min_height_by_viewport") or {}
+        viewport_width = str((hit.get("viewport") or {}).get("width"))
+        min_height = float(height_by_viewport.get(
+            viewport_width, predicate.get("min_height", 0)))
+        if float(rect.get("w", 0)) < min_width or float(rect.get("h", 0)) < min_height:
+            return False, (
+                f"control rect {rect!r} is smaller than "
+                f"{min_width:g}x{min_height:g}px")
+        return True, (
+            f"control owns all 9 hit points in viewport "
+            f"{hit.get('viewport')} with rect {rect}")
 
     if kind == "protocol_rows":
         gained_before = match_rows(before, predicate)
@@ -679,6 +824,11 @@ def check_predicate(
     if kind == "text_contains":
         want = predicate["value"]
         return (want in text), f"{want!r} {'in' if want in text else 'NOT in'} observe_at text"
+    if kind == "text_nonempty":
+        present = bool(after.get("target_present")) and bool(text.strip())
+        return present, (
+            f"observe_at text is {'present' if present else 'absent or empty'}"
+        )
     if kind == "text_equals":
         want = predicate["value"]
         return (text.strip() == want), f"observe_at text is {text.strip()!r}, wanted {want!r}"
@@ -981,26 +1131,35 @@ class Hub:
         except urllib.error.HTTPError as exc:
             return exc.code, exc.read().decode()[:2000]
 
-    def upload(self, method: str, path: str, wav: Path, field: str) -> tuple[int, Any]:
+    def upload(self, method: str, path: str, wav: Path, field: str,
+               form: dict[str, Any] | None = None) -> tuple[int, Any]:
         """The fixture WAV at the documented input boundary. Never a microphone."""
         return _multipart_upload(f"{self.url}{path}", method, wav, field,
-                                 {"X-HoldSpeak-Token": self.token})
+                                 {"X-HoldSpeak-Token": self.token}, form=form)
 
     def stop(self) -> None:
         _terminate(self.proc)
 
 
 def _multipart_upload(url: str, method: str, wav: Path, field: str,
-                      headers: dict[str, str]) -> tuple[int, Any]:
+                      headers: dict[str, str],
+                      form: dict[str, Any] | None = None) -> tuple[int, Any]:
     """One multipart/form-data upload of `wav` as `field` (the import route
     takes an UploadFile, holdspeak/web/routes/meeting_import.py:52-55)."""
     boundary = uuid.uuid4().hex
+    parts: list[bytes] = []
+    for name, value in (form or {}).items():
+        parts.append(
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+            f"{value}\r\n".encode()
+        )
     head = (
         f"--{boundary}\r\n"
         f'Content-Disposition: form-data; name="{field}"; filename="{wav.name}"\r\n'
         "Content-Type: audio/wav\r\n\r\n"
     ).encode()
-    payload = head + wav.read_bytes() + f"\r\n--{boundary}--\r\n".encode()
+    payload = b"".join(parts) + head + wav.read_bytes() + f"\r\n--{boundary}--\r\n".encode()
     req = urllib.request.Request(
         url, data=payload, method=method,
         headers={**headers,
@@ -1015,6 +1174,78 @@ def _multipart_upload(url: str, method: str, wav: Path, field: str,
                 return resp.status, raw[:2000]
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read().decode()[:2000]
+
+
+def _wait_field(value: Any, wanted: Any) -> bool:
+    """Match a declared completion field without inventing transcript data."""
+    if isinstance(wanted, dict):
+        if wanted.get("nonempty"):
+            return value not in (None, "", [], {})
+        if wanted.get("positive"):
+            return isinstance(value, (int, float)) and value > 0
+        if "min_items" in wanted:
+            return isinstance(value, (list, tuple, dict)) and len(value) >= int(wanted["min_items"])
+    return value == wanted
+
+
+def wait_for_fixture_completion(
+    hub: Hub, wait_for: dict[str, Any], variables: dict[str, str],
+) -> dict[str, Any]:
+    """Poll the product's read route after a 202 import response.
+
+    The 202 is retained as the input-boundary response.  This second read is
+    the real worker completion, including the product's ASR output and timing;
+    a timeout remains a blocked observation.
+    """
+    wait_for = substitute(wait_for, variables)
+    method = wait_for.get("method", "GET")
+    path = wait_for["path"]
+    fields = wait_for.get("fields") or {}
+    timeout_s = float(wait_for.get("timeout_s", 300))
+    poll_s = float(wait_for.get("poll_s", 0.5))
+    started = time.monotonic()
+    polls = 0
+    last_status: int | None = None
+    last_payload: Any = None
+    last_matches: dict[str, bool] = {}
+    while time.monotonic() - started < timeout_s:
+        last_status, last_payload = hub.api(method, path)
+        last_matches = {}
+        payload_is_object = isinstance(last_payload, dict)
+        if payload_is_object:
+            last_matches = {
+                name: (found and _wait_field(value, wanted))
+                for name, wanted in fields.items()
+                for found, value in [_json_path(last_payload, name)]
+            }
+        if (last_status is not None and 200 <= last_status < 300
+                and payload_is_object and set(last_matches) == set(fields)
+                and all(last_matches.values())):
+            return {
+                "method": method,
+                "path": path,
+                "fields": fields,
+                "status": last_status,
+                "matched": True,
+                "polls": polls + 1,
+                "elapsed_s": round(time.monotonic() - started, 3),
+                "payload": last_payload,
+                "field_matches": last_matches,
+            }
+        polls += 1
+        time.sleep(poll_s)
+    return {
+        "method": method,
+        "path": path,
+        "fields": fields,
+        "status": last_status,
+        "matched": False,
+        "polls": polls,
+        "elapsed_s": round(time.monotonic() - started, 3),
+        "payload": last_payload,
+        "field_matches": last_matches,
+        "timeout_s": timeout_s,
+    }
 
 
 def _start_real_heartbeat_conductor() -> None:
@@ -1324,6 +1555,31 @@ class _CalibrationHandler(BaseHTTPRequestHandler):
             # the shape of GET /api/meetings: newest first
             self._json(200, {"meetings": _read_cal_state().get("meetings", [])})
             return
+        meeting_prefix = "/api/meetings/"
+        if self.path.split("?")[0].startswith(meeting_prefix):
+            meeting_id = self.path.split("?", 1)[0][len(meeting_prefix):]
+            state = _read_cal_state()
+            meeting = next(
+                (row for row in state.get("meetings", [])
+                 if row.get("id") == meeting_id),
+                None,
+            )
+            if meeting is None:
+                self._json(404, {"error": "meeting not found"})
+                return
+            # The import boundary answers 202 first.  The declared completion
+            # read is a separate route, so the calibration double completes
+            # the synthetic row only when that read is made.
+            if meeting.get("status") == "importing":
+                meeting.update({
+                    "status": "complete",
+                    "transcription_status": "complete",
+                    "duration": 1.0,
+                    "segments": [{"text": "Architecture boundary review"}],
+                })
+                _write_cal_state(state)
+            self._json(200, meeting)
+            return
         body = CALIBRATION_PAGE.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1420,6 +1676,11 @@ class CalibrationServer:
         self.proc: subprocess.Popen[str] | None = None
 
     @property
+    def url(self) -> str:
+        """Expose the same origin name as the real Hub adapter."""
+        return self.base
+
+    @property
     def db_path(self) -> str:
         return str(self.state_path)
 
@@ -1457,9 +1718,10 @@ class CalibrationServer:
             except Exception:  # noqa: BLE001
                 return exc.code, raw[:600]
 
-    def upload(self, method: str, path: str, wav: Path, field: str) -> tuple[int, Any]:
+    def upload(self, method: str, path: str, wav: Path, field: str,
+               form: dict[str, Any] | None = None) -> tuple[int, Any]:
         """The same multipart upload a real hub receives."""
-        return _multipart_upload(f"{self.base}{path}", method, wav, field, {})
+        return _multipart_upload(f"{self.base}{path}", method, wav, field, {}, form=form)
 
     def restart(self) -> dict[str, Any]:
         return _restart_process(self)
@@ -2158,11 +2420,16 @@ def scheduler_wait(step: dict[str, Any], case: dict[str, Any] | None, page: Any,
     bound = float(case.get("completion_bound_s", 180))
     max_wait = min(float(step.get("max_wait_s", 2 * TICK_SECONDS + 15)), bound)
     poll_s = float(step.get("poll_s", 5))
-    baseline = _observe_digest(page, case, hub)
+    entry = snapshot(page, case, hub)
+    baseline = (entry.get("protocol") or {}).get("payload_sha256") or entry.get("text")
+    predicate = (case.get("expected") or {}).get("predicate") or {}
+    state_at_entry = False
+    if predicate.get("kind") == "protocol_field":
+        state_at_entry, _reading = check_predicate(predicate, entry, entry)
     started = time.monotonic()
     polls = 0
     changed = False
-    while time.monotonic() - started < max_wait:
+    while not state_at_entry and time.monotonic() - started < max_wait:
         time.sleep(poll_s)
         polls += 1
         if _observe_digest(page, case, hub) != baseline:
@@ -2180,12 +2447,27 @@ def scheduler_wait(step: dict[str, Any], case: dict[str, Any] | None, page: Any,
         "polls": polls,
         "conductor_ticks_waited": ticks,
         "observe_at_changed": changed,
+        "state_satisfied_at_entry": state_at_entry,
         "machine_clock_moved": False,
     })
     return {"kind": "clock", "adapter": step.get("adapter"),
             "clock": step.get("clock"), "waited_s": waited, "polls": polls,
+            "state_satisfied_at_entry": state_at_entry,
             "conductor_ticks_waited": ticks, "observe_at_changed": changed,
             "done": True}
+
+
+def _restart_detail(snap: dict[str, Any]) -> dict[str, Any]:
+    """Retain the useful meeting material around a real hub restart."""
+    payload = (snap.get("protocol") or {}).get("payload") or {}
+    intel = payload.get("intel") if isinstance(payload, dict) else None
+    return {
+        "meeting_id": payload.get("id") if isinstance(payload, dict) else None,
+        "summary": intel.get("summary") if isinstance(intel, dict) else None,
+        "run_receipt": payload.get("run_receipt") if isinstance(payload, dict) else None,
+        "transcription_status": payload.get("transcription_status") if isinstance(payload, dict) else None,
+        "payload": payload,
+    }
 
 
 def producer_clock_advance(step: dict[str, Any], hub: Hub | None,
@@ -2315,10 +2597,16 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 f"no documented input boundary declared for {step['path']}; "
                 "the rig never opens a microphone")
         status, payload = hub.upload(
-            route["method"], route["path"], wav, step.get("field", "file"))
+            route["method"], route["path"], wav, step.get("field", "file"),
+            form=step.get("form"))
         record = {"kind": "fixture", "path": step["path"], "route": route,
                   "adapter": step.get("adapter", "http-route"), "status": status,
                   "response": payload if isinstance(payload, (dict, list)) else str(payload)[:600]}
+        want_status = step.get("expect_status")
+        if want_status is not None and status != want_status:
+            raise Blocked(
+                f"{route['method']} {route['path']} answered {status}, "
+                f"wanted {want_status}: {record['response']}"[:500])
         if status >= 400:
             raise Blocked(f"the input boundary answered {status}: {record['response']}"[:500])
         name = step.get("capture_as")
@@ -2335,6 +2623,9 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                     f"(it answered {record['response']})"[:500])
             variables[name] = str(value)
             record["captured"] = {"name": name, "path": where, "value": str(value)}
+        if step.get("wait_for"):
+            record["completion_wait"] = wait_for_fixture_completion(
+                hub, step["wait_for"], variables)
         return record
     if kind == "cli":
         action = step.get("action")
@@ -2345,8 +2636,48 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
                 "one implemented command is action 'restart_hub'.")
         if hub is None or not hasattr(hub, "restart"):
             raise Blocked("a restart_hub step needs the rig's own hub process")
+        resolved_case = substitute(case or {}, variables)
+        before_restart = snapshot(page, resolved_case, hub) if page is not None else None
         record = {"kind": "cli", "action": "restart_hub",
                   "adapter": step.get("adapter", "process"), **hub.restart()}
+        after_restart = snapshot(page, resolved_case, hub) if page is not None else None
+        record["hub_identity"] = {
+            "url": hub.url,
+            "port": hub.port,
+            "db_path": hub.db_path,
+            "stopped_pid": record.get("stopped_pid"),
+            "started_pid": record.get("started_pid"),
+        }
+        if before_restart is not None and after_restart is not None:
+            record["meeting_before"] = _restart_detail(before_restart)
+            record["meeting_after"] = _restart_detail(after_restart)
+            record["summary_retained"] = (
+                record["meeting_before"].get("summary") ==
+                record["meeting_after"].get("summary")
+                and record["meeting_after"].get("summary") not in (None, "")
+            )
+            record["receipt_retained"] = (
+                record["meeting_before"].get("run_receipt") ==
+                record["meeting_after"].get("run_receipt")
+                and record["meeting_after"].get("run_receipt") not in (None, {})
+            )
+            record["meeting_identity_retained"] = (
+                record["meeting_before"].get("meeting_id") ==
+                record["meeting_after"].get("meeting_id")
+            )
+            name = step.get("capture_as")
+            if name:
+                summary = record["meeting_before"].get("summary")
+                if summary in (None, ""):
+                    raise Blocked(
+                        "restart capture_as requested a pre-restart summary, "
+                        "but the meeting detail had no summary")
+                variables[name] = str(summary)
+                record["captured"] = {
+                    "name": name,
+                    "path": "intel.summary",
+                    "value": str(summary),
+                }
         provenance["restarts"].append(record)
         # A face case must look at the hub again: the page was talking to a
         # process that no longer exists.
@@ -2830,13 +3161,22 @@ def exercise(
     steps: list[dict[str, Any]] = []
     for step in case.get("setup", []):
         try:
-            steps.append(run_step(step, page, hub, provenance, case,
-                                  variables=variables))
-        except Blocked:
-            recorder.set(setup=steps, variables=dict(variables))
+            step_record = run_step(step, page, hub, provenance, case,
+                                   variables=variables)
+            steps.append(step_record)
+            recorder.set(setup=steps, provenance=provenance,
+                         variables=dict(variables))
+            wait = step_record.get("completion_wait")
+            if wait and not wait.get("matched"):
+                raise Blocked(
+                    f"fixture completion did not reach its declared fields in "
+                    f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
+                )
+        except Blocked as exc:
+            recorder.set(setup=steps, setup_error={
+                "step": step, "error": str(exc)[:800]},
+                variables=dict(variables))
             raise
-        recorder.set(setup=steps, provenance=provenance,
-                     variables=dict(variables))
 
     # Placeholders in `expected` are resolved AFTER the trigger (Astra round
     # three, finding 2): a trigger that mints `{meeting_id}` (J4's import,
@@ -2893,7 +3233,22 @@ def exercise(
     try:
         trigger_record = run_step(trigger, page, hub, provenance, pre_case,
                                   allow_error=True, variables=variables)
-    except Exception:
+        wait = trigger_record.get("completion_wait")
+        if wait and not wait.get("matched"):
+            recorder.set(trigger=trigger_record, provenance=provenance,
+                         variables=dict(variables))
+            raise Blocked(
+                f"fixture completion did not reach its declared fields in "
+                f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
+            )
+    except Blocked as exc:
+        recorder.set(trigger_error={"step": trigger, "error": str(exc)[:800]})
+        if ui_capture is not None:
+            ui_capture.close()
+        raise
+    except Exception as exc:
+        recorder.set(trigger_error={"step": trigger,
+                                    "error": f"{type(exc).__name__}: {exc}"[:800]})
         if ui_capture is not None:
             ui_capture.close()
         raise
@@ -2939,6 +3294,8 @@ def exercise(
             recorder.record["trigger_response_capture"] = ui_capture.record()
         if answer is not None:
             snap["trigger_response"] = answer
+        if trigger.get("kind") == "cli" and trigger.get("action") == "restart_hub":
+            snap["restart"] = trigger_record
         return snap
 
     # The moment the promised result FIRST existed. The bound is measured
@@ -3043,6 +3400,14 @@ def exercise(
         verdict=verdict,
         shots=[str(shots / "before.png"), str(shots / "after.png")],
     )
+    framing = capture_framed_view(page, case, hub, shots)
+    if framing is not None:
+        recorder.set(framing=framing)
+        if framing.get("done"):
+            recorder.set(shots=[str(shots / "before.png"), str(shots / "after.png"),
+                                framing["shot"]])
+        recorder.note("framing is a separate scroll after the raw observation; "
+                      "it does not change the verdict or completion time")
     recorder.note(f"predicate: {why}")
     if late:
         recorder.note("the completion bound was exceeded; `within_bound` is "
@@ -3074,6 +3439,26 @@ def _settle_fn():
         return _settle
     except Exception:  # noqa: BLE001 — pragma: no cover
         return lambda page: page.wait_for_timeout(200)
+
+
+def capture_framed_view(page: Any, case: dict[str, Any], hub: Hub | None,
+                        shots: Path) -> dict[str, Any] | None:
+    """Optional glass framing AFTER the raw verdict, never a completion predicate."""
+    selector = (case.get("expected") or {}).get("frame_selector")
+    if not selector:
+        return None
+    record: dict[str, Any] = {"selector": selector,
+                              "action": "scroll_into_view_center", "done": False}
+    try:
+        page.locator(selector).first.evaluate(
+            "el => el.scrollIntoView({block: 'center', inline: 'nearest'})", timeout=5000)
+        _settle_fn()(page)
+        record["snapshot"] = _clean(snapshot(page, case, hub))
+        page.screenshot(path=str(shots / "framed.png"))
+        record.update(done=True, shot=str(shots / "framed.png"))
+    except Exception as exc:  # raw verdict and shots remain intact
+        record["error"] = f"{type(exc).__name__}: {exc}"
+    return record
 
 
 def observation_skeleton(
@@ -3244,6 +3629,21 @@ def run_case(
                       f"{viewport} is not one of them")
         return recorder.record
 
+    replay = case_engine_replay(case)
+    if replay and engine != "replayed":
+        recorder.set(verdict="blocked", complete=True)
+        recorder.note(
+            f"the case declares a provider replay at {replay!r}, but this run "
+            f"was requested with --engine {engine!r}; replay is installed only "
+            "for an explicit replayed run")
+        return recorder.record
+    if engine == "replayed" and not replay:
+        recorder.set(verdict="blocked", complete=True)
+        recorder.note(
+            "--engine replayed was requested but the case declares no "
+            "engine_reply boundary")
+        return recorder.record
+
     if build:
         _ensure_build()
 
@@ -3252,7 +3652,6 @@ def run_case(
     hub: Hub | None = None
     try:
         scheduler = case_needs_scheduler(case)
-        replay = case_engine_replay(case)
         hub = Hub(home, token=token, scheduler=scheduler,
                   engine_replay=_repo_path(replay) if replay else None,
                   producer_clock=case_needs_producer_clock(case)).start()
@@ -3269,6 +3668,8 @@ def run_case(
         # observation is read as if it came from the whole product.
         provenance["product_wiring"] = hub.wiring
         provenance["engine_replay_sha256"] = hub.engine_replay
+        if engine == "real":
+            provenance["engine_identity"] = _engine_identity()
         recorder.set(provenance=provenance)
 
         with sync_playwright() as play:
@@ -3292,6 +3693,13 @@ def run_case(
                 exercise(page, case, recorder=recorder, hub=hub,
                          provenance=provenance, shots=shots)
             except Blocked as exc:
+                blocked_shot = shots / "blocked.png"
+                try:
+                    page.screenshot(path=str(blocked_shot))
+                except Exception as shot_error:  # noqa: BLE001 — retain the block
+                    recorder.note(f"blocked screenshot unavailable: {shot_error}")
+                else:
+                    recorder.set(shots=[str(blocked_shot)])
                 recorder.set(verdict="blocked")
                 recorder.note(f"BLOCKED: {exc}")
             finally:

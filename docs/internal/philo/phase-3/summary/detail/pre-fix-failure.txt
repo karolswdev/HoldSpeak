@@ -1,0 +1,23 @@
+============================= test session starts =============================
+tests/unit/test_philo3_summary_detail.py::test_real_producer_projects_job_into_detail_list_and_recovery FAILED
+tests/unit/test_philo3_summary_detail.py::test_real_producer_success_keeps_detail_and_recovery_job_projection FAILED
+tests/unit/test_philo3_summary_detail.py::test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued FAILED
+tests/unit/test_philo3_summary_detail.py::test_real_producer_terminal_failure_projects_failed_cause FAILED
+
+FAILED test_philo3_summary_detail.py::test_real_producer_projects_job_into_detail_list_and_recovery
+E   KeyError: 'intel_job'
+  at tests/unit/test_philo3_summary_detail.py:72
+
+FAILED test_philo3_summary_detail.py::test_real_producer_success_keeps_detail_and_recovery_job_projection
+E   KeyError: 'intel_job'
+  at tests/unit/test_philo3_summary_detail.py:103
+
+FAILED test_philo3_summary_detail.py::test_scheduled_retry_projects_retrying_after_due_time_and_manual_enqueue_stays_queued
+E   KeyError: 'intel_job'
+  at tests/unit/test_philo3_summary_detail.py:127
+
+FAILED test_philo3_summary_detail.py::test_real_producer_terminal_failure_projects_failed_cause
+E   KeyError: 'intel_job'
+  at tests/unit/test_philo3_summary_detail.py:164
+
+4 failed in 1.52s

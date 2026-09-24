@@ -1,0 +1,39 @@
+NOTE: Edited worker transcript. Complete independent command output is retained in astra-*-raw.txt.
+
+# PHILO-3-02 packaging fence — post-fix green run
+
+The focused test reads the installed distribution METADATA produced for the
+editable project.  It requires an unconditional `openai` requirement and
+checks that `llama-cpp-python` and `resemblyzer` remain optional.
+
+Collection command:
+
+```sh
+HOME=$(mktemp -d) PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH \
+  .venv/bin/python -m pytest --collect-only -q \
+  tests/unit/test_philo3_install_contract.py
+```
+
+Output:
+
+```text
+tests/unit/test_philo3_install_contract.py::test_produced_core_metadata_has_endpoint_client_only
+
+1 test collected in 0.04s
+```
+
+Run command:
+
+```sh
+HOME=$(mktemp -d) PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH \
+  .venv/bin/python -m pytest -q tests/unit/test_philo3_install_contract.py
+```
+
+Output and exit status:
+
+```text
+.                                                                        [100%]
+1 passed in 0.26s
+COLLECT_EXIT=0
+RUN_EXIT=0
+```

@@ -17410,7 +17410,9 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_server.py",
-        "tests/unit/test_phase143_intel_queue_inventory.py"
+        "tests/unit/test_phase143_intel_queue_inventory.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -17602,7 +17604,9 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_server.py",
-        "tests/unit/test_phase143_intel_queue_inventory.py"
+        "tests/unit/test_phase143_intel_queue_inventory.py",
+        "tests/unit/test_philo3_summary_round2_atlas.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19170,7 +19174,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19304,7 +19310,8 @@
         "tests/integration/test_meeting_stop_and_conflicts.py",
         "tests/integration/test_web_dashboard_home.py",
         "tests/integration/test_web_flagship_audit.py",
-        "tests/integration/test_web_server.py"
+        "tests/integration/test_web_server.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19439,7 +19446,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19604,7 +19613,9 @@
         "tests/integration/test_web_history_import_ui.py",
         "tests/integration/test_web_meeting_import_api.py",
         "tests/integration/test_web_transcript_import_api.py",
-        "tests/unit/test_graph_walk_calibration.py"
+        "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19702,7 +19713,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19800,7 +19813,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19904,7 +19919,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19998,7 +20015,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20096,7 +20115,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20195,7 +20216,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20288,7 +20311,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20391,7 +20416,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20489,7 +20516,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20585,7 +20614,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20676,7 +20707,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20769,7 +20802,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20865,7 +20900,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -20958,7 +20995,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21056,7 +21095,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21155,7 +21196,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21249,7 +21292,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21350,7 +21395,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21443,7 +21490,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21541,7 +21590,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21636,7 +21687,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21739,7 +21792,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21835,7 +21890,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21943,7 +22000,9 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
-        "tests/unit/test_hs201_route_http.py"
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33147,7 +33206,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_web_flagship_audit.py",
-        "tests/integration/test_web_server.py"
+        "tests/integration/test_web_server.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33478,7 +33538,8 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
-        "tests/unit/test_phase200_watch_arming.py"
+        "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33587,7 +33648,8 @@
         "tests/unit/test_hs170_faces_wire.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_intel_profile_resolution.py",
-        "tests/unit/test_phase200_watch_arming.py"
+        "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

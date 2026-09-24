@@ -452,7 +452,7 @@
 .arrival-meeting-duration {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -461,7 +461,7 @@
 .arrival-meeting-badge {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -487,6 +487,28 @@
    The same danger tone FAILED wears: it is a problem, not a stage. */
 .arrival-meeting-badge[data-badge="not-draining"] {
   color: var(--danger, #c53030);
+}
+
+/* PHILO-3-02: the existing meeting row owns its result wells. */
+.arrival-meeting-status-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--text-muted);
+  font: 600 12px / 1.35 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.arrival-meeting-status-fact[data-tone="danger"],
+.arrival-meeting-read-error {
+  color: var(--danger, #c53030);
+}
+
+.arrival-meeting-read-error {
+  font: 600 12px / 1.35 var(--font-mono);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 /* ── Proposal prefix (HS-172-03) ───────────────────────────────────── */
@@ -638,5 +660,8 @@
   .chair .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-trailing {
     flex: none;
     margin-left: auto;
+  }
+  .chair .surface-ledger[data-cols="room"] .surface-ledger-line[data-testid="arrival-meeting-row"] > .surface-ledger-trailing .btn {
+    min-height: 44px;
   }
 }

@@ -1,0 +1,46 @@
+{
+  "full_summary": "12 failed, 11559 passed, 116 skipped, 4 xfailed in 5678.77s (1:34:38)",
+  "full_failures": [
+    "tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face",
+    "tests/e2e/test_hs200_attention_glass.py::TestAttentionGlass::test_long_row_393",
+    "tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]",
+    "tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[393]",
+    "tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again",
+    "tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart",
+    "tests/unit/test_phase200_intel_drain.py::test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face",
+    "tests/unit/test_phase200_intel_drain.py::test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling"
+  ],
+  "baseline_commit": "7b2c2b2afa7c7dd02b56ce97f269d6f1585042c0",
+  "baseline_failures": [
+    "tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face",
+    "tests/e2e/test_hs200_attention_glass.py::TestAttentionGlass::test_long_row_393",
+    "tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]",
+    "tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[393]",
+    "tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart"
+  ],
+  "shared": [
+    "tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face",
+    "tests/e2e/test_hs200_attention_glass.py::TestAttentionGlass::test_long_row_393",
+    "tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]",
+    "tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]",
+    "tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[393]",
+    "tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart"
+  ],
+  "new": [
+    "tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again",
+    "tests/unit/test_phase200_intel_drain.py::test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling",
+    "tests/unit/test_phase200_intel_drain.py::test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face"
+  ],
+  "baseline_only": []
+}

@@ -1,0 +1,62 @@
+NOTE: Edited worker transcript. Complete independent command output is retained in astra-*-raw.txt.
+
+# PHILO-3-02 D2 — documented base install after fix
+
+This repeats the README source install in a new venv with an isolated HOME.
+No `dev`, `test`, or `meeting` extra was requested.  The global uv cache was
+used only to avoid redundant downloads; the package environment and HOME are
+fresh.  No hub, model, endpoint, microphone, keychain, or desk was started.
+
+Command:
+
+```sh
+install_home=$(mktemp -d)
+install_venv=$(mktemp -d)
+export HOME="$install_home"
+export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
+export UV_CACHE_DIR=/Users/karol/Library/Caches/uv
+printf '%s\n' "HOME=$HOME" "VENV=$install_venv" "INSTALL=uv pip install -e ."
+uv venv "$install_venv"
+source "$install_venv/bin/activate"
+uv pip install -e .
+python - <<'PY'
+from importlib import metadata
+import importlib.util
+
+print(f"holdspeak distribution: {metadata.version('holdspeak')}")
+for name in ('holdspeak', 'openai', 'llama_cpp', 'resemblyzer', 'zeroconf'):
+    spec = importlib.util.find_spec(name)
+    print(f"{name}: {spec.origin if spec else 'MISSING'}")
+PY
+python -c 'from holdspeak.intel import OpenAI; print(f"OpenAI={OpenAI!r}"); assert OpenAI is not None, "production OpenAI client is unavailable"'
+```
+
+Selected worker output:
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.zFwzBA5cVF
+VENV=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.V9cfznQ8Ub
+INSTALL=uv pip install -e .
+Using CPython 3.13.11 interpreter at: /Users/karol/.local/bin/python3.13
+Creating virtual environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.V9cfznQ8Ub
+Using Python 3.13.11 environment at: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.V9cfznQ8Ub
+Resolved 75 packages in 698ms
+Building holdspeak @ file:///Users/karol/dev/tools/wt-philo-3-02
+Built holdspeak @ file:///Users/karol/dev/tools/wt-philo-3-02
+Prepared 27 packages in 27.18s
+Installed 75 packages in 543ms
+ + holdspeak==0.4.0 (from file:///Users/karol/dev/tools/wt-philo-3-02)
+--- base package identity ---
+holdspeak distribution: 0.4.0
+holdspeak: /Users/karol/dev/tools/wt-philo-3-02/holdspeak/__init__.py
+openai: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.V9cfznQ8Ub/lib/python3.13/site-packages/openai/__init__.py
+llama_cpp: MISSING
+resemblyzer: MISSING
+zeroconf: MISSING
+--- base production import fence ---
+OpenAI=<class 'openai.OpenAI'>
+INSTALL_EXIT=0
+```
+
+The decisive executable production assertion exits `0`; the base install
+contains the endpoint client and leaves the local model/speaker stack absent.

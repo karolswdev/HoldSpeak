@@ -1,0 +1,80 @@
+{
+  "artboards": [
+    {
+      "file": "summary-imported.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 imported \u00b7 1440"
+    },
+    {
+      "file": "summary-imported-phone.dc.html",
+      "x": 1520,
+      "y": 0,
+      "w": 393,
+      "h": 852,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 imported \u00b7 393"
+    },
+    {
+      "file": "summary-ready.dc.html",
+      "x": 0,
+      "y": 1040,
+      "w": 1440,
+      "h": 900,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 ready \u00b7 1440"
+    },
+    {
+      "file": "summary-ready-phone.dc.html",
+      "x": 1520,
+      "y": 1040,
+      "w": 393,
+      "h": 852,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 ready \u00b7 393"
+    },
+    {
+      "file": "summary-retrying.dc.html",
+      "x": 0,
+      "y": 2080,
+      "w": 1440,
+      "h": 900,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 retrying \u00b7 1440"
+    },
+    {
+      "file": "summary-retrying-phone.dc.html",
+      "x": 1520,
+      "y": 2080,
+      "w": 393,
+      "h": 852,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 retrying \u00b7 393"
+    },
+    {
+      "file": "summary-failed.dc.html",
+      "x": 0,
+      "y": 3120,
+      "w": 1440,
+      "h": 900,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 failed \u00b7 1440"
+    },
+    {
+      "file": "summary-failed-phone.dc.html",
+      "x": 1520,
+      "y": 3120,
+      "w": 393,
+      "h": 852,
+      "title": "Draft \u00b7 Unchecked \u00b7 Arrival \u00b7 failed \u00b7 393"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "philo3-summary-proposed",
+      "x": 0,
+      "y": -120,
+      "w": 760,
+      "text": "PHILO-3-02 draft, unchecked artboards. Synthetic fixture material only. Preserve Arrival rows, Run/Open positions, and library wells; counsel/design ratification is still required before build."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

@@ -1,0 +1,2562 @@
+{
+  "head": "0ad59c0488ba100b516e3b1763d93a9a81f486ac",
+  "reviewed_count": 511,
+  "untracked_files_unchanged": 135,
+  "paths": [
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/brief-footer-1440.png",
+      "test_output_sha256": "6684ccd4aae19d715b68f122a6322e90431572659f5f0419d5a68e8b54038261",
+      "restored_head_sha256": "9174b55aef5c85c069d6f2cb3f6fd1b6228b6c27d22b7bce82b34833e9eb63e9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/brief-footer-393.png",
+      "test_output_sha256": "f3c03eae0d39f1e0f03d3c0076f6e52065021a82f0675f7acd0077216dd2f71a",
+      "restored_head_sha256": "9b79431a96a73952769820c74f5e4dee21f885c9157952e258576d12d6f24f65"
+    },
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/chrome-1440.png",
+      "test_output_sha256": "e85f1146560d79850cc7b9b3c4bbb86414dc9cf444f48860064b5587fc7db9bf",
+      "restored_head_sha256": "5b04fb8ea8e9ec4a7fe60d7dbe5fde8f69eec5a07e615f0745aa5f065051f66c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/chrome-393.png",
+      "test_output_sha256": "d4ee4b43e2e3d67d7064e11220013cbca345dd27eee4c919a693e54b89dcfb4d",
+      "restored_head_sha256": "0f618bfb9e0dbba867951bc72d329f4a0ee2a36fbeb24d5af1d98e5caf056d97"
+    },
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/thread-1440.png",
+      "test_output_sha256": "dee6b0485e64596b752011f6b932916a970ffbabfb5a1d8db1eb7bb1b3a7eed2",
+      "restored_head_sha256": "80c575e338956a6e8afcf03be42a000d6b6e2dcc3ddd04af10f7516be1e49964"
+    },
+    {
+      "path": "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits/thread-393.png",
+      "test_output_sha256": "17c38bdd10c11a24080ad05e012141df58008655b2a1481733de0c2b912ffe07",
+      "restored_head_sha256": "0f42feabfd2292d5e60736da49d4cb3e0e9d84a8c665e1a70d2a551372179985"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-empty-1440x900.png",
+      "test_output_sha256": "a2975cfc6f5a8db6911dbe9b4261036ea90cc254a681290a9b445d90efda9bee",
+      "restored_head_sha256": "9a314af9ba221cb81de1b9cbf24c64305d3f20a0130755197afd6d0040e14879"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-empty-393x667.png",
+      "test_output_sha256": "372832738cac3e9f5278040c7464d078d46d69c9f180f2b0601af72ec04d597d",
+      "restored_head_sha256": "6a45fa1a63111126cce63c9aa9d4e59694643bf6c131efb49480095ab2406bce"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-empty-393x900.png",
+      "test_output_sha256": "37c7d32dce70ecb41d964ff7a232957d44bcae93d998911735d0ea2ea18bb25e",
+      "restored_head_sha256": "d1f13fb54ee3e5c85e4d742862017cac05f3b312f00d50852012c1c4340f87a0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-populated-1440x900.png",
+      "test_output_sha256": "27ca8ec9ff1cf835f37871e6c5015b6043ec7d340582906c6f5aed94144441a8",
+      "restored_head_sha256": "10240e6ecd8fa27e7d3540102eb1a75168e61cbaf6e81b63757c723c6ec759da"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-populated-393x667.png",
+      "test_output_sha256": "3c5c96759bd01d7b914f1570339768cf51079a5f4b53f76199bc1662bf19a10b",
+      "restored_head_sha256": "91eee272f23d1b2a2adfb72a308a6d05c41b8c591fcb0b7811fef5266768e5f3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-141-from-thought-to-work/assets/story-05a/chair-working-band-populated-393x900.png",
+      "test_output_sha256": "e15f5394d56f3da59e84c66ada5358e02dc2d643eb93ad160871214d80e43c32",
+      "restored_head_sha256": "28377e2be25da2293f64f64cf9e224b675e3618353406c8dd41fed2dba1ba75e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-empty-1440.png",
+      "test_output_sha256": "a84db8c9d16c0c098408ce82f945813566e16a4cd98b53e22d8ba98d95fd1ea9",
+      "restored_head_sha256": "3e310b6b31683bf7d3e353f56895124ec7fb863dcc9848ab1647d59810864128"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-empty-393.png",
+      "test_output_sha256": "4551ae9421fa79682bd8970a9a3b9833fab681e4eb7f72988fea7dbc58a3708b",
+      "restored_head_sha256": "8ba3cd437b2d7ee11eacf3b5b5d2bfbc974d55cd381e264432202806743ebb0a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-error-1440.png",
+      "test_output_sha256": "ec1d79e11e922ec39089527b2f0fba83a71bd1854311f5e2115ce3b9ccddd05b",
+      "restored_head_sha256": "c9a033f90bd10e36dbd1bad896fdd38819ee348f20608e270bf553ff49e32110"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-error-393.png",
+      "test_output_sha256": "047d299bec31b6ce19043ef5b96159622d302bda3c2ae1c680845a7ceff56852",
+      "restored_head_sha256": "e6032808f23be594950543645d08428a7e32971ab6916d702217ffa43ec1ad4f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-populated-1440.png",
+      "test_output_sha256": "1f3976c1b8f17140527b966e24a270555dd7ec22ac63bf3a9794b9aa7b6639da",
+      "restored_head_sha256": "3459a32836711378ee258c1aeb7391122c22ccc15aea3064d9e4e8e31300c311"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots/door-populated-393.png",
+      "test_output_sha256": "e0da1f5e8a5c968fb04f8e883b9b177d037fe40c5310c06672aa321a6cd1b988",
+      "restored_head_sha256": "b10c479d7c7ee9724bee09180126318ce16a2e1e46a098383eec56a1198e1b39"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots/go-menu-393.png",
+      "test_output_sha256": "d4b44d63df463383ce194f3076fac756d4affd8ad745f0584c838abbe8800f0c",
+      "restored_head_sha256": "fef971915efaecc6ddadda69c7bc0002e7ad92078d52d33673266282f57bf5f8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots/rail-empty-1440.png",
+      "test_output_sha256": "261764ed638b32f968ac56e5947f789f72c46988c80613b7634459f2d79b51e1",
+      "restored_head_sha256": "3e310b6b31683bf7d3e353f56895124ec7fb863dcc9848ab1647d59810864128"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots/rail-populated-1440.png",
+      "test_output_sha256": "0e2bbe86dc1226a89950a2fc015f07aa35f69783df367a2340ce51ee1d60ae07",
+      "restored_head_sha256": "0d84cf689d49d81a9447b7ea5231b84719aa79e608ff4d7b9ff0a57ccfc1cd43"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots/rail-populated-393.png",
+      "test_output_sha256": "487f7410a6a2fdd5198a9316624278bbab4073616a1cb94b7d0f07e0d09aad13",
+      "restored_head_sha256": "f6376e2952fb38b17f5a35b9f9dc4cf34cf90855fba8f81d979e42bec1b3d0d8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots/settings-calendar-1440.png",
+      "test_output_sha256": "fedbfa6983a28f9042fc4c957a8d5ce4b7c07872209e3224930582b371ed5189",
+      "restored_head_sha256": "d3c043478cc22ba17a8918b5525c82c70ee61c74139f45013fb3272176053a12"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots/rail-connect-1440.png",
+      "test_output_sha256": "9cde41f1efad817e7378035e9f7027d9107af571d56e15f3ab2534b32dbc1281",
+      "restored_head_sha256": "fef10c1af703217efb8d12762acb3e58da277487da3ac2e7bdb6e4834048aa11"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots/rail-connect-393.png",
+      "test_output_sha256": "e90292fe93b5b6ebb89aad51616660d8bc8f8c68641da3bcc0de1f803badbc71",
+      "restored_head_sha256": "c99d6cbc423f6a63acd300b210168c4e953672117a55d798462db747ad06014d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots/rail-connect-settings-open-1440.png",
+      "test_output_sha256": "1db76620ac62ffe041d81be4058e46d551965076d5d78778f87840dc81a304fa",
+      "restored_head_sha256": "4774e3693c49ea8d1a081df4a36de44c873e7f52d0056e88eea28fa4cacfca54"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-145-the-door-polish/assets/story-03-shots/rail-quiet-1440.png",
+      "test_output_sha256": "545a6b50264169cc1e74d481d8e30754737022b25c770a37bdd635357a427f07",
+      "restored_head_sha256": "508f0b13fd8f9774d36f0855f9a5a3a5dd7b2119a51ee1b519a8001c95ba6f1c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/allow-once-held-1440.png",
+      "test_output_sha256": "8a8de470a8a25f1c113785cd08961e6d297c858229f248ddd5ec9b21b1693969",
+      "restored_head_sha256": "c63a8814a8bf0c6a908c7c0015e1c9374829deb18b8e305df3739feaf3c8a3aa"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/allow-once-held-393.png",
+      "test_output_sha256": "fce0605641c7569f881540c035002b5eb19cb88ec3dafa02dd12183548e581c8",
+      "restored_head_sha256": "78a4a7ce9c502822bacd77c7cc551bca6843ab8a299c5262a4cc495d3517e75b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/allow-once-receipted-1440.png",
+      "test_output_sha256": "b3d534c99aa34eb1059e11c3d4d6bd74a77ef07c41a6a06e0254365efb4bad53",
+      "restored_head_sha256": "3214ed5d899ff852436d27e6286aa0fc747600720d52bc7f47c54df80b9eac51"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/allow-once-receipted-393.png",
+      "test_output_sha256": "bc09470e0d1b46b49a722259b009aeb3830a0d5cc794dc9568d7859213663587",
+      "restored_head_sha256": "dc662013e3d9905c2ad8ed12fa830c2b7d953b6c71e0f1f04d3c81b0f519654e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/deny-denied-1440.png",
+      "test_output_sha256": "cfe9c7c6591f273d06bdc7be85b99407c06611269f4b11fad3a621986a0651d7",
+      "restored_head_sha256": "7d73ec0b633154639157420d2dc350c7f25d80e444a1ece0f019e95daad2ddc4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/deny-denied-393.png",
+      "test_output_sha256": "a78004e1e4d7885cbda66c2316fa728c6d95d5340269ee01f3c25a76cc5f0467",
+      "restored_head_sha256": "bfff736eaea31fa6641e1dd16c398260b89541c62ff8d0554c00c6f7a52e0054"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/deny-held-1440.png",
+      "test_output_sha256": "2591bfe50f7b325534a111e24d9b6a1eca16ab84e68ddd4eb5845a9f5a44addd",
+      "restored_head_sha256": "5ce988c571322ed6f99da73ee96df2b67f35cac43d73e75e978db2d1f35e5a66"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/deny-held-393.png",
+      "test_output_sha256": "6926823cb505959548279e6abaa51d9e9a14cb0ede203127005a2edaeef9ea75",
+      "restored_head_sha256": "486b9fa5dca3fe63aed891d78470807dc1d0a216e3f284eb60535ed79c089f8b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/elicit-declined-1440.png",
+      "test_output_sha256": "8de391607512f9c638ff75c908af573111b58659c02b8d9a9d6e946f1f5ce956",
+      "restored_head_sha256": "78a0f1ec81f7454f031bbeeb2de0e9ec8608564b216a85713046d0b8c7d4e510"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/elicit-form-1440.png",
+      "test_output_sha256": "6e167f1d9c7c233af2dc0226abbbbbfc0ad82d394876b6977e18db30deac68f0",
+      "restored_head_sha256": "b3861b7603786dcd7c024a0eb648e9944eb559515d1c7678f3a18f0e3775da5e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/elicit-form-393.png",
+      "test_output_sha256": "7d672ba09563ee0511374d930b43ee71a61c111a8be170506d03d819ace822c9",
+      "restored_head_sha256": "385243403408540ce2e04d85d861b6264b0c2913047588fe714816be1d752dac"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/elicit-submitted-1440.png",
+      "test_output_sha256": "7a04f2f833723c4e2ac5bd4e2fd265161c04d7827ea923cb4df82ef39d7d6adc",
+      "restored_head_sha256": "4dcbd574283bccf97b37ad9c7ec103059d367aacd9ece02b713e81530209816d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/elicit-submitted-393.png",
+      "test_output_sha256": "0cfab379913cc98328107637ede3394cd671a7076c5946b015238de25ceee663",
+      "restored_head_sha256": "a3a67b4aed79ba78e4414a83d4790b6b1d2d730097c411c715a81f81a45da858"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/failed-row-1440.png",
+      "test_output_sha256": "fe4f0de17d0af4bcfe57e4f45bd019d95035eb7662a5b74d148492ef1289f507",
+      "restored_head_sha256": "208b948c1b9d757659e882800c50f264ae6575ceb77f94a207e79e3691b6afba"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots/failed-row-393.png",
+      "test_output_sha256": "afb69a62f1cc81cf6b081149f14cd275be5e58c25050e50f44e339f9cca26361",
+      "restored_head_sha256": "e9fe83b12d9ea4f0e0c09a2bfae2188224e6f3abd30394bba3fe2d9c6513f9dc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/desk-list-notes-1440.png",
+      "test_output_sha256": "3179f8aaf021249d5aade60cc4cba754df7c246cd541ec5889a4d0d4e36125c1",
+      "restored_head_sha256": "4f1a9f52c9c8e2791580c296adfaf899f2dc570a97700f7c9074eba942a4d05f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/desk-list-notes-393.png",
+      "test_output_sha256": "68970e5076f6a28d027381f6f9bec11334415c69ea8c326df62dae6adf04a56c",
+      "restored_head_sha256": "ed392539147dda95b9d1998cd32e1376109ab3dbddd27312442a05f306d3c34d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/desk-list-notes-final-1440.png",
+      "test_output_sha256": "3179f8aaf021249d5aade60cc4cba754df7c246cd541ec5889a4d0d4e36125c1",
+      "restored_head_sha256": "4f1a9f52c9c8e2791580c296adfaf899f2dc570a97700f7c9074eba942a4d05f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/desk-list-notes-final-393.png",
+      "test_output_sha256": "68970e5076f6a28d027381f6f9bec11334415c69ea8c326df62dae6adf04a56c",
+      "restored_head_sha256": "ed392539147dda95b9d1998cd32e1376109ab3dbddd27312442a05f306d3c34d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/set-status-1440.png",
+      "test_output_sha256": "a8e9c9b624cc14fb3574bb564139fd306f4e6cc4d959b1ec3266a00b7204c93a",
+      "restored_head_sha256": "9fae93001986624abe9615cbc5c20886bcc8a8b92eb325781122def162a472f1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-05-shots/set-status-393.png",
+      "test_output_sha256": "a1996967f7b22723b31cdbed9075c5d80315e6331c59615b00853b8123e71d2b",
+      "restored_head_sha256": "6f014f5d8d5358f0bbcfbbb037777c5b4ec31302993f47d149718e3f81c34bfd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-auto-admit-1440.png",
+      "test_output_sha256": "7896a85bc4b47867fd616a328bb617d4f5bdb133e5a67b3b457fd88e9bf61a41",
+      "restored_head_sha256": "e5cd8619ec953ac65d05475961188eb3a3cbf8241c2efc36f669cf280150ba60"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-auto-admit-393.png",
+      "test_output_sha256": "c4684ffe2f534736d9d16e596924b3cbdbc0192177382ac2b92e47c4bb3883de",
+      "restored_head_sha256": "8987526cad67b2f0e3354984d77653d1945ca2105499b92654df9877412d1f93"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-held-1440.png",
+      "test_output_sha256": "7c710d8c1b94f0ed2d4aaaf3eb117a1ff1ecd78646b3c80f4467f01fadbb52e5",
+      "restored_head_sha256": "172998b22e1b61b055b02017a0716177292f34683bf1341315fd98394e437a8b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-held-393.png",
+      "test_output_sha256": "d3cc68cd158d66130b8be3f69950b7a387e1a456f1796905ea3333e2902d1c0d",
+      "restored_head_sha256": "93c6f0fb20992cff15ff3137e110c7fdbef8d097f96946570cdec7e769afc7ba"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-receipted-1440.png",
+      "test_output_sha256": "3621f8c797c90171869df1d57251f9706b5adece5dcef7abba815d69d533af5c",
+      "restored_head_sha256": "e50446385befa0f7349d6d238aaf2646216bcbdc001e8c791ce00879b8a29240"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots/allow-always-receipted-393.png",
+      "test_output_sha256": "8f9786d110e0be6668ef174d147e71047704571c9ce4e6d0fb948e44579e712d",
+      "restored_head_sha256": "8e5cdf988a3c3a80b12b03157e048a88f9c2d1fe752d33e8a802ba264fa90186"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-chase-active-1440.png",
+      "test_output_sha256": "00b4137b5734dc6fa3bde3e4788314d52b1bd6899ec2c2a4a95059a677cb02f4",
+      "restored_head_sha256": "7058a28af8d4a634850601bdb8d4af7730bee09748f8dffc247208766d7e163a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-chase-active-393.png",
+      "test_output_sha256": "c7ffa8cde3468b32a3e43010ff1ce7620b44731ea9b255f0b846a7a719635d1f",
+      "restored_head_sha256": "bbd1c52aa537fda918b25191d8a0652649c300a85f16249e158fa4c612efd55a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-draft-active-1440.png",
+      "test_output_sha256": "1fa5e85703f6d682fbb3abe34fa2039fe80bdfd7c8c58e818b424b66feee0f2a",
+      "restored_head_sha256": "5e58c7a7932d00a44633886b974e42b0715e0dac00f2935061e1301edca9acd5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-draft-active-393.png",
+      "test_output_sha256": "738c80a83629d716be0b9cf9e59f1df48fe6d705e74378bbc89f3fde55783a63",
+      "restored_head_sha256": "d21b4a3badbb1776a49b3983aad940a7119b477a98e011b1294cca8d7942dd94"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-tabs-initial-1440.png",
+      "test_output_sha256": "b0a42e537808e985f8f625e49e44a6e45a01fcd7e0ad3b713f625e11a3e43331",
+      "restored_head_sha256": "2c5eb5c37406f6a7cfbc45dadd495d31cfab0fab5e53e8138afb22d839ee4c97"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-tabs-initial-393.png",
+      "test_output_sha256": "816bd27800e8c852de461242b18ee7e6df03d9989a619a0353ca9aac8546c288",
+      "restored_head_sha256": "f49f522aade9575ecb4e6688c946a38f1a663b8af8d2c428c0ebaabdbb8d4938"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-unbound-1440.png",
+      "test_output_sha256": "3ac17d8b0243ff29b0bc9a602214c7f4e24deec7f243695cd0e9ad56cda041f8",
+      "restored_head_sha256": "c8167bd20181afe3245505ed819810fc5e0f46e3a70fb9a0abbb871ed4e5e364"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots/modes-unbound-393.png",
+      "test_output_sha256": "aa48edbedfcf7298753bb6ec9ce09aed7c124355dd007ea317acc3d2d4d8dba1",
+      "restored_head_sha256": "cb55c63bc7f82710e126e46c13fd575f8b2fef1fa49d6740cb3146f63c7e6daf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-esc-before-1440.png",
+      "test_output_sha256": "0fbb37b84153f392859ebe47d14404de8905e5f1481aefe245914ed8d61fff4d",
+      "restored_head_sha256": "d20388746bfb9841bb0ae9a3bc09d8dd11dd9087bb1dc4d17fd0b52f51d1c6a5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-esc-before-393.png",
+      "test_output_sha256": "cf53f3f85fdb197e0d94f28d7a9d7f51aef34a22b96855c855714c006366f541",
+      "restored_head_sha256": "b53a52df9034f2c5535fa7b5771edc10a2d8b4a8ccf02bb75f9582e6eba05dba"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-esc-closed-1440.png",
+      "test_output_sha256": "2238db9e651af55bacaa4bb4e89bf6837e085e44414105d68ab52e30a1d3d8b7",
+      "restored_head_sha256": "1cb13908f79dbf41a3225ad4661953b622bef6a2776bc415755852ab6c9bf407"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-esc-closed-393.png",
+      "test_output_sha256": "08790225abd286bd6d2175d704de0cad9588371f97bb1fc0b48e3ad76363b8c8",
+      "restored_head_sha256": "df58706dfb6390475df38a2e94cbb72b8a070aeed15d6de9d8a5693788643678"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mo-palette-1440.png",
+      "test_output_sha256": "803023cbf10265aa3c542ecc774ca9fb97806cfa71d5b90ec3af686bcba1f7e0",
+      "restored_head_sha256": "11bf562f86c112dcfc0403f2ccd34bcae344639a08e5cc4e7d378114cb4b2812"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mo-palette-393.png",
+      "test_output_sha256": "76083926d8476c43f931ddc013a30473baaa4fd50761903fb436ccb40ed24620",
+      "restored_head_sha256": "367b15c5da80d2dbd8c76a8c4c6f8edaa703cbc24a1d5e4e6e7176a45d9fc56d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mode-args-1440.png",
+      "test_output_sha256": "a9ac5276e730974ca6762727d6f7cfd869762ccaf7b8f483b170633290dc2ee5",
+      "restored_head_sha256": "d68ec126bfb50afc39f33fd3b4a99eddcee2d77ed715f91e9c6cbef0b7b14683"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mode-args-393.png",
+      "test_output_sha256": "bf045270d9fba8bcae6efcbed3940e69a5a42c24606517c2a651e8af40cd3a53",
+      "restored_head_sha256": "bb327f24068038b0b3c8643a61c25e1c2a4c9ac16ab6ef5ba979ddbab89414cf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mode-chase-picked-1440.png",
+      "test_output_sha256": "054550957156172127f023a5eb921cf728f0d93f6ae70a9d83cb51b0f837c716",
+      "restored_head_sha256": "246a3e29acf0552fd10958f93797a9270382b05a7f829147b253ef1697445f7a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-mode-chase-picked-393.png",
+      "test_output_sha256": "950a7aaf061f11e2a2c23f1d05252422bf6eaf5dbfd59829c569490da3fc0fcd",
+      "restored_head_sha256": "a703118b86c5df0a5c0e68cdfe8b9b4e69023719e359e82e1c154950e1ad354d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-prompt-args-1440.png",
+      "test_output_sha256": "b396174d25c7a6cc38d3941e63bfb426e63531b018d1b2e8abbc34a584bfb8ec",
+      "restored_head_sha256": "11f4e207103bf2f3a6bfe2d8b880b6dd24c32b35196c9eb4e06e92816433b79e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-prompt-args-393.png",
+      "test_output_sha256": "37ecbd8657d7afe474aa343ba73d310d0004d0f8a2b302fe6b92f000402c0dbd",
+      "restored_head_sha256": "62456b0dc553b8d0ea16788f4389afa1d91539d96364f349b3222c8056d34019"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-prompt-inserted-1440.png",
+      "test_output_sha256": "e88168e2aea39e1cad6a63b8cb6a090a48308a0084a0a158660dcb34aad9f75f",
+      "restored_head_sha256": "a86fd0de051561af96bbfd9e87498b80ce2a87eb2b3a13c7533cac8b0aedf0ac"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots/slash-prompt-inserted-393.png",
+      "test_output_sha256": "c2163e996f6a80e680f6fd68bbc66a57a68dcf31b38deb2739e49b8f3ec985ff",
+      "restored_head_sha256": "a89fcd1d0fdfcc58c278142f5a1f7e549c753e4c32bc17d994d7d3ebe9e2c3c4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-after-send-1440.png",
+      "test_output_sha256": "325785c9dc8db6076fa1b14abd20c7d4fa02b7a1234e17819e3abb4b3d75f669",
+      "restored_head_sha256": "93be250339a7b960a4f9f10e8ad49a85cf3004480602fb9cab1f6291869c385e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-after-send-393.png",
+      "test_output_sha256": "446fa189afd1da9eb750a309c67d674d06b3b364636bbbdd94fd789841c4e256",
+      "restored_head_sha256": "bfd4b34067c7035211e04610874520d65acbfc8b63c9ba43bc9bd66789431043"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-chip-1440.png",
+      "test_output_sha256": "02ab0f5bb619921fd103022558dca9e76e2cc78aba5794498e76dca3617b23db",
+      "restored_head_sha256": "bdd1850f706f06a78c82a078f849ae3b10fe6ecdd55f597586cf26180efa3407"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-chip-393.png",
+      "test_output_sha256": "8b1a932fa0885b98bb7bda503fccc501f58ae7c4e70c22a248770f5edb3eed20",
+      "restored_head_sha256": "790ac61a07caab056c914e8905a8c70fed11a607fd386acb02f3c97cb1c52c9f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-popover-1440.png",
+      "test_output_sha256": "7b99e35ba62b88013442145eb899121ecaa0b578ec1756157911cdf3d0841712",
+      "restored_head_sha256": "8606b601bd79c972306c27e4a3d02f0c22355bcde228c5a1168f1fe05b16d0e4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots/annotation-popover-393.png",
+      "test_output_sha256": "c665cb117c3e8a1c89223c0001c9a1429196851f900779d2d0fad4b8a1a3416f",
+      "restored_head_sha256": "26e1b32287094834800faa88feb241e4207a4fc8a6cf69b6d0091a53cedc5db6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-cut-marker-1440.png",
+      "test_output_sha256": "36e2e31b58ff0d630c5b016d63889485771f0ab0a8f9a204d3c74d94c1944ca5",
+      "restored_head_sha256": "36ddda0cb967684608827f74299dc33800c3b75833b4832a5ab4c600fcddbbb8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-cut-marker-393.png",
+      "test_output_sha256": "2818dd00d4f0850daceb315cc63f0b374de5bd06c2c8a440fc6e375babb157d5",
+      "restored_head_sha256": "77c3c19fb52b3835193da793cae6f6e5b0faa0001c9d4a428b1629193f90f06d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-fold-expanded-1440.png",
+      "test_output_sha256": "add6bb6e7ad38a3587e4175a84056401478de5b63db4cafae25b1dccb8be564d",
+      "restored_head_sha256": "23923251b493cd862d6b6efac8559da7556c5d0a76d64c82d3f14c1811192917"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-fold-expanded-393.png",
+      "test_output_sha256": "32b1355ab51a100f078f3f87f6977f3eba6503bf34ccd96f54820e241dbcba51",
+      "restored_head_sha256": "cd37d0942abb09eb1d450f30c112cb1a92fe85ba1641c6731b86478621ebae11"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-raw-fold-1440.png",
+      "test_output_sha256": "f4f1bb89fcc26e41bbf966b150055f5d38399f20b1de2a91a1a6734137ab9eef",
+      "restored_head_sha256": "797a9e9713e1f9d3bf6095af4b12d0e420b7c3cbe12abcd2bc55fc997dd8d78a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/compact-raw-fold-393.png",
+      "test_output_sha256": "d98a3bc652516b31647f94945cef8cf945fbd201721053e4452d8f1571a262f6",
+      "restored_head_sha256": "b11a3318657ee9334a856b8370fd0841dffdb2cc30aeb01d459059fe1f0b76fd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/todo-receipt-1440.png",
+      "test_output_sha256": "04741674ed08a679dd5406ffbba3be11c6bb84d0c553b73cfc5e104a269aa775",
+      "restored_head_sha256": "88737edbaf1d35ad21fdb31c09ebe8f82e14a75fd089d092e28b343559681cd4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/todo-receipt-393.png",
+      "test_output_sha256": "26df6cc5157e63013c8369225215841ff88d7cb9915f23ce681ccab80c63cbe5",
+      "restored_head_sha256": "284db8fa66b245a502fbdec0c056fa2cf23eb135daca4fdeb3a5a962bf540052"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-desk-1440.png",
+      "test_output_sha256": "6201ab2d696839ac10aca15164bf229d7940835ba29244e18743034bc87cc1ff",
+      "restored_head_sha256": "6bd705277c3a0ae9cccf07e5a7afe6fce6b202751a1ad3bf6532b1815c1d785f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-desk-393.png",
+      "test_output_sha256": "e598482f32bb5407df2996253bfdeb14c175d3f024785adc64ac5c7131bda32e",
+      "restored_head_sha256": "bea1ca579dac0b0f940fadea545b9003397fdfd6b56fb4484b82e387430151a2"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-extra-off-1440.png",
+      "test_output_sha256": "1de5a2579b46f3e340f2deb78b4f4498c9b00f0e38dc36932338fbbcde00f7c0",
+      "restored_head_sha256": "709dc7f8a2232d756e09888638c407e8ac73ee3ae15cd682d468c5251947b919"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-extra-off-393.png",
+      "test_output_sha256": "5656333199faea0ab3c7567c4edf24026b658833e0fa2e0bc79a771eceff029a",
+      "restored_head_sha256": "eca965d6ab2727b11d8c8488daf49b8c77942bb4b9a05a55f777299dc4942340"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-sounds-module-1440.png",
+      "test_output_sha256": "1de5a2579b46f3e340f2deb78b4f4498c9b00f0e38dc36932338fbbcde00f7c0",
+      "restored_head_sha256": "709dc7f8a2232d756e09888638c407e8ac73ee3ae15cd682d468c5251947b919"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots/tts-settings-sounds-module-393.png",
+      "test_output_sha256": "5656333199faea0ab3c7567c4edf24026b658833e0fa2e0bc79a771eceff029a",
+      "restored_head_sha256": "eca965d6ab2727b11d8c8488daf49b8c77942bb4b9a05a55f777299dc4942340"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots/call-loop-thread-open-1440.png",
+      "test_output_sha256": "3c494f9a4058cdefc7107b2153911a3b1be5bd8e017e3cd76af91b58726a960c",
+      "restored_head_sha256": "c48415a31992509d346a501105a89b325223b9246af5a0bd5a4b7d2526b39ffb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots/call-loop-thread-open-393.png",
+      "test_output_sha256": "69c47a803650201734e9031de455bc3aaf3d836efa9620ec813d4dd12ca556aa",
+      "restored_head_sha256": "5ad0ddf584a555b26656c448bdb2adafa4f5b25f705534cc829a681a711a412f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots/call-loop-turn-visible-1440.png",
+      "test_output_sha256": "e17f3b0e152d9193fbf3cd878e9ee50105a56f88126e9398a409a588f58addf4",
+      "restored_head_sha256": "6520d4cfe383dea1bcd28d5a2b8daa5e81d01fffcffe2da137b3cbf964221a09"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots/call-loop-turn-visible-393.png",
+      "test_output_sha256": "9586b81f728776778211f1645f784dcb72c270a1dbe391c03f5876ea0a65de93",
+      "restored_head_sha256": "94760bce2d7ed417d5d774cfadb56842725971993d8bfbe24d069a6bc5a7d0ac"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-off-1440.png",
+      "test_output_sha256": "9f134a57bafc2031063d0657cfd7ad508167d9fa12e2235fae3d2101230c0813",
+      "restored_head_sha256": "8d5224fde85fa93cd0b4e7068a75db91630981fb51e2233b9a07e9daba28eb17"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-off-393.png",
+      "test_output_sha256": "e91a4c6dbcfcae6c325df819d0ac8cf80a4dd2fcab03f7812f8b4a57b9b93a4f",
+      "restored_head_sha256": "92b15891e728ae3341c069df7ff2adcb5e55eb14d1105b984482e1630fe05079"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-on-1440.png",
+      "test_output_sha256": "63a8600a4a16d9b695cd5ce272b37dcc4da621b493816d9a155d8425870380c6",
+      "restored_head_sha256": "8b3ee4273dc71128469025344e15401b25a37f011fb91a9b191b7a25e66eca27"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-on-393.png",
+      "test_output_sha256": "3f741e83978be5f735451ba4284472142088f83abef6d3c630b32e8d034f5b36",
+      "restored_head_sha256": "533062693c261af8fc3ffbaccc8c117ac04d93c20dc7a1b06cd8393099de06ca"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-stopped-1440.png",
+      "test_output_sha256": "401098ada805d4fea15f79b5f13160f421cdd80457831e84f13fdd1c43c79a6a",
+      "restored_head_sha256": "4515f446f16915dd4150d47e60d056844dc39daa70f0eddf17b26bf40ec067ab"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots/call-chip-stopped-393.png",
+      "test_output_sha256": "c24114b019ff8f33b14b0411821b9ce19a6e328a7482ace9a97cf8ab6b7ef205",
+      "restored_head_sha256": "dac8cc1e12e830bb68c157c36bcf12658cc4e721009d05dd352bd78d4d6f6e7a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-present-1440.png",
+      "test_output_sha256": "5e9e44db7629599f55e5d4ed314f547d9bbff328f250649740f431d93c5670f4",
+      "restored_head_sha256": "8c9b9a6d0e703b400d72bc2344eeac107c169c4962fc3791cb6c0650439cb677"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-present-393.png",
+      "test_output_sha256": "e8e87d39603712a2a60cda4850a46a83561b8fc19bd73b8da9b7efc47de54782",
+      "restored_head_sha256": "737bfbb2bc8413cfaf22f799a2fb1a1a9e9da24a3bebf852af8a1efe164575cc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-speaking-1440.png",
+      "test_output_sha256": "490a778ddf6b4764a00371059a8f69cdd19ac58e54b6357ec446fbe0ae92fb67",
+      "restored_head_sha256": "89ae2042843a132513a56605959a7e056608725a37213b397d0eed1180f2c8d9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-speaking-393.png",
+      "test_output_sha256": "a437e906a45f9e51d2fa6546a035909e5eb381259da634dc07fde5bae81afc47",
+      "restored_head_sha256": "f3c81d2da6090c7a65e5b33db3ce84553f78d4f466c990ac3f3f1dcf1dd59111"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-stopped-1440.png",
+      "test_output_sha256": "081f86ead90c4820c303a2a5278db3501d6b6ef4d16d3451d86e36a291abf28d",
+      "restored_head_sha256": "a0cf85cf81932e7e9c0baa95d526a550db54633017b04fe3634b5be681069b82"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots/speaker-glyph-stopped-393.png",
+      "test_output_sha256": "7af433e4ec94f30a1393303a81235dd64c859293373fb35dce454b60e81467e9",
+      "restored_head_sha256": "af93acb911f918de50c279ff59835c011dbc53c7b81193ac7818322fa2c32a6f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-cards-1440.png",
+      "test_output_sha256": "6edbf4800a6a4f33bc2b96da365fcaeb8530c50f5f41f40fe8ff235d3d6b3297",
+      "restored_head_sha256": "ed907f285b0137b5c8f5815e6c51b50c51bff9e65a54be2d201a015cb6034fd4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-cards-393.png",
+      "test_output_sha256": "ceb75dc9ffbebc9433064eff53d424c23aaf274db82f5e9c52bd7f04b1b3b7bc",
+      "restored_head_sha256": "d95f1ead543e74f4838c23318a861aea391c95b63ceae81254d58917f3977d4c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-cards-focus-1440.png",
+      "test_output_sha256": "187cd2dee6d83fd174e256464c2cfd1c455b4ec8216d637a92eb28d409d0f27e",
+      "restored_head_sha256": "da2c1462ff4b221aa90863b11ccbb8784b99e43fa9c8ccc01705167d40ede6cc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-cards-focus-393.png",
+      "test_output_sha256": "0721c115a7ccd840e32823e744416869f156e42a9a250ba34bcdf40095f0450d",
+      "restored_head_sha256": "1eec5874a3914757432148a96c5ce9db452c2115b2ccabb03865de26e7a1792d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-strip-1440.png",
+      "test_output_sha256": "28d4d92eef1a13028eed9ed27a06ff2abd659f506f8fd07a77d83673e08ee5fe",
+      "restored_head_sha256": "36173675a1c3518183571f18db0be283c23ded8ab60dd9cab72c57ec094c967a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/door-strip-393.png",
+      "test_output_sha256": "7632dd7a1779b2441fc5a3ec04a2c88dea8b5a5b371db89316a3ba8bb20f0d45",
+      "restored_head_sha256": "911885f63a9e782f1294fbe925f4ac6fc80e869db8d2b51d804d1974628e9338"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/strip-initial-1440.png",
+      "test_output_sha256": "28d4d92eef1a13028eed9ed27a06ff2abd659f506f8fd07a77d83673e08ee5fe",
+      "restored_head_sha256": "36173675a1c3518183571f18db0be283c23ded8ab60dd9cab72c57ec094c967a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots/strip-initial-393.png",
+      "test_output_sha256": "7632dd7a1779b2441fc5a3ec04a2c88dea8b5a5b371db89316a3ba8bb20f0d45",
+      "restored_head_sha256": "911885f63a9e782f1294fbe925f4ac6fc80e869db8d2b51d804d1974628e9338"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots/topology-keyboard-focus-1440.png",
+      "test_output_sha256": "264d32c743a0247f7a9e0178892999983cf0dbf07ea712864090a07764f58057",
+      "restored_head_sha256": "432f9aa909d8cdfe031f1881001441208be51a13a543b9542f4f39e13641dcf7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots/topology-keyboard-focus-393.png",
+      "test_output_sha256": "89aef84e60a51f69dbfc41e19c67c10ba27b625bf4e1e100c46d62ca5b46184c",
+      "restored_head_sha256": "4ac8e67ba6eaf1cff80001acb9f21effd939b1692ae0162b6a455f611e9de07c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots/topology-map-1440.png",
+      "test_output_sha256": "bc332d4f8a1c85aab6e8d377f4dfc354edc05119b9e27eb50f56c99b8b7e5ac6",
+      "restored_head_sha256": "9037a8c7b5629708709570f089ef586ca98b620dd94ee2783882c3b7ee344814"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots/topology-map-393.png",
+      "test_output_sha256": "2419c4862e103bd906f1ff7ce2e3ceaf81ac692f1074d586f836e02a0ddd9203",
+      "restored_head_sha256": "f3b186d89ce53412f0cb4b17befb5c7e70c131409d0d5ec9613ca5be7a8bb4ab"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots/review-card-393.png",
+      "test_output_sha256": "17cc109bb895072436221c0c608430ce13a4f36cd4e2d2e93beb65f18bbb4f95",
+      "restored_head_sha256": "f95a0da818ae587702039345606c028d3a7e88cc89630d8d02f125ad4b791282"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots/review-degraded-1440.png",
+      "test_output_sha256": "5bc8e0200261454afc32438d65267dec10e9d49d49aaed802d6a522a5174756c",
+      "restored_head_sha256": "7913cbb0f3b2979be13a5146d8f7c926181486989ac39b0edf00f14372d241ed"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots/review-queue-1440.png",
+      "test_output_sha256": "5ffa45a819d4d0c99aa2ad76192e517f910c9ef0ab55e5eb4277dfe662c7fbf9",
+      "restored_head_sha256": "869c56c070d824e0d6ce7e6640d3c56b5af98e284da28818ba56b4694f1b966d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots/review-summary-1440.png",
+      "test_output_sha256": "de24294293b1ba01fe9b34eaf0552bd4b1b8b7429f5271356b73d1f3756504b0",
+      "restored_head_sha256": "a4cfb23ee0cd1061ed5d74a694bd353f66c3c1aee4d3f84ad2929dbe09e89221"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots/room-after-review-1440.png",
+      "test_output_sha256": "9b90b3bceaed860249e4005f370aba3dcf9134390d64ee1aa7b9c64106d6d091",
+      "restored_head_sha256": "ff40a7435dcf94ace992f86c02601abd09b73accd0fc7effbafcba4b5f2e8d43"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/claim-source-1440.png",
+      "test_output_sha256": "03f82f02d3473240b298e2fbc9b9b7dab37c388a09fbe6aff63a84cc51ed4243",
+      "restored_head_sha256": "958280ef9287f931cdd186c6d697fc781c4ec50ecc10302290c7770a5c1ac6b8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/claim-source-393.png",
+      "test_output_sha256": "6be27c6fee1195cba4800d3010383bcecbec3f10e213b8f618d65c261c34b367",
+      "restored_head_sha256": "522d4364aec6a035ac95ee3bab4e37a4a9de3dea1466299c565855627bc0005f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/degraded-fallback-1440.png",
+      "test_output_sha256": "76b1e44422223e079b550c8bae79f38e914861e2cf9de833cfa48ad0aba48af8",
+      "restored_head_sha256": "b7fce982473f4e5c23b38ad1e4e2d4adece198ebcf75b3b6b4ce239baa81597a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/degraded-fallback-393.png",
+      "test_output_sha256": "774135ea99b9746664fa673f6511c332d81e045fbba61787c316ecf8e4eb9127",
+      "restored_head_sha256": "d2b16213dbd3bcf6c31a495c733aea54e8ef522c852e900a60e9c42f8b080108"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/draft-list-1440.png",
+      "test_output_sha256": "070db2fb3a9978da126478c9b13b45328dec575895a26e069e1913aee290f315",
+      "restored_head_sha256": "ab8c336719624241f7c8a17d181869d11e6a2254acafc0b98bff18fa086a3a91"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/draft-list-393.png",
+      "test_output_sha256": "7bfb16291905a537e44e56114ba21b25d91579accc79ba90881767a625dad706",
+      "restored_head_sha256": "8f32ca6d23cbf151c12272d807ff832024e032fe5e8e6f6ebd4cb46cab92b696"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/editor-claims-1440.png",
+      "test_output_sha256": "08830ef74ba2fd1d5fa06c05972491ed3f442c6a22e18e7e2bdbcecba24bf602",
+      "restored_head_sha256": "48aeff3a52bab2e7edc40dc1af8084bf74d057c7ee3ff65c952a5b9b8adcd7a9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/editor-claims-393.png",
+      "test_output_sha256": "85f6b8ce664b30ae61d0654bed2c605b1df4740f1075fff1bb90b1c445a72f63",
+      "restored_head_sha256": "cfcd81ab8a73952a07d2f565bbb045769eb650b10edaf224e14fad6c8e19ceb9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/published-readonly-1440.png",
+      "test_output_sha256": "e6d9a59c843097c6758e3e471fef951e29e928b3d105e9ca4d68af859658033c",
+      "restored_head_sha256": "d737a5515652bee6eff3111af1e7981da907e03225287aa4180e54dc669b9722"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/published-readonly-393.png",
+      "test_output_sha256": "11a0a93eaea0f7ae4a3a9758f9d04d333ef0c38a8fc8817ed0955a1e3b95eb56",
+      "restored_head_sha256": "272f3196c75c33a6b6a96be3648708e77c5c4608b83132fa7d3164385a963a40"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/unverified-span-1440.png",
+      "test_output_sha256": "74fdccfafcaf1a90600965f38f34b479b07c8fd74ff44cb4a24eebb5142fb3fb",
+      "restored_head_sha256": "65b22788ad04f3a0e48faca4856842d7486577db4dbc4b2c1edbb15be812d884"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/unverified-span-393.png",
+      "test_output_sha256": "449f4b062eaaaf5325847a513d1f94e0ec49de0e30df36a31ef38aafbb465033",
+      "restored_head_sha256": "af70d13542ea926477dfd32af3156312628b9e0ddee7df3388ec3eb4c8db17a7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/verbs-band-1440.png",
+      "test_output_sha256": "03f82f02d3473240b298e2fbc9b9b7dab37c388a09fbe6aff63a84cc51ed4243",
+      "restored_head_sha256": "958280ef9287f931cdd186c6d697fc781c4ec50ecc10302290c7770a5c1ac6b8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-shots/verbs-band-393.png",
+      "test_output_sha256": "6be27c6fee1195cba4800d3010383bcecbec3f10e213b8f618d65c261c34b367",
+      "restored_head_sha256": "522d4364aec6a035ac95ee3bab4e37a4a9de3dea1466299c565855627bc0005f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-162-the-update-factory/assets/story-06-stopwatch.json",
+      "test_output_sha256": "e1d81d191f3bcade773efb1a1f08313280e775a6f9b18d446b430d3a094fec03",
+      "restored_head_sha256": "9dd0677e7a02145a683407eba4087707b1131e1d5121d5aec9c5b5ead3b33b6d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-effect-inventory.json",
+      "test_output_sha256": "152777831bdaf97747c62a614de16daaed71a03b5d369815e76294444760b93e",
+      "restored_head_sha256": "f5e96909993fa4496f8a61c96fa6e2c5d087c305c603ff7fc20edbaa4aa511cf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/degraded-result-1440.png",
+      "test_output_sha256": "d9061e734bac0ae12f56bf8ae9f435c0d7918fad4bc9b8ffc365f4799c90588b",
+      "restored_head_sha256": "036065b9d59870bb105556daa06917dd64dbdde1a8aa4d3e8088934158149104"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/degraded-result-393.png",
+      "test_output_sha256": "35e203daab761cb5160930134db47b0c2a5c0f7f91870c38aa0293d5994dd072",
+      "restored_head_sha256": "44f0119872dadf5df7d387e54a5436e335c948d95c55129f1abd0afbe4a045a5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-completed-1440.png",
+      "test_output_sha256": "806d23fe370c9c3b0c2166f61a40ee4f552a2b848e87176012a6a0bd78f484a1",
+      "restored_head_sha256": "c92a1ee418ae7f3bf23273fd15546f7f67d4cd7654d457b8cd9afba197affbf1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-completed-393.png",
+      "test_output_sha256": "b37443c153153e59cbb3e97e4d142acec9a1486b06f8a78ca9c043541e058061",
+      "restored_head_sha256": "44dba6aa35f636dd2f82b29b4f05b0843598393f26eac880a82c431c3f5acfee"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-dedup-1440.png",
+      "test_output_sha256": "bbdef15e5d639096a5834b400281adb43dff22ec5152d2d2effa1b28baee0cf0",
+      "restored_head_sha256": "c92a1ee418ae7f3bf23273fd15546f7f67d4cd7654d457b8cd9afba197affbf1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-dedup-393.png",
+      "test_output_sha256": "ec38e9543d1b43519ea10e6e16dd15e32befb0cb8f52857041ae30ed43841a8a",
+      "restored_head_sha256": "c7eed5795d659cfadb3730c9c443382cb7e950f74719820482c70542fb88c430"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-history-1440.png",
+      "test_output_sha256": "8f2898e90a3d8b3a9595676d237ea96b3ac8f6e449c8132a763a8b2b3b51b0a7",
+      "restored_head_sha256": "d1afbd201c6e040f3508dcd90362aceb423765f9608b6255cbf19b9d3d0faff0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/dogfood-history-393.png",
+      "test_output_sha256": "37c6019ad8e64ff9d84096fbbd34b6301145845df868514762702519133d8c07",
+      "restored_head_sha256": "06b4b87d30d1ca181ceadda7b130c4931c70d3f5a46cf20c71e1888b2a6ecbd9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/history-list-1440.png",
+      "test_output_sha256": "49c60c96ce45b0f61ea6fd148ff06a49630de5828d0f45bf2615c32eeafe4ba0",
+      "restored_head_sha256": "cd994a803ffb5b01fe5d1917028cb3d6642ddbb0ed5d285d5e5de8e9b56c554c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/history-list-393.png",
+      "test_output_sha256": "e4cbb85d874334d8e6b3c6e62947283be8866e4fb0e0a1bb97b770d463d847e9",
+      "restored_head_sha256": "a9bf2c9484deafe9a727cf1f8dd080847e49dfe82a60d9c51c4dfaf9486c71cf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/policy-editor-1440.png",
+      "test_output_sha256": "f0ae1a628bffd7058cf9f5b520e8a6bb95d081301623c86b431bb8f2e59d9fdf",
+      "restored_head_sha256": "d730ce57c5f639b09319c3d1a6e8bb6fb87db06f860ce4eb54c8faefd8886487"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/policy-editor-393.png",
+      "test_output_sha256": "12742cd92ff08937ad610e208e791e67aba8af3f4ede61f65f35025b3dd211c4",
+      "restored_head_sha256": "73bd7849e5a7065e3bbd78af59204a093c5ce5fb0226317eb30cf0f0db2c2c71"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/run-detail-1440.png",
+      "test_output_sha256": "1581ebebe26547c1d19f41588681ca2c2e23149669a64ccd23347c31763d7e92",
+      "restored_head_sha256": "52d81441fad5fdcab14e642a9f4b22650d95e056379d1a5da5e4481dba2e278f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/run-detail-393.png",
+      "test_output_sha256": "f6880b7ffb9035914426e1abb21c1e06707af9efa82283bb77a5746e69d7ba42",
+      "restored_head_sha256": "581d9530b3985508f2abd932b10e829a85710cc4350612d55f1c07ff4bff2b5a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/steward-empty-1440.png",
+      "test_output_sha256": "380e155af65d10b4ad09588711d0b4b4acc5486d74e4ff3df8458de9f2479d1e",
+      "restored_head_sha256": "de35195ee89ee977997dd9de790dd4b87915059696dd5cf2f82e934b25715f4f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/steward-empty-393.png",
+      "test_output_sha256": "df4bc1ecea21cb0d7caf8317b2c99acc0740f454a687ce67f03e1ae19b1ac102",
+      "restored_head_sha256": "e75c8c21e8f35882d036c81d6904714e882dc43ae0dd15bca9bbc217d9ae96c1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/stop-interrupted-1440.png",
+      "test_output_sha256": "d1c00468c4031e87aee8c17ba55d31815e5ccd7d6785ef4c03125cd942167565",
+      "restored_head_sha256": "d4661d54f53fe094f8ba09a1f541e66a2aeb0c5a8a144c3d3ead59b082a0bc42"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/stop-interrupted-393.png",
+      "test_output_sha256": "5a96e9e2d46f825f8c6b9036560111f555ccf127ea3ddc6c76ecba23d45c4aa5",
+      "restored_head_sha256": "48497fc53912afb98bedcacb26a7e0fbe7ef812d2a72f0616bb910bfe9d76e3b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/stop-running-1440.png",
+      "test_output_sha256": "b486c7922d1c1453ae72acf71f8a6a9b49c56af4969755b4d33657819047e6ab",
+      "restored_head_sha256": "57be9c435753b25e5250a9fc3ddfd64cfb085d9de70c28168dbfa33050b9dcad"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots/stop-running-393.png",
+      "test_output_sha256": "2a09aaf3f3eaf96c529e707cb4ca644f2f8b42a7f3ca3ed72c642d1287dd96e8",
+      "restored_head_sha256": "2ff3935c00fbf4a47224aa74413dae2f6874d4eff4afe303fbb833c5945c1232"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-stopwatch.json",
+      "test_output_sha256": "96cd031b42d230a65bc782af449f6821644b51f96c93912ff830a12e306db813",
+      "restored_head_sha256": "e605e8c7b1e8695a40c326ee4c685187e3931972dc3afb4aa1ca18fea77d8bd6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-effect-inventory.json",
+      "test_output_sha256": "009bc7b2fa3db8980211b0ea3b6f4aa9b55482fcf3dce8af3538a820636cf083",
+      "restored_head_sha256": "60baff2341fe6753deade47269c618ed26d2c1bbd99e909cc1a2b7831e7eb637"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/circuit-open-1440.png",
+      "test_output_sha256": "615e1a616b4f423353788ae4f4827f359a8fafd620bd0cccef9673f6a8dd5686",
+      "restored_head_sha256": "2444e81a8aad1c8f50f92e29d4a862d28da1d915797e496979aa2832efd58f9b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/circuit-open-393.png",
+      "test_output_sha256": "3317004585701bb0a439c7a9be171b1dfc5beebfd5844328ac40c2ae705636f9",
+      "restored_head_sha256": "344e78ec37fb24857934985f98cf87855a5019c47725fd836d494ba9294a929a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/circuit-recovered-1440.png",
+      "test_output_sha256": "dacc85a270d49b034d4509100437bfc1a745e0b9c6e9920ed8975495317354fd",
+      "restored_head_sha256": "03095d66df729f70d82c433141d450202a142850f27cde452bebf6ed881ac601"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/circuit-recovered-393.png",
+      "test_output_sha256": "57cba4c45c616fe6d02ef758d4c8c32014f49d7a26d6cc819befa7abc63616a5",
+      "restored_head_sha256": "5b96c7c1f9a388e7f63c566c62998b2df238f7c965c038e5b54879b656bbde60"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/dedup-proof-1440.png",
+      "test_output_sha256": "12076541fe1d305afb991c1a1f568d8c23c43664c7f309a78601f5c6499e5af0",
+      "restored_head_sha256": "65fa138f1453d2134663b40ce2c8b2aa9acc307007c71b8bc4ae4c6e7624ca83"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/dedup-proof-393.png",
+      "test_output_sha256": "f101c0f71873a2482906c1f84fb4203726be20c7435fb80c1092420096a43ce2",
+      "restored_head_sha256": "05c1c32253d34109ffb4a38a98f0f9a8c69bea238051f34fb4e017c2e4d051ac"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/gate-a-detail-1440.png",
+      "test_output_sha256": "28f8c70d6bd423797e508890f3efc6d4986bb257f694a007c3ac08debf03a273",
+      "restored_head_sha256": "5f6b7c3d9dd59941dd15e37b26e20debf9bd7d5049c2e2b55ad50417efe440ac"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/gate-a-detail-393.png",
+      "test_output_sha256": "0286c2a0a1ead7a505c37ad0fb455baf17c188a8ce1c2b876a12e7485207ab91",
+      "restored_head_sha256": "88c633d8308ab01edd9cd47f90114bef0ebb7d2436d502ec71448e29f3d1bd9c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/gate-a-list-1440.png",
+      "test_output_sha256": "3273912ab2c7d72f1246d5d9fd161d410d4bfd58627b90a8326025c30c9ca889",
+      "restored_head_sha256": "30e80c7dd1202bea87485ba0d6824764740d1bbd5a060db93152539010a86e81"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/gate-a-list-393.png",
+      "test_output_sha256": "ee221014d033ec90172115a1e5121d224f1754f7d7d1e3249e28ca7e388a5d51",
+      "restored_head_sha256": "5a31bba71806f3ce58720cff9b49650a863e6ea5199f59f59e3beb9a0fb74465"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/opt-out-proof-1440.png",
+      "test_output_sha256": "a9e1adb626a43b1305717a2f4affd89ec0452987372cde7b99da191f3872b31b",
+      "restored_head_sha256": "65fa138f1453d2134663b40ce2c8b2aa9acc307007c71b8bc4ae4c6e7624ca83"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-shots/opt-out-proof-393.png",
+      "test_output_sha256": "628e47fccc338a066711dcdab4f973ddb493376657d7226e86cc656f6dbdc13b",
+      "restored_head_sha256": "5f4a5f6be597339cfcafe676429def31e53e3677bebdd126a71bd879e5ef4b35"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-164-the-unattended-desk/assets/story-06-stopwatch.json",
+      "test_output_sha256": "39feaa9977863355f855a6899c2ff0e2ceaf50c6d0d797ac4d13321f9fa44172",
+      "restored_head_sha256": "05cdbe9b513370d2656c6b4aa0acf1fd5c060b7429b8764da53f3962f9d4fe9a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots/cold-desktop.png",
+      "test_output_sha256": "8784a82bbb396bfec2e66fafe0f4ccae093a0379ae7ef3b7574f2f22985bae2b",
+      "restored_head_sha256": "c638b15a4b6c8b31dad660d9f0028c266e7d97075c10789f067cb0ea6e4d5351"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots/cold-phone.png",
+      "test_output_sha256": "772e00accc11f22d6c5650f0cb55d9d7d77a124e5de3186b4f9dbc2874c03d79",
+      "restored_head_sha256": "4897d7cb8447a63e0283aacf0694e7d0a1bb155bb3ca13c4b351059f3850d050"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots/fold-sign-in.png",
+      "test_output_sha256": "4087d772ebfd6ea33a03c42807ffece9c8745b83241b2232b8a2ece7e4ac7a30",
+      "restored_head_sha256": "7d0b08b686482994f2f527bc7dddf6c3594c784b5014a5ea62ec56d289336da5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots/recheck-after.png",
+      "test_output_sha256": "5760b87a1ed61dc0f55093a21551638b6e1ecd9ddf0215dc18f38b7cb5bac076",
+      "restored_head_sha256": "7e0c487314c3bd955b4e8214bf9ba621c4f8a6bef8333f283037f37514386b6e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-03-shots/recheck-before.png",
+      "test_output_sha256": "4e7eb3f7b6ab3a365af7f8604755a067307005d2aa6395d48d54e51ce6d4f10c",
+      "restored_head_sha256": "bdc687cc6511a4a51a35d958c2031052690e54a425cbde8618caf2738d1b4b2a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-05-shots/wings-1440.png",
+      "test_output_sha256": "4da18bf3b779c038d2ce60a5bd3e0a38f9da0697ecea39de684c80f50b37ae4e",
+      "restored_head_sha256": "85a1477fb1e378006a7f4e2b673be8db434c11d0551125193446bb68b069a964"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-168-the-connections-door/assets/story-05-shots/wings-393.png",
+      "test_output_sha256": "7a794865c6751cf332b7bc87643c72b09211016bc16f01818c42b3851b8f9c1d",
+      "restored_head_sha256": "611ed9878bbc786d6ec05defe08f76495ddf67cc5123546e9bd96f994a3f4013"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-adjust-1440.png",
+      "test_output_sha256": "103ffa18f383ef52ff3c872ac27c98ad79876e8e3e656fba3a1ea3d0b6f1e4c4",
+      "restored_head_sha256": "385265b0304e0d6481c6d9a8f71d871b5d203c717caca6b3fd2915c8fc382d75"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-adjust-393.png",
+      "test_output_sha256": "6b961ab379e91198bfb44fef26f5eb72d267f823659bf115c2238cc480153a7e",
+      "restored_head_sha256": "c8e774c47835abdef895735eac108e943d2e5072eb768956c84a6d0507d5396e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-checking-1440.png",
+      "test_output_sha256": "2d7a6694ca5ca7e5069fab71e681b6cf6b8a23234e51c9dc3d9a37b632a47c3f",
+      "restored_head_sha256": "12d8d40e64c7d05f17dbeee8d1de03c477324c1a4c1a8fe7297111a829980b7a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-checking-393.png",
+      "test_output_sha256": "7bb0653e1e5f93f53e031f2020b403b26923358b5e4d5551e808f8df6612793e",
+      "restored_head_sha256": "5ced129b7735adba285cd61d939f868772b44b19f43754144bc45dc949debdce"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-1440.png",
+      "test_output_sha256": "f88939d42bd4964fdfe8f8ca6b64837f632d387b713e972847a191a29191deaf",
+      "restored_head_sha256": "73b1dbc2e70f38e0f2f3fc0f6a67ad620af9bddedc79ad8ccbcff3ff3ad821bf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-393.png",
+      "test_output_sha256": "52a895bf3615ed38e5530d518e982248f8e9b06e459dbe5b84bfa183d8bb9824",
+      "restored_head_sha256": "313f8fdde75b79055c859dd1be133a63782ceed8ccd0c63e8bedca94b2aa7d5c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-connect-1440.png",
+      "test_output_sha256": "194dae8898305707c2812575ebf946a441db4bd5c9ddb8326d48ad08df4ead78",
+      "restored_head_sha256": "4f2357a3e7220d841902fece39b763572974ea0865c886e57887ed53014f53f1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-connect-393.png",
+      "test_output_sha256": "219401ec030942ccfd626ba0f3f8981b8d9f627ac0e8ce9e258ae95c90a5b3f2",
+      "restored_head_sha256": "dae82a1a8c8bfa167b2d773985463688a920aedded7fcd6560e4e08494b9ad04"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-return-1440.png",
+      "test_output_sha256": "4a865a97f195d21dfd09785f86b1dbbda7876d2a1671d73b7194229572525cb6",
+      "restored_head_sha256": "e7274eb17d51f100b0447b9d5bb9a4bc4c0d6e632f318d623edabbabfb7e49fd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-cold-return-393.png",
+      "test_output_sha256": "3d0a26e0d97728f92a65b01999dbc8c6e8ac2a0d6470d52a7ad3b7084916c345",
+      "restored_head_sha256": "51f853fc02b4cb84dc4dd7192452a1aa8e153f2354274a8decba04fcced3d14d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-empty-1440.png",
+      "test_output_sha256": "ed92297e73e460a7e019a78fb2bc29450b0a7a411adcae9a8220cceab4cb2080",
+      "restored_head_sha256": "9daa9c272bc7ada8c31ddc63c38b8673d1e7810e376bbc2619764a876c2ab72f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-empty-393.png",
+      "test_output_sha256": "1ff4d4004f700f21e380d7b8d99bda9e1368accad54a57d306163ccc92732e67",
+      "restored_head_sha256": "e7f86b65ed02c359b25d2a6e7e280d1f334d244c86d5e58f4b74d60a6ddc5dd0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-live-1440.png",
+      "test_output_sha256": "5456e8aacd193758c49e50b888740febe9efb8e2d9e504fc25e01feaa42be234",
+      "restored_head_sha256": "bd7c970654de715862af91b0ad323ddbba66123e35207bd7147622295c305b94"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-live-393.png",
+      "test_output_sha256": "69cf10352bd1e160f01d70138a6e703ed987dd8a3ebe44c935faa134d1bcd67d",
+      "restored_head_sha256": "e23e6d3408f0dab755553b149f1494ab0001bae42c200a23ffb949ceeca280ce"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-live-gh-1440.png",
+      "test_output_sha256": "2d7a6694ca5ca7e5069fab71e681b6cf6b8a23234e51c9dc3d9a37b632a47c3f",
+      "restored_head_sha256": "12d8d40e64c7d05f17dbeee8d1de03c477324c1a4c1a8fe7297111a829980b7a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-live-gh-393.png",
+      "test_output_sha256": "7bb0653e1e5f93f53e031f2020b403b26923358b5e4d5551e808f8df6612793e",
+      "restored_head_sha256": "5ced129b7735adba285cd61d939f868772b44b19f43754144bc45dc949debdce"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-live-page-1440.png",
+      "test_output_sha256": "7e29cf4c8fa290768d7678944690797a6e579e2d62543fff634b95243719828e",
+      "restored_head_sha256": "fe6a8c1ecb769cf7e5094408bc4f8d240bab33af153cd488d653325f3a873b2b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-picker-1440.png",
+      "test_output_sha256": "a53c04755e68ca489fb3618846c928b2989fb3c0ff25dd48919d6065faeb4baa",
+      "restored_head_sha256": "e11bc197a1bbc6eb294ab6fe5074ce723efbed241d41baec4cf1bb127147e5ee"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-02-shots/door-picker-393.png",
+      "test_output_sha256": "4696f352e7959c50db7227e82b2b7dc5a727844f8ab0913527e04528fda31ba1",
+      "restored_head_sha256": "d8260bb0a4eda7d9a7c6d62effc56fe11bcf43cb67e71778c814ac037d77e41d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/history-1440.png",
+      "test_output_sha256": "c3764fed0ce5b1c68c75b108e8ce1caf068d446ce8c4028fefaa1c563d2f8ae9",
+      "restored_head_sha256": "9042000ad91ae420542a724ce422120443348a022096dbd5dc86117b15306af8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/history-393.png",
+      "test_output_sha256": "7dd8759957c83be1ff466daa68fb252f0739645ed06077480f57a96322787b23",
+      "restored_head_sha256": "cb02ce85520307d89cd26dd53e54dd5074406fb2019784dc1e85597d65dd0da1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/room-needs-you-1440.png",
+      "test_output_sha256": "2c53da89112f93077c67566bf2b5b19d146f07b0593aac35d1a93fafa20e6886",
+      "restored_head_sha256": "efb0158a34a4d1002f8846abb860cc518692920db123549089ad8c7fe0a3e6b9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/room-needs-you-393.png",
+      "test_output_sha256": "c161cd64609bb611e3320f574bf25a14c3db61b25b9a3e9079e206872fdf48d2",
+      "restored_head_sha256": "43dd958a1fe38f303420eb025a01c371889dee4261cbebda321fc268bb8b5937"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/room-quiet-1440.png",
+      "test_output_sha256": "671218be7ce4b4d76eb59ac0f76f95d45d3bcbe25ae61669f5e66496a18d899d",
+      "restored_head_sha256": "1722170e7fcc32d01e44414fea8d40bed3fd47cb9dca6a65880732b911a92fdf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-169-the-streamlined-door/assets/story-03-shots/room-quiet-393.png",
+      "test_output_sha256": "0f27e75f47d4eb94030f97c8166c27a74feac4b311a4f2f826e8ffe3c0e3a288",
+      "restored_head_sha256": "36c025c4f78c9b877e1c9ebb4ffee68ce97b0df79df8bf4426f417546b9b6a69"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/census.md",
+      "test_output_sha256": "f03b0631b991f92d57d999c933595fd445f15758c0a3e6705ddc2ad01c121152",
+      "restored_head_sha256": "ad18465477388c87d5ce51bebc78c4f7606dc7a1a9b6bdca7dd930a958bfc17b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-cadence-1440.png",
+      "test_output_sha256": "2e177b0dba5c16012c794f543622525f7c47b8619a18b93508c364bd803a813c",
+      "restored_head_sha256": "4bf0fcab80f1c7937f2006f5577bc77811395b1d316e2ada1c0e4e052ef6b26e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-cadence-393.png",
+      "test_output_sha256": "03ea8f3261b7379ab1082c45d8822e0d53ef18902f5939bf591fbc6d0ff8c03b",
+      "restored_head_sha256": "4cf2a7c328beb79ba85007040217c1edaa77c1cf5a6a114d9084360d3d1903fb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-commands-1440.png",
+      "test_output_sha256": "8b694667c8116a7491102bbcd1620fb3ad3360cca3e67f088b18e53ba331a693",
+      "restored_head_sha256": "620a809184b2137b312d0b6950248d522276175278ee2a112cee99127b9c1105"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-commands-393.png",
+      "test_output_sha256": "104076223a49fb63d978e2e155f8043907a7561249d8416c71b388a97d981574",
+      "restored_head_sha256": "b4b393c38d54b32b41ef0b95fb64ca637ad13d7cd98691580678248a6996c9f9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-settings-1440.png",
+      "test_output_sha256": "732d7db9bce2bfa843091a4309bc7d503eb6dd6e932d5e7e084bde3b0523c700",
+      "restored_head_sha256": "577da8a578e6eed7485d3b8087604acb78c860bca9e4ef2451859f5cb1f5b454"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-settings-393.png",
+      "test_output_sha256": "91adc34192139ff43957b627a8aab8b1685fc0a99dcde5cc356d6c2d11dbb26b",
+      "restored_head_sha256": "3d1af1ab355b091cc3540b29724096cc237f3d83afba1c430ee2c188276769ad"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-setup-1440.png",
+      "test_output_sha256": "9f909db85f0800ac4815ad1056ede22ad1edd459657bf3fcf37003bd8ef7e1c5",
+      "restored_head_sha256": "78d164153ec924f4c058156580175885901ff427fc7bf4a76cc0e34bbf4e3ba4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/configure-setup-393.png",
+      "test_output_sha256": "381bb1d9f11430a77a6cda9592452dd3359266e743fca5b39cca25cf55cc72b8",
+      "restored_head_sha256": "3784efeac3d5a0f33750cadbe625b35253197cb9d458254417d50bcec1afc47d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/design-components-1440.png",
+      "test_output_sha256": "825818ff171ba73d12039a01b8560dd7eabc927a08559cb8b7dd9264978248ff",
+      "restored_head_sha256": "45f72b9dfef09423432e40cb1a49dd6efaf5afd3b3a1361570da087c7390e07d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/design-components-393.png",
+      "test_output_sha256": "a9673a2447ec03ee37962436718b14d1b6b1d64c9d66b2c395790dc3831620c5",
+      "restored_head_sha256": "6e1a001d171673d78dfbe9d51c6a97f864c493340868adc79e56aba1a7d6a7ae"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/desk-1440.png",
+      "test_output_sha256": "7484c53e0864f4314d4cf7c318fba919c52b37d35afef2204ce26c16a501d117",
+      "restored_head_sha256": "bdff3d83dce7978ff555b4f605e08c8be945ed72979b83a1931eb59cdc025afd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/desk-393.png",
+      "test_output_sha256": "fc67cab312e9e567bc793e9f0b9b7a22f54f52bf842869850180d2597297acdb",
+      "restored_head_sha256": "007877e37e2c75e99945df0f503b704505c70f4484de6a8aa61b78928f48ab16"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/dictate-1440.png",
+      "test_output_sha256": "9460e1b9193805617ae380c7f4dff7a4c89a8f43f8060f857ca56f28e6ddd0e3",
+      "restored_head_sha256": "152dffc150aad0e4042d32f1c5a68854b1c8ab75858ce28dbf73c334e9674973"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/dictate-393.png",
+      "test_output_sha256": "beb16d879b5f5e84ffdf451212a1198ebdb18101eeb471364bf563bf5dfe93b6",
+      "restored_head_sha256": "c5c2e3cd6bd221af7402ffd4be2e946c2c079bbe471543ff9f569d78bead2786"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-activity-1440.png",
+      "test_output_sha256": "6715466782f2aed0f9712ee000c7dada943770499c91f847d01c912651cdc000",
+      "restored_head_sha256": "c77165f2a869ed05b5457adb3e5f7da1e18eb9c42b034993bb23a7eaf1030711"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-activity-393.png",
+      "test_output_sha256": "61d1873ce3f541c27ab33e2fb95d17482c9f0c681be598ba60f634fa2a5ecb74",
+      "restored_head_sha256": "49457efd879dfa1377966377027c43b7af31105aec56d9500edbdb4e987679f3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-personas-and-coders-1440.png",
+      "test_output_sha256": "c92f95817d7e399b43e92642fbbf06e31640ae301e1fb832756a3823a8666907",
+      "restored_head_sha256": "4478bdfcfd71a065aac8fc08020cc1faf4337319268810cc398b500a0ed24ef5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-personas-and-coders-393.png",
+      "test_output_sha256": "b4288bd27bb8cdc1e34d39d30f288c74f2932292e17f87c6c85328d3a0ba1842",
+      "restored_head_sha256": "c5d9ff9eaf081b5f5dd47cdf14d4a3756b212b085cfe9842a138597c73672912"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-processes-1440.png",
+      "test_output_sha256": "1eb1ed6165c3ba11d557ea383033457674b8bec78a729032015d4b3f1b90f498",
+      "restored_head_sha256": "f7282d71f1013d827a7591fed6f1853a3863176789c59443731656047c45e3e9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/inspect-processes-393.png",
+      "test_output_sha256": "9d78846553147cc2412c20a2cf73a695a8b18681157f947f801d09a402bc118d",
+      "restored_head_sha256": "ae3136c94268e6a92845a3c0c2b81e8f61de13c575fdc2be96ceb79c88ff089e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-concierge-1440.png",
+      "test_output_sha256": "c5527e163786e61978853fdc8b7201e586911ebc354a1d04c5eca7217067e1f8",
+      "restored_head_sha256": "7187aaf5b5f813f7f55600e2de691283c64470d335f87102f6725187665777d3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-concierge-393.png",
+      "test_output_sha256": "4cecdfdcb39d8ccb4babfb1c768d7abc8d08e64ac41237d4a331ce7bd8300a33",
+      "restored_head_sha256": "c3c6fa674361f877526ddfbe65d30d51be36b530575f88380970ad6c34016055"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-constitutional-context-1440.png",
+      "test_output_sha256": "0bd49ac0d1f3e8bbf04af0dd5fb43b4ccd1c66d3aab69e050d2cee6df52602eb",
+      "restored_head_sha256": "54da66f8e63de1d335c5a66b64208a48825da61ddab7a9ffaac262ff3dc829da"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-constitutional-context-393.png",
+      "test_output_sha256": "b687c985b4708ab05a9ef1a9ec2b4300ea488e28814f24295f2df3ccfdaf641c",
+      "restored_head_sha256": "48d7916ca30dc85e9cdb95170420c65781e17fd19222c2da260e4b10f6153869"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-people-1440.png",
+      "test_output_sha256": "2307056501dfeda6b549834fe1cc7e372a863a4916b5665601df199de68550ad",
+      "restored_head_sha256": "940c0475f0f5ea306758965dcc6bf495dbbbc9c949a1c4cd665ddb84c023fc5b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-people-393.png",
+      "test_output_sha256": "8cc4b91d0bc82b0ea9ccb0e758c91e4c6886c08d688fdd6adc6e73c0885c6e68",
+      "restored_head_sha256": "46fe102c36c9dbf289934829c1b1adbf602f77dc8eb11a4a73d299056f5344f5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-project-memory-1440.png",
+      "test_output_sha256": "0f16d3a822197cf922c07d9fed60c8f6d03c62546b8e5a6006aaea6ef4c939d7",
+      "restored_head_sha256": "7ae67031bbf81bcd95f3fc0fdc2d08d3c791d8ec4d0f78f16ad62b6fb1bdd5b4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-project-memory-393.png",
+      "test_output_sha256": "7db1310e8e0752752c224a8e430bbf8d361adeeef69126e4301fc7d2e6b85a02",
+      "restored_head_sha256": "eb79fa27f8c1484a6523fb50940afd584f635a783b5ceef8f8b464a8103ce055"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-workbenches-1440.png",
+      "test_output_sha256": "4f87698d27d58b44726762b2b8bb146ba8d6c01472079c4ef9685563f81f272b",
+      "restored_head_sha256": "94d2f803e4cdde424dc3ad349f8f277ad6a9cdd1a453e5b1b0c5b939174d6942"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/open-workbenches-393.png",
+      "test_output_sha256": "914ad9e3b742af867cae5fd99b107f0607c622233e9a226a114ce766141dc3f5",
+      "restored_head_sha256": "ccd9177c116346493c9c2c1b1ab4e5e0b98b278b45787b12b00d7228a3a16a2c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/project-setup-1440.png",
+      "test_output_sha256": "83f5fb441f486dc2182152686724d409e22ab3fffd4d0b9e32d7e8ea52e39c46",
+      "restored_head_sha256": "73b1dbc2e70f38e0f2f3fc0f6a67ad620af9bddedc79ad8ccbcff3ff3ad821bf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/project-setup-393.png",
+      "test_output_sha256": "52a895bf3615ed38e5530d518e982248f8e9b06e459dbe5b84bfa183d8bb9824",
+      "restored_head_sha256": "313f8fdde75b79055c859dd1be133a63782ceed8ccd0c63e8bedca94b2aa7d5c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/record-live-1440.png",
+      "test_output_sha256": "6debc00d45df3589bef3883354b5201a6f90b6372d2a6f5be94aa68201ecb56c",
+      "restored_head_sha256": "c2990071bb5e345a148d59b0c74c572b94f119531877cf771e4cfe0474bab884"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/record-live-393.png",
+      "test_output_sha256": "a9ebcaf2fa3293d321f06b32252a6aa92d2f3a11ec1a87246cd348d3ee9919c6",
+      "restored_head_sha256": "507a6e70ed52ac691974ee645373a813ac035340dd0c152e21a9cdd358f6ed5d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/review-calendar-snapshot-1440.png",
+      "test_output_sha256": "b819b62c7684193d9a12573aa73b10363882e51b0ce9a991b024356fdd50c0df",
+      "restored_head_sha256": "b690234ce627aad68fd4f58744a19d05d885a1bd66db4ced76c186e424edfd2c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/review-meetings-1440.png",
+      "test_output_sha256": "fe8f7c5b59d66898a09263b44ba35ae0ce2e92c94bc51d0f4dee47ea1c6bde83",
+      "restored_head_sha256": "3f712668bc67bf825645373d515f708e4007a2d929b08f72208b0fe6bddc1393"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/review-meetings-393.png",
+      "test_output_sha256": "6b99813e90df74313d502d36ed5a9aa6467c5bb26f07325b247512b2a523ade9",
+      "restored_head_sha256": "f8d546e62f628e188e911a8fdd417c784b05ba0378ea435c8606da7a7a9b84c6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-adjust-1440.png",
+      "test_output_sha256": "3ec7f908abf231b95b5ca8be32d691e16d39a273dca206e9b84ae788feffe3f0",
+      "restored_head_sha256": "588635b4e9384b68f70a9db81f2cc1375fb038447a794f71a690924f6f09f135"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-cold-1440.png",
+      "test_output_sha256": "66bff97c53939772da01fef641ee2b6f0b5c3aa9ea455e54cd4418b67e455603",
+      "restored_head_sha256": "ce1c2f3f037ea6b38397ab6190736407f9893eab94a359bd4576035eef38da5f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-downloading-1440.png",
+      "test_output_sha256": "65c854b369874813a789d2ae5cf9f1be3df0d805fab7c07569c85e701c84afea",
+      "restored_head_sha256": "7e961af88c4693e52cd7ba98aca4f53d3858d137fa4b3f7d1b9cfe1572c8488d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-main-1440.png",
+      "test_output_sha256": "52fc1ed5424676dad8efefeef0289e29853ec55c15a4cd089e9177253685a01c",
+      "restored_head_sha256": "bf26573966b8453e595b31c3c465bcfbe927d9928c5170fde2567279a15c052d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-main-393.png",
+      "test_output_sha256": "c1c79e887743037bee114a3e6859bbe4d7c8067136a0835e92128fa058081c9f",
+      "restored_head_sha256": "4520b9eee2b4810891a987374187c1efbdf1d6b737ed0f84e1d0fbe6171b9696"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-03-shots/build-picker-1440.png",
+      "test_output_sha256": "a563f006a9a2b2608479e7309381340f02d8879314bd5f4c62c6a417b2a872a9",
+      "restored_head_sha256": "d2da14b9b96e6f274033efa08b75ad198abe0405e782790b3b5b028c21230b7d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-brief-1440.png",
+      "test_output_sha256": "c36c746f393f5cd9567842068d91c9aa2fa798aee8f8478a2b4c6cf372d45f23",
+      "restored_head_sha256": "9ad17170f303a89c685f39960ee402915d559bdd818bbb28ede77f5995718fd8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-muted-1440.png",
+      "test_output_sha256": "38d8bbf9548875d25dcecd7ae30705bc23379d318b12e7ad57c4edb8e91f9982",
+      "restored_head_sha256": "aa64041635095c5ef07c3acfcc12b986166e0d6ed9857938ea2f1610b55ff230"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-needs-you-1440.png",
+      "test_output_sha256": "5a92866559ae7b58a053a0e16a220297b3027c5cf4b558bc1e246f3be5c550e6",
+      "restored_head_sha256": "66ef83144b0e84774198639c00c7594729f42d71f3a03a4d2fc6de24e5fc0c7d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-needs-you-393.png",
+      "test_output_sha256": "1043da3da3c53ab90dc16aea418f1bce11e711478dbfd8180661ee3e9a569bc9",
+      "restored_head_sha256": "0cd24763d34b36c5f0f9a7228b2728551a9f3f88bc205490a26d102d6680c7f0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-quiet-1440.png",
+      "test_output_sha256": "00d742ce94e6336ec03b21bd610f9a8a56b2ca06333c95bdef39f0c8ebcbb5d8",
+      "restored_head_sha256": "eb9c826a1c88a0b89c8b636adfdb36cf3f99a647814ec969f3e4b3b79552938b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-arrival-quiet-393.png",
+      "test_output_sha256": "dc080735f1c9767c805aa2a88daf91d9a13dd52566e71adcc69d651317c7272f",
+      "restored_head_sha256": "324aee58e30b808da1b08070e4df6376ca38347a719208af073083981d7be0af"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-settings-hub-desktop.png",
+      "test_output_sha256": "2184b0369aba669ef703433f25ee4ccb5b7837b6f36ddf0abdbadb0bf8d50c55",
+      "restored_head_sha256": "e9f38bbd4e6dae1dbeacca59862be179449369746d4499b6c7973b530a997f7c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-settings-hub-phone.png",
+      "test_output_sha256": "1c0ebcf569b304d0883063ca08b3449481f7fc1ba06b7bb3ce82a2b54ba7458e",
+      "restored_head_sha256": "e4e439bf839151436e0a3a6c6e0d15d877327cff2cddc0f8144dd22191463569"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-idle-1440.png",
+      "test_output_sha256": "84d9fa799e1aac44c4cd19db2304863b19ddd93efc94e3d95f911647b204b463",
+      "restored_head_sha256": "1b842a104b2f9cf8fffcd4026a1fc438f4e1ff3fac0d3302da92e755c8b5d366"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-idle-393.png",
+      "test_output_sha256": "99e8f6d6ee5d8b56b2150ea867d50e214111a110b6794e1f9e2879f7cfb9fea9",
+      "restored_head_sha256": "5802b25816167e083f5f719537e7563b35bbe78c77fcb5a61fc6e867c6483fc9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-landed-1440.png",
+      "test_output_sha256": "1ca1953cd48b47d9f89b2f83ba384e7f9e2858dd244d2d90f5c0295a7c36743c",
+      "restored_head_sha256": "3c9ee69c359676b1336ec5dbac301c5b859f26fe67bcda9ab1bba56fc1c8e0c1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-landed-393.png",
+      "test_output_sha256": "def07618b6ad2c670a6c3ea7921184a764983a365823cc30511bf6a4139baedc",
+      "restored_head_sha256": "e61dc1fe87a1fdd6388e1a400ad30b4a96ef10f7f32122d98d812ebc88db816a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-teach-1440.png",
+      "test_output_sha256": "953510e15e63eafa04ab71584a51c938541d4d7c712e7250232f449fcd5399f1",
+      "restored_head_sha256": "7c7a2d6159271a67359ec11a088c699eae5db9c67e5215b3411f5c3e7e122326"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-04-shots/build-speak-unset-1440.png",
+      "test_output_sha256": "84d9fa799e1aac44c4cd19db2304863b19ddd93efc94e3d95f911647b204b463",
+      "restored_head_sha256": "1b842a104b2f9cf8fffcd4026a1fc438f4e1ff3fac0d3302da92e755c8b5d366"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-02-shots/build-rhythm-393.png",
+      "test_output_sha256": "afb5a98358da4d707420287bc31e4e905914a722005df20ab1ac0d29e3688797",
+      "restored_head_sha256": "25056eaeba3a7ddb17b4aa2a1cbe4252fc2ca46504c1a5cf3e711b604a0e4d4d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-02-shots/build-rhythm-cadence-1440.png",
+      "test_output_sha256": "6e626d6cdce1d3f14a38d4d07f82dcb9b27ca9853ab4f4eaaa9280594ab06ae6",
+      "restored_head_sha256": "e9f259be2fae4d2ea9398bcf120ed713bbe41d59b16abfc4fb448b8b2350153b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-02-shots/build-rhythm-quiet-1440.png",
+      "test_output_sha256": "9fb93e2f1ca56c31df2637f3a7917922ffd6bc80644bb0edbc3586ce7c912a9e",
+      "restored_head_sha256": "3589c6ffd2315372ecb62a28506ac332b1aedd4e188959943aa62b4c03d8c5c7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-02-shots/build-rhythm-running-1440.png",
+      "test_output_sha256": "90ac4aa6a39b87ec75e01e35f735693a6f9e6609d01568e0bfeea781a5495afe",
+      "restored_head_sha256": "a237dde9d8f481c60c8572a4a1b8d69cf806d44ee065c1ccb9fe7b2274a09078"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-02-shots/build-settings-hub-heartbeat-1440.png",
+      "test_output_sha256": "f140ae2218c3adbdf6f8dde1768f895d0f6c9b944c48eee0e336957415b6202e",
+      "restored_head_sha256": "dbfd983fe699b4447807057422bc216acb5eb61c2a7b6c1db173aa42e9240ed1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/artboard-1440-1440.png",
+      "test_output_sha256": "ea67f04a940de74eed4aeed99be42d324db3402e7c162221454f4467ab77b251",
+      "restored_head_sha256": "25eddaf2655909e1186e240832f5c0e3822dcfe3faa89dd16512f64171d9fa18"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/artboard-393-393.png",
+      "test_output_sha256": "2719a06b9e7c463e91209905e62c8a88c42362aef672dc3807a377e0f1a884dc",
+      "restored_head_sha256": "3cf7d6c81605976f753561fb6d76b7d89620a0c56b969090c4e92a33ed14f2cf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-dock-badge-1440.png",
+      "test_output_sha256": "cb0c019fd51d93849b42f3e6efc059925e005d719e2be17ba6df6c1184944eda",
+      "restored_head_sha256": "5d0fe2dd20a448508fb26593eb8b4481ec99491fdced96ae550b882b64e262ed"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-shade-brief-1440.png",
+      "test_output_sha256": "07129a86d08cc5999c6892b322897efe7b5f12a490c1a4d6889882b48c530ae9",
+      "restored_head_sha256": "84b3f0cd4c66aa67c547adf59fff86e254fbfcd91d171f4d74deb12b5754466f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-shade-projects-1440.png",
+      "test_output_sha256": "574b4586b338d2ccf5417d0e70dacd4793d124d8b545d3c12d6efc1a70194a65",
+      "restored_head_sha256": "100222f33f48f097c778b3cbd910d9b132ce7a83113c3fe1fff3c2c68c8bef36"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-shade-projects-393.png",
+      "test_output_sha256": "1826f245b4ba3edb3da928491d8eda97daf0c554c2dc3f2f5e4684f095f48278",
+      "restored_head_sha256": "1fb0228df3907f5cc9782c5d3d54b69a24fff53298fcb448051b7aa1214b30e6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-shade-quiet-1440.png",
+      "test_output_sha256": "2e31b2797e133c0a8e4b59a2094c68f2929659adc879ebfbd6354661d3f9696d",
+      "restored_head_sha256": "a52f4f6f429958b32928d61a36cac06fc490e5d190f557ea56add24d7c43ba85"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-04-shots/build-shade-quiet-393.png",
+      "test_output_sha256": "a34da4a0d5b4184860805c35189641f1e51b11bb053c079a3b0f1279bf94d64e",
+      "restored_head_sha256": "f237a41cc3a4f951f7b9ecc328a812e533cab72360d822b4508eaaccfb4fdd16"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-projects-1440.png",
+      "test_output_sha256": "0277e38a48da8a6abf205ae1d1e57fc96a2b2d8e285cd8d8e73c5f63d5dfa92e",
+      "restored_head_sha256": "58961c8b49587704549fc14b5d7ed07094d3580b4eb4eccac4061f5ded0ccc77"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-projects-393.png",
+      "test_output_sha256": "6bce0cb2f524420f7c47bd3143c17fe3f8a9aef865c2752e2255ba1a6097594b",
+      "restored_head_sha256": "6b0ad200d9c6e8ca197abf785a8357292661da5135630d67f22c8a6d3e77a994"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-02-shots/build-settings-meetings-1440.png",
+      "test_output_sha256": "5f7a0be8538c9eed3814966271f9f3a1ff65319e78964a3e0d02c750f03de16f",
+      "restored_head_sha256": "cd951596a8d22443e8267a68740aa43940bf2ad3b49d337d754ff7dfe41e618d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-02-shots/build-settings-meetings-393.png",
+      "test_output_sha256": "2ccce5c9dbf114bcbcafc96efa581437f00270f531c9a8512300b44520c24896",
+      "restored_head_sha256": "93eefda8b44ec520a9e53289f5bb05bbbc605fa1247eead2ff07bfef3855f2fb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-02-shots/build-settings-meetings-nomodel-1440.png",
+      "test_output_sha256": "e32269edac4858792b23865474af83f98606b8cf77843bc9c1c3c2cf23ee97b9",
+      "restored_head_sha256": "bafcc719c9fcd66020d7794728d931101499bc6ef28ec9a60b0821fd645de87c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-02-shots/build-settings-meetings-nomodel-393.png",
+      "test_output_sha256": "d507829f89c94cf16781fd8d0c262ceaac2dc1eb2f281213782ff7afcf63684a",
+      "restored_head_sha256": "6267a6b137f9ce4815004baaf7d863d0751361adbb0b255e739d3fca01a385da"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-arrival-confirm-1440.png",
+      "test_output_sha256": "f570f576e279871559c5224543a7cbbcf5c5297233fe61bdb44211ba46e3c397",
+      "restored_head_sha256": "8021fd64f05f9cd5aeb6aeed576e392521fe0b3298b62da2352b1f382525ef92"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-arrival-confirm-393.png",
+      "test_output_sha256": "13788b5f9fd19790f44065027874cfc01cdad820650554710c4cecbe3b6887b6",
+      "restored_head_sha256": "0d686b205e60fe970b6ad3097c3188a48db7cc5656836feea4a129ac19225c4b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-meeting-queued-1440.png",
+      "test_output_sha256": "55b8ae5fbddc44d35d23db5614c9234bc9c021e519774bea0936aae99994d589",
+      "restored_head_sha256": "3be4426756bd0726e30175a626887237eb20669fc2d86333e3460aa87144a6de"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-meeting-ran-1440.png",
+      "test_output_sha256": "7c031beac519d5af0abdc8728bdd5332f6bee8540c0763a51f3f5c7408ad98b7",
+      "restored_head_sha256": "a2da027b04026ac5656b7530efc959f18e875a7250d51d29ad8e259f36d6fdca"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-meeting-ran-393.png",
+      "test_output_sha256": "7448290e2a05d2391d181be2fb86b8345300560cb05994a1c43ee4d7465fb3a2",
+      "restored_head_sha256": "f5ca029818f4661be4878f99d514e6faa7624f055dc58249e9e8f6c7ff28067e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-meeting-ran-detail-1440.png",
+      "test_output_sha256": "9033c475e668ef50ec022bb3687b12f074276c3b95a94ada160f7b428ca23965",
+      "restored_head_sha256": "1952838837f93a4ecdc2036475707f5516f5a3dfa3c5583a66693fc3a247ca68"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-room-confirmed-1440.png",
+      "test_output_sha256": "a466741f01c4e5727c629adbfea9d9312a3112e42fe729ea903ebfb796bce39e",
+      "restored_head_sha256": "175956e533767f7700257de6e532aa23211b52e90c1f0e68fccef6ddb60a9230"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-room-edit-1440.png",
+      "test_output_sha256": "ee2484eec01f9efff46c8a9a9d52357774e8f554a2d9a2b61ac47426df44da3b",
+      "restored_head_sha256": "c99e42980abab87f863a0dfabe18d54515070bdc7971c6b561d1e56b47d42802"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-room-proposals-1440.png",
+      "test_output_sha256": "1a7e0146a0405f0a0a43c214ccf6282cade14f5e6587cb81af55e2bc82b5bedc",
+      "restored_head_sha256": "60c693a823d93812544319ffac6c24feecf32f759111ea44637e5fc3c1a5a28f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots/build-room-proposals-393.png",
+      "test_output_sha256": "dfe6317c7a6511dc34713918de530e68e120e62269a7a3aace9c05bba5cdf88f",
+      "restored_head_sha256": "787181a25b1e619ad0d4db6e42174b50722bd1287492c967ac389ef088ad5475"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-05-shots/build-people-now-1440.png",
+      "test_output_sha256": "06a2cc4b75356eb6378ab818a1e1458e553ec05d590c608d462dbe0aac111668",
+      "restored_head_sha256": "39c5ce674de1503f9d6208e4edee05ff887539ab5e210369e3d57fc43198a1b6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-05-shots/build-people-now-393.png",
+      "test_output_sha256": "f3d53942a705d9e6da254ec8bbbaef97635dad2aa0c46d248796c58a6c273838",
+      "restored_head_sha256": "483d05aa66084c61dc866e2702a33700ac49940249b76be43b00d55c208fe1ca"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-05-shots/build-people-prep-1440.png",
+      "test_output_sha256": "ce207ed2f3774d06eb2951c2fbb9e49dd4071c983167330e56bf77ff1698c18c",
+      "restored_head_sha256": "279f92c6045885674a9bfaf30b43eaa3f6cc1c5def8e87e501e2d30dcc7bd8ea"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-05-shots/build-people-prep-393.png",
+      "test_output_sha256": "53d00a8632ee236b730ddde64e03ce88526dd4fbdcdd36308653b4fc981579ee",
+      "restored_head_sha256": "2ed77f24d84243d7001573689a45c2b2b9561e49d2fa212693bc54e41197f6d1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-06-shots/build-room-suggested-1440.png",
+      "test_output_sha256": "1a7e0146a0405f0a0a43c214ccf6282cade14f5e6587cb81af55e2bc82b5bedc",
+      "restored_head_sha256": "a6b1b43beff90f95136f7af9d23da16b263d66e7cfc3e50dcbcb5483d867ba98"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-06-shots/build-room-suggested-393.png",
+      "test_output_sha256": "dfe6317c7a6511dc34713918de530e68e120e62269a7a3aace9c05bba5cdf88f",
+      "restored_head_sha256": "8312af6ba3bda1d7a5e57b6082637b3f2db32329df6733e5553dbc78f9c656d6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-02-shots/build-update-deterministic-1440.png",
+      "test_output_sha256": "7cb4dc3760f2616d9a104da68c2ba189cc830339e48aa03a2569106a743e8124",
+      "restored_head_sha256": "a2b2ce00f4cd6b4396104bceeee20b92df1f6fe1606731e889ab2ef5d2a6d42e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-02-shots/build-update-drafted-1440.png",
+      "test_output_sha256": "735fc6635e792954d25bceda815573f46d6dda621fd34052112dd6b55ad0c0b0",
+      "restored_head_sha256": "77aa0deab92f2d66368c4ae6374c40078e3ebaeae133b200e6f19b23c0050f00"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-02-shots/build-update-drafted-393.png",
+      "test_output_sha256": "66413ed123a689ee664ad770a8e78878381df3458f9fd0f6f196b2ec53f72dfa",
+      "restored_head_sha256": "bcd0d8a20fc1a191dc03b7a50ca15862587bd3dd5a6fc1826ac9da6af8d328b1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-03-shots/build-room-health-1440.png",
+      "test_output_sha256": "3810b54cf89d11c8d959caf0ff5cf716cb1d0eee95c602f5f2e0f9f81e446e22",
+      "restored_head_sha256": "3c991f78b0154218c97c33b6875017f074671edbe1816597894a4cc5487b764f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-03-shots/build-room-health-393.png",
+      "test_output_sha256": "fe86ae8d53d54225dff2aea9a644bfed241cdea8bc963598edfa0759d96002cf",
+      "restored_head_sha256": "50d581cdf3993555f69f35ce161da61f52658ee5cd754292d0767c7870f78b7e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-03-shots/build-room-health-ready-1440.png",
+      "test_output_sha256": "14382e12917c8f7a4695cc9f439fff0daffcca0fd812795e3150db7ff36b5fda",
+      "restored_head_sha256": "21483266af6bb4f7e2fe9911c29fa1358977cd1b85090a1ba8166847c765c10d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-03-shots/build-room-health-ready-393.png",
+      "test_output_sha256": "a5965501d353bed5551d975b7157b0726a98d5a94f894f0a80ac20bcf2e45640",
+      "restored_head_sha256": "5de5497d17a249a12a14d67868c6fcd8d3a39dd9c54039ed12984f9449051fa6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-room-nudge-card-1440.png",
+      "test_output_sha256": "fdb69116e11156a8a4ddf75a7b437fcb5250cc944a423be8c153815d6871ce82",
+      "restored_head_sha256": "d6261777f87cb2b2d5d7fe44f0d034f85dfd580efdf6955feb39b9de35cae00b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-room-nudge-card-393.png",
+      "test_output_sha256": "a86b5272d1e44083280c430b08f51f855fb7f7232756ecf71afebca686564e7f",
+      "restored_head_sha256": "b0e303f7ed7f7cc749cd692cac2b9261946f7b7ca6faa0c6aabc922aad831254"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-room-nudge-sent-1440.png",
+      "test_output_sha256": "3cb961e7328255337b989400131665382b491039d8f0847f868a46368734e679",
+      "restored_head_sha256": "9a607abbcec87639b4cd47f9d531bbbb4021f0852003d3f5ab85307ae61f17c0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-room-nudge-sent-393.png",
+      "test_output_sha256": "0f31d14f3020f43579ca383e096cc8e9447cfef7599372afb166f836ae114000",
+      "restored_head_sha256": "a0864c3e3c7b5817542d2f11e28e845ec523afc50121ee61f4cfbc976a0e68e3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-steward-policy-1440.png",
+      "test_output_sha256": "aef21797e8786e07ebb5afb862ac1ca18057c18db828ab1af3bb771c569f85a1",
+      "restored_head_sha256": "2855c4415df159d0703feea4981b53659d2891d2342809cb1ca1043988b339d3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/story-04-shots/build-steward-policy-393.png",
+      "test_output_sha256": "86ea4763b338dcb0c386391832f2f59a0478a3fce5a1889ee19da211031151b2",
+      "restored_head_sha256": "cf9dac077ee109fbd851c98a68ab77b25d22eb120274f754d9722c9072602595"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-issue-1440.png",
+      "test_output_sha256": "732b074eb8b9e850c7d126fa3218d4399039193a1e2d3750e5678f94079085d7",
+      "restored_head_sha256": "7318e63fcd5949d93a5127ebcdff3c26c26edafd0d3182b541cc003092f2d425"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-issue-393.png",
+      "test_output_sha256": "f93ff0aad3da91e81963364e27ba099d8fd56f4fc4f0245ae6f76d99ba0bfb53",
+      "restored_head_sha256": "7e8132d30ae5080978fdfcf7a0658dfb4d6544499b30a39e3859a0f4e0c64d65"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-off-1440.png",
+      "test_output_sha256": "9669c82fdee50d3224af96e32c1c8a16fc34106bdfda21e385404ce99ab606eb",
+      "restored_head_sha256": "4a4552605f6db02cff19d546718b56b4cd672970574e9ef41f19ae7065df1808"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-off-393.png",
+      "test_output_sha256": "dd8b9d1da68c45d3ce0ed39f5bdb4d8e9b22ef6d74a76e37ad9e0d629d5da3c1",
+      "restored_head_sha256": "3921efc08f09787eeff14ef4ddda121390f6160231f87f2eefa3bb24a2fee83a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-on-1440.png",
+      "test_output_sha256": "bccb6475034e82074eb2f864d5999b772da14c7a47f584e02c548977071b717e",
+      "restored_head_sha256": "3568e07a2f8bf58964de011ac1ff95618ca5301c42b5c5e7c63900517d4495bb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-on-393.png",
+      "test_output_sha256": "d0907be58b399e27d88eaf85e0fd6c149ac7579475cbf27fb492d0e72ffe8a0c",
+      "restored_head_sha256": "2f45c46004694ad88cb9262d49c69f13eaa99ddde9eb85732b4e610a2d50dc5f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-token-1440.png",
+      "test_output_sha256": "de36fecb85e3bffe5d046226bd6a4960c042765ae1ed3a7f6e1d550d14785855",
+      "restored_head_sha256": "0f96ef242de9a0c621148f28968c45630516bc63d00e89ebfea22a9cc50637ce"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-04-shots/build-egress-remote-chip-1440.png",
+      "test_output_sha256": "74bf2012d7f48f21ee437d2cb6968d41e6dc3546c8200cd61d3424e01499104e",
+      "restored_head_sha256": "2c8134ea5e87007e15324ee2f45d569a4bb1454b02e4b65a1ed07b5dd107c3f2"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-04-shots/build-room-receipts-1440.png",
+      "test_output_sha256": "6f4621cf5ea78e0bd376e0313da8a20fb5bd36b69f97760133afca864b7ceee6",
+      "restored_head_sha256": "5d8c979cde45709d46bf69ca39c73f59ca9d7102a20b74b0b9670a71cd60c1c4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-04-shots/build-room-receipts-393.png",
+      "test_output_sha256": "e3615ef35330cef9d53c958e5cac62471f0dab8e425566d1862ec97f9e07e236",
+      "restored_head_sha256": "b7fa12ef6b1dacc536d80b4804b4924c2e1d60a457f3e20b134c8571bfb4370a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-04-shots/build-shade-receipts-1440.png",
+      "test_output_sha256": "2bb76e39edfe515af579ed906169f9f81f0f51085d5c552a793719579966bee7",
+      "restored_head_sha256": "059c46f8d50bc457990abeed55ad959f5ab8d61f55e198037e852f9276a0ea83"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-04-shots/build-shade-receipts-393.png",
+      "test_output_sha256": "4bf385af4761cca51abf5a4f754d7806a6919d74e3bdb305025f499af3583f20",
+      "restored_head_sha256": "909d8d782efd6aed2506df18ad9e937918a736a844125673781b31d9eeddc980"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-07-shots/build-door-confluence-connected-1440.png",
+      "test_output_sha256": "146b28aa386470810121698e4c20af5f4514c7a7986ad5bb2d41b818cd79da92",
+      "restored_head_sha256": "cdc8396c22247c5e7a1d84f4fec18b65a459e210084f1586325e2f1afedc7637"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-07-shots/build-door-confluence-connected-393.png",
+      "test_output_sha256": "de26bd3c7b70dcdbbefbe30ef668e1666836596abc1ee42192517f4946ca4330",
+      "restored_head_sha256": "cdc81c52c876b620e91274d0265a494a4e502468ee85c0c4274af8341b67d0c0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-07-shots/build-door-confluence-notconnected-1440.png",
+      "test_output_sha256": "f88939d42bd4964fdfe8f8ca6b64837f632d387b713e972847a191a29191deaf",
+      "restored_head_sha256": "ec417c11eaa3f554911801ff6b048ead5f00aede84c437b2ca71e0816f846a3a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-08-shots/build-rhythm-run-now-once-1440.png",
+      "test_output_sha256": "8eda1320792e6c2f072ce5b23b2312cd6f76773a2a638c62acef63f1a58e5804",
+      "restored_head_sha256": "4466202305f182d26954fd3830dbb2cffacd761916f9ff8da75936a6b41d84f0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-08-shots/build-rhythm-runs-on-local-1440.png",
+      "test_output_sha256": "8eda1320792e6c2f072ce5b23b2312cd6f76773a2a638c62acef63f1a58e5804",
+      "restored_head_sha256": "71df6446c07ed3c1e2836c80273c20ff520389eb02114cf63d07ad2a569b5877"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-08-shots/build-rhythm-runs-on-remote-1440.png",
+      "test_output_sha256": "e4fc06be8296afc85366e5474232613e3ff7f4eefecc45bc05d7be9f2489dbc9",
+      "restored_head_sha256": "bbff7c9a01f64e7f511374b91b567bf9dd4d99d83a64cfc4fcb579ac2944babf"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-08-shots/build-rhythm-runs-on-remote-393.png",
+      "test_output_sha256": "afe01a0e55a15ab0a632169f3d03cbc0ad7fe28012d5596277373ae9fcce3268",
+      "restored_head_sha256": "38117a31f418165a479cba2ca56996bfd6dc51420b8f0d176c5438a8d6a452e6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-armed-orphan-1440.png",
+      "test_output_sha256": "e7d6bd02a01a59d442b96ecd9d566a9ecf5e8efadee8898d7427c5a9acc63496",
+      "restored_head_sha256": "251648036e9fb06b27e6470ea2ccd314f139bf0efc76659500c2e83da4efd128"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-cancel-refused-1440.png",
+      "test_output_sha256": "9a258e31dcf36ba0367f1e627524ac1a23196cf97e80a0f4405bff7bb4579ca7",
+      "restored_head_sha256": "42d8e8620238f97698e3c7a9f97a6cf5e6fe8eb8fdf6141667eb5fe8d2ae7cad"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-cancelled-1440.png",
+      "test_output_sha256": "105356fa160fc7553ca8b2b9a86011ada324727eab00d703ea4886620bfbbecc",
+      "restored_head_sha256": "211dfd28f8216c947deb5ab6d59b0913fea89ad272619c2f8f5f4c1a986f8ae4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-no-calendar-1440.png",
+      "test_output_sha256": "a17e5d9b009a17f2fc7dcf90665712936d18227cb9fac07af24a6d65d01554ea",
+      "restored_head_sha256": "a5a8a8442dbfc17ed33258ffdf4026810a2b31010278e69ec4c1a24f305581b9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-this-week-bound-1440.png",
+      "test_output_sha256": "a6f94bb1bdee1a1d9a95885bf992d7680452b580304e1f1bfd4e6f394bf98a28",
+      "restored_head_sha256": "6608b2812c9d185d2bb70ca4c0321e2753349b8f256005c3334fe9df8f367347"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-unlink-1440.png",
+      "test_output_sha256": "f8ebaade3c8d71a8c7be4b538e275e41132d7cba9c8a80cbcbf45fd4132b8148",
+      "restored_head_sha256": "f4ed97b7ba6342d35ad578294f9ceaf3c2086d611e1d628ab53bbb6525590492"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-unlink-393.png",
+      "test_output_sha256": "c52759bf1d3536ddc4a5b8db27b22dca81edb50fbdd2474a31fc1fe429adaf02",
+      "restored_head_sha256": "918309f078820e0face158fb4ae4da70d6ef84e392caa5a3356b8e8e7162985f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-week-1440.png",
+      "test_output_sha256": "db2656095836fb4d1cf54756d9968b27bd2cc6e2fb7dc205cec546b9def3997f",
+      "restored_head_sha256": "5a5d7e9fd7ca1192222ed484e74af417622030eb1df5a50e7c8afd04d3efc90a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-02-shots/arrival-week-393.png",
+      "test_output_sha256": "e5a8423bc9d18e3fdb09bcecd8dbb90a5ea7a7e02a56bb9948050fa2ac24c971",
+      "restored_head_sha256": "d2cbea9a59874e5f83d6d985a97500ff06cebb5ec7f078dd1c2d1cea4a502f58"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-03-shots/settings-calendar-1440.png",
+      "test_output_sha256": "ec247f0b105387aa5a3b6b18cc7ede9ed09cdd3ac8b46d2fc2550ce07a138dac",
+      "restored_head_sha256": "b8e8b1165c9cde5bec9f339e103c132d15b842eede9dd4a44d2b5f5df87d8cad"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-03-shots/settings-calendar-393.png",
+      "test_output_sha256": "e3469471dbcf61d65b94617373d9fbebf998a9b0350f881ef4faac1294d33e5a",
+      "restored_head_sha256": "5ad847cdec8f28ae30b584bc504443f8716f2a5e6275daaa0eda458914826dff"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-03-shots/settings-calendar-well-1440.png",
+      "test_output_sha256": "52482fca5b68874b6c2b392e9018615c78c99db21f0f8ecee7d860ca7218acc1",
+      "restored_head_sha256": "79287629ea8cfa40b0f8f973c183e635d7c18408b21d1a0151a9fdd21589438f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-04-shots/room-sources-meetings-1440.png",
+      "test_output_sha256": "26bcb49ee04d960e61dbbfef6ad84aee9c4837c54706e01445b7ef30a84fb559",
+      "restored_head_sha256": "2eaebde7d997f257838968f759911ad08bd241ff7c3f0eacce9e7cf80fb51c92"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-04-shots/room-sources-meetings-393.png",
+      "test_output_sha256": "cf8bd9415ae58d8587fb8fc56e4749fb02541ca4a395879c1d3ef75d98c81269",
+      "restored_head_sha256": "37c6d1ab853654d2dfd7f26b96da872749584531803e75b8088339f63758e7e9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-04-shots/room-sources-meetings-paused-1440.png",
+      "test_output_sha256": "d1af5e3c49ef9da0adb432eea989ead5b86cb8826ca58c81e291ab6ed7017640",
+      "restored_head_sha256": "0c00629abb11e8a1dfd7fdcd145c08886fcbbbb6029258f7cbe9d03760a1d0b1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-05-shots/brief-week-1440.png",
+      "test_output_sha256": "a28c5537640133a1934fdc61d6aa158472937d6c9d4766f012a05e773aa9e9d6",
+      "restored_head_sha256": "6638795626a41134b7ce76111281988716fa01266a04a583e3eddd6f2e21abff"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-05-shots/brief-week-393.png",
+      "test_output_sha256": "60568baf48f35794cdd371767df47ca242c3793b578812335a00a66587baad28",
+      "restored_head_sha256": "4a64476a2d4ef79b2772a09ba8fb5acf5ed887f03ad9a7e2168e092b2d6dfb22"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-05-shots/rhythm-weekly-brief-1440.png",
+      "test_output_sha256": "abb1efaeb781b7f377a688251040f2dad81486e98c158ef39269922eba7c22d6",
+      "restored_head_sha256": "29c22d6f2a82d13a32eb269874345e82a3ddeb30bb3808d94de93eb26e90d711"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-175-calendar-and-the-clock/assets/story-05-shots/rhythm-weekly-brief-393.png",
+      "test_output_sha256": "ecc28c7df516c421c5b6a5051d92edd09ab24747427fc79ab004c631148d781a",
+      "restored_head_sha256": "1c249589fd9042b14c732342dbc4f4aa56eb1451d486b2cc48619c80072ee812"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/applied-1440.png",
+      "test_output_sha256": "16ada77537fc2034b7b0f485acb9c04e03fcd32c6a0a27c6776b84ad2893604a",
+      "restored_head_sha256": "91b83a18e3dd759186cf49ba24528f44ddf63bf2283744635c741aba0b8fd01c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/applied-393.png",
+      "test_output_sha256": "f750cac84dbb9cdb459711f1413a89f8b03b9a80ecd82d9a3c5f8587039b87f9",
+      "restored_head_sha256": "6036252766bf198b30622b9ff5f61b35d4a70263903a77aaefdf80de10141dcd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/refused-1440.png",
+      "test_output_sha256": "bfc2dd4a5bc4c50372878890546ce9e0a167dd937da1d41ccfab8485927cff1f",
+      "restored_head_sha256": "c598587af8506d8dfd14c6b212d4236be6fa29fef46665b83889cd78ae3137d7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/refused-393.png",
+      "test_output_sha256": "f1d5ff9785e2e147c582f4cbf9d37ec7b522159746ab660ba638e743ab125593",
+      "restored_head_sha256": "d450c49c9fec65f70e6e80772b88677863953663615f8efdb07c9938c9b8ddf6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/taught-1440.png",
+      "test_output_sha256": "caced1112a4ec19f8b5ab18d9fc7a59c2d3ecc6c62626f4d47c8dcc4fd660c76",
+      "restored_head_sha256": "29168de5d946267bedb97aa5faf967ae8663b53a77573914e9c3550f09b6709b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/taught-393.png",
+      "test_output_sha256": "09dfe7deac18aabd1a03eb811b1d649e2a69f8f82e95832faa13b572a6a36ff6",
+      "restored_head_sha256": "01df2d1a8597b2f2dd4a141cee21c42f841e8eb981f8ced56b09ef37c1882be5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/wrong-1440.png",
+      "test_output_sha256": "9945d2859089cc3cad743ba8bd34eef7933aefed2d1438e383e9b1a03b12310f",
+      "restored_head_sha256": "5076bf860888b9279569aec2b1139ffdc63ec18b77761d5bfd2f7df19639b8d6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/wrong-393.png",
+      "test_output_sha256": "11bf04ce9ca295e3378e7eba6cfdfe93e1d4d2640e9bfcabcc9dfec08f1d62eb",
+      "restored_head_sha256": "5e9a137b37fce0af97139ed58209396a99d58b9963f39ee0eef6136177fd60d2"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/wrong-route-1440.png",
+      "test_output_sha256": "36f04e1a1a76b186e945d6e20e0bb16e754064a6140a401dbd0b0f353671129a",
+      "restored_head_sha256": "76148c604aa647ab780b9e5cf5f3de91bf5b26ddd5b9eb2f5fb3088c7d2678e3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-02-shots/wrong-route-393.png",
+      "test_output_sha256": "d81dace5d63fc6bd13f36ed76f9285b0ef751bfe9863075c2550f38df6306208",
+      "restored_head_sha256": "0c2d9da37ab634fcb533504d1dbd71a0894087a31750fcf0bde73b6dc08f933d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/filtered-1440.png",
+      "test_output_sha256": "89169c66d4a5635bec50d6e83790eb64b7c57d69ad232ed767f9095b59db077b",
+      "restored_head_sha256": "ee7e47eb0e17c68e686ee35a098131c8674ce26a50b09915a5c9d78e123b98e4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/filtered-393.png",
+      "test_output_sha256": "0df43422d71876ef8b730ab030d56e4942bf30f6d0e30ebde0d15062cd57d422",
+      "restored_head_sha256": "a729ddbe77f228353cabca4b7f0cc56158caad7da204b8e462bb89b08118576a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/quiet-1440.png",
+      "test_output_sha256": "b7cb2550119e5aa7b99b4dd2e150d9f3670a5150b3d6ebb49e165422303bf0f9",
+      "restored_head_sha256": "8769acba9455e8d5647c731cf28e08b3907ca4fbd84743e34a9f7836dc5df21c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/quiet-393.png",
+      "test_output_sha256": "3bffe8e010e3416c46d7e1b20fc13dccf1c68db17e8c27273c4e3c91ae0f3108",
+      "restored_head_sha256": "e0e3e69f37c95d5f53cb9c8b2e86a8175a0d7e8c4bde7357905709ed0e9d5f8e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/row-open-1440.png",
+      "test_output_sha256": "79e99053a2760dc31087f1a7eb69a3792259d8d36aed20008e14e891f2423cee",
+      "restored_head_sha256": "573f6ced4c03bbaeee8882e7bc0d4a1196a5adc067ed7bbdac2be87f576b2e2f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/row-open-393.png",
+      "test_output_sha256": "ebaffed7ab64a1e850aa86de6674af3c7821d3b6d9203b2af915fd9b73c9f2fb",
+      "restored_head_sha256": "17c6b0f8c4fb11770e2614d027ccd852ee9df82003b38bb4899d4d3bf35fec8f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/search-final-1440.png",
+      "test_output_sha256": "2c698e219fcf4ca244f5a11f155699561d27912844854b974e63d6b87446c2b6",
+      "restored_head_sha256": "985ac892c02d816c290836d3405fc8016334bf4f051672794ef79be94c2c701a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/stream-1440.png",
+      "test_output_sha256": "32761669e7780dba6978454277350ce33568d7571851b45d2b1b187b5843efd0",
+      "restored_head_sha256": "271c275bc785291cb60761982589752759e9d9acd1b27ce0971c77de023d53c9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-03-shots/stream-393.png",
+      "test_output_sha256": "b6356e778d3e0358fb4a8cde9e3a2004ba635144888cea600d924a577f7e6361",
+      "restored_head_sha256": "217e26e2a8b8419f366677e0234960c2e5be676dc4d0ffb9d472f147b8db5415"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/learned-1440.png",
+      "test_output_sha256": "e8b013e4bcf2638cd7fd55e5a9bcac2c80d088a82fde22486c3fe70e58d22347",
+      "restored_head_sha256": "1384090845c80ca11ffe6a37a5aeef13cd05cbcf5c151ad96f92815de890f98e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/learned-393.png",
+      "test_output_sha256": "4977fc749119e6a38157c69e2ec296ed661d5f016443b940d1db4d9a88408243",
+      "restored_head_sha256": "01c11ac5209d231211eabe4b417e5ed9e4b4b85543ae50ee501144e86715ffe2"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/learned-quiet-1440.png",
+      "test_output_sha256": "7af2022e83d38f42e5fce4ee2d8df05ad06b6971a685a4f0693324512f8070f1",
+      "restored_head_sha256": "07c68b42b4d1e3c9d46dbddb794a781c2c47047345da0c12f079851c69d85f26"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/learned-quiet-393.png",
+      "test_output_sha256": "f8f8b567c9f9563c8a73c47fcfe781cf0416bce3d694ae6c395d86f6d9f6c41e",
+      "restored_head_sha256": "6285d436b185f4dc25e87eb442de20ed50ad44e0e2bcb9637930d790898cbbeb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/loop-speak-1440.png",
+      "test_output_sha256": "9e3f848e49f832f2f675c5d608747f026ae27a50d13e561c9caeaabddc3b92be",
+      "restored_head_sha256": "770fed4c4fa4a5d9e1290e04ff856ccd7e8f85bc34230dad884a21f550da0297"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-176-the-speak-loop/assets/story-05-shots/loop-speak-393.png",
+      "test_output_sha256": "888c33dc82af3a792de86f9dd901d58b981ff0fe4a16f63df27a789589d18d99",
+      "restored_head_sha256": "5b2f6f1142ce4cbc4af7b095fa43c84413fed4520f4840858ab2db0b7ccb3a6b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots/runtime-identity-healthy-desktop.png",
+      "test_output_sha256": "2d49e942fa4877b935b64414003b9ba04d3bdd6da235fb011c1c9d4e0bc59396",
+      "restored_head_sha256": "f4bea27a33142191236b2aca9852ffaca5b6b5e8b2a364878eb3f39bfc358145"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots/runtime-identity-healthy-phone.png",
+      "test_output_sha256": "6b7ec6caac358984674bebd787eed4591d4a9faca5386f4fa6cae03c145952fe",
+      "restored_head_sha256": "f6024876155f446943816bf077906c61373727274c8283a2454c153574ea7feb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots/runtime-identity-stale-desktop.png",
+      "test_output_sha256": "5d17755b8c948374004ea9b2e9385162452a277981dad6360a84416b51ab10b2",
+      "restored_head_sha256": "fd07366f73c341c3f7bac99722d7b99fa2490eb6fb4f9b42992f8be335c41587"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-02-shots/runtime-identity-stale-phone.png",
+      "test_output_sha256": "7f61c05a6976c813433b6eeeeed382d0d3242e0924ac91afe49fcb147f3700f5",
+      "restored_head_sha256": "b62099eafa577a219d6c3f04958746dde70137e2f88ff965b8b3450c6f2a8f59"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-credential-expired-1440.png",
+      "test_output_sha256": "f4ced949a34d558048f84aeaa8d5ac2f2ab2e15b62c242bdb40cef060d89f625",
+      "restored_head_sha256": "b5eed037b4e3ebfb382a4d8f77f0004f1d40b73615460ae17e23302227c91d6a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-credential-expired-393.png",
+      "test_output_sha256": "ddd3cff908bc7194af328261ee3e4fcc9f105f10bb3889607e9ffc1cfc884438",
+      "restored_head_sha256": "1fdcad6f8117245fc8e2af7d03230e4b638a37e62cc0ccf04b1618b59d1da89e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-endpoint-unreachable-1440.png",
+      "test_output_sha256": "c50de677776299e3b0b42c608f6225612ed9772b5a5976b43312d9d68ba50c52",
+      "restored_head_sha256": "04f4efe48c2890568cb3cd4f5fc5a3501f0f0ebf8c811917b4e5009ef9c040d9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-endpoint-unreachable-393.png",
+      "test_output_sha256": "d2bfa3e76c029f57d9bfd161e79793ff093e8cd5bd41683834a3aebb378c2188",
+      "restored_head_sha256": "c6d3cbdb19ae62f9540bbc0aafd0b1416d2ca553b6dbffa0872f170c635ed538"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-model-file-missing-1440.png",
+      "test_output_sha256": "f232dbe4aa09b20e22bb29c1616f59ef022c0eaba9e875f6e980f278bc91c649",
+      "restored_head_sha256": "9a9105ef1a04a092e61b38abf49d48d95dc53f638678ebae9541be9fac37e8cc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-model-file-missing-393.png",
+      "test_output_sha256": "dab83b50fa0a6bccee8f15d88ed6501dabded5e5c8a15cc905aaefba3d9a3fd7",
+      "restored_head_sha256": "c2df2a80c23ff2065a3fd191f47335c10d669ac1ae6ba6fcb6c3731b6105d249"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-tool-incompatible-1440.png",
+      "test_output_sha256": "20c6535f238171920dcc4c4ff16276f70e35b60f1bcfee08c09c5d5d34dc576b",
+      "restored_head_sha256": "97c7bccf568d570d1002bf11ab4e01c1220bb46525fee96297aa5a7684c14ee4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-04-shots/repair-tool-incompatible-393.png",
+      "test_output_sha256": "8a18d4208f3b47b31e630531793f63041a4bfe8af3726c88f419cfdc0958c84e",
+      "restored_head_sha256": "9d6538df04545a2f12353d1b915ef125a6ff37ad92f7079565241f6ee466f771"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/all-denied-1440.png",
+      "test_output_sha256": "9f600a2fdcaa25a4ff60d670648cf3c40eab2587574b949e275a387d7a7f3b2b",
+      "restored_head_sha256": "66e629af22d21107f2ac2efaa182d36340de85ebb6f891d97fe036ebf687ee31"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/all-denied-393.png",
+      "test_output_sha256": "d68d451fd7238a1d863e249757ba9e7e42d64952082279e86f89f12379f97191",
+      "restored_head_sha256": "e13016c20f856891961b455909de791d67f39fcdb89ec4b61f8ec8fdf95b2e08"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/all-granted-1440.png",
+      "test_output_sha256": "fef1f8b9f3bd6d27bad096f31438afd40e71eab724c43312404a8318eb02e63e",
+      "restored_head_sha256": "29c8dd4ae31fc5216e6db2ad931468d2e6101926437a53177c8965d826baaeed"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/all-granted-393.png",
+      "test_output_sha256": "414644ef6f4158bc491cd82caa1e408c8bb723fdf92582d3fae536b64d10bb38",
+      "restored_head_sha256": "203eb6728d82c5c90c4920b4772bedebe66fb04346583a3b73c7598a600006df"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/listener-failed-1440.png",
+      "test_output_sha256": "b3deeb816498d04e6634eac4f8c6cc5aa99ba5744e6f9e23ec3f55736856e36d",
+      "restored_head_sha256": "297b0207e759a9784e7906a8fb77b9a6137a95bdc49703a77c4cad42a730af8a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/listener-failed-393.png",
+      "test_output_sha256": "7a2cabd375834a006c955f4501a0a933c2fc4c138684c160647dc56e1339a40b",
+      "restored_head_sha256": "79e1e94533aea16fc50f47aa92b7d8e4fcb8f609b8a4752faabe0895a642a1c5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/not-asked-1440.png",
+      "test_output_sha256": "ea1dfd7a2480eb6a338f840fadc097d6e8919d66095ce8e94edc81da1f7ba8a6",
+      "restored_head_sha256": "b48c1798f9ec1a0e43d655eb42cc1d3028b61e8f28c54b198d12e19e126dd831"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/not-asked-393.png",
+      "test_output_sha256": "339edf5196b47e77b6b6d8c9ea05e94566194608cff73ac876dc4535b0a1cc91",
+      "restored_head_sha256": "f2f0b3e0f500cc6a0b52fa01d74815a46a7557d0653e0ee5e8c8ed3101ed1b63"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/one-denied-1440.png",
+      "test_output_sha256": "17437a745bc017e576a0e975f8b779267d5ced81006961a8e6a2c343c08ddac4",
+      "restored_head_sha256": "165d23bc0ce6ba6d038071818047f16ca99465bd021b410a4d4f0860b3916081"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-05-shots/one-denied-393.png",
+      "test_output_sha256": "0a753506de568f386132471a0d95f12c9b6dbd686d53191ef77b907f6b3b0812",
+      "restored_head_sha256": "43b2c53c2531c0226f88c0d73cf0a1e8a8cbadeac61fd34abfaffccc59a3910a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-complete-empty-1440.png",
+      "test_output_sha256": "765589bc71f59ee82d4c5c95e70a1e027ba0d901a977277b64eecae664e29616",
+      "restored_head_sha256": "61c726288c6cffd214d04175b8f161d46ecc857fa31101103f5e238cc23af3a5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-complete-empty-393.png",
+      "test_output_sha256": "2eae5b75235a191bbd995c644d99be3cde443b23dda522ca9e54552507cca2f8",
+      "restored_head_sha256": "29f57c6de658f99d89c94af62d7daa9b72efa3794d63a8888fca417804cd0dff"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-one-failed-1440.png",
+      "test_output_sha256": "057673198e2069d6e287c58e285aed9ab8290945b69660675c1c9ecb3f27a2a4",
+      "restored_head_sha256": "22cdbefd52cbda5528b46ba02ae8419a854fdbfe870a68619d0a4c948d8a68a8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-one-failed-393.png",
+      "test_output_sha256": "e0065ef196042763e307ca7574fc5604e08b17f313c4f71af899db92d2bce933",
+      "restored_head_sha256": "a7bf5670bf9491480126f0dc0f23f0cb6534968d7abb1ee335c990de321eb912"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-partial-empty-1440.png",
+      "test_output_sha256": "4f3cbac8392cbd5b7e1ccd8e4fde4c27598a026473ea3d77c7dca5e6b5da5a30",
+      "restored_head_sha256": "4f6726eb64af21d21ec11178ca5973c11906a734573d5861a7531de4f62b9c78"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-arrival-partial-empty-393.png",
+      "test_output_sha256": "25eb85c1137c6d91a283b47ea76e1722dc920ab3e7b751e1246c0630432c2192",
+      "restored_head_sha256": "17f545073fa149608237e7a5fbd34090372f1a23a6722806ca5d5ee9a9cba437"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-shade-coverage-1440.png",
+      "test_output_sha256": "2406e52466a38e1b20f83e879079eb549fe87e8e3d27346037441bd3655e3c15",
+      "restored_head_sha256": "95078dddfd76c16fa3290d3619d3994acfb2c7f7b112845d56ac2149a79a0a0e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-07-shots/build-shade-coverage-393.png",
+      "test_output_sha256": "d84821bf557369f4b289bc276556cd2acfec0bcf16aaecbee100d538aa7ea526",
+      "restored_head_sha256": "44442444c9d2c75de90d2170eec3236f4df0036dfc84223fcc07ea2776a6c0a1"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-refchip-focus-1440.png",
+      "test_output_sha256": "88450a902c86d17579926d68e62f352795660bc562bc324c57a96e0c269d336a",
+      "restored_head_sha256": "4a5ac13632b44b22f5234e03a25d8d5db83c5af2c08f01e6248e2263c08bd6fc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-refchip-focus-393.png",
+      "test_output_sha256": "f601077121dccf4703f195f9d561c158b72ad53278036197f92abd03562b4f4d",
+      "restored_head_sha256": "1496efc1caf459f113dc389d78e9479fecea6303b4117161663b13692d6be732"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-refchip-hover-1440.png",
+      "test_output_sha256": "7a21fd735ad84de500e92d71015c4ff33bd484e5fd3abfd7ae3424cc7a3acfd2",
+      "restored_head_sha256": "22aaab0ebedcd1fd33898564910f0ca70b64af7faa35f9c61b9ec2811a97c5ea"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-refchip-hover-393.png",
+      "test_output_sha256": "588f8bd207e9f2950676d9a062c03446cb69aacad6c9ccfd16762764d18682d8",
+      "restored_head_sha256": "7212f755629cf4e152630a627a0a5f4d55051ed09f92c3024bbf05a424529f7c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-send-live-1440.png",
+      "test_output_sha256": "f5e4856466e5ea07f764cbe6995c2f6d9bc1c44bf4517e5c3c7c529550623f05",
+      "restored_head_sha256": "be9149f2d19416eca291b63932dde3cd861d246cf3e24923d77439c3f9dce640"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-send-live-393.png",
+      "test_output_sha256": "7be8debfce9315442c81c51576a17f2e22a8012d810c97325f3b6801298dbf6a",
+      "restored_head_sha256": "383b75f20c37ba7e0dd3e14fe7bd74d41b36e4b4feee7fbffbead681f2870679"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-send-refused-1440.png",
+      "test_output_sha256": "5b8d2ac598f3f9c1181042484f7c84ca4d3866fdefdb672aff505bd2d9d5fa9f",
+      "restored_head_sha256": "f6fbe5c25426ce6f4e7e97589b93d8a1c34eeeaab0f569abc86741ff8a89bd6f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/composer-send-refused-393.png",
+      "test_output_sha256": "ae0213db7075ac014b5ae9e73d3256bbcf233ae7f0f34ea84fb6f521d0345db6",
+      "restored_head_sha256": "0beb1495725af0f6f13e993ad986f9b69512abf5704ac6e30fba1600bad368e4"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-1440.png",
+      "test_output_sha256": "1bd73b4e76293acf718da9755920862521de2e49f2af5ad7aedd9b258f71622b",
+      "restored_head_sha256": "cf15b5160c0da64d341def90572a97d5ac546482ac86d1c5acdf36a1e571b4ef"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-failed-1440.png",
+      "test_output_sha256": "0ea6b312ce49bfda880b403f08ad980366764746bd275f918a7c383beb6b2e4b",
+      "restored_head_sha256": "c5af77e818c9d22ddd124bee269c4a998200f6ffabdfe01fb99598ea03d947f8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-failed-393.png",
+      "test_output_sha256": "1bfea5dd4c617d329831192f7c184a40fe5ba8e38136718347e7ee962a111d20",
+      "restored_head_sha256": "f8d0b732c50405196ec0bdd9f468d98db1d7f0638a06e127449ba7732f761665"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-failed-block-1440.png",
+      "test_output_sha256": "0b849ef890c2267c3b7bedaeef18e102b2b62f5d089701cb031282a5b98ebad0",
+      "restored_head_sha256": "c86add39840e358f68d828e8538165d6efb7d7aba6d1c7603c196b2b6aa813fb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-failed-block-393.png",
+      "test_output_sha256": "89461fbaa0bd07f2c501abb5c4c92922f9213fb31eb3c768d5658d21a23b1672",
+      "restored_head_sha256": "1597b35607e7a8c826fae1d3b2688c397975c770aaf6f7aa7345fd3e63b96f70"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-five-rows-sticky-1440.png",
+      "test_output_sha256": "dbf078179f96c6a657a0ca0c19dbbc117fc059c077baba9f073c2eae05e8bde5",
+      "restored_head_sha256": "5ee4d60365ffbe32ddcef0cd018a6d51672c6165889b4d7a4c2277ad8c8b1a3e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-more-open-1440.png",
+      "test_output_sha256": "d8d0b38900ad8f064cf58c5baea2aa9c4392dd4386d45b7268c544264e8083bd",
+      "restored_head_sha256": "b698b5312941c9c39b02c6e3bef11c6422e3263710998f444db2eed5cefd2433"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-narrow-393.png",
+      "test_output_sha256": "1cf9caadc0dc0a955f08a2ee485a8832c7edd732f81a94d787be4a514fcbb2d2",
+      "restored_head_sha256": "1b4cefba7e581d50b1a77f15c01c80f74994eaf4cacf8fa794541deefc220600"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-narrow-rows-393.png",
+      "test_output_sha256": "b4601fde631e57f50a16719fcc1a0fee52e85f17e2ad7f0259eb0aaf20ee1368",
+      "restored_head_sha256": "72c4a18e2e706e3f7ae641e3955530e2905e772d634d7eccad5f849dd43a1448"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-saved-1440.png",
+      "test_output_sha256": "98be13d78afe32fee6dd1ba28bd11d222b49a2452929ec41abc39c1cf705a036",
+      "restored_head_sha256": "cf15b5160c0da64d341def90572a97d5ac546482ac86d1c5acdf36a1e571b4ef"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-saved-block-1440.png",
+      "test_output_sha256": "a50edaee09b8cad26d1bffe98a8c87a4dbbcb97ba1e051a06c2994f686a7a92e",
+      "restored_head_sha256": "9fa14a504cb51a03e9245dcf71b2f30891e0c1855ce4865d035dcdcb945fdbe6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-two-rows-1440.png",
+      "test_output_sha256": "0cf55ba3422102f407bf7111747f552fb60fadbc0343b94d5550ceef3ac1ea52",
+      "restored_head_sha256": "4818c73e247d077253c2c01bf260c67a192bdaf00174594e4326dfd667981676"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-1440.png",
+      "test_output_sha256": "8076e8fc731b94e9722f89d9e9ce952fe8cc51d19c6b81a1eec53a4b5f67ea3e",
+      "restored_head_sha256": "a7869f0ce9c53e45b3064207b6a78e4a44ae864eb7ad90f39fd45ae0125a2a9c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a-followup2/summary-trust-393.png",
+      "test_output_sha256": "f43b5991225184d702c3578416e5f7537a0614797a8076a9c0327f98dcf0758c",
+      "restored_head_sha256": "17ef187d294514c53313218343d549c69c27b49255bc1af7a041da5dc792e5f9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a/meeting-after-restart-1440.png",
+      "test_output_sha256": "454f42f5404a3a73f29707ce7109b5b7c8fecc918aa7a93b24748731ab9bd1ff",
+      "restored_head_sha256": "8406355e16c9228e6692bc8d569c89660576c36444d271d5e6658006b453e496"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/lane-a/meeting-after-restart-393.png",
+      "test_output_sha256": "421dc6f7c84b0c82fb8d3668ee2d8401183ab3345db968f376261724115c245f",
+      "restored_head_sha256": "2d9d75edd75a7696428e17974f0e931982134205e3c513daa63f796a0d0606da"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-assigned-1440.png",
+      "test_output_sha256": "9db61f7a84e5f8fcd72ec10cebba4df443c3aa2bfeff5d0a15196f39aca2227d",
+      "restored_head_sha256": "01d438a9e157e709b315828a9770852036d5237f09375bb5997281bd5a316fa3"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-assigned-393.png",
+      "test_output_sha256": "a32f636bd28d3d08fe470ceaba52476276fd078a5ca042dd996ed40c349d4e9a",
+      "restored_head_sha256": "9eb215ce1849e2ac359d48726fb6a47b04a983374b6e6b2bb3ac18fcaa9c6903"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-before-repair-1440.png",
+      "test_output_sha256": "938e4a0c97c76079707c13f75dd12ce26edab12976fee6d27f2a0586108a0c8c",
+      "restored_head_sha256": "629313b38d3afb2a8685c4db1ca2083339c11cca3e8809808e7bdc5462fe867a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-before-repair-393.png",
+      "test_output_sha256": "e95dd6922d6991aea17a2a7210c1a95c56096bd5ca0f581ded33aa8a03dffb68",
+      "restored_head_sha256": "4447dfbdc6a70721404872e5db06e0c75df8e4e8c7791566d8cd1b58079cb8f7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-blocker-1440.png",
+      "test_output_sha256": "938e4a0c97c76079707c13f75dd12ce26edab12976fee6d27f2a0586108a0c8c",
+      "restored_head_sha256": "629313b38d3afb2a8685c4db1ca2083339c11cca3e8809808e7bdc5462fe867a"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-blocker-393.png",
+      "test_output_sha256": "067cc5d3b66baab48aab888ee3331ea61c43b72a1765b02f7b8efae4053e815d",
+      "restored_head_sha256": "3446d8078fb87610776f03d11b50300399d44a3cc34033060faf361490b7bb7c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-no-engine-yet-1440.png",
+      "test_output_sha256": "885c3fd5f26b0a8229b63025ab2de0f346e4b80c1f346dd68d52de1e6ad1df4b",
+      "restored_head_sha256": "8e5db0a87a0c54e9ea0b9609759502503acbf502dfda320bd92d38d1fade2ca0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-no-engine-yet-393.png",
+      "test_output_sha256": "9540f96b44109f6d4d00c073e1bca38137c805816e602fbc09b5d37252556e6a",
+      "restored_head_sha256": "c56d436d6e10e344fce2b9f625af7c67fbfdbbb4756225dd05f1efa3b6d47111"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-speech-row-1440.png",
+      "test_output_sha256": "e6c0fae71c392fb38bf944a408a2bca38b1132f725d86dc58574fa9cc3dad99e",
+      "restored_head_sha256": "f7c7397aa439d28d7c259cc91da65715bd3cf73b19f80481d22240f34513cce0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-speech-row-393.png",
+      "test_output_sha256": "dfc7022ae82b518b4028a088d3959b059856968b194ff76867cbccd09479c3b2",
+      "restored_head_sha256": "ff8db394842ce773a77d09a504cdde2549059d8c6554c8def278231c6b03ded6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-unknown-setup-1440.png",
+      "test_output_sha256": "ff80e34d7aa1cf609cd88bdd07478bfa0177bf2180a32edb4391ccf99199aa52",
+      "restored_head_sha256": "899649f318cb941bae60006a29c3a30356f9dd989b5dfa9d307c6d40bf836a3e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chair-unknown-setup-393.png",
+      "test_output_sha256": "756a088a31e107ad0fbdda0e8aa7de29e39b6a185983897cdafccd77f9de4246",
+      "restored_head_sha256": "0103119990281a8e2bc51af9710a41933a9892ab0773cb5e50a14ad55ba74ef0"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chip-and-trust-1440.png",
+      "test_output_sha256": "d919ee152add43132c3e77dee10081d0434d8696c710f495fd132f52261df159",
+      "restored_head_sha256": "298c5467c6387ff9035cc4a9ef88164e49f3c77bd4ab27e3df01216388f479d8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/chip-and-trust-393.png",
+      "test_output_sha256": "7676000c2635267034a46e0cf6a77b2ab72fe4eaac7a539833ad50f497d08127",
+      "restored_head_sha256": "95887b38d92e56f1c7f0b9b37b47059452dbdd94f5910ea4d758a7c7049bfc8f"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/meetings-failed-1440.png",
+      "test_output_sha256": "2f6a13b0304425422b65e9ec82cab464ce178c001bda9798fcb8eda8889a98a6",
+      "restored_head_sha256": "0990d6f9f7b18d9e43c190302bafb7fd2c85a5d0f7f42644a0ea92012c01a3ff"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/meetings-failed-393.png",
+      "test_output_sha256": "bfc45b549b2749cd1130c9f7b95ed41cca26019979ee2443d7a1eabb8f388650",
+      "restored_head_sha256": "18455b74723221e212b6e28a7439402885b2373012e0f0eaa33c2819b2b1aad9"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/open-to-network-1440.png",
+      "test_output_sha256": "0bd76cd91244d8ae19f78283ef7914bfe179637d1e17ab9fced7a09afa3d892f",
+      "restored_head_sha256": "55204c16931c0b33c2f781ca350b83b6069ca4761abab8f9b679933917541c7c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-01-shots/open-to-network-393.png",
+      "test_output_sha256": "674ab705846d1565763216dc61180c208975b5eed25a8556f937c11a4d391f6b",
+      "restored_head_sha256": "3392c2d90a7280320094a9998a454cfa95519180372b0a9fa72689df4b415e38"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-1440.png",
+      "test_output_sha256": "cb729c4b9532c55e39a310ff427d634b0cc443c61b682df5b90ce8970b242fbe",
+      "restored_head_sha256": "7129ba82a38f6efa6de89d5caa2764ade1f0235b394bc3a41a3cc628f15d5291"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/after-restart-393.png",
+      "test_output_sha256": "0ac80dcaec878282d9bd5e1269be06447b65912272542633145c95fc537cc602",
+      "restored_head_sha256": "302e73686aa32cdc4eb14047d3828fb8646bb9e23e777ddcc0f0207e86327bbd"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-1440.png",
+      "test_output_sha256": "a6d2ebf3baff3b6b2544852626ed8ba21355d5b5ec49baf3a3065dceeb72a8ab",
+      "restored_head_sha256": "61dff399ab70dc35bd7ebdf07ed1bd7410876e7acc09cf053bf30528ce8cf0cc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/ledger-retry-393.png",
+      "test_output_sha256": "696e5dfac100547210237df498f8ac9692d7f0d6de1944acb41fcece2b06a0b2",
+      "restored_head_sha256": "855b4cce8fb6d29e360e27721bad410af74001a1233eaf6d1d3668fa8615f091"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-1440.png",
+      "test_output_sha256": "3aed7008842eaa6dd005972fba9c6f8f7d29bfb06cc22d4bc8d1e22933f2b31c",
+      "restored_head_sha256": "2ce4dbb6e994920738b7c1d49bb1d522148d150be1af63fc54076d76eb84b419"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/meetings-chip-393.png",
+      "test_output_sha256": "e6b8f408f9b7581915aba414f1ecc4253453097fac1c5709d2b0dfd6a7195d07",
+      "restored_head_sha256": "bff251ee9f50627b38b9bd1a52aa95011d219ae7081dfb30aa590b004b70a884"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-1440.png",
+      "test_output_sha256": "3d07580eb6ae73b5febc453e6d286f7347324531bec90902ea33630f190f2937",
+      "restored_head_sha256": "7d2c22afcb67252e791870ee938888c557537641be7578807d694029a079ebb7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-after-run-393.png",
+      "test_output_sha256": "e51e789843d1b831c2d88be9eef0496a740b35e04de8ceefb9196cccb61bedee",
+      "restored_head_sha256": "279471d4c3954a516147321fd4238185233f3195657c42768c108dee1b57963d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-1440.png",
+      "test_output_sha256": "d24d9dfd24334a7eec061f1bc2f9068ff0e8424b87f0618c91cf937f0fea6ee2",
+      "restored_head_sha256": "79ea5aae2330a7f64144eb0fec1b343fb5cef37c4d8ac65e7d81b7a1e90a1c81"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/record-before-run-393.png",
+      "test_output_sha256": "54f8340ef29f73ca160ce27e7a037f5e0a0279874424622777f93e62d4934930",
+      "restored_head_sha256": "93e6f0f1511dee42605d1fb496754fd19b2ad1928f9887068232daa80dcaf978"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-1440.png",
+      "test_output_sha256": "815fbe5cc49bab199c39db5b790053e7141c8e3ad9ce9a2cbda5e8f2c3c340cf",
+      "restored_head_sha256": "a223baf05b29420bd56e5b1bf3907dfffe64f6a04ce1dca2da8d8d4e88129e24"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/refusal-stale-hash-393.png",
+      "test_output_sha256": "35aa95cd8d22a1a12834a58948c423a5c0b5c7f5321c1dea3a2338ab0a1e11dc",
+      "restored_head_sha256": "be2a018d115679872515e6cb7978d2dd227d551eefaea7d5fa8ce689d4bb3226"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-1440.png",
+      "test_output_sha256": "93b72c190b2ad78ee76ab2ec79fc808d860c88e523034ee01c872e805bb4654c",
+      "restored_head_sha256": "5460f9ab678f4ac67639cd2a1b7277f014e23fc183ffa9e7dc6968a024ab4056"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots/review-not-run-393.png",
+      "test_output_sha256": "f2a75964e009c25738635e38acd5bebcc9a25d2d25d608a251ef9f8ab474732f",
+      "restored_head_sha256": "a7fe453e9c550e7ddfcb7499832338a033c5c85f82757695856c2b5b984ad17c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots/guardrail-decision-box-1440.png",
+      "test_output_sha256": "b0cb6dc2a4dfad3b37dfa188a6cbc4810ed002e9cf47decdfc907731508bdc7d",
+      "restored_head_sha256": "fa31d8a2b95a29b1ca3e50460db298985e4933f9806ff980c4b0e5893806fa8b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots/guardrail-decision-box-393.png",
+      "test_output_sha256": "60ea54a6b26782a1caf214fa2c8622451b4847117d6662e8efb0b78d3cbaa6e0",
+      "restored_head_sha256": "4ba8e7f28311f916c2e80582c4da89db91badb1a9b9341883259de36af83653b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots/guardrail-row-1440.png",
+      "test_output_sha256": "30e5b562b8d6234deac948f67661626d4ee0c9e68001083b3bd0e52df064798a",
+      "restored_head_sha256": "788512727a7d087fa0b4822b237621ff544df1e4a6dc4841751f394643a02b4d"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-08-shots/guardrail-row-393.png",
+      "test_output_sha256": "12da1c48a1769a0ca3bfdeb98ecba05f61a69db264fb45091ac3d5b2c8dd8a4f",
+      "restored_head_sha256": "4686b7809363dd38912a7b09a0a090afff12a573a3663e40f6c6933262bd9731"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-ready-1440.png",
+      "test_output_sha256": "cf1aac4f10109b25cd942cbc096a117a574aae5e3034333fa1d3c40982b45b07",
+      "restored_head_sha256": "13d1cbc890560fad1d6aa94e67e14d70f32ae5cb8fc5b217fee79bedfdb63ddc"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-ready-393.png",
+      "test_output_sha256": "b1dc3b14dd39064ebe44b66f1e878e79f3a9c6ce45767cfd4b9f2e43ebf2eeb7",
+      "restored_head_sha256": "b3d2c754bdf2f9bf6367099e364fdd4f175747f23965c7aa06f87275eab45216"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-refused-1440.png",
+      "test_output_sha256": "71663c11fee17770d9bcf92c613f29263f197e97411450c099a47b87377ab578",
+      "restored_head_sha256": "031e5b02b8bfb6d72798de8d1fb66dceedf7fa6f3892a9c65fdb910b1b7f6805"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/add-engine-refused-393.png",
+      "test_output_sha256": "de1ac9679b071751a8e6793e16b9efe2009aeb8b1a2429e1c89bea00f4c0a50b",
+      "restored_head_sha256": "0d8bcaef268f4760963368c2a144e0929626d6563dd4be5228abfd11201e1539"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-cold-1440.png",
+      "test_output_sha256": "cd131a5054cc801d771c00ad5fd88e7168f38984752b20c127a730c5df10732d",
+      "restored_head_sha256": "2845316fbbf13e50596059e135793870057d090e17a2ca215325ed1cfa5ddcae"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-cold-393.png",
+      "test_output_sha256": "05546b410f640244cc6096751784c2005906d070ef9928158851ed9bab606f64",
+      "restored_head_sha256": "942a201e9904828c0ecdb5ca7175c543ddeb37041f7055f0b020ae4ab10d9fed"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-back-on-1440.png",
+      "test_output_sha256": "fad35b807ba64f8f7db273906ebcb74befed07daf88f877b0a496676ce8114c0",
+      "restored_head_sha256": "02aeb44fe47d2a70f1323525b723460716fcf363f52716fc35ea54632db945f8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-back-on-393.png",
+      "test_output_sha256": "c9b869741a384280429b8ee8c448c64187f610a78f2fbe657127638de5ef036a",
+      "restored_head_sha256": "d5d0ec20c6972f725a98b77796ad02c03eab9bf1a23478e5a9cf989bda23cc51"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-connected-1440.png",
+      "test_output_sha256": "9efc421d6f284e118410245e2e203d53000dd4882a54433b2fd4b119fd269f8e",
+      "restored_head_sha256": "367309bfbbe62ae994dd2f7fec8c92d11619709c9e04d39a79b6f929475aacc6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-engine-connected-393.png",
+      "test_output_sha256": "55c78fb1fb404186f11ea64eefc1ce48e1d2986d70235bdf26d2945dc0ec32b9",
+      "restored_head_sha256": "1559e80d3161d296222d90841d437f1258009f436453ca356e575b567b2cc0e8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-from-the-go-menu-1440.png",
+      "test_output_sha256": "fad35b807ba64f8f7db273906ebcb74befed07daf88f877b0a496676ce8114c0",
+      "restored_head_sha256": "02aeb44fe47d2a70f1323525b723460716fcf363f52716fc35ea54632db945f8"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-from-the-go-menu-393.png",
+      "test_output_sha256": "c9b869741a384280429b8ee8c448c64187f610a78f2fbe657127638de5ef036a",
+      "restored_head_sha256": "d5d0ec20c6972f725a98b77796ad02c03eab9bf1a23478e5a9cf989bda23cc51"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-summary-off-1440.png",
+      "test_output_sha256": "1934a2c71e7b9267550ef2918374a5722ff1285687d8062ee8c53cb6fab29770",
+      "restored_head_sha256": "9e428c885a5da431deedc3bda600a724957e8a99a35b9a688b2b4ea88da087df"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-09-shots/models-summary-off-393.png",
+      "test_output_sha256": "c9b869741a384280429b8ee8c448c64187f610a78f2fbe657127638de5ef036a",
+      "restored_head_sha256": "3995d0a4e941d0a2f07d2b0d7840178dc3e7831d3e13c7930600405645b25e73"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-after-run-1440.png",
+      "test_output_sha256": "10076f914710fc843a9216e0462de44401c03cb8f4e1ce3665daae25d287c505",
+      "restored_head_sha256": "0dbe997cc6f9acd281aab182cf9d9da510312b50dc862e6ce11568d81df8fd3c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-after-run-393.png",
+      "test_output_sha256": "4471a5fbc705ab62edda79d19d442b8b61ebcc53caca0c73f7be25e24f0491f2",
+      "restored_head_sha256": "305b51ba2f4d93885e4848d9485c6b5b3450d015975bb13f98bb2a434a3bf3d7"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-done-1440.png",
+      "test_output_sha256": "9f63d51c71817451b23f6f9fed8688ac64eaf8e2638e245c1ce025748dfcb9f8",
+      "restored_head_sha256": "0f3582620b36d8396415cb520cad8d82ccebccdf84aedeccfe7b36ec629fb717"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-done-393.png",
+      "test_output_sha256": "76bb13db1093a36e16cee9c41f5b7a61fd591a2fed20f20189fc8df660f62e81",
+      "restored_head_sha256": "d2341e0c65ff0e6ef021cb2e33cb7c214523903b6ca47733c48299d44d475873"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-row-length-1440.png",
+      "test_output_sha256": "1c8b8917c9e6e2ccf7a2c7fae5ebf675affcc2c21e0537eb54f11ad03c6c26a1",
+      "restored_head_sha256": "64fd322cb74b740431f57085e5566252dd5c692dd4e79da6adb39aaa2ee4bf0b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-10-shots/import-row-length-393.png",
+      "test_output_sha256": "5b494e98dd5689636ff7c0c45baf70149a2eb31f7e2267cf503db2e2e0f0d110",
+      "restored_head_sha256": "5293d8d75c6e74eef7be654ca8aa435d51bdd6067cce3bedbf27e824387a8386"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/head-over-setup-and-offer-1440.png",
+      "test_output_sha256": "c8e76fdbf7b5c0553e249d4192889f5f15a5eeb708c419258db33eb7366d0be3",
+      "restored_head_sha256": "5f8c92ee7d39567f2e1e8d35874626706ffdad6b2fae8b3c4b98f6c5a12a7319"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/head-over-setup-and-offer-393.png",
+      "test_output_sha256": "4be14e1dc715ca7746455c709a7e4c4b137d31e4a03765890170a212a23d311e",
+      "restored_head_sha256": "07f1479e738825fc85882299adfefd1407257627c7b76008d95e4cd03c54ea8c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/no-open-actions-filter-1440.png",
+      "test_output_sha256": "97459da92ddd0d47eda12819608eb398c366bca2f1f739c8654da5fc913be635",
+      "restored_head_sha256": "95efe6344355c5acd272d6de373fe5a4042cd75f1a1c0c89b5294c8f77d60fcb"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/no-open-actions-filter-393.png",
+      "test_output_sha256": "2464626618f0041b55b8bc1defd9887591149ef302de19fc9a2356a6298b0f4f",
+      "restored_head_sha256": "d7c065c5fee7f27d32f9f605555976481a1fd4ffaf5394fc73e266167b6aa987"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/quiet-arrival-1440.png",
+      "test_output_sha256": "adbc111d7108c1a24eb746e63cdfdfd48429e448cc980239e56262e0551b8b74",
+      "restored_head_sha256": "971dc1cac3655d0aa89094c27dbeab5a3ca0f5950ffb45affddf988ba58e45b2"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-11-shots/quiet-arrival-393.png",
+      "test_output_sha256": "beb95ccf181b9d1d7f029ef17d0b1f06c13822d19dd6995ad5fb63a3e093159a",
+      "restored_head_sha256": "65efb489f442acf854ff1e1a469c26a0134d0b39bfd3b0c7008405850379273c"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-1440.png",
+      "test_output_sha256": "541de8fdc5040ab1dce2797fd33ab6c342c01b08624d0a072c7bbd2cc4a2b0f8",
+      "restored_head_sha256": "742790551c57a096595ff71715b6a3d405442591250e6da4255839a92b38cb2b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-393.png",
+      "test_output_sha256": "80b27ada48417aee64a2d8b01929c489cec854003e3210d92ce6a10aafb54b73",
+      "restored_head_sha256": "e91164dfaaeaf36707be10bb15b44b6de6d54bd0129ccf63727ad89d9734712e"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-draft-1440.png",
+      "test_output_sha256": "5a1bc44a3d6b736a974a7f06d6d0e70d7262557b40f027a3d764689b67d03b6c",
+      "restored_head_sha256": "3938a9352caa9f63e72b3782d771a3a02f4264fa56f2e7fc2f12f4440c2c1184"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-draft-393.png",
+      "test_output_sha256": "e9c3cf5192260e2ea98ebd6029a238e175f06f8abd09c3b85ca31ea848299dfe",
+      "restored_head_sha256": "0e68755138eb49c2b7c4cb79177bb56eb1ec03f0c09730703ddd2529adbd19c5"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-draft-added-1440.png",
+      "test_output_sha256": "5e1c584c9c9286ef0bc86985a636c1395011eb045b53e0208a139945be30cec8",
+      "restored_head_sha256": "f7f47209545e50696a540c57968c60f1af5bf7348cd1c3997abbeb83ddf4bab6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots/after-draft-added-393.png",
+      "test_output_sha256": "d2a66df86475d79aca03753b178a65754de8a9636a1233111df76e10ef512839",
+      "restored_head_sha256": "763ceb83413575f4350f0415202d07f1ae2d91dc026fdf231ba17d8c68e94210"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/dock-1440.png",
+      "test_output_sha256": "acb5c2bdd1091fdf3353a3f7d3223257e7fc18f84458f454970533a6ea8d9926",
+      "restored_head_sha256": "a392e8f83c183ad2d12cab974bb6c86984e180e78aa4a4424d4556330dea3923"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/dock-393.png",
+      "test_output_sha256": "5a5fe393af02b54192868a2947d7d224d7a33b31907f382bad981bf69771eb44",
+      "restored_head_sha256": "10724172518e61ce4c9edb5b556165d76427e88cb34fb94328bfd9f044b1ee47"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/editor-rail-1440.png",
+      "test_output_sha256": "c398d655b67a1cddf9671bc8849102c8636abe92860e27a61bb7bf3dd2f323f6",
+      "restored_head_sha256": "e3e66418b7c25a148c695e546c885f68503f78bbce42e664aca8b07ce0f91213"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/editor-rail-393.png",
+      "test_output_sha256": "59d2ebd4c44c41abc112a830402a0f685e334e9f5cc37ce4f490bec10a0ac007",
+      "restored_head_sha256": "535c2110c5e53c4ad4cd509d16dbe3a75a73bd1c42d85fbadd863b62bfbfe943"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/menu-open-1440.png",
+      "test_output_sha256": "c1fb2a4ddc7a064734ee8a0477b61ea439ec90aa9ea519d63810d00b01643fe4",
+      "restored_head_sha256": "510f2f1e29155afea296d381885172c83309384d674d6a3fbfb214da55a8617b"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/menu-open-393.png",
+      "test_output_sha256": "6268b9d085c2c0cad4b320a6826a8120a2078c6829d9093dec6942e7f551cdf7",
+      "restored_head_sha256": "2a72d960167c567f7343cf2c958232539112c04aa256740fb6e8a89f11fba5fa"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/wings-1440.png",
+      "test_output_sha256": "e0db4c422453510e4124e47bee910abe47677dbacf60c70cbfad9b739514b0fe",
+      "restored_head_sha256": "5aefde7e63d1ad796dc7381ee3829a4db6be587247e72d7d17342a6ad4668dd6"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-03-shots/wings-393.png",
+      "test_output_sha256": "7778d3451915a1b2c48d8b800d4f638e5d5077de2dde5a15b574a56be40b3515",
+      "restored_head_sha256": "0f7e46523712040274e4199df47a262a63eee202c183e7a3e30b2c66f9517138"
+    }
+  ]
+}

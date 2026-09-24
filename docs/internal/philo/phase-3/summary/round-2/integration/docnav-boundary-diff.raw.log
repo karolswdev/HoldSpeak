@@ -1,0 +1,99 @@
+CURRENT_BYTES=304195 EXPECTED_BYTES=304195
+CURRENT_LINES=8985 EXPECTED_LINES=8985
+CURRENT_CANDIDATES=897 EXPECTED_CANDIDATES=897
+CURRENT_SNAPSHOT=675401a857b85336d4acaa8c65383dfc9636e4c8 EXPECTED_SNAPSHOT=675401a857b85336d4acaa8c65383dfc9636e4c8
+ADDED_ROWS=8 REMOVED_ROWS=8
+ADDED
+web/src/desk/api.ts:1102:df6c75d50d59c1c45eb26003ef5dfa864b6e3bc07541b65180e71917f493268b
+web/src/desk/chair/ChairHome.tsx:817:21e6c061d3f41d05e829a621a09f735f65344c17d4ce1428c62f08188955c28f
+web/src/desk/chair/ChairHome.tsx:968:abc2856408b047de5eb33b280c197ade29369361c61479d6d184bfcbed931a3a
+web/src/desk/chair/ChairHome.tsx:1481:11c89ea9bcf532605e60e6eca577e680617c2177da5346243ddd8fc9d49c5d36
+web/src/desk/chair/ChairHome.tsx:1763:36fbd7864a72123814314c28d5285551eaf3c0ae4cdefbb578bbf15b252cb33d
+web/src/desk/chair/ChairHome.tsx:1817:17eeaf853b80a06ed3471e080964e1f70a9626103f6c4ea1738ffdbb3e2d5e9a
+web/src/desk/chair/ChairHome.tsx:1876:d85dd671c7d834b4fff6685046a9960076790cbc7d1ac014fb60a485e9b9e193
+web/src/lib/primitives.ts:533:2eced04d52089eb214d453bdb3eed85897664201369694af133330350c414e50
+REMOVED
+web/src/desk/api.ts:1026:df6c75d50d59c1c45eb26003ef5dfa864b6e3bc07541b65180e71917f493268b
+web/src/desk/chair/ChairHome.tsx:724:21e6c061d3f41d05e829a621a09f735f65344c17d4ce1428c62f08188955c28f
+web/src/desk/chair/ChairHome.tsx:876:abc2856408b047de5eb33b280c197ade29369361c61479d6d184bfcbed931a3a
+web/src/desk/chair/ChairHome.tsx:1388:11c89ea9bcf532605e60e6eca577e680617c2177da5346243ddd8fc9d49c5d36
+web/src/desk/chair/ChairHome.tsx:1670:36fbd7864a72123814314c28d5285551eaf3c0ae4cdefbb578bbf15b252cb33d
+web/src/desk/chair/ChairHome.tsx:1724:17eeaf853b80a06ed3471e080964e1f70a9626103f6c4ea1738ffdbb3e2d5e9a
+web/src/desk/chair/ChairHome.tsx:1783:d85dd671c7d834b4fff6685046a9960076790cbc7d1ac014fb60a485e9b9e193
+web/src/lib/primitives.ts:512:2eced04d52089eb214d453bdb3eed85897664201369694af133330350c414e50
+UNIFIED_DIFF
+--- boundary-candidates.json
++++ generated(boundary-census)
+@@ -6663,7 +6663,7 @@
+     },
+     {
+       "path": "web/src/desk/api.ts",
+-      "line": 1026,
++      "line": 1102,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6753,7 +6753,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 724,
++      "line": 817,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6763,7 +6763,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 876,
++      "line": 968,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6773,7 +6773,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 1388,
++      "line": 1481,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6783,7 +6783,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 1670,
++      "line": 1763,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6793,7 +6793,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 1724,
++      "line": 1817,
+       "kinds": [
+         "http_client"
+       ],
+@@ -6803,7 +6803,7 @@
+     },
+     {
+       "path": "web/src/desk/chair/ChairHome.tsx",
+-      "line": 1783,
++      "line": 1876,
+       "kinds": [
+         "http_client"
+       ],
+@@ -8073,7 +8073,7 @@
+     },
+     {
+       "path": "web/src/lib/primitives.ts",
+-      "line": 512,
++      "line": 533,
+       "kinds": [
+         "http_client"
+       ],
+BOUNDARY_DIFF_EXIT=0

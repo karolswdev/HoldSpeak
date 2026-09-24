@@ -6663,7 +6663,7 @@
     },
     {
       "path": "web/src/desk/api.ts",
-      "line": 1026,
+      "line": 1102,
       "kinds": [
         "http_client"
       ],
@@ -6753,7 +6753,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 724,
+      "line": 817,
       "kinds": [
         "http_client"
       ],
@@ -6763,7 +6763,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 876,
+      "line": 968,
       "kinds": [
         "http_client"
       ],
@@ -6773,7 +6773,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1388,
+      "line": 1481,
       "kinds": [
         "http_client"
       ],
@@ -6783,7 +6783,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1670,
+      "line": 1763,
       "kinds": [
         "http_client"
       ],
@@ -6793,7 +6793,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1724,
+      "line": 1817,
       "kinds": [
         "http_client"
       ],
@@ -6803,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1783,
+      "line": 1876,
       "kinds": [
         "http_client"
       ],
@@ -8073,7 +8073,7 @@
     },
     {
       "path": "web/src/lib/primitives.ts",
-      "line": 512,
+      "line": 533,
       "kinds": [
         "http_client"
       ],

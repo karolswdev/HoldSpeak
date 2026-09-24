@@ -1,0 +1,4 @@
+Command: HOME=$(mktemp -d) uv run --no-sync pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_refinement_thought_service.py
+........................................................................ [ 90%]
+........                                                                 [100%]
+80 passed in 7.11s

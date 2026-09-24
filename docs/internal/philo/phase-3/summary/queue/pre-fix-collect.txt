@@ -1,0 +1,13 @@
+PHILO-3-02 queue fence — pre-fix collection
+Date: 2026-09-23
+Command:
+  test_home=$(mktemp -d); HOME="$test_home" uv run --no-sync pytest --collect-only -q tests/unit/test_philo3_summary_queue.py
+Exit code: 0
+
+Raw output:
+tests/unit/test_philo3_summary_queue.py::test_real_admitted_success_notifies_after_running_and_receipt
+tests/unit/test_philo3_summary_queue.py::test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt
+tests/unit/test_philo3_summary_queue.py::test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt
+tests/unit/test_philo3_summary_queue.py::test_real_admission_refusal_notifies_after_durable_refusal_receipt
+
+4 tests collected in 0.40s

@@ -1,0 +1,455 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_____________________ TestMeetingsGlass.test_meetings_face _____________________
+
+self = <tests.e2e.test_hs170_meetings_glass.TestMeetingsGlass object at 0x109d18b90>
+
+    def test_meetings_face(self) -> None:
+        from playwright.sync_api import sync_playwright, expect
+    
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+    
+            for width in (1440, 393):
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda err: errors.append(str(err)))
+    
+                # Navigate with auth token
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+                _normal_chair(page)
+    
+                # Open the meetings surface
+                _open_surface(page, "review-meetings")
+                found = _wait_for_surface_window(page, timeout=12000)
+                assert found, f"Meetings surface window did not open at {width}"
+    
+                # Wait for data to render (headline is the signal)
+                headline = page.locator("[data-testid='meetings-headline']")
+                headline.wait_for(timeout=8_000)
+                _settle(page)
+    
+                # ── Assert: headline ──
+                headline_text = headline.text_content() or ""
+                assert "1" in headline_text and "summary" in headline_text.lower(), (
+                    f"Headline at {width}: expected '1 ... summary', got '{headline_text}'"
+                )
+    
+                # ── Assert: Run summary on OFF-with-words row ──
+                run_btns = page.locator("[data-testid='run-intelligence-btn']")
+                expect(run_btns.first).to_be_visible(timeout=5_000)
+                assert run_btns.count() == 1, (
+                    f"Expected exactly 1 'Run summary' at {width}, got {run_btns.count()}"
+                )
+    
+                # ── Assert: NO TRANSCRIPT renders ──
+                no_transcript = page.locator("[data-testid='no-transcript-token']")
+                expect(no_transcript.first).to_be_visible(timeout=3_000)
+    
+                # ── Assert: 0 SEG never appears ──
+                win = page.locator(".desk-surface-window")
+                page_text = win.text_content() or ""
+                assert "0 SEG" not in page_text, (
+                    f"'0 SEG' found in page at {width}"
+                )
+    
+                # ── Assert: INTERRUPTED renders for dead capture, REC never does ──
+                assert "INTERRUPTED" in page_text, (
+                    f"'INTERRUPTED' not found at {width} for dead capture"
+                )
+                state_tokens_text = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return '';
+                    const tokens = body.querySelectorAll('[data-testid="state-token"]');
+                    return Array.from(tokens).map(t => t.textContent).join('|');
+                }""")
+                assert "REC" not in state_tokens_text.split("|"), (
+                    f"'REC' state token found at {width}: {state_tokens_text}"
+                )
+    
+                # ── Assert: no raw <button> in the face body ──
+                raw_buttons = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return [];
+                    const all = body.querySelectorAll('button');
+                    const raw = [];
+                    for (const b of all) {
+                        // .btn = library Button; .desk-mic = library MicButton
+                        if (!b.classList.contains('btn') && !b.classList.contains('btn--chrome') && !b.classList.contains('desk-mic')) {
+                            raw.push((b.textContent || '').trim().slice(0, 40));
+                        }
+                    }
+                    return raw;
+                }""")
+                assert len(raw_buttons) == 0, (
+                    f"Raw buttons at {width}: {raw_buttons}"
+                )
+    
+                # ── Assert: HS-170-04 restored doors ──
+                if width == 1440:
+                    # Search StringGadget with mic in the list head
+                    search_input = page.locator(".meetings-search .gadget-string input")
+                    expect(search_input).to_be_visible(timeout=3_000)
+    
+                    # Facet token toggles on the caption row
+                    facet_area = page.locator("[data-testid='meetings-facets']")
+>                   expect(facet_area).to_be_visible(timeout=3_000)
+E                   AssertionError: Locator expected to be visible
+E                   Actual value: None
+E                   Error: element(s) not found 
+E                   Call log:
+E                     - Expect "to_be_visible" with timeout 3000ms
+E                     - waiting for locator("[data-testid='meetings-facets']")
+
+tests/e2e/test_hs170_meetings_glass.py:318: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____________________ TestAttentionGlass.test_long_row_393 _____________________
+
+self = <tests.e2e.test_hs200_attention_glass.TestAttentionGlass object at 0x109d9c490>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-359/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109882520>
+
+    def test_long_row_393(self, tmp_path, monkeypatch) -> None:
+>       _run_long_row(tmp_path, monkeypatch, 393)
+
+tests/e2e/test_hs200_attention_glass.py:733: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-359/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109882520>
+width = 393
+
+    def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        """Counsel P0-2: nothing extends past the viewport; one primary on the
+        whole face; the sources disclosure opens with an Open per projection."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 1100})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _arrive(page, url)
+                _seed_long_row(page)
+                _reload_arrival(page)
+                wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+                first = wire["items"][0]
+                assert first["title"].startswith("KAN-7") and first["dedupCount"] == 2, first
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+                _settle(page)
+                page.mouse.move(2, 2)
+    
+                row = page.locator("[data-testid='arrival-needs-you-row']").first
+                assert LONG_TITLE in (row.text_content() or "")
+                project = row.locator(".surface-project-button")
+                assert project.count() == 1
+                assert (project.get_attribute("aria-label") or "") == f"Open the Project: {LONG_PROJECT}"
+                _no_horizontal_scroll(page, width)
+                # The verb sits on the SAME line as the meta, at its right.
+                boxes = page.evaluate("""() => {
+                    const row = document.querySelector('[data-testid="arrival-needs-you-row"]');
+                    const meta = row.querySelector('.arrival-needs-you-meta').getBoundingClientRect();
+                    const verb = row.querySelector('.surface-ledger-trailing .btn').getBoundingClientRect();
+                    const name = row.querySelector('.surface-ledger-primary').getBoundingClientRect();
+                    return {metaTop: meta.top, metaBottom: meta.bottom, verbTop: verb.top, verbBottom: verb.bottom,
+                            verbRight: verb.right, nameBottom: name.bottom, rowRight: row.getBoundingClientRect().right};
+                }""")
+                assert boxes["verbRight"] <= width + 0.5, boxes
+                if width <= 480:
+                    assert boxes["verbTop"] >= boxes["nameBottom"] - 1, f"the verb is under the name at 393: {boxes}"
+                    assert boxes["verbTop"] < boxes["metaBottom"] and boxes["verbBottom"] > boxes["metaTop"], \
+                        f"the verb shares the meta line at 393: {boxes}"
+                assert len(_primaries(page)) == 1, _primaries(page)
+    
+                _shot(page, "long-row", width)
+    
+                trigger = row.locator(".surface-disclosure-trigger").first
+                trigger.click()
+                _settle(page)
+                opens = page.get_by_test_id("arrival-source-open")
+                assert opens.count() == 2, "every projection keeps its own Open"
+                titles = [t.text_content() for t in page.locator(".arrival-source-title").all()]
+                assert titles == [f"KAN-7 {LONG_TITLE}", LONG_TITLE], titles
+                _no_horizontal_scroll(page, width)
+                assert len(_primaries(page)) == 1, _primaries(page)
+                _shot(page, "long-row-sources", width)
+    
+                # The selected filter token is never the filled primary.
+                page.get_by_role("group", name="Ranking").get_by_role("button", name="OVERDUE").click()
+                _settle(page)
+                assert len(_primaries(page)) == 1, _primaries(page)
+    
+                if width <= 480:
+                    # Counsel P1-8: scrolled to the end, the last section clears the
+                    # capture bar.
+                    page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+                    page.wait_for_timeout(200)
+                    _settle(page)
+                    clear = page.evaluate("""() => {
+                        const bar = document.querySelector('.arrival-capture-bar').getBoundingClientRect();
+                        const sections = [...document.querySelectorAll('.chair > [data-testid^="arrival-"]')]
+                            .filter(el => !el.classList.contains('arrival-capture-bar'));
+                        const last = sections[sections.length - 1].getBoundingClientRect();
+                        return {barTop: bar.top, lastBottom: last.bottom, lastId: sections[sections.length - 1].getAttribute('data-testid')};
+                    }""")
+>                   assert clear["lastBottom"] <= clear["barTop"] + 0.5, clear
+E                   AssertionError: {'barTop': 821, 'lastBottom': 1004.296875, 'lastId': 'arrival-meetings'}
+E                   assert 1004.296875 <= (821 + 0.5)
+
+tests/e2e/test_hs200_attention_glass.py:659: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ test_running_then_kept_brief_with_claims_and_not_read[393] __________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-359/test_running_then_kept_brief_w0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x112eefd10>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_running_then_kept_brief_with_claims_and_not_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """P3Brief / P3BriefPhone over a REAL dispatch to the fake server: the
+        document, `CLAIMS` on three axes with typed unknowns, `NO SOURCE` +
+        `Find support`, `SUPERSEDED 1` with its successor (P1-2), `NOT INCLUDED
+        2` (P1-3), `NOT READ 2` carrying the state chip and the repair, the
+        LAN egress and receipt from the wire, `Keep` -- then the kept brief
+        re-read by id with its manifest (AC2, AC3, AC4)."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        llm = FakeLLM()
+        llm.reply = _board_reply
+        llm.delay_s = 6.0
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(viewport={"width": width, "height": 900 if width >= 1440 else 852})
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                _init_desk(page, url)
+                project_id = _seed_project_room(page, f"hs200-11-brief-{width}")
+                _define_route(tmp_path / "home", llm.endpoint, "probe-llm", 1)
+                _open_room(page, project_id)
+                _enter_prepare(page)
+                _purpose(page).fill(PURPOSE)
+                page.get_by_test_id("prepare-verb").click()
+    
+                # The run: a real plan with `Stop` kept, the egress beside it.
+                page.get_by_test_id("prepare-running").wait_for(timeout=10000)
+                assert page.get_by_role("button", name="Stop", exact=True).count() == 1
+                _shot_room(page, f"prepare-running-{width}")
+    
+                page.get_by_test_id("prepare-document").wait_for(timeout=60000)
+                _settle(page)
+                assert len(llm.posts) == 1, llm.requests
+                assert "read replica" in llm.posts[0]["body"], "the decision travelled in the prompt"
+                assert page.get_by_test_id("prepare-head-name").inner_text().strip() == "Brief ready"
+                assert _chip_words(page.get_by_test_id("prepare-lifecycle")) == "DRAFT"
+                assert page.get_by_test_id("prepare-manifest-token").inner_text().strip() == "MANIFEST · REV 1"
+                assert _chip_words(page.get_by_test_id("prepare-coverage")) == "COVERAGE · 2 OF 4"
+                assert page.get_by_test_id("prepare-prepared").inner_text().strip().startswith("PREPARED ")
+    
+                # The document is the bounded outline, in caption-step headings;
+                # the superseded decision is NOT a line of it (P1-2).
+                doc = page.get_by_test_id("prepare-document").inner_text()
+                assert "DECIDE TODAY" in doc and "ASK THEM" in doc, doc
+                assert "Sprint velocity improved" in doc
+                assert "full freeze" not in doc, doc
+                assert "Extra priority" not in doc, doc
+    
+                captions = _section_captions(page)
+                assert "CLAIMS 5" in captions and "SUPERSEDED 1" in captions and "NOT READ 2" in captions, captions
+    
+                # The carried decision keeps its axes; the model's own prose is
+                # LINKED at best; the uncited sentence is UNSUPPORTED (C2).
+                kinds = _texts(page, "prepare-claim-kind")
+                assert kinds == ["DECISION", "INFERENCE", "INFERENCE", "INFERENCE", "INFERENCE"], kinds
+                support = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-support").all()]
+                assert support == ["SUPPORTED", "LINKED", "LINKED", "LINKED", "UNSUPPORTED"], support
+                acceptance = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-acceptance").all()]
+                assert acceptance == ["ACCEPTED", "UNREVIEWED", "UNREVIEWED", "UNREVIEWED", "UNREVIEWED"], acceptance
+                unknowns = [_chip_words(el) for el in page.get_by_test_id("prepare-claim-unknown").all()]
+                assert "DEADLINE 2026-12-31 · NO SOURCE" in unknowns, unknowns
+                assert "NUMBER 95% · NO SOURCE" in unknowns, unknowns
+                # The NAME rule: no known person on this desk, no false NAME chip.
+                assert not [u for u in unknowns if u.startswith("NAME ")], unknowns
+                # No raw id on the face (162's law): the ref chip names the source.
+                ref_chips = _texts(page, "prepare-claim-ref")
+                assert ref_chips[0].startswith("DEC "), ref_chips
+                assert ref_chips[1].lower() == "karolswdev/holdspeak", ref_chips
+                assert not any("decrec" in r.lower() or "w_gh" in r.lower() for r in ref_chips), ref_chips
+                # No source, no source chip: `NO SOURCE` + `Find support`, and no
+                # `Open source` that opens nothing.
+                assert page.get_by_test_id("prepare-claim-no-source").count() == 1
+                assert page.get_by_test_id("prepare-claim-find").count() == 1
+                assert page.get_by_test_id("prepare-claim-open").count() == 4
+                assert page.get_by_role("button", name="Write it myself").count() == 0
+    
+                # P1-2: the superseded citation, its successor linked.
+                assert page.get_by_test_id("prepare-superseded-row").count() == 1
+                assert _chip_words(page.get_by_test_id("prepare-superseded-chip")).startswith("SUPERSEDED BY DEC ")
+                assert page.get_by_test_id("prepare-superseded-open").count() == 1
+    
+                # P1-3: what the bound left out is named, with why.
+                page.get_by_role("button", name="NOT INCLUDED 2").click()
+>               page.get_by_test_id("prepare-not-included").wait_for(timeout=5000)
+
+tests/e2e/test_hs200_preparation_brief_glass.py:706: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.13/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.13/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x11417dbd0>
+cb = <function Channel.send.<locals>.<lambda> at 0x114179940>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 5000ms exceeded.
+E           Call log:
+E             - waiting for get_by_test_id("prepare-not-included") to be visible
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+____________ test_saved_ask_draws_the_ratified_unfinished_row[393] _____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-359/test_saved_ask_draws_the_ratif0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11416caf0>
+width = 393
+
+    @pytest.mark.timeout(300)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_saved_ask_draws_the_ratified_unfinished_row(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """`UNFINISHED 1`: purpose, `SAVED HH:MM`, custody, one `Resume`."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        purpose = "Whether the Q4 platform migration can land before the freeze"
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                page = browser.new_page(
+                    viewport={"width": width, "height": 900 if width >= 1440 else 852}
+                )
+                page.on("pageerror", lambda e: errors.append(str(e)))
+    
+                _init_desk(page, url)
+                project_id = _create_project(page, "Q4 platform", "hs200-41-saved")
+                task = _save_ask(page, project_id, purpose)
+                assert task["state"] == "saved", task
+                assert task["purpose"] == purpose
+    
+                _open_room(page, project_id)
+                page.get_by_test_id("room-unfinished").wait_for(timeout=15000)
+                assert _rows(page).count() == 1, "expected exactly one unfinished row"
+    
+                # The caption carries the count the design ratified. F5 moved it:
+                # the list is a Room SECTION now, so the count rides the section
+                # label rather than a caption inside the composer's sticky foot.
+                section = _rows(page).first.locator(
+                    "xpath=ancestor::section[contains(@class,'surface-section')][1]"
+                )
+                caption = section.locator(".surface-section-head h3").first.inner_text().strip()
+                assert caption == "UNFINISHED 1", caption
+                # F5: and it is NOT inside the sticky ask container.
+                assert page.evaluate(
+                    """() => !document.querySelector('.room-ask-container')
+                       .contains(document.querySelector('[data-testid="room-unfinished"]'))"""
+                ), "the unfinished list must live in the Room body, not the sticky foot"
+    
+                # F5 tail — AT THE ROOM'S OPENING SCROLL POSITION, not only at
+                # full scroll. Filed as the trailing section, UNFINISHED was the
+                # one the sticky foot reached: the Room opened with the single row
+                # he came back for sitting under the composer, its verb hidden.
+                # It is placed directly after NEEDS YOU now, so the foot never
+                # reaches it at rest.
+                order = page.evaluate(
+                    """() => Array.from(document.querySelectorAll(
+                         '.room-body .surface-section-head h3')).map(el => el.textContent.trim())"""
+                )
+                print(f"[hs200-41] section order at rest: {order}")
+                unfinished_at = [i for i, name in enumerate(order)
+                                 if name.startswith("UNFINISHED")]
+                assert unfinished_at, order
+                if "NEEDS YOU" in order:
+                    assert unfinished_at[0] == order.index("NEEDS YOU") + 1, (
+                        f"UNFINISHED belongs directly after NEEDS YOU: {order}"
+                    )
+                if "SOURCES" in order:
+                    assert unfinished_at[0] < order.index("SOURCES"), order
+                clear = page.evaluate(
+                    """() => {
+                        const body = document.querySelector('.desk-surface-body');
+                        const top = body ? body.scrollTop : 0;
+                        const well = document.querySelector('.room-ask-container')
+                          .getBoundingClientRect();
+                        const rows = Array.from(document.querySelectorAll(
+                          '[data-testid="room-unfinished"] .surface-task-resume'));
+                        const covered = rows.filter(row => {
+                          const r = row.getBoundingClientRect();
+                          return r.bottom > well.top + 1 && r.top < well.bottom - 1;
+                        }).length;
+                        // The row's ONE verb must be whole, not a sliver above
+                        // the composer's edge.
+                        const verb = document.querySelector(
+                          '[data-testid="room-unfinished"] .surface-task-resume-verbs button');
+                        const v = verb.getBoundingClientRect();
+                        return {scrollTop: top, covered,
+                                verbClear: Math.round(well.top - v.bottom)};
+                    }"""
+                )
+                print(f"[hs200-41] at rest: {json.dumps(clear)}")
+                assert clear["scrollTop"] == 0, "this is meant to measure the RESTING Room"
+>               assert clear["covered"] == 0, (
+                    f"the row he came back for opens under the composer: {clear}"
+                )
+E               AssertionError: the row he came back for opens under the composer: {'scrollTop': 0, 'covered': 1, 'verbClear': -101}
+E               assert 1 == 0
+
+tests/e2e/test_hs200_task_resume_glass.py:288: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[hs200-41] section order at rest: ['NEEDS YOU', 'UNFINISHED 1', 'SOURCES', 'RECEIPTS 4', 'SINCE CREATED']
+[hs200-41] at rest: {"scrollTop": 0, "covered": 1, "verbClear": -101}
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face
+FAILED tests/e2e/test_hs200_attention_glass.py::TestAttentionGlass::test_long_row_393
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+FAILED tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]
+4 failed in 33.90s

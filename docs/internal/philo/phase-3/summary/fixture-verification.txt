@@ -1,0 +1,4 @@
+Synthetic WAV seconds: 34.67525
+Real replay producer -> real bound adapter: provider_error_result
+Fixture hashes, WAV format, real replay and bound failure: PASS
+No hub, DB, network or model call. This is not an atlas observation.

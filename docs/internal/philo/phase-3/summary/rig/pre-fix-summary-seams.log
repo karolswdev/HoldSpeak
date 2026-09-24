@@ -1,0 +1,42 @@
+fixture fence FAIL case.j4.meetings_import.imported: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j4.meetings_import.imported: no real completion wait
+fixture fence FAIL case.j5.meeting_open.route_disclosed: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j5.meeting_open.route_disclosed: no real completion wait
+fixture fence FAIL case.j5.meeting_open.no_engine_no_verb: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j5.meeting_open.no_engine_no_verb: no real completion wait
+fixture fence FAIL case.j6.run_summary.intel_queued: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.intel_queued: no real completion wait
+fixture fence FAIL case.j6.run_summary.intel_running: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.intel_running: no real completion wait
+fixture fence FAIL case.j6.run_summary.intel_ready: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.intel_ready: no real completion wait
+fixture fence FAIL case.j6.run_summary.intel_failed: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.intel_failed: no real completion wait
+fixture fence FAIL case.j6.run_summary.intel_retry: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.intel_retry: no real completion wait
+fixture fence FAIL case.j6.route_intelligence_run.refusal: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.route_intelligence_run.refusal: no real completion wait
+fixture fence FAIL case.j7.hub_restart.intel_retained: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j7.hub_restart.intel_retained: no real completion wait
+fixture fence FAIL case.j7.arrival_load.reload_persisted: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j7.arrival_load.reload_persisted: no real completion wait
+fixture fence FAIL case.j6.route_intelligence_run.no_assignment: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.route_intelligence_run.no_assignment: no real completion wait
+fixture fence FAIL case.j6.run_summary.summary_text: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.summary_text: no real completion wait
+fixture fence FAIL case.j6.run_summary.host_named: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j6.run_summary.host_named: no real completion wait
+fixture fence FAIL case.j5.meeting_open.planned_host_disclosed: tests/fixtures/core_path_smoke_16k.wav
+completion wait fence FAIL case.j5.meeting_open.planned_host_disclosed: no real completion wait
+one-run fence FAIL case.j6.run_summary.intel_running: clicks=1, api_runs=1
+one-run fence FAIL case.j6.run_summary.intel_ready: clicks=1, api_runs=1
+reply fence FAIL case.j6.run_summary.intel_failed: engine_reply boundaries=2
+reply fence FAIL case.j6.run_summary.intel_failed: legacy reply path=.tmp/graph-walk/engine-replies/intel-failure.json
+reply fence FAIL case.j6.run_summary.intel_failed: legacy reply path=.tmp/graph-walk/engine-replies/intel-failure.json
+reply fence FAIL case.j6.run_summary.intel_retry: legacy reply path=.tmp/graph-walk/engine-replies/intel-failure.json
+rendered summary fence FAIL case.j6.run_summary.summary_text: observe_at=.desk-window .surface-material
+rendered summary fence FAIL case.j7.arrival_load.reload_persisted: observe_at=[data-testid=arrival-headline]
+phone hit fence FAIL case.j5.meeting_open.route_disclosed: no hit_target predicate
+phone hit fence FAIL case.j5.meeting_open.planned_host_disclosed: no hit_target predicate
+restart fence FAIL: old jobs queue observation without retained summary/receipt/identity
+PRE-FIX RED FENCES: 41

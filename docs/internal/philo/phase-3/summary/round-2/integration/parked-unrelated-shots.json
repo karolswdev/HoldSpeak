@@ -1,0 +1,56 @@
+[
+  {
+    "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-1440.png",
+    "status_before": "??",
+    "sha256": "eeb3c01a8d41aec6f91f69443be649c4425afc9521b4766ea2c50d2066d56309",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-1440.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-393.png",
+    "status_before": "??",
+    "sha256": "93875ba17730f3b925713d124e62727744b33afdf024ba4ce1260fe12bbfa593",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots/door-no-chip-393.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-1440.png",
+    "status_before": "??",
+    "sha256": "d05aa71de03ec82d955c92f2bc750ff858102a17d364eaedd03faebf087b6a01",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-1440.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-393.png",
+    "status_before": "??",
+    "sha256": "4d3f58afd668fb6f469f4fc1f26e7e06be71b7394dbaf3ec723fccb5e1404b6a",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/census/change-places-393.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-archive-1440.png",
+    "status_before": "??",
+    "sha256": "e92bf763621f96fda0ca8a754aab8bbd806113d1b2fdc126e233c81d6b734d5b",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-archive-1440.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-search-1440.png",
+    "status_before": "??",
+    "sha256": "b76c7a391ccb45b223963e9483bf43d097004524c3fd48ba5f8e80b92db28f81",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-07-shots/build-command-deck-search-1440.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-1440.png",
+    "status_before": "??",
+    "sha256": "a19c36b2c729f4df0b2a09a7005c381beec5262642d14230f89ce3a3c0b89a9d",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-1440.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-393.png",
+    "status_before": "??",
+    "sha256": "707311a0cd66a1debc9d0d6ddf3388101798e70397fe201f458c1e266dca65f4",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-174-reach/assets/story-02-shots/build-remote-revoked-393.png"
+  },
+  {
+    "path": "pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-393.png",
+    "status_before": "??",
+    "sha256": "0e953669e09d5d0b352574c30f8f5962eec9d7c23a732a3193f0645e4a6a81fd",
+    "parked": "/Users/karol/dev/tools/wt-philo-3-02/.tmp/philo3-r2-integrated-parked-shots/pm/roadmap/holdspeak/phase-200-the-working-practice/assets/story-41-shots/taskresume-after-restart-393.png"
+  }
+]

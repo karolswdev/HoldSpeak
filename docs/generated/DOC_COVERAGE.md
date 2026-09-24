@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 248 / 248 |
-| Test paths | 179 / 179 |
-| Documentation paths | 216 / 216 |
-| Assertions inspected | 179 |
-| Tests executed | 151 |
+| Source paths | 250 / 250 |
+| Test paths | 185 / 185 |
+| Documentation paths | 219 / 219 |
+| Assertions inspected | 185 |
+| Tests executed | 157 |
 | Records with an executed assertion | 73 |
 | Semantic records unresolved | 74 |
 
@@ -50,8 +50,8 @@ Validation errors at generation: **0**.
 | `voice.dictation_pipeline` | capabilities | 3/3 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `voice.delivery` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
 | `meeting.capture` | capabilities | 3/3 | 2/2 | 2 | 2 | 1 | partially_evidenced |
-| `meeting.import` | capabilities | 2/2 | 2/2 | 2 | 2 | 1 | partially_evidenced |
-| `meeting.intelligence` | capabilities | 3/3 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `meeting.import` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
+| `meeting.intelligence` | capabilities | 5/5 | 8/8 | 8 | 8 | 0 | partially_evidenced |
 | `meeting.aftercare` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |

@@ -493,6 +493,295 @@ def test_every_boundary_names_its_substitution(atlas: dict) -> None:
     assert not problems, problems
 
 
+SUMMARY_CASE_PREFIXES = ("case.j4.", "case.j5.", "case.j6.", "case.j7.")
+
+
+def _summary_cases(atlas: dict) -> list[dict]:
+    return [case for case in atlas["cases"] if case["id"].startswith(SUMMARY_CASE_PREFIXES)]
+
+
+def test_summary_cases_use_the_retained_architect_import_fixture(atlas: dict) -> None:
+    """A2's meeting material enters through the real multipart import boundary.
+
+    J4's microphone cases stay separate: their browser-device boundary is a
+    lawful blocked proof, while every imported meeting used by J4-J7 must use
+    the retained synthetic architect WAV. The old smoke WAV made a transport
+    pass look like useful meeting material.
+    """
+    expected = "tests/fixtures/philo3_architect_meeting.wav"
+    problems: list[str] = []
+    for case in _summary_cases(atlas):
+        imports = [
+            step for step in _acts(case)
+            if step.get("kind") == "fixture"
+            and step.get("route", {}).get("path") == "/api/meetings/import"
+        ]
+        if imports and any(step.get("path") != expected for step in imports):
+            problems.append(f"{case['id']}: imported material is not {expected}")
+    assert not problems, problems
+
+
+def test_summary_run_cases_have_one_run_trigger(atlas: dict) -> None:
+    """The real Arrival Run gesture is the one trigger; setup never re-runs it."""
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        if not case["id"].startswith("case.j6.run_summary."):
+            continue
+        steps = _acts(case)
+        clicks = [
+            step for step in steps
+            if step.get("kind") == "ui"
+            and step.get("action") == "click"
+            and "arrival-run-intel" in step.get("selector", "")
+        ]
+        api_runs = [
+            step for step in steps
+            if step.get("kind") == "api"
+            and step.get("method") == "POST"
+            and "/intelligence/run" in step.get("path", "")
+        ]
+        if len(clicks) != 1 or api_runs:
+            problems.append(
+                f"{case['id']}: Run clicks={len(clicks)}, API run steps={len(api_runs)}"
+            )
+    assert not problems, problems
+
+
+def test_summary_running_reads_the_claimed_job_wire_status(atlas: dict) -> None:
+    """The producer exposes a claimed current row while execution is live."""
+    case = next(
+        case for case in _summary_cases(atlas)
+        if case["id"] == "case.j6.run_summary.intel_running"
+    )
+    predicate = case["expected"]["predicate"]
+    assert predicate == {
+        "kind": "protocol_field",
+        "path": "/jobs/0/status",
+        "value": "claimed",
+    }
+
+
+def test_summary_queued_reads_the_run_admission_response(atlas: dict) -> None:
+    case = next(
+        case for case in _summary_cases(atlas)
+        if case["id"] == "case.j6.run_summary.intel_queued"
+    )
+    trigger = case["trigger"]
+    predicate = case["expected"]["predicate"]
+    assert trigger.get("trigger_route") == {
+        "method": "POST",
+        "path": "/api/meetings/{meeting_id}/intelligence/run",
+    }
+    assert predicate["kind"] == "protocol_status"
+    assert predicate["method"] == "POST"
+    assert predicate["path"] == "/api/meetings/{meeting_id}/intelligence/run"
+    assert predicate["status"] == 200
+    assert predicate["body_contains"] == '"state": "queued"'
+    assert predicate["body_fields"] == {"jobId": {"nonempty": True}}
+
+
+def test_summary_preconditions_do_not_require_future_or_consumed_run_state(atlas: dict) -> None:
+    for case in _summary_cases(atlas):
+        setup_run = any(
+            step.get("action") == "click"
+            and "arrival-run-intel" in step.get("selector", "")
+            for step in case["setup"]
+        )
+        checks = _checks(case)
+        if setup_run:
+            assert not any(
+                entry.get("observe_at") == "[data-testid=arrival-run-intel]"
+                for entry in checks
+            ), case["id"]
+        elif "arrival-run-intel" in case["trigger"].get("selector", ""):
+            assert not any(
+                entry.get("observe_at") == "protocol: GET /api/intel/jobs"
+                for entry in checks
+            ), case["id"]
+
+
+def test_summary_state_reads_do_not_require_a_new_row_after_setup_run(atlas: dict) -> None:
+    for suffix in ("intel_running", "intel_ready"):
+        case = next(c for c in _summary_cases(atlas)
+                    if c["id"] == f"case.j6.run_summary.{suffix}")
+        assert case["expected"]["predicate"]["kind"] == "protocol_field"
+        assert "min_new" not in case["expected"]["predicate"]
+
+
+def test_summary_manual_retry_requires_failed_producer_and_current_route(atlas: dict) -> None:
+    case = next(c for c in _summary_cases(atlas)
+                if c["id"] == "case.j6.run_summary.intel_retry")
+    assert any(entry.get("predicate", {}).get("path") == "/intel_job/status"
+               and entry["predicate"].get("value") == "failed"
+               for entry in _checks(case))
+    assert any(step.get("method") == "GET"
+               and step.get("capture_path") == "/planned_route/selection_hash"
+               and step.get("capture_as") == "selection_hash"
+               for step in case["setup"])
+    assert case["trigger"]["body"] == {"expected_selection_hash": "{selection_hash}"}
+
+
+def test_summary_planned_host_cases_check_real_text_and_control_ownership(atlas: dict) -> None:
+    for suffix in ("route_disclosed", "planned_host_disclosed"):
+        case = next(c for c in _summary_cases(atlas)
+                    if c["id"] == f"case.j5.meeting_open.{suffix}")
+        assert case["expected"]["predicate"] == {
+            "kind": "text_contains", "value": "192.168.1.43 · LAN",
+        }
+        assert any(entry.get("observe_at") == "[data-testid=arrival-run-intel]"
+                   and entry.get("predicate", {}).get("kind") == "hit_target"
+                   and entry["predicate"].get("min_height_by_viewport", {}).get("393", 0) >= 44
+                   for entry in _checks(case))
+
+
+def test_summary_failure_cases_retain_reply_at_the_provider_boundary(atlas: dict) -> None:
+    """Failure replay is a tree artifact and the rig's real provider seam."""
+    expected = "tests/fixtures/philo3_summary_failure_reply.json"
+    problems: list[str] = []
+    for case in atlas["cases"]:
+        if case["id"] not in {
+            "case.j6.run_summary.intel_failed",
+            "case.j6.run_summary.intel_retry",
+            "case.j6.run_summary.retrying",
+        }:
+            continue
+        boundaries = [step for step in _acts(case) if step.get("kind") == "boundary"]
+        replies = [step for step in boundaries if step.get("substitute") == "engine_reply"]
+        if len(boundaries) != 1 or len(replies) != 1:
+            problems.append(f"{case['id']}: expected one engine_reply boundary")
+            continue
+        boundary = replies[0]
+        if (boundary.get("reply") != expected or "reply_path" in boundary
+                or boundary.get("adapter") != "labelled-substitution"):
+            problems.append(
+                f"{case['id']}: boundary must use reply={expected!r} and "
+                "adapter='labelled-substitution'"
+            )
+    assert not problems, problems
+
+
+def test_summary_imports_wait_for_real_completion_and_retain_title(atlas: dict) -> None:
+    """A 202 upload is only the start of the real ASR import."""
+    expected = "tests/fixtures/philo3_architect_meeting.wav"
+    problems: list[str] = []
+    for case in _summary_cases(atlas):
+        for step in _acts(case):
+            if step.get("kind") != "fixture" or step.get("route", {}).get("path") != "/api/meetings/import":
+                continue
+            wait = step.get("wait_for") or {}
+            fields = wait.get("fields") or {}
+            if step.get("path") != expected:
+                problems.append(f"{case['id']}: import does not use {expected}")
+            if step.get("expect_status") != 202:
+                problems.append(f"{case['id']}: import must require HTTP 202")
+            if wait.get("method") != "GET" or wait.get("path") != "/api/meetings/{meeting_id}":
+                problems.append(f"{case['id']}: import has no meeting-detail completion wait")
+            if fields.get("/transcription_status") != "complete":
+                problems.append(f"{case['id']}: completion wait does not require transcription_status=complete")
+            if not isinstance(fields.get("/duration"), dict) or not fields["/duration"].get("positive"):
+                problems.append(f"{case['id']}: completion wait does not require positive duration")
+            if not isinstance(fields.get("/segments"), dict) or fields["/segments"].get("min_items") != 1:
+                problems.append(f"{case['id']}: completion wait does not require transcript segments")
+            if (step.get("form") or {}).get("title") != "Architecture boundary review":
+                problems.append(f"{case['id']}: import does not carry the readable meeting title")
+    assert not problems, problems
+
+
+def test_summary_arrival_observations_name_the_rendered_states(atlas: dict) -> None:
+    """Rendered proof reads Arrival's summary/error surfaces, not old wrappers."""
+    wanted = {
+        "case.j6.run_summary.summary_text": ("[data-testid=meeting-summary-text]", "text_nonempty"),
+        "case.j6.run_summary.intel_failed": ("[data-testid=arrival-summary-status]", "text_equals"),
+        "case.j7.arrival_load.reload_persisted": ("[data-testid=meeting-summary-text]", "text_equals"),
+    }
+    problems: list[str] = []
+    for case_id, (selector, kind) in wanted.items():
+        case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+        expected = case["expected"]
+        predicate = expected.get("predicate") or {}
+        if expected.get("observe_at") != selector or predicate.get("kind") != kind:
+            problems.append(f"{case_id}: expected {kind} at {selector}")
+        words = expected.get("words", "")
+        if "HOLDSPEAK-SYNTH-1" in words or ".desk-window .surface-material" in words:
+            problems.append(f"{case_id}: retains the old summary marker or wrapper")
+    failed = next(case for case in _summary_cases(atlas) if case["id"] == "case.j6.run_summary.intel_failed")
+    if not failed["expected"]["predicate"].get("value", "").startswith("FAILED\nLAST ATTEMPT · "):
+        problems.append("case.j6.run_summary.intel_failed: a retry cause is not terminal failure")
+    assert not problems, problems
+
+
+def test_summary_models_window_closes_before_arrival_steps(atlas: dict) -> None:
+    problems: list[str] = []
+    for case in _summary_cases(atlas):
+        setup = case.get("setup", [])
+        for index, step in enumerate(setup):
+            if (step.get("kind") != "ui" or step.get("action") != "click"
+                    or step.get("selector") != "[data-testid=concierge-add-submit]"):
+                continue
+            following = setup[index + 1] if index + 1 < len(setup) else {}
+            if not (following.get("kind") == "ui"
+                    and following.get("action") == "wait_for"
+                    and following.get("state") == "hidden"
+                    and following.get("selector") == "#surface-concierge .desk-window-title"):
+                problems.append(f"{case['id']}: Models is not closed before the next Arrival step")
+    assert not problems, problems
+
+
+def test_summary_restart_proof_retains_summary_receipt_and_identity(atlas: dict) -> None:
+    case = next(case for case in _summary_cases(atlas) if case["id"] == "case.j7.hub_restart.intel_retained")
+    trigger = case["trigger"]
+    predicate = case["expected"]["predicate"]
+    assert trigger.get("kind") == "cli" and trigger.get("action") == "restart_hub"
+    assert trigger.get("capture_as") == "before_summary"
+    assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
+    assert predicate.get("value") == "{before_summary}"
+    assert predicate.get("nonempty") is True
+    assert predicate.get("restart_required") is True
+    assert "/api/intel/summary" not in case["expected"].get("words", "")
+
+
+def test_summary_microphone_cases_keep_the_lawful_blocked_boundary(atlas: dict) -> None:
+    case = next(case for case in _summary_cases(atlas) if case["id"] == "case.j4.record_start.capture_recording")
+    boundaries = [step for step in case["setup"] if step.get("kind") == "boundary"]
+    assert boundaries and boundaries[0].get("substitute") == "browser_audio_device"
+    assert not [step for step in _acts(case) if step.get("kind") == "fixture"]
+    record_only = next(
+        case for case in _summary_cases(atlas)
+        if case["id"] == "case.j4.record_only.no_speech_head"
+    )
+    record_boundaries = [step for step in _acts(record_only) if step.get("kind") == "boundary"]
+    assert record_boundaries and record_boundaries[0].get("substitute") == "browser_audio_device"
+    assert record_boundaries[0].get("reply_path") == "tests/fixtures/philo3_architect_meeting.wav"
+
+
+def test_summary_cases_do_not_claim_the_old_pangram(atlas: dict) -> None:
+    assert not any(
+        token in json.dumps(case)
+        for case in _summary_cases(atlas)
+        for token in ("HOLDSPEAK-SYNTH-1", "core_path_smoke_16k.wav")
+    )
+
+
+def test_summary_stop_cases_require_a_real_active_meeting(atlas: dict) -> None:
+    """A fresh idle hub cannot turn POST /api/meeting/stop into capture proof."""
+    for case_id in (
+        "case.j4.meeting_stop.capture_finalized",
+        "case.j4.meeting_stop.transcription_absent",
+    ):
+        case = next(case for case in _summary_cases(atlas) if case["id"] == case_id)
+        checks = [
+            step for step in case.get("preconditions", [])
+            if isinstance(step, dict) and step.get("kind") == "check"
+        ]
+        assert any(
+            step.get("observe_at") == "protocol: GET /api/runtime/status"
+            and step.get("predicate", {}).get("kind") == "protocol_field"
+            and step.get("predicate", {}).get("path") == "/meeting_active"
+            and step.get("predicate", {}).get("value") is True
+            for step in checks
+        ), case_id
+
+
 @pytest.fixture(scope="module")
 def graph_case_schema() -> dict:
     return json.loads(GRAPH_SCHEMA_PATH.read_text())
@@ -1152,3 +1441,46 @@ def test_j10_retention_is_proven_after_another_reload(atlas: dict) -> None:
     ok, why = rig.check_predicate(rp, {}, latest(None))
     assert not ok, f"a null latest (the brief lost) passed: {why}"
     assert not rig.check_predicate(rp, {}, latest({"id": "brief-other"}))[0]
+
+
+def test_summary_failure_settings_reach_the_real_drainer_after_restart(atlas: dict) -> None:
+    """The real conductor captures retry settings at startup, not each tick."""
+    ids = {"case.j6.run_summary.intel_failed", "case.j6.run_summary.intel_retry",
+           "case.j6.run_summary.retrying"}
+    for case in atlas["cases"]:
+        if case["id"] not in ids:
+            continue
+        setup = case["setup"]
+        settings = next(i for i, s in enumerate(setup) if s.get("path") == "/api/settings")
+        restart = next((i for i, s in enumerate(setup) if s.get("action") == "restart_hub"), -1)
+        assert restart > settings, case["id"]
+        run = next((i for i, s in enumerate(setup) if s.get("action") == "click"
+                    and s.get("selector") == "[data-testid=arrival-run-intel]"), len(setup))
+        assert restart < run, case["id"]
+
+
+def test_summary_no_engine_absence_is_read_inside_the_existing_meetings_scope(atlas: dict) -> None:
+    case = next(c for c in atlas['cases'] if c['id'] == 'case.j5.meeting_open.no_engine_no_verb')
+    assert case['expected']['observe_at'] == '[data-testid=arrival-meetings]'
+    assert case['expected']['predicate'] == {'kind': 'text_absent', 'value': 'Run summary'}
+
+
+def test_summary_reload_reads_the_same_already_persisted_summary(atlas: dict) -> None:
+    case = next(c for c in atlas['cases'] if c['id'] == 'case.j7.arrival_load.reload_persisted')
+    setup = case['setup']
+    run = next(i for i,s in enumerate(setup) if s.get('action') == 'click' and s.get('selector') == '[data-testid=arrival-run-intel]')
+    waits = [i for i,s in enumerate(setup) if s.get('action') == 'wait_for' and s.get('selector') == '[data-testid=meeting-summary-text]']
+    assert waits and waits[0] > run
+    capture = next(s for s in setup if s.get('capture_as') == 'persisted_summary')
+    assert capture['path'] == '/api/meetings/{meeting_id}'
+    assert capture['capture_path'] == '/intel/summary'
+    assert case['expected']['predicate'] == {'kind':'text_equals', 'value':'{persisted_summary}'}
+@pytest.mark.parametrize("case_id,field", [
+    ("case.j6.run_summary.intel_ready", "/intel_job/status"),
+    ("case.j6.run_summary.host_named", "/run_receipt/attempts/0/host"),
+])
+def test_summary_terminal_cases_read_durable_meeting_not_active_queue(atlas, case_id, field):
+    """Succeeded jobs leave the active queue; the durable meeting owns completion."""
+    case = next(case for case in atlas["cases"] if case["id"] == case_id)
+    assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
+    assert case["expected"]["predicate"]["path"] == field

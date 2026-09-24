@@ -711,24 +711,25 @@ CLAIMS: list[Claim] = [
     # ── PHILO-2-07: the council's three doc-drift lines ──────────────
     Claim(
         doc="web/src/desk/useDeskChangedRefresh.ts",
-        anchor="One meeting write announces itself too: the import worker",
+        anchor="Meeting changes announce themselves from the import worker",
         sentence=(
-            "One meeting write announces itself too: the import worker emits a "
-            "`meeting` frame when an import ends, success or failure "
-            "(`MeetingService._run_import_job`). Other meeting writes, the summary "
-            "queue, project rooms, thoughts and sync emit no frame; their surfaces "
+            "Meeting changes announce themselves from the import worker when an "
+            "import ends, success or failure (`MeetingService._run_import_job`), "
+            "and from the summary queue after durable running and settled "
+            "transitions (`_notify_queue_meeting_changed`). Other meeting writes, "
+            "project rooms, thoughts and sync emit no frame; their surfaces "
             "carry their own signals."
         ),
         predicate=lambda: desk_changed_comment_holds(),
         state="holds",
         truth=(
-            "the only literal-kind 'meeting' desk_changed call under holdspeak/ is "
-            "in MeetingService._run_import_job (meeting_service.py:289); no literal "
-            "thought/project/room/sync kind exists; intel_queue.py, "
-            "intel_queue_conductor.py and meeting_intel_service.py never announce "
-            "(fnd.docs.desk_changed_comment_drift, corrected 2026-09-22)"
+            "literal-kind 'meeting' desk_changed calls under holdspeak/ are in "
+            "MeetingService._run_import_job and _notify_queue_meeting_changed; "
+            "real-producer queue fences verify durable running and settled "
+            "publication. No literal thought/project/room/sync kind exists "
+            "(PHILO-3-02, updated 2026-09-23)"
         ),
-        story="PHILO-2-07",
+        story="PHILO-3-02",
     ),
     Claim(
         doc="docs/internal/philo/data/voice.json",
@@ -937,19 +938,13 @@ def desk_changed_literal_kinds() -> dict[str, set[tuple[str, str]]]:
 def desk_changed_comment_holds() -> bool:
     """The corrected useDeskChangedRefresh comment, against the real emitters."""
     kinds = desk_changed_literal_kinds()
-    if kinds.get("meeting") != {("holdspeak/services/meeting_service.py", "_run_import_job")}:
+    if kinds.get("meeting") != {
+        ("holdspeak/services/meeting_service.py", "_run_import_job"),
+        ("holdspeak/intel_queue.py", "_notify_queue_meeting_changed"),
+    }:
         return False
     if set(kinds) & {"thought", "thoughts", "project", "project_room", "room", "sync"}:
         return False
-    # "the summary queue ... emit no frame": neither the queue, its conductor
-    # nor the meeting-intelligence service announces a desk change.
-    for rel in (
-        "holdspeak/intel_queue.py",
-        "holdspeak/intel_queue_conductor.py",
-        "holdspeak/services/meeting_intel_service.py",
-    ):
-        if "desk_changed" in _read(rel):
-            return False
     return True
 
 

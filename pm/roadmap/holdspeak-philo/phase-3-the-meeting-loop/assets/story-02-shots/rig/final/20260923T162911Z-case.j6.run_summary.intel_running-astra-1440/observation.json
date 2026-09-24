@@ -1,0 +1,832 @@
+{
+  "id": "obs-20260923T162911Z-case.j6.run_summary.intel_running-astra-1440",
+  "run_id": "20260923T162911Z-case.j6.run_summary.intel_running-astra-1440",
+  "case_id": "case.j6.run_summary.intel_running",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.timer.intel_drainer"
+  ],
+  "state_id": "state.meetings.intel.running",
+  "provenance": {
+    "revision": "aac7544eae3c1f30a5928c95825a8cb654c582cc",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f62b3024c816370eb1a72e8660eb4d2bd94330505795cdd75f442e948e2b16a3",
+      "assets": [
+        "index-CT6RwACn.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:58717",
+      "port": 58717,
+      "pid": 84692,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7e2hhncp",
+      "scheduler_thread": true
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7e2hhncp/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T16:29:11.827997+00:00",
+      "mechanism": "no clock is moved: the run polls GET /api/intel/jobs (<= the case's completion_bound_s) for the REAL drainer to move the job",
+      "scheduler_thread": true,
+      "clock": "clock.intel_drainer",
+      "adapter": "scheduler-wait",
+      "tick_seconds": 60,
+      "max_wait_s": 135.0,
+      "waited_s": 0.0,
+      "polls": 0,
+      "conductor_ticks_waited": 0,
+      "observe_at_changed": false,
+      "state_satisfied_at_entry": true,
+      "machine_clock_moved": false
+    },
+    "engine_mode": "real",
+    "engine_identity": {
+      "endpoint": "http://192.168.1.43:8080",
+      "models_url": "http://192.168.1.43:8080/v1/models",
+      "expected_model_prefix": "Qwen3.6-35B",
+      "status": 200,
+      "models": [
+        {
+          "id": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "owned_by": "llamacpp"
+        }
+      ],
+      "expected_model_seen": true
+    },
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "6bf463fe5d447fcfa7326beb6c58f87f53c2bb18fc128f00e9cbd616d2f7151e",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer",
+        "the heartbeat conductor loop"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "aaeb87be",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "aaeb87be"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/aaeb87be",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 5,
+        "elapsed_s": 2.062,
+        "payload": {
+          "id": "aaeb87be",
+          "started_at": "2026-09-23T10:29:18.426103",
+          "ended_at": "2026-09-23T10:29:53.101353",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Shab will add the meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat meat",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 298,
+          "sync_modified_at": "2026-09-23T10:29:20.481358",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j6.run_summary.intel_queued reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the real LAN engine reachable",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "aaeb87be"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "meeting_id": "aaeb87be"
+  },
+  "trigger": {
+    "kind": "clock",
+    "adapter": "scheduler-wait",
+    "clock": "clock.intel_drainer",
+    "waited_s": 0.0,
+    "polls": 0,
+    "state_satisfied_at_entry": true,
+    "conductor_ticks_waited": 0,
+    "observe_at_changed": false,
+    "done": true
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "b155293234ad7539d42998b7b24b55366fd67cde962ef852757dfc30ab9b7f15",
+      "after": "7ccd92b76f13d766df021033d752db4c7b62e5c48ea0dad4a31018286a007643"
+    },
+    "document_text_len": {
+      "before": 2050,
+      "after": 2051
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:58717/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f",
+      "rows": [
+        {
+          "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+          "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+          "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+          "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+          "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+          "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+          "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+          "lifecycle_posture": "claimed",
+          "meeting_id": "aaeb87be",
+          "status": "claimed",
+          "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+          "requested_at": "2026-09-23T10:29:21.991646",
+          "updated_at": "2026-09-23T10:29:22.108045",
+          "attempts": 1,
+          "last_error": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                "host": "192.168.1.43",
+                "ordinal": 1,
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+            "status": "ready"
+          },
+          "run_receipt": null,
+          "meeting_title": "Architecture boundary review",
+          "started_at": "2026-09-23T10:29:18.426103",
+          "intel_status_detail": "Claimed deferred meeting intelligence.",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "retries_remaining": 5,
+          "retry_max_attempts": 6,
+          "retry_history": [
+            {
+              "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+              "event_kind": "claim",
+              "attempt": 1,
+              "outcome": "claimed",
+              "error": null,
+              "retry_at": null,
+              "created_at": "2026-09-23T10:29:21.991646"
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "jobs": [
+          {
+            "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+            "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+            "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+            "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+            "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+            "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+            "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+            "lifecycle_posture": "claimed",
+            "meeting_id": "aaeb87be",
+            "status": "claimed",
+            "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+            "requested_at": "2026-09-23T10:29:21.991646",
+            "updated_at": "2026-09-23T10:29:22.108045",
+            "attempts": 1,
+            "last_error": null,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                  "host": "192.168.1.43",
+                  "ordinal": 1,
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+              "status": "ready"
+            },
+            "run_receipt": null,
+            "meeting_title": "Architecture boundary review",
+            "started_at": "2026-09-23T10:29:18.426103",
+            "intel_status_detail": "Claimed deferred meeting intelligence.",
+            "retry_scheduled": false,
+            "next_retry_at": null,
+            "retries_remaining": 5,
+            "retry_max_attempts": 6,
+            "retry_history": [
+              {
+                "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+                "event_kind": "claim",
+                "attempt": 1,
+                "outcome": "claimed",
+                "error": null,
+                "retry_at": null,
+                "created_at": "2026-09-23T10:29:21.991646"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f"
+    },
+    "document_text_sha256": "b155293234ad7539d42998b7b24b55366fd67cde962ef852757dfc30ab9b7f15",
+    "document_text_len": 2050,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:29:22.258640+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:58717/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f",
+      "rows": [
+        {
+          "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+          "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+          "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+          "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+          "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+          "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+          "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+          "lifecycle_posture": "claimed",
+          "meeting_id": "aaeb87be",
+          "status": "claimed",
+          "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+          "requested_at": "2026-09-23T10:29:21.991646",
+          "updated_at": "2026-09-23T10:29:22.108045",
+          "attempts": 1,
+          "last_error": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                "host": "192.168.1.43",
+                "ordinal": 1,
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+            "status": "ready"
+          },
+          "run_receipt": null,
+          "meeting_title": "Architecture boundary review",
+          "started_at": "2026-09-23T10:29:18.426103",
+          "intel_status_detail": "Claimed deferred meeting intelligence.",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "retries_remaining": 5,
+          "retry_max_attempts": 6,
+          "retry_history": [
+            {
+              "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+              "event_kind": "claim",
+              "attempt": 1,
+              "outcome": "claimed",
+              "error": null,
+              "retry_at": null,
+              "created_at": "2026-09-23T10:29:21.991646"
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "jobs": [
+          {
+            "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+            "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+            "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+            "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+            "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+            "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+            "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+            "lifecycle_posture": "claimed",
+            "meeting_id": "aaeb87be",
+            "status": "claimed",
+            "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+            "requested_at": "2026-09-23T10:29:21.991646",
+            "updated_at": "2026-09-23T10:29:22.108045",
+            "attempts": 1,
+            "last_error": null,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                  "host": "192.168.1.43",
+                  "ordinal": 1,
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+              "status": "ready"
+            },
+            "run_receipt": null,
+            "meeting_title": "Architecture boundary review",
+            "started_at": "2026-09-23T10:29:18.426103",
+            "intel_status_detail": "Claimed deferred meeting intelligence.",
+            "retry_scheduled": false,
+            "next_retry_at": null,
+            "retries_remaining": 5,
+            "retry_max_attempts": 6,
+            "retry_history": [
+              {
+                "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+                "event_kind": "claim",
+                "attempt": 1,
+                "outcome": "claimed",
+                "error": null,
+                "retry_at": null,
+                "created_at": "2026-09-23T10:29:21.991646"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f"
+    },
+    "document_text_sha256": "7ccd92b76f13d766df021033d752db4c7b62e5c48ea0dad4a31018286a007643",
+    "document_text_len": 2051,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:29:23.438190+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:58717/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f",
+      "rows": [
+        {
+          "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+          "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+          "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+          "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+          "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+          "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+          "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+          "lifecycle_posture": "claimed",
+          "meeting_id": "aaeb87be",
+          "status": "claimed",
+          "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+          "requested_at": "2026-09-23T10:29:21.991646",
+          "updated_at": "2026-09-23T10:29:22.108045",
+          "attempts": 1,
+          "last_error": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                "host": "192.168.1.43",
+                "ordinal": 1,
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+            "status": "ready"
+          },
+          "run_receipt": null,
+          "meeting_title": "Architecture boundary review",
+          "started_at": "2026-09-23T10:29:18.426103",
+          "intel_status_detail": "Claimed deferred meeting intelligence.",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "retries_remaining": 5,
+          "retry_max_attempts": 6,
+          "retry_history": [
+            {
+              "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+              "event_kind": "claim",
+              "attempt": 1,
+              "outcome": "claimed",
+              "error": null,
+              "retry_at": null,
+              "created_at": "2026-09-23T10:29:21.991646"
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "jobs": [
+          {
+            "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+            "origin_job_id": "ij_61f47e296d85203a2fd06c616ed6c336d23bbb6f1ac62da204920412571b2271",
+            "work_descriptor_sha256": "sha256:1671ea95cd3e312ddf142672ed7151b1b24e80208ff539ed4ae602543d3a9bbd",
+            "claim_id": "ic_dda500e9b9805f6e5e8db16a262f04460e2c0eb36c26646e51c92f7309ac4927",
+            "parent_operation_id": "op_ea52c56c6b47416db74313153c7e120e",
+            "bundle_id": "iprb_8bb95730e4d70c90c1519e32d79177c98938dc6de2f31b69aacf5f5edcb9fce5",
+            "bundle_sha256": "sha256:74bc196e892b68975909c607a9d84bbb7480d71263db02d61bccc8778f3b0a27",
+            "lifecycle_posture": "claimed",
+            "meeting_id": "aaeb87be",
+            "status": "claimed",
+            "transcript_hash": "c6680aaa60b00aaac666c7ef9bcbad54735a9d84b421eec2d0de5f0e6ed1a057",
+            "requested_at": "2026-09-23T10:29:21.991646",
+            "updated_at": "2026-09-23T10:29:22.108045",
+            "attempts": 1,
+            "last_error": null,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                  "host": "192.168.1.43",
+                  "ordinal": 1,
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:16d19308f1bbd5ddf3ba817bc1366feb913db59d03de968cdb0d8c6be950cd54",
+              "status": "ready"
+            },
+            "run_receipt": null,
+            "meeting_title": "Architecture boundary review",
+            "started_at": "2026-09-23T10:29:18.426103",
+            "intel_status_detail": "Claimed deferred meeting intelligence.",
+            "retry_scheduled": false,
+            "next_retry_at": null,
+            "retries_remaining": 5,
+            "retry_max_attempts": 6,
+            "retry_history": [
+              {
+                "job_id": "ij_950bae57785cf0bb522109dffca474c1ea70ec48d8c1039b7c3662dd60137726",
+                "event_kind": "claim",
+                "attempt": 1,
+                "outcome": "claimed",
+                "error": null,
+                "retry_at": null,
+                "created_at": "2026-09-23T10:29:21.991646"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "9e06449b361cdcb780e4af1aec2e5ab33bd88d8f769f18ca59ae5ba2c275778f"
+    },
+    "document_text_sha256": "7ccd92b76f13d766df021033d752db4c7b62e5c48ea0dad4a31018286a007643",
+    "document_text_len": 2051,
+    "replay_identity": null,
+    "at_utc": "2026-09-23T16:29:23.308438+00:00",
+    "predicate_satisfied": true,
+    "reading": "/jobs/0/status equals the declared value",
+    "elapsed_s": 0.918
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/jobs/0/status equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.047,
+    "first_satisfied_at_s": 0.918,
+    "completion_bound_s": 180.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: /jobs/0/status equals the declared value"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T162911Z-case.j6.run_summary.intel_running-astra-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/final/20260923T162911Z-case.j6.run_summary.intel_running-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7e2hhncp/.local/share/holdspeak/holdspeak.db",
+    "SCHEDULER heartbeat conductor thread started (HeartbeatMixin._heartbeat_loop, TICK_SECONDS=60)",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\", \"the heartbeat conductor loop\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\"]}",
+    "HUB_READY http://127.0.0.1:58717",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:00<00:00, 18355.82it/s]"
+  ]
+}

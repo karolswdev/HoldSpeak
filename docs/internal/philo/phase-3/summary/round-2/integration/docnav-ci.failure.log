@@ -1,0 +1,37 @@
+Retained command/failure excerpt from https://github.com/karolswdev/HoldSpeak/actions/runs/35936854087/job/107435694324
+PR merge ref 03ed1fa318c8447cd46aef337eda1592cbecc37a: branch4f5fd691 into main497d90f3.
+
+2026-09-24T00:06:54.1525878Z ##[group]Run python -m unittest discover -s tests/unit -p test_docs_navigation.py
+2026-09-24T00:06:54.1526745Z [36;1mpython -m unittest discover -s tests/unit -p test_docs_navigation.py[0m
+2026-09-24T00:06:54.1527415Z [36;1mpython scripts/check_docs.py[0m
+2026-09-24T00:06:54.1528512Z [36;1mpython scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md[0m
+2026-09-24T00:06:54.1529708Z [36;1mpython scripts/philo_repository_census.py --check[0m
+2026-09-24T00:06:54.1530259Z [36;1mpython scripts/philo_api_reference.py --check[0m
+2026-09-24T00:06:54.1530726Z [36;1mpython scripts/philo_boundary_census.py --check[0m
+2026-09-24T00:06:54.1531303Z [36;1mpython scripts/philo_doctor_reference.py --check[0m
+2026-09-24T00:06:54.1531804Z [36;1mpython scripts/philo_config_reference.py --check[0m
+2026-09-24T00:06:54.1533067Z [36;1mpython scripts/philo_graph_reference.py --check[0m
+2026-09-24T00:06:54.1533584Z [36;1mpython scripts/validate_architecture.py[0m
+2026-09-24T00:06:54.1534095Z [36;1mpython scripts/generate_capability_docs.py --check[0m
+2026-09-24T00:06:54.1534630Z [36;1mpython scripts/check_doc_coverage.py --check[0m
+2026-09-24T00:06:54.2456751Z shell: /usr/bin/bash -e {0}
+2026-09-24T00:06:54.2457125Z env:
+2026-09-24T00:06:54.2457466Z   UV_SYSTEM_PYTHON: 1
+2026-09-24T00:06:54.2457775Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-24T00:06:54.2458180Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-24T00:06:54.2458578Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-24T00:06:54.2458918Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-24T00:06:54.2459314Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-24T00:06:54.2459698Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-24T00:06:54.2460012Z ##[endgroup]
+2026-09-24T00:06:57.3448085Z .........
+2026-09-24T00:06:57.3448543Z ----------------------------------------------------------------------
+2026-09-24T00:06:57.3449150Z Ran 9 tests in 0.009s
+2026-09-24T00:06:57.3449320Z 
+2026-09-24T00:06:57.3449405Z OK
+2026-09-24T00:06:57.4473828Z Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+2026-09-24T00:06:57.4984733Z Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
+2026-09-24T00:06:58.0178485Z Repository census: 5 outputs verified.
+2026-09-24T00:07:01.5853434Z API reference checked
+2026-09-24T00:07:05.2034720Z boundary census drift
+2026-09-24T00:07:05.2097185Z ##[error]Process completed with exit code 1.

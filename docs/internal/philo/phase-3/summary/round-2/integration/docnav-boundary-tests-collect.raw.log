@@ -1,0 +1,13 @@
+tests/unit/test_philo_census.py::test_raw_request_is_not_fabricated_schema
+tests/unit/test_philo_census.py::test_declared_method_and_errors_retained
+tests/unit/test_philo_census.py::test_websocket_has_explicit_transport
+tests/unit/test_philo_census.py::test_import_only_file_does_not_invent_handler
+tests/unit/test_philo_census.py::test_doctor_census_records_repair_and_condition
+tests/unit/test_philo_census.py::test_candidate_patterns_do_not_claim_proof
+tests/unit/test_philo_census.py::test_repository_categories_separate_runtime_and_evidence
+tests/unit/test_philo_census.py::test_workspace_reference_rejects_invalid_rect_and_version
+tests/unit/test_philo_census.py::test_config_census_keeps_default_expression_without_executing_it
+tests/unit/test_philo_census.py::test_api_candidates_are_independent_of_directory_enumeration
+
+10 tests collected in 0.04s
+BOUNDARY_TEST_COLLECT_EXIT=0

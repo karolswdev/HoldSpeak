@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+:root { --bg:#0e0f13; --panel:#1c1f27; --line:#2a2e3e; --text:#f2f3f5; --muted:#9ba2b0; --faint:#767e8d; --ember:#a86e4a; --ember-ink:#8a5a3d; --green:#34d399; --red:#f87171; --amber:#fbbf24; }
+* { box-sizing:border-box; }
+html, body { margin:0; background:var(--bg); color:var(--text); }
+body { font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+button { border-radius:0; cursor:pointer; font-family:"JetBrains Mono",SFMono-Regular,Consolas,monospace; font-weight:600; }
+.desk { width:1440px; height:900px; background:var(--bg); display:flex; flex-direction:column; overflow:hidden; }
+.menu { height:28px; padding:0 16px; display:flex; align-items:center; gap:16px; background:var(--panel); border-bottom:1px solid var(--line); flex-shrink:0; }
+.brand { display:flex; align-items:center; gap:12px; font:700 13px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; }
+.brand span:not(:first-child) { color:var(--muted); font-weight:400; }
+.reach { display:flex; align-items:center; gap:6px; margin-left:12px; font:12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
+.reach i { width:8px; height:8px; background:var(--green); border-radius:1px; }
+.menu-spacer { flex:1; }
+.menu-right { display:flex; align-items:center; gap:16px; font:12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; color:var(--muted); }
+.board-note { color:var(--ember); letter-spacing:.04em; font-size:12px; }
+.content { flex:1; display:flex; justify-content:center; padding:0 40px; overflow-y:auto; }
+.column { width:100%; max-width:900px; display:flex; flex-direction:column; padding:34px 0 16px; }
+.head { display:flex; flex-direction:column; gap:7px; margin-bottom:24px; }
+.headline { font:650 26px/1.15 "Space Grotesk",Inter,sans-serif; color:var(--ember); }
+.headline.danger { color:var(--red); }
+.next { color:var(--muted); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase; }
+.section { display:flex; flex-direction:column; margin-bottom:20px; }
+.section-label { color:var(--faint); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; }
+.section-label b { color:var(--text); font-weight:600; }
+.row { display:flex; align-items:center; gap:10px; min-width:0; padding:10px 0; border-top:1px solid var(--line); }
+.row.attention { background:rgba(168,110,74,.08); }
+.time { flex:0 0 76px; color:var(--muted); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+.primary { flex:1 1 240px; min-width:0; color:var(--text); font:600 15px/1.35 Inter,system-ui,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.facts { display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex:0 0 auto; }
+.token, .chip { display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid var(--line); background:rgba(0,0,0,.28); color:var(--muted); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
+.chip { gap:5px; padding:0 8px; letter-spacing:.08em; }
+.chip i { width:7px; height:7px; border-radius:50%; background:currentColor; }
+.chip.ran { color:var(--green); }
+.chip.retry { color:var(--amber); }
+.chip.failed { color:var(--red); }
+.chip.off { color:var(--muted); }
+.route { color:var(--ember); }
+.cause { color:var(--red); max-width:240px; overflow:hidden; text-overflow:ellipsis; }
+.actions { display:flex; align-items:center; gap:6px; flex:0 0 auto; margin-left:auto; }
+.btn.primary { flex:0 0 auto; min-width:0; }
+.btn { min-height:28px; padding:3px 10px; border:1px solid transparent; background:transparent; color:var(--text); font-size:12px; line-height:1; }
+.btn.primary { flex:0 0 auto; min-width:0; border-color:var(--ember-ink); background:var(--ember-ink); color:var(--text); }
+.btn.ghost { border-color:var(--line); background:var(--panel); }
+.open { display:flex; flex-direction:column; gap:10px; padding:12px 0 4px 86px; }
+.well { padding:10px 12px; background:var(--panel); border:1px solid var(--line); box-shadow:inset 1px 1px 0 rgba(0,0,0,.30), inset -1px -1px 0 rgba(255,255,255,.07); }
+.well-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; color:var(--faint); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase; }
+.well-head .receipt { color:var(--ember); font-size:12px; }
+.summary { color:var(--text); font:13px/1.55 Inter,system-ui,sans-serif; max-width:720px; }
+.summary-note { margin-top:7px; color:var(--faint); font:600 12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.05em; text-transform:uppercase; }
+.transcript { display:flex; flex-direction:column; gap:7px; }
+.source-text { margin:0; color:var(--text); font:13px/1.55 Inter,system-ui,sans-serif; }
+.segment { display:flex; gap:9px; align-items:flex-start; }
+.speaker { flex:0 0 52px; color:var(--ember); font:600 12px/1.5 "JetBrains Mono",SFMono-Regular,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase; }
+.segment p { margin:0; color:var(--text); font:13px/1.5 Inter,system-ui,sans-serif; }
+.status-well { color:var(--muted); font:12px/1.5 Inter,system-ui,sans-serif; }
+.status-well strong { color:var(--red); font-weight:600; }
+.footer { margin-top:auto; display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel); border:1px solid var(--line); box-shadow:inset 1px 1px 0 rgba(0,0,0,.30), inset -1px -1px 0 rgba(255,255,255,.07); }
+.footer .btn { color:var(--muted); }
+.footer .btn.primary { color:var(--text); }
+.dock { height:40px; padding:0 20px; display:flex; align-items:center; justify-content:center; gap:24px; background:var(--panel); border-top:1px solid var(--line); flex-shrink:0; color:var(--muted); font:12px/1 "JetBrains Mono",SFMono-Regular,Consolas,monospace; }
+@media (max-width:600px) {
+  .desk { width:393px; height:852px; }
+  .menu { padding:0 10px; gap:8px; }
+  .brand { font-size:12px; }
+  .brand span:not(:first-child), .menu-right > span:not(.board-note) { display:none; }
+  .reach { margin-left:auto; font-size:12px; }
+  .menu-right { gap:0; }
+  .board-note { display:block !important; font-size:12px; }
+  .content { padding:0 14px; overflow-y:auto; }
+  .column { padding:18px 0 10px; }
+  .head { margin-bottom:18px; }
+  .headline { font-size:24px; }
+  .next { line-height:1.4; }
+  .section { margin-bottom:16px; }
+  .row { flex-wrap:wrap; align-items:center; gap:6px 8px; padding:9px 0; }
+  .time { flex:0 0 54px; font-size:12px; }
+  .primary { flex:1 1 calc(100% - 64px); font-size:14px; white-space:normal; overflow:visible; }
+  .facts { width:100%; padding-left:62px; gap:5px; }
+  .token, .chip { min-height:18px; padding:0 6px; font-size:12px; }
+  .cause { max-width:100%; white-space:normal; }
+  .actions { width:100%; justify-content:flex-end; padding-left:62px; margin-left:0; }
+  .open { padding:10px 0 3px 0; }
+  .well { padding:9px 10px; }
+  .well-head { font-size:12px; }
+  .summary, .source-text { font-size:12px; line-height:1.5; }
+  .speaker { flex-basis:44px; font-size:12px; }
+  .btn { min-height:44px; padding:6px 12px; }
+  .footer { flex-wrap:wrap; margin-top:auto; }
+  .dock { height:36px; padding:0 10px; gap:12px; flex-wrap:wrap; font-size:12px; }
+}
+</style></head><body>
+<x-dc>
+<div class="desk" data-state="failed">
+  <div class="menu"><div class="brand"><span>HoldSpeak</span><span>Desk</span><span>Object</span><span>Go</span><span>Window</span></div><div class="reach"><i></i><span>REACH ON</span></div><span class="menu-spacer"></span><div class="menu-right"><span class="board-note">DRAFT · UNCHECKED</span><span>Fri, Sep 22 · 09:36 AM</span></div></div>
+  <div class="content"><div class="column">
+    <div class="head"><div class="headline danger">1 meeting needs attention</div><div class="next">SUMMARY FAILED · ARCHITECTURE BOUNDARY REVIEW</div></div>
+    <div class="section"><div class="section-label">MEETINGS <b>1</b></div>
+      <div class="row attention">
+        <span class="time">SEP 22</span><span class="primary">Architecture boundary review</span>
+        <div class="facts"><span class="token">34.67525 S</span><span class="token">81 WORDS</span><span class="token cause">ATTEMPT 3/3 · REFUSED</span><span class="chip failed"><i></i>FAILED</span><span class="token route">192.168.1.43 · LAN</span></div>
+        <div class="actions"><button class="btn ghost">Retry</button></div>
+      </div>
+      <div class="open"><div class="well"><div class="well-head"><span>SUMMARY</span><span class="receipt">NOT SAVED</span></div><div class="status-well"><strong>FAILED.</strong> Attempt 3 of 3. The provider refused the recorded reply. The cause stays with this meeting.</div></div><div class="well"><div class="well-head"><span>TRANSCRIPT</span><span class="receipt">SAVED</span></div><div class="transcript"><p class="source-text">HoldSpeak synthetic architect meeting.<br><br>Decision one: use SQLite for the local meeting ledger. Owner: Maya Chen. Action: Maya Chen will write the migration plan by Friday.<br><br>Decision two: keep summary retrieval on the local desk after a hub restart. Owner: Leo Martinez. Action: Leo Martinez will test restart retrieval on Tuesday.<br><br>Decision three: use a recorded provider reply for isolated rig tests. Owner: Priya Shah. Action: Priya Shah will add the named failure fence before ship.<br><br>Marker: HoldSpeak synthetic architect three.</p></div></div></div>
+    </div>
+    <div class="footer"><button class="btn primary">Talk</button><button class="btn">Develop a thought</button><button class="btn">Record meeting</button></div>
+  </div></div>
+  <div class="dock"><span>Intelligence</span><span>Speak</span><span>Meetings</span><span>Rooms</span></div>
+</div>
+</x-dc>
+</body></html>

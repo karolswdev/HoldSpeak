@@ -1,0 +1,48 @@
+............F....................................................        [100%]
+=================================== FAILURES ===================================
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+    
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.briefs.absent: web/src/desk/chair/ChairHome.tsx:1080 no longer holds 'briefLoading' (line reads '<div data-testid="arrival-coverage">')
+E         state.briefs.loading: web/src/desk/chair/ChairHome.tsx:467 no longer holds 'setBriefLoading' (line reads 'fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you",')
+E         state.briefs.generating: web/src/desk/chair/ChairHome.tsx:1157 no longer holds 'generating' (line reads '<ThoughtsSection thoughts={thoughts} />')
+E         state.briefs.generation_failure: web/src/desk/chair/ChairHome.tsx:564 no longer holds 'reportWriteFailure' (line reads '// path was clear and the face still asked for an engine. So the Chair')
+E         state.briefs.populated: web/src/desk/chair/ChairHome.tsx:684 no longer holds 'briefItems' (line reads 'const muted: NeedsYouItem[] = [];')
+E         state.briefs.reload_persisted: web/src/desk/chair/ChairHome.tsx:1144 no longer holds 'arrival-brief' (line reads '<OrphanArmedRow')
+E         state.briefs.item.untouched: web/src/desk/chair/ChairHome.tsx:689 no longer holds 'briefShelf' (line reads 'return { unmutedItems: unmuted, mutedItems: muted };')
+E         state.meetings.transcription.present: web/src/desk/chair/ChairHome.tsx:1954 no longer holds 'hasTranscript' (line reads '}')
+E         state.desk_presentation.reload_reconnect: web/src/desk/chair/ChairHome.tsx:504 no longer holds 're-reads' (line reads 'const meetingDetailKey = useMemo(')
+E         state.desk_presentation.reload_reconnect: web/src/desk/chair/ChairHome.tsx:469 no longer holds 'apiFetch' (line reads 'setNeedsYou(data);')
+E       assert not ['state.briefs.absent: web/src/desk/chair/ChairHome.tsx:1080 no longer holds \'briefLoading\' (line reads \'<div data-..._persisted: web/src/desk/chair/ChairHome.tsx:1144 no longer holds 'arrival-brief' (line reads '<OrphanArmedRow')", ...]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+1 failed, 64 passed in 0.55s

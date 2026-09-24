@@ -1,0 +1,25 @@
+{
+  "status": "OWNER RATIFIED 2026-09-23 — Ratify, build it",
+  "ratification": "https://claude.ai/artifact/KnASxYRZc4UXkAiFU1z5zX",
+  "artifact": "PHILO-3-02 corrected Arrival canvas",
+  "scope": "static canvas only; synthetic fixture presentation; not a product screenshot or execution result",
+  "artboards": [
+    {"file": "summary-imported.dc.html", "width": 1440, "height": 900, "state": "imported", "title": "Canvas · static mock · imported · 1440"},
+    {"file": "summary-imported-phone.dc.html", "width": 393, "height": 852, "state": "imported", "title": "Canvas · static mock · imported · 393"},
+    {"file": "summary-ready.dc.html", "width": 1440, "height": 900, "state": "ready", "title": "Canvas · static mock · ready · 1440"},
+    {"file": "summary-ready-phone.dc.html", "width": 393, "height": 852, "state": "ready", "title": "Canvas · static mock · ready · 393"},
+    {"file": "summary-retrying.dc.html", "width": 1440, "height": 900, "state": "retrying", "title": "Canvas · static mock · retrying · 1440"},
+    {"file": "summary-retrying-phone.dc.html", "width": 393, "height": 852, "state": "retrying", "title": "Canvas · static mock · retrying · 393"},
+    {"file": "summary-failed.dc.html", "width": 1440, "height": 900, "state": "failed", "title": "Canvas · static mock · failed · 1440"},
+    {"file": "summary-failed-phone.dc.html", "width": 393, "height": 852, "state": "failed", "title": "Canvas · static mock · failed · 393"}
+  ],
+  "composition": {
+    "headline": "ChairHome headline vocabulary",
+    "row": "existing meeting row with Run summary before execution and Open after RAN/SAVED",
+    "wells": ["MeetingSummarySlab", "TranscriptWell"],
+    "egress": "planned RouteDisclosure before Run; actual LAN receipt after Run",
+    "retry_failure": "RETRYING or FAILED with LAST ATTEMPT and LAST ERROR facts in the existing summary well",
+    "phone": "named surface container for Chair content; 44px phone verb target; shell bands use the device rule"
+  },
+  "annotation": "Synthetic source, generated audio facts and summary mock are labelled in README and canvas chrome. Main PNGs retain the arrival position; four additional phone footer PNGs retain the scroll checks. No live run, LAN result, restart result or owner sitting is claimed."
+}

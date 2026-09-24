@@ -1,0 +1,1135 @@
+{
+  "schema": "PHILO-3-02-summary-wire@1",
+  "cases": [
+    {
+      "state": "imported_off",
+      "list": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "title": "Architecture boundary review",
+        "duration_seconds": 34.67525,
+        "segment_count": 2,
+        "action_item_count": 0,
+        "tags": [
+          "architecture"
+        ],
+        "intel_status": "disabled",
+        "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "needs_you_count": 0,
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:8c108b331d1886860c78603e14911dc321dc21358b33d222932b8485536f931b",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      "detail": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [
+          "architecture"
+        ],
+        "segments": [
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "disabled",
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "sync_modified_at": "2026-09-23T09:39:33.153297",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:8c108b331d1886860c78603e14911dc321dc21358b33d222932b8485536f931b",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null,
+        "intel_model_host": null
+      },
+      "recovery": {
+        "meeting_id": "m-philo3-summary",
+        "visible": false,
+        "state": "disabled",
+        "headline": "Meeting saved \u00b7 intelligence incomplete",
+        "completed": [
+          {
+            "label": "Meeting",
+            "detail": "Saved"
+          },
+          {
+            "label": "Transcript",
+            "detail": "2 saved segments"
+          }
+        ],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:8c108b331d1886860c78603e14911dc321dc21358b33d222932b8485536f931b",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "remaining": {
+          "label": "Summary, topics, action items, and routed artifacts",
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting."
+        },
+        "job": null,
+        "actions": {
+          "retry": false,
+          "skip": false
+        }
+      }
+    },
+    {
+      "state": "running",
+      "list": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "title": "Architecture boundary review",
+        "duration_seconds": 34.67525,
+        "segment_count": 2,
+        "action_item_count": 0,
+        "tags": [
+          "architecture"
+        ],
+        "intel_status": "running",
+        "intel_status_detail": "Claimed deferred meeting intelligence.",
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "needs_you_count": 0,
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:35e327a6459d45e4bae3b5bf6daaf23b1325d8371dc3e18cfa585b8259e88243",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": {
+          "status": "running",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.316486",
+          "updated_at": "2026-09-23T09:39:33.316486",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null
+        }
+      },
+      "detail": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [
+          "architecture"
+        ],
+        "segments": [
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "running",
+          "detail": "Claimed deferred meeting intelligence.",
+          "requested_at": "2026-09-23T09:39:33.315796",
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "sync_modified_at": "2026-09-23T09:39:33.316486",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:35e327a6459d45e4bae3b5bf6daaf23b1325d8371dc3e18cfa585b8259e88243",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": {
+          "status": "running",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.316486",
+          "updated_at": "2026-09-23T09:39:33.316486",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null
+        },
+        "intel_model_host": null
+      },
+      "recovery": {
+        "meeting_id": "m-philo3-summary",
+        "visible": true,
+        "state": "running",
+        "headline": "Meeting saved \u00b7 intelligence running",
+        "completed": [
+          {
+            "label": "Meeting",
+            "detail": "Saved"
+          },
+          {
+            "label": "Transcript",
+            "detail": "2 saved segments"
+          }
+        ],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:35e327a6459d45e4bae3b5bf6daaf23b1325d8371dc3e18cfa585b8259e88243",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "remaining": {
+          "label": "Summary, topics, action items, and routed artifacts",
+          "detail": "Claimed deferred meeting intelligence."
+        },
+        "job": {
+          "status": "running",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.316486",
+          "updated_at": "2026-09-23T09:39:33.316486",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "local",
+                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "host": "same_device",
+                "ordinal": 1,
+                "profile_id": "deferred-queue-model",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:35e327a6459d45e4bae3b5bf6daaf23b1325d8371dc3e18cfa585b8259e88243",
+            "status": "ready"
+          },
+          "run_receipt": null
+        },
+        "actions": {
+          "retry": false,
+          "skip": false
+        }
+      }
+    },
+    {
+      "state": "success",
+      "list": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "title": "Architecture boundary review",
+        "duration_seconds": 34.67525,
+        "segment_count": 2,
+        "action_item_count": 1,
+        "tags": [
+          "architecture"
+        ],
+        "intel_status": "ready",
+        "intel_status_detail": "Meeting intelligence ready.",
+        "intel_model_host": "same_device",
+        "intel_duration_s": 0,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "needs_you_count": 0,
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:d97ad1e0da692edddafa3fa803e1e8a63fa70f0985e12260ac34d509b9744d5f",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "cloud.example",
+              "boundary": "cloud",
+              "profile_id": "summary-cloud-after-run",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_b92f4f1998a649dcbbef82f94be4a3cb",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_c8adb617fb82453f0a0c046318a7a61817263cfdb35ffc34f975a850a7b35ef9",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "succeeded",
+          "receipt_id": "rr_de6de6ff7143dce0b263e8f7b44596f1",
+          "selection_hash": "sha256:50df7391853394be92cc90cd7ede4bf43fd31024a29033b1bd208dfa0b417e98"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "succeeded",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.530459",
+          "updated_at": "2026-09-23T09:39:33.668389",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null
+        }
+      },
+      "detail": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [
+          "architecture"
+        ],
+        "segments": [
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": {
+          "timestamp": 34.67525,
+          "topics": [
+            "Budget"
+          ],
+          "action_items": [
+            {
+              "id": "action_7131aaa8810b669fd1aaee3c",
+              "task": "Send the deck",
+              "owner": "Me",
+              "due": null,
+              "status": "pending",
+              "review_state": "pending",
+              "reviewed_at": null,
+              "source_timestamp": null,
+              "created_at": "2026-09-23T09:39:33",
+              "completed_at": null,
+              "delegated_at": null
+            }
+          ],
+          "summary": "The team reviewed the budget."
+        },
+        "intel_status": {
+          "state": "ready",
+          "detail": "Meeting intelligence ready.",
+          "requested_at": "2026-09-23T09:39:33.529749",
+          "completed_at": "2026-09-23T09:39:33.668389"
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "sync_modified_at": "2026-09-23T09:39:33.668389",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:d97ad1e0da692edddafa3fa803e1e8a63fa70f0985e12260ac34d509b9744d5f",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "cloud.example",
+              "boundary": "cloud",
+              "profile_id": "summary-cloud-after-run",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_b92f4f1998a649dcbbef82f94be4a3cb",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_c8adb617fb82453f0a0c046318a7a61817263cfdb35ffc34f975a850a7b35ef9",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "succeeded",
+          "receipt_id": "rr_de6de6ff7143dce0b263e8f7b44596f1",
+          "selection_hash": "sha256:50df7391853394be92cc90cd7ede4bf43fd31024a29033b1bd208dfa0b417e98"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "succeeded",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.530459",
+          "updated_at": "2026-09-23T09:39:33.668389",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null
+        },
+        "intel_model_host": "same_device",
+        "intel_duration_s": 0
+      },
+      "recovery": {
+        "meeting_id": "m-philo3-summary",
+        "visible": false,
+        "state": "ready",
+        "headline": "Meeting saved \u00b7 intelligence incomplete",
+        "completed": [
+          {
+            "label": "Meeting",
+            "detail": "Saved"
+          },
+          {
+            "label": "Transcript",
+            "detail": "2 saved segments"
+          },
+          {
+            "label": "Meeting analysis",
+            "detail": "Summary, topics, and action items saved"
+          }
+        ],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:d97ad1e0da692edddafa3fa803e1e8a63fa70f0985e12260ac34d509b9744d5f",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "cloud.example",
+              "boundary": "cloud",
+              "profile_id": "summary-cloud-after-run",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_b92f4f1998a649dcbbef82f94be4a3cb",
+              "outcome": "succeeded"
+            }
+          ],
+          "job_id": "ij_c8adb617fb82453f0a0c046318a7a61817263cfdb35ffc34f975a850a7b35ef9",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "succeeded",
+          "receipt_id": "rr_de6de6ff7143dce0b263e8f7b44596f1",
+          "selection_hash": "sha256:50df7391853394be92cc90cd7ede4bf43fd31024a29033b1bd208dfa0b417e98"
+        },
+        "last_refusal": null,
+        "remaining": {
+          "label": "Remaining meeting intelligence",
+          "detail": "Meeting intelligence ready."
+        },
+        "job": {
+          "status": "succeeded",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:33.530459",
+          "updated_at": "2026-09-23T09:39:33.668389",
+          "last_error": null,
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "local",
+                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "host": "same_device",
+                "ordinal": 1,
+                "profile_id": "deferred-queue-model",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:50df7391853394be92cc90cd7ede4bf43fd31024a29033b1bd208dfa0b417e98",
+            "status": "ready"
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "same_device",
+                "leg_ordinal": 1,
+                "operation_id": "op_b92f4f1998a649dcbbef82f94be4a3cb",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_c8adb617fb82453f0a0c046318a7a61817263cfdb35ffc34f975a850a7b35ef9",
+            "meeting_id": "m-philo3-summary",
+            "outcome": "succeeded",
+            "receipt_id": "rr_de6de6ff7143dce0b263e8f7b44596f1",
+            "selection_hash": "sha256:50df7391853394be92cc90cd7ede4bf43fd31024a29033b1bd208dfa0b417e98"
+          }
+        },
+        "actions": {
+          "retry": false,
+          "skip": false
+        }
+      }
+    },
+    {
+      "state": "retry",
+      "list": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "title": "Architecture boundary review",
+        "duration_seconds": 34.67525,
+        "segment_count": 2,
+        "action_item_count": 0,
+        "tags": [
+          "architecture"
+        ],
+        "intel_status": "queued",
+        "intel_status_detail": "PROVIDER FAILED",
+        "intel_model_host": "same_device",
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "needs_you_count": 0,
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7029dfab11b1473684137a3a395ea225",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_d929f08448c6e441eac1f041f8d99b13bacf1af3e287312a6b1d483e9d641df8",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_f4cea56db540d5e1b84fb918eefcb668",
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "retrying",
+          "attempts": 1,
+          "requested_at": "2020-01-01T00:00:00",
+          "updated_at": "2026-09-23T09:39:33.981366",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": true,
+          "next_retry_at": "2020-01-01T00:00:00"
+        }
+      },
+      "detail": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [
+          "architecture"
+        ],
+        "segments": [
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "queued",
+          "detail": "PROVIDER FAILED",
+          "requested_at": "2026-09-23T09:39:33.852695",
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "sync_modified_at": "2026-09-23T09:39:33.980566",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7029dfab11b1473684137a3a395ea225",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_d929f08448c6e441eac1f041f8d99b13bacf1af3e287312a6b1d483e9d641df8",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_f4cea56db540d5e1b84fb918eefcb668",
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "retrying",
+          "attempts": 1,
+          "requested_at": "2020-01-01T00:00:00",
+          "updated_at": "2026-09-23T09:39:33.981366",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": true,
+          "next_retry_at": "2020-01-01T00:00:00"
+        },
+        "intel_model_host": "same_device"
+      },
+      "recovery": {
+        "meeting_id": "m-philo3-summary",
+        "visible": true,
+        "state": "queued",
+        "headline": "Meeting saved \u00b7 intelligence queued",
+        "completed": [
+          {
+            "label": "Meeting",
+            "detail": "Saved"
+          },
+          {
+            "label": "Transcript",
+            "detail": "2 saved segments"
+          }
+        ],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7029dfab11b1473684137a3a395ea225",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_d929f08448c6e441eac1f041f8d99b13bacf1af3e287312a6b1d483e9d641df8",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_f4cea56db540d5e1b84fb918eefcb668",
+          "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6"
+        },
+        "last_refusal": null,
+        "remaining": {
+          "label": "Summary, topics, action items, and routed artifacts",
+          "detail": "PROVIDER FAILED"
+        },
+        "job": {
+          "status": "retrying",
+          "attempts": 1,
+          "requested_at": "2020-01-01T00:00:00",
+          "updated_at": "2026-09-23T09:39:33.981366",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": true,
+          "next_retry_at": "2020-01-01T00:00:00",
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "local",
+                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "host": "same_device",
+                "ordinal": 1,
+                "profile_id": "deferred-queue-model",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:6e4b460ed473f39dbba7997eb9c90a10a5cdcb35954ef3d03eaceb6f29f3a0d6",
+            "status": "ready"
+          },
+          "run_receipt": null
+        },
+        "actions": {
+          "retry": true,
+          "skip": true
+        }
+      }
+    },
+    {
+      "state": "terminal_failure",
+      "list": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "title": "Architecture boundary review",
+        "duration_seconds": 34.67525,
+        "segment_count": 2,
+        "action_item_count": 0,
+        "tags": [
+          "architecture"
+        ],
+        "intel_status": "error",
+        "intel_status_detail": "PROVIDER FAILED",
+        "intel_model_host": "same_device",
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "needs_you_count": 0,
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7df91f434f9148be9b0a5f0476130da8",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_47165dd8f7a86915aa03fe2e138f5e19ae40717a40fedca5de7655e1a9b59925",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_a9119663c46cfd30c9afdea99cf1e448",
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "failed",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:34.139415",
+          "updated_at": "2026-09-23T09:39:34.278445",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": false,
+          "next_retry_at": null
+        }
+      },
+      "detail": {
+        "id": "m-philo3-summary",
+        "started_at": "2026-08-10T09:00:00",
+        "ended_at": "2026-08-10T09:00:34.675250",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [
+          "architecture"
+        ],
+        "segments": [
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "We will ship the boundary change on Tuesday.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "error",
+          "detail": "PROVIDER FAILED",
+          "requested_at": "2026-09-23T09:39:34.138755",
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 16,
+        "sync_modified_at": "2026-09-23T09:39:34.278445",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7df91f434f9148be9b0a5f0476130da8",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_47165dd8f7a86915aa03fe2e138f5e19ae40717a40fedca5de7655e1a9b59925",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_a9119663c46cfd30c9afdea99cf1e448",
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c"
+        },
+        "last_refusal": null,
+        "intel_job": {
+          "status": "failed",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:34.139415",
+          "updated_at": "2026-09-23T09:39:34.278445",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": false,
+          "next_retry_at": null
+        },
+        "intel_model_host": "same_device"
+      },
+      "recovery": {
+        "meeting_id": "m-philo3-summary",
+        "visible": true,
+        "state": "failed",
+        "headline": "Meeting saved \u00b7 intelligence incomplete",
+        "completed": [
+          {
+            "label": "Meeting",
+            "detail": "Saved"
+          },
+          {
+            "label": "Transcript",
+            "detail": "2 saved segments"
+          }
+        ],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "same_device",
+              "boundary": "local",
+              "profile_id": "deferred-queue-model",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+            }
+          ]
+        },
+        "run_receipt": {
+          "attempts": [
+            {
+              "host": "same_device",
+              "leg_ordinal": 1,
+              "operation_id": "op_7df91f434f9148be9b0a5f0476130da8",
+              "outcome": "failed"
+            }
+          ],
+          "job_id": "ij_47165dd8f7a86915aa03fe2e138f5e19ae40717a40fedca5de7655e1a9b59925",
+          "meeting_id": "m-philo3-summary",
+          "outcome": "failed",
+          "receipt_id": "rr_a9119663c46cfd30c9afdea99cf1e448",
+          "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c"
+        },
+        "last_refusal": null,
+        "remaining": {
+          "label": "Summary, topics, action items, and routed artifacts",
+          "detail": "PROVIDER FAILED"
+        },
+        "job": {
+          "status": "failed",
+          "attempts": 1,
+          "requested_at": "2026-09-23T09:39:34.139415",
+          "updated_at": "2026-09-23T09:39:34.278445",
+          "last_error": "PROVIDER FAILED",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "local",
+                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "host": "same_device",
+                "ordinal": 1,
+                "profile_id": "deferred-queue-model",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c",
+            "status": "ready"
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "same_device",
+                "leg_ordinal": 1,
+                "operation_id": "op_7df91f434f9148be9b0a5f0476130da8",
+                "outcome": "failed"
+              }
+            ],
+            "job_id": "ij_47165dd8f7a86915aa03fe2e138f5e19ae40717a40fedca5de7655e1a9b59925",
+            "meeting_id": "m-philo3-summary",
+            "outcome": "failed",
+            "receipt_id": "rr_a9119663c46cfd30c9afdea99cf1e448",
+            "selection_hash": "sha256:08f1710860fab52265b2b0f985cee7509a94014ca623f7ea9ef4020ca395114c"
+          }
+        },
+        "actions": {
+          "retry": true,
+          "skip": true
+        }
+      }
+    }
+  ]
+}

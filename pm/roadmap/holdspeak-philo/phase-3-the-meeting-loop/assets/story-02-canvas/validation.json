@@ -1,0 +1,1242 @@
+{
+  "status": "PASS",
+  "scope": "static canvas only; no product server, hub, model, keychain, desk database or microphone",
+  "boards": [
+    {
+      "file": "summary-imported.dc.html",
+      "state": "imported",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "summary-imported.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 502,
+        "clientWidth": 502,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 794,
+        "clientHeight": 794,
+        "overflowY": "auto",
+        "scrollable": false
+      },
+      "forbidden_copy": false
+    },
+    {
+      "file": "summary-imported-phone.dc.html",
+      "state": "imported",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screenshot": "summary-imported-phone.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 369,
+        "clientWidth": 369,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 760,
+        "clientHeight": 746,
+        "overflowY": "auto",
+        "scrollable": true
+      },
+      "forbidden_copy": false,
+      "phone_hit_ownership": {
+        "verb": "Run summary",
+        "box": {
+          "x": 275.796875,
+          "y": 243.578125,
+          "width": 105.203125,
+          "height": 44,
+          "right": 381.0,
+          "bottom": 287.578125
+        },
+        "dock_top": 800,
+        "points": {
+          "center": {
+            "x": 328.4,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "top": {
+            "x": 328.4,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "right": {
+            "x": 379.0,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "bottom": {
+            "x": 328.4,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "left": {
+            "x": 277.8,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "top_left": {
+            "x": 277.8,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "top_right": {
+            "x": 379.0,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "bottom_left": {
+            "x": 277.8,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button primary"
+          },
+          "bottom_right": {
+            "x": 379.0,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button primary"
+          }
+        }
+      },
+      "phone_footer_hit_ownership": [
+        {
+          "verb": "Talk",
+          "box": {
+            "x": 25,
+            "y": 693.078125,
+            "width": 54.8125,
+            "height": 44,
+            "right": 79.8125,
+            "bottom": 737.078125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 52.41,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 52.41,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 77.81,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 52.41,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 77.81,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 77.81,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Develop a thought",
+          "box": {
+            "x": 87.8125,
+            "y": 693.078125,
+            "width": 148.40625,
+            "height": 44,
+            "right": 236.21875,
+            "bottom": 737.078125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 162.02,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 162.02,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 234.22,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 162.02,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 89.81,
+              "y": 715.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 89.81,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 234.22,
+              "y": 695.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 89.81,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 234.22,
+              "y": 735.08,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Record meeting",
+          "box": {
+            "x": 25,
+            "y": 745.078125,
+            "width": 126.8125,
+            "height": 44,
+            "right": 151.8125,
+            "bottom": 789.078125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 88.41,
+              "y": 767.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 88.41,
+              "y": 747.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 149.81,
+              "y": 767.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 88.41,
+              "y": 787.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 767.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 747.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 149.81,
+              "y": 747.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 787.08,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 149.81,
+              "y": 787.08,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        }
+      ],
+      "footer_screenshot": "summary-imported-phone.dc-footer.png"
+    },
+    {
+      "file": "summary-ready.dc.html",
+      "state": "ready",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "summary-ready.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 777,
+        "clientWidth": 777,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 794,
+        "clientHeight": 794,
+        "overflowY": "auto",
+        "scrollable": false
+      },
+      "forbidden_copy": false
+    },
+    {
+      "file": "summary-ready-phone.dc.html",
+      "state": "ready",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screenshot": "summary-ready-phone.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 369,
+        "clientWidth": 369,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 936,
+        "clientHeight": 746,
+        "overflowY": "auto",
+        "scrollable": true
+      },
+      "forbidden_copy": false,
+      "phone_hit_ownership": {
+        "verb": "Open",
+        "box": {
+          "x": 326.1875,
+          "y": 243.578125,
+          "width": 54.8125,
+          "height": 44,
+          "right": 381.0,
+          "bottom": 287.578125
+        },
+        "dock_top": 800,
+        "points": {
+          "center": {
+            "x": 353.59,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "top": {
+            "x": 353.59,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "right": {
+            "x": 379.0,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "bottom": {
+            "x": 353.59,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "left": {
+            "x": 328.19,
+            "y": 265.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "top_left": {
+            "x": 328.19,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "top_right": {
+            "x": 379.0,
+            "y": 245.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "bottom_left": {
+            "x": 328.19,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button"
+          },
+          "bottom_right": {
+            "x": 379.0,
+            "y": 285.58,
+            "ok": true,
+            "hit": "button.button"
+          }
+        }
+      },
+      "phone_footer_hit_ownership": [
+        {
+          "verb": "Talk",
+          "box": {
+            "x": 25,
+            "y": 679.3125,
+            "width": 54.8125,
+            "height": 44,
+            "right": 79.8125,
+            "bottom": 723.3125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 52.41,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 52.41,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 77.81,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 52.41,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 77.81,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 77.81,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Develop a thought",
+          "box": {
+            "x": 87.8125,
+            "y": 679.3125,
+            "width": 148.40625,
+            "height": 44,
+            "right": 236.21875,
+            "bottom": 723.3125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 162.02,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 162.02,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 234.22,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 162.02,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 89.81,
+              "y": 701.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 89.81,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 234.22,
+              "y": 681.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 89.81,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 234.22,
+              "y": 721.31,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Record meeting",
+          "box": {
+            "x": 25,
+            "y": 731.3125,
+            "width": 126.8125,
+            "height": 44,
+            "right": 151.8125,
+            "bottom": 775.3125
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 88.41,
+              "y": 753.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 88.41,
+              "y": 733.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 149.81,
+              "y": 753.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 88.41,
+              "y": 773.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 753.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 733.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 149.81,
+              "y": 733.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 773.31,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 149.81,
+              "y": 773.31,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        }
+      ],
+      "footer_screenshot": "summary-ready-phone.dc-footer.png"
+    },
+    {
+      "file": "summary-retrying.dc.html",
+      "state": "retrying",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "summary-retrying.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 828,
+        "clientWidth": 828,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 794,
+        "clientHeight": 794,
+        "overflowY": "auto",
+        "scrollable": false
+      },
+      "forbidden_copy": false
+    },
+    {
+      "file": "summary-retrying-phone.dc.html",
+      "state": "retrying",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screenshot": "summary-retrying-phone.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 369,
+        "clientWidth": 369,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 809,
+        "clientHeight": 746,
+        "overflowY": "auto",
+        "scrollable": true
+      },
+      "forbidden_copy": false,
+      "phone_footer_hit_ownership": [
+        {
+          "verb": "Talk",
+          "box": {
+            "x": 25,
+            "y": 741.65625,
+            "width": 54.8125,
+            "height": 44,
+            "right": 79.8125,
+            "bottom": 785.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 52.41,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 52.41,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 77.81,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 52.41,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 77.81,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 77.81,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Develop a thought",
+          "box": {
+            "x": 87.8125,
+            "y": 741.65625,
+            "width": 148.40625,
+            "height": 44,
+            "right": 236.21875,
+            "bottom": 785.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 162.02,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 162.02,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 234.22,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 162.02,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 89.81,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 89.81,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 234.22,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 89.81,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 234.22,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Record meeting",
+          "box": {
+            "x": 25,
+            "y": 755.65625,
+            "width": 126.8125,
+            "height": 44,
+            "right": 151.8125,
+            "bottom": 799.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 88.41,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 88.41,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 149.81,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 88.41,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 149.81,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 149.81,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        }
+      ],
+      "footer_screenshot": "summary-retrying-phone.dc-footer.png"
+    },
+    {
+      "file": "summary-failed.dc.html",
+      "state": "failed",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "summary-failed.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 828,
+        "clientWidth": 828,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 794,
+        "clientHeight": 794,
+        "overflowY": "auto",
+        "scrollable": false
+      },
+      "forbidden_copy": false
+    },
+    {
+      "file": "summary-failed-phone.dc.html",
+      "state": "failed",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screenshot": "summary-failed-phone.dc.png",
+      "title": {
+        "text": "Architecture boundary review",
+        "scrollWidth": 369,
+        "clientWidth": 369,
+        "fontSize": "15px"
+      },
+      "fonts_loaded": {
+        "Inter": true,
+        "Space Grotesk": true,
+        "JetBrains Mono": true
+      },
+      "fonts": {
+        ".arrival-display": "26px",
+        ".meeting-title": "15px",
+        ".summary-text": "13px",
+        ".transcript-text": "13px"
+      },
+      "readable_text_min_px": 12,
+      "scroll": {
+        "scrollHeight": 809,
+        "clientHeight": 746,
+        "overflowY": "auto",
+        "scrollable": true
+      },
+      "forbidden_copy": false,
+      "phone_footer_hit_ownership": [
+        {
+          "verb": "Talk",
+          "box": {
+            "x": 25,
+            "y": 741.65625,
+            "width": 54.8125,
+            "height": 44,
+            "right": 79.8125,
+            "bottom": 785.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 52.41,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 52.41,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 77.81,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 52.41,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 77.81,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 77.81,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Develop a thought",
+          "box": {
+            "x": 87.8125,
+            "y": 741.65625,
+            "width": 148.40625,
+            "height": 44,
+            "right": 236.21875,
+            "bottom": 785.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 162.02,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 162.02,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 234.22,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 162.02,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 89.81,
+              "y": 763.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 89.81,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 234.22,
+              "y": 743.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 89.81,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 234.22,
+              "y": 783.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        },
+        {
+          "verb": "Record meeting",
+          "box": {
+            "x": 25,
+            "y": 755.65625,
+            "width": 126.8125,
+            "height": 44,
+            "right": 151.8125,
+            "bottom": 799.65625
+          },
+          "dock_top": 800,
+          "points": {
+            "center": {
+              "x": 88.41,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top": {
+              "x": 88.41,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "right": {
+              "x": 149.81,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom": {
+              "x": 88.41,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "left": {
+              "x": 27,
+              "y": 777.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_left": {
+              "x": 27,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "top_right": {
+              "x": 149.81,
+              "y": 757.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_left": {
+              "x": 27,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            },
+            "bottom_right": {
+              "x": 149.81,
+              "y": 797.66,
+              "ok": true,
+              "hit": "button.button"
+            }
+          }
+        }
+      ],
+      "footer_screenshot": "summary-failed-phone.dc-footer.png"
+    }
+  ]
+}

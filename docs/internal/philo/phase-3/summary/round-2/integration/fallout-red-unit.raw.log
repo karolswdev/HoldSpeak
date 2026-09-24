@@ -1,0 +1,148 @@
+FF
+=================================== FAILURES ===================================
+__ test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-408/test_a_failing_provider_retrie0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11007cb00>
+
+    def test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face(tmp_path, monkeypatch):
+        """Ruling 5. The fake is the PROVIDER (``engine.analyze`` returns an
+        errored ``IntelResult``), never a status field.  Everything the
+        assertions read — attempts, ``requested_at``, ``last_error``, the
+        terminal status, and ``list_jobs`` (the face's own data) — is written by
+        production code.
+        """
+        from holdspeak.intel_queue import start_intel_queue_worker
+    
+        # A routed plugin chain: the shape a real meeting claim has.  With an
+        # EMPTY chain the claim planner re-freezes the descriptor on every claim
+        # and resets `attempts` to 0 -- the ceiling is then unreachable.  That is
+        # a pre-existing `db/intel.py` defect, reported with HS-200-42 and NOT
+        # papered over here; this test asserts the ladder the product must have.
+        db, _broker, engine, _host, _requests = _queue_rig(
+            tmp_path, monkeypatch,
+            plugins=("decision_capture",), chain=("decision_capture",),
+        )
+        engine.error = "provider exploded"
+        _queued_meeting(db, "m-retry")
+    
+        started = datetime.now()
+        worker = start_intel_queue_worker(
+            None,
+            retry_base_seconds=1,
+            retry_max_seconds=2,
+            retry_max_attempts=2,
+            poll_seconds=5.0,
+        )
+        try:
+            def terminal() -> bool:
+                jobs = db.intel.list_intel_jobs(status="all")
+                return any(j.status == "failed" and int(j.attempts) >= 2 for j in jobs)
+    
+            assert _wait(terminal, timeout=60.0, nudge=worker.wake), [
+                (j.job_id[:10], j.status, j.attempts) for j in db.intel.list_intel_jobs(status="all")
+            ]
+        finally:
+            worker.stop()
+    
+        # The whole row chain, not the head: the ladder lives across rows.
+        rows = _rows(db, "intel_jobs")
+        ladder = sorted(int(r["attempts"]) for r in rows if r["status"] == "failed")
+        assert ladder == [1, 2], rows
+        # Backoff: the retry was scheduled into the FUTURE, not re-run immediately.
+        successors = [r for r in rows if int(r["attempts"]) == 2]
+        assert successors, rows
+        assert datetime.fromisoformat(successors[0]["requested_at"]) > started, (
+            "the retry did not move requested_at forward"
+        )
+        assert all(r["last_error"] for r in rows if r["status"] == "failed")
+        # The ceiling's own sentence, written by the repository.
+>       assert any(
+            "after 2 attempt(s)" in str(r["last_error"]) for r in rows if r["status"] == "failed"
+        ), rows
+E       AssertionError: [{'attempts': 0, 'bundle_id': None, 'bundle_sha256': None, 'claim_id': None, ...}, {'attempts': 1, 'bundle_id': 'iprb_...df27f26785cad3bdcba0bed6f5c2', 'claim_id': 'ic_0baa1f38b0c584c473b16f49f828f1a319970228b604f4f916aab4b0d64754f1', ...}]
+E       assert False
+E        +  where False = any(<generator object test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face.<locals>.<genexpr> at 0x1101e3d80>)
+
+tests/unit/test_phase200_intel_drain.py:373: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting m-retry (attempt 1/2): retrying in 1s
+______ test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-408/test_a_failing_job_with_no_rou0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1102f0770>
+
+    def test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling(tmp_path, monkeypatch):
+        """The runaway the drainer made reachable — fenced.
+    
+        PRE-FIX STATE, measured on this exact rig (``retry_max_attempts=2``,
+        empty plugin chain), one line per drain round::
+    
+            0 1 [('ij_345bbb','superseded',0), ('ij_68683b','failed',1), ('ij_fa05e7','queued',1)]
+            2 1 [... ('ij_fa05e7','superseded',1), ('ij_1d58bc','failed',1), ('ij_6c0b46','queued',1)]
+            4 1 [... ('ij_6c0b46','superseded',1), ('ij_b86cc3','failed',1), ('ij_dfa9a3','queued',1)]
+            6 1 [... ('ij_dfa9a3','superseded',1), ('ij_784e80','failed',1), ('ij_2c4eaf','queued',1)]
+    
+        ``attempts`` never leaves 1, the ceiling is unreachable, a ``queued``
+        survivor is always present, and ``intel_jobs`` grows by TWO rows every
+        retry — forever, on a 15s hub poll.  The cause was in claim planning
+        (``db/intel.py``): ``_frozen_plugin_members`` is falsy whenever the routed
+        chain is empty, so every claim superseded a descriptor identical to the
+        one it minted and inserted the replacement with ``attempts`` reset to 0.
+    
+        Every assertion below fails on that pre-fix tree.
+        """
+        from holdspeak.intel_queue import start_intel_queue_worker
+    
+        # No plugins, no chain: the owner's ordinary meeting.
+        db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+        engine.error = "provider exploded"
+        _queued_meeting(db, "m-nochain")
+    
+        worker = start_intel_queue_worker(
+            None,
+            retry_base_seconds=1,
+            retry_max_seconds=2,
+            retry_max_attempts=2,
+            poll_seconds=5.0,
+        )
+        try:
+            def terminal() -> bool:
+                rows = _rows(db, "intel_jobs")
+                return any(
+                    r["status"] == "failed" and int(r["attempts"]) >= 2 for r in rows
+                )
+    
+            assert _wait(terminal, timeout=60.0, nudge=worker.wake), [
+                (r["job_id"][:9], r["status"], r["attempts"]) for r in _rows(db, "intel_jobs")
+            ]
+            # The loop must also STOP: give it several more poll-and-wake rounds
+            # and the row count must not move.
+            settled = len(_rows(db, "intel_jobs"))
+            for _ in range(20):
+                worker.wake()
+                time.sleep(0.1)
+            assert len(_rows(db, "intel_jobs")) == settled, _rows(db, "intel_jobs")
+        finally:
+            worker.stop()
+    
+        rows = _rows(db, "intel_jobs")
+        # Terminal, with the repository's own ceiling sentence.
+>       assert any(
+            r["status"] == "failed"
+            and int(r["attempts"]) == 2
+            and "after 2 attempt(s)" in str(r["last_error"])
+            for r in rows
+        ), rows
+E       AssertionError: [{'attempts': 0, 'bundle_id': None, 'bundle_sha256': None, 'claim_id': None, ...}, {'attempts': 1, 'bundle_id': 'iprb_...f884434b43ec23a5fb20f35498c3', 'claim_id': 'ic_7b3d755bce161763ab991098d92d104f68029180117329b6060066bcae325af2', ...}]
+E       assert False
+E        +  where False = any(<generator object test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling.<locals>.<genexpr> at 0x1103b0040>)
+
+tests/unit/test_phase200_intel_drain.py:451: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting m-nochain (attempt 1/2): retrying in 1s
+=========================== short test summary info ============================
+FAILED tests/unit/test_phase200_intel_drain.py::test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face
+FAILED tests/unit/test_phase200_intel_drain.py::test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling
+2 failed in 5.56s
+FOCUSED_UNIT_EXIT=1

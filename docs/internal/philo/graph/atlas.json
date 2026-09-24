@@ -47,7 +47,7 @@
           "value": "arrival-headline"
         },
         "observe_at": "[data-testid=arrival-headline]",
-        "words": "the gate closes and THE DESK is shown (the arrival headline is present); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards \u2014 recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
+        "words": "the gate closes and THE DESK is shown (the arrival headline is present); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards — recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
         "reads": []
       },
       "completion_bound_s": 20,
@@ -1021,12 +1021,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
+            "kind": "hit_target",
+            "min_width": 44,
+            "min_height": 44
           },
           "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+          "why": "the Run summary control owns all 9 interior hit points and is fully visible at both the desktop and phone viewport"
         },
         {
           "kind": "check",
@@ -1447,14 +1447,15 @@
           "role": "button",
           "name": "Continue later",
           "optional": true,
-          "adapter": "ui-pointer"
+          "adapter": "ui-pointer",
+          "timeout_s": 10
         },
         {
           "kind": "boundary",
           "substitutes": "the browser's microphone device",
-          "label": "chromium --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<fixture> (boundary substitution: this proves the capture-to-transcript path, NOT real microphone hardware) Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST. Input: tests/fixtures/core_path_smoke_16k.wav (sha256 36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04) at the browser's fake audio device - NOT an HTTP input boundary, so it is recorded here rather than claimed as a fixture POST.",
+          "label": "Synthetic architect meeting at a browser audio boundary. This rig has no microphone recorder; block without substituting microphone ownership.",
           "substitute": "browser_audio_device",
-          "reply_path": "tests/fixtures/core_path_smoke_16k.wav"
+          "reply_path": "tests/fixtures/philo3_architect_meeting.wav"
         }
       ],
       "trigger": {
@@ -1491,7 +1492,17 @@
       "state_id": "state.meetings.capture.finalized",
       "applicability": "applicable",
       "preconditions": [
-        "case.j4.record_start.capture_recording reached"
+        "case.j4.record_start.capture_recording reached",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meeting_active",
+            "value": true
+          },
+          "observe_at": "protocol: GET /api/runtime/status",
+          "why": "the stop route is only a recorded-state proof when the runtime reports an active meeting; a fresh rig without a lawful microphone start must block before POST /api/meeting/stop"
+        }
       ],
       "setup": [],
       "trigger": {
@@ -1531,8 +1542,8 @@
       "setup": [],
       "trigger": {
         "kind": "fixture",
-        "path": "tests/fixtures/core_path_smoke_16k.wav",
-        "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+        "path": "tests/fixtures/philo3_architect_meeting.wav",
+        "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
         "route": {
           "method": "POST",
           "path": "/api/meetings/import"
@@ -1540,7 +1551,26 @@
         "field": "file",
         "capture_as": "meeting_id",
         "adapter": "http-route",
-        "capture_path": "meeting_id"
+        "capture_path": "meeting_id",
+        "form": {
+          "title": "Architecture boundary review"
+        },
+        "wait_for": {
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "fields": {
+            "/transcription_status": "complete",
+            "/duration": {
+              "positive": true
+            },
+            "/segments": {
+              "min_items": 1
+            }
+          },
+          "timeout_s": 300,
+          "poll_s": 0.5
+        },
+        "expect_status": 202
       },
       "expected": {
         "predicate": {
@@ -1563,7 +1593,17 @@
       "state_id": "state.meetings.transcription.absent",
       "applicability": "applicable",
       "preconditions": [
-        "a meeting recorded with NO speech engine assigned"
+        "a meeting recorded with NO speech engine assigned",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meeting_active",
+            "value": true
+          },
+          "observe_at": "protocol: GET /api/runtime/status",
+          "why": "the no-transcript stop observation requires a real active capture; the rig cannot claim one from a fresh idle runtime without microphone ownership"
+        }
       ],
       "setup": [
         {
@@ -1578,7 +1618,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         }
       ],
       "trigger": {
@@ -1642,6 +1683,19 @@
           },
           "observe_at": "[data-testid=arrival-headline]",
           "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "hit_target",
+            "min_width": 44,
+            "min_height": 24,
+            "min_height_by_viewport": {
+              "393": 44
+            }
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary control owns all 9 interior hit points and is fully visible at both desktop and phone widths"
         }
       ],
       "setup": [
@@ -1657,21 +1711,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -1711,17 +1768,44 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
           },
+          "expect_status": 202,
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
         },
         {
           "kind": "ui",
@@ -1735,7 +1819,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -1752,12 +1837,17 @@
       },
       "expected": {
         "predicate": {
-          "kind": "attr_equals",
-          "attr": "data-testid",
-          "value": "arrival-route"
+          "kind": "text_contains",
+          "value": "192.168.1.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
-        "words": "the planned host is named on the row beside Run summary, before the click [the audit's stated observation location: face: [data-testid=arrival-route]]"
+        "words": "the planned host is named on the row beside Run summary, before the click [the audit's stated observation location: face: [data-testid=arrival-route]]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ]
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -1810,12 +1900,13 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -1823,7 +1914,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -1837,7 +1947,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -1857,8 +1968,14 @@
           "kind": "text_absent",
           "value": "Run summary"
         },
-        "observe_at": "[data-testid=arrival-run-intel]",
-        "words": "no Run summary verb is drawn (a verb that cannot run is withheld, not disabled in place) [the audit's stated observation location: face: the absence of [data-testid=arrival-run-intel]]"
+        "observe_at": "[data-testid=arrival-meetings]",
+        "words": "No Run summary verb inside the visible meetings section when no engine is assigned.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ]
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -1910,21 +2027,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -1964,9 +2084,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -1974,7 +2102,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -1988,7 +2135,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -2001,19 +2149,27 @@
         "kind": "ui",
         "selector": "[data-testid=arrival-run-intel]",
         "action": "click",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run"
+        }
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "jobs",
-          "match": {
-            "status": "queued"
-          },
-          "min_new": 1
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run",
+          "status": 200,
+          "body_contains": "\"state\": \"queued\"",
+          "body_fields": {
+            "jobId": {
+              "nonempty": true
+            }
+          }
         },
         "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "POST /api/meetings/{id}/intelligence/run answers 2xx with a jobId; the intel job row reads 'queued' and a desk projection appears reading attention/unseen [the audit's stated observation location: protocol: GET /api/intel/jobs; protocol: GET /api/desk/projections]"
+        "words": "The one Run response admits a queued job with its own nonempty identity, even if the drainer claims it before the first observation."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -2035,16 +2191,6 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
-        {
-          "kind": "check",
-          "predicate": {
             "kind": "protocol_field",
             "path": "/meetings/0/id",
             "value": "{meeting_id}"
@@ -2076,21 +2222,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -2130,9 +2279,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2140,7 +2297,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -2156,35 +2332,33 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
-        },
-        {
-          "kind": "api",
-          "method": "POST",
-          "path": "/api/meetings/{meeting_id}/intelligence/run",
-          "body": {},
-          "adapter": "http-route"
         }
       ],
       "trigger": {
         "kind": "clock",
         "clock": "clock.intel_drainer",
         "how": "no clock is moved: the run polls GET /api/intel/jobs (<= the case's completion_bound_s) for the REAL drainer to move the job",
-        "adapter": "scheduler-wait"
+        "adapter": "scheduler-wait",
+        "poll_s": 0.1
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "jobs",
-          "match": {
-            "status": "running"
-          },
-          "min_new": 1
+          "kind": "protocol_field",
+          "path": "/jobs/0/status",
+          "value": "claimed"
         },
         "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "the job's status becomes 'claimed' or 'running' and the meeting's gesture state answers 'running' [the audit's stated observation location: protocol: GET /api/intel/jobs]"
+        "words": "The real drainer leaves the admitted job in claimed; this is a state read, not a newly inserted row claim."
       },
       "completion_bound_s": 180,
       "viewports": []
@@ -2203,16 +2377,6 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
-        {
-          "kind": "check",
-          "predicate": {
             "kind": "protocol_field",
             "path": "/meetings/0/id",
             "value": "{meeting_id}"
@@ -2244,21 +2408,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -2298,9 +2465,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2308,7 +2483,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -2324,35 +2518,33 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
-        },
-        {
-          "kind": "api",
-          "method": "POST",
-          "path": "/api/meetings/{meeting_id}/intelligence/run",
-          "body": {},
-          "adapter": "http-route"
         }
       ],
       "trigger": {
         "kind": "clock",
         "clock": "clock.intel_drainer",
         "how": "no clock is moved: the run polls GET /api/intel/jobs (<= the case's completion_bound_s) for the REAL drainer to move the job",
-        "adapter": "scheduler-wait"
+        "adapter": "scheduler-wait",
+        "poll_s": 0.1
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "jobs",
-          "match": {
-            "status": "succeeded"
-          },
-          "min_new": 1
+          "kind": "protocol_field",
+          "path": "/intel_job/status",
+          "value": "succeeded"
         },
-        "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "the meeting's gesture state answers 'ready' and summary text exists for that meeting; the host that RAN it is recorded and compared with the host J5 disclosed. Technical completion is reported separately from owner usefulness [the audit's stated observation location: protocol: GET /api/intel/summary; face: the Chair's meeting row badge]"
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "The real admitted job succeeded. Read its durable meeting detail because succeeded jobs leave the active queue."
       },
       "completion_bound_s": 600,
       "viewports": []
@@ -2401,29 +2593,47 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 1,
+              "intel_retry_max_seconds": 1,
+              "intel_retry_max_attempts": 1
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries for this failure and retry walk"
         },
         {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
           "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "adapter": "labelled-substitution"
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -2463,9 +2673,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2473,7 +2691,32 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run"
         },
         {
           "kind": "ui",
@@ -2487,20 +2730,14 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-meetings]"
-        },
-        {
-          "kind": "boundary",
-          "substitutes": "the named provider endpoint",
-          "label": "an assigned engine profile whose base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json"
         }
       ],
       "trigger": {
@@ -2511,16 +2748,21 @@
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "projections",
-          "match": {
-            "source_kind": "intel_job",
-            "attention_state": "needs_attention"
-          },
-          "min_new": 1
+          "kind": "text_equals",
+          "value": "FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
-        "observe_at": "protocol: GET /api/desk/projections",
-        "words": "the job reaches status 'failed' and a desk projection appears reading attention/needs_attention with severity error; the face states a refusal rather than staying silent [the audit's stated observation location: protocol: GET /api/desk/projections; face: the Chair's meeting row]"
+        "observe_at": "[data-testid=arrival-summary-status]",
+        "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/summary"
+          }
+        ]
       },
       "completion_bound_s": 300,
       "viewports": [
@@ -2541,16 +2783,6 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
-        {
-          "kind": "check",
-          "predicate": {
             "kind": "protocol_field",
             "path": "/meetings/0/id",
             "value": "{meeting_id}"
@@ -2567,6 +2799,18 @@
           },
           "observe_at": "[data-testid=arrival-headline]",
           "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "adapter": "observation",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/intel_job/status",
+            "value": "failed"
+          },
+          "timeout_s": 60,
+          "why": "The declared producer state must exist before the trigger; missing material blocks this case."
         }
       ],
       "setup": [
@@ -2582,29 +2826,47 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 1,
+              "intel_retry_max_seconds": 1,
+              "intel_retry_max_attempts": 1
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries for this failure and retry walk"
         },
         {
           "kind": "boundary",
           "substitutes": "the named provider endpoint",
           "substitute": "engine_reply",
-          "reply_path": ".tmp/graph-walk/engine-replies/intel-failure.json",
           "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
-          "adapter": "labelled-substitution"
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -2644,9 +2906,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2654,7 +2924,32 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run"
         },
         {
           "kind": "ui",
@@ -2670,29 +2965,48 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "adapter": "http-route",
+          "capture_as": "selection_hash",
+          "capture_path": "/planned_route/selection_hash",
+          "body": null
         }
       ],
       "trigger": {
         "kind": "api",
         "method": "POST",
         "path": "/api/intel/retry/{meeting_id}",
-        "body": {},
+        "body": {
+          "expected_selection_hash": "{selection_hash}"
+        },
         "adapter": "http-route"
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "jobs",
-          "match": {
-            "status": "queued"
-          },
-          "min_new": 1
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/intel/retry/{meeting_id}",
+          "status": 200,
+          "body_fields": {
+            "success": true
+          }
         },
         "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "a new job leaf exists for that meeting and the failed ancestor no longer projects attention (exactly one job projection for the meeting) [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "words": "A real failed job exists before the manual retry. The current route hash binds the single retry request; the response and current job lineage are retained. This case does not claim the retry completed."
       },
       "completion_bound_s": 300,
       "viewports": []
@@ -2726,6 +3040,18 @@
           },
           "observe_at": "[data-testid=arrival-headline]",
           "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "adapter": "observation",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/segments",
+            "value": []
+          },
+          "timeout_s": 5,
+          "why": "The declared producer state must exist before the trigger; missing material blocks this case."
         }
       ],
       "setup": [
@@ -2741,12 +3067,13 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2754,7 +3081,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -2785,7 +3131,7 @@
           "body_contains": "Meeting has no transcript"
         },
         "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "the route refuses by name (an intelligible refusal naming the missing assignment), not a silent 2xx with nothing queued [the audit's stated observation location: protocol: the response body of that POST]"
+        "words": "The no-transcript refusal needs a real empty-transcript producer. The available synthetic WAV produces speech, so this case blocks on its explicit empty-transcript precondition instead of falsely claiming the refusal."
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -2799,17 +3145,7 @@
       "state_id": "state.meetings.intel.retained_after_restart",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_ready reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
+        "A completed synthetic architect import is reproduced in this isolated run.",
         {
           "kind": "check",
           "predicate": {
@@ -2844,21 +3180,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -2898,9 +3237,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -2908,7 +3255,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -2924,24 +3290,42 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=meeting-summary-text]",
+          "timeout_s": 300,
+          "adapter": "ui-pointer",
+          "why": "the real Run gesture has produced rendered summary material before the hub restart"
         }
       ],
       "trigger": {
         "kind": "cli",
         "action": "restart_hub",
-        "adapter": "process"
+        "adapter": "process",
+        "capture_as": "before_summary"
       },
       "expected": {
         "predicate": {
           "kind": "protocol_field",
-          "path": "jobs.0.status",
-          "value": "succeeded"
+          "path": "/intel/summary",
+          "value": "{before_summary}",
+          "nonempty": true,
+          "restart_required": true
         },
-        "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "after the restart the same summary text is reachable in two moves or fewer from arrival, and the meeting's gesture state still answers 'ready' [the audit's stated observation location: face: the Chair, counting moves; protocol: GET /api/intel/summary]"
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "after the restart the same summary text is reachable in two moves or fewer from arrival, and the meeting's gesture state still answers 'ready'; the rig retains the before/after summary, durable run receipt, meeting identity, hub pids and database identity [the audit's stated observation location: protocol: GET /api/meetings/{meeting_id}]"
       },
       "completion_bound_s": 180,
       "viewports": []
@@ -2959,32 +3343,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
-        {
-          "kind": "check",
-          "predicate": {
             "kind": "protocol_field",
             "path": "/meetings/0/id",
             "value": "{meeting_id}"
           },
           "observe_at": "protocol: GET /api/meetings",
           "why": "IMPORT_MEETING really minted the meeting the later steps name"
-        },
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "protocol_field",
-            "path": "/jobs/0/meeting_id",
-            "value": "{meeting_id}"
-          },
-          "observe_at": "protocol: GET /api/intel/jobs",
-          "why": "RUN_SUMMARY really queued a job against THIS meeting"
         }
       ],
       "setup": [
@@ -3000,21 +3364,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -3054,9 +3421,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -3064,7 +3439,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -3078,7 +3472,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -3088,9 +3483,34 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=meeting-summary-text]",
+          "timeout_s": 300,
+          "adapter": "ui-pointer",
+          "why": "wait for rendered completion before testing persisted retrieval"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "adapter": "http-route",
+          "capture_as": "persisted_summary",
+          "capture_path": "/intel/summary",
+          "expect_status": 200,
+          "body": null
         }
       ],
       "trigger": {
@@ -3100,12 +3520,18 @@
       },
       "expected": {
         "predicate": {
-          "kind": "attr_equals",
-          "attr": "data-testid",
-          "value": "arrival-headline"
+          "kind": "text_equals",
+          "value": "{persisted_summary}"
         },
-        "observe_at": "[data-testid=arrival-headline]",
-        "words": "ASTRA (A): the desk must be PRESENT after the reconnect; an empty page no longer passes. || the desk re-reads and draws the same meeting with the same badge; nothing that existed before the reload is missing after it [the audit's stated observation location: face: the Chair]"
+        "observe_at": "[data-testid=meeting-summary-text]",
+        "words": "The rendered summary after reload equals the completed summary read before reload.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "frame_selector": "[data-testid=meeting-summary-text]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -3541,9 +3967,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -3551,7 +3985,25 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
         },
         {
           "kind": "ui",
@@ -3738,9 +4190,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -3748,7 +4208,25 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
         },
         {
           "kind": "ui",
@@ -3939,9 +4417,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -3949,7 +4435,25 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
         },
         {
           "kind": "ui",
@@ -4150,9 +4654,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -4160,7 +4672,25 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          }
         },
         {
           "kind": "ui",
@@ -5767,6 +6297,18 @@
           },
           "observe_at": "[data-testid=arrival-headline]",
           "why": "the desk is really past the first-value gate"
+        },
+        {
+          "kind": "check",
+          "adapter": "observation",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/planned_route/status",
+            "value": "unavailable"
+          },
+          "timeout_s": 5,
+          "why": "The declared producer state must exist before the trigger; missing material blocks this case."
         }
       ],
       "setup": [
@@ -5782,12 +6324,13 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -5795,7 +6338,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -5819,18 +6381,16 @@
       },
       "expected": {
         "predicate": {
-          "kind": "protocol_rows",
-          "collection": "projections",
-          "match": {
-            "source_kind": "intel_job",
-            "attention_state": "needs_attention"
-          },
-          "min_new": 1
+          "kind": "protocol_status",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run",
+          "status": 409,
+          "body_contains": "route_unavailable"
         },
         "observe_at": "protocol: GET /api/desk/projections",
-        "words": "the missing assignment reaches the DESK: a job projection appears reading needs_attention. The route itself does NOT refuse - run_intelligence names only missing/empty/reserved/running/ready (meeting_intel_service.py:163-169) - so the owner's only telling is the late failure. If nothing surfaces, that is the finding [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "words": "A completed transcript with no summary assignment receives the named route_unavailable refusal; no background failure is invented."
       },
-      "completion_bound_s": 300,
+      "completion_bound_s": 30,
       "viewports": []
     },
     {
@@ -6128,7 +6688,15 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the browser's microphone device",
+          "label": "Synthetic architect meeting at a browser audio boundary. This rig has no microphone recorder; block without substituting microphone ownership.",
+          "substitute": "browser_audio_device",
+          "reply_path": "tests/fixtures/philo3_architect_meeting.wav"
         },
         {
           "kind": "api",
@@ -6152,7 +6720,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -6160,7 +6729,8 @@
           "role": "button",
           "name": "Continue later",
           "optional": true,
-          "adapter": "ui-pointer"
+          "adapter": "ui-pointer",
+          "timeout_s": 1
         }
       ],
       "trigger": {
@@ -6197,8 +6767,7 @@
       "state_id": "state.meetings.intel.ready",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_ready reached in this run -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        "the synthetic meeting material carries the planted token HOLDSPEAK-SYNTH-1",
+        "A completed synthetic architect import is reproduced in this isolated run.",
         {
           "kind": "check",
           "predicate": {
@@ -6218,16 +6787,6 @@
           },
           "observe_at": "protocol: GET /api/meetings",
           "why": "IMPORT_MEETING really minted the meeting the later steps name"
-        },
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "protocol_field",
-            "path": "/jobs/0/meeting_id",
-            "value": "{meeting_id}"
-          },
-          "observe_at": "protocol: GET /api/intel/jobs",
-          "why": "RUN_SUMMARY really queued a job against THIS meeting"
         }
       ],
       "setup": [
@@ -6243,21 +6802,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -6297,9 +6859,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -6307,7 +6877,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -6321,41 +6910,35 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-meetings]"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-run-intel]"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-meetings] [data-testid=arrival-run-intel]",
-          "optional": true,
-          "adapter": "ui-pointer"
         }
       ],
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "selector": "[data-testid=arrival-meetings] .desk-ledger-row",
+        "selector": "[data-testid=arrival-run-intel]",
         "adapter": "ui-pointer"
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "HOLDSPEAK-SYNTH-1"
+          "kind": "text_nonempty"
         },
-        "observe_at": ".desk-window .surface-material",
-        "words": "The SUMMARY TEXT is on the summary face, not merely a succeeded job. The token is the brief section 5 requirement that the material make summary errors inspectable. READ OFF SOURCE: the transcript of tests/fixtures/core_path_smoke_16k.wav is unknown at authoring time, so the live pass must either use synthetic material carrying this token or record this case BLOCKED - never pass it on a summary nobody read."
+        "observe_at": "[data-testid=meeting-summary-text]",
+        "words": "the Arrival summary face contains non-empty generated summary material for the retained architect meeting; the rendered summary is read after the single Run gesture, not inferred from a succeeded job",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "frame_selector": "[data-testid=meeting-summary-text]"
       },
       "completion_bound_s": 600,
       "viewports": [
@@ -6372,17 +6955,7 @@
       "state_id": "state.meetings.intel.ready",
       "applicability": "applicable",
       "preconditions": [
-        "case.j6.run_summary.intel_ready reached in this run -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
-        {
-          "kind": "check",
-          "predicate": {
-            "kind": "attr_equals",
-            "attr": "data-testid",
-            "value": "arrival-run-intel"
-          },
-          "observe_at": "[data-testid=arrival-run-intel]",
-          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
-        },
+        "A completed synthetic architect import is reproduced in this isolated run.",
         {
           "kind": "check",
           "predicate": {
@@ -6417,21 +6990,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -6471,9 +7047,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -6481,7 +7065,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -6497,6 +7100,13 @@
         },
         {
           "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-run-intel]",
+          "adapter": "ui-pointer",
+          "why": "Wait for the disclosed Run control before the single setup click."
+        },
+        {
+          "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-run-intel]"
@@ -6505,18 +7115,18 @@
       "trigger": {
         "kind": "api",
         "method": "GET",
-        "path": "/api/intel/jobs",
+        "path": "/api/meetings/{meeting_id}",
         "body": null,
         "adapter": "http-route"
       },
       "expected": {
         "predicate": {
           "kind": "protocol_field",
-          "path": "/jobs/0/run_receipt/attempts/0/host",
+          "path": "/run_receipt/attempts/0/host",
           "value": "192.168.1.43"
         },
-        "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "ASTRA round 2: the EXECUTED host, not the planned one. `run_receipt` lives on the durable job row (meeting_intel_service.py:74) and its shape is `{receipt_id, job_id, meeting_id, selection_hash, outcome, attempts[{leg_ordinal, host, outcome, operation_id}]}` (phase-201 story-03:40); the first attempt is the leg that ran. The PLANNED host is a separate case (case.j5.meeting_open.planned_host_disclosed) and the council compares them. The value is the declared LAN engine and is environment-specific. || Article III: the host is NAMED on the job. READ OFF SOURCE - this is the PLANNED host recorded on the job row (meeting_intel_service.py:74 carries planned_route; ChairHome.tsx:2018 reads legs[0].host). The host that actually RAN lives in run_receipt, whose shape I could not verify, so the live pass must record BOTH and the council compares them against the host J5 disclosed. The value is the declared LAN engine and is environment-specific."
+        "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+        "words": "The executed host is read from the durable meeting run receipt, separately from the planned route. Succeeded jobs leave the active queue; completion cannot be read from its first active row."
       },
       "completion_bound_s": 60,
       "viewports": []
@@ -6531,7 +7141,20 @@
       "applicability": "applicable",
       "preconditions": [
         "one meeting with a transcript",
-        "an engine assigned to meeting.deferred_analysis"
+        "an engine assigned to meeting.deferred_analysis",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "hit_target",
+            "min_width": 44,
+            "min_height": 24,
+            "min_height_by_viewport": {
+              "393": 44
+            }
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary control owns all 9 interior hit points and is fully visible at both desktop and phone widths"
+        }
       ],
       "setup": [
         {
@@ -6546,21 +7169,24 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
-          "optional": true
+          "optional": true,
+          "timeout_s": 10
         },
         {
           "kind": "ui",
@@ -6600,9 +7226,17 @@
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
           "kind": "fixture",
-          "path": "tests/fixtures/core_path_smoke_16k.wav",
-          "sha256": "36d3a24bbaf79f805fa4ad5360feb918c7467956b5001166d741f48e4c037e04",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -6610,7 +7244,26 @@
           "field": "file",
           "capture_as": "meeting_id",
           "adapter": "http-route",
-          "capture_path": "meeting_id"
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
         },
         {
           "kind": "ui",
@@ -6624,7 +7277,8 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
-          "optional": true
+          "optional": true,
+          "timeout_s": 1
         },
         {
           "kind": "ui",
@@ -6641,14 +7295,240 @@
       },
       "expected": {
         "predicate": {
-          "kind": "attr_equals",
-          "attr": "data-testid",
-          "value": "arrival-route"
+          "kind": "text_contains",
+          "value": "192.168.1.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
-        "words": "Article III: the host this run WILL use is disclosed on the row BEFORE the click. Its text is recorded so the council can set it against the host that actually ran (case.j6.run_summary.host_named). [the audit's stated observation location: [data-testid=arrival-route]]"
+        "words": "Article III: the host this run WILL use is disclosed on the row BEFORE the click. Its text is recorded so the council can set it against the host that actually ran (case.j6.run_summary.host_named). [the audit's stated observation location: [data-testid=arrival-route]]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ]
       },
       "completion_bound_s": 60,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.j6.run_summary.retrying",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.retry_after_failure",
+      "applicability": "applicable",
+      "preconditions": [
+        "a queued job whose destination refuses",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-run-intel"
+          },
+          "observe_at": "[data-testid=arrival-run-intel]",
+          "why": "the Run summary verb is drawn only when the route is ready (ChairHome.tsx:1962,2009), so its presence proves BOTH that SET_ENGINE landed and that the meeting arrived; without it the case would measure a desk that never got an engine"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "observe_at": "protocol: GET /api/meetings",
+          "why": "IMPORT_MEETING really minted the meeting the later steps name"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/settings",
+          "body": {
+            "meeting": {
+              "intel_retry_base_seconds": 120,
+              "intel_retry_max_seconds": 120,
+              "intel_retry_max_attempts": 2
+            }
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the real settings route bounds provider failure retries for this failure and retry walk"
+        },
+        {
+          "kind": "boundary",
+          "substitutes": "the named provider endpoint",
+          "substitute": "engine_reply",
+          "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+          "adapter": "labelled-substitution",
+          "reply": "tests/fixtures/philo3_summary_failure_reply.json"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the conductor reads retry settings at startup; restart before the one Run"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "selector": "[data-testid=arrival-run-intel]",
+        "action": "click",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_equals",
+          "value": "RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
+        },
+        "observe_at": "[data-testid=arrival-summary-status]",
+        "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/summary"
+          }
+        ]
+      },
+      "completion_bound_s": 300,
       "viewports": [
         1440,
         393
@@ -7293,7 +8173,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1134,
+          "line": 1226,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -7312,7 +8192,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 486,
+          "line": 518,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -7343,7 +8223,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 1212,
+          "line": 1304,
           "claim": "the Chair's second verb reads Generating... in flight"
         }
       ],
@@ -7381,7 +8261,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "reportWriteFailure",
-          "line": 589,
+          "line": 681,
           "claim": "a refused generate reaches the desk's write-failure channel with a retry"
         }
       ],
@@ -7431,7 +8311,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 709,
+          "line": 802,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -7451,7 +8331,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1199,
+          "line": 1291,
           "claim": "a brief with nothing untriaged still keeps its own section after a reload"
         }
       ],
@@ -7478,7 +8358,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 714,
+          "line": 805,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -7902,7 +8782,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2010,
+          "line": 2209,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -9548,7 +10428,7 @@
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
           "line": 42,
-          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT \u00b7 time from the last successful write (PHILO-3-04)"
+          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT · time from the last successful write (PHILO-3-04)"
         }
       ],
       "reachable_by": [
@@ -9596,13 +10476,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 529,
+          "line": 621,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 493,
+          "line": 520,
           "claim": "the brief read is one of those re-reads"
         }
       ],

@@ -7,16 +7,23 @@ import {
   SurfaceWell,
 } from "../../../desk/surface/Surface";
 import { countLabel } from "../../../desk/surface";
+import { Disclosure } from "../../../desk/surface/patterns";
 import { rowId } from "../../pageSupport";
 
 export function TranscriptWell({
   id,
   segments,
   momentSegmentIndex,
+  defaultOpen,
+  wordCount,
 }: {
   id: string;
   segments: Record<string, unknown>[];
   momentSegmentIndex?: number | null;
+  /** When supplied, wrap this well in the shared fold species. */
+  defaultOpen?: boolean;
+  /** Durable transcript word count shown on the folded trigger. */
+  wordCount?: number | null;
 }) {
   useEffect(() => {
     if (momentSegmentIndex == null || !segments.length) return;
@@ -28,7 +35,7 @@ export function TranscriptWell({
     return () => window.cancelAnimationFrame(frame);
   }, [id, momentSegmentIndex, segments.length]);
 
-  return (
+  const well = (
     <SurfaceWell head={countLabel("TRANSCRIPT", segments.length)}>
       {segments.length ? (
         <ol className="transcript-list">
@@ -61,5 +68,19 @@ export function TranscriptWell({
         <SurfaceState empty emptyLabel="No transcript" emptyGlyph="¶" />
       )}
     </SurfaceWell>
+  );
+  if (defaultOpen === undefined) return well;
+  const words = typeof wordCount === "number" && wordCount > 0
+    ? `${wordCount} WORDS`
+    : undefined;
+  return (
+    <Disclosure
+      label="TRANSCRIPT"
+      token={words}
+      defaultOpen={defaultOpen}
+      variant="dense"
+    >
+      {well}
+    </Disclosure>
   );
 }

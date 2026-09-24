@@ -91,6 +91,20 @@ export interface MeetingSegment {
   startedAt?: string;
 }
 
+/** Durable deferred-summary leaf projected by the meeting service. */
+export interface IntelJob {
+  status: string;
+  attempts: number;
+  lastError: string | null;
+  requestedAt: string | null;
+  updatedAt: string | null;
+  retryScheduled?: boolean;
+  nextRetryAt?: string | null;
+  retriesRemaining?: number | null;
+  retryMaxAttempts?: number | null;
+  runReceipt?: RunReceipt | null;
+}
+
 export interface Meeting {
   kind: "meeting";
   id: string;
@@ -109,6 +123,13 @@ export interface Meeting {
   calendarSourceLabel?: string | null;
   /** HS-170-04: word count of the transcript (null when no transcript). */
   transcriptWords?: number | null;
+  /** Detail projection carried by the Arrival's bounded read. */
+  intelSummary?: string | null;
+  intelTopics?: string[];
+  intelStatusDetail?: string | null;
+  intelRequestedAt?: string | null;
+  intelCompletedAt?: string | null;
+  intelJob?: IntelJob | null;
   /** HS-201-03 contract: the SERVICE route the next summary run will use
    *  (ordered legs with host), resolved by the hub before any POST. */
   plannedRoute?: PlannedRoute | null;

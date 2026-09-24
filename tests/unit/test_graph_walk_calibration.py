@@ -966,14 +966,29 @@ def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_p
     minted = record["trigger"]["captured"]["value"]
     assert minted == state["meetings"][0]["id"]
     assert record["variables"]["meeting_id"] == minted
-    # the upload WAS the trigger, and its own answer travels with the after
+    # This is the calibration double's transport answer, not the fixture's
+    # JSON body: the upload WAS the trigger and answered 202 before the
+    # separate completion read.
+    upload = record["trigger"]
+    assert upload["kind"] == "fixture" and upload["status"] == 202
+
+    completion = upload["completion_wait"]
+    assert completion["matched"] is True
+    assert completion["status"] == 200
+    completed = completion["payload"]
+    assert completed["transcription_status"] == "complete"
+    assert completed["duration"] > 0
+    assert len(completed["segments"]) >= 1
+
+    # The upload's own answer travels with the after observation.
     answer = record["after"]["trigger_response"]
     assert answer["status"] == 202 and answer["path"] == "/api/meetings/import"
     assert answer["body"]["meeting_id"] == minted
     # before the trigger there was no meeting, and nothing named one
     assert record["before"]["protocol"]["rows"] == []
     assert record["pending_placeholders"] == ["meeting_id"]
-    assert any(minted in note for note in record["notes"])
+    assert record["after"]["protocol"]["rows"][0]["id"] == minted
+    assert any("/meetings/0/id" in note for note in record["notes"])
 
 
 def test_a_placeholder_nothing_binds_blocks_before_the_trigger(negatives):

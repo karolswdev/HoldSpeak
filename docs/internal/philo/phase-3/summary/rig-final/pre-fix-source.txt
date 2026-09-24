@@ -1,0 +1,2 @@
+Original script and atlas/schema: git show HEAD:path at aac7544eae3c1f30a5928c95825a8cb654c582cc
+Final test files and synthetic WAV copied as test inputs only. No production code shims.

@@ -1,0 +1,7 @@
+Command:
+HOME=$(mktemp -d) uv run --no-sync pytest --collect-only -q tests/unit/test_philo3_summary_detail.py tests/unit/test_philo3_summary_queue.py
+
+10 tests collected in 0.45s
+
+Collected names are retained in pre-fix-collect.txt; the post-fix collection
+contains the same 10 tests.

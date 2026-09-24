@@ -1,0 +1,11 @@
+PHILO-3-02 queue fence — post-fix focused run
+Date: 2026-09-23
+Command:
+  test_home=$(mktemp -d); HOME="$test_home" uv run --no-sync pytest -q tests/unit/test_philo3_summary_queue.py tests/unit/test_phase200_intel_drain.py tests/unit/test_intel_queue.py tests/unit/test_meeting_deferred_admission.py -k 'philo3 or test_ or bound_claim_executes_stored_service_member_and_completes_ledger or pre_c_unbound_claim_is_cut_over_inert_and_only_a_fresh_descriptor_can_bind or bound_deferred_kernel_refusal_is_terminal_with_one_attempt or claim_refusal_terminalizes_and_unbounded_drain_continues or each_queue_retry_admits_a_new_job_parent or claim_admits_one_job_parent_with_base_and_plugin_children'
+Exit code: 0
+
+Raw output:
+................................................................
+........ [ 93%]
+.....                                                                    [100%]
+77 passed in 33.83s
