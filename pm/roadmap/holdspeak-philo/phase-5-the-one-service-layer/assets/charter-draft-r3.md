@@ -1,3 +1,5 @@
+> Superseded by ../current-phase-status.md (chartered 2026-09-24).
+
 # Phase 5 — The One Service Layer (CHARTER DRAFT r3 — the owner's D1–D3 RULED 2026-09-24; Astra r2 check owed; then charter)
 
 **r1** drafted 2026-09-23 by Muad'Dib. **Astra check r1: BOUNCE** (`.tmp/two-brains/20260923-190909-check/phase-4-charter-astra.md`, reviewed HEAD 46172fcf) — the inventory was loose, the owner's ruling and Muad'Dib's proposal were blurred, the existing descriptor was over-read, two composition gaps were unnamed, the ratchet counted aggregates, and story 06 asked the owner to learn operation names. **r2** (this file) pays most of that check; Astra (charter check of Phase 4, 2026-09-23) lists the CARRIED conditions in §12, so "paid" is not claimed. Astra's counter-proposal for the story list is adopted with amendments noted. The owner has not ruled. Nothing is built. Phase 3 closes first.
