@@ -1,0 +1,378 @@
+{
+  "7a-empty-original-1440": {
+    "label": "BRIEF",
+    "headline": "No changes",
+    "snapshot": null,
+    "handled": null,
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "7b-fully-triaged-original-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": null,
+    "handled": null,
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "7c-one-line-proposed-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": null,
+    "handled": "ALL 6 HANDLED",
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "7b-fully-triaged-proposed-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "8a-quiet-generating-proposed-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": true,
+    "failed": false,
+    "receipts": [
+      "GENERATING…"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": true,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "8b-quiet-failed-proposed-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": true,
+    "receipts": [
+      "BRIEF DID NOT GENERATE · HTTP 500"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "9-same-day-success-proposed-1440": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [
+      "Brief ready · 6 items · 5:40 PM"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 928,
+    "scrollW": 1440,
+    "vw": 1440
+  },
+  "7a-empty-original-393": {
+    "label": "BRIEF",
+    "headline": "No changes",
+    "snapshot": null,
+    "handled": null,
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "7b-fully-triaged-original-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": null,
+    "handled": null,
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "7c-one-line-proposed-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": null,
+    "handled": "ALL 6 HANDLED",
+    "date": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": false,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "7b-fully-triaged-proposed-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "8a-quiet-generating-proposed-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": true,
+    "failed": false,
+    "receipts": [
+      "GENERATING…"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": true,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "8b-quiet-failed-proposed-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": true,
+    "receipts": [
+      "BRIEF DID NOT GENERATE · HTTP 500"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  },
+  "9-same-day-success-proposed-393": {
+    "label": "BRIEF",
+    "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+    "snapshot": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "handled": "ALL 6 HANDLED",
+    "date": "SNAPSHOT · SEP 21 – 23 · GENERATED SEP 23 17:40",
+    "generating": false,
+    "failed": false,
+    "receipts": [
+      "Brief ready · 6 items · 5:40 PM"
+    ],
+    "marker_before_headline": true,
+    "handled_role": null,
+    "raw_buttons": 0,
+    "has_zero_brief_counter": false,
+    "buttons": [
+      {
+        "text": "Generate",
+        "disabled": false,
+        "width": 76,
+        "text_fits": true
+      }
+    ],
+    "min_text_px": 12,
+    "section_width": 369,
+    "scrollW": 393,
+    "vw": 393
+  }
+}

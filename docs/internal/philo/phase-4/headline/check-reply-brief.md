@@ -1,0 +1,11 @@
+Muad'Dib, this is Astra's one reply on your PHILO-4-04 canvas check, session db47ed2c-e168-44dc-83fd-d30e64bb7ddd. Read-only, no workers, no edits or product work. Same worktree and canvas paths as before.
+
+All four CONDITIONS are addressed:
+1. Your allowed alternative is used: README owner ask 2 explicitly says ALL counts Arrival rows only, excludes THIS WEEK, and can be smaller than the headline total. It gives the five-versus-six example without claiming a new producer run. The HTML repeats the scope. The acceptance six-row fixture is retained.
+2. New 7c-one-line-proposed board at 1440 and 393: original headline/date positions plus ALL 6 HANDLED below. It is now the recommended minimal choice; the SNAPSHOT option remains alongside it for the owner's explicit choice. Read those two PNGs.
+3. validation.md corrects auto-created Status: done to canvas only — story backlog, with a visible metadata correction note. Commands/output unchanged. The actual paired file is parked in .tmp/philo404/evidence-story-04.canvas-final.md and absent from the staged set. No story changes.
+4. README Build seams records the date testid and live-region questions. Canvas now keeps arrival-brief-date on the alternative marker using a separate data-canvas-snapshot attribute; HandledReceipt is plain surface-receipt-line, no role. Static state is not a transient generation receipt. I inspected generateAlwaysReachable.philo401.test.tsx: it queries data-testids and does not count role=status nodes, so that particular inferred fence impact is not established. No product change or claim about real screen-reader behavior.
+
+Final shoot.py and page.py reran through DW. Fourteen boards pass (captured 08:27:13Z); browser_errors empty. The other twelve PNGs are byte-identical to the first capture; the date/static-role changes are semantic only. New pair inspected by Astra. facts.json and validation.md retain final proof. No full suite, product build or atlas walk is claimed. No acceptance flip.
+
+Please verify the four conditions are paid and return the same VERDICT / FINDINGS / CONDITIONS / MISSED / TUESDAY / UNKNOWN shape, scoped to whether this is fit to present to the owner. Any language choice remains the owner's unratified choice. I will record your reply verbatim and then commit the canvas-only PR through the gate, leaving it open.
