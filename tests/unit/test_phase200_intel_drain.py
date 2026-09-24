@@ -368,10 +368,18 @@ def test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face(t
     assert datetime.fromisoformat(successors[0]["requested_at"]) > started, (
         "the retry did not move requested_at forward"
     )
-    assert all(r["last_error"] for r in rows if r["status"] == "failed")
-    # The ceiling's own sentence, written by the repository.
+    assert all(
+        r["last_error"] == "PROVIDER FAILED"
+        for r in rows
+        if r["status"] == "failed"
+    ), rows
+    # The row carries the plain producer cause.  The attempt ceiling is
+    # asserted by the ladder above; the face must not receive the old queue
+    # wrapper with its attempt count.
     assert any(
-        "after 2 attempt(s)" in str(r["last_error"]) for r in rows if r["status"] == "failed"
+        r["status"] == "failed" and r["attempts"] == 2
+        and r["last_error"] == "PROVIDER FAILED"
+        for r in rows
     ), rows
     # No queued survivor: the ceiling terminalized the chain.
     assert [r for r in rows if r["status"] == "queued"] == []
@@ -380,7 +388,7 @@ def test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face(t
     failed = [j for j in listed if j["status"] == "failed"]
     assert failed, listed
     assert any(j["attempts"] == 2 for j in failed), failed
-    assert all(j["last_error"] for j in failed)
+    assert all(j["last_error"] == "PROVIDER FAILED" for j in failed), failed
     # Nothing is still scheduled: the chain is terminal, not waiting.
     assert all(j["retry_scheduled"] is False for j in failed), failed
     assert all(j["next_retry_at"] is None for j in failed), failed
@@ -447,11 +455,13 @@ def test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling(tmp_path, 
         worker.stop()
 
     rows = _rows(db, "intel_jobs")
-    # Terminal, with the repository's own ceiling sentence.
+    # Terminal, with the plain producer cause shown on the face.  The
+    # attempts=2 assertion is the technical ceiling; this assertion keeps
+    # the displayed cause free of the old queue wrapper.
     assert any(
         r["status"] == "failed"
         and int(r["attempts"]) == 2
-        and "after 2 attempt(s)" in str(r["last_error"])
+        and r["last_error"] == "PROVIDER FAILED"
         for r in rows
     ), rows
     # No queued survivor: nothing is left for the drainer to pick up again.
@@ -467,7 +477,10 @@ def test_a_failing_job_with_no_routed_chain_still_reaches_its_ceiling(tmp_path, 
     # And the face can show it.
     listed = _service(db).list_jobs(OWNER, {"status": "all", "limit": 50})["jobs"]
     assert any(
-        j["status"] == "failed" and j["attempts"] == 2 and j["last_error"] for j in listed
+        j["status"] == "failed"
+        and j["attempts"] == 2
+        and j["last_error"] == "PROVIDER FAILED"
+        for j in listed
     ), listed
 
 

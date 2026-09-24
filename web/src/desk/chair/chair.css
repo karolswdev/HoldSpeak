@@ -419,6 +419,14 @@
   letter-spacing: 0.03em;
 }
 
+/* PHILO-3-03: the failed read and its Retry, one row (wraps at 393). */
+.arrival-brief-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
 /* The brief's own words when it has no untriaged rows (its headline). */
 .arrival-brief-headline {
   display: block;

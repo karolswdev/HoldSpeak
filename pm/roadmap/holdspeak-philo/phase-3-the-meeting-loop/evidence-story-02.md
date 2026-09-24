@@ -6642,3 +6642,631 @@ SKIPPED [2] tests/e2e/test_hs168_sources_glass.py:367: HS-169-02 retired the Sou
 Six actual case/width pairs pass; all shots retained; import completion, single Run, closed setup window, plain causes, settled counts and real ready-engine identity verified.
 Astra also inspected all before/after/framed shots. Fold defaults and refresh continuity are rendered-fence evidence; owner usefulness remains partial.
 ```
+
+### Captured run — 2026-09-23T22:13:53Z
+
+- **Command:** `/bin/zsh .tmp/philo3-r2-integrated-focused.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** unknown
+
+```text
+........................................................................ [ 43%]
+........................................................................ [ 87%]
+....................                                                     [100%]
+164 passed in 27.39s
+```
+
+### Captured run — 2026-09-23T22:13:55Z
+
+- **Command:** `/bin/zsh .tmp/philo3-r2-integrated-web.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+
+> holdspeak-web@0.0.1 check
+> npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build && npm run bundle:gate
+
+
+> holdspeak-web@0.0.1 tokens:check
+> node scripts/generate-tokens.cjs --check
+
+tokens.css and tokens.gen.ts match design-tokens.json
+
+> holdspeak-web@0.0.1 tokens:gate
+> node scripts/validate-tokens.cjs
+
+token gate: clean (11 allow-listed exceptions, all in use)
+
+> holdspeak-web@0.0.1 guard:architecture
+> node scripts/guard-architecture.mjs
+
+React architecture guard passed (827 source files; zero framework residue).
+
+> holdspeak-web@0.0.1 typecheck
+> tsc --noEmit
+
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-3-02/web
+
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at createColoredCanvas (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:7:26)
+    at canUseNewCanvasBlendModes (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:17:21)
+    at file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canvasUtils.mjs:11:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at VitestModuleEvaluator.runExternalModule (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/vitest/dist/module-evaluator.js:80:21) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at getTestContext (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getTestContext.mjs:8:22)
+    at getMaxFragmentPrecision (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getMaxFragmentPrecision.mjs:8:16)
+    at new _GlProgram (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:37:40)
+    at Function.from (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:77:27)
+    at new ParticleShader (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/shader/ParticleShader.mjs:15:33)
+    at new ParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/ParticleContainerPipe.mjs:29:26)
+    at new CanvasParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/canvas/CanvasParticleContainerPipe.mjs:8:5) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at createColoredCanvas (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:7:26)
+    at canUseNewCanvasBlendModes (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canUseNewCanvasBlendModes.mjs:17:21)
+    at file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/utils/canvasUtils.mjs:11:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at VitestModuleEvaluator.runExternalModule (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/vitest/dist/module-evaluator.js:80:21) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at getTestContext (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getTestContext.mjs:8:22)
+    at getMaxFragmentPrecision (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/program/getMaxFragmentPrecision.mjs:8:16)
+    at new _GlProgram (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:37:40)
+    at Function.from (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/gl/shader/GlProgram.mjs:77:27)
+    at new ParticleShader (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/shader/ParticleShader.mjs:15:33)
+    at new ParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/shared/ParticleContainerPipe.mjs:29:26)
+    at new CanvasParticleContainerPipe (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/scene/particle-container/canvas/CanvasParticleContainerPipe.mjs:8:5) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at CanvasContextSystem.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/canvas/CanvasContextSystem.mjs:35:46)
+    at CanvasRenderer.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/shared/system/AbstractRenderer.mjs:69:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at autoDetectRenderer (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/rendering/renderers/autoDetectRenderer.mjs:53:3)
+    at _Application.init (file:///Users/karol/dev/tools/wt-philo-3-02/web/node_modules/pixi.js/lib/app/Application.mjs:52:21)
+    at WorldEngine.init (/Users/karol/dev/tools/wt-philo-3-02/web/src/desk/gl/engine.ts:188:7) undefined
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/nodes/HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/jsdom/lib/jsdom/living/generated/HTMLCanvasElement.js:131:58)
+    at /Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:16723:49
+    at Object.get (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:11239:23)
+    at _isIconLigature (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:16722:41)
+    at /Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28288:54
+    at Array.some (<anonymous>)
+    at hasRealTextChildren (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28287:35)
+    at Rule.colorContrastMatches [as matches] (/Users/karol/dev/tools/wt-philo-3-02/web/node_modules/axe-core/axe.js:28249:12) undefined
+
+ Test Files  307 passed (307)
+      Tests  2813 passed (2813)
+   Start at  16:14:04
+   Duration  89.93s (transform 4.87s, setup 12.02s, import 32.44s, tests 60.99s, environment 52.65s)
+
+
+> holdspeak-web@0.0.1 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1690 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/api.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/usePrepareController.ts but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/ProjectRoomCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/RoomPeopleSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/useProjectRoomController.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/window/Dock.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/store/compositorSlice.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/usePrepareController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SettingsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/SpeakFace.tsx but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/App.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/components/AmbientLayer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/chair/ChairHome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/AttentionDrawer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskStartActions.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskToolInspector.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskToolShelf.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/FirstWords.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/GlassDropLayer.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/Pullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/RecordOrb.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/SurfaceWindows.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/SystemShade.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/TrustWindow.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/ArtifactPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/ChainPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/CoderPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/DecisionPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/DirectoryPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/KbPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/MeetingPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/NotePullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/RecipePullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/WorkflowPullout.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/shared/CapabilitySection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/views/BriefView.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/pullouts/views/FollowThroughView.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/surface/citations.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/verbRegistry.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/ProjectRoomCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/RoomPeopleSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/door/useDoorController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/prepare/PreparePosture.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/recall/RecallFace.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/project-room/useProjectRoomController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/CommandsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/CompanionCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/HistoryCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/LiveCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/PeopleCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/RuntimeDocsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SettingsCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/SetupCore.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/DictationSections.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/dictation/Readiness.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/ArtifactsLibrary.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/DoorSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/ImportSection.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/pages/cores/history/MeetingReview.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/store.ts is dynamically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/shell.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts, /Users/karol/dev/tools/wt-philo-3-02/web/src/features/concierge/useConciergeController.ts but also statically imported by /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/DeskApp.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/chair/ChairHome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/AskPanel.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk/components/DeskChrome.tsx, /Users/karol/dev/tools/wt-philo-3-02/web/src/desk
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```
+
+### Captured run — 2026-09-23T22:16:18Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.intel_failed --brain astra --viewport 1440 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60383 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yjj0dnt9/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221618Z-case.j6.run_summary.intel_failed-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221618Z-case.j6.run_summary.intel_failed-astra-1440/after.png']
+NOTE: predicate: observe_at text is 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T22:16:33Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.intel_failed --brain astra --viewport 393 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60451 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-12jf280s/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221633Z-case.j6.run_summary.intel_failed-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221633Z-case.j6.run_summary.intel_failed-astra-393/after.png']
+NOTE: predicate: observe_at text is 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T22:16:47Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.retrying --brain astra --viewport 1440 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60514 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221647Z-case.j6.run_summary.retrying-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221647Z-case.j6.run_summary.retrying-astra-1440/after.png']
+NOTE: predicate: observe_at text is 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T22:17:01Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.retrying --brain astra --viewport 393 --engine replayed --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60577 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-b38w0doq/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221702Z-case.j6.run_summary.retrying-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221702Z-case.j6.run_summary.retrying-astra-393/after.png']
+NOTE: predicate: observe_at text is 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED', wanted 'RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED'
+```
+
+### Captured run — 2026-09-23T22:17:16Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.summary_text --brain astra --viewport 1440 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60629 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x6k4hxr_/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221716Z-case.j6.run_summary.summary_text-astra-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221716Z-case.j6.run_summary.summary_text-astra-1440/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221716Z-case.j6.run_summary.summary_text-astra-1440/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is present
+```
+
+### Captured run — 2026-09-23T22:17:34Z
+
+- **Command:** `uv run --no-sync python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas.json --case case.j6.run_summary.summary_text --brain astra --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+PASS: live
+BRAIN: astra
+SOURCE: 9b03604796709faf21036a4a2bff384b6ad49caf dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas.json
+RUNTIME: build=['index-G7189zzm.js'] hub=http://127.0.0.1:60677 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-_xjlzspr/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j6
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221734Z-case.j6.run_summary.summary_text-astra-393/before.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221734Z-case.j6.run_summary.summary_text-astra-393/after.png', 'pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221734Z-case.j6.run_summary.summary_text-astra-393/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: observe_at text is present
+```
+
+### Captured run — 2026-09-23T22:18:36Z
+
+- **Command:** `python3 docs/internal/philo/phase-3/summary/round-2/verify_integrated_observations.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+('case.j6.run_summary.intel_failed', 1440) pass 77 words 0.934 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.intel_failed', 393) pass 298 words 0.928 seconds {'total_jobs': 1, 'queued_jobs': 0, 'running_jobs': 0, 'failed_jobs': 1, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 0, 'next_retry_at': None}
+('case.j6.run_summary.retrying', 1440) pass 151 words 0.928 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T16:19:00.766412'}
+('case.j6.run_summary.retrying', 393) pass 76 words 0.927 seconds {'total_jobs': 1, 'queued_jobs': 1, 'running_jobs': 0, 'failed_jobs': 0, 'queued_due_jobs': 0, 'scheduled_retry_jobs': 1, 'next_retry_at': '2026-09-23T16:19:15.226483'}
+('case.j6.run_summary.summary_text', 1440) pass 77 words 6.666 seconds real LAN engine
+('case.j6.run_summary.summary_text', 393) pass 299 words 7.935 seconds real LAN engine
+Six integrated actual case/width pairs pass; all shots retained; import completion, single Run, closed setup window, plain causes, settled counts and real ready-engine identity verified.
+Astra also inspected all before/after/framed shots. Fold defaults and refresh continuity are rendered-fence evidence; owner usefulness remains partial.
+Ready-state target hit ownership is retained in the index; inherited aftercare obstruction is ledgered, not waived as whole-face compliance.
+```
+
+### Captured run — 2026-09-23T22:19:08Z
+
+- **Command:** `/bin/zsh .tmp/philo3-r2-integrated-full.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 12e903e06d0d113f3c0d7b9d4f334435c270fe60
+
+```text
+...........ssssssssssssssssssssss.........ssssss............s..s........ [  0%]
+..................ssssssssssss....sssssssss......................ssss... [  1%]
+.ssssss........................F........................................ [  1%]
+........................................................................ [  2%]
+......................F..................xxxx.......F..........F........ [  3%]
+...........FF....FF..........................F.......................... [  3%]
+ssssssssss.s............................................................ [  4%]
+........................................................................ [  4%]
+.....................s...............sss................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+....................................ss....................ss............ [  9%]
+..........................................................s............. [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 14%]
+......ss..........s..................................................... [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 27%]
+............................................................s........... [ 28%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 30%]
+........................................................s............... [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 32%]
+....................................s........ss...ss.................... [ 33%]
+......s......sssss...................................................... [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+..................ss.................................................... [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+............................s........................................... [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+....................................................s..sss.............. [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+..........................................F............................. [ 65%]
+....................................FF.................................. [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+.......................................................s................ [ 80%]
+........................................................................ [ 80%]
+....................................................s................... [ 81%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 94%]
+................................................s....................... [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+.............................................s.......................... [ 99%]
+........................................................................ [ 99%]
+...................                                                      [100%]
+=================================== FAILURES ===================================
+_____________________ TestMeetingsGlass.test_meetings_face _____________________
+
+self = <tests.e2e.test_hs170_meetings_glass.TestMeetingsGlass object at 0x109979450>
+
+    def test_meetings_face(self) -> None:
+        from playwright.sync_api import sync_playwright, expect
+    
+        errors: list[str] = []
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+    
+            for width in (1440, 393):
+                page = browser.new_page(viewport={"width": width, "height": 900})
+                page.on("pageerror", lambda err: errors.append(str(err)))
+    
+                # Navigate with auth token
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "POST", "/api/desk/seed", token=TOKEN)
+                _api(page, "PUT", "/api/setup/onboarding",
+                     {"disposition": "completed"}, token=TOKEN)
+                _normal_chair(page)
+    
+                # Open the meetings surface
+                _open_surface(page, "review-meetings")
+                found = _wait_for_surface_window(page, timeout=12000)
+                assert found, f"Meetings surface window did not open at {width}"
+    
+                # Wait for data to render (headline is the signal)
+                headline = page.locator("[data-testid='meetings-headline']")
+                headline.wait_for(timeout=8_000)
+                _settle(page)
+    
+                # ── Assert: headline ──
+                headline_text = headline.text_content() or ""
+                assert "1" in headline_text and "summary" in headline_text.lower(), (
+                    f"Headline at {width}: expected '1 ... summary', got '{headline_text}'"
+                )
+    
+                # ── Assert: Run summary on OFF-with-words row ──
+                run_btns = page.locator("[data-testid='run-intelligence-btn']")
+                expect(run_btns.first).to_be_visible(timeout=5_000)
+                assert run_btns.count() == 1, (
+                    f"Expected exactly 1 'Run summary' at {width}, got {run_btns.count()}"
+                )
+    
+                # ── Assert: NO TRANSCRIPT renders ──
+                no_transcript = page.locator("[data-testid='no-transcript-token']")
+                expect(no_transcript.first).to_be_visible(timeout=3_000)
+    
+                # ── Assert: 0 SEG never appears ──
+                win = page.locator(".desk-surface-window")
+                page_text = win.text_content() or ""
+                assert "0 SEG" not in page_text, (
+                    f"'0 SEG' found in page at {width}"
+                )
+    
+                # ── Assert: INTERRUPTED renders for dead capture, REC never does ──
+                assert "INTERRUPTED" in page_text, (
+                    f"'INTERRUPTED' not found at {width} for dead capture"
+                )
+                state_tokens_text = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return '';
+                    const tokens = body.querySelectorAll('[data-testid="state-token"]');
+                    return Array.from(tokens).map(t => t.textContent).join('|');
+                }""")
+                assert "REC" not in state_tokens_text.split("|"), (
+                    f"'REC' state token found at {width}: {state_tokens_text}"
+                )
+    
+                # ── Assert: no raw <button> in the face body ──
+                raw_buttons = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return [];
+                    const all = body.querySelectorAll('button');
+                    const raw = [];
+                    for (const b of all) {
+                        // .btn = library Button; .desk-mic = library MicButton
+                        if (!b.classList.contains('btn') && !b.classList.contains('btn--chrome') && !b.classList.contains('desk-mic')) {
+                            raw.push((b.textContent || '').trim().slice(0, 40));
+                        }
+                    }
+                    return raw;
+                }""")
+                assert len(raw_buttons) == 0, (
+                    f"Raw buttons at {width}: {raw_buttons}"
+                )
+    
+                # ── Assert: HS-170-04 restored doors ──
+                if width == 1440:
+                    # Search StringGadget with mic in the list head
+                    search_input = page.locator(".meetings-search .gadget-string input")
+                    expect(search_input).to_be_visible(timeout=3_000)
+    
+                    # Facet token toggles on the caption row
+                    facet_area = page.locator("[data-testid='meetings-facets']")
+>                   expect(facet_area).to_be_visible(timeout=3_000)
+E                   AssertionError: Locator expected to be visible
+E                   Actual value: None
+E                   Error: element(s) not found 
+E                   Call log:
+E                     - Expect "to_be_visible" with timeout 3000ms
+E                     - waiting for locator("[data-testid='meetings-facets']")
+
+tests/e2e/test_hs170_meetings_glass.py:318: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____________________ TestAttentionGlass.test_long_row_393 _____________________
+
+self = <tests.e2e.test_hs200_attention_glass.TestAttentionGlass object at 0x109ab9d00>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1447c66d0>
+
+    def test_long_row_393(self, tmp_path, monkeypatch) -> None:
+>       _run_long_row(tmp_path, monkeypatch, 393)
+
+tests/e2e/test_hs200_attention_glass.py:733: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-407/test_long_row_3930')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1447c66d0>
+width = 393
+
+    def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        """Counsel P0-2: nothing extends past the viewport; one primary on the
+        whole face; the sources disclosure opens with an Open per projection."""
+        _ensure_build()
+        server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+        errors: list[str] = []
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as pw:
+                browser = pw.chromium.launch()
+                pa
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```
+
+### Captured run — 2026-09-23T23:59:47Z
+
+- **Command:** `/bin/zsh .tmp/philo3-r2-fallout-astra.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d07b7bdb05d0938b50592e9bf7f612c2cd844e27
+
+```text
+......................                                                   [100%]
+22 passed in 43.18s
+```

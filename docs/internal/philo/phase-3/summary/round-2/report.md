@@ -1,5 +1,32 @@
 # PHILO-3-02 — round-two response and proof
 
+## Final integrated verification — 2026-09-23
+
+After the first gated round-two commit `9b036047`, main advanced to **`5de5d0c3`** (A3) and PR #616 had conflicts. Astra integrated main, preserving A2's import/replay/restart/engine evidence and A3's brief-read/producer-clock behavior. A fourth Luna worker (`gpt-5.6-luna`, `xhigh`) resolved the rig/schema conflicts and held; Astra resolved atlas/status/generated records and reviewed the combined face. The roadmap requires a phase summary when all story files are done; the added technical ledger explicitly leaves the phase exit and owner sitting open.
+
+Final **web check: 307 files / 2,813 tests pass**, with typecheck/build/bundle gate. [Complete raw output](integration/full-web.raw.log), DW `2026-09-23T22:13:55Z`. Desk JS 1,321,794 B, CSS 319,279 B, zero maps. Final focused Python: **164 collected / 164 passed**, [collection](integration/focused.collect.raw.log), [run](integration/focused.raw.log), DW `2026-09-23T22:13:53Z`. The worker's independently read raw scoped results are **6 producer-clock + 62 calibration tests passed**. The focused/web DW captures recorded index `unknown` because the resolved merge was not staged yet; the source was quiet, and the subsequent walks/full run record the resolved index. No product edits followed the final build. A fifth Luna worker corrected the three old test expectations/probe boundaries exposed by the full run; the full result remains retained.
+
+Final full Python: **12 failed, 11,559 passed, 116 skipped, 4 xfailed in 5678.77 s (exit 1)**. [Complete raw output](integration/full-python.raw.log), [classification](full-suite-classification.md). Nine failures reproduce on archived main; three old lane expectations/probes are paid by the focused correction recorded there. 22 passed in 43.18 s (DW `2026-09-23T23:59:47Z`). The earlier 106-pass partial run is retained as interrupted, not counted as a full result.
+
+Six actual integrated J6 walks were repeated, one hub and fresh HOME per invocation, on **`index-G7189zzm.js`**, index SHA `1cd6b691cb0828d1c31bd5bfa97507272c5d47ce884d633a646423a34911fcac`. [Integrated observation/shot index](integrated-observations-index.json), [audit](integration/observations-audit.raw.log), [audit source](verify_integrated_observations.py). All use completed import, closed engine setup, one Run and no manual refresh. Astra inspected all fourteen integrated before/after/framed shots.
+
+| Actual case | 1440 run / result | 393 run / result | Result |
+| --- | --- | --- | --- |
+| `case.j6.run_summary.intel_failed` | `20260923T221618Z` / 0.934 s | `20260923T221633Z` / 0.928 s | Plain cause; header 1 FAILED; queued 0 / failed 1; 77 / 298 words on collapsed fold |
+| `case.j6.run_summary.retrying` | `20260923T221647Z` / 0.928 s | `20260923T221702Z` / 0.927 s | Plain cause; header 1 QUEUED; scheduled retries 1 / failed 0; 151 / 76 words |
+| `case.j6.run_summary.summary_text` | `20260923T221716Z` / 6.666 s | `20260923T221734Z` / 7.935 s | Real summary/actual host; summary open; 77 / 299 words |
+
+Each full run directory is under `assets/story-02-shots/rig/round-2-integrated/` beside the story. Both ready runs again identify **Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf**, `llamacpp`, at `192.168.1.43:8080`. All six technical state predicates pass; the four cause regions own all nine hit samples. **The ready 393 raw summary does not own every hit sample:** the inherited aftercare panel covers its lower line and controls; in the framed shot it also reaches the transcript fold. The 1440 panel covers Capture Bar verbs. These are retained failures of whole-face clearance, ledgered under the owner's explicit no-fix instruction. The fold's default and one-click behavior are also fenced in the rendered component; this does not claim an unobstructed fold in every aftercare state.
+
+The original 60 observations, the six pre-integration round-two observations and these six integrated observations all remain: **72 retained observations**, without changing any original observation. No new real-LAN J7 atlas restart walk is claimed; the additional controlled-provider legacy glass fence exercises its own restart separately. [The integrated usefulness mapping](usefulness.md#integrated-output-after-main-merge) records both new outputs, including corrupted SQLite/Maya and missing Priya action/deadline. Technical correction and partial usefulness remain separate.
+
+The initial graph census invocation used system Python and could not import `holdspeak`; the corrected venv invocation reports zero new/removed/changed/stale/unread entries, with the inherited five miscited anchors and fourteen subtype conflicts. The worker's first calibration invocation lacked the browser-cache path; its retained rerun passes. These are invocation errors, not product failures or flake claims.
+
+
+## First round-two gate checkpoint — retained history
+
+The sections below describe commit `9b036047` before main integration and the completed final full run above. Its pending language is historical.
+
 Astra implemented the owner's round-two instruction against Muad'Dib's recorded **RATIFY-WITH-CONDITIONS** at branch `dfbaccd541e46e5a793786f3a6a6373e81b6e1a4`. C1 and the five accompanying corrections are paid below; Muad'Dib's re-read and merge remain pending. PHILO-3-02 stays done. This appends evidence and does not flip the story again.
 
 ## Built result

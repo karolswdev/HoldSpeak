@@ -12,7 +12,7 @@ import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt, type GeneratedBrief } from "./briefEgress";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
-import { apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
@@ -143,6 +143,25 @@ interface MondayBrief {
   sections: Record<string, BriefItem[]>;
   is_empty: boolean;
   shelf?: Record<string, string>;
+  /* PHILO-3-03: the route's own date labels (holdspeak/web/routes/monday_brief.py). */
+  period_label?: string | null;
+  generated_label?: string | null;
+}
+
+/** PHILO-3-03: why the brief read failed — the status, or no answer at all. */
+function briefLoadCause(error: unknown): string {
+  return error instanceof ApiError ? `HTTP ${error.status}` : "NO ANSWER";
+}
+
+/** PHILO-3-03: the brief's period and generated date, one caption line. */
+function BriefDate({ brief }: { brief: MondayBrief }) {
+  const parts = [brief.period_label, brief.generated_label].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <span className="surface-receipt-line" data-testid="arrival-brief-date">
+      {parts.join(" · ")}
+    </span>
+  );
 }
 
 /** Door card (from GET /api/door .board columns). */
@@ -492,12 +511,18 @@ function Arrival() {
   // ── brief ──
   const [brief, setBrief] = useState<MondayBrief | null>(null);
   const [briefLoading, setBriefLoading] = useState(true);
-  useEffect(() => {
+  /* PHILO-3-03: a failed read is NOT an absent brief. `null` = the read
+     answered (or has not failed); a string = the cause the face names. */
+  const [briefLoadFailed, setBriefLoadFailed] = useState<string | null>(null);
+  const readBrief = useCallback(() => {
+    setBriefLoading(true);
+    setBriefLoadFailed(null);
     void apiFetch<MondayBrief | null>("/api/brief/latest")
-      .then(setBrief)
-      .catch(() => null)
+      .then((data) => setBrief(data))
+      .catch((error) => setBriefLoadFailed(briefLoadCause(error)))
       .finally(() => setBriefLoading(false));
   }, []);
+  useEffect(() => { readBrief(); }, [readBrief]);
 
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
@@ -1169,7 +1194,36 @@ function Arrival() {
       ) : null}
 
       {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ── */}
-      {!briefLoading && !brief ? (
+      {briefLoading && !brief ? (
+        /* PHILO-3-03 (ratified canvas, state 2): the read is open. */
+        <div data-testid="arrival-brief">
+          <SurfaceSection label="BRIEF">
+            <span className="surface-receipt-line" role="status" data-testid="arrival-brief-loading">
+              READING…
+            </span>
+          </SurfaceSection>
+        </div>
+      ) : briefLoadFailed && !brief ? (
+        /* PHILO-3-03 (ratified canvas, state 3): the read failed. Never
+           "No brief yet": that is a claim about the hub it did not make. */
+        <div data-testid="arrival-brief">
+          <SurfaceSection label="BRIEF">
+            <span className="arrival-brief-failed">
+              <span
+                className="surface-receipt-line"
+                role="status"
+                data-tone="danger"
+                data-testid="arrival-brief-load-failed"
+              >
+                {`BRIEF DID NOT LOAD · ${briefLoadFailed}`}
+              </span>
+              <Button variant="ghost" dense onClick={readBrief} data-testid="arrival-brief-retry">
+                Retry
+              </Button>
+            </span>
+          </SurfaceSection>
+        </div>
+      ) : !briefLoading && !brief ? (
         <div data-testid="arrival-brief">
           <SurfaceSection
             label="BRIEF"
@@ -1210,6 +1264,7 @@ function Arrival() {
             busyId={busyBriefId}
             onShelf={doBriefShelf}
           />
+          {brief ? <BriefDate brief={brief} /> : null}
           {/* HS-202-02 (Astra's counsel finding 2) — the receipt lived
               ONLY under `!brief`, so success replaced the branch that
               held it and the owner saw no receipt at all. Article III
@@ -1256,6 +1311,7 @@ function Arrival() {
                 {brief.headline}
               </span>
             ) : null}
+            <BriefDate brief={brief} />
             {briefKept ? (
               <span
                 className="surface-receipt-line"

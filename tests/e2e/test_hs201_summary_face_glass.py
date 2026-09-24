@@ -513,11 +513,14 @@ def _assert_no_overlap(page) -> None:
     """
     overlap = page.evaluate(
         """() => {
-            const footer = document.querySelector('.surface-footer');
+            const meetingsWindow = document.querySelector('#surface-meetings')
+              ?.closest('.desk-surface-window');
+            if (!meetingsWindow) return ['Meetings window not found'];
+            const footer = meetingsWindow.querySelector('.surface-footer');
             const bad = [];
             const hits = (a, b) =>
               a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right;
-            for (const surface of document.querySelectorAll(
+            for (const surface of meetingsWindow.querySelectorAll(
                 '.surface-state-error, [data-testid$="-refusal"],' +
                 ' .meeting-intel-recovery-facts')) {
               const a = surface.getBoundingClientRect();
@@ -530,7 +533,7 @@ def _assert_no_overlap(page) -> None:
                 const w = win.getBoundingClientRect();
                 if (a.right > w.right + 1) bad.push('out of window: ' + (surface.textContent || ''));
               }
-              for (const verb of document.querySelectorAll('button')) {
+              for (const verb of meetingsWindow.querySelectorAll('button')) {
                 const b = verb.getBoundingClientRect();
                 if (b.width === 0) continue;
                 if (hits(a, b)) bad.push(verb.textContent || 'verb');

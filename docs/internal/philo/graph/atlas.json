@@ -5463,27 +5463,138 @@
         "edge.face.arrival_brief_generate_again"
       ],
       "state_id": "state.briefs.next_day_window",
-      "applicability": "unreachable",
-      "reason": "tooling-debt: no clock control. Missing mechanism: a way to move the hub process's date that actually reaches the brief producer. Cost: the 'and another' half of J10 - the owner's sitting defect 2 read one day later - cannot be observed, so a next-day regression would pass unseen.",
+      "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.populated reached",
-        "the producer's local date advanced by one day"
-      ],
-      "setup": [
+        "case.j10.arrival_generate_brief.generated_empty reached in this run's setup (the Chair's Generate on a fresh HOME makes the empty brief)",
+        "the hub started WITH the brief producer clock seam (the case carries a producer-clock step); the machine clock is never moved",
         {
-          "kind": "clock",
-          "clock": "clock.python_wall",
-          "how": "NO mechanism exists in scope. The route passes no now argument (holdspeak/web/routes/monday_brief.py:112), the producer falls back to the process wall clock (holdspeak/services/monday_brief_service.py:146), no libfaketime is on PATH, and the brief forbids changing the machine clock. clock.browser_date does NOT reach the producer, so moving it would be a claimed clock advance that never arrived"
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
         }
       ],
-      "expected": {
-        "words": "a SECOND brief row exists under a new date key and the face draws it; NOT RUN until the producer's date is PROVEN to have advanced [the audit's stated observation location: protocol: the brief ids and their period_end dates]"
-      },
-      "completion_bound_s": 180,
+      "completion_bound_s": 120,
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before the brief is generated"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "adapter": "ui-pointer",
+          "why": "day one: the Chair's Generate makes the EMPTY brief (a fresh HOME has nothing material)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=arrival-brief-receipt]",
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the day-one brief's id, before the decision exists"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Graph walk next-day decision J10",
+            "status": "proposed"
+          },
+          "adapter": "http-route",
+          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/generate",
+          "body": null,
+          "adapter": "http-route",
+          "why": "the same producer-day: generate returns the existing brief (monday_brief_service.py:205-213)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/sections/decisions",
+            "value": []
+          },
+          "observe_at": "protocol: GET /api/brief/latest",
+          "why": "same-day idempotency: the retained brief still has NO decision item, so inclusion can only come from a new producer-day"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "the rig's own hub runs MeetingWebServer(brief_clock=) with the wall clock plus an offset read from a file in the run's HOME (scripts/graph_walk.py _producer_clock); this step writes advance_days=1. The machine clock is not moved; the hub prints what the producer read (PRODUCER_CLOCK_READ) into provenance",
+          "why": "cross the producer-day boundary (COUNCIL.md A3: the minimum verified producer-clock boundary)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-brief-generate]",
+        "adapter": "ui-pointer",
+        "why": "the Chair's 'Generate again' on the retained empty brief (ChairHome.tsx), now on the next producer-day",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/brief/generate"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Review decision: Graph walk next-day decision J10"
+        },
+        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+        "words": "RE-POINTED by PHILO-3-03 (owner's ruling 2026-09-23): the producer's day now moves through clock.python_wall's producer-clock mechanism. Day one: Generate makes an empty brief; the decision is recorded after it; a same-day generate keeps that brief (no decision item). The producer's day moves by one inside the rig's own hub; Generate again on the face draws the NEW brief's item row 'Review decision: Graph walk next-day decision J10'. Mirrors case.a3.brief_next_day.decision_on_the_face (atlas-phase3.json); the id half is case.a3.brief_next_day.new_id_with_the_decision. The sealed phase-2 passes that recorded this case as unreachable stay history.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ]
+      }
     },
     {
       "id": "case.j10.route_brief_generate.load_failure",
@@ -8056,14 +8167,14 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "return None",
-          "line": 104,
+          "line": 108,
           "claim": "GET /api/brief/latest answers null when no brief exists"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "briefLoading",
-          "line": 1172,
-          "claim": "the Chair draws the generate branch when the read finished and there is no brief"
+          "symbol": "!briefLoading && !brief",
+          "line": 1226,
+          "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
       "reachable_by": [
@@ -8081,7 +8192,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 494,
+          "line": 518,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -8112,7 +8223,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 1184,
+          "line": 1304,
           "claim": "the Chair's second verb reads Generating... in flight"
         }
       ],
@@ -8150,7 +8261,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "reportWriteFailure",
-          "line": 656,
+          "line": 681,
           "claim": "a refused generate reaches the desk's write-failure channel with a retry"
         }
       ],
@@ -8169,7 +8280,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1178,
+          "line": 1189,
           "claim": "is_empty is true when no section holds an item"
         },
         {
@@ -8200,7 +8311,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 777,
+          "line": 802,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -8220,7 +8331,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1173,
+          "line": 1291,
           "claim": "a brief with nothing untriaged still keeps its own section after a reload"
         }
       ],
@@ -8247,7 +8358,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 780,
+          "line": 805,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -8272,7 +8383,7 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "write_shelf",
-          "line": 123,
+          "line": 127,
           "claim": "POST /api/brief/items/{item_id}/shelf writes it"
         }
       ],
@@ -8297,7 +8408,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1106,
+          "line": 1117,
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -8360,13 +8471,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 187,
+          "line": 198,
           "claim": "the brief is keyed by the period_end date"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "_load_brief",
-          "line": 202,
+          "line": 213,
           "claim": "a second generate on the same date returns the existing brief"
         }
       ],
@@ -8385,25 +8496,25 @@
       "sources": [
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "generate",
-          "line": 112,
-          "claim": "the route calls generate with no now argument"
+          "symbol": "brief_clock",
+          "line": 100,
+          "claim": "the route's producer takes the clock the composition wires (None = the wall clock)"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "def generate",
-          "line": 182,
-          "claim": "now is keyword-only and defaults to None, so the route gets the wall clock"
+          "symbol": "self._clock()",
+          "line": 197,
+          "claim": "generate reads the producer's one clock when no now is passed"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "datetime.datetime.now",
-          "line": 146,
-          "claim": "the window falls back to the process wall clock"
+          "symbol": "date_key",
+          "line": 198,
+          "claim": "the brief's identity is its period_end date, so a new producer-day mints a new brief"
         }
       ],
       "reachable_by": [
-        "unexercised: no production entry point supplies a clock to the brief producer and there is no mechanism in scope to move the hub's Python wall clock (clock.python_wall). Recorded as case.j10.arrival_generate_again.next_day, applicability unreachable, bin tooling-debt. Cost: the second brief of a new day, and the whole next-day half of J10, cannot be observed."
+        "case.j10.arrival_generate_again.next_day"
       ]
     },
     {
@@ -8671,7 +8782,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2153,
+          "line": 2209,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -10365,13 +10476,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 575,
+          "line": 621,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 466,
+          "line": 520,
           "claim": "the brief read is one of those re-reads"
         }
       ],
@@ -10537,18 +10648,18 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 187,
+          "line": 198,
           "claim": "the brief's identity is its period_end date"
         },
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "generate",
-          "line": 112,
-          "claim": "and the route supplies no clock to move it"
+          "symbol": "brief_clock",
+          "line": 100,
+          "claim": "the route's producer clock is injectable; the rig's own hub moves it (clock.python_wall, producer-clock)"
         }
       ],
       "reachable_by": [
-        "unexercised: clock.python_wall and clock.sqlite_now have no mechanism in scope (no libfaketime on PATH; the brief forbids changing the machine clock), so a second calendar day cannot be reached inside the hub. Cost: the whole next-day half of J10 goes unobserved."
+        "case.j10.arrival_generate_again.next_day"
       ]
     },
     {
@@ -10645,10 +10756,12 @@
     },
     {
       "id": "clock.python_wall",
-      "source": "datetime.datetime.now() / time.time() inside the hub process (holdspeak/services/monday_brief_service.py:146, holdspeak/runtime/heartbeat.py:110)",
-      "mechanism": "none within scope - the hub is a separate process, no libfaketime is on PATH, and the brief forbids changing the machine clock. Any case needing a different calendar day is tooling-debt, not a state.",
-      "status": "tooling_debt",
-      "used_by": []
+      "source": "datetime.datetime.now() inside the hub process; for the brief producer it is MondayBriefService's one clock (holdspeak/services/monday_brief_service.py:142, read by generate at :197)",
+      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the brief router (holdspeak/web/routes/monday_brief.py:100). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub; the machine clock, other producers (heartbeat, cadence, SQL datetime('now')) and the MCP sidecar are not moved.",
+      "status": "available",
+      "used_by": [
+        "case.j10.arrival_generate_again.next_day"
+      ]
     },
     {
       "id": "clock.sqlite_now",

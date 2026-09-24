@@ -1,0 +1,498 @@
+{
+  "id": "obs-20260923T165558Z-case.j10.route_generate_again.same_day_same_id-muaddib-1440",
+  "run_id": "20260923T165558Z-case.j10.route_generate_again.same_day_same_id-muaddib-1440",
+  "case_id": "case.j10.route_generate_again.same_day_same_id",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.route.brief_generate"
+  ],
+  "state_id": "state.briefs.same_day_idempotent",
+  "provenance": {
+    "revision": "7b2c2b2afa7c7dd02b56ce97f269d6f1585042c0",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e964afc36cae543835714be3e771679d333050e23ae15b412f40bf5322d5b605",
+      "assets": [
+        "index-Dtg24-ew.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61263",
+      "port": 61263,
+      "pid": 5477,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-dxzm0lj_",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-dxzm0lj_/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T16:55:58.641474+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "c5a768ee039adb26c0eef5b6e94b4cc0021abc029aaf8349106f453694726e46",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-f06d8445edc34e20b373bf6ee7fd711c"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-brief-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-brief-headline', wanted 'arrival-brief-headline'"
+    }
+  ],
+  "variables": {
+    "first_brief_id": "brief-f06d8445edc34e20b373bf6ee7fd711c"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/brief/generate",
+    "adapter": "http-route",
+    "status": 200,
+    "response": {
+      "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+      "period_start": "2026-09-22T17:00:00",
+      "period_end": "2026-09-23T10:56:04.345284",
+      "headline": "Nothing material changed.",
+      "sections": {
+        "this_week": [],
+        "changed": [],
+        "broke": [],
+        "waiting": [],
+        "decisions": []
+      },
+      "generated_at": "2026-09-23T10:56:04.345284",
+      "is_empty": true,
+      "shelf": {},
+      "ledger": {
+        "operations": 0,
+        "since": null
+      },
+      "period_label": "SEP 21 \u2013 23",
+      "generated_label": "GENERATED SEP 23 10:56",
+      "person_sections_state": "unavailable"
+    },
+    "response_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: GET /api/brief/latest",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:61263/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "rows": [],
+      "payload": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+    },
+    "document_text_sha256": "c691c3264c5fed0e8e61f7ce779a7a60b09ec747d95329c4f7fe1a7eae126dfa",
+    "document_text_len": 378,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+      }
+    ],
+    "at_utc": "2026-09-23T16:56:06.098706+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/brief/latest",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:61263/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "rows": [],
+      "payload": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+    },
+    "document_text_sha256": "c691c3264c5fed0e8e61f7ce779a7a60b09ec747d95329c4f7fe1a7eae126dfa",
+    "document_text_len": 378,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+      }
+    ],
+    "at_utc": "2026-09-23T16:56:07.261108+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "body": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/brief/latest",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nWed,",
+    "url": "http://127.0.0.1:61263/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "rows": [],
+      "payload": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+    },
+    "document_text_sha256": "c691c3264c5fed0e8e61f7ce779a7a60b09ec747d95329c4f7fe1a7eae126dfa",
+    "document_text_len": 378,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "body_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c"
+      }
+    ],
+    "at_utc": "2026-09-23T16:56:07.126222+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "56905f4a24e0fbfe28c0f981638c96501022b963b5882308e310e544feafe05c",
+      "body": {
+        "id": "brief-f06d8445edc34e20b373bf6ee7fd711c",
+        "period_start": "2026-09-22T17:00:00",
+        "period_end": "2026-09-23T10:56:04.345284",
+        "headline": "Nothing material changed.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-23T10:56:04.345284",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 23",
+        "generated_label": "GENERATED SEP 23 10:56",
+        "person_sections_state": "unavailable"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/brief/generate answered 200, wanted 200 (body sha256 56905f4a24e0); 'brief-f06d8445edc34e20b373bf6ee7fd711c' in the response body",
+    "elapsed_s": 0.916
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/brief/generate answered 200, wanted 200 (body sha256 56905f4a24e0); 'brief-f06d8445edc34e20b373bf6ee7fd711c' in the response body",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.051,
+    "first_satisfied_at_s": 0.916,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/brief/generate answered 200, wanted 200 (body sha256 56905f4a24e0); 'brief-f06d8445edc34e20b373bf6ee7fd711c' in the response body"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-03-shots/20260923T165558Z-case.j10.route_generate_again.same_day_same_id-muaddib-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-03-shots/20260923T165558Z-case.j10.route_generate_again.same_day_same_id-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-dxzm0lj_/.local/share/holdspeak/holdspeak.db",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61263"
+  ]
+}

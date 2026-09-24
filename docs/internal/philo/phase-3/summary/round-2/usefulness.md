@@ -26,3 +26,23 @@ Each observation retains import-completion transcript and `after.api_reads` meet
 Both structured outputs contain exactly two action items: “Write the Migration Plan” / Mayyachan / Friday; “Test restart retrieval” / Leo Martinez / Tuesday. Neither contains Priya's action. The 393 summary calls the three clauses “decisions” although its first two are action assignments; that wording is retained, not corrected in the evidence.
 
 The [earlier usefulness mapping](../usefulness.md) remains valid historical evidence. [ASR instability and aftercare obstruction](deferred-ledger.md) remain inherited follow-ups. A successful queue, visible receipt, folded transcript and retained summary do not establish that the owner's meeting facts survived.
+
+## Integrated output after main merge
+
+The two additional ready runs on the final A2+A3 build remain **partial usefulness**, despite technical completion. The [1440 observation](../../../../../../pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221716Z-case.j6.run_summary.summary_text-astra-1440/observation.json) has 77 words, meeting `d5d4e62c`; the [393 observation](../../../../../../pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221734Z-case.j6.run_summary.summary_text-astra-393/observation.json) has 299 words, meeting `ea883298`. Same audio hash and real engine as above. Both complete outputs are retained; neither replaces the earlier results.
+
+| Planted fact | Integrated 1440 output | Integrated 393 output |
+| --- | --- | --- |
+| D1: SQLite for local meeting ledger | ASR “SQ like”; summary “using SQ for the local ledger” — SQLite not recovered | Same substitution — SQLite not recovered |
+| O1: Maya Chen | ASR, summary and action owner “Mayyachan” — wrong identity | Same wrong identity |
+| A1: migration plan by Friday | Structured action and Friday recovered; summary only says action items assigned | Summary and structured action/deadline recovered, with corrupted owner |
+| D2: local-desk summary retrieval after hub restart | Full decision recovered in summary | Full decision recovered in summary |
+| O2: Leo Martinez | Name in summary, correct structured action owner | Correct summary/action owner |
+| A2: test restart retrieval on Tuesday | Structured action and Tuesday recovered; summary omits task detail | Summary and structured action/Tuesday recovered |
+| D3: recorded provider reply for isolated rig tests | Decision recovered in summary | Decision recovered in summary |
+| O3: Priya Shah | Name appears in the list of assignees; no explicit named action or decision-to-owner pairing | Named beside the recorded-reply decision; no structured action |
+| A3: named failure fence before ship | ASR “Our named failure offense before ship”; summary and structured actions omit action/deadline | ASR repeats “flashing” before “named failure offense before ship”; summary and structured actions omit action/deadline |
+
+Both structured outputs still contain exactly two items: migration plan / Mayyachan / Friday, and restart retrieval / Leo Martinez / Tuesday. The summary's statement that Priya is assigned is not a recovered failure-fence action. The larger 393 transcript is ASR repetition, not a larger source meeting.
+
+The 393 raw ready shot also records inherited aftercare overlap (`after.hit_test.all_owned: false`); its separately framed shot shows the summary but the panel reaches the transcript fold. This is retained in the [owner-cost ledger](deferred-ledger.md), not hidden by selecting another shorter result. The owner's sitting and full planted-fact recovery remain open.

@@ -1,0 +1,1908 @@
+.EEEEEE....EE.EE.EFE.EE..EF.F....F....FEEEEEE.EE.......FEFEEE.           [100%]
+==================================== ERRORS ====================================
+___ ERROR at setup of test_six_calibration_cases_get_their_expected_verdicts ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_no_calibration_verdict_comes_from_the_presence_of_a_diff _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_the_wrong_target_case_records_where_the_result_landed _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_the_operation_that_never_completes_is_incomplete_not_settled _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_every_observation_carries_provenance_and_before_after _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+______ ERROR at setup of test_run_ids_are_unique_per_case_brain_viewport _______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def calibration(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-calibration")
+>       return calibrate(out), out
+               ^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ddcae40>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10de4af20>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+______ ERROR at setup of test_every_negative_control_comes_out_as_stated _______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_______ ERROR at setup of test_a_refresh_with_its_handler_removed_fails ________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_______ ERROR at setup of test_a_result_after_the_bound_is_never_a_pass ________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_________ ERROR at setup of test_an_absence_needs_a_scope_that_exists __________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+___ ERROR at setup of test_a_precondition_that_does_not_hold_blocks_the_case ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+___ ERROR at setup of test_a_words_only_case_is_blocked_and_never_a_keyerror ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_a_captured_value_drives_a_later_step_and_the_predicate _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+__ ERROR at setup of test_an_unresolved_placeholder_is_blocked_and_never_sent __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_____ ERROR at setup of test_a_check_step_in_setup_blocks_where_it_stands ______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_______ ERROR at setup of test_every_new_predicate_kind_gets_its_verdict _______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_a_refusal_status_is_read_from_the_triggers_own_response _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+________ ERROR at setup of test_a_row_gone_is_named_never_merely_fewer _________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_________ ERROR at setup of test_protocol_field_reads_one_named_field __________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_____ ERROR at setup of test_input_value_reads_the_field_not_the_dom_text ______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+__ ERROR at setup of test_a_restart_is_a_real_restart_and_the_value_survives ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+__________ ERROR at setup of test_a_refusal_must_name_what_is_missing __________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+___ ERROR at setup of test_an_asserted_absence_is_earned_by_the_named_bound ____
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_a_placeholder_nothing_binds_blocks_before_the_trigger _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_ ERROR at setup of test_a_clicked_verb_reads_its_identity_from_its_own_response _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+__ ERROR at setup of test_a_clicked_verb_status_is_read_by_its_declared_route __
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def predicate_calibration(tmp_path_factory):
+        """All four new kinds, on the calibration page and its protocol surface,
+        through the same engine a real case uses."""
+        out = tmp_path_factory.mktemp("graph-walk-predicates")
+>       records = calibrate(out, cases=CALIBRATION_PREDICATE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1d89d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c784720>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+___ ERROR at setup of test_a_different_id_beside_unchanged_old_content_fails ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10c4e5480>, _basetemp=PosixPath.../folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def negatives(tmp_path_factory):
+        out = tmp_path_factory.mktemp("graph-walk-negatives")
+>       records = calibrate(out, cases=CALIBRATION_NEGATIVE_CASES)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10dde6210>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1865c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+=================================== FAILURES ===================================
+_______________ test_a_precondition_that_holds_lets_the_case_run _______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_a_precondition_that_holds0')
+
+    def test_a_precondition_that_holds_lets_the_case_run(tmp_path):
+        case = dict(CALIBRATION_NEGATIVE_CASES[4])
+        case["id"] = "NEG-5-precondition-met"
+        case["preconditions"] = [
+            {"kind": "check", "observe_at": "#q-out",
+             "predicate": {"kind": "text_contains", "value": "not ready"}},
+        ]
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:307: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1991d0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10e1ae2a0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+________________ test_a_check_step_that_holds_lets_the_case_run ________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_a_check_step_that_holds_l0')
+
+    def test_a_check_step_that_holds_lets_the_case_run(tmp_path):
+        case = dict(CALIBRATION_NEGATIVE_CASES[6])
+        case["id"] = "NEG-8-check-in-setup-holds"
+        case["setup"] = [
+            {"kind": "ui", "action": "click", "selector": "#q-btn", "adapter": "ui-pointer"},
+            {"kind": "check", "observe_at": "#q-out",
+             "predicate": {"kind": "text_contains", "value": "went"}},
+        ]
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:414: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1da2c0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c785ee0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+________________ test_a_relative_goto_resolves_against_the_hub _________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_a_relative_goto_resolves_0')
+
+    def test_a_relative_goto_resolves_against_the_hub(tmp_path):
+        """An atlas case says `goto "/"`. Without a base url Chromium answers
+        "Cannot navigate to invalid URL" and the whole case blocks."""
+        case = {
+            "id": "CAL-relative-goto", "job": "a case navigates with a bare path",
+            "edge_ids": ["cal:goto"], "state_id": "cal:page",
+            "applicability": "applicable", "preconditions": "the page is served",
+            "setup": [{"kind": "ui", "action": "goto", "url": "/",
+                       "adapter": "ui-navigation"}],
+            "trigger": {"kind": "ui", "action": "click", "selector": "#c-btn",
+                        "adapter": "ui-pointer"},
+            "expected": {"observe_at": "#c-wrong",
+                         "predicate": {"kind": "text_contains", "value": "saved"}},
+            "completion_bound_s": 5, "viewports": [1440],
+        }
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:446: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10ded3ad0>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10c787f60>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+______________ test_prose_in_expected_words_is_not_a_placeholder _______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_prose_in_expected_words_i0')
+
+    def test_prose_in_expected_words_is_not_a_placeholder(tmp_path):
+        """An atlas case's `words` says `POST …/{attempt_id}/finish` as English."""
+        case = {
+            "id": "CAL-prose-braces", "job": "prose braces", "edge_ids": ["cal:w"],
+            "state_id": "cal:page", "applicability": "applicable",
+            "preconditions": "the page is served", "setup": [],
+            "trigger": {"kind": "ui", "action": "click", "selector": "#c-btn",
+                        "adapter": "ui-pointer"},
+            "expected": {"observe_at": "#c-wrong",
+                         "predicate": {"kind": "text_contains", "value": "saved"},
+                         "words": "no 4xx on POST /api/setup/first-value/{attempt_id}/finish"},
+            "completion_bound_s": 5, "viewports": [1440],
+        }
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:556: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10c852030>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10f22eac0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_____ test_the_scheduler_wait_adapter_lets_a_timer_edge_produce_the_result _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_the_scheduler_wait_adapte0')
+
+    def test_the_scheduler_wait_adapter_lets_a_timer_edge_produce_the_result(tmp_path):
+        """The ONE implemented clock mechanism (W2's `clock.heartbeat_scheduler`).
+    
+        Setup arms a stand-in timer — as the real case lowers `sweep_every_minutes`
+        to its floor — and then NOTHING is pressed: the scheduler alone must write
+        the promised result. No clock is moved, and a substitute button is never
+        used in place of the timer.
+        """
+>       records = calibrate(tmp_path, cases=[CALIBRATION_SCHEDULER_CASE])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:638: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10f2c4e20>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10f2c8360>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+____ test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_the_real_j4_import_case_f0')
+
+    def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_path):
+        """Finding 2: the ACTUAL atlas case, through a synthetic import boundary
+        that answers like the real route (202 {"meeting_id", "status"}). Before
+        the fix: BLOCKED "unresolved placeholder … meeting_id", zero uploads."""
+        case = _atlas_case(J4_IMPORT)
+        assert case["trigger"]["capture_as"] == "meeting_id", "the atlas case changed"
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:961: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10e1b4e50>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10f2cb420>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+_____ test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it ______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-404/test_a_placeholder_still_unbou0')
+
+    def test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it(tmp_path):
+        """A trigger that binds one name does not excuse another."""
+        case = dict(_atlas_case(J4_IMPORT))
+        case["id"] = "CAL-u-bound-one-not-the-other"
+        case["expected"] = {**case["expected"],
+                            "observe_at": "protocol: GET /api/meetings",
+                            "predicate": {"kind": "protocol_field",
+                                          "path": "/meetings/0/id",
+                                          "value": "{meeting_id}-{other}"}}
+>       record = calibrate(tmp_path, cases=[case])[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_graph_walk_calibration.py:1014: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/graph_walk.py:3518: in calibrate
+    context = play.chromium.launch_persistent_context(
+.venv/lib/python3.13/site-packages/playwright/sync_api/_generated.py:14870: in launch_persistent_context
+    self._sync(
+.venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py:166: in launch_persistent_context
+    result = await self._channel.send_return_as_dict(
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:83: in send_return_as_dict
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x10f271e50>
+cb = <function Channel.send_return_as_dict.<locals>.<lambda> at 0x10f22e5c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch_persistent_context: Executable doesn't exist at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.daPSdTrCHs/Library/Caches/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-mac-arm64/chrome-headless-shell
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: Error
+=========================== short test summary info ============================
+ERROR tests/unit/test_graph_walk_calibration.py::test_six_calibration_cases_get_their_expected_verdicts
+ERROR tests/unit/test_graph_walk_calibration.py::test_no_calibration_verdict_comes_from_the_presence_of_a_diff
+ERROR tests/unit/test_graph_walk_calibration.py::test_the_wrong_target_case_records_where_the_result_landed
+ERROR tests/unit/test_graph_walk_calibration.py::test_the_operation_that_never_completes_is_incomplete_not_settled
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_observation_carries_provenance_and_before_after
+ERROR tests/unit/test_graph_walk_calibration.py::test_run_ids_are_unique_per_case_brain_viewport
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_negative_control_comes_out_as_stated
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refresh_with_its_handler_removed_fails
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_result_after_the_bound_is_never_a_pass
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_absence_needs_a_scope_that_exists
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_precondition_that_does_not_hold_blocks_the_case
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_words_only_case_is_blocked_and_never_a_keyerror
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_captured_value_drives_a_later_step_and_the_predicate
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_unresolved_placeholder_is_blocked_and_never_sent
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_check_step_in_setup_blocks_where_it_stands
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_new_predicate_kind_gets_its_verdict
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refusal_status_is_read_from_the_triggers_own_response
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_row_gone_is_named_never_merely_fewer
+ERROR tests/unit/test_graph_walk_calibration.py::test_protocol_field_reads_one_named_field
+ERROR tests/unit/test_graph_walk_calibration.py::test_input_value_reads_the_field_not_the_dom_text
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_restart_is_a_real_restart_and_the_value_survives
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refusal_must_name_what_is_missing
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_asserted_absence_is_earned_by_the_named_bound
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_placeholder_nothing_binds_blocks_before_the_trigger
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_clicked_verb_reads_its_identity_from_its_own_response
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_clicked_verb_status_is_read_by_its_declared_route
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_different_id_beside_unchanged_old_content_fails
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_precondition_that_holds_lets_the_case_run
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_check_step_that_holds_lets_the_case_run
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_relative_goto_resolves_against_the_hub
+FAILED tests/unit/test_graph_walk_calibration.py::test_prose_in_expected_words_is_not_a_placeholder
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_scheduler_wait_adapter_lets_a_timer_edge_produce_the_result
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it
+7 failed, 28 passed, 27 errors in 7.58s

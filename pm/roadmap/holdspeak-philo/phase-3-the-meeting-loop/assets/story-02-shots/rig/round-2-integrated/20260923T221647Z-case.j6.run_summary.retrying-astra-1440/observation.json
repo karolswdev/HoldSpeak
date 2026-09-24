@@ -1,0 +1,1783 @@
+{
+  "id": "obs-20260923T221647Z-case.j6.run_summary.retrying-astra-1440",
+  "run_id": "20260923T221647Z-case.j6.run_summary.retrying-astra-1440",
+  "case_id": "case.j6.run_summary.retrying",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.face.arrival_run_intel"
+  ],
+  "state_id": "state.meetings.intel.retry_after_failure",
+  "provenance": {
+    "revision": "9b03604796709faf21036a4a2bff384b6ad49caf",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1cd6b691cb0828d1c31bd5bfa97507272c5d47ce884d633a646423a34911fcac",
+      "assets": [
+        "index-G7189zzm.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:60514",
+      "port": 60514,
+      "pid": 71539,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_summary_failure_reply.json": "6b089b93055db6aa595ca087f478c3e253c47b9d9e8ab2d821494df13f58cbca",
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-23T22:16:47.441025+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+        "substitute": "engine_reply",
+        "installed_sha256": "6b089b93055db6aa595ca087f478c3e253c47b9d9e8ab2d821494df13f58cbca"
+      }
+    ],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 71539,
+        "started_pid": 71660,
+        "downtime_s": 1.55,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+        "port": 60514,
+        "hub_identity": {
+          "url": "http://127.0.0.1:60514",
+          "port": 60514,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 71539,
+          "started_pid": 71660
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {}
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {}
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": true,
+        "page_reloaded": true
+      }
+    ],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "ff719b7af9787cc98b3953bc05eeff5e989d6917e9d7d347efe485834be7b1ec",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": "6b089b93055db6aa595ca087f478c3e253c47b9d9e8ab2d821494df13f58cbca"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "settings": {
+          "config_version": 1,
+          "control_mode": "yolo",
+          "hotkey": {
+            "key": "alt_r",
+            "display": "\u2325R"
+          },
+          "model": {
+            "name": "base",
+            "warm_on_start": true,
+            "backend": "auto",
+            "language": "auto",
+            "transcribe_timeout_seconds": 120.0,
+            "local_model_preload_authority": ""
+          },
+          "ui": {
+            "desk_sounds": true
+          },
+          "meeting": {
+            "mic_device": null,
+            "system_audio_device": null,
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "auto_export": false,
+            "export_format": "markdown",
+            "intel_enabled": false,
+            "intel_provider": "local",
+            "intel_realtime_model": "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
+            "intel_temperature": 0.2,
+            "intel_summary_model": null,
+            "intel_deferred_enabled": true,
+            "intelligence_auto": "room_linked",
+            "auto_record": "off",
+            "auto_record_lead_minutes": 5,
+            "intel_retry_base_seconds": 120,
+            "intel_retry_max_seconds": 120,
+            "intel_retry_max_attempts": 2,
+            "intel_retry_failure_webhook_header_name": null,
+            "intel_cloud_reasoning_effort": null,
+            "intel_cloud_store": false,
+            "intel_profile_id": null,
+            "mir_enabled": true,
+            "routing_profile": "balanced",
+            "intent_router_enabled": false,
+            "intent_window_seconds": 90,
+            "intent_step_seconds": 30,
+            "intent_score_threshold": 0.6,
+            "intent_hysteresis_windows": 1,
+            "disabled_plugins": [],
+            "intent_segment_probe_enabled": false,
+            "allow_actuators": true,
+            "allowed_actuators": [
+              "*"
+            ],
+            "webhook_allowed_hosts": [
+              "*"
+            ],
+            "companion_github_repo": "",
+            "diarization_enabled": false,
+            "diarize_mic": false,
+            "cross_meeting_recognition": true,
+            "similarity_threshold": 0.75
+          },
+          "dictation": {
+            "pipeline": {
+              "enabled": true,
+              "stages": [
+                "intent-router",
+                "kb-enricher"
+              ],
+              "max_total_latency_ms": 600,
+              "target_profile_override": "auto",
+              "rewrite_passes": 1,
+              "corrections_enabled": true,
+              "target_detect_llm_enabled": false,
+              "target_detect_llm_below": 0.8,
+              "journal_enabled": true,
+              "journal_retention": 500
+            },
+            "runtime": {
+              "backend": "auto",
+              "mlx_model": "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
+              "llama_cpp_model_path": "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
+              "profile_id": null,
+              "openai_compatible_timeout_seconds": 8.0,
+              "n_ctx": 2048,
+              "n_threads": null,
+              "n_gpu_layers": -1,
+              "warm_on_start": false,
+              "eviction_idle_seconds": 0
+            },
+            "macros": {
+              "enabled": false,
+              "items": []
+            },
+            "spoken_symbols": [],
+            "preview_before_type": false
+          },
+          "device": {},
+          "presence": {
+            "enabled": false,
+            "mascot": false
+          },
+          "wake_word": {
+            "enabled": false,
+            "model": "hey_jarvis",
+            "threshold": 0.5,
+            "armed_window_seconds": 8.0,
+            "action": "preview"
+          },
+          "mesh": {
+            "device_name": ""
+          },
+          "cadence": {
+            "enabled": false,
+            "pressure": "normal",
+            "use_llm": false,
+            "tick_interval_seconds": 300,
+            "quiet_hours_start": 22,
+            "quiet_hours_end": 8,
+            "max_nudges_per_day": 12
+          },
+          "cadence_telegram": {
+            "enabled": false,
+            "allowed_chat_ids": []
+          },
+          "rails_observer": {
+            "enabled": false,
+            "profile_id": null,
+            "poll_seconds": 30,
+            "tail": 20
+          },
+          "thoughts": {
+            "inference_target_id": null
+          },
+          "calendar": {
+            "sources": [],
+            "subscription": ""
+          },
+          "_revision": "6efcf134306e6f34",
+          "_calendar_subscription": {
+            "kind": "disabled",
+            "host": "",
+            "refresh_seconds": 900,
+            "egress": false
+          },
+          "_calendar_sources": [],
+          "_placement": {
+            "meeting": {
+              "placement_source": "provider",
+              "placement_reason": "",
+              "provider_intent": "local",
+              "provider_honored": true,
+              "boundary": "local",
+              "target_id": "",
+              "target_name": "",
+              "engine": "local",
+              "model": "Qwen3.5-9B-Instruct-Q6_K",
+              "node": "",
+              "runnable": false,
+              "runnable_reason": "llama-cpp-python is not available"
+            }
+          },
+          "_secrets": {
+            "web_token": {
+              "configured": false
+            },
+            "device_psk": {
+              "configured": false
+            },
+            "telegram_bot_token": {
+              "configured": false
+            },
+            "telegram_pairing_code": {
+              "configured": false
+            },
+            "failure_webhook_url": {
+              "configured": false
+            },
+            "failure_webhook_credential": {
+              "configured": false
+            },
+            "slack_webhook_url": {
+              "configured": false
+            },
+            "companion_webhook_url": {
+              "configured": false
+            }
+          }
+        }
+      },
+      "response_sha256": "31f46f38bf05aba72e48ad3a9c8585fed214c07e716d363613166dd5518a71a0"
+    },
+    {
+      "kind": "boundary",
+      "label": "the assigned engine's base_url answers an error; production parsing, queueing, persistence and rendering stay real",
+      "substitute": "engine_reply",
+      "adapter": "labelled-substitution",
+      "installed_sha256": "6b089b93055db6aa595ca087f478c3e253c47b9d9e8ab2d821494df13f58cbca",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "9f19a9b2",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "9f19a9b2"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/9f19a9b2",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 6,
+        "elapsed_s": 2.572,
+        "payload": {
+          "id": "9f19a9b2",
+          "started_at": "2026-09-23T16:16:54.526351",
+          "ended_at": "2026-09-23T16:17:29.201601",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 151,
+          "sync_modified_at": "2026-09-23T16:16:56.824706",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 71539,
+      "started_pid": 71660,
+      "downtime_s": 1.55,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+      "port": 60514,
+      "hub_identity": {
+        "url": "http://127.0.0.1:60514",
+        "port": 60514,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 71539,
+        "started_pid": 71660
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {}
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {}
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": true,
+      "page_reloaded": true
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a queued job whose destination refuses",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-run-intel]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-run-intel"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-run-intel', wanted 'arrival-run-intel'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "9f19a9b2"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    }
+  ],
+  "variables": {
+    "meeting_id": "9f19a9b2"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-run-intel]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "RETRYING\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "arrival-meeting-status-facts",
+        "data-testid": "arrival-summary-status"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 300,
+        "y": 361,
+        "w": 880,
+        "h": 16
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "1ba1ca642637688e59cb57713677a9873ef22a9d4c6dde8fbe1213e5b9748d10",
+      "after": "6bfbf34341bed0f3d75cb5d95e0dee5c5e305733150d62c13928630902009e4a"
+    },
+    "document_text_len": {
+      "before": 450,
+      "after": 532
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/9f19a9b2",
+          "status": 200,
+          "payload": {
+            "id": "9f19a9b2",
+            "started_at": "2026-09-23T16:16:54.526351",
+            "ended_at": "2026-09-23T16:17:29.201601",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "disabled",
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 151,
+            "sync_modified_at": "2026-09-23T16:16:56.824706",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "bb8de6964e950c300992844aca6ae47bd9db78c3234b2a7fcc901f1b4cc1fbf7"
+        },
+        {
+          "method": "GET",
+          "path": "/api/intel/summary",
+          "status": 200,
+          "payload": {
+            "total_jobs": 0,
+            "queued_jobs": 0,
+            "running_jobs": 0,
+            "failed_jobs": 0,
+            "queued_due_jobs": 0,
+            "scheduled_retry_jobs": 0,
+            "next_retry_at": null
+          },
+          "body_sha256": "e73357fd5fd4bb6e6c0d241f9b449891ae45e1eeb588443deebf81802fff9218"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/9f19a9b2",
+          "status": 200,
+          "payload": {
+            "id": "9f19a9b2",
+            "started_at": "2026-09-23T16:16:54.526351",
+            "ended_at": "2026-09-23T16:17:29.201601",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "queued",
+              "detail": "PROVIDER FAILED",
+              "requested_at": "2026-09-23T16:17:00.580504",
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 151,
+            "sync_modified_at": "2026-09-23T16:17:00.766425",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": {
+              "attempts": [
+                {
+                  "host": "192.168.1.43",
+                  "leg_ordinal": 1,
+                  "operation_id": "op_bc0794f324374bf3923d8545bc969478",
+                  "outcome": "failed"
+                }
+              ],
+              "job_id": "ij_15e98de24c03300d8212d48cc6a50757ff93098fda2fdcc0377aa8a4ad2e49f9",
+              "meeting_id": "9f19a9b2",
+              "outcome": "failed",
+              "receipt_id": "rr_5c45372460d6ffd2dcb7197ac830a7a5",
+              "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52"
+            },
+            "last_refusal": null,
+            "intel_job": {
+              "status": "retrying",
+              "attempts": 1,
+              "requested_at": "2026-09-23T16:19:00.766412",
+              "updated_at": "2026-09-23T16:17:00.767765",
+              "last_error": "PROVIDER FAILED",
+              "retry_scheduled": true,
+              "next_retry_at": "2026-09-23T16:19:00.766412"
+            },
+            "intel_model_host": "192.168.1.43"
+          },
+          "body_sha256": "78fc43a71cd6966017c51a493f3121d8e23a385fb4ac77f0054ef4ef90e897d6"
+        },
+        {
+          "method": "GET",
+          "path": "/api/intel/summary",
+          "status": 200,
+          "payload": {
+            "total_jobs": 1,
+            "queued_jobs": 1,
+            "running_jobs": 0,
+            "failed_jobs": 0,
+            "queued_due_jobs": 0,
+            "scheduled_retry_jobs": 1,
+            "next_retry_at": "2026-09-23T16:19:00.766412"
+          },
+          "body_sha256": "0f18bdaf146c57cb32981567045290e2a54cd22953bf39623cd4364417110099"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-summary-status]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:60514/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "1ba1ca642637688e59cb57713677a9873ef22a9d4c6dde8fbe1213e5b9748d10",
+    "document_text_len": 450,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/9f19a9b2",
+        "status": 200,
+        "payload": {
+          "id": "9f19a9b2",
+          "started_at": "2026-09-23T16:16:54.526351",
+          "ended_at": "2026-09-23T16:17:29.201601",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 151,
+          "sync_modified_at": "2026-09-23T16:16:56.824706",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "bb8de6964e950c300992844aca6ae47bd9db78c3234b2a7fcc901f1b4cc1fbf7"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/summary",
+        "status": 200,
+        "payload": {
+          "total_jobs": 0,
+          "queued_jobs": 0,
+          "running_jobs": 0,
+          "failed_jobs": 0,
+          "queued_due_jobs": 0,
+          "scheduled_retry_jobs": 0,
+          "next_retry_at": null
+        },
+        "body_sha256": "e73357fd5fd4bb6e6c0d241f9b449891ae45e1eeb588443deebf81802fff9218"
+      }
+    ],
+    "at_utc": "2026-09-23T22:17:00.473502+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-summary-status]",
+    "target_present": true,
+    "text": "RETRYING\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED",
+    "attrs": {
+      "class": "arrival-meeting-status-facts",
+      "data-testid": "arrival-summary-status"
+    },
+    "rect": {
+      "x": 300,
+      "y": 361,
+      "w": 880,
+      "h": 16
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 300,
+        "y": 361,
+        "w": 880,
+        "h": 16
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 302,
+          "y": 363,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 302,
+          "y": 369,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 302,
+          "y": 375,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 363,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 369,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 375,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 1178,
+          "y": 363,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        },
+        {
+          "x": 1178,
+          "y": 369,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        },
+        {
+          "x": 1178,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:60514/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "6bfbf34341bed0f3d75cb5d95e0dee5c5e305733150d62c13928630902009e4a",
+    "document_text_len": 532,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/9f19a9b2",
+        "status": 200,
+        "payload": {
+          "id": "9f19a9b2",
+          "started_at": "2026-09-23T16:16:54.526351",
+          "ended_at": "2026-09-23T16:17:29.201601",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "queued",
+            "detail": "PROVIDER FAILED",
+            "requested_at": "2026-09-23T16:17:00.580504",
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 151,
+          "sync_modified_at": "2026-09-23T16:17:00.766425",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_bc0794f324374bf3923d8545bc969478",
+                "outcome": "failed"
+              }
+            ],
+            "job_id": "ij_15e98de24c03300d8212d48cc6a50757ff93098fda2fdcc0377aa8a4ad2e49f9",
+            "meeting_id": "9f19a9b2",
+            "outcome": "failed",
+            "receipt_id": "rr_5c45372460d6ffd2dcb7197ac830a7a5",
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "retrying",
+            "attempts": 1,
+            "requested_at": "2026-09-23T16:19:00.766412",
+            "updated_at": "2026-09-23T16:17:00.767765",
+            "last_error": "PROVIDER FAILED",
+            "retry_scheduled": true,
+            "next_retry_at": "2026-09-23T16:19:00.766412"
+          },
+          "intel_model_host": "192.168.1.43"
+        },
+        "body_sha256": "78fc43a71cd6966017c51a493f3121d8e23a385fb4ac77f0054ef4ef90e897d6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/summary",
+        "status": 200,
+        "payload": {
+          "total_jobs": 1,
+          "queued_jobs": 1,
+          "running_jobs": 0,
+          "failed_jobs": 0,
+          "queued_due_jobs": 0,
+          "scheduled_retry_jobs": 1,
+          "next_retry_at": "2026-09-23T16:19:00.766412"
+        },
+        "body_sha256": "0f18bdaf146c57cb32981567045290e2a54cd22953bf39623cd4364417110099"
+      }
+    ],
+    "at_utc": "2026-09-23T22:17:01.621811+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/9f19a9b2/intelligence/run",
+      "status": 200,
+      "body_sha256": "7850f22b7631c86d643a88525fc560e02aa6000237e1dd453dc457105961100a",
+      "body": {
+        "jobId": "ij_a7d4ede39e350aa9470daa319e0027f37d3998d046dd1b97613ce0a63f0882b3",
+        "state": "queued",
+        "host": "192.168.1.43",
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+              "host": "192.168.1.43",
+              "ordinal": 1,
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+          "status": "ready"
+        },
+        "run_receipt": null
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60514) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-summary-status]",
+    "target_present": true,
+    "text": "RETRYING\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED",
+    "attrs": {
+      "class": "arrival-meeting-status-facts",
+      "data-testid": "arrival-summary-status"
+    },
+    "rect": {
+      "x": 300,
+      "y": 361,
+      "w": 880,
+      "h": 16
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 300,
+        "y": 361,
+        "w": 880,
+        "h": 16
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 302,
+          "y": 363,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 302,
+          "y": 369,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 302,
+          "y": 375,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 363,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 369,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 740,
+          "y": 375,
+          "owned": true,
+          "owner": "li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts > span.arrival-meeting-status-fact"
+        },
+        {
+          "x": 1178,
+          "y": 363,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        },
+        {
+          "x": 1178,
+          "y": 369,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        },
+        {
+          "x": 1178,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-body > div.arrival-meeting-status-facts"
+        }
+      ],
+      "all_owned": true
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 EXTERNAL REACH ENABLED\nSea",
+    "url": "http://127.0.0.1:60514/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "6bfbf34341bed0f3d75cb5d95e0dee5c5e305733150d62c13928630902009e4a",
+    "document_text_len": 532,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/9f19a9b2",
+        "status": 200,
+        "payload": {
+          "id": "9f19a9b2",
+          "started_at": "2026-09-23T16:16:54.526351",
+          "ended_at": "2026-09-23T16:17:29.201601",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Acetyl Ac",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "queued",
+            "detail": "PROVIDER FAILED",
+            "requested_at": "2026-09-23T16:17:00.580504",
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 151,
+          "sync_modified_at": "2026-09-23T16:17:00.766425",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_bc0794f324374bf3923d8545bc969478",
+                "outcome": "failed"
+              }
+            ],
+            "job_id": "ij_15e98de24c03300d8212d48cc6a50757ff93098fda2fdcc0377aa8a4ad2e49f9",
+            "meeting_id": "9f19a9b2",
+            "outcome": "failed",
+            "receipt_id": "rr_5c45372460d6ffd2dcb7197ac830a7a5",
+            "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "retrying",
+            "attempts": 1,
+            "requested_at": "2026-09-23T16:19:00.766412",
+            "updated_at": "2026-09-23T16:17:00.767765",
+            "last_error": "PROVIDER FAILED",
+            "retry_scheduled": true,
+            "next_retry_at": "2026-09-23T16:19:00.766412"
+          },
+          "intel_model_host": "192.168.1.43"
+        },
+        "body_sha256": "78fc43a71cd6966017c51a493f3121d8e23a385fb4ac77f0054ef4ef90e897d6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intel/summary",
+        "status": 200,
+        "payload": {
+          "total_jobs": 1,
+          "queued_jobs": 1,
+          "running_jobs": 0,
+          "failed_jobs": 0,
+          "queued_due_jobs": 0,
+          "scheduled_retry_jobs": 1,
+          "next_retry_at": "2026-09-23T16:19:00.766412"
+        },
+        "body_sha256": "0f18bdaf146c57cb32981567045290e2a54cd22953bf39623cd4364417110099"
+      }
+    ],
+    "at_utc": "2026-09-23T22:17:01.488404+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/9f19a9b2/intelligence/run",
+      "status": 200,
+      "body_sha256": "7850f22b7631c86d643a88525fc560e02aa6000237e1dd453dc457105961100a",
+      "body": {
+        "jobId": "ij_a7d4ede39e350aa9470daa319e0027f37d3998d046dd1b97613ce0a63f0882b3",
+        "state": "queued",
+        "host": "192.168.1.43",
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+              "host": "192.168.1.43",
+              "ordinal": 1,
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:cbce7d2a05be30820a213582fd9a1e711351163e2863529b862da97313618b52",
+          "status": "ready"
+        },
+        "run_receipt": null
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60514) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "observe_at text is 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED', wanted 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED'",
+    "elapsed_s": 0.928
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "observe_at text is 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED', wanted 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.06,
+    "first_satisfied_at_s": 0.928,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: observe_at text is 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED', wanted 'RETRYING\\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\\nLAST ERROR \u00b7 PROVIDER FAILED'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:60514) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/meetings/9f19a9b2/intelligence/run",
+      "status": 200,
+      "body_sha256": "7850f22b7631c86d643a88525fc560e02aa6000237e1dd453dc457105961100a",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60514) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:60514) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/meetings/9f19a9b2/intelligence/run",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/9f19a9b2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221647Z-case.j6.run_summary.retrying-astra-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-02-shots/rig/round-2-integrated/20260923T221647Z-case.j6.run_summary.retrying-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v_ymc433/.local/share/holdspeak/holdspeak.db",
+    "ENGINE_REPLAY 6b089b93055db6aa595ca087f478c3e253c47b9d9e8ab2d821494df13f58cbca",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"a RECORDED provider reply at the real provider seam\", \"the database owner lock\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:60514",
+    "Deferred intel failed for meeting 9f19a9b2 (attempt 1/2): retrying in 120s"
+  ]
+}
