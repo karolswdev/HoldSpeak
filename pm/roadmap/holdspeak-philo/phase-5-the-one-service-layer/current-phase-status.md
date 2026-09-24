@@ -196,6 +196,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — Astra r3 (final) on the charter: RATIFY-WITH-CONDITIONS; the one condition (story 02: `generate=true` belongs to `monday_brief.get`, not `monday_brief.generate`) paid; the two owner questions Astra named (ratify the charter + 11–14 sequential days; accept reopening the Desk for a Codex-changed brief vs amend scope) put to the owner by AskUserQuestion — Muad'Dib.
+
 - 2026-09-24 — CHARTERED by the two brains; the draft parked at `assets/charter-draft-r3.md`; Astra r2's conditions paid in this file and the story files — Muad'Dib.
 - 2026-09-24 — Muad'Dib ACCEPTS all seven of Astra's r2 between-brain positions (Declaration, Composition, Effects, Transport, Proof, Closing proof, Fences); on Proof, the headless path is charted in story 03 before any `op` verdict is trusted — Muad'Dib.
 - 2026-09-24 — Astra check r2 on draft r3: RATIFY-WITH-CONDITIONS (`checks/charter-astra-r2.md`); the four-story list amended with estimates 3–4 / 4–5 / 3–4 / 1 days.
