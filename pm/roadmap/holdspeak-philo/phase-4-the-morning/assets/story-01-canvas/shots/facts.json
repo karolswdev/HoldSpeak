@@ -1,6 +1,6 @@
 {
  "0-today-1440": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 1,
    "label_h": 18,
@@ -15,13 +15,13 @@
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Overdue: Send the vendor review notes",
     "top": 158,
     "bottom": 202,
     "in_viewport": true
    },
    {
-    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "text": "Unassigned: Draft the migration runbook",
     "top": 203,
     "bottom": 247,
     "in_viewport": true
@@ -95,7 +95,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 928,
     "painted_h": 24,
@@ -115,7 +115,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -135,7 +135,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Overdue: Send the vendor review notes",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -150,7 +150,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "text": "Unassigned: Draft the migration runbook",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -165,7 +165,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -188,7 +188,7 @@
   "vw": 1440
  },
  "1-generate-reachable-1440": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 1,
    "label_h": 18,
@@ -203,13 +203,13 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 164,
     "bottom": 208,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Meeting recorded: Platform sync",
     "top": 209,
     "bottom": 253,
     "in_viewport": true
@@ -294,7 +294,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 928,
     "painted_h": 24,
@@ -314,7 +314,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -344,6 +344,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -359,22 +374,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -397,7 +397,7 @@
   "vw": 1440
  },
  "2a-generating-1440": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 1,
    "label_h": 18,
@@ -412,13 +412,13 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 164,
     "bottom": 208,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Meeting recorded: Platform sync",
     "top": 209,
     "bottom": 253,
     "in_viewport": true
@@ -503,7 +503,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 928,
     "painted_h": 24,
@@ -528,7 +528,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -558,6 +558,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -573,22 +588,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -674,7 +674,7 @@
   "vw": 1440
  },
  "3a-did-not-generate-1440": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 1,
    "label_h": 18,
@@ -689,13 +689,13 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 164,
     "bottom": 208,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Meeting recorded: Platform sync",
     "top": 209,
     "bottom": 253,
     "in_viewport": true
@@ -780,7 +780,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 928,
     "painted_h": 24,
@@ -805,7 +805,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -835,6 +835,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -850,22 +865,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -1681,7 +1681,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -1749,7 +1749,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -1822,7 +1822,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -1919,7 +1919,7 @@
  },
  "console-errors-1440": [],
  "0-today-393": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 1,
    "label_h": 18,
@@ -1934,15 +1934,15 @@
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Overdue: Send the vendor review notes",
     "top": 203,
     "bottom": 296,
     "in_viewport": true
    },
    {
-    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "text": "Unassigned: Draft the migration runbook",
     "top": 297,
-    "bottom": 411,
+    "bottom": 390,
     "in_viewport": true
    }
   ],
@@ -2014,7 +2014,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 369,
     "painted_h": 24,
@@ -2034,7 +2034,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -2054,7 +2054,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
+    "text": "Overdue: Send the vendor review notes",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -2069,7 +2069,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "text": "Unassigned: Draft the migration runbook",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -2084,7 +2084,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -2107,7 +2107,7 @@
   "vw": 393
  },
  "1-generate-reachable-393": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 2,
    "label_h": 36,
@@ -2122,15 +2122,15 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 238,
-    "bottom": 331,
+    "bottom": 352,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "top": 332,
-    "bottom": 425,
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
     "in_viewport": true
    }
   ],
@@ -2213,7 +2213,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 369,
     "painted_h": 24,
@@ -2233,7 +2233,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -2263,6 +2263,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -2278,22 +2293,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -2316,7 +2316,7 @@
   "vw": 393
  },
  "2a-generating-393": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 2,
    "label_h": 36,
@@ -2331,15 +2331,15 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 238,
-    "bottom": 331,
+    "bottom": 352,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "top": 332,
-    "bottom": 425,
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
     "in_viewport": true
    }
   ],
@@ -2422,7 +2422,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 369,
     "painted_h": 24,
@@ -2447,7 +2447,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -2477,6 +2477,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -2492,22 +2507,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -2593,7 +2593,7 @@
   "vw": 393
  },
  "3a-did-not-generate-393": {
-  "label": "BRIEF · 4 THINGS WAITING",
+  "label": "BRIEF · 6 THINGS WAITING",
   "head": {
    "label_lines": 2,
    "label_h": 36,
@@ -2608,15 +2608,15 @@
     "in_viewport": true
    },
    {
-    "text": "Meeting recorded: Platform sync",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 238,
-    "bottom": 331,
+    "bottom": 352,
     "in_viewport": true
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "top": 332,
-    "bottom": 425,
+    "text": "Meeting recorded: Platform sync",
+    "top": 353,
+    "bottom": 446,
     "in_viewport": true
    }
   ],
@@ -2699,7 +2699,7 @@
     "text_fits": true
    },
    {
-    "text": "1 more",
+    "text": "3 more",
     "disabled": false,
     "w": 369,
     "painted_h": 24,
@@ -2724,7 +2724,7 @@
   ],
   "texts": [
    {
-    "text": "BRIEF · 4 THINGS WAITING",
+    "text": "BRIEF · 6 THINGS WAITING",
     "px": 12,
     "cls": "h3"
    },
@@ -2754,6 +2754,21 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
     "text": "Meeting recorded: Platform sync",
     "px": 15,
     "cls": "surface-ledger-primary"
@@ -2769,22 +2784,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Open loop: Rate limits for the partner API",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "1",
+    "text": "3",
     "px": 12,
     "cls": "btn btn--ghost btn--sm "
    },
@@ -3600,7 +3600,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3668,7 +3668,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3741,7 +3741,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+    "text": "1 thing changed, 3 things waiting, 2 decisions waiting.",
     "px": 12,
     "cls": "arrival-brief-headline"
    },
@@ -3921,7 +3921,7 @@
     "clientW": 163,
     "truncated": false,
     "text_overflow": "clip",
-    "title": "The route for this face is not set."
+    "title": "192.168.1.43 · LAN"
    },
    {
     "text": "+ FALLBACK api.anthropic.com",
@@ -3932,7 +3932,7 @@
     "clientW": 244,
     "truncated": false,
     "text_overflow": "clip",
-    "title": "The route for this face is not set."
+    "title": "+ FALLBACK api.anthropic.com"
    }
   ],
   "heading": null,

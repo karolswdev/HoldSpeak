@@ -749,7 +749,7 @@ export function EgressChip({
      (03-interaction-walk.md Appendix B.2). A caller that knows the route
      passes it; a caller that has not read one says NOT SET. */
   label = "NOT SET",
-  title = "The route for this face is not set.",
+  title,
   scope,
   className,
   ariaLabel,
@@ -769,6 +769,10 @@ export function EgressChip({
    * (the one tap into Privacy and Trust); a plain fact chip stays a span. */
   onClick?: () => void;
 }) {
+  /* PHILO-4-01 r5 — a chip that names its destination carries that full
+     text as its title; the unset sentence stays only on a chip that is
+     truly unset (no label, or NOT SET). */
+  const tip = title ?? (label && label !== "NOT SET" ? label : "The route for this face is not set.");
   const cls =
     "gadget-chip gadget-chip-egress" + (className ? ` ${className}` : "");
   if (onClick) {
@@ -777,7 +781,7 @@ export function EgressChip({
         type="button"
         className={cls}
         data-scope={scope}
-        title={title}
+        title={tip}
         aria-label={ariaLabel}
         onClick={onClick}
       >
@@ -786,7 +790,7 @@ export function EgressChip({
     );
   }
   return (
-    <span className={cls} data-scope={scope} title={title}>
+    <span className={cls} data-scope={scope} title={tip}>
       {label}
     </span>
   );

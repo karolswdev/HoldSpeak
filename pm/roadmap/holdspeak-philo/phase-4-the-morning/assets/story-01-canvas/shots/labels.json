@@ -1,25 +1,47 @@
 {
  "0-today": {
-  "state": "TODAY (reference): populated, untriaged; no Generate; decisions last",
-  "head": "BRIEF · 4 THINGS WAITING",
+  "state": "TODAY (reference): populated, untriaged; no Generate; decisions last (ChairHome.tsx:801); each section in the _compose priority order; the decision is row 5 of 6, behind 3 more",
+  "head": "BRIEF · 6 THINGS WAITING",
   "verbs": [
    "Ack",
    "Defer",
-   "1 more"
+   "3 more"
   ],
-  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "rows_visible": [
+   "Meeting recorded: Platform sync (changed, 50)",
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)"
+  ],
+  "rows_folded": [
+   "Open loop: Rate limits for the partner API (waiting, 100)",
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); today: changed, broke, waiting, decisions"
  },
  "1-generate-reachable": {
   "state": "Board 1: populated, untriaged; Generate in the head verb slot",
-  "head": "BRIEF · 4 THINGS WAITING",
+  "head": "BRIEF · 6 THINGS WAITING",
   "egress": "THIS DEVICE",
   "verbs": [
    "Generate",
    "Ack",
    "Defer",
-   "1 more"
+   "3 more"
   ],
-  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
  },
  "2a-generating": {
   "state": "Board 2a: generation open; Generate disabled",
@@ -27,10 +49,22 @@
    "Generate (disabled)",
    "Ack",
    "Defer",
-   "1 more"
+   "3 more"
   ],
   "status": "GENERATING…",
-  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
  },
  "2b-reading": {
   "state": "Board 2b: read open; Generate disabled",
@@ -46,10 +80,22 @@
    "Generate",
    "Ack",
    "Defer",
-   "1 more"
+   "3 more"
   ],
   "status": "BRIEF DID NOT GENERATE · HTTP 500",
-  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
+  "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
+  "head": "BRIEF · 6 THINGS WAITING",
+  "rows_visible": [
+   "Review decision: Adopt the one desk bus (decisions, 200; decision created SEP 22 11:30)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (decisions, 110; decision created SEP 21 10:15)",
+   "Meeting recorded: Platform sync (changed, 50)"
+  ],
+  "rows_folded": [
+   "Overdue: Send the vendor review notes (waiting, 300)",
+   "Unassigned: Draft the migration runbook (waiting, 200)",
+   "Open loop: Rate limits for the partner API (waiting, 100)"
+  ],
+  "order_source": "harness/compose_headline.py (the REAL _compose); story 02: decisions first, newest first by the decision record's created_at; the rest in the producer's order"
  },
  "3b-did-not-load": {
   "state": "Board 3b: read failed; Retry repeats the GET (a different action from Generate)",
@@ -145,7 +191,7 @@
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
  },
  "7b-fully-triaged": {
-  "state": "Board 7b: the day-one brief (4 items), all four rows Ack'd/Defer'd; untriagedBrief is empty, so the quiet branch renders (ChairHome.tsx:1286-1328); the rows are gone from the Arrival",
+  "state": "Board 7b: the day-one brief (6 items), all six rows Ack'd/Defer'd; untriagedBrief is empty, so the quiet branch renders (ChairHome.tsx:1286-1328); the rows are gone from the Arrival",
   "head": "BRIEF",
   "egress": "THIS DEVICE",
   "verbs": [
@@ -154,8 +200,8 @@
   "verbs_today": [
    "Generate again"
   ],
-  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
-  "headline_source": "the stored headline, pasted verbatim from the REAL _compose (harness/compose_headline.py; monday_brief_service.py:327-387) over DAY1's four items in the producer's sections: changed = Meeting recorded (:507), waiting = Open loop (:708), decisions = Review decision (:768) + Commitment due (:812); triage does not rewrite it",
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
+  "headline_source": "the stored headline, pasted verbatim from the REAL _compose (harness/compose_headline.py; monday_brief_service.py:327-387) over DAY1's six items in the producer's sections and priorities: changed = Meeting recorded (50, :511); waiting = Overdue (300) + Unassigned (200) (:655-672) + Open loop (100, :712); decisions = Review decision (200, :771) + Commitment due (110, :815); triage does not rewrite it",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40"
  },
  "8a-quiet-generating": {
@@ -165,7 +211,7 @@
   "verbs": [
    "Generate (disabled)"
   ],
-  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
   "status": "GENERATING…"
  },
@@ -176,7 +222,7 @@
   "verbs": [
    "Generate"
   ],
-  "headline": "1 thing changed, 1 thing waiting, 2 decisions waiting.",
+  "headline": "1 thing changed, 3 things waiting, 2 decisions waiting.",
   "caption": "SEP 21 – 23 · GENERATED SEP 23 17:40",
   "status": "BRIEF DID NOT GENERATE · HTTP 500"
  },
@@ -210,6 +256,11 @@
   "chips": [
    "192.168.1.43 · LAN",
    "+ FALLBACK API.ANTHROPIC.COM (full text; a route chip never truncates)"
-  ]
+  ],
+  "titles": [
+   "192.168.1.43 · LAN",
+   "+ FALLBACK api.anthropic.com"
+  ],
+  "title_rule": "round five: each route chip's title is its full text (RouteDisclosure.tsx passes it; EgressChip falls back to its label); the unset sentence stays only on a chip with no label or NOT SET"
  }
 }

@@ -29,16 +29,19 @@ const NEW = { id: "dn", text: "Review decision: Ship the ingest API behind a fla
 const M1 = { id: "m1", text: "Meeting recorded: Platform sync" };
 const M2 = { id: "m2", text: "Meeting recorded: Architecture review" };
 const L1 = { id: "l1", text: "Open loop: Rate limits for the partner API" };
-const C1 = { id: "c1", text: "Commitment due 2026-09-25: Send the Q4 plan to Dana" };
+const C1 = { id: "c1", text: "Commitment due 2026-09-25: Send the Q4 plan to Dana" }; // decision dc1 created SEP 21 10:15
+const O1 = { id: "o1", text: "Overdue: Send the vendor review notes" };
+const U1 = { id: "u1", text: "Unassigned: Draft the migration runbook" };
 
 const DAY1 = "SEP 21 – 23 · GENERATED SEP 23 17:40";
 const DAY2 = "SEP 21 – 24 · GENERATED SEP 24 08:02";
-/* The producer's headline for DAY1's four items, pasted verbatim from the
- * REAL `_compose` (harness/compose_headline.py): the four items in the
- * sections the producer gives them (C1 `Commitment due` is a `decisions`
- * item, monday_brief_service.py:812; the Arrival reads changed, broke,
- * waiting, decisions and never this_week, ChairHome.tsx:801). */
-const DAY1_HEADLINE = "1 thing changed, 1 thing waiting, 2 decisions waiting.";
+/* Round five: DAY1 is six items with the producer's texts, sections and
+ * priorities (harness/compose_headline.py: M1 changed 50; O1 waiting 300,
+ * U1 waiting 200, L1 waiting 100; D2 decisions 200, C1 decisions 110),
+ * run through the REAL `_compose` (monday_brief_service.py:327-387). The
+ * headline, the per-section order and both Arrival orders below are its
+ * output, pasted verbatim. */
+const DAY1_HEADLINE = "1 thing changed, 3 things waiting, 2 decisions waiting.";
 
 function Verbs({ busy }: { busy?: boolean }) {
   return (
@@ -104,8 +107,12 @@ const Generating = () => (
   <span className="surface-receipt-line" role="status" data-testid="arrival-brief-generating">GENERATING…</span>
 );
 
-const DAY1_TODAY_ORDER = [M1, L1, C1, D2]; // today: changed, waiting, decisions LAST
-const DAY1_ORDER = [D2, M1, L1, C1];       // proposed: decisions lead, newest first
+/* today (ChairHome.tsx:801): changed, broke, waiting, decisions LAST; each
+ * section in `_compose` order (priority, :331-335). D2 is row 5 of 6. */
+const DAY1_TODAY_ORDER = [M1, O1, U1, L1, D2, C1];
+/* story 02: the decisions section first, newest first by the decision
+ * record's created_at (D2 SEP 22 > dc1 SEP 21); the rest keep their order. */
+const DAY1_ORDER = [D2, C1, M1, O1, U1, L1];
 const DAY2_ONE = [NEW, D2, M2, M1, L1, C1];
 const DAY2_SEVERAL = [NEW, D3, D2, D1, M2, L1, C1];
 
@@ -152,9 +159,9 @@ const boards: Record<string, ReactNode> = {
       <span className="arrival-brief-headline" data-testid="arrival-brief-headline">No changes</span>
       <Caption text={DAY1} />
     </SurfaceSection>),
-  /* 7b: the day-one brief, all four rows Ack'd/Defer'd. untriagedBrief is
+  /* 7b: the day-one brief, all six rows Ack'd/Defer'd. untriagedBrief is
    * empty, so ChairHome.tsx:1286-1328 renders: head `BRIEF` (no count),
-   * the brief's STORED headline (it counts the four items; triage does not
+   * the brief's STORED headline (it counts the six items; triage does not
    * rewrite it), the caption, and today `Generate again`. */
   "7b-fully-triaged": (
     <SurfaceSection label="BRIEF" actions={<Verbs />}>
