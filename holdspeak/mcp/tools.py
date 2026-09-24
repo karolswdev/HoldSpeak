@@ -285,7 +285,7 @@ TOOLS.extend([
     # machine. Completion is read through meeting.get.
     _mcp_tool(
         "meeting.import",
-        "Import one recording or transcript file into a new meeting. The hub reads the file at path, keeps its own copy and transcribes it in the background; read meeting.get until transcription finishes.",
+        "Owner only. Import one recording or transcript file into a new meeting. The hub reads the file at path, keeps its own copy and transcribes it in the background; read meeting.get until transcription finishes.",
         {
             "path": {"type": "string", "description": "Absolute path to an audio or transcript file the hub process can read."},
             "title": {"type": "string", "description": "Optional title; defaults to the file name."},

@@ -41,3 +41,36 @@ MISSED:
 TUESDAY: The local-owner loop is supported by service tests and unchanged Chair behavior; the complete ordinary-words Codex job still awaits stories 03–04.
 
 UNKNOWN: No fresh Codex rehearsal, real ASR/model execution, or 1440/393 walk was performed in this check. M1–M11 were read, not independently rerun. Heavy CI remained running or queued at last inspection. No full suite was run, and nothing in the reviewed tree was changed.
+## Check — Astra, 2026-09-24, round two on built: PHILO-5-02 (PR #635 @ 462833ff)
+
+VERDICT: RATIFY-WITH-CONDITIONS — PR #635 at `462833ff`. The four r1 conditions are paid in the tree. Two wording corrections remain before merge.
+
+FINDINGS:
+
+1. **The tool description must say “Owner only.”** The actual DESK-agent `tools/list` response advertises `meeting.import` without its restriction; see `holdspeak/mcp/tools.py:288` and the [captured roster](/tmp/astra-philo502-r2-hx1xHi/probe-built/probe.json). The descriptor’s exported `owner_only` flag does not reach that response. This fails Tenets 3/4 and Article VI.1: clients should know the limit before calling. Correcting this newly added tool’s description does not alter the 225 pre-existing definitions.
+
+2. **The admission correction is sound in the tree, but the PR description still asserts the withdrawn exemption.** `pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/current-phase-status.md:207`, `pm/roadmap/holdspeak/BACKLOG.md:1204`, and `tests/unit/test_philo5_the_loop.py:618` now retain and assign the debt correctly. However, [PR #635](https://github.com/karolswdev/HoldSpeak/pull/635) still says a decision write meets none of XI.1’s triggers. Update that claim and the import section’s missing owner restriction. An inaccurate merge record fails Article IX.3; Tenet 1 supports the scoped deferral already recorded.
+
+3. **The owner boundary now holds.** Authorization precedes filesystem access at `holdspeak/mcp/tools.py:706`. My independent fresh-hub probe issued a real DESK credential: remote and loopback agents received `owner_required`, with zero source-file opens and zero meeting rows. The owner imported the same file, producing meeting **`1c6200fc`** with its transcript. On an archive of `fca54146`, the same probe let the remote agent import and read meeting **`5e2c1e3f`**. [Built proof](/tmp/astra-philo502-r2-hx1xHi/probe-built/probe.json), [pre-fix proof](/tmp/astra-philo502-r2-hx1xHi/probe-r1/probe.json). The HTTP route fence also passes. This is the proportionate correction required by Tenet 1 and XI.4.
+
+4. **The shape and traversal fences now prove their claims.** `tests/unit/test_philo5_the_loop_r2.py:333` exercises all eight braced declarations through real producers, treating the shelf result as a dynamic map. `thought.list` correctly declares `{items, next_cursor}`. `tests/unit/test_philo5_the_loop_r2.py:348` records both transports’ writes and reads. I independently reproduced **M12–M15**: each new fence failed while its paired old fence passed. [Mutation evidence](/tmp/astra-philo502-r2-hx1xHi/mutations.txt).
+
+5. **Scoped verification passes.** I collected and ran **13/13 r2 tests**, plus **99/99** loop, compatibility, and census tests. The archived r2 run reproduced **4 failures / 9 passes**: three behavioral failures and one unavailable-symbol failure, which I do not count as behavioral proof. All five generated checks and `dw check` passed. [Green](/tmp/astra-philo502-r2-hx1xHi/green.txt), [regressions](/tmp/astra-philo502-r2-hx1xHi/regression.txt), [archive red](/tmp/astra-philo502-r2-hx1xHi/red.txt), [generated checks](/tmp/astra-philo502-r2-hx1xHi/generated-checks.txt).
+
+6. **All four fast CI jobs passed, and I read their logs:** [Web Quality](https://github.com/karolswdev/HoldSpeak/actions/runs/36057229484/job/107827152465) — 310 files / 2,837 tests plus build gates; [G0](https://github.com/karolswdev/HoldSpeak/actions/runs/36057229484/job/107827152488) — 11 tests; [Documentation](https://github.com/karolswdev/HoldSpeak/actions/runs/36057229484/job/107827152530); [Linux Smoke](https://github.com/karolswdev/HoldSpeak/actions/runs/36057229484/job/107827152571). No additional implementation blocker found within this check.
+
+CONDITIONS:
+
+- Add “Owner only” to the published import description; update affected generated output and fences together.
+- Refresh the PR description to state the owner boundary and inherited, unresolved admission debt.
+
+MISSED:
+
+1. The restriction exists in execution but is absent from client discovery.
+2. The withdrawn constitutional claim survives in the merge-facing record.
+
+TUESDAY: The owner’s local import works; the complete ordinary-words loop still awaits stories 03–04.
+
+UNKNOWN: No full suite, fresh atlas/1440/393 walk, live-network probe, or real ASR/model run. The probes used real hub applications through TestClient. Heavy CI remained pending. The reviewed tree is unchanged.
+
+Conditions paid by Muad'Dib in this commit: the `meeting.import` tool description now opens "Owner only." (roster regenerated, drift guards green); the PR description corrected (owner boundary; the admission = inherited, unruled Article XI debt).
