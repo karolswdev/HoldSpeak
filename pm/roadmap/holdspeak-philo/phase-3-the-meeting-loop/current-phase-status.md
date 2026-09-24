@@ -1,6 +1,6 @@
 # Phase 3 - The Meeting Loop
 
-**Last updated:** 2026-09-23 (A2 second counsel).
+**Last updated:** 2026-09-24 (closure chain on the rig; final summary; exits 2 and 4 flipped).
 
 ## Goal
 
@@ -26,9 +26,18 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 ## Exit criteria (evidence required)
 
 - [ ] The end-to-end chain runs on the rig with retained observations at 1440 and 393: import completes → summary on the arrival with the actual host → the same summary after a restart → a decision recorded → the next producer-day's dated brief contains it.
-- [ ] Every repaired seam has a fence that failed pre-fix.
+  **Open (2026-09-24).** Steps 1–4 PASS at both widths (`assets/closure/`: 1 `20260924T011648Z`/`012020Z`, 2 `012038Z`/`012106Z`, 3 `012132Z`/`012202Z`, 4 `012742Z`/`012814Z`). Step 5 as written is BLOCKED at both widths (`013355Z`/`013440Z`): with yesterday's brief rows untriaged the Arrival draws no Generate verb (`ChairHome.tsx:1260`). After Ack on every row, the next-day brief has the decision under a new id (protocol), but the Arrival shows it only behind `1 more` (`013738Z`/`014018Z` FAIL); one more move shows it in the brief view (`014258Z`/`014339Z` PASS). Detail: [final summary](final-summary.md).
+- [x] Every repaired seam has a fence that failed pre-fix.
+  Per story, from the checks and evidence (not re-derived):
+  A1 — `tests/unit/test_philo3_01_decision_route.py` against the pre-fix 500 from `git show 7ce95358` (`story-01-record-the-decision.md`:36); `philo301DecisionFace.test.tsx` 4/4 fail on the old head (story-01:42); `philo301DecisionNoLoss.test.tsx` and `philo301RetryKept.test.tsx` fail on the previous code (story-01:40; Astra r2 probes fail/pass); `tests/e2e/test_philo3_01_receipt_hits.py` pre-fix Chair bottom 866 vs 800, capture bar 777 vs dock 727, document 918 vs 852 (story-01:38).
+  A2 — round one: queue 4/4, detail 6/6, Arrival vitest 11/11 fail on a `git archive origin/main` copy ([checks/story-02-built-muaddib.md](checks/story-02-built-muaddib.md):15); round two on `dfbaccd5`: pytest 7 failed, vitest 9 failed (plain cause), `test_philo3_summary_counts.py` both fail on `assert []`, refresh 1 failed / 11 passed (:48–50); install fence before-state from the retained log only (:15). Exception-path causes (`intel_queue.py:557`, `:642`) are NOT repaired and have no fence (ledgered).
+  A3 — the pre-fix Chair source makes 5/6 new tests fail ([checks/story-03-built-astra.md](checks/story-03-built-astra.md):15); the recipe fence refuses every mutation (advance removed, moved, invalid; early empty generate) (`test_philo_graph_atlas.py`, r2 :41).
+  A4 — 6/7 receipt tests and 3/4 floor tests fail on the parent ([checks/story-04-built-astra.md](checks/story-04-built-astra.md):13); the 600 px layout fence fails on the pre-fix CSS (:37).
+  The closure's own rig changes (`_restart_detail` read fallback; no unfilled read is sent) are tooling and have no separate fence.
 - [ ] The owner's sitting on the finished chain, with his words as the phase's final summary; technical completion and usefulness reported separately.
-- [ ] (if D3 includes it) The thought's receipt on the face, canvas-ratified, both widths.
+  **Open — his.** The technical record and the usefulness map are in [final-summary.md](final-summary.md); his words are not.
+- [x] (if D3 includes it) The thought's receipt on the face, canvas-ratified, both widths.
+  D3 ruled A4 in. The owner ratified the canvas ([assets/story-04-canvas/](assets/story-04-canvas/README.md); merge `8c078662`, PR #614: "the owner ratified the canvas"); Astra r2 RATIFY ([checks/story-04-built-astra.md](checks/story-04-built-astra.md):42); rig `case.j11.thought_keep.receipt_time` at 1440 `20260923T060140Z` and 393 `20260923T060148Z` ([evidence-story-04](evidence-story-04.md)).
 
 ## Story status
 
@@ -49,6 +58,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-24 01:45 UTC: CLOSURE CHAIN on the rig (Muad'Dib's lane; Astra's check owed). Actual LAN engine `Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf` at 192.168.1.43:8080; one hub and one fresh HOME per run; 24 observations kept, none selected. Steps 1–4 PASS at 1440 and 393. Step 5 is BLOCKED as written: no Generate verb while yesterday's brief has an untriaged row. With triage the dated brief has the decision, but the Arrival hides it behind `1 more`. Found: the next-day brief can answer 500 when a breakage row repeats (`monday_brief_service.py:546`, `:305`). Usefulness partial: SQLite, Maya Chen and Priya's action lost in 22/22 summaries; owners and due dates lost on the Arrival rows. Exits 2 and 4 flipped; 1 and 3 open. [Final summary](final-summary.md).
 
 2026-09-23 18:30: A2 second Muad'Dib counsel on Astra's round two (PR #616 @ 0624a6a3): RATIFY-WITH-CONDITIONS, both paid in the same commit (the glass-probe wording corrected and its lost cross-layer coverage ledgered; main merged). Every round-one condition verified paid with pre-fix reds reproduced: plain PROVIDER FAILED cause, the queue count seam, refresh continuity, the transcript fold on the library Disclosure, no raw ids. Ledgered for closure: exception-path failures still carry queue wording; aftercare covers the fold at 393; ASR instability; `1 WORDS`. Merge on green CI.
 
@@ -76,6 +87,8 @@ PHILO-3-02 checkpoint, 2026-09-23: install committed first as `794f07ff`, then q
 | Scope creep from the deferred list | high | the deferred list is explicit; a new story needs the owner's word | a fifth story appears |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — closure run by Muad'Dib's lane: the chain written as seven cumulative atlas cases (`case.closure.chain.*`, atlas-phase3 `phase3-closure`); exit 1 left open on a BLOCKED step 5; the Generate-verb gap, the breakage-id 500, the `1 more` cap and the lost owners/dates ledgered for the owner and the council, not repaired here.
 
 - 2026-09-23 — owner ruled summary open, transcript collapsed by default, word count on the existing fold, one click to open; applied in A2 round two. Aftercare obstruction and ASR instability are ledgered, not repaired in A2.
 
