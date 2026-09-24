@@ -22,12 +22,16 @@ import { readPlannedRoute } from "@w/meetings/summaryRoute";
 type Item = { id: string; text: string };
 const BRIEF_CAP = 3;
 
-const D1 = { id: "d1", text: "Review decision: Use SQLite for the local store" }; // created SEP 21 09:05
+/* The decision record's created_at (story 02's recency source). Round six:
+ * every decision new on DAY2 was recorded AFTER DAY1's generation (SEP 23
+ * 17:40); one recorded earlier would already be on DAY1 (decisions have no
+ * time window, monday_brief_service.py:774-783). */
+const D1 = { id: "d1", text: "Review decision: Use SQLite for the local store" }; // created SEP 23 18:05
 const D2 = { id: "d2", text: "Review decision: Adopt the one desk bus" };         // created SEP 22 11:30
-const D3 = { id: "d3", text: "Review decision: Keep one hub per desk" };          // created SEP 23 16:10
+const D3 = { id: "d3", text: "Review decision: Keep one hub per desk" };          // created SEP 24 07:31
 const NEW = { id: "dn", text: "Review decision: Ship the ingest API behind a flag" }; // created SEP 24 07:58
-const M1 = { id: "m1", text: "Meeting recorded: Platform sync" };
-const M2 = { id: "m2", text: "Meeting recorded: Architecture review" };
+const M1 = { id: "m1", text: "Meeting recorded: Platform sync" };         // ended SEP 23 15:30
+const M2 = { id: "m2", text: "Meeting recorded: Architecture review" };   // ended SEP 23 18:10
 const L1 = { id: "l1", text: "Open loop: Rate limits for the partner API" };
 const C1 = { id: "c1", text: "Commitment due 2026-09-25: Send the Q4 plan to Dana" }; // decision dc1 created SEP 21 10:15
 const O1 = { id: "o1", text: "Overdue: Send the vendor review notes" };
@@ -113,8 +117,14 @@ const DAY1_TODAY_ORDER = [M1, O1, U1, L1, D2, C1];
 /* story 02: the decisions section first, newest first by the decision
  * record's created_at (D2 SEP 22 > dc1 SEP 21); the rest keep their order. */
 const DAY1_ORDER = [D2, C1, M1, O1, U1, L1];
-const DAY2_ONE = [NEW, D2, M2, M1, L1, C1];
-const DAY2_SEVERAL = [NEW, D3, D2, D1, M2, L1, C1];
+/* Round six: the next day (SEP 24 08:02, window SEP 23 17:00 -> 08:02).
+ * The producer CARRIES o1, u1, l1, d2, c1 (no time window) and drops m1
+ * (windowed; it ended inside DAY1's window). Triage is untouched: DAY2 is
+ * a new brief with new item ids, so its shelf is empty. Decisions lead,
+ * strictly newest first by created_at; then changed, waiting in `_compose`
+ * order. harness/compose_headline.py prints these orders and headlines. */
+const DAY2_ONE = [NEW, D2, C1, M2, O1, U1, L1];
+const DAY2_SEVERAL = [NEW, D3, D1, D2, C1, M2, O1, U1, L1];
 
 const boards: Record<string, ReactNode> = {
   "0-today": (<><Rows items={DAY1_TODAY_ORDER} /><Caption text={DAY1} /></>),
@@ -137,9 +147,9 @@ const boards: Record<string, ReactNode> = {
       <Generating />
     </SurfaceSection>),
   "4-next-day-one-decision": (<><Rows items={DAY2_ONE} actions={<Verbs />} /><Caption text={DAY2} />
-    <Receipt text="Brief ready · 6 items · 8:02 AM" /></>),
-  "5-next-day-several-decisions": (<><Rows items={DAY2_SEVERAL} actions={<Verbs />} /><Caption text={DAY2} />
     <Receipt text="Brief ready · 7 items · 8:02 AM" /></>),
+  "5-next-day-several-decisions": (<><Rows items={DAY2_SEVERAL} actions={<Verbs />} /><Caption text={DAY2} />
+    <Receipt text="Brief ready · 9 items · 8:02 AM" /></>),
   /* 6: no brief on the hub yet (the A3 words), Generate in the head. */
   "6-null-brief": (
     <SurfaceSection label="BRIEF" actions={<Verbs />}>

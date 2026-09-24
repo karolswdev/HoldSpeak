@@ -1025,225 +1025,6 @@
   "vw": 1440
  },
  "4-next-day-one-decision-1440": {
-  "label": "BRIEF · 6 THINGS WAITING",
-  "head": {
-   "label_lines": 1,
-   "label_h": 18,
-   "chip_h": 18,
-   "chip_clipped": false
-  },
-  "rows": [
-   {
-    "text": "Review decision: Ship the ingest API behind a flag",
-    "top": 119,
-    "bottom": 163,
-    "in_viewport": true
-   },
-   {
-    "text": "Review decision: Adopt the one desk bus",
-    "top": 164,
-    "bottom": 208,
-    "in_viewport": true
-   },
-   {
-    "text": "Meeting recorded: Architecture review",
-    "top": 209,
-    "bottom": 253,
-    "in_viewport": true
-   }
-  ],
-  "buttons": [
-   {
-    "text": "Generate",
-    "disabled": false,
-    "w": 76,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 58,
-    "content_w": 58,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 40,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 22,
-    "content_w": 22,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 40,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 22,
-    "content_w": 22,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 40,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 22,
-    "content_w": 22,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "3 more",
-    "disabled": false,
-    "w": 928,
-    "painted_h": 24,
-    "halo_h": "auto",
-    "owns_44_band": false,
-    "text_w": 43,
-    "content_w": 910,
-    "text_fits": true
-   }
-  ],
-  "lines": [
-   {
-    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
-    "px": "12px",
-    "tone": null
-   },
-   {
-    "text": "Brief ready · 6 items · 8:02 AM",
-    "px": "12px",
-    "tone": null
-   }
-  ],
-  "texts": [
-   {
-    "text": "BRIEF · 6 THINGS WAITING",
-    "px": 12,
-    "cls": "h3"
-   },
-   {
-    "text": "THIS DEVICE",
-    "px": 12,
-    "cls": "gadget-chip gadget-chip-egress"
-   },
-   {
-    "text": "Generate",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Review decision: Ship the ingest API behind a flag",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Review decision: Adopt the one desk bus",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Meeting recorded: Architecture review",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "3",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "more",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
-    "px": 12,
-    "cls": "surface-receipt-line"
-   },
-   {
-    "text": "Brief ready · 6 items · 8:02 AM",
-    "px": 12,
-    "cls": "surface-receipt-line"
-   }
-  ],
-  "min_text_px": 12,
-  "floor_ok": true,
-  "raw_buttons": 0,
-  "width": 928,
-  "scrollW": 1440,
-  "vw": 1440
- },
- "5-next-day-several-decisions-1440": {
   "label": "BRIEF · 7 THINGS WAITING",
   "head": {
    "label_lines": 1,
@@ -1259,13 +1040,13 @@
     "in_viewport": true
    },
    {
-    "text": "Review decision: Keep one hub per desk",
+    "text": "Review decision: Adopt the one desk bus",
     "top": 164,
     "bottom": 208,
     "in_viewport": true
    },
    {
-    "text": "Review decision: Adopt the one desk bus",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 209,
     "bottom": 253,
     "in_viewport": true
@@ -1405,7 +1186,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Review decision: Keep one hub per desk",
+    "text": "Review decision: Adopt the one desk bus",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -1420,7 +1201,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Review decision: Adopt the one desk bus",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -1451,6 +1232,225 @@
    },
    {
     "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 928,
+  "scrollW": 1440,
+  "vw": 1440
+ },
+ "5-next-day-several-decisions-1440": {
+  "label": "BRIEF · 9 THINGS WAITING",
+  "head": {
+   "label_lines": 1,
+   "label_h": 18,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 119,
+    "bottom": 163,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "top": 164,
+    "bottom": 208,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "top": 209,
+    "bottom": 253,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 40,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 22,
+    "content_w": 22,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "6 more",
+    "disabled": false,
+    "w": 928,
+    "painted_h": 24,
+    "halo_h": "auto",
+    "owns_44_band": false,
+    "text_w": 43,
+    "content_w": 910,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 9 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "6",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
     "px": 12,
     "cls": "surface-receipt-line"
    }
@@ -2944,225 +2944,6 @@
   "vw": 393
  },
  "4-next-day-one-decision-393": {
-  "label": "BRIEF · 6 THINGS WAITING",
-  "head": {
-   "label_lines": 2,
-   "label_h": 36,
-   "chip_h": 18,
-   "chip_clipped": false
-  },
-  "rows": [
-   {
-    "text": "Review decision: Ship the ingest API behind a flag",
-    "top": 144,
-    "bottom": 258,
-    "in_viewport": true
-   },
-   {
-    "text": "Review decision: Adopt the one desk bus",
-    "top": 259,
-    "bottom": 352,
-    "in_viewport": true
-   },
-   {
-    "text": "Meeting recorded: Architecture review",
-    "top": 353,
-    "bottom": 446,
-    "in_viewport": true
-   }
-  ],
-  "buttons": [
-   {
-    "text": "Generate",
-    "disabled": false,
-    "w": 76,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 58,
-    "content_w": 58,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 44,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 22,
-    "content_w": 26,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 44,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 22,
-    "content_w": 26,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "Ack",
-    "disabled": false,
-    "w": 44,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 22,
-    "content_w": 26,
-    "text_fits": true
-   },
-   {
-    "text": "Defer",
-    "disabled": false,
-    "w": 54,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 36,
-    "content_w": 36,
-    "text_fits": true
-   },
-   {
-    "text": "3 more",
-    "disabled": false,
-    "w": 369,
-    "painted_h": 24,
-    "halo_h": "44px",
-    "owns_44_band": true,
-    "text_w": 43,
-    "content_w": 351,
-    "text_fits": true
-   }
-  ],
-  "lines": [
-   {
-    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
-    "px": "12px",
-    "tone": null
-   },
-   {
-    "text": "Brief ready · 6 items · 8:02 AM",
-    "px": "12px",
-    "tone": null
-   }
-  ],
-  "texts": [
-   {
-    "text": "BRIEF · 6 THINGS WAITING",
-    "px": 12,
-    "cls": "h3"
-   },
-   {
-    "text": "THIS DEVICE",
-    "px": 12,
-    "cls": "gadget-chip gadget-chip-egress"
-   },
-   {
-    "text": "Generate",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Review decision: Ship the ingest API behind a flag",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Review decision: Adopt the one desk bus",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Meeting recorded: Architecture review",
-    "px": 15,
-    "cls": "surface-ledger-primary"
-   },
-   {
-    "text": "Ack",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "Defer",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "3",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "more",
-    "px": 12,
-    "cls": "btn btn--ghost btn--sm "
-   },
-   {
-    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
-    "px": 12,
-    "cls": "surface-receipt-line"
-   },
-   {
-    "text": "Brief ready · 6 items · 8:02 AM",
-    "px": 12,
-    "cls": "surface-receipt-line"
-   }
-  ],
-  "min_text_px": 12,
-  "floor_ok": true,
-  "raw_buttons": 0,
-  "width": 369,
-  "scrollW": 393,
-  "vw": 393
- },
- "5-next-day-several-decisions-393": {
   "label": "BRIEF · 7 THINGS WAITING",
   "head": {
    "label_lines": 2,
@@ -3178,15 +2959,15 @@
     "in_viewport": true
    },
    {
-    "text": "Review decision: Keep one hub per desk",
+    "text": "Review decision: Adopt the one desk bus",
     "top": 259,
     "bottom": 352,
     "in_viewport": true
    },
    {
-    "text": "Review decision: Adopt the one desk bus",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "top": 353,
-    "bottom": 446,
+    "bottom": 467,
     "in_viewport": true
    }
   ],
@@ -3324,7 +3105,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Review decision: Keep one hub per desk",
+    "text": "Review decision: Adopt the one desk bus",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -3339,7 +3120,7 @@
     "cls": "btn btn--ghost btn--sm "
    },
    {
-    "text": "Review decision: Adopt the one desk bus",
+    "text": "Commitment due 2026-09-25: Send the Q4 plan to Dana",
     "px": 15,
     "cls": "surface-ledger-primary"
    },
@@ -3370,6 +3151,225 @@
    },
    {
     "text": "Brief ready · 7 items · 8:02 AM",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   }
+  ],
+  "min_text_px": 12,
+  "floor_ok": true,
+  "raw_buttons": 0,
+  "width": 369,
+  "scrollW": 393,
+  "vw": 393
+ },
+ "5-next-day-several-decisions-393": {
+  "label": "BRIEF · 9 THINGS WAITING",
+  "head": {
+   "label_lines": 2,
+   "label_h": 36,
+   "chip_h": 18,
+   "chip_clipped": false
+  },
+  "rows": [
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "top": 144,
+    "bottom": 258,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "top": 259,
+    "bottom": 352,
+    "in_viewport": true
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "top": 353,
+    "bottom": 446,
+    "in_viewport": true
+   }
+  ],
+  "buttons": [
+   {
+    "text": "Generate",
+    "disabled": false,
+    "w": 76,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 58,
+    "content_w": 58,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "Ack",
+    "disabled": false,
+    "w": 44,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 22,
+    "content_w": 26,
+    "text_fits": true
+   },
+   {
+    "text": "Defer",
+    "disabled": false,
+    "w": 54,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 36,
+    "content_w": 36,
+    "text_fits": true
+   },
+   {
+    "text": "6 more",
+    "disabled": false,
+    "w": 369,
+    "painted_h": 24,
+    "halo_h": "44px",
+    "owns_44_band": true,
+    "text_w": 43,
+    "content_w": 351,
+    "text_fits": true
+   }
+  ],
+  "lines": [
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": "12px",
+    "tone": null
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
+    "px": "12px",
+    "tone": null
+   }
+  ],
+  "texts": [
+   {
+    "text": "BRIEF · 9 THINGS WAITING",
+    "px": 12,
+    "cls": "h3"
+   },
+   {
+    "text": "THIS DEVICE",
+    "px": 12,
+    "cls": "gadget-chip gadget-chip-egress"
+   },
+   {
+    "text": "Generate",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Ship the ingest API behind a flag",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Keep one hub per desk",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Review decision: Use SQLite for the local store",
+    "px": 15,
+    "cls": "surface-ledger-primary"
+   },
+   {
+    "text": "Ack",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "Defer",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "6",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "more",
+    "px": 12,
+    "cls": "btn btn--ghost btn--sm "
+   },
+   {
+    "text": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+    "px": 12,
+    "cls": "surface-receipt-line"
+   },
+   {
+    "text": "Brief ready · 9 items · 8:02 AM",
     "px": 12,
     "cls": "surface-receipt-line"
    }

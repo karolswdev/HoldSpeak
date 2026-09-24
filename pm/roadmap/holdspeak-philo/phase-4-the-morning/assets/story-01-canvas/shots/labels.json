@@ -117,44 +117,56 @@
   "result": "success: the populated branch with the receipt (board 4 treatment); failure: BRIEF DID NOT GENERATE · <cause> in the status slot, Generate enabled (board 3a treatment)"
  },
  "4-next-day-one-decision": {
-  "state": "Board 4: next-day brief after ONE Generate; new decision first",
-  "head": "BRIEF · 6 THINGS WAITING",
+  "state": "Board 4: next-day brief after ONE Generate; the day's one new decision leads; decisions newest first by created_at, then changed, waiting in _compose order",
+  "head": "BRIEF · 7 THINGS WAITING",
+  "headline_compose": "1 thing changed, 3 things waiting, 3 decisions waiting.",
+  "carry": "carried from DAY1 (no time window): o1, u1, l1, d2, c1; not carried: m1 (meeting collector is windowed, :473-516; it ended SEP 23 15:30, inside DAY1's window); triage untouched (new brief, new item ids, empty shelf :1131, :1157)",
   "rows_visible": [
    "Review decision: Ship the ingest API behind a flag",
    "Review decision: Adopt the one desk bus",
-   "Meeting recorded: Architecture review"
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana"
   ],
   "rows_created_at": [
    "SEP 24 07:58",
    "SEP 22 11:30",
-   null
-  ],
-  "fold": "3 more",
-  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
-  "receipt": "Brief ready · 6 items · 8:02 AM"
- },
- "5-next-day-several-decisions": {
-  "state": "Board 5: next-day brief, several older decisions; newest first",
-  "head": "BRIEF · 7 THINGS WAITING",
-  "rows_visible": [
-   "Review decision: Ship the ingest API behind a flag",
-   "Review decision: Keep one hub per desk",
-   "Review decision: Adopt the one desk bus"
-  ],
-  "rows_created_at": [
-   "SEP 24 07:58",
-   "SEP 23 16:10",
-   "SEP 22 11:30"
+   "SEP 21 10:15"
   ],
   "fold": "4 more",
   "fold_holds": [
-   "Review decision: Use SQLite for the local store (SEP 21 09:05)",
-   "Meeting recorded: Architecture review",
-   "Open loop: Rate limits for the partner API",
-   "Commitment due 2026-09-25: Send the Q4 plan to Dana"
+   "Meeting recorded: Architecture review (changed, 50, new: ended SEP 23 18:10)",
+   "Overdue: Send the vendor review notes (waiting, 300, carried)",
+   "Unassigned: Draft the migration runbook (waiting, 200, carried)",
+   "Open loop: Rate limits for the partner API (waiting, 100, carried)"
   ],
   "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
   "receipt": "Brief ready · 7 items · 8:02 AM"
+ },
+ "5-next-day-several-decisions": {
+  "state": "Board 5: next-day brief, several new decisions (all recorded after DAY1's generation at SEP 23 17:40); decisions lead, strictly newest first by created_at",
+  "head": "BRIEF · 9 THINGS WAITING",
+  "headline_compose": "1 thing changed, 3 things waiting, 5 decisions waiting.",
+  "carry": "carried from DAY1 (no time window): o1, u1, l1, d2, c1; not carried: m1 (meeting collector is windowed, :473-516; it ended SEP 23 15:30, inside DAY1's window); triage untouched (new brief, new item ids, empty shelf :1131, :1157)",
+  "rows_visible": [
+   "Review decision: Ship the ingest API behind a flag",
+   "Review decision: Keep one hub per desk",
+   "Review decision: Use SQLite for the local store"
+  ],
+  "rows_created_at": [
+   "SEP 24 07:58",
+   "SEP 24 07:31",
+   "SEP 23 18:05"
+  ],
+  "fold": "6 more",
+  "fold_holds": [
+   "Review decision: Adopt the one desk bus (SEP 22 11:30, carried)",
+   "Commitment due 2026-09-25: Send the Q4 plan to Dana (SEP 21 10:15, carried)",
+   "Meeting recorded: Architecture review (changed, 50, new)",
+   "Overdue: Send the vendor review notes (waiting, 300, carried)",
+   "Unassigned: Draft the migration runbook (waiting, 200, carried)",
+   "Open loop: Rate limits for the partner API (waiting, 100, carried)"
+  ],
+  "caption": "SEP 21 – 24 · GENERATED SEP 24 08:02",
+  "receipt": "Brief ready · 9 items · 8:02 AM"
  },
  "6-null-brief": {
   "state": "Board 6: no brief on the hub yet; Generate in the head",
