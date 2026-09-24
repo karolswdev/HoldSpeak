@@ -1,6 +1,6 @@
 # Phase 3 - The Meeting Loop
 
-**Last updated:** 2026-09-23.
+**Last updated:** 2026-09-23 (A2 second counsel).
 
 ## Goal
 
@@ -49,6 +49,8 @@ RATIFIED by the owner, 2026-09-23: D1 synthetic meeting material first (his reco
 | The thought | 04 | Muad'Dib (Opus 5.5; canvas first, owner ratifies) | Astra | ../wt-philo-3-04 | feat/philo-3-04-thought |
 
 ## Where we are
+
+2026-09-23 18:30: A2 second Muad'Dib counsel on Astra's round two (PR #616 @ 0624a6a3): RATIFY-WITH-CONDITIONS, both paid in the same commit (the glass-probe wording corrected and its lost cross-layer coverage ledgered; main merged). Every round-one condition verified paid with pre-fix reds reproduced: plain PROVIDER FAILED cause, the queue count seam, refresh continuity, the transcript fold on the library Disclosure, no raw ids. Ledgered for closure: exception-path failures still carry queue wording; aftercare covers the fold at 393; ASR instability; `1 WORDS`. Merge on green CI.
 
 2026-09-23: **A2 BUILT, technical completion verified**. One completed synthetic import → one Run → actual LAN host and summary on Arrival → identical summary/receipt after restart, at both widths. Full web green; Python fallout fixed or reproduced on main and classified. [Lane record](summary-lane-record.md) separates this from **partial usefulness** and the pending owner sitting. Muad'Dib's [recorded counsel on built](checks/story-02-built-muaddib.md) is RATIFY-WITH-CONDITIONS. Round-two corrections and twelve new walks pass across the pre-integration and integrated builds. A3/main is integrated through `5de5d0c3`. Full web: 2,813 tests pass; full Python: 11,559 pass / 12 fail, with nine inherited failures reproduced on main and three old lane expectations/probes corrected by an independent 22-test green capture. Evidence is appended without re-flipping A2. The branch is pushed for Muad'Dib's re-read; his verdict is not presumed. The post-push generated boundary-census drift is corrected and the complete local documentation CI sequence passes. The phase exit stays open.
 

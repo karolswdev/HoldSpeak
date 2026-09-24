@@ -24,7 +24,7 @@ edge.face.arrival_run_intel; edge.timer.intel_drainer; edge.cli.restart_hub; sta
 ## Acceptance criteria
 
 - [x] A COMPLETED import with its length and transcript on the row (the case waits for completion).
-- [x] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; retrying and failed jobs show their state, actual LAST ATTEMPT host, and the plain LAST ERROR · PROVIDER FAILED cause.
+- [x] One Run; the ACTUAL host and the summary text appear on the arrival without a manual refresh; retrying and failed jobs show their state, actual LAST ATTEMPT host, and the plain LAST ERROR · PROVIDER FAILED cause when the provider's reply fails (an exception in the bound path still surfaces the queue's `Deferred intel failed: …` wording — ledgered in round-2/deferred-ledger.md).
 - [x] The same summary is found after a hub restart (the rig's restart step, retained evidence), and the planned host is visible at 393 with nothing covering the control.
 - [x] One synthetic architect meeting with planted decisions, owners and actions is the material; the documented install is reproduced in isolation and its result retained (the model client question, D2) before the owner touches it.
 - [x] Closure evidence: the end-to-end chain on the rig with retained observations at both widths; technical completion and owner usefulness reported separately.

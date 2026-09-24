@@ -37,3 +37,37 @@ UNKNOWN: why the trigger's `jobId` differs from the receipt's `job_id` in every 
 ## Muad'Dib's conditions to Astra, round two
 
 C1 as above; plus, because they sit on the same face this story made truthful and are small: the stale `1 QUEUED` chip beside a FAILED row is found and fixed with a fence; the refresh blanking (`setMeetingDetails({})`) is removed in favour of the identity+generation guard; the transcript well collapsed by default per the owner's ruling (word count on the fold); the two uncanvassed strings (`MEETING KEPT`, `MEETING DETAIL IDENTITY CHANGED · <raw ids>`) become ASD-STE100 lines without raw ids or are removed; the aftercare panel overlap and the ASR instability are ledgered, not fixed here.
+
+## Check — Muad'Dib, second counsel on built, 2026-09-23 (PR #616 @ 0624a6a3, after Astra's round two)
+
+Written by Muad'Dib's Opus 5.5 counsel worker (read-only in the worktree; fences run in isolated HOMEs; pre-fix reds reproduced on `git archive dfbaccd5` with HEAD's fences overlaid; no product on the real desk, no e2e).
+
+VERDICT: RATIFY-WITH-CONDITIONS (both conditions paid by Muad'Dib in this commit; the verdict lifts to RATIFY on merge)
+
+FINDINGS:
+1. C1 plain cause PAID. `intel_queue.py:35` `PROVIDER_FAILURE_CAUSE = "PROVIDER FAILED"`, passed at `:536`; `db/intel.py:1854-1876` keeps the "after N attempt(s)" wrapper on the attempt-audit row only; the retry path (`:1933`) writes the plain error. The face prints `LAST ERROR · ${job.lastError}` unchanged (`ChairHome.tsx:2075`). The rendered fence asserts the words and rejects `ATTEMPT(S)|DEFERRED INTEL|BOUND ANALYSIS|PUBLISH` (`arrivalSummaryCompletion.test.tsx:106-112`). Pre-fix on the dfbaccd5 archive: pytest 7 failed / 7 passed (incl. `assert 'Deferred intel failed after 1 attempt(s): …' == 'PROVIDER FAILED'`), vitest 9 failed / 3 passed. On HEAD: 34 passed (five Python fence files), vitest 12 passed. Shots …221618Z/1440, …221633Z/393, …221647Z/1440, …221702Z/393 read `LAST ERROR · PROVIDER FAILED`.
+2. Stale `1 QUEUED` PAID at the settlement seam: `_notify_queue_meeting_changed` (`intel_queue.py:82-101`) now also broadcasts `runtime_queue` via the same `build_runtime_queue_frame` the success path uses (carries `drainer`). Fence `test_philo3_summary_counts.py` admits through the real service, drains through the real `process_next_intel_job`; pre-fix both fail on `assert []`. Shots: failed runs show header `1 FAILED`, no QUEUED chip, both widths; retrying shows `1 QUEUED` (correct, a scheduled successor).
+3. Refresh blanking GONE: `ChairHome.tsx:540-554` keeps same-identity details and prunes the departed; generation/active/identity guards kept (`:560,:589,:570`). Restoring only `setMeetingDetails({})` on a HEAD archive fails the "keeps the open summary and user-open transcript through an unresolved desk refresh" fence (1 failed / 11 passed).
+4. Transcript fold PAID with the library `Disclosure` (`TranscriptWell.tsx:72-85`; trigger = library `Button`, `Disclosure.tsx:95`); `N WORDS` on the fold; `defaultOpen={false}` from `ChairHome.tsx:2139-2144`; other consumers keep their defaults; summary open. No `<button>` added in the diff. Shots at both widths show `▸ TRANSCRIPT … N WORDS` closed; the rendered fence clicks it open once.
+5. Strings PAID: `SUMMARY READ FAILED` (`ChairHome.tsx:565,574`), `MEETING SAVED` (`:2060`); the fence asserts neither raw id renders.
+6. The three lane failures: `test_phase200_intel_drain.py` STRENGTHENED (exact `== "PROVIDER FAILED"`, attempts/terminal/no-survivor kept). `test_hs201_summary_face_glass.py:_assert_no_overlap` NARROWED to the Meetings window (the failure it cured was real noise: two Arrival folds behind the window, full log 1373-1420) — but the probe no longer sees a cross-layer verb covering a refusal, and the classification's "actual foreground overlap" was an overclaim (rect intersection, no z-order).
+7. The nine inherited failure ids equal the archived-main baseline (`integration/main-baseline-fallout.raw.log`); the baseline commit is `7b2c2b2a`, not `5de5d0c3`.
+8. `0624a6a3` is generated metadata only (eight `"line"` renumbers in `boundary-candidates.json`).
+9. Evidence clean: no ` M` in the worktree; `git diff origin/main..HEAD --stat -- pm/roadmap/holdspeak/` empty — no closed-phase asset touched.
+10. Graph files intact after the merge: `philo_graph_reference.py --check` exit 0; `philo_graph_validate.py` OK; atlas valid against its schema; `test_philo_graph_atlas.py` 71 passed; `dw check holdspeak-philo` ok.
+11. HEAD did not contain `origin/main` (`497d90f3`, #617 docs-only, merge-tree clean).
+12. Carried from round one, not new: the retrying row's red `FAILED` receipt token beside `RETRYING`; FAILED thrice on the failed row at 1440; the error well's head `SUMMARY · READ FAILED` over body `SUMMARY READ FAILED` (`ChairHome.tsx:2051-2055`).
+
+CONDITIONS (paid here by Muad'Dib):
+- C1. The classification's "actual foreground overlap" reworded to what the probe does (rect intersection inside the Meetings window); the lost cross-layer coverage ledgered in `round-2/deferred-ledger.md` with its follow-up (page-wide `elementFromPoint`).
+- C2. `origin/main` (`497d90f3`) merged into the branch before the PR merges.
+
+MISSED (ranked by owner cost; ledgered, not fixed here):
+1. Other terminal paths still reach the face with queue wording: `intel_queue.py:642` (`Deferred intel failed: {ExceptionClassName}`) and `:557` (`Deferred intel failed: {detail}`). Only the projection-None path is fenced; story box 2 narrowed accordingly. Whether a real LAN outage lands on `:536` or `:642` is unverified.
+2. The inherited aftercare panel covers the summary and the fold at 393 and Capture Bar verbs at 1440 (ledgered).
+3. ASR instability: 77/298/151/76/77/299 words from one WAV (ledgered).
+4. `1 WORDS` (`TranscriptWell.tsx:73`; `countLabel` at `:39` not reused) — ledgered, with the next touch.
+
+TUESDAY: Yes. One Run; the summary lands open under the row with the actual LAN host; the transcript sits folded with its count; a failed or retrying run says PROVIDER FAILED and the header agrees with the row. What still hurts: on a phone the aftercare panel covers the summary's lower lines and the fold until dismissed; an exception-path failure still reads `Deferred intel failed: <ClassName>`.
+
+UNKNOWN: which path a real LAN outage takes (no live outage walk); the Arrival with the fold open (rendered fence only, no shot); whether the nine inherited failures are identical on `5de5d0c3` (baseline is `7b2c2b2a`); remote CI at `0624a6a3` (read by Muad'Dib separately); the trigger/receipt job-id lineage from round one.
