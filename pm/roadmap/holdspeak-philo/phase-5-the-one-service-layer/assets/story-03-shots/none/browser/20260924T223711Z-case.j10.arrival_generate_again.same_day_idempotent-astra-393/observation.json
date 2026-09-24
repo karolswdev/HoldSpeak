@@ -1,0 +1,1106 @@
+{
+  "id": "obs-20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+  "run_id": "20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+  "case_id": "case.j10.arrival_generate_again.same_day_idempotent",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_generate_again"
+  ],
+  "state_id": "state.briefs.same_day_idempotent",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:54252",
+      "port": 54252,
+      "pid": 79701,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-co2tj4o3",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-co2tj4o3/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T22:37:11.883527+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f410b8ab58ee2b225eeece59d704c31946b9bbff110834befd358fbf0e5b719",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 16:37",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee",
+      "captured": {
+        "name": "first_brief_id",
+        "path": "id",
+        "value": "brief-462d1ce4641948d3879764b0c108300c"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-brief-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-brief-headline', wanted 'arrival-brief-headline'"
+    }
+  ],
+  "variables": {
+    "first_brief_id": "brief-462d1ce4641948d3879764b0c108300c"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:37 PM\n1 need you\nNO CAL",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:40 PM\n1 need you\nNO CAL"
+    },
+    "document_text_sha256": {
+      "before": "591651448340a1c2781e3f85a173bd7d7532605f104fb12a391fecb4de95f196",
+      "after": "6892b1411df80b12c9bbed886b4390074def0ec88d099e1c31266fd6c72f2af7"
+    },
+    "document_text_len": {
+      "before": 283,
+      "after": 305
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "No changes",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 382,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 382,
+        "w": 369,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:37 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:54252/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "591651448340a1c2781e3f85a173bd7d7532605f104fb12a391fecb4de95f196",
+    "document_text_len": 283,
+    "replay_identity": {
+      "from": "trigger",
+      "path": "headline",
+      "value": null,
+      "read_from": "the trigger's response, not the page"
+    },
+    "identity_display": {
+      "from": "selector",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "attr": null,
+      "value": "No changes",
+      "spec": "[data-testid=arrival-brief-headline]"
+    },
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-462d1ce4641948d3879764b0c108300c",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:37:17.913618",
+          "headline": "No changes",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": []
+          },
+          "generated_at": "2026-09-24T16:37:17.913618",
+          "is_empty": true,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:37",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee"
+      }
+    ],
+    "at_utc": "2026-09-24T22:37:19.651162+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    }
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "No changes",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 382,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 382,
+        "w": 369,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:40 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:54252/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "6892b1411df80b12c9bbed886b4390074def0ec88d099e1c31266fd6c72f2af7",
+    "document_text_len": 305,
+    "replay_identity": {
+      "from": "trigger",
+      "path": "headline",
+      "value": null,
+      "read_from": "the trigger's response, not the page"
+    },
+    "identity_display": {
+      "from": "selector",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "attr": null,
+      "value": "No changes",
+      "spec": "[data-testid=arrival-brief-headline]"
+    },
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-462d1ce4641948d3879764b0c108300c",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:37:17.913618",
+          "headline": "No changes",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": []
+          },
+          "generated_at": "2026-09-24T16:37:17.913618",
+          "is_empty": true,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:37",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee"
+      }
+    ],
+    "at_utc": "2026-09-24T22:40:20.249043+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee",
+      "body": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 16:37",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief-headline]",
+    "target_present": true,
+    "text": "No changes",
+    "attrs": {
+      "class": "arrival-brief-headline",
+      "data-testid": "arrival-brief-headline"
+    },
+    "rect": {
+      "x": 12,
+      "y": 382,
+      "w": 369,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 382,
+        "w": 369,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 14,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 197,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 384,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 395,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        },
+        {
+          "x": 379,
+          "y": 406,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > span.arrival-brief-headline"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:37 PM\n1 need you\nNO CAL",
+    "url": "http://127.0.0.1:54252/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7ce2507c2734e702689d4b8d4df66e8eb6cf3df54b238580255d84de64389fe8",
+    "document_text_len": 305,
+    "replay_identity": {
+      "from": "trigger",
+      "path": "headline",
+      "value": null,
+      "read_from": "the trigger's response, not the page"
+    },
+    "identity_display": {
+      "from": "selector",
+      "selector": "[data-testid=arrival-brief-headline]",
+      "attr": null,
+      "value": "No changes",
+      "spec": "[data-testid=arrival-brief-headline]"
+    },
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-462d1ce4641948d3879764b0c108300c",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:37:17.913618",
+          "headline": "No changes",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": []
+          },
+          "generated_at": "2026-09-24T16:37:17.913618",
+          "is_empty": true,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:37",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee"
+      }
+    ],
+    "at_utc": "2026-09-24T22:37:20.654516+00:00",
+    "brief_db": {
+      "brief": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "spoken": 0,
+        "disposition": null
+      },
+      "items": [],
+      "shelf": []
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee",
+      "body": {
+        "id": "brief-462d1ce4641948d3879764b0c108300c",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:37:17.913618",
+        "headline": "No changes",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": []
+        },
+        "generated_at": "2026-09-24T16:37:17.913618",
+        "is_empty": true,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 16:37",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "predicate_satisfied": true,
+    "reading": "unchanged result; the returned identity 'No changes' (headline='No changes') IS the one displayed at '[data-testid=arrival-brief-headline]' (response chosen by the declared trigger_route POST /api/brief/generate)",
+    "elapsed_s": 0.95
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "unchanged result; the returned identity 'No changes' (headline='No changes') IS the one displayed at '[data-testid=arrival-brief-headline]' (response chosen by the declared trigger_route POST /api/brief/generate)",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 180.541,
+    "first_satisfied_at_s": 0.95,
+    "completion_bound_s": 180.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: unchanged result; the returned identity 'No changes' (headline='No changes') IS the one displayed at '[data-testid=arrival-brief-headline]' (response chosen by the declared trigger_route POST /api/brief/generate)"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/brief/generate",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "a0f6bc49b9160ada3f5cde4fecc081683c9057e00974284b2c414a6ae2220bee",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/brief/generate"
+    },
+    "why": "chosen by the declared trigger_route POST /api/brief/generate",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-co2tj4o3/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-co2tj4o3/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:54252"
+  ],
+  "duration_s": 188.635
+}

@@ -1,0 +1,344 @@
+{
+  "id": "obs-20260924T215136Z-CAL-op-success-astra-1440",
+  "run_id": "20260924T215136Z-CAL-op-success-astra-1440",
+  "case_id": "CAL-op-success",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "an operation creates a decision and a named read observes it",
+  "edge_ids": [
+    "cal:op-success"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50921,
+      "pid": 53752
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:36.347259+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "decision_id": "cal-d-1"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.create",
+    "args": {
+      "title": "operation success"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.create",
+        "arguments": {
+          "kind": "decisions",
+          "data": {
+            "title": "operation success"
+          }
+        }
+      }
+    },
+    "response": {
+      "id": "cal-d-1",
+      "title": "operation success"
+    },
+    "domain_response": {
+      "id": "cal-d-1",
+      "title": "operation success"
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"id\": \"cal-d-1\", \"title\": \"operation success\"}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.001,
+    "captured": {
+      "name": "decision_id",
+      "path": "id",
+      "value": "cal-d-1"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "62bc848cdcda88e8a4ecece16c8d86985acd454121d2008fa528e9fbc10c37f2"
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.read",
+      "args": null
+    },
+    "op": {
+      "name": "decision.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:36.348283+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "cal-d-1"
+      }
+    },
+    "op": {
+      "name": "decision.read",
+      "args": {
+        "decision_id": "cal-d-1"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "cal-d-1"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "domain_response": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-d-1\", \"title\": \"operation success\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "62bc848cdcda88e8a4ecece16c8d86985acd454121d2008fa528e9fbc10c37f2",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:37.256730+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.create",
+      "body_sha256": "7b82b5f090f3543305d09a9d3ad3eb2165bb0a22e5804ed4135474db9b00e359",
+      "body": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-d-1\", \"title\": \"operation success\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "cal-d-1"
+      }
+    },
+    "op": {
+      "name": "decision.read",
+      "args": {
+        "decision_id": "cal-d-1"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "cal-d-1"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "domain_response": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-d-1\", \"title\": \"operation success\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "62bc848cdcda88e8a4ecece16c8d86985acd454121d2008fa528e9fbc10c37f2",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:37.253849+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.create",
+      "body_sha256": "7b82b5f090f3543305d09a9d3ad3eb2165bb0a22e5804ed4135474db9b00e359",
+      "body": {
+        "id": "cal-d-1",
+        "title": "operation success"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-d-1\", \"title\": \"operation success\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "id equals the declared value",
+    "elapsed_s": 0.906
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "id equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.908,
+    "first_satisfied_at_s": 0.906,
+    "completion_bound_s": 3.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['decision_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: id equals the declared value"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "decision_id"
+  ],
+  "shots": []
+}

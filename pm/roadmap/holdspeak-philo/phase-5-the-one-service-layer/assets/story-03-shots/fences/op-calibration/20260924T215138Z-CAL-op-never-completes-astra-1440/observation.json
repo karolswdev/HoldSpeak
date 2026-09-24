@@ -1,0 +1,375 @@
+{
+  "id": "obs-20260924T215138Z-CAL-op-never-completes-astra-1440",
+  "run_id": "20260924T215138Z-CAL-op-never-completes-astra-1440",
+  "case_id": "CAL-op-never-completes",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "builtin:calibration",
+  "job": "an operation read remains running past its completion bound",
+  "edge_ids": [
+    "cal:op-never"
+  ],
+  "state_id": "cal:op",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "kind": "headless operation calibration (no Page)"
+    },
+    "hub": {
+      "kind": "calibration fixture server (its own process)",
+      "port": 50921,
+      "pid": 53752
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-03/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/fences/op-calibration/calibration-state.json",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:51:38.434979+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800"
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the MCP fixture is up",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "meeting.read",
+    "args": {
+      "meeting_id": "cal-never"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "tools/call",
+      "params": {
+        "name": "meeting.get",
+        "arguments": {
+          "meeting_id": "cal-never"
+        }
+      }
+    },
+    "response": {
+      "id": "cal-never",
+      "intel_status": {
+        "state": "running"
+      }
+    },
+    "domain_response": {
+      "id": "cal-never",
+      "intel_status": {
+        "state": "running"
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.0
+  },
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-never"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "domain_response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "12f147dc468a424c829d4a5fd5663364322c1d1b88254fc358dbefd8c727f33f",
+    "pending_marker_present": true,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:38.436683+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-never"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "domain_response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "12f147dc468a424c829d4a5fd5663364322c1d1b88254fc358dbefd8c727f33f",
+    "pending_marker_present": true,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:39.753717+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.read",
+      "body_sha256": "edf68a9de66827ed1266e4c2ed8ef339459b22612e874ecccbf0b8db08175962",
+      "body": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:50921",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      }
+    },
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "cal-never"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.get",
+          "arguments": {
+            "meeting_id": "cal-never"
+          }
+        }
+      },
+      "response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "domain_response": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "12f147dc468a424c829d4a5fd5663364322c1d1b88254fc358dbefd8c727f33f",
+    "pending_marker_present": true,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:51:39.340252+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.read",
+      "body_sha256": "edf68a9de66827ed1266e4c2ed8ef339459b22612e874ecccbf0b8db08175962",
+      "body": {
+        "id": "cal-never",
+        "intel_status": {
+          "state": "running"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"cal-never\", \"intel_status\": {\"state\": \"running\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "predicate_satisfied": false,
+    "reading": "intel_status.state = 'running', wanted 'complete'",
+    "elapsed_s": 0.903
+  },
+  "terminal_outcome": {
+    "state": "incomplete",
+    "predicate_satisfied": false,
+    "reading": "intel_status.state = 'running', wanted 'complete'",
+    "pending_marker": "intel_status.state",
+    "pending_marker_present": true,
+    "elapsed_s": 1.317,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 1.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: intel_status.state = 'running', wanted 'complete'",
+    "UNRESOLVED: the promised result is absent and nothing moved at all. A zero diff is never a pass (brief \u00a73).",
+    "the operation never completed within its bound; the pending marker was still present."
+  ],
+  "complete": true,
+  "shots": []
+}

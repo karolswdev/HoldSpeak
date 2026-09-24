@@ -3020,7 +3020,7 @@
       "state_id": "state.engines.assignment_missing",
       "applicability": "applicable",
       "preconditions": [
-        "a meeting with NO transcript (case.j4.meeting_stop.transcription_absent reached) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "a real imported meeting whose nonempty VTT parser failure persisted an empty row (MeetingService creates the placeholder before parsing; every invocation uses a fresh HOME)",
         {
           "kind": "check",
           "predicate": {
@@ -3072,8 +3072,8 @@
         },
         {
           "kind": "fixture",
-          "path": "tests/fixtures/philo3_architect_meeting.wav",
-          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "path": "tests/fixtures/philo5_empty.vtt",
+          "sha256": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c",
           "route": {
             "method": "POST",
             "path": "/api/meetings/import"
@@ -3083,21 +3083,16 @@
           "adapter": "http-route",
           "capture_path": "meeting_id",
           "form": {
-            "title": "Architecture boundary review"
+            "title": "Architecture boundary review — empty transcript"
           },
           "wait_for": {
             "method": "GET",
             "path": "/api/meetings/{meeting_id}",
             "fields": {
-              "/transcription_status": "complete",
-              "/duration": {
-                "positive": true
-              },
-              "/segments": {
-                "min_items": 1
-              }
+              "/intel_status/state": "import_failed",
+              "/segments": []
             },
-            "timeout_s": 300,
+            "timeout_s": 60,
             "poll_s": 0.5
           },
           "expect_status": 202
@@ -3131,7 +3126,17 @@
           "body_contains": "Meeting has no transcript"
         },
         "observe_at": "protocol: GET /api/intel/jobs",
-        "words": "The no-transcript refusal needs a real empty-transcript producer. The available synthetic WAV produces speech, so this case blocks on its explicit empty-transcript precondition instead of falsely claiming the refusal."
+        "words": "the real empty-transcript producer leaves a durable failed meeting with zero segments; the summary operation refuses by name and does not create an intelligence job",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/jobs"
+          }
+        ]
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -5762,7 +5767,17 @@
           "value": "acknowledged"
         },
         "observe_at": "protocol: GET /api/brief/shelf",
-        "words": "GET /api/brief/shelf holds that item as 'acknowledged' and the Chair's untriaged list drops it [the audit's stated observation location: protocol: GET /api/brief/shelf; face: [data-testid=arrival-brief]]"
+        "words": "GET /api/brief/shelf retains the intended item as 'acknowledged'. This API trigger proves durable shelf state; it does not prove refresh of the already-open Arrival. The separate ALL 2 HANDLED face case checks the UI-click transition.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
+          }
+        ]
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -5862,7 +5877,17 @@
           "value": "deferred"
         },
         "observe_at": "protocol: GET /api/brief/shelf",
-        "words": "GET /api/brief/shelf holds that item as 'deferred'; an unknown state is refused by name (422) [the audit's stated observation location: protocol: GET /api/brief/shelf]"
+        "words": "GET /api/brief/shelf retains the intended item as 'deferred'. This API trigger proves durable shelf state; it does not prove refresh of the already-open Arrival. The separate ALL 2 HANDLED face case checks the UI-click transition.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
+          }
+        ]
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -6395,7 +6420,17 @@
           "body_contains": "route_unavailable"
         },
         "observe_at": "protocol: GET /api/desk/projections",
-        "words": "A completed transcript with no summary assignment receives the named route_unavailable refusal; no background failure is invented."
+        "words": "A completed transcript with no summary assignment receives the named route_unavailable refusal; no background failure is invented.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/intel/jobs"
+          }
+        ]
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -6493,10 +6528,21 @@
           "kind": "protocol_status",
           "method": "POST",
           "path": "/api/brief/items/{item_id}/shelf",
-          "status": 422
+          "status": 422,
+          "body_contains": "Unknown shelf state: shelved"
         },
         "observe_at": "protocol: GET /api/brief/shelf",
-        "words": "an unknown shelf state is refused by name with 422 (holdspeak/web/routes/monday_brief.py:135-136) [the audit's stated observation location: protocol: GET /api/brief/shelf]"
+        "words": "the HTTP producer returns 422 with 'Unknown shelf state: shelved' and the shelf read remains unchanged",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
+          }
+        ]
       },
       "completion_bound_s": 30,
       "viewports": []
@@ -7540,6 +7586,569 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.j6.route_intelligence_run.refusal.op",
+      "job": "j6",
+      "edge_ids": [
+        "edge.route.meeting_intelligence_run"
+      ],
+      "state_id": "state.engines.assignment_missing",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo5_empty.vtt",
+            "title": "Architecture boundary review — empty transcript"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel_status.state",
+            "value": "import_failed"
+          },
+          "timeout_s": 300,
+          "why": "the real parser failure retained the empty meeting row"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "value": []
+          },
+          "timeout_s": 300,
+          "why": "the retained failed import has no transcript segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.list",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "meetings",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the failed import still minted a durable meeting row"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "meeting.summary.run",
+        "args": {
+          "meeting_id": "{meeting_id}",
+          "expected_selection_hash": ""
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical summary operation must refuse an empty transcript"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_refusal",
+          "error_contains": "Meeting has no transcript"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "meeting.list",
+            "args": {}
+          }
+        ],
+        "words": "the empty meeting remains durable while summary run refuses by name"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j6.route_intelligence_run.no_assignment.op",
+      "job": "j6",
+      "edge_ids": [
+        "edge.route.meeting_intelligence_run"
+      ],
+      "state_id": "state.engines.assignment_missing",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.status",
+            "value": "unavailable"
+          },
+          "timeout_s": 300,
+          "why": "the owning hub has no summary assignment"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "meeting.summary.run",
+        "args": {
+          "meeting_id": "{meeting_id}",
+          "expected_selection_hash": ""
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical summary operation must refuse the unavailable route"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_refusal",
+          "code": "route_unavailable",
+          "error_contains": "The summary route is not available."
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "meeting.list",
+            "args": {}
+          }
+        ],
+        "words": "the transcript remains durable while the missing assignment refusal is named"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.arrival_generate_again.same_day_idempotent.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_generate_again"
+      ],
+      "state_id": "state.briefs.same_day_idempotent",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "repeat the same producer-day brief operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "id",
+          "value": "{first_brief_id}"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          }
+        ],
+        "words": "same-day generation returns and retains the original brief identity"
+      },
+      "completion_bound_s": 180.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.route_generate_again.same_day_same_id.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_generate"
+      ],
+      "state_id": "state.briefs.same_day_idempotent",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "repeat the same producer-day brief operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "id",
+          "value": "{first_brief_id}"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          }
+        ],
+        "words": "same-day generation returns and retains the original brief identity"
+      },
+      "completion_bound_s": 60.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.brief_item_shelf.acknowledged.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.item.acknowledged",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.shelf.write",
+        "args": {
+          "item_id": "{item_id}",
+          "state": "acknowledged"
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical shelf operation is the durable triage path"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "/{item_id}",
+          "value": "acknowledged"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "the shelf read retains the named triage result"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.brief_item_shelf.deferred.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.item.deferred",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.shelf.write",
+        "args": {
+          "item_id": "{item_id}",
+          "state": "deferred"
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical shelf operation is the durable triage path"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "/{item_id}",
+          "value": "deferred"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "the shelf read retains the named triage result"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j10.brief_item_shelf.refused.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.item.untouched",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk brief material J10",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "item_id",
+          "capture_path": "sections.decisions.0.id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.shelf.write",
+        "args": {
+          "item_id": "{item_id}",
+          "state": "shelved"
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical shelf operation must refuse the unknown state"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_refusal",
+          "code": "mcp_refused",
+          "error_contains": "not one of ['acknowledged', 'deferred', None]",
+          "refusal_origin": "transport_schema",
+          "registry_reached": false
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "the owning MCP schema refuses the invalid shelf state before the registry with its own validator text; the durable shelf read remains unchanged"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
     }
   ],
   "states": [

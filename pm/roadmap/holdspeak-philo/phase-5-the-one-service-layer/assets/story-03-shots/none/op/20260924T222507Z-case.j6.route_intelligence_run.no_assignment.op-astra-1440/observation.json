@@ -1,0 +1,2439 @@
+{
+  "id": "obs-20260924T222507Z-case.j6.route_intelligence_run.no_assignment.op-astra-1440",
+  "run_id": "20260924T222507Z-case.j6.route_intelligence_run.no_assignment.op-astra-1440",
+  "case_id": "case.j6.route_intelligence_run.no_assignment.op",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meeting_intelligence_run"
+  ],
+  "state_id": "state.engines.assignment_missing",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52849",
+      "port": 52849,
+      "pid": 72307,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1k2loo1y",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1k2loo1y/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T22:25:07.874115+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "8e189dbc4a6a6349ec8c4e922248ba610dcddda0b0889c4e9963ba0c5ba89558",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.import",
+      "args": {
+        "path": "/Users/karol/dev/tools/wt-philo-5-03/tests/fixtures/philo3_architect_meeting.wav",
+        "title": "Architecture boundary review"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.import",
+          "arguments": {
+            "path": "/Users/karol/dev/tools/wt-philo-5-03/tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          }
+        }
+      },
+      "response": {
+        "meeting_id": "2c36d4a0",
+        "transcription_status": "importing"
+      },
+      "domain_response": {
+        "meeting_id": "2c36d4a0",
+        "transcription_status": "importing"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"meeting_id\": \"2c36d4a0\", \"transcription_status\": \"importing\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.01,
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "2c36d4a0"
+      }
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "transcription_status",
+        "value": "complete"
+      },
+      "adapter": "observation",
+      "waited_s": 2.19,
+      "holds": true,
+      "reading": "transcription_status equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "segments",
+        "nonempty": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "segments is non-empty"
+    },
+    {
+      "kind": "check",
+      "observe_at": {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        }
+      },
+      "predicate": {
+        "kind": "op_field",
+        "path": "planned_route.status",
+        "value": "unavailable"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "planned_route.status equals the declared value"
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "meeting_id": "2c36d4a0"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "meeting.summary.run",
+    "args": {
+      "meeting_id": "2c36d4a0",
+      "expected_selection_hash": ""
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "method": "tools/call",
+      "params": {
+        "name": "meeting.run_intelligence",
+        "arguments": {
+          "meeting_id": "2c36d4a0",
+          "expected_selection_hash": ""
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "route_unavailable",
+      "current_planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "error": "The summary route is not available.",
+      "last_refusal": {
+        "attempts": [],
+        "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+        "meeting_id": "2c36d4a0",
+        "outcome": "refused",
+        "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+        "selection_hash": ""
+      },
+      "planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "run_receipt": {
+        "attempts": [],
+        "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+        "meeting_id": "2c36d4a0",
+        "outcome": "refused",
+        "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+        "selection_hash": ""
+      }
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 14,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.002,
+    "named_refusal": {
+      "code": "route_unavailable",
+      "current_planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "error": "The summary route is not available.",
+      "last_refusal": {
+        "attempts": [],
+        "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+        "meeting_id": "2c36d4a0",
+        "outcome": "refused",
+        "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+        "selection_hash": ""
+      },
+      "planned_route": {
+        "legs": [],
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "status": "unavailable"
+      },
+      "run_receipt": {
+        "attempts": [],
+        "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+        "meeting_id": "2c36d4a0",
+        "outcome": "refused",
+        "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+        "selection_hash": ""
+      }
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": null,
+      "after": "9957f9a231df3fd8c54211a0245686229251e7864f10003d61ed646866002071"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "2c36d4a0"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "2c36d4a0"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T16:25:44.105466",
+            "formatted_duration": "00:34",
+            "id": "2c36d4a0",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T16:25:09.430216",
+            "sync_modified_at": "2026-09-24T16:25:11.558122",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T16:25:44.105466",
+            "formatted_duration": "00:34",
+            "id": "2c36d4a0",
+            "intel": null,
+            "intel_job": null,
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "state": "disabled"
+            },
+            "last_refusal": null,
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": null,
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T16:25:09.430216",
+            "sync_modified_at": "2026-09-24T16:25:11.558122",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"formatted_duration\": \"00:34\", \"id\": \"2c36d4a0\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T16:25:09.430216\", \"sync_modified_at\": \"2026-09-24T16:25:11.558122\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "meeting.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.list",
+              "arguments": {}
+            }
+          },
+          "response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 34.67525,
+                "ended_at": "2026-09-24T16:25:44.105466",
+                "id": "2c36d4a0",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "disabled",
+                "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 2,
+                "started_at": "2026-09-24T16:25:09.430216",
+                "tags": [],
+                "title": "Architecture boundary review",
+                "transcriptWords": 299
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "domain_response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 34.67525,
+                "ended_at": "2026-09-24T16:25:44.105466",
+                "id": "2c36d4a0",
+                "intel_duration_s": null,
+                "intel_job": null,
+                "intel_model_host": null,
+                "intel_status": "disabled",
+                "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+                "last_refusal": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": null,
+                "segment_count": 2,
+                "started_at": "2026-09-24T16:25:09.430216",
+                "tags": [],
+                "title": "Architecture boundary review",
+                "transcriptWords": 299
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"id\": \"2c36d4a0\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"disabled\", \"intel_status_detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 2, \"started_at\": \"2026-09-24T16:25:09.430216\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299}], \"next_cursor\": null, \"total\": 1}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "2c36d4a0"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 159,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.get",
+              "arguments": {
+                "meeting_id": "2c36d4a0"
+              }
+            }
+          },
+          "response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T16:25:44.105466",
+            "formatted_duration": "00:34",
+            "id": "2c36d4a0",
+            "intel": null,
+            "intel_job": {
+              "attempts": 1,
+              "last_error": "The summary route is not available.",
+              "next_retry_at": null,
+              "requested_at": "2026-09-24T16:25:11.637184",
+              "retry_scheduled": false,
+              "status": "failed",
+              "updated_at": "2026-09-24T16:25:11.637184"
+            },
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "The summary route is not available.",
+              "requested_at": null,
+              "state": "error"
+            },
+            "last_refusal": {
+              "attempts": [],
+              "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+              "meeting_id": "2c36d4a0",
+              "outcome": "refused",
+              "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+              "selection_hash": ""
+            },
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": {
+              "attempts": [],
+              "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+              "meeting_id": "2c36d4a0",
+              "outcome": "refused",
+              "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+              "selection_hash": ""
+            },
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T16:25:09.430216",
+            "sync_modified_at": "2026-09-24T16:25:11.637184",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "domain_response": {
+            "bookmarks": [],
+            "calendar_event_id": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "capture_failure": null,
+            "capture_status": "finalized",
+            "devices": [],
+            "duration": 34.67525,
+            "ended_at": "2026-09-24T16:25:44.105466",
+            "formatted_duration": "00:34",
+            "id": "2c36d4a0",
+            "intel": null,
+            "intel_job": {
+              "attempts": 1,
+              "last_error": "The summary route is not available.",
+              "next_retry_at": null,
+              "requested_at": "2026-09-24T16:25:11.637184",
+              "retry_scheduled": false,
+              "status": "failed",
+              "updated_at": "2026-09-24T16:25:11.637184"
+            },
+            "intel_model_host": null,
+            "intel_status": {
+              "completed_at": null,
+              "detail": "The summary route is not available.",
+              "requested_at": null,
+              "state": "error"
+            },
+            "last_refusal": {
+              "attempts": [],
+              "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+              "meeting_id": "2c36d4a0",
+              "outcome": "refused",
+              "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+              "selection_hash": ""
+            },
+            "mic_label": "Me",
+            "planned_route": {
+              "legs": [],
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "status": "unavailable"
+            },
+            "provenance": "desktop",
+            "remote_label": "Remote",
+            "run_receipt": {
+              "attempts": [],
+              "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+              "meeting_id": "2c36d4a0",
+              "outcome": "refused",
+              "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+              "selection_hash": ""
+            },
+            "segments": [
+              {
+                "device_id": null,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+              },
+              {
+                "device_id": null,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+              }
+            ],
+            "started_at": "2026-09-24T16:25:09.430216",
+            "sync_modified_at": "2026-09-24T16:25:11.637184",
+            "tags": [],
+            "title": "Architecture boundary review",
+            "transcriptWords": 299,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "web_url": null
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 159,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"formatted_duration\": \"00:34\", \"id\": \"2c36d4a0\", \"intel\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"The summary route is not available.\", \"requested_at\": null, \"state\": \"error\"}, \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T16:25:09.430216\", \"sync_modified_at\": \"2026-09-24T16:25:11.637184\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "meeting.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 160,
+            "method": "tools/call",
+            "params": {
+              "name": "meeting.list",
+              "arguments": {}
+            }
+          },
+          "response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 34.67525,
+                "ended_at": "2026-09-24T16:25:44.105466",
+                "id": "2c36d4a0",
+                "intel_duration_s": null,
+                "intel_job": {
+                  "attempts": 1,
+                  "last_error": "The summary route is not available.",
+                  "next_retry_at": null,
+                  "requested_at": "2026-09-24T16:25:11.637184",
+                  "retry_scheduled": false,
+                  "status": "failed",
+                  "updated_at": "2026-09-24T16:25:11.637184"
+                },
+                "intel_model_host": null,
+                "intel_status": "error",
+                "intel_status_detail": "The summary route is not available.",
+                "last_refusal": {
+                  "attempts": [],
+                  "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                  "meeting_id": "2c36d4a0",
+                  "outcome": "refused",
+                  "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                  "selection_hash": ""
+                },
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": {
+                  "attempts": [],
+                  "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                  "meeting_id": "2c36d4a0",
+                  "outcome": "refused",
+                  "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                  "selection_hash": ""
+                },
+                "segment_count": 2,
+                "started_at": "2026-09-24T16:25:09.430216",
+                "tags": [],
+                "title": "Architecture boundary review",
+                "transcriptWords": 299
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "domain_response": {
+            "meetings": [
+              {
+                "action_item_count": 0,
+                "calendar_event_id": null,
+                "capture_checkpoint_seconds": 0.0,
+                "capture_failure": null,
+                "capture_status": "finalized",
+                "duration_seconds": 34.67525,
+                "ended_at": "2026-09-24T16:25:44.105466",
+                "id": "2c36d4a0",
+                "intel_duration_s": null,
+                "intel_job": {
+                  "attempts": 1,
+                  "last_error": "The summary route is not available.",
+                  "next_retry_at": null,
+                  "requested_at": "2026-09-24T16:25:11.637184",
+                  "retry_scheduled": false,
+                  "status": "failed",
+                  "updated_at": "2026-09-24T16:25:11.637184"
+                },
+                "intel_model_host": null,
+                "intel_status": "error",
+                "intel_status_detail": "The summary route is not available.",
+                "last_refusal": {
+                  "attempts": [],
+                  "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                  "meeting_id": "2c36d4a0",
+                  "outcome": "refused",
+                  "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                  "selection_hash": ""
+                },
+                "needs_you_count": 0,
+                "planned_route": {
+                  "legs": [],
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "status": "unavailable"
+                },
+                "provenance": "desktop",
+                "run_receipt": {
+                  "attempts": [],
+                  "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                  "meeting_id": "2c36d4a0",
+                  "outcome": "refused",
+                  "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                  "selection_hash": ""
+                },
+                "segment_count": 2,
+                "started_at": "2026-09-24T16:25:09.430216",
+                "tags": [],
+                "title": "Architecture boundary review",
+                "transcriptWords": 299
+              }
+            ],
+            "next_cursor": null,
+            "total": 1
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 160,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"id\": \"2c36d4a0\", \"intel_duration_s\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": \"error\", \"intel_status_detail\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segment_count\": 2, \"started_at\": \"2026-09-24T16:25:09.430216\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299}], \"next_cursor\": null, \"total\": 1}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:52849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "2c36d4a0"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.558122",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": null,
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "state": "disabled"
+          },
+          "last_refusal": null,
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": null,
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.558122",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 12,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"formatted_duration\": \"00:34\", \"id\": \"2c36d4a0\", \"intel\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"requested_at\": null, \"state\": \"disabled\"}, \"last_refusal\": null, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": null, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T16:25:09.430216\", \"sync_modified_at\": \"2026-09-24T16:25:11.558122\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "disabled",
+              "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": null,
+              "intel_model_host": null,
+              "intel_status": "disabled",
+              "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "last_refusal": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": null,
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 13,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"id\": \"2c36d4a0\", \"intel_duration_s\": null, \"intel_job\": null, \"intel_model_host\": null, \"intel_status\": \"disabled\", \"intel_status_detail\": \"No summary yet. Import does not run the summary \\u2014 ask for it on the meeting.\", \"last_refusal\": null, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": null, \"segment_count\": 2, \"started_at\": \"2026-09-24T16:25:09.430216\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-24T22:25:11.635534+00:00"
+  },
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:52849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 159,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "2c36d4a0"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": "The summary route is not available.",
+            "next_retry_at": null,
+            "requested_at": "2026-09-24T16:25:11.637184",
+            "retry_scheduled": false,
+            "status": "failed",
+            "updated_at": "2026-09-24T16:25:11.637184"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "The summary route is not available.",
+            "requested_at": null,
+            "state": "error"
+          },
+          "last_refusal": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.637184",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": "The summary route is not available.",
+            "next_retry_at": null,
+            "requested_at": "2026-09-24T16:25:11.637184",
+            "retry_scheduled": false,
+            "status": "failed",
+            "updated_at": "2026-09-24T16:25:11.637184"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "The summary route is not available.",
+            "requested_at": null,
+            "state": "error"
+          },
+          "last_refusal": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.637184",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 159,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"formatted_duration\": \"00:34\", \"id\": \"2c36d4a0\", \"intel\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"The summary route is not available.\", \"requested_at\": null, \"state\": \"error\"}, \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T16:25:09.430216\", \"sync_modified_at\": \"2026-09-24T16:25:11.637184\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 160,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": {
+                "attempts": 1,
+                "last_error": "The summary route is not available.",
+                "next_retry_at": null,
+                "requested_at": "2026-09-24T16:25:11.637184",
+                "retry_scheduled": false,
+                "status": "failed",
+                "updated_at": "2026-09-24T16:25:11.637184"
+              },
+              "intel_model_host": null,
+              "intel_status": "error",
+              "intel_status_detail": "The summary route is not available.",
+              "last_refusal": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": {
+                "attempts": 1,
+                "last_error": "The summary route is not available.",
+                "next_retry_at": null,
+                "requested_at": "2026-09-24T16:25:11.637184",
+                "retry_scheduled": false,
+                "status": "failed",
+                "updated_at": "2026-09-24T16:25:11.637184"
+              },
+              "intel_model_host": null,
+              "intel_status": "error",
+              "intel_status_detail": "The summary route is not available.",
+              "last_refusal": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 160,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"id\": \"2c36d4a0\", \"intel_duration_s\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": \"error\", \"intel_status_detail\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segment_count\": 2, \"started_at\": \"2026-09-24T16:25:09.430216\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-24T22:25:41.904983+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.summary.run",
+      "body_sha256": "1cf4a98e08d1f857c6bd07942566dd72888918e27b30081fc5a7c8bb1de3b3bc",
+      "body": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "2c36d4a0",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "2c36d4a0",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "2c36d4a0",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "2c36d4a0",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      }
+    },
+    "op_digest": "9957f9a231df3fd8c54211a0245686229251e7864f10003d61ed646866002071"
+  },
+  "initial_feedback": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:52849",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "meeting.read",
+        "args": {
+          "meeting_id": "2c36d4a0"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 15,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.get",
+            "arguments": {
+              "meeting_id": "2c36d4a0"
+            }
+          }
+        },
+        "response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": "The summary route is not available.",
+            "next_retry_at": null,
+            "requested_at": "2026-09-24T16:25:11.637184",
+            "retry_scheduled": false,
+            "status": "failed",
+            "updated_at": "2026-09-24T16:25:11.637184"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "The summary route is not available.",
+            "requested_at": null,
+            "state": "error"
+          },
+          "last_refusal": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.637184",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "domain_response": {
+          "bookmarks": [],
+          "calendar_event_id": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "capture_failure": null,
+          "capture_status": "finalized",
+          "devices": [],
+          "duration": 34.67525,
+          "ended_at": "2026-09-24T16:25:44.105466",
+          "formatted_duration": "00:34",
+          "id": "2c36d4a0",
+          "intel": null,
+          "intel_job": {
+            "attempts": 1,
+            "last_error": "The summary route is not available.",
+            "next_retry_at": null,
+            "requested_at": "2026-09-24T16:25:11.637184",
+            "retry_scheduled": false,
+            "status": "failed",
+            "updated_at": "2026-09-24T16:25:11.637184"
+          },
+          "intel_model_host": null,
+          "intel_status": {
+            "completed_at": null,
+            "detail": "The summary route is not available.",
+            "requested_at": null,
+            "state": "error"
+          },
+          "last_refusal": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "mic_label": "Me",
+          "planned_route": {
+            "legs": [],
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "status": "unavailable"
+          },
+          "provenance": "desktop",
+          "remote_label": "Remote",
+          "run_receipt": {
+            "attempts": [],
+            "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+            "meeting_id": "2c36d4a0",
+            "outcome": "refused",
+            "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+            "selection_hash": ""
+          },
+          "segments": [
+            {
+              "device_id": null,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and"
+            },
+            {
+              "device_id": null,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+            }
+          ],
+          "started_at": "2026-09-24T16:25:09.430216",
+          "sync_modified_at": "2026-09-24T16:25:11.637184",
+          "tags": [],
+          "title": "Architecture boundary review",
+          "transcriptWords": 299,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "web_url": null
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 15,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"bookmarks\": [], \"calendar_event_id\": null, \"capture_checkpoint_at\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"devices\": [], \"duration\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"formatted_duration\": \"00:34\", \"id\": \"2c36d4a0\", \"intel\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": {\"completed_at\": null, \"detail\": \"The summary route is not available.\", \"requested_at\": null, \"state\": \"error\"}, \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"mic_label\": \"Me\", \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"remote_label\": \"Remote\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segments\": [{\"device_id\": null, \"end_time\": 30.0, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 0.0, \"text\": \"Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Go to coworkers and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and add data and\"}, {\"device_id\": null, \"end_time\": 34.67525, \"is_bookmarked\": false, \"speaker\": \"Recording\", \"speaker_id\": null, \"start_time\": 30.0, \"text\": \"named failure offense before ship, Marker, hold speaks synthetic arquitect 3.\"}], \"started_at\": \"2026-09-24T16:25:09.430216\", \"sync_modified_at\": \"2026-09-24T16:25:11.637184\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299, \"transcription_status\": \"complete\", \"transcription_status_detail\": null, \"web_url\": null}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "meeting.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 16,
+          "method": "tools/call",
+          "params": {
+            "name": "meeting.list",
+            "arguments": {}
+          }
+        },
+        "response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": {
+                "attempts": 1,
+                "last_error": "The summary route is not available.",
+                "next_retry_at": null,
+                "requested_at": "2026-09-24T16:25:11.637184",
+                "retry_scheduled": false,
+                "status": "failed",
+                "updated_at": "2026-09-24T16:25:11.637184"
+              },
+              "intel_model_host": null,
+              "intel_status": "error",
+              "intel_status_detail": "The summary route is not available.",
+              "last_refusal": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "domain_response": {
+          "meetings": [
+            {
+              "action_item_count": 0,
+              "calendar_event_id": null,
+              "capture_checkpoint_seconds": 0.0,
+              "capture_failure": null,
+              "capture_status": "finalized",
+              "duration_seconds": 34.67525,
+              "ended_at": "2026-09-24T16:25:44.105466",
+              "id": "2c36d4a0",
+              "intel_duration_s": null,
+              "intel_job": {
+                "attempts": 1,
+                "last_error": "The summary route is not available.",
+                "next_retry_at": null,
+                "requested_at": "2026-09-24T16:25:11.637184",
+                "retry_scheduled": false,
+                "status": "failed",
+                "updated_at": "2026-09-24T16:25:11.637184"
+              },
+              "intel_model_host": null,
+              "intel_status": "error",
+              "intel_status_detail": "The summary route is not available.",
+              "last_refusal": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "needs_you_count": 0,
+              "planned_route": {
+                "legs": [],
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "status": "unavailable"
+              },
+              "provenance": "desktop",
+              "run_receipt": {
+                "attempts": [],
+                "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+                "meeting_id": "2c36d4a0",
+                "outcome": "refused",
+                "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+                "selection_hash": ""
+              },
+              "segment_count": 2,
+              "started_at": "2026-09-24T16:25:09.430216",
+              "tags": [],
+              "title": "Architecture boundary review",
+              "transcriptWords": 299
+            }
+          ],
+          "next_cursor": null,
+          "total": 1
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 16,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"meetings\": [{\"action_item_count\": 0, \"calendar_event_id\": null, \"capture_checkpoint_seconds\": 0.0, \"capture_failure\": null, \"capture_status\": \"finalized\", \"duration_seconds\": 34.67525, \"ended_at\": \"2026-09-24T16:25:44.105466\", \"id\": \"2c36d4a0\", \"intel_duration_s\": null, \"intel_job\": {\"attempts\": 1, \"last_error\": \"The summary route is not available.\", \"next_retry_at\": null, \"requested_at\": \"2026-09-24T16:25:11.637184\", \"retry_scheduled\": false, \"status\": \"failed\", \"updated_at\": \"2026-09-24T16:25:11.637184\"}, \"intel_model_host\": null, \"intel_status\": \"error\", \"intel_status_detail\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"needs_you_count\": 0, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"provenance\": \"desktop\", \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"segment_count\": 2, \"started_at\": \"2026-09-24T16:25:09.430216\", \"tags\": [], \"title\": \"Architecture boundary review\", \"transcriptWords\": 299}], \"next_cursor\": null, \"total\": 1}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-24T22:25:12.544373+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "meeting.summary.run",
+      "body_sha256": "1cf4a98e08d1f857c6bd07942566dd72888918e27b30081fc5a7c8bb1de3b3bc",
+      "body": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "2c36d4a0",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "2c36d4a0",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "meeting.summary.run",
+      "args": {
+        "meeting_id": "2c36d4a0",
+        "expected_selection_hash": ""
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "meeting.run_intelligence",
+          "arguments": {
+            "meeting_id": "2c36d4a0",
+            "expected_selection_hash": ""
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"route_unavailable\", \"current_planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"error\": \"The summary route is not available.\", \"last_refusal\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}, \"planned_route\": {\"legs\": [], \"reason_code\": \"no assignment\", \"selection_hash\": null, \"status\": \"unavailable\"}, \"run_receipt\": {\"attempts\": [], \"job_id\": \"ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d\", \"meeting_id\": \"2c36d4a0\", \"outcome\": \"refused\", \"receipt_id\": \"rr_3a30b0d8aa49bbbb4e5c10510c4ccade\", \"selection_hash\": \"\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.002,
+      "named_refusal": {
+        "code": "route_unavailable",
+        "current_planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "error": "The summary route is not available.",
+        "last_refusal": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        },
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "run_receipt": {
+          "attempts": [],
+          "job_id": "ij_0e78ac3d3fbc3c9a1089f9b3cd4dbbea3099232800bf9eaf8f1311bae12bd55d",
+          "meeting_id": "2c36d4a0",
+          "outcome": "refused",
+          "receipt_id": "rr_3a30b0d8aa49bbbb4e5c10510c4ccade",
+          "selection_hash": ""
+        }
+      }
+    },
+    "op_digest": "9957f9a231df3fd8c54211a0245686229251e7864f10003d61ed646866002071",
+    "predicate_satisfied": false,
+    "reading": "refusal error 'The summary route is not available.' does not contain ['route_unavailable']",
+    "elapsed_s": 0.909
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "refusal error 'The summary route is not available.' does not contain ['route_unavailable']",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 30.269,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: refusal error 'The summary route is not available.' does not contain ['route_unavailable']",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['op_digest', 'op_reads'])."
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1k2loo1y/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1k2loo1y/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52849"
+  ],
+  "duration_s": 36.301
+}

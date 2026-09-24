@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (02 BUILT on `feat/philo-5-02-the-loop`; Astra checks on built).
+**Last updated:** 2026-09-24 (01 and 02 merged; 03 done on `feat/philo-5-03-the-atlas`, Astra lane; precommit conditions paid; PR held for counsel on built).
 
 ## Goal
 
@@ -150,7 +150,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 - [ ] 1. Every pilot operation is reachable by route, by MCP and by the rig's `op` step, resolving to the same declared contract and the same live instance within one hub (object identity proved in-hub; durable state compared across restart).
 - [ ] 2. The duplicate MCP definitions for the pilot are retired (the decision PATH, not the generic `desk.*` tools); the residual set is explicit, reasoned by `(transport, entry point, discriminator)`, and shrank by the pilot's entries; the fence fails on a new residual identity (red proved on a copy of main).
 - [ ] 3. The complete tool roster (generated + legacy) is regenerated and drift-guarded.
-- [ ] 4. The named atlas pairs agree on durable outcome and refusals between the `api`/`op` path and the browser path; the 1440/393 face walks are retained separately; real-engine and replayed runs are retained separately.
+- [x] 4. The named atlas pairs agree on durable outcome and refusals between the `api`/`op` path and the browser path; the 1440/393 face walks are retained separately; real-engine and replayed runs are retained separately. [PHILO-5-03 proof and comparison scopes](story-03-lane-report.md#proof).
 - [ ] 5. Rehearsed, owner-reviewed shots: Astra drives the job in ordinary words through Codex against an isolated hub; the MCP transcript and the Desk shots at 1440 and 393 are retained; Muad'Dib checks; the owner reviews the shots. Never recorded as a sitting.
 
 ## Story status
@@ -159,7 +159,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 |---|---|---|---|---|
 | PHILO-5-01 | One decision through one contract (and the Codex path proved) | done | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-5-02 | The loop shares the contract | done | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | [evidence-story-02](./evidence-story-02.md) |
-| PHILO-5-03 | The atlas proves the three paths | backlog | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | - |
+| PHILO-5-03 | The atlas proves the three paths | done | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-5-04 | The owner asks in his own words (rehearsed, owner-reviewed shots) | backlog | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | - |
 
 ## Lanes
@@ -172,6 +172,20 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+2026-09-24: PHILO-5-03 DONE; Muad'Dib's precommit check ratified with record conditions paid. Work is in
+`../wt-philo-5-03`, branch `feat/philo-5-03-the-atlas`, from main `c4d46498`.
+The headless rig reaches the owning hub's registry through `/api/mcp` and
+retains setup, waiting, protocol reads and restart without a page. All 18
+named pairs and 2 separately labelled replay pairs pass. There are 33
+selected browser observations at the applicable 1440/393 widths and 20
+selected op observations; 9 unselected attempts remain unchanged. Scoped
+validation: 219 tests passed in 113.35 seconds. The full suite was excluded
+by the lane brief. [Lane report](story-03-lane-report.md),
+[pairs](assets/story-03-shots/pairs.json), [evidence](evidence-story-03.md).
+No merge is authorized here; Muad'Dib counsels on built. Shelf schema refusal,
+HTTP missing-decision fallback, Thought create-custody scope and the observed
+face limitations are recorded under Decisions deferred for PHILO-5-04.
 
 2026-09-24: PHILO-5-02 ROUND TWO after Astra's check on built (`checks/story-02-built-astra.md`, BOUNCE, four conditions). Paid: (1) the owner boundary — `meeting.import` is `owner_only` in the contract; a remote DESK credential, issued through the real settings route and calling `/api/mcp` from a non-loopback client, now gets `owner_required` and the hub never opens, checks or copies the file (on round one the same call imported the file); the local owner still imports; (2) `thought.list` declares `{items, next_cursor}`, and every braced result declaration is run against its real producer; (3) the shelf write and read are recorded through the registry on HTTP and MCP, and mutations M12/M13 (bypass `invoke`) turn that fence red; (4) the decision admission is INHERITED Article XI DEBT, unruled, assigned to the owner's ruling (BACKLOG + "Decisions deferred"); the zero-count test is characterization only. Audit: no other registry operation reads the filesystem or spawns from a caller-named path. Proof under `docs/internal/philo/phase-5/the-loop/round-2/`. Next: Astra's re-check on built.
 
@@ -232,6 +246,12 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Decisions deferred
 
+- PHILO-5-03 record follow-up for PHILO-5-04: an op import records its fixture SHA256 in `provenance.fixture_hashes`, not on the op step itself. The hash is retained; consider a direct step citation. Registry-reach unit instrumentation uses the real root in-process; the spawned-hub claim comes from the actual op atlas runs.
+
+- PHILO-5-03 rehearsed observations, assigned to PHILO-5-04: S4 at393 saved the decision in the DB but its raw after shot had blank reading content; eventual rendering was not verified. Empty VTT import leaves an Arrival meeting labelled SAVED while the durable state is import_failed. The HTTP missing-decision route falls through from registry NotFound to DecisionLifecycleService (`holdspeak/web/routes/decisions.py:58-61`), so one HTTP read produces two observer failure rows; MCP produces only the primitive row. The brief says two things broke for one cause. This inherited Article XI compatibility projection debt goes to PHILO-5-04. The S5 pair uses the same HTTP failure seed on both sides; it does not establish missing-decision refusal parity. See checks/story-03-breakage-source-muaddib.md. The existing transient meeting toast also shows a zero decided count. These are presentation/debt findings against Tenets3/4 and UX-CANON, not new product changes in the atlas lane. See assets/story-03-shots/glass-review.md and checks/story-03-breakage-window-muaddib.md.
+- PHILO-5-03 Thought comparison scope: browser blank-note create and MCP typed create have different immutable raw-source custody. MCP requires nonempty raw_text and substitutes it for a blank initial body. The op case starts from distinct draft text and proves the same saved working body plus revision/time/ID/cursor relationships; it does not claim identical immutable raw content across these create affordances. The rejected blank-raw attempt and the first same-body attempt are retained, unselected.
+
+- PHILO-5-03 shelf refusal: the MCP `monday_brief.shelf` schema rejects an unknown state before the registry, while `brief.shelf.write` declares the service's unknown-state refusal. This is contract/transport drift, assigned to the PHILO-5-04 sitting for a follow-up decision. The refused pair can show equal prohibited-state outcomes and unchanged shelf state; it cannot prove registry reach or count that refusal branch toward exit criterion 1. Preserve `refusal_origin: transport_schema`, `registry_reached: false` and both actual envelopes. Counsel: [story-03-shelf-refusal-muaddib.md](checks/story-03-shelf-refusal-muaddib.md). No schema-alignment fence exists across every transport; that missing coverage has the same follow-up home.
 - The Info-window rename of a decision (the face sends `name`; `decision.update` ignores it; `web/src/desk/components/InfoWindow.tsx:31`) — a real bug, fenced as observed in 01, not fixed there; parked in `pm/roadmap/holdspeak/BACKLOG.md` (PHILO-5-01 follow-ups).
 - The owner's ratification of this charter.
 - ~~The MCP import intake's client contract~~ — settled by Muad'Dib for story 02 and built (Decisions made, 2026-09-24); Astra checks on built.

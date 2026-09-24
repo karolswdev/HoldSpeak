@@ -1,0 +1,914 @@
+{
+  "id": "obs-20260924T210623Z-case.closure.chain.s1_import_complete-astra-393",
+  "run_id": "20260924T210623Z-case.closure.chain.s1_import_complete-astra-393",
+  "case_id": "case.closure.chain.s1_import_complete",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import"
+  ],
+  "state_id": "state.meetings.capture.imported",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62672",
+      "port": 62672,
+      "pid": 24433,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ehquttkg",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ehquttkg/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T21:06:23.686892+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "35a2ed96d9332ab170152fed6ec63af8dda92564561e5388e84afb8be6ccd4d8",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "e7915356"
+  },
+  "trigger": {
+    "kind": "fixture",
+    "path": "tests/fixtures/philo3_architect_meeting.wav",
+    "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+    },
+    "adapter": "http-route",
+    "status": 202,
+    "response": {
+      "meeting_id": "e7915356",
+      "status": "importing"
+    },
+    "captured": {
+      "name": "meeting_id",
+      "path": "meeting_id",
+      "value": "e7915356"
+    },
+    "completion_wait": {
+      "method": "GET",
+      "path": "/api/meetings/e7915356",
+      "fields": {
+        "/transcription_status": "complete",
+        "/duration": {
+          "positive": true
+        },
+        "/segments": {
+          "min_items": 1
+        }
+      },
+      "status": 200,
+      "matched": true,
+      "polls": 6,
+      "elapsed_s": 2.588,
+      "payload": {
+        "id": "e7915356",
+        "started_at": "2026-09-24T15:06:31.445464",
+        "ended_at": "2026-09-24T15:07:06.120714",
+        "duration": 34.67525,
+        "formatted_duration": "00:34",
+        "title": "Architecture boundary review",
+        "tags": [],
+        "segments": [
+          {
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "device_id": null
+          },
+          {
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "device_id": null
+          }
+        ],
+        "bookmarks": [],
+        "intel": null,
+        "intel_status": {
+          "state": "disabled",
+          "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "requested_at": null,
+          "completed_at": null
+        },
+        "mic_label": "Me",
+        "remote_label": "Remote",
+        "web_url": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "transcriptWords": 76,
+        "sync_modified_at": "2026-09-24T15:06:33.620871",
+        "devices": [],
+        "planned_route": {
+          "status": "ready",
+          "reason_code": null,
+          "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+          "legs": [
+            {
+              "ordinal": 1,
+              "host": "192.168.1.43",
+              "boundary": "lan",
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1,
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+            }
+          ]
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null,
+        "intel_model_host": null
+      },
+      "field_matches": {
+        "/transcription_status": true,
+        "/duration": true,
+        "/segments": true
+      }
+    }
+  },
+  "diff": {
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:06 PM\nNothing needs you",
+      "after": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n03:06 PM\nNothin"
+    },
+    "document_text_sha256": {
+      "before": "f2a908fd00c4af0f6debdc872b76e9e17de3f827a5eedd030507776fa672693b",
+      "after": "d01c0ac6473f54b41fc42e7b5b620b77ac1833a90d653039fe1a9d3193444948"
+    },
+    "document_text_len": {
+      "before": 208,
+      "after": 337
+    },
+    "api_reads": {
+      "before": null,
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/e7915356",
+          "status": 200,
+          "payload": {
+            "id": "e7915356",
+            "started_at": "2026-09-24T15:06:31.445464",
+            "ended_at": "2026-09-24T15:07:06.120714",
+            "duration": 34.67525,
+            "formatted_duration": "00:34",
+            "title": "Architecture boundary review",
+            "tags": [],
+            "segments": [
+              {
+                "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 0.0,
+                "end_time": 30.0,
+                "is_bookmarked": false,
+                "device_id": null
+              },
+              {
+                "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+                "speaker": "Recording",
+                "speaker_id": null,
+                "start_time": 30.0,
+                "end_time": 34.67525,
+                "is_bookmarked": false,
+                "device_id": null
+              }
+            ],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "disabled",
+              "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "complete",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "sync_modified_at": "2026-09-24T15:06:33.620871",
+            "devices": [],
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "3c51fe80f72b681b7e108503befb80f3d67eabe2b95ed2a4f399bc027a7b96e5"
+        }
+      ]
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "aa37fe6ce49881598c3bd500caed0ea007d3c3a2797d04ffef576a798ec484fc"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:06 PM\nNothing needs you",
+    "url": "http://127.0.0.1:62672/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599",
+      "rows": [],
+      "payload": {
+        "meetings": [],
+        "total": 0
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+    },
+    "document_text_sha256": "f2a908fd00c4af0f6debdc872b76e9e17de3f827a5eedd030507776fa672693b",
+    "document_text_len": 208,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T21:06:31.391257+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n03:06 PM\nNothin",
+    "url": "http://127.0.0.1:62672/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "aa37fe6ce49881598c3bd500caed0ea007d3c3a2797d04ffef576a798ec484fc",
+      "rows": [
+        {
+          "id": "e7915356",
+          "started_at": "2026-09-24T15:06:31.445464",
+          "ended_at": "2026-09-24T15:07:06.120714",
+          "title": "Architecture boundary review",
+          "duration_seconds": 34.67525,
+          "segment_count": 2,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "e7915356",
+            "started_at": "2026-09-24T15:06:31.445464",
+            "ended_at": "2026-09-24T15:07:06.120714",
+            "title": "Architecture boundary review",
+            "duration_seconds": 34.67525,
+            "segment_count": 2,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "aa37fe6ce49881598c3bd500caed0ea007d3c3a2797d04ffef576a798ec484fc"
+    },
+    "document_text_sha256": "d01c0ac6473f54b41fc42e7b5b620b77ac1833a90d653039fe1a9d3193444948",
+    "document_text_len": 337,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/e7915356",
+        "status": 200,
+        "payload": {
+          "id": "e7915356",
+          "started_at": "2026-09-24T15:06:31.445464",
+          "ended_at": "2026-09-24T15:07:06.120714",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-24T15:06:33.620871",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "3c51fe80f72b681b7e108503befb80f3d67eabe2b95ed2a4f399bc027a7b96e5"
+      }
+    ],
+    "at_utc": "2026-09-24T21:06:35.138150+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "07aea221ea4f80de52d203c5975944b643f766df8cb68c61c28e45fcd29f46cf",
+      "body": {
+        "meeting_id": "e7915356",
+        "status": "importing"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n03:06 PM\nNothin",
+    "url": "http://127.0.0.1:62672/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "aa37fe6ce49881598c3bd500caed0ea007d3c3a2797d04ffef576a798ec484fc",
+      "rows": [
+        {
+          "id": "e7915356",
+          "started_at": "2026-09-24T15:06:31.445464",
+          "ended_at": "2026-09-24T15:07:06.120714",
+          "title": "Architecture boundary review",
+          "duration_seconds": 34.67525,
+          "segment_count": 2,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "needs_you_count": 0,
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "e7915356",
+            "started_at": "2026-09-24T15:06:31.445464",
+            "ended_at": "2026-09-24T15:07:06.120714",
+            "title": "Architecture boundary review",
+            "duration_seconds": 34.67525,
+            "segment_count": 2,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": 76,
+            "needs_you_count": 0,
+            "planned_route": {
+              "status": "ready",
+              "reason_code": null,
+              "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+              "legs": [
+                {
+                  "ordinal": 1,
+                  "host": "192.168.1.43",
+                  "boundary": "lan",
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1,
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+                }
+              ]
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "aa37fe6ce49881598c3bd500caed0ea007d3c3a2797d04ffef576a798ec484fc"
+    },
+    "document_text_sha256": "d01c0ac6473f54b41fc42e7b5b620b77ac1833a90d653039fe1a9d3193444948",
+    "document_text_len": 337,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/e7915356",
+        "status": 200,
+        "payload": {
+          "id": "e7915356",
+          "started_at": "2026-09-24T15:06:31.445464",
+          "ended_at": "2026-09-24T15:07:06.120714",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 76,
+          "sync_modified_at": "2026-09-24T15:06:33.620871",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:24b3d84a0a928d5e1890a6ef76ad3abe65ee2f5224f61cb326ec3d78d3afae1a",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "3c51fe80f72b681b7e108503befb80f3d67eabe2b95ed2a4f399bc027a7b96e5"
+      }
+    ],
+    "at_utc": "2026-09-24T21:06:34.943320+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/import",
+      "status": 202,
+      "body_sha256": "07aea221ea4f80de52d203c5975944b643f766df8cb68c61c28e45fcd29f46cf",
+      "body": {
+        "meeting_id": "e7915356",
+        "status": "importing"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id equals the declared value",
+    "elapsed_s": 3.504
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/meetings/0/id equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 3.699,
+    "first_satisfied_at_s": 3.504,
+    "completion_bound_s": 300.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: /meetings/0/id equals the declared value"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "meeting_id"
+  ],
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210623Z-case.closure.chain.s1_import_complete-astra-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210623Z-case.closure.chain.s1_import_complete-astra-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ehquttkg/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ehquttkg/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62672"
+  ]
+}

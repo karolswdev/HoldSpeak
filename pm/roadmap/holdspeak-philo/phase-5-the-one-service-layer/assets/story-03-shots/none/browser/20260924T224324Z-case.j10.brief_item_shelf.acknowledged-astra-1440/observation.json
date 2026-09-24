@@ -1,0 +1,701 @@
+{
+  "id": "obs-20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440",
+  "run_id": "20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440",
+  "case_id": "case.j10.brief_item_shelf.acknowledged",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.route.brief_item_shelf"
+  ],
+  "state_id": "state.briefs.item.acknowledged",
+  "provenance": {
+    "revision": "c4d464985c25b296906608f0b256960d229c786c",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55220",
+      "port": 55220,
+      "pid": 83444,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sel2m6vk",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sel2m6vk/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T22:43:25.168585+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "5f410b8ab58ee2b225eeece59d704c31946b9bbff110834befd358fbf0e5b719",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_101363840fa0",
+          "title": "Graph walk brief material J10",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-24T22:43:29Z",
+          "updated_at": "2026-09-24T22:43:29Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "2f8522818d37d9a06e8c2d54bdcaff11faa3024fad7d1f0cf77e8029f6684dea"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-receipt]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/brief/latest",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T16:43:31.897591",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+              "section": "decisions",
+              "text": "Review decision: Graph walk brief material J10",
+              "detail": null,
+              "source_ref": "decision:decision_101363840fa0",
+              "priority": 200,
+              "created_at": "2026-09-24T22:43:29Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-24T16:43:31.897591",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 0,
+          "since": null
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 16:43",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "355f9bccdd3ba33ee18e099f7d2a367a0a3771af06ee8e7c06aa90733cb3e53e",
+      "captured": {
+        "name": "item_id",
+        "path": "sections.decisions.0.id",
+        "value": "brief-item-a6a3383d245e409b9ca9373171c5a860"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "one proposed desk decision titled 'Graph walk brief material J10' minted in setup through POST /api/decisions, so the brief has one item the Chair draws as a row (ChairHome.tsx:1114-1120, :1874) -- REPRODUCED in this run, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief]",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "Brief ready"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'Brief ready' in observe_at text"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "item_id": "brief-item-a6a3383d245e409b9ca9373171c5a860"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/brief/items/brief-item-a6a3383d245e409b9ca9373171c5a860/shelf",
+    "adapter": "http-route",
+    "status": 200,
+    "response": {
+      "item_id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+      "state": "acknowledged"
+    },
+    "response_sha256": "f66d86e49b1dda9f0204b7cda6994d5a800cfd86bbf64261f014cc558708c7b2"
+  },
+  "diff": {
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+            "period_start": "2026-09-23T17:00:00",
+            "period_end": "2026-09-24T16:43:31.897591",
+            "headline": "1 decision waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk brief material J10",
+                  "detail": null,
+                  "source_ref": "decision:decision_101363840fa0",
+                  "priority": 200,
+                  "created_at": "2026-09-24T22:43:29Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-24T16:43:31.897591",
+            "is_empty": false,
+            "shelf": {},
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 21 \u2013 24",
+            "generated_label": "GENERATED SEP 24 16:43",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "355f9bccdd3ba33ee18e099f7d2a367a0a3771af06ee8e7c06aa90733cb3e53e"
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/shelf",
+          "status": 200,
+          "payload": {},
+          "body_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+            "period_start": "2026-09-23T17:00:00",
+            "period_end": "2026-09-24T16:43:31.897591",
+            "headline": "1 decision waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+                  "section": "decisions",
+                  "text": "Review decision: Graph walk brief material J10",
+                  "detail": null,
+                  "source_ref": "decision:decision_101363840fa0",
+                  "priority": 200,
+                  "created_at": "2026-09-24T22:43:29Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-24T16:43:31.897591",
+            "is_empty": false,
+            "shelf": {
+              "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+            },
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 21 \u2013 24",
+            "generated_label": "GENERATED SEP 24 16:43",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "241e47032307618dc1f2a37c3a059fac1b22acd1e5341eef3c3a2aba8cd8a341"
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/shelf",
+          "status": 200,
+          "payload": {
+            "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+          },
+          "body_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+        }
+      ]
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:55220/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "rows": [],
+      "payload": {}
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "document_text_sha256": "52da9b1aea01311bf26827c1ab4c589247990fb096ed0d48314f53865393b5b5",
+    "document_text_len": 489,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:43:31.897591",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+                "section": "decisions",
+                "text": "Review decision: Graph walk brief material J10",
+                "detail": null,
+                "source_ref": "decision:decision_101363840fa0",
+                "priority": 200,
+                "created_at": "2026-09-24T22:43:29Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T16:43:31.897591",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:43",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "355f9bccdd3ba33ee18e099f7d2a367a0a3771af06ee8e7c06aa90733cb3e53e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {},
+        "body_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      }
+    ],
+    "at_utc": "2026-09-24T22:43:32.417646+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:55220/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f",
+      "rows": [],
+      "payload": {
+        "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+    },
+    "document_text_sha256": "52da9b1aea01311bf26827c1ab4c589247990fb096ed0d48314f53865393b5b5",
+    "document_text_len": 489,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:43:31.897591",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+                "section": "decisions",
+                "text": "Review decision: Graph walk brief material J10",
+                "detail": null,
+                "source_ref": "decision:decision_101363840fa0",
+                "priority": 200,
+                "created_at": "2026-09-24T22:43:29Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T16:43:31.897591",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:43",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "241e47032307618dc1f2a37c3a059fac1b22acd1e5341eef3c3a2aba8cd8a341"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {
+          "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+        },
+        "body_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+      }
+    ],
+    "at_utc": "2026-09-24T22:43:33.577545+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-a6a3383d245e409b9ca9373171c5a860/shelf",
+      "status": 200,
+      "body_sha256": "f66d86e49b1dda9f0204b7cda6994d5a800cfd86bbf64261f014cc558708c7b2",
+      "body": {
+        "item_id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+        "state": "acknowledged"
+      }
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/brief/shelf",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:55220/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/brief/shelf",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f",
+      "rows": [],
+      "payload": {
+        "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+    },
+    "document_text_sha256": "52da9b1aea01311bf26827c1ab4c589247990fb096ed0d48314f53865393b5b5",
+    "document_text_len": 489,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-1fc63202b06d498d90d61f01de2e6079",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T16:43:31.897591",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+                "section": "decisions",
+                "text": "Review decision: Graph walk brief material J10",
+                "detail": null,
+                "source_ref": "decision:decision_101363840fa0",
+                "priority": 200,
+                "created_at": "2026-09-24T22:43:29Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T16:43:31.897591",
+          "is_empty": false,
+          "shelf": {
+            "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+          },
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 16:43",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "241e47032307618dc1f2a37c3a059fac1b22acd1e5341eef3c3a2aba8cd8a341"
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/shelf",
+        "status": 200,
+        "payload": {
+          "brief-item-a6a3383d245e409b9ca9373171c5a860": "acknowledged"
+        },
+        "body_sha256": "f2754d20271117456d43942ee29732668dbaf0bf2819c408e78851b880f9652f"
+      }
+    ],
+    "at_utc": "2026-09-24T22:43:33.440526+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-a6a3383d245e409b9ca9373171c5a860/shelf",
+      "status": 200,
+      "body_sha256": "f66d86e49b1dda9f0204b7cda6994d5a800cfd86bbf64261f014cc558708c7b2",
+      "body": {
+        "item_id": "brief-item-a6a3383d245e409b9ca9373171c5a860",
+        "state": "acknowledged"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "/brief-item-a6a3383d245e409b9ca9373171c5a860 equals the declared value",
+    "elapsed_s": 0.915
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "/brief-item-a6a3383d245e409b9ca9373171c5a860 equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.052,
+    "first_satisfied_at_s": 0.915,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: /brief-item-a6a3383d245e409b9ca9373171c5a860 equals the declared value"
+  ],
+  "complete": true,
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sel2m6vk/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sel2m6vk/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55220"
+  ],
+  "duration_s": 8.746
+}

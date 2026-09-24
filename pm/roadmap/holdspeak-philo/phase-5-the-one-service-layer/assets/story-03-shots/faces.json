@@ -1,0 +1,508 @@
+{
+  "browser_runs": [
+    {
+      "case_id": "case.closure.chain.s1_import_complete",
+      "run_id": "20260924T210414Z-case.closure.chain.s1_import_complete-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210414Z-case.closure.chain.s1_import_complete-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210414Z-case.closure.chain.s1_import_complete-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210414Z-case.closure.chain.s1_import_complete-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s1_import_complete",
+      "run_id": "20260924T210623Z-case.closure.chain.s1_import_complete-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210623Z-case.closure.chain.s1_import_complete-astra-393/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210623Z-case.closure.chain.s1_import_complete-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T210623Z-case.closure.chain.s1_import_complete-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s2_summary_with_host",
+      "run_id": "20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T210729Z-case.closure.chain.s2_summary_with_host-astra-1440/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s2_summary_with_host",
+      "run_id": "20260924T212912Z-case.closure.chain.s2_summary_with_host-astra-393",
+      "viewport": 393,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T212912Z-case.closure.chain.s2_summary_with_host-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T212912Z-case.closure.chain.s2_summary_with_host-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T212912Z-case.closure.chain.s2_summary_with_host-astra-393/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T212912Z-case.closure.chain.s2_summary_with_host-astra-393/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s2_summary_with_host.replayed",
+      "run_id": "20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "replayed",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224620Z-case.closure.chain.s2_summary_with_host.replayed-astra-1440/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s2_summary_with_host.replayed",
+      "run_id": "20260924T224720Z-case.closure.chain.s2_summary_with_host.replayed-astra-393",
+      "viewport": 393,
+      "engine_mode": "replayed",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224720Z-case.closure.chain.s2_summary_with_host.replayed-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224720Z-case.closure.chain.s2_summary_with_host.replayed-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224720Z-case.closure.chain.s2_summary_with_host.replayed-astra-393/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224720Z-case.closure.chain.s2_summary_with_host.replayed-astra-393/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s3_same_summary_after_restart",
+      "run_id": "20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213120Z-case.closure.chain.s3_same_summary_after_restart-astra-1440/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s3_same_summary_after_restart",
+      "run_id": "20260924T213245Z-case.closure.chain.s3_same_summary_after_restart-astra-393",
+      "viewport": 393,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213245Z-case.closure.chain.s3_same_summary_after_restart-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213245Z-case.closure.chain.s3_same_summary_after_restart-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213245Z-case.closure.chain.s3_same_summary_after_restart-astra-393/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213245Z-case.closure.chain.s3_same_summary_after_restart-astra-393/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s3_same_summary_after_restart.replayed",
+      "run_id": "20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "replayed",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224832Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s3_same_summary_after_restart.replayed",
+      "run_id": "20260924T224917Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393",
+      "viewport": 393,
+      "engine_mode": "replayed",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224917Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224917Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224917Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393/after.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/replayed/browser/20260924T224917Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393/framed.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s4_decision_recorded",
+      "run_id": "20260924T213441Z-case.closure.chain.s4_decision_recorded-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213441Z-case.closure.chain.s4_decision_recorded-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213441Z-case.closure.chain.s4_decision_recorded-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213441Z-case.closure.chain.s4_decision_recorded-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s4_decision_recorded",
+      "run_id": "20260924T213555Z-case.closure.chain.s4_decision_recorded-astra-393",
+      "viewport": 393,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213555Z-case.closure.chain.s4_decision_recorded-astra-393/observation.json",
+      "face_verdict": null,
+      "glass_review": "unverified-rendered-content",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213555Z-case.closure.chain.s4_decision_recorded-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T213555Z-case.closure.chain.s4_decision_recorded-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.a1.decision_face_create.opens_and_reopens",
+      "run_id": "20260924T213830Z-case.a1.decision_face_create.opens_and_reopens-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T213830Z-case.a1.decision_face_create.opens_and_reopens-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T213830Z-case.a1.decision_face_create.opens_and_reopens-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T213830Z-case.a1.decision_face_create.opens_and_reopens-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.a1.decision_face_create.opens_and_reopens",
+      "run_id": "20260924T214148Z-case.a1.decision_face_create.opens_and_reopens-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T214148Z-case.a1.decision_face_create.opens_and_reopens-astra-393/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T214148Z-case.a1.decision_face_create.opens_and_reopens-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T214148Z-case.a1.decision_face_create.opens_and_reopens-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.a3.brief_next_day.decision_on_the_face",
+      "run_id": "20260924T215956Z-case.a3.brief_next_day.decision_on_the_face-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T215956Z-case.a3.brief_next_day.decision_on_the_face-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T215956Z-case.a3.brief_next_day.decision_on_the_face-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T215956Z-case.a3.brief_next_day.decision_on_the_face-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.a3.brief_next_day.decision_on_the_face",
+      "run_id": "20260924T220156Z-case.a3.brief_next_day.decision_on_the_face-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220156Z-case.a3.brief_next_day.decision_on_the_face-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220156Z-case.a3.brief_next_day.decision_on_the_face-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220156Z-case.a3.brief_next_day.decision_on_the_face-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.a3.brief_next_day.new_id_with_the_decision",
+      "run_id": "20260924T220621Z-case.a3.brief_next_day.new_id_with_the_decision-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220621Z-case.a3.brief_next_day.new_id_with_the_decision-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220621Z-case.a3.brief_next_day.new_id_with_the_decision-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T220621Z-case.a3.brief_next_day.new_id_with_the_decision-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s5_next_day_brief_has_it",
+      "run_id": "20260924T221218Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221218Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221218Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221218Z-case.closure.chain.s5_next_day_brief_has_it-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s5_next_day_brief_has_it",
+      "run_id": "20260924T221324Z-case.closure.chain.s5_next_day_brief_has_it-astra-393",
+      "viewport": 393,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221324Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221324Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T221324Z-case.closure.chain.s5_next_day_brief_has_it-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s5_next_day_brief_with_breakage",
+      "run_id": "20260924T222649Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222649Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222649Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222649Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.closure.chain.s5_next_day_brief_with_breakage",
+      "run_id": "20260924T222745Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-393",
+      "viewport": 393,
+      "engine_mode": "real",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222745Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222745Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/real/browser/20260924T222745Z-case.closure.chain.s5_next_day_brief_with_breakage-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.philo404.arrival_triaged_headline.all_handled",
+      "run_id": "20260924T222024Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222024Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222024Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222024Z-case.philo404.arrival_triaged_headline.all_handled-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.philo404.arrival_triaged_headline.all_handled",
+      "run_id": "20260924T222106Z-case.philo404.arrival_triaged_headline.all_handled-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222106Z-case.philo404.arrival_triaged_headline.all_handled-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222106Z-case.philo404.arrival_triaged_headline.all_handled-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222106Z-case.philo404.arrival_triaged_headline.all_handled-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j11.thought_keep.receipt_time",
+      "run_id": "20260924T221628Z-case.j11.thought_keep.receipt_time-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221628Z-case.j11.thought_keep.receipt_time-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221628Z-case.j11.thought_keep.receipt_time-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221628Z-case.j11.thought_keep.receipt_time-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j11.thought_keep.receipt_time",
+      "run_id": "20260924T221724Z-case.j11.thought_keep.receipt_time-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221724Z-case.j11.thought_keep.receipt_time-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221724Z-case.j11.thought_keep.receipt_time-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T221724Z-case.j11.thought_keep.receipt_time-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j6.route_intelligence_run.refusal",
+      "run_id": "20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j6.route_intelligence_run.no_assignment",
+      "run_id": "20260924T222425Z-case.j6.route_intelligence_run.no_assignment-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222425Z-case.j6.route_intelligence_run.no_assignment-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222425Z-case.j6.route_intelligence_run.no_assignment-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T222425Z-case.j6.route_intelligence_run.no_assignment-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.arrival_generate_again.same_day_idempotent",
+      "run_id": "20260924T223147Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223147Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223147Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223147Z-case.j10.arrival_generate_again.same_day_idempotent-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.arrival_generate_again.same_day_idempotent",
+      "run_id": "20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393",
+      "viewport": 393,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393/observation.json",
+      "face_verdict": "pass",
+      "glass_review": "pass",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T223711Z-case.j10.arrival_generate_again.same_day_idempotent-astra-393/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.route_generate_again.same_day_same_id",
+      "run_id": "20260924T224233Z-case.j10.route_generate_again.same_day_same_id-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224233Z-case.j10.route_generate_again.same_day_same_id-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224233Z-case.j10.route_generate_again.same_day_same_id-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224233Z-case.j10.route_generate_again.same_day_same_id-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.brief_item_shelf.acknowledged",
+      "run_id": "20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224324Z-case.j10.brief_item_shelf.acknowledged-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.brief_item_shelf.deferred",
+      "run_id": "20260924T224425Z-case.j10.brief_item_shelf.deferred-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224425Z-case.j10.brief_item_shelf.deferred-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224425Z-case.j10.brief_item_shelf.deferred-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224425Z-case.j10.brief_item_shelf.deferred-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    },
+    {
+      "case_id": "case.j10.brief_item_shelf.refused",
+      "run_id": "20260924T224519Z-case.j10.brief_item_shelf.refused-astra-1440",
+      "viewport": 1440,
+      "engine_mode": "none",
+      "observation": "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224519Z-case.j10.brief_item_shelf.refused-astra-1440/observation.json",
+      "face_verdict": null,
+      "glass_review": "protocol-only",
+      "shots": [
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224519Z-case.j10.brief_item_shelf.refused-astra-1440/before.png",
+        "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-03-shots/none/browser/20260924T224519Z-case.j10.brief_item_shelf.refused-astra-1440/after.png"
+      ],
+      "reviewer": "Astra",
+      "notes": "See glass-review.md; protocol cases carry no face verdict."
+    }
+  ],
+  "review": "Astra personally viewed all listed shots; read glass-review.md for scope and limitations."
+}

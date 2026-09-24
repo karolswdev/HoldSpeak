@@ -418,7 +418,7 @@ def test_a_check_step_that_holds_lets_the_case_run(tmp_path):
 
 
 def test_the_step_vocabulary_is_closed_and_exported():
-    assert STEP_KINDS == {"api", "ui", "fixture", "clock", "boundary", "cli", "check"}
+    assert STEP_KINDS == {"api", "op", "ui", "fixture", "clock", "boundary", "cli", "check"}
     with pytest.raises(Blocked) as raised:
         run_step({"kind": "telekinesis"}, page=None, hub=None, provenance={})
     assert "'telekinesis'" in str(raised.value)

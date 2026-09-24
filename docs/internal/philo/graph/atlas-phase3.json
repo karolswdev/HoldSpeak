@@ -70,7 +70,7 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "ui",
@@ -212,7 +212,17 @@
           "body_contains": "invalid decision status"
         },
         "observe_at": "protocol: POST /api/decisions",
-        "words": "setup: Search > New Decision creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; Done titles it by the first line; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal."
+        "words": "setup: Search > New Decision creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; Done titles it by the first line; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions"
+          }
+        ]
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -302,13 +312,13 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "CREATE DECISION FAILED \u00b7 HTTP 500"
+            "value": "CREATE DECISION FAILED · HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "the failed create is named, and the read failure that follows (refresh) does not replace it or its Retry"
@@ -417,7 +427,7 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "READ DECISIONS FAILED \u00b7 HTTP 500"
+            "value": "READ DECISIONS FAILED · HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "a failed decisions read is named with Retry"
@@ -487,6 +497,16 @@
           "action": "wait_for",
           "selector": "[aria-label=\"Note body\"]",
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/thoughts",
+          "body": null,
+          "capture_as": "thought_id",
+          "capture_path": "items.0.id",
+          "adapter": "http-route",
+          "why": "capture the one Thought created through the face before reading its durable body and revisions"
         }
       ],
       "trigger": {
@@ -499,14 +519,22 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "KEPT \u00b7"
+          "value": "KEPT ·"
         },
         "observe_at": ".thought-note-foot .surface-footer-receipt-line",
-        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT \u00b7 <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING\u2026` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
+        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT · <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING…` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
         "reads": [
           {
             "method": "GET",
             "path": "/api/thoughts"
+          },
+          {
+            "method": "GET",
+            "path": "/api/thoughts/{thought_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/thoughts/{thought_id}/workbench"
           }
         ]
       },
@@ -602,7 +630,9 @@
             "status": "proposed"
           },
           "adapter": "http-route",
-          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
+          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
         },
         {
           "kind": "api",
@@ -653,6 +683,10 @@
           {
             "method": "GET",
             "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
           }
         ]
       }
@@ -743,7 +777,9 @@
             "status": "proposed"
           },
           "adapter": "http-route",
-          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
+          "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
         },
         {
           "kind": "api",
@@ -795,6 +831,10 @@
           {
             "method": "GET",
             "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
           }
         ]
       }
@@ -869,7 +909,7 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "BRIEF DID NOT LOAD \u00b7 HTTP 500"
+            "value": "BRIEF DID NOT LOAD · HTTP 500"
           },
           "observe_at": "[data-testid=arrival-brief]",
           "timeout_s": 10,
@@ -908,7 +948,7 @@
           "value": "No brief yet"
         },
         "observe_at": "[data-testid=arrival-brief]",
-        "words": "setup: every brief read fails at the browser boundary; after a reload the BRIEF section says 'BRIEF DID NOT LOAD \u00b7 HTTP 500' with Retry and NOT 'No brief yet'; the fault lifts. trigger: Retry reads again; the hub answers null (a fresh HOME has no brief), so the section now says 'No brief yet'. before.png is the failure line, after.png the answered read.",
+        "words": "setup: every brief read fails at the browser boundary; after a reload the BRIEF section says 'BRIEF DID NOT LOAD · HTTP 500' with Retry and NOT 'No brief yet'; the fault lifts. trigger: Retry reads again; the hub answers null (a fresh HOME has no brief), so the section now says 'No brief yet'. before.png is the failure line, after.png the answered read.",
         "reads": [
           {
             "method": "GET",
@@ -2273,6 +2313,10 @@
           {
             "method": "GET",
             "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
           }
         ],
         "words": "chain step 5: the producer day moves by one inside the rig's hub; Generate again draws the new dated brief, and its ledger holds 'Review decision: Keep summary retrieval on the local desk'; the trigger's own response carries a new id."
@@ -3141,7 +3185,7 @@
       ],
       "preconditions": [
         "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger",
-        "run with rows/run_breakage_case.py: process-only TZ selects an evening hour and asserts the real failure enters both daily lookbacks"
+        "run scripts/philo5_breakage_walk.py --case case.closure.chain.s5_next_day_brief_with_breakage --viewport 1440 or 393 --out <phase-5 assets>: it selects a process-only Etc/GMT zone and asserts local producer hour [17,23); outside that window the run is BLOCKED, never PASS"
       ],
       "setup": [
         {
@@ -3384,6 +3428,27 @@
           "why": "the day-one brief contains the real failed read"
         },
         {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "old_breakage_id",
+          "capture_path": "sections.broke.0.id",
+          "adapter": "http-route",
+          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/items/{old_breakage_id}/shelf",
+          "body": {
+            "state": "acknowledged"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "acknowledge the old brief's breakage row without changing the next brief's item identity"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "selector": "[aria-controls=desk-tool-shelf]",
@@ -3516,11 +3581,2553 @@
           {
             "method": "GET",
             "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/brief/shelf"
           }
         ],
         "words": "Story 03 closure variant: the same one-Generate chain with a real failed read in both lookbacks; first row unobscured, one source failure in two distinct brief-scoped ids, old brief and triage unchanged. The as-written case remains separate."
       },
       "completion_bound_s": 120
+    },
+    {
+      "id": "case.closure.chain.s1_import_complete.op",
+      "job": "j4",
+      "edge_ids": [
+        "edge.route.meetings_import"
+      ],
+      "state_id": "state.meetings.capture.imported",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "meeting.import",
+        "args": {
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "title": "Architecture boundary review"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "meeting_id",
+        "capture_path": "meeting_id",
+        "why": "the owning hub reads and holds the fixture through the MCP import intake"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "transcription_status",
+          "value": "complete"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "the owning hub imports the recording, waits for the real transcriber to finish, and the durable meeting read retains its identity, positive duration and bounded segments"
+      },
+      "completion_bound_s": 300.0
+    },
+    {
+      "id": "case.closure.chain.s2_summary_with_host.op",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "meeting.summary.run",
+        "args": {
+          "meeting_id": "{meeting_id}",
+          "expected_selection_hash": "{selection_hash}"
+        },
+        "adapter": "mcp-http",
+        "why": "the owning hub queues summary through the canonical operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "intel.summary",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "the summary operation reaches the real engine and the durable meeting read has a summary and receipt"
+      },
+      "completion_bound_s": 600.0
+    },
+    {
+      "id": "case.closure.chain.s3_same_summary_after_restart.op",
+      "job": "j7",
+      "edge_ids": [
+        "edge.cli.hub_restart"
+      ],
+      "state_id": "state.meetings.intel.retained_after_restart",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "seed the durable summary before the restart"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary exists before the headless restart"
+        }
+      ],
+      "trigger": {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "why": "restart the owning hub on the same isolated HOME and database"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "intel.summary",
+          "nonempty": true,
+          "restart_required": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "the headless restart retains summary, receipt and meeting identity"
+      },
+      "completion_bound_s": 180.0
+    },
+    {
+      "id": "case.closure.chain.s4_decision_recorded.op",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "seed the durable summary"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "headless durable read"
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "same-hub restart before the decision path"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id",
+          "why": "the operation creates the decision row"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.update",
+        "args": {
+          "decision_id": "{decision_id}",
+          "context_markdown": "Source: Architecture boundary review (imported meeting)",
+          "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez."
+        },
+        "adapter": "mcp-http",
+        "why": "the operation is the durable counterpart of Done -> PUT"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "title",
+          "value": "Keep summary retrieval on the local desk"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "{decision_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "the decision update persists title/body/context after the summary restart chain"
+      },
+      "completion_bound_s": 60.0
+    },
+    {
+      "id": "case.a1.decision_face_create.opens_and_reopens.op",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Adopt the one desk bus",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id",
+          "why": "create through the registry"
+        },
+        {
+          "kind": "op",
+          "name": "decision.update",
+          "args": {
+            "decision_id": "{decision_id}",
+            "context_markdown": "Source: meeting review 2026-09-22",
+            "decision_markdown": "Adopt the one desk bus\nfor every frame"
+          },
+          "adapter": "mcp-http",
+          "why": "write the durable decision fields"
+        },
+        {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "{decision_id}"
+          }
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.create",
+        "args": {
+          "title": "Refused decision",
+          "status": "bogus"
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical create operation must name the invalid-status refusal"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_refusal",
+          "error_contains": "invalid decision status"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.list",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.list",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          }
+        ],
+        "words": "the invalid status refusal leaves the durable decision list unchanged"
+      },
+      "completion_bound_s": 60.0,
+      "viewports": []
+    },
+    {
+      "id": "case.a3.brief_next_day.decision_on_the_face.op",
+      "job": "a3",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "preconditions": [],
+      "completion_bound_s": 120.0,
+      "viewports": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "why": "make day-one brief"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk next-day decision A3",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "sections.decisions",
+            "value": []
+          },
+          "timeout_s": 300,
+          "why": "same-day brief does not include the new decision"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "advance only the producer clock in the owning hub HOME",
+          "why": "cross the producer-day boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "generate the next producer-day brief"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "sections.decisions",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          }
+        ],
+        "words": "the next-day brief is a fresh durable brief containing the decision"
+      }
+    },
+    {
+      "id": "case.a3.brief_next_day.new_id_with_the_decision.op",
+      "job": "a3",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "preconditions": [],
+      "completion_bound_s": 120.0,
+      "viewports": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "why": "make day-one brief"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk next-day decision A3",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "sections.decisions",
+            "value": []
+          },
+          "timeout_s": 300,
+          "why": "same-day brief does not include the new decision"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "advance only the producer clock in the owning hub HOME",
+          "why": "cross the producer-day boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "generate the next producer-day brief"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "sections.decisions",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          }
+        ],
+        "words": "the next-day brief is a fresh durable brief containing the decision"
+      }
+    },
+    {
+      "id": "case.closure.chain.s5_next_day_brief_has_it.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "headless durable read"
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "same-hub restart before brief material"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "why": "make day-one brief before decision"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "decision.update",
+          "args": {
+            "decision_id": "{decision_id}",
+            "context_markdown": "Source: Architecture boundary review (imported meeting)",
+            "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez."
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "sections.decisions",
+            "value": []
+          },
+          "timeout_s": 300,
+          "why": "same-day brief is retained without the decision row"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "advance only the producer clock in the owning hub HOME",
+          "why": "cross the producer-day boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "generate the next-day brief"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "sections.decisions",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "the next-day brief carries the durable decision relationship and preserves the earlier brief"
+      },
+      "completion_bound_s": 120.0
+    },
+    {
+      "id": "case.closure.chain.s5_next_day_brief_with_breakage.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_latest"
+      ],
+      "state_id": "state.briefs.next_day_window",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [
+        "run scripts/philo5_breakage_walk.py --case case.closure.chain.s5_next_day_brief_with_breakage.op --viewport 1440 --headless --out <phase-5 assets> --no-build: it selects a process-only Etc/GMT zone and asserts local producer hour [17,23); outside that window the run is BLOCKED, never PASS",
+        "the setup-only HTTP 404 probe below records the browser's legacy DecisionLifecycleService fallback event; this is observer parity for the two breakage rows, not an MCP refusal-equivalence claim"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "headless durable read"
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "same-hub restart before brief material"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decisions/philo402-deliberately-absent",
+          "expect_status": 404,
+          "adapter": "http-route",
+          "body": null,
+          "why": "setup only: exercise the HTTP legacy fallback at holdspeak/web/routes/decisions.py:58-61 so both paths seed the identical two pipeline_events; this is not a missing-decision refusal parity claim"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "why": "make day-one brief after the missing decision read"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "sections.broke",
+            "nonempty": true
+          },
+          "why": "the real failed read produces broke rows; the following capture selects the lifecycle failure by text rather than row order"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "old_breakage_id",
+          "capture_path": "sections.broke",
+          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief",
+          "capture_match": {
+            "text": "DecisionLifecycleService.get_decision failed"
+          },
+          "capture_field": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.shelf.write",
+          "args": {
+            "item_id": "{old_breakage_id}",
+            "state": "acknowledged"
+          },
+          "adapter": "mcp-http",
+          "why": "acknowledge the old brief's breakage row without changing the next brief's item identity"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Keep summary retrieval on the local desk",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "decision.update",
+          "args": {
+            "decision_id": "{decision_id}",
+            "context_markdown": "Source: Architecture boundary review (imported meeting)",
+            "decision_markdown": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez."
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "sections.decisions",
+            "value": []
+          },
+          "timeout_s": 300,
+          "why": "same-day brief is retained without the decision row"
+        },
+        {
+          "kind": "clock",
+          "clock": "clock.python_wall",
+          "adapter": "producer-clock",
+          "advance_days": 1,
+          "how": "advance only the producer clock in the owning hub HOME",
+          "why": "cross the producer-day boundary"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.generate",
+        "args": {},
+        "adapter": "mcp-http",
+        "why": "generate the next-day brief"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "sections.decisions",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "the next-day brief carries the durable decision relationship and preserves the earlier brief"
+      },
+      "completion_bound_s": 120.0
+    },
+    {
+      "id": "case.philo404.arrival_triaged_headline.all_handled.op",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_generate",
+        "edge.route.brief_generate",
+        "edge.route.brief_item_shelf"
+      ],
+      "state_id": "state.briefs.populated",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk triage headline Ack",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_a",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Graph walk triage headline Defer",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_b",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.generate",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_brief_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "item_a",
+          "capture_path": "sections.decisions",
+          "capture_match": {
+            "source_ref": "decision:{decision_a}"
+          },
+          "capture_field": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.latest",
+          "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "item_b",
+          "capture_path": "sections.decisions",
+          "capture_match": {
+            "source_ref": "decision:{decision_b}"
+          },
+          "capture_field": "id"
+        },
+        {
+          "kind": "op",
+          "name": "brief.shelf.write",
+          "args": {
+            "item_id": "{item_a}",
+            "state": "acknowledged"
+          },
+          "adapter": "mcp-http"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "/{item_a}",
+            "value": "acknowledged"
+          },
+          "timeout_s": 300,
+          "why": "headless durable read"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "brief.shelf.write",
+        "args": {
+          "item_id": "{item_b}",
+          "state": "deferred"
+        },
+        "adapter": "mcp-http",
+        "why": "the canonical shelf operation is the durable Defer path"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "/{item_b}",
+          "value": "deferred"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "brief.shelf.read",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "brief.latest",
+            "args": {}
+          },
+          {
+            "kind": "op",
+            "name": "brief.shelf.read",
+            "args": {}
+          }
+        ],
+        "words": "both durable shelf states exist for the two brief items"
+      },
+      "completion_bound_s": 30.0
+    },
+    {
+      "id": "case.j11.thought_keep.receipt_time.op",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.thought_keep"
+      ],
+      "state_id": "state.desk_presentation.window_open_thought",
+      "applicability": "applicable",
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "id": "hs-seed-inbox",
+            "name": "Inbox"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "seed the real Inbox directory required by the Thought producer"
+        },
+        {
+          "kind": "op",
+          "name": "thought.create",
+          "args": {
+            "request_id": "philo5-j11",
+            "raw_text": "Draft before J11 save",
+            "initial_note": {
+              "title": "Thought",
+              "body_markdown": "Draft before J11 save",
+              "tags": []
+            }
+          },
+          "adapter": "mcp-http",
+          "capture_as": "thought_id",
+          "capture_path": "thought.id",
+          "why": "MCP create requires nonempty immutable raw_text and substitutes it for a blank initial body. Start with distinct draft text, then prove the saved working body/revisions/time; raw custody is preserved within each transport, not equated across different create affordances."
+        },
+        {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "aggregate_revision",
+          "capture_path": "thought.aggregate_revision"
+        },
+        {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "working_revision",
+          "capture_path": "thought.working_revision"
+        },
+        {
+          "kind": "op",
+          "name": "thought.workbench.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "workspace_cursor",
+          "capture_path": "workspace_cursor"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "thought.save",
+        "args": {
+          "thought_id": "{thought_id}",
+          "body_markdown": "Graph walk J11 receipt time",
+          "expected_aggregate_revision": "{aggregate_revision}",
+          "expected_working_revision": "{working_revision}",
+          "workspace_cursor": "{workspace_cursor}"
+        },
+        "adapter": "mcp-http",
+        "why": "save the working copy through the canonical operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "thought.working_note.body_markdown",
+          "value": "Graph walk J11 receipt time"
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "thought.read",
+            "args": {
+              "thought_id": "{thought_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "thought.workbench.read",
+            "args": {
+              "thought_id": "{thought_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "thought.list",
+            "args": {}
+          }
+        ],
+        "words": "the saved Thought read retains the wrapped thought body, CAS revisions, workbench cursor and working-note time"
+      },
+      "completion_bound_s": 60.0,
+      "viewports": []
+    },
+    {
+      "id": "case.closure.chain.s2_summary_with_host.op.replayed",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded summary provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo5_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider seam; retain the real hub and operation registry"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "meeting.summary.run",
+        "args": {
+          "meeting_id": "{meeting_id}",
+          "expected_selection_hash": "{selection_hash}"
+        },
+        "adapter": "mcp-http",
+        "why": "the owning hub queues summary through the canonical operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "intel.summary",
+          "nonempty": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "replayed provider variant; durable identity and receipt are compared separately from the real-engine run"
+      },
+      "completion_bound_s": 600.0
+    },
+    {
+      "id": "case.closure.chain.s3_same_summary_after_restart.op.replayed",
+      "job": "j7",
+      "edge_ids": [
+        "edge.cli.hub_restart"
+      ],
+      "state_id": "state.meetings.intel.retained_after_restart",
+      "applicability": "applicable",
+      "viewports": [],
+      "preconditions": [],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "http://192.168.1.43:8080"
+          },
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "the hub checks the real endpoint before defining it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200501",
+              "profile_id": "engine-192-168-1-43-8080",
+              "expected_profile_revision": 0,
+              "label": "192.168.1.43:8080",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "http://192.168.1.43:8080",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "the existing Model Library definition path mints the immutable profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "8d0b2f37-0e1d-5c43-8a8c-7a0c1e200502",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "adapter": "http-route",
+          "why": "the explicit summary selection uses the captured immutable profile"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo3_architect_meeting.wav",
+            "title": "Architecture boundary review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "the owning hub reads and holds the fixture through the MCP import intake"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 300,
+          "why": "the real import worker completed before later operations"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "the real transcript has durable segment rows"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary.run receives the hash read from the same durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the typed selection hash from the durable meeting read before summary.run"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.summary.run",
+          "args": {
+            "meeting_id": "{meeting_id}",
+            "expected_selection_hash": "{selection_hash}"
+          },
+          "adapter": "mcp-http",
+          "why": "seed the durable summary before the restart"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 300,
+          "why": "summary exists before the headless restart"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded summary provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo5_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider seam; retain the real hub and operation registry"
+        }
+      ],
+      "trigger": {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "why": "restart the owning hub on the same isolated HOME and database"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_field",
+          "path": "intel.summary",
+          "nonempty": true,
+          "restart_required": true
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          }
+        ],
+        "words": "replayed provider variant; durable identity and receipt are compared separately from the real-engine run"
+      },
+      "completion_bound_s": 180.0
+    },
+    {
+      "id": "case.closure.chain.s2_summary_with_host.replayed",
+      "job": "j6",
+      "edge_ids": [
+        "edge.face.arrival_run_intel"
+      ],
+      "state_id": "state.meetings.intel.ready",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]",
+          "why": "the Run verb is drawn only when the route is ready"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded summary provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo5_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider seam; retain the real browser, hub and operation registry"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=arrival-run-intel]",
+        "adapter": "ui-pointer"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "192.168.1.43"
+        },
+        "observe_at": "[data-testid=summary-record-attempts]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "frame_selector": "[data-testid=meeting-summary-text]",
+        "words": "replayed provider variant; chain step 2: one Run on the Arrival row against the actual LAN engine; the summary well draws on the row with the contacted host on its receipt (RunAttempts renders only inside a non-empty summary slab); no manual refresh."
+      },
+      "completion_bound_s": 600
+    },
+    {
+      "id": "case.closure.chain.s3_same_summary_after_restart.replayed",
+      "job": "j7",
+      "edge_ids": [
+        "edge.cli.hub_restart"
+      ],
+      "state_id": "state.meetings.intel.retained_after_restart",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]",
+          "why": "the Run verb is drawn only when the route is ready"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=meeting-summary-text]",
+          "timeout_s": 300,
+          "why": "the one Run produced rendered summary material"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "body": null,
+          "capture_as": "persisted_summary",
+          "capture_path": "intel.summary",
+          "adapter": "http-route",
+          "why": "the summary the restart must keep"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/run_receipt/attempts/0/host",
+            "value": "192.168.1.43"
+          },
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "why": "the durable receipt names the actual LAN host"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded summary provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo5_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider seam; retain the real browser, hub and operation registry"
+        }
+      ],
+      "trigger": {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_equals",
+          "value": "{persisted_summary}"
+        },
+        "observe_at": "[data-testid=meeting-summary-text]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "frame_selector": "[data-testid=meeting-summary-text]",
+        "words": "replayed provider variant; chain step 3: the hub is stopped and started on the same HOME and database; the reloaded face shows the same summary text; the restart record retains the meeting id, summary and run receipt before and after."
+      },
+      "completion_bound_s": 180
     }
   ],
   "states": [
@@ -3547,7 +6154,7 @@
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
           "line": 42,
-          "claim": "its foot states the write (KEPT \u00b7 <time>, SAVING\u2026, DID NOT SAVE \u00b7 <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
+          "claim": "its foot states the write (KEPT · <time>, SAVING…, DID NOT SAVE · <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
         }
       ],
       "reachable_by": [

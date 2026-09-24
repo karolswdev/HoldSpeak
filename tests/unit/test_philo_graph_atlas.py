@@ -364,10 +364,13 @@ def test_face_cases_carry_both_ruled_viewports(atlas: dict) -> None:
         if case["applicability"] != "applicable":
             continue
         where = case["expected"].get("observe_at") or ""
-        face = (
-            case.get("trigger", {}).get("kind") == "ui"
-            or (bool(where) and not where.startswith("protocol:"))
-        )
+        if isinstance(where, dict) and where.get("kind") == "op":
+            face = False
+        else:
+            face = (
+                case.get("trigger", {}).get("kind") == "ui"
+                or (bool(where) and not where.startswith("protocol:"))
+            )
         want = [393, 1440] if face else []
         if sorted(case["viewports"]) != want:
             problems.append(
@@ -432,6 +435,8 @@ def test_every_predicate_observes_a_selector_or_a_route(atlas: dict) -> None:
         if "predicate" not in case["expected"]:
             continue
         where = case["expected"]["observe_at"]
+        if isinstance(where, dict) and where.get("kind") == "op":
+            continue
         if where.startswith(prefix):
             method, _, path = where[len(prefix) :].strip().partition(" ")
             if not path.startswith("/"):
@@ -459,6 +464,164 @@ def test_every_case_keeps_its_human_sentence(atlas: dict) -> None:
     """`words` is the prose the owner and the council read; it is never dropped."""
     problems = [case["id"] for case in atlas["cases"] if not case["expected"].get("words")]
     assert not problems, problems
+
+
+def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
+    """Operation siblings prove the same durable result through the hub.
+
+    Their observation is an operation object, so the rig can call a durable
+    read after the trigger.  A refusal must observe that retained read while
+    the trigger's own refusal record remains the only mutating result.
+    """
+    siblings = [
+        case
+        for path in ATLAS_FILES
+        for case in json.loads(path.read_text())['cases']
+        if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
+    ]
+    assert len(siblings) == 20  # 18 real op siblings plus two replay variants
+    mutating = {
+        'decision.create', 'decision.update', 'meeting.import',
+        'meeting.summary.run', 'brief.generate', 'brief.shelf.write',
+        'thought.create', 'thought.save',
+    }
+    readable = {
+        'decision.read', 'decision.list', 'meeting.list', 'meeting.read',
+        'brief.latest', 'brief.shelf.read', 'thought.read',
+        'thought.workbench.read', 'thought.list',
+    }
+    problems: list[str] = []
+    for case in siblings:
+        expected = case['expected']
+        observation = expected.get('observe_at')
+        if not isinstance(observation, dict) or observation.get('kind') != 'op':
+            problems.append(f"{case['id']}: expected.observe_at is not an op object")
+            continue
+        if observation.get('name') not in readable:
+            problems.append(f"{case['id']}: observation re-fires {observation.get('name')!r}")
+        predicate_kind = (expected.get('predicate') or {}).get('kind')
+        if predicate_kind not in {'op_field', 'op_refusal'}:
+            problems.append(f"{case['id']}: predicate is not an op predicate")
+        for read in expected.get('reads', []):
+            if read.get('kind') != 'op' or read.get('name') not in readable:
+                problems.append(f"{case['id']}: expected read is not durable: {read}")
+        for step in _acts(case):
+            if step.get('kind') == 'ui':
+                problems.append(f"{case['id']}: operation sibling carries a UI step")
+        trigger = case.get('trigger') or {}
+        if trigger.get('kind') == 'op' and trigger.get('name') not in mutating:
+            problems.append(f"{case['id']}: trigger is not a producer operation")
+    assert not problems, '\n'.join(problems)
+
+
+def test_named_pair_observations_bind_their_read_arguments() -> None:
+    """A durable read must use an id captured from the case's own producer."""
+    cases = [case for path in ATLAS_FILES for case in json.loads(path.read_text())['cases']]
+    bases = {case['id'][:-3] for case in cases if case['id'].endswith('.op')}
+    problems = []
+    for case in cases:
+        if not any(case['id'] == base or case['id'].startswith(base + '.') for base in bases):
+            continue
+        bound = {step['capture_as'] for step in _acts(case) if step.get('capture_as')}
+        expected = case['expected']
+        reads = {key: expected.get(key) for key in ('observe_at', 'predicate', 'reads')}
+        names = set(re.findall(r'\{([a-z][a-z0-9_]*)\}', json.dumps(reads)))
+        if names - bound:
+            problems.append((case['id'], sorted(names - bound)))
+    assert not problems, problems
+
+
+def test_all_handled_operation_maps_items_by_decision_source() -> None:
+    """Shelf ids follow durable decision relationships, never brief sort order."""
+    case = next(
+        case
+        for path in ATLAS_FILES
+        for case in json.loads(path.read_text())['cases']
+        if case['id'] == 'case.philo404.arrival_triaged_headline.all_handled.op'
+    )
+    captures = [
+        step for step in case['setup']
+        if step.get('kind') == 'op'
+        and step.get('name') == 'brief.latest'
+        and step.get('capture_as') in {'item_a', 'item_b'}
+    ]
+    assert {step['capture_as'] for step in captures} == {'item_a', 'item_b'}
+    assert {tuple(step['capture_match'].items()) for step in captures} == {
+        (('source_ref', 'decision:{decision_a}'),),
+        (('source_ref', 'decision:{decision_b}'),),
+    }
+    assert all(step['capture_path'] == 'sections.decisions' for step in captures)
+    assert all(step['capture_field'] == 'id' for step in captures)
+
+
+def test_breakage_cases_use_evening_wrapper_and_shelf_old_item() -> None:
+    """Breakage proof pins and shelves the first brief's own failure row."""
+    assert (REPO / "scripts/philo5_breakage_walk.py").exists()
+    cases = {
+        case['id']: case
+        for path in ATLAS_FILES
+        for case in json.loads(path.read_text())['cases']
+        if case['id'] in {
+            'case.closure.chain.s5_next_day_brief_with_breakage',
+            'case.closure.chain.s5_next_day_brief_with_breakage.op',
+        }
+    }
+    assert len(cases) == 2
+    for case_id, case in cases.items():
+        wrapper = next(
+            text for text in case['preconditions']
+            if 'scripts/philo5_breakage_walk.py' in text
+        )
+        assert f'--case {case_id}' in wrapper
+        assert '[17,23)' in wrapper
+        assert 'BLOCKED, never PASS' in wrapper
+
+        is_op = case_id.endswith('.op')
+        if is_op:
+            probe = next(
+                step for step in case['setup']
+                if step.get('kind') == 'api'
+                and step.get('method') == 'GET'
+                and step.get('path') == '/api/decisions/philo402-deliberately-absent'
+            )
+            assert probe['expect_status'] == 404
+            assert probe['body'] is None
+            assert any('observer parity' in text for text in case['preconditions'])
+            capture = next(
+                step for step in case['setup']
+                if step.get('kind') == 'op'
+                and step.get('name') == 'brief.latest'
+                and step.get('capture_as') == 'old_breakage_id'
+            )
+            shelf = next(
+                step for step in case['setup']
+                if step.get('kind') == 'op'
+                and step.get('name') == 'brief.shelf.write'
+                and step.get('args', {}).get('item_id') == '{old_breakage_id}'
+            )
+        else:
+            capture = next(
+                step for step in case['setup']
+                if step.get('kind') == 'api'
+                and step.get('method') == 'GET'
+                and step.get('path') == '/api/brief/latest'
+                and step.get('capture_as') == 'old_breakage_id'
+            )
+            shelf = next(
+                step for step in case['setup']
+                if step.get('kind') == 'api'
+                and step.get('method') == 'POST'
+                and step.get('path') == '/api/brief/items/{old_breakage_id}/shelf'
+            )
+        if is_op:
+            assert capture['capture_path'] == 'sections.broke'
+            assert capture['capture_match'] == {
+                'text': 'DecisionLifecycleService.get_decision failed'
+            }
+            assert capture['capture_field'] == 'id'
+        else:
+            assert capture['capture_path'] == 'sections.broke.0.id'
+        assert shelf.get('args', shelf.get('body', {})).get('state') == 'acknowledged'
 
 
 # ───────────── the rig's ui vocabulary, and the one case contract ─────────────
@@ -511,6 +674,8 @@ def test_summary_cases_use_the_retained_architect_import_fixture(atlas: dict) ->
     expected = "tests/fixtures/philo3_architect_meeting.wav"
     problems: list[str] = []
     for case in _summary_cases(atlas):
+        if case["id"] == "case.j6.route_intelligence_run.refusal":
+            continue
         imports = [
             step for step in _acts(case)
             if step.get("kind") == "fixture"
@@ -665,6 +830,8 @@ def test_summary_imports_wait_for_real_completion_and_retain_title(atlas: dict) 
     expected = "tests/fixtures/philo3_architect_meeting.wav"
     problems: list[str] = []
     for case in _summary_cases(atlas):
+        if case["id"] == "case.j6.route_intelligence_run.refusal":
+            continue
         for step in _acts(case):
             if step.get("kind") != "fixture" or step.get("route", {}).get("path") != "/api/meetings/import":
                 continue
@@ -1020,6 +1187,8 @@ GATE_MARKERS = ("desk-first-words", "chair-first-value")
 
 def _is_face_case(case: dict) -> bool:
     where = case["expected"].get("observe_at") or ""
+    if isinstance(where, dict) and where.get("kind") == "op":
+        return False
     return (
         case.get("trigger", {}).get("kind") == "ui"
         or (bool(where) and not where.startswith("protocol:"))
@@ -1484,3 +1653,20 @@ def test_summary_terminal_cases_read_durable_meeting_not_active_queue(atlas, cas
     case = next(case for case in atlas["cases"] if case["id"] == case_id)
     assert case["expected"]["observe_at"] == "protocol: GET /api/meetings/{meeting_id}"
     assert case["expected"]["predicate"]["path"] == field
+
+
+def test_no_assignment_op_reads_refusal_code_separately_from_error(atlas: dict) -> None:
+    case = next(c for c in atlas["cases"] if c["id"] == "case.j6.route_intelligence_run.no_assignment.op")
+    predicate = case["expected"]["predicate"]
+    assert predicate["code"] == "route_unavailable"
+    assert predicate["error_contains"] == "The summary route is not available."
+
+
+def test_thought_op_save_starts_from_different_working_text() -> None:
+    atlas = json.loads((REPO / "docs/internal/philo/graph/atlas-phase3.json").read_text())
+    case = next(c for c in atlas["cases"] if c["id"] == "case.j11.thought_keep.receipt_time.op")
+    create = next(s for s in case["setup"] if s.get("name") == "thought.create")
+    before = create["args"]["initial_note"]["body_markdown"] or create["args"]["raw_text"]
+    assert before != case["trigger"]["args"]["body_markdown"]
+    assert case["expected"]["predicate"]["path"] == "thought.working_note.body_markdown"
+    assert case["expected"]["predicate"]["value"] == case["trigger"]["args"]["body_markdown"]

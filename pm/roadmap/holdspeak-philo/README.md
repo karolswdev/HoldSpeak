@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5: story 02 ROUND TWO — `meeting.import` requires the owner before any file is touched (fenced with a real remote DESK credential); `thought.list` declares its real shape; shelf writes fenced through the registry; the decision admission recorded as inherited Article XI debt, owner ruling owed; awaiting Astra's re-check on built).
+**Last updated:** 2026-09-24 (Phase 5: stories 01 and 02 merged; story 03 done in Astra's atlas lane, with Muad'Dib's precommit conditions paid. All 18 named pairs and 2 separate replay pairs pass. The PR remains held for counsel on built. The inherited decision-admission debt remains unruled.)
 **Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — chartered 2026-09-24 by the two brains, unratified (the owner's ratification owed).
-**Status:** Phases 1–4 delivered and merged. Phase 3 closed by ruling with its sitting waived; Phase 4 The Morning closed 2026-09-24 (the next-day brief in one move, proven on the rig at both widths). Phase 5 The One Service Layer chartered 2026-09-24 (the owner's D1–D3 and proof mode ruled; Astra r1 BOUNCE → r2 RATIFY-WITH-CONDITIONS, conditions paid); nothing built; the owner's ratification owed.
+**Status:** Phases 1–4 delivered and merged. Phase 5 The One Service Layer is ratified and in progress. Stories 01 and 02 are merged; story 03 proves the atlas paths; story 04 will rehearse the loop through Codex. Proof mode is an isolated rehearsal with owner-reviewed shots, not a sitting.
 
 ## Vision
 
@@ -33,4 +33,3 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 Update this date, the owning story and the phase status with each story completion.
 One story completes per commit with paired captured evidence. The owner requested one umbrella PR.
 Do not edit the main HoldSpeak project's current phase or Phase 201 status.
-
