@@ -1,0 +1,10 @@
+# probe_a_approval_refusal — run 2026-09-25T18:19:45Z on main 02a862f2, isolated HOME
+$ HOME=$(mktemp -d) uv run pytest -q -s -p no:cacheprovider pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/design/probes/probe_a_approval_refusal.py
+
+submit -> state=awaiting_decision operation_id=op_bda964a2476c4e7a9ecb281c0b493b26
+decide(agent) -> KernelRefused reason=owner_principal_required_to_decide
+after refusal: operation.state=awaiting_decision receipt=None
+kernel_receipts rows for the operation = 0
+.
+1 passed in 0.28s
+exit=0
