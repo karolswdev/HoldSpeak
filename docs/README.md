@@ -53,7 +53,7 @@ recorded snapshot. Check your installed version when a control is absent.
 
 ## Build and integrate
 
-The MCP sidecar exposes 225 tools across 41 families.
+The MCP sidecar exposes 229 tools across 42 families.
 Its generated roster is the reference for tool names and membership.
 Discovery and execution also depend on the caller's permissions.
 
