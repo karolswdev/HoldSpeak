@@ -31,6 +31,14 @@ Under `assets/story-01-shots/`, `HOLDSPEAK_EVIDENCE_WRITE=1`, each hub in a fres
 - Glass reading (both `after.png` viewed): the row `Architecture boundary review — empty transcript` shows FAILED in the danger tone; no SAVED anywhere; no Open verb and no Run summary on the row. At 1440 the row's expanded well reads `SUMMARY` with the fact `FAILED` (the existing status-facts idiom, `ChairHome.tsx:2215-2228`). The headline reads `2 need you`: the failed import now counts as attention (`hasMeetingAttention`, `ChairHome.tsx:269-272`) beside the SETUP row, which is the existing law for every FAILED meeting (`ChairHome.tsx:811`).
 - `attempts/` — three parked crashed runs (a `:has-text()` observe_at the rig refuses; one `--headless`), with a README. Not evidence.
 
+## Round 2 (Astra's check on built: BOUNCE; `checks/lane-a-built-astra.md` finding 2)
+
+- **The expanded row names the import.** `web/src/desk/chair/ChairHome.tsx:2176-2181,2237`: for `import_failed` (and no failed intel job) the status well head reads `IMPORT` and the cause line is the import worker's `intel_status_detail` (`LAST ERROR · No cues could be parsed from …`); every other failure keeps `SUMMARY`. The head carries `data-testid=arrival-status-well-head`.
+- **Fence:** `web/src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx` — the complete row (the ledger line and its open well): badge FAILED, head IMPORT, the import's cause, no `SUMMARY`, no `SAVED`. Red on a `git archive f6c0c0d1` copy (`Received: "SEP 24Architecture boundary review — empty transcriptFAILEDSUMMARYFAILED"`), green on the branch: `docs/internal/philo/phase-6/badge/round-2/`.
+- **Rig:** `case.philo601.import_failed.badge` now observes the well head (`readable_text IMPORT`); the badge FAILED is a setup check on the same evaluator. `20260925T035149Z-…-1440` VERDICT pass (`'IMPORT' is readable in viewport 1440x900 with rect x 306 y 450 w 40 h 13`); `20260925T035156Z-…-393` VERDICT pass (`x 22 y 307 w 40 h 13`). Glass (both after.png viewed): the row reads FAILED; the well reads IMPORT / FAILED / LAST ERROR with the import's cause; no SUMMARY, no SAVED. The trigger is the pointer on the well head: at 393 the open well sits below the sticky capture bar, the rig has no scroll verb and `End` did not scroll the Arrival; the head has no handler. Parked runs: `attempts/README.md`.
+- **Narrowed:** the story no longer claims that no state falls to SAVED; `importing`/`refused`/`live` are BACKLOG "PHILO-6 follow-ups" row 1 (assigned).
+- **Seen, not changed:** the import's cause names the worker's temporary file (`TMPLYES_VQF.VTT`), not the owner's file name; producer wording, outside this story.
+
 ## Not claimed
 
 - `importing` (`meeting_service.py:198`), `refused` (`meeting_session/intel_admission.py:93`) and `live` (`meeting_session/live_readiness.py:82`) still fall to the SAVED fallback (`intelBadge.ts:31`). They are not terminal failure states of the import path; mapping them is a word decision outside this story. Listed for the orchestrator (BACKLOG candidate).
@@ -58,6 +66,50 @@ Under `assets/story-01-shots/`, `HOLDSPEAK_EVIDENCE_WRITE=1`, each hub in a fres
    Start at  20:40:05
    Duration  3.50s (transform 3.63s, setup 1.82s, import 8.85s, tests 5.66s, environment 7.05s)
 
+API reference checked
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Boundary candidate census checked
+```
+
+### Captured run — 2026-09-25T03:58:43Z
+
+- **Command:** `bash -c set -o pipefail; HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider tests/unit/test_philo6_01_import_badge.py tests/unit/test_philo_graph_atlas.py && (cd web && npx vitest run src/desk/chair) && HOME=$(mktemp -d) uv run python scripts/philo_api_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_graph_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_boundary_census.py --check`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d164c58227ee48708df9c55ad0f76b618543412
+
+```text
+........................................................................ [ 92%]
+......                                                                   [100%]
+78 passed in 1.86s
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-a/web
+
+
+ Test Files  20 passed (20)
+      Tests  103 passed (103)
+   Start at  21:58:46
+   Duration  3.42s (transform 3.27s, setup 2.08s, import 9.41s, tests 5.69s, environment 8.28s)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
 API reference checked
 note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
 note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load

@@ -2169,13 +2169,23 @@ function ArrivalMeetingWells({
   const summary = String(meeting.intelSummary ?? "").trim();
   const job = meeting.intelJob;
   const badge = arrivalIntelBadge(meeting);
+  // PHILO-6-01 round 2 (Astra's check on built, finding 2): the well names
+  // WHAT failed. A failed import is not a failed summary: its well head is
+  // IMPORT and its cause line is the import's (the worker's
+  // `intel_status_detail`, meeting_service.py `_set_import_status`).
+  const importFailed =
+    badge === "FAILED" &&
+    job?.status !== "failed" &&
+    String(meeting.intelStatus ?? "").toLowerCase() === "import_failed";
+  const wellHead = importFailed ? "IMPORT" : "SUMMARY";
+  const cause = importFailed ? meeting.intelStatusDetail : job?.lastError;
   const hasFailureFact = badge === "RETRYING" || badge === "FAILED" || Boolean(job?.lastError);
   const statusFacts = [
     hasFailureFact ? badge : "",
     hasFailureFact && job?.attempts && job.attempts > 0 && receipt
       ? `LAST ATTEMPT · ${egressFor(receipt.attempts[receipt.attempts.length - 1]?.host ?? "").label}`
       : "",
-    job?.lastError ? `LAST ERROR · ${job.lastError}` : "",
+    cause ? `LAST ERROR · ${cause}` : "",
   ].filter(Boolean);
   const hasStatusFacts = statusFacts.length > 0;
   const segments = (meeting.segments ?? []).map((segment) => ({
@@ -2224,7 +2234,7 @@ function ArrivalMeetingWells({
           </div>
         </SurfaceWell>
       ) : hasStatusFacts ? (
-        <SurfaceWell head="SUMMARY">
+        <SurfaceWell head={<span data-testid="arrival-status-well-head">{wellHead}</span>}>
           <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
             {statusFacts.map((fact, index) => (
               <span

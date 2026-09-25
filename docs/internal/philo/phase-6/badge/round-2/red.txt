@@ -1,0 +1,33 @@
+# PHILO-6-01 round 2 RED — git archive f6c0c0d1 (the round-one state, f6c0c0d14b3c627e55ec21146cfd4e6f800d7390) with the round-two test overlaid; the fixture is the unchanged real import-worker wire
+$ cd web && npx vitest run src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx
+
+ RUN  v4.1.9 /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r1/web
+
+ ❯ src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx (1 test | 1 failed) 29ms
+     × badge FAILED, well head IMPORT, the import's cause, and no summary claim 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx > PHILO-6-01 round 2: the failed import's row names the IMPORT > badge FAILED, well head IMPORT, the import's cause, and no summary claim
+AssertionError: expected 'SEP 24Architecture boundary review — …' to contain 'IMPORT'
+
+Expected: "IMPORT"
+Received: "SEP 24Architecture boundary review — empty transcriptFAILEDSUMMARYFAILED"
+
+ ❯ src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx:55:18
+     53|     const text = item.textContent ?? "";
+     54|     // The well names what failed: the import.
+     55|     expect(text).toContain("IMPORT");
+       |                  ^
+     56|     expect(within(item).getByTestId("arrival-status-well-head").textCo…
+     57|     // The cause line is the import worker's.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  21:47:35
+   Duration  767ms (transform 323ms, setup 57ms, import 439ms, tests 29ms, environment 173ms)
+
+exit=1
