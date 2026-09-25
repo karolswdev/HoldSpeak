@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-25 (PHILO-7-02 built on `feat/philo-7-02-article-xi`: membership and decisions under Article XI, the delegation grant and its ratified face; residual 293 -> 284. Earlier: PHILO-7-01 built and round two paid after Astra's check on built (RATIFY-WITH-CONDITIONS): notes, zones and knowledge bases on the contract; the rename repair; discovery words; the shelf alignment; residual 320 -> 293. Earlier: Phase 7 RATIFIED; R5 decision.delete in the grant).
+**Last updated:** 2026-09-25 (PHILO-7-02 round two paid (Astra's check on built, BOUNCE): the grant body P0, receipts in every refusal response, the scroll edge. Earlier: PHILO-7-02 built on `feat/philo-7-02-article-xi`: membership and decisions under Article XI, the delegation grant and its ratified face; residual 293 -> 284. Earlier: PHILO-7-01 built and round two paid after Astra's check on built (RATIFY-WITH-CONDITIONS): notes, zones and knowledge bases on the contract; the rename repair; discovery words; the shelf alignment; residual 320 -> 293. Earlier: Phase 7 RATIFIED; R5 decision.delete in the grant).
 
 ## Vision
 
