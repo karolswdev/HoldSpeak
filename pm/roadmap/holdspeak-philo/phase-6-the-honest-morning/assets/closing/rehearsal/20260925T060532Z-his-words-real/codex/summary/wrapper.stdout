@@ -1,0 +1,3 @@
+astra: role=ask model=gpt-6-astra effort=xhigh rc=0
+astra: session=01a0d72b-4bab-7cc3-9707-f26a322ca568
+astra: report=/Users/karol/dev/tools/wt-philo-6-close/.tmp/two-brains/20260925-000625-ask-philo5-04-summary/last.md

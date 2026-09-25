@@ -1,0 +1,10 @@
+{
+  "elapsed_s": 227.758,
+  "error": {
+    "message": "MCP exchange reconciliation for 'list_mcp_resource_templates' found no unused matching /api/mcp row",
+    "type": "RuntimeError"
+  },
+  "finished_at": "2026-09-25T06:12:42.734852+00:00",
+  "outcome": "blocked",
+  "started_at": "2026-09-25T06:08:54.974929+00:00"
+}

@@ -1,0 +1,14 @@
+DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fkovbyw6/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fkovbyw6/.config/holdspeak/config.json
+PRODUCER_CLOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fkovbyw6/graph-walk-producer-clock.json
+TRANSCRIPT_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fkovbyw6/rehearsal-transcript.jsonl
+WIRING {"has": ["MeetingWebServer routes", "the brief producer clock seam (wall clock + the run's offset file)", "bounded HTTP rehearsal recording", "the database owner lock (port published)", "the intelligence queue drainer"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyListener (no native keystrokes)", "voice_session / device registry", "transcriber warm-up", "the deferred plugin-queue thread", "the Cadence Engine tick", "the heartbeat conductor loop (not requested by the case)"]}
+HUB_READY http://127.0.0.1:51014
+
+Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Fetching 4 files:  25%|██▌       | 1/4 [00:00<00:00,  3.74it/s]
+Fetching 4 files: 100%|██████████| 4/4 [00:06<00:00,  1.63s/it]
+Fetching 4 files: 100%|██████████| 4/4 [00:06<00:00,  1.52s/it]
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/multiprocessing/resource_tracker.py:396: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-wh1d4mkc'}
+  warnings.warn(
