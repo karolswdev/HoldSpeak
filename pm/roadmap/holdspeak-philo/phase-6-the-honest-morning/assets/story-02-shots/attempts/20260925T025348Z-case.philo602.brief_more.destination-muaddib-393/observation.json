@@ -1,0 +1,287 @@
+{
+  "id": "obs-20260925T025348Z-case.philo602.brief_more.destination-muaddib-393",
+  "run_id": "20260925T025348Z-case.philo602.brief_more.destination-muaddib-393",
+  "case_id": "case.philo602.brief_more.destination",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_more",
+    "edge.face.arrival_brief_generate",
+    "edge.route.brief_generate"
+  ],
+  "state_id": "state.briefs.populated",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "bd29eb26ff27567fb94d665a16f08e6ed8e798c376f45521fffa0e5936bb47ae",
+      "assets": [
+        "index-DoC_QuFo.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50281",
+      "port": 50281,
+      "pid": 38069,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xsqrsa6y",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xsqrsa6y/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.txt": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:53:48.774854+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "a81688ba03c865740565f25224540a72bba527ec1ddeb9787ed870e5f9946ed8",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.txt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "ad142fe1",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "ad142fe1"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/ad142fe1",
+        "fields": {
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 1,
+        "elapsed_s": 0.014,
+        "payload": {
+          "id": "ad142fe1",
+          "started_at": "2026-09-24T20:53:52.703055",
+          "ended_at": "2026-09-24T20:54:22.703055",
+          "duration": 30.0,
+          "formatted_duration": "00:30",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "HoldSpeak synthetic architect meeting.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 6.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "use SQLite for the local meeting ledger. Owner: Maya Chen. Action: Maya Chen will write the migration plan by Friday.",
+              "speaker": "Decision one",
+              "speaker_id": null,
+              "start_time": 6.0,
+              "end_time": 12.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "keep summary retrieval on the local desk after a hub restart. Owner: Leo Martinez. Action: Leo Martinez will test restart retrieval on Tuesday.",
+              "speaker": "Decision two",
+              "speaker_id": null,
+              "start_time": 12.0,
+              "end_time": 18.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "use a recorded provider reply for isolated rig tests. Owner: Priya Shah. Action: Priya Shah will add the named failure fence before ship.",
+              "speaker": "Decision three",
+              "speaker_id": null,
+              "start_time": 18.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "HoldSpeak synthetic architect three.",
+              "speaker": "Marker",
+              "speaker_id": null,
+              "start_time": 24.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 74,
+          "sync_modified_at": "2026-09-24T20:53:52.708646",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/meetings/ad142fe1/intelligence/run",
+      "adapter": "http-route",
+      "status": 409,
+      "response": "{\"success\":false,\"error\":\"The summary route is not available.\",\"plainReason\":\"The summary route is not available.\",\"code\":\"route_unavailable\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":{\"attempts\":[],\"job_id\":\"ij_1a1db87de2e4e500b5b8fca8b198f6c1bc7d6fcda1045548b95490c739bcc154\",\"meeting_id\":\"ad142fe1\",\"outcome\":\"refused\",\"receipt_id\":\"rr_3fc5a36c3bede89838ff1aca639324ed\",\"selection_hash\":null},\"last_refusal\":{\"a",
+      "response_sha256": "335af861cb430e6ec1ed6a655f177cb2667fa067af099c308e9d006aac8f7e07"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-missing/shelf",
+      "adapter": "http-route",
+      "status": 404,
+      "response": "{\"detail\":\"Unknown brief item: brief-item-missing\"}",
+      "response_sha256": "1b9d11beaf209a4c724ac60cb85b77d7a6c4903c3469901f6f16062919d28811"
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "meeting_id": "ad142fe1"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: ui step wait_for on '[data-testid=arrival-brief-more]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-testid=arrival-brief-more]\").first to be visible\n"
+  ],
+  "complete": true,
+  "setup_error": {
+    "step": {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-more]",
+      "why": "the fold is drawn: more than three rows wait"
+    },
+    "error": "ui step wait_for on '[data-testid=arrival-brief-more]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-testid=arrival-brief-more]\").first to be visible\n"
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-6-a/pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-02-shots/before-origin-main/20260925T025348Z-case.philo602.brief_more.destination-muaddib-393/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xsqrsa6y/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xsqrsa6y/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50281"
+  ],
+  "duration_s": 15.649
+}

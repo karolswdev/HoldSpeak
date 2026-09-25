@@ -1,0 +1,17 @@
+# PHILO-6-01 GREEN — branch feat/philo-6-a-badge-brief (working tree over 66205729332ef66a6d16a186c04ae4801311734a)
+$ HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo6_01_import_badge.py
+.                                                                        [100%]
+1 passed in 1.33s
+exit=0
+
+$ cd web && npx vitest run src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-a/web
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:36:29
+   Duration  772ms (transform 326ms, setup 60ms, import 442ms, tests 27ms, environment 175ms)
+
+exit=0

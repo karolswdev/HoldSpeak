@@ -1,0 +1,232 @@
+# PHILO-6-01 RED — git archive origin/main (66205729332ef66a6d16a186c04ae4801311734a) with the branch's tests overlaid
+$ HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo6_01_import_badge.py
+.                                                                        [100%]
+1 passed in 5.91s
+exit=0
+
+$ cd web && npx vitest run src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx
+
+ RUN  v4.1.9 /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/base/web
+
+ ❯ src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx (3 tests | 2 failed) 1033ms
+     × the Arrival row of the producer's failed import shows the FAILED badge 1030ms
+     × names the states the badge covers; the failure states are FAILED 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx > PHILO-6-01 a failed import reads FAILED, never SAVED > the Arrival row of the producer's failed import shows the FAILED badge
+AssertionError: expected 'SAVED' to be 'FAILED' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"chair"[39m
+        [33mdata-testid[39m=[32m"chair"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"arrival-headline"[39m
+          [33mdata-testid[39m=[32m"arrival-headline"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"arrival-display arrival-display--accent"[39m
+            [33mdata-testid[39m=[32m"arrival-display"[39m
+          [36m>[39m
+            [0m1 need you[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-blocker"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mSETUP[0m
+              [36m</h3>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger"[39m
+              [33mdata-cols[39m=[32m"room"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-count"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-blocker-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mCould not read setup[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--secondary btn--sm "[39m
+                      [33mdata-testid[39m=[32m"arrival-blocker-verb-unknown"[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mTry again[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-brief"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBRIEF[0m
+              [36m</h3>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                [33mdata-scope[39m=[32m"local"[39m
+                [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+              [36m>[39m
+                [0mTHIS DEVICE[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGenerate[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"arrival-brief-empty"[39m
+            [36m>[39m
+              [0mNo brief yet[0m
+            [36m</span>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-meetings"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mMEETINGS 1[0m
+              [36m</h3>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger"[39m
+              [33mdata-cols[39m=[32m"room"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-count"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-open[39m=[32m"true"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-meeting-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-time"[39m
+                  [36m>[39m
+                    [0mSEP 24[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mArchitecture boundary review — empty transcript[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"arrival-meeting-badge"[39m
+                    [33mdata-badge[39m=[32m"saved"[39m
+                    [33mdata-testid[39m=[32m"arrival-meeting-badge"[39m
+                  [36m>[39m
+                    [0mSAVED[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mOpen[0m
+                    [36m</button>[39m
+                 ...
+
+Expected: "FAILED"
+Received: "SAVED"
+
+ ❯ src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx:51:51
+     49|     render(<ChairHome />);
+     50|     const badge = await screen.findByTestId("arrival-meeting-badge");
+     51|     await waitFor(() => expect(badge.textContent).toBe("FAILED"));
+       |                                                   ^
+     52|     expect(badge.getAttribute("data-badge")).toBe("failed");
+     53|     expect(screen.getByTestId("arrival-meeting-row").textContent).not.…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx > PHILO-6-01 a failed import reads FAILED, never SAVED > names the states the badge covers; the failure states are FAILED
+AssertionError: import_failed: expected 'SAVED' to be 'FAILED' // Object.is equality
+
+Expected: "FAILED"
+Received: "SAVED"
+
+ ❯ src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx:73:40
+     71|     };
+     72|     for (const [state, badge] of Object.entries(covered)) {
+     73|       expect(intelBadge(state), state).toBe(badge);
+       |                                        ^
+     74|     }
+     75|     expect(intelBadge(null)).toBe("SAVED");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:36:24
+   Duration  1.79s (transform 326ms, setup 60ms, import 445ms, tests 1.03s, environment 175ms)
+
+exit=1

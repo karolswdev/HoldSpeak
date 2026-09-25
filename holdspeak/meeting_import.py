@@ -71,9 +71,20 @@ ProgressCallback = Callable[[int, int], None]
 
 
 class MeetingImportError(HoldSpeakError):
-    """A user-actionable import failure (bad file, missing ffmpeg, no speech)."""
+    """A user-actionable import failure (bad file, missing ffmpeg, no speech).
+
+    PHILO-6-01 round 3 (UX-CANON A.3): ``cause`` is the SHORT class the face
+    shows (``LAST ERROR · <cause>``): no path, no file name, no sentence. The
+    message stays the actionable detail for logs and the CLI.
+    """
 
     code: str = "MEETING_IMPORT_ERROR"
+
+    def __init__(
+        self, *args: object, code: str | None = None, cause: str = "IMPORT ERROR"
+    ) -> None:
+        super().__init__(*args, code=code)
+        self.cause = cause
 
 
 @dataclass
@@ -144,7 +155,9 @@ def _decode_with_ffmpeg(path: Path) -> tuple[np.ndarray, int]:
     if proc.returncode != 0:
         detail = proc.stderr.decode(errors="replace").strip().splitlines()
         tail = detail[-1] if detail else "unknown ffmpeg error"
-        raise MeetingImportError(f"ffmpeg could not decode {path.name}: {tail}")
+        raise MeetingImportError(
+            f"ffmpeg could not decode {path.name}: {tail}", cause="AUDIO DID NOT DECODE"
+        )
     audio = np.frombuffer(proc.stdout, dtype=np.int16).astype(np.float32) / 32768.0
     return audio, TARGET_SAMPLE_RATE
 
@@ -171,7 +184,8 @@ def validate_format(filename: str) -> None:
             raise MeetingImportError(
                 f"Importing {suffix} audio requires ffmpeg on your PATH "
                 "(e.g. `brew install ffmpeg` or your package manager). "
-                "WAV files import without it."
+                "WAV files import without it.",
+                cause="FFMPEG NOT INSTALLED"
             )
         return
     raise MeetingImportError(
@@ -179,7 +193,8 @@ def validate_format(filename: str) -> None:
         + ", ".join(sorted(FFMPEG_SUFFIXES))
         + " with ffmpeg installed; transcripts: "
         + ", ".join(sorted(TRANSCRIPT_SUFFIXES))
-        + "."
+        + ".",
+        cause="UNSUPPORTED TYPE"
     )
 
 
@@ -199,20 +214,23 @@ def load_audio(path: Path) -> tuple[np.ndarray, int]:
                 return _decode_with_ffmpeg(path)
             raise MeetingImportError(
                 f"{path.name} is not a plain PCM WAV ({exc}). Install ffmpeg to "
-                "import compressed or non-PCM audio (e.g. `brew install ffmpeg`)."
+                "import compressed or non-PCM audio (e.g. `brew install ffmpeg`).",
+                cause="UNSUPPORTED TYPE"
             ) from exc
     if suffix in FFMPEG_SUFFIXES:
         if not ffmpeg_available():
             raise MeetingImportError(
                 f"Importing {suffix} audio requires ffmpeg on your PATH "
                 "(e.g. `brew install ffmpeg` or your package manager). "
-                "WAV files import without it."
+                "WAV files import without it.",
+                cause="FFMPEG NOT INSTALLED"
             )
         return _decode_with_ffmpeg(path)
     raise MeetingImportError(
         f"Unsupported audio format: {suffix or path.name}. Supported: .wav natively; "
         + ", ".join(sorted(FFMPEG_SUFFIXES))
-        + " with ffmpeg installed."
+        + " with ffmpeg installed.",
+        cause="UNSUPPORTED TYPE"
     )
 
 
@@ -240,7 +258,7 @@ def import_meeting(
     """
     path = Path(path)
     if not path.is_file():
-        raise MeetingImportError(f"No such audio file: {path}")
+        raise MeetingImportError(f"No such audio file: {path}", cause="FILE NOT FOUND")
 
     audio, rate = load_audio(path)
     if rate != TARGET_SAMPLE_RATE:
@@ -248,7 +266,8 @@ def import_meeting(
     duration = len(audio) / float(TARGET_SAMPLE_RATE)
     if duration < 0.5:
         raise MeetingImportError(
-            f"{path.name} contains less than half a second of audio — nothing to import."
+            f"{path.name} contains less than half a second of audio — nothing to import.",
+            cause="AUDIO TOO SHORT"
         )
 
     if started_at is None:
@@ -291,7 +310,8 @@ def import_meeting(
     if not segments:
         raise MeetingImportError(
             f"No speech could be transcribed from {path.name} "
-            f"({windows_total} window(s) checked). Nothing was imported."
+            f"({windows_total} window(s) checked). Nothing was imported.",
+            cause="NO SPEECH FOUND"
         )
 
     return _persist_import(
@@ -439,11 +459,13 @@ def import_transcript(
     """
     path = Path(path)
     if not path.is_file():
-        raise MeetingImportError(f"No such transcript file: {path}")
+        raise MeetingImportError(f"No such transcript file: {path}", cause="FILE NOT FOUND")
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
-        raise MeetingImportError(f"Could not read {path.name}: {exc}") from exc
+        raise MeetingImportError(
+            f"Could not read {path.name}: {exc}", cause="FILE NOT READABLE"
+        ) from exc
 
     fallback = (speaker or DEFAULT_TRANSCRIPT_SPEAKER_LABEL).strip() or (
         DEFAULT_TRANSCRIPT_SPEAKER_LABEL
@@ -451,7 +473,7 @@ def import_transcript(
     try:
         parsed = parse_transcript(text, path.name, fallback_speaker=fallback)
     except TranscriptParseError as exc:
-        raise MeetingImportError(str(exc)) from exc
+        raise MeetingImportError(str(exc), cause=exc.cause) from exc
 
     segments = [
         TranscriptSegment(

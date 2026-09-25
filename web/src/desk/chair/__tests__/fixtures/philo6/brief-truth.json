@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-09-25T07:19:00-11:00",
+  "generated_label": "GENERATED SEP 25 07:19",
+  "headline": "1 meeting this week, 1 thing changed, 2 things broke.",
+  "id": "brief-philo6-00",
+  "is_empty": false,
+  "ledger": {
+    "operations": 0,
+    "since": null
+  },
+  "period_end": "2026-09-25T07:19:00-11:00",
+  "period_label": "SEP 21 \u2013 25",
+  "period_start": "2026-09-24T17:00:00-11:00",
+  "person_sections_state": "unavailable",
+  "sections": {
+    "broke": [
+      {
+        "created_at": null,
+        "detail": "LookupError('Unknown brief item: brief-item-missing')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-01",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-01",
+        "text": "Brief triage did not save"
+      },
+      {
+        "created_at": null,
+        "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-02",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-02",
+        "text": "Summary did not start: Architecture review"
+      }
+    ],
+    "changed": [
+      {
+        "created_at": null,
+        "detail": "30 min",
+        "id": "brief-item-philo6-03",
+        "priority": 50,
+        "section": "changed",
+        "source_ref": "meeting:m-arch",
+        "text": "Meeting recorded: Architecture review"
+      }
+    ],
+    "decisions": [],
+    "this_week": [
+      {
+        "created_at": null,
+        "detail": null,
+        "id": "brief-cal-total-philo6-04",
+        "priority": 60,
+        "section": "this_week",
+        "source_ref": "calendar:week",
+        "text": "1 meeting this week"
+      },
+      {
+        "created_at": null,
+        "detail": null,
+        "id": "brief-cal-next-philo6-05",
+        "priority": 55,
+        "section": "this_week",
+        "source_ref": "calendar_event:evt-sat",
+        "text": "Next: Design review at 10:00"
+      }
+    ],
+    "waiting": []
+  },
+  "shelf": {
+    "brief-break-pipeline-brief-philo6-00-philo6-01": "acknowledged"
+  }
+}

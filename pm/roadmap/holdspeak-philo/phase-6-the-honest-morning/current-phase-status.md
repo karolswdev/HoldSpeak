@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 (RATIFIED; in build).
+**Last updated:** 2026-09-24 night (RATIFIED; in build; 01 and 02 done, round 2 after Astra's BOUNCE on built).
 
 ## Goal
 
@@ -52,15 +52,15 @@ The six defects come from retained evidence, not from taste. The source is the P
 
 - [ ] 1. Each repair's fence is red on a `git archive origin/main` copy with the branch's tests overlaid, and green on the built branch; both transports where the seam has two (HTTP and `op`). "Unknown tool" or a missing symbol is never counted as red.
 - [ ] 2. The two canvases are ratified by the owner BEFORE their build: (a) the toast placement at 1440 and 393 (story 03); (b) any count label or count meaning change, with the exact strings, at both widths (story 02). If story 02 changes no label and no meaning, (b) is recorded as not needed.
-- [ ] 3. The closing chain on the rig at 1440 and 393: the Phase 4 exit-1 case `case.closure.chain.s5_next_day_brief_has_it` AS WRITTEN (`docs/internal/philo/graph/atlas-phase3.json:1946`) AND the Phase 5 rehearsal driver `scripts/philo5_his_words.py` re-run. The morning shots show: no SAVED on a failed import; one time format; counts that agree with their labels; no zero token; no overlap at 393; one broke row per cause; the decision body present at once after Done.
+- [ ] 3. The closing chain on the rig at 1440 and 393: the Phase 4 exit-1 case `case.closure.chain.s5_next_day_brief_has_it` AS WRITTEN (`docs/internal/philo/graph/atlas-phase3.json:1946`) AND the Phase 5 rehearsal driver `scripts/philo5_his_words.py` re-run. The morning shots show: no SAVED on a failed import; one time format; counts that agree with their labels; no zero token; no overlap at 393; one broke row per cause; the decision body present at once after Done. **Assigned to this run (round 3, Astra's round-two ruling 5):** `case.closure.chain.s5_next_day_brief_with_breakage.op` (`docs/internal/philo/graph/atlas-phase3.json:4780`), whose check and capture were reworded in round 2 (row 0 is checked for `Decision did not load`, then its id is captured). It is UNVERIFIED LIVE until this run; a schema fence does not close it.
 - [ ] 4. Rehearsed, owner-reviewed shots (never recorded as a sitting).
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-6-01 | The honest import badge | in-progress | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | - |
-| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
+| PHILO-6-01 | The honest import badge | done | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | [evidence-story-01](./evidence-story-01.md) |
+| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | done | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
 | PHILO-6-04 | One cause, one row | done | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-6-05 | The decision body at once | done | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -80,6 +80,13 @@ Lane law for this phase:
 
 ## Where we are
 
+2026-09-24 night: lane A ROUND 3 after Astra's round-two check (BOUNCE, `checks/lane-a-built-astra.md` "Round two"). 02: a brief line states only what the record proves — the outcome is the OUTERMOST call (earliest start; a nested call sorts after its parent because the observer stores call-start time); a Changed line only from the truthful table (story 02), the follow-up line from the recorded `verb` (`Follow-up completed` only for `done`), `Decision recorded` from `create_from_*` only with its inner `create`; reads, reconciliations and a cached brief tell only their failure; an unknown success writes nothing. 01: the import cause is a short class at the producer (`LAST ERROR · NO TRANSCRIPT LINES`, no temp file name); the rig case re-run PASS at 1440 and 393. Fences on an ADVANCING clock, red on a `git archive 27ee9559` copy, green on the branch (`docs/internal/philo/phase-6/brief/round-3/`). The changed S5 `.op` case is assigned to exit 3. Astra checks round 3.
+
+2026-09-24 night: lane A ROUND 2 after Astra's check on built (BOUNCE, `checks/lane-a-built-astra.md`). 01: the expanded well of a failed import reads `IMPORT` with the import's cause (never `SUMMARY · FAILED`); the rig case re-shot PASS at 1440 and 393 on the well head; the broad "unmapped states" claim narrowed (`importing`/`refused`/`live` → BACKLOG "PHILO-6 follow-ups"). 02: a failed operation makes only its Broke row (no success line); the fallback says `<Object> did not <verb>` with enumerated objects (no `Primitive`); the atlas selectors changed with the words; the rehearsal box replaced by a SCOPE AMENDMENT (carried to exit 3; see "Decisions made"). Fences red on a `git archive f6c0c0d1` copy, green on the branch (`docs/internal/philo/phase-6/{badge,brief}/round-2/`). Astra checks round 2.
+
+2026-09-24 night: PHILO-6-02 DONE in lane A: ONE clock (the producer's `generated_at` in the viewer's zone, the Brief view's existing stamp, on the caption and the receipt); the counts keep their labels and meanings (no canvas needed: the raw-id filter hid raw producer rows from the head); human producer words (`Summary requested: <title>`, `Summary did not start: <title>`, no `Service.method`). Fences red on `origin/main`, green on the branch; the fold-destination walk FAIL before / PASS after at 1440 and 393. OPEN: the story's rehearsal box — `scripts/philo5_his_words.py` blocked three times before the brief stage (the Codex decision turn used `desk.create`); carried to exit 3. Astra checks on built.
+
+2026-09-24 night: PHILO-6-01 DONE in lane A (`feat/philo-6-a-badge-brief`): a failed import reads FAILED on the Arrival (`web/src/desk/chair/intelBadge.ts:26`); the fence is red on `origin/main` (SAVED) and green on the branch; the rig case `case.philo601.import_failed.badge` PASS at 1440 and 393. Astra checks on built. Next in the lane: PHILO-6-02.
 2026-09-24 night: lane B merged (04 done, 05 done; 03's zero omission + the ratified canvas); Astra builds 03's placement; lane A in round three (the brief's outcome-blind wording and the import cause line).
 
 2026-09-24 night — lane B round two records the actual Muad’Dib counsel at `checks/lane-b-built-muaddib.md` and relabels the earlier Astra-invoked claude -p checks. Records and canvas corrections follow that counsel; 03 stays in-progress, with placement unbuilt and unratified. Off-Arrival proposal: a top-of-surface flow slot inside Meetings and the Floor. Phone ask 2 explicitly moves the reading position. The 0/0 proposal verb is withheld with a red-before-fix fence. Three follow-ups now also live in BACKLOG “PHILO-6 follow-ups”. One gated update to PR #647; no merge.
@@ -110,6 +117,12 @@ Lane law for this phase:
 
 ## Decisions made (this phase)
 
+- 2026-09-24 night — **Round 3, the event-selection tie rule** (lane A): a correlated operation's outcome is the call with the EARLIEST start; on a start-time tie, the HIGHEST insertion id. The brief said "lowest insertion id"; that picks the CHILD, because the observer emits in `finally` and the enclosing call finishes (and inserts) last (`holdspeak/services/observer.py:113` stores `t0`; `:158,185` emit in `finally`). Astra may overrule.
+- 2026-09-24 night — **Round 3, `Follow-up date set`** (lane A) instead of the brief's `Follow-up dated`: ASD-STE100 has no verb "date"; the face verb is `Set a date`. `dismiss` and `snooze` get no Changed line (no row names them). Astra may overrule.
+
+- 2026-09-24 night — **SCOPE AMENDMENT, story 02** (`docs/internal/ORCHESTRATION.md:69`; the owner may overrule at the sitting): the Phase 5 rehearsal re-run (`scripts/philo5_his_words.py` at 1440 and 393) moves from story 02 to exit 3 (the closing chain). The driver failures are inherited (Astra, `checks/lane-a-built-astra.md` finding 6: main `66205729` fails on tool selection, Codex chose `door.add_item`; the branch fails MCP resource-list reconciliation after a correct `desk.create`). Homes: tool selection = BACKLOG "PHILO-5-04 follow-ups" MCP discoverability row (Phase 7 story 01/04); reconciliation = BACKLOG "PHILO-6 follow-ups" row 2 (Muad'Dib, before exit 3). Story 02 stays DONE only with this amendment — Muad'Dib (lane A, round 2).
+- 2026-09-24 night — story 02 round 2: a failed operation makes NO Changed row (its one line is the Broke row), rather than a failure-worded Changed row: one cause, one row — Muad'Dib (lane A).
+- 2026-09-24 night — story 02: the brief's ONE clock is the producer's `generated_at` in the viewer's zone (the Brief view's stamp, HS-175 C8), on the caption and the receipt; exit 2(b) (the count canvas) is NOT needed: no count label or meaning changed — Muad'Dib (lane A).
 - 2026-09-24 night — the owner RATIFIED the story 03 placement canvas (in flow above the capture bar; top-of-surface off the Arrival; phone auto-scroll accepted). Lane B (04, 05, the zero omission, the canvas) MERGED `4d55d4d5` after Muad'Dib's counsel (conditions paid in r2). Astra builds the placement now — Muad'Dib.
 
 - 2026-09-24 night — PHILO-6-05 Astra-invoked claude -p built check RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-astra-invoked-claude.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.

@@ -1,0 +1,193 @@
+{
+  "id": "obs-20260925T023735Z-case.philo601.import_failed.badge-muaddib-393",
+  "run_id": "20260925T023735Z-case.philo601.import_failed.badge-muaddib-393",
+  "case_id": "case.philo601.import_failed.badge",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import",
+    "edge.face.arrival_meeting_row"
+  ],
+  "state_id": "state.meetings.transcription.absent",
+  "provenance": {
+    "revision": "66205729332ef66a6d16a186c04ae4801311734a",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "cb5d59f81be0f5cd108d8e8219fe885f8408a9b3f17a9a61929ea4a16fa44421",
+      "assets": [
+        "index-DNwYWdnx.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64434",
+      "port": 64434,
+      "pid": 24617,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z7lc6up0",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z7lc6up0/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo5_empty.vtt": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:37:36.165727+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "566d4546e23a04aebf3474dc2bb535716ecf2e2c2c6b5141e25abb02750eaeb7",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo5_empty.vtt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "4c58a7b0",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "4c58a7b0"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/4c58a7b0",
+        "fields": {
+          "/intel_status/state": "import_failed",
+          "/segments": []
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 2,
+        "elapsed_s": 0.524,
+        "payload": {
+          "id": "4c58a7b0",
+          "started_at": "2026-09-24T20:37:40.033127",
+          "ended_at": null,
+          "duration": 0.524017,
+          "formatted_duration": "00:00",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "No cues could be parsed from tmplbv40c5a.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-24T20:37:40.039261",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/intel_status/state": true,
+          "/segments": true
+        }
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; the real import route and worker receive a header-only VTT and leave intel_status.state = import_failed with no segments (the PHILO-5-03 producer probe).",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "4c58a7b0"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "not_run",
+  "notes": [],
+  "complete": true,
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z7lc6up0/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z7lc6up0/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64434"
+  ],
+  "duration_s": 7.157
+}

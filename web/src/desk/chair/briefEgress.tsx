@@ -13,6 +13,7 @@
  * names THIS DEVICE because that is true, not because it is the default.
  */
 import { EgressChip } from "../surface";
+import { generatedStampLocal } from "../pullouts/views/BriefView";
 
 export function BriefEgress() {
   return (
@@ -44,10 +45,10 @@ export function briefReceipt(brief: GeneratedBrief | null): string | null {
     (total, rows) => total + (Array.isArray(rows) ? rows.length : 0),
     0,
   );
-  const when = new Date(String(brief.generated_at ?? ""));
-  const time = Number.isNaN(when.getTime())
-    ? ""
-    : when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // PHILO-6-02 (a): one clock. The receipt tells the producer's time in the
+  // viewer's zone through the same stamp as the caption above it
+  // (`GENERATED SEP 25 18:19`), never a second format.
+  const time = generatedStampLocal(brief.generated_at) ?? "";
   // UX-CANON A.8 — no counter of zero: an empty brief says it is ready
   // and says nothing about a count.
   const parts = ["Brief ready"];

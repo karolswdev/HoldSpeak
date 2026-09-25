@@ -1,0 +1,162 @@
+# PHILO-6-02 RED — git archive origin/main (66205729332ef66a6d16a186c04ae4801311734a) with the branch's tests overlaid
+# The producer link runs FIRST with PHILO6_WRITE_FIXTURE=1, so the rendered link reads the BASE producer's own brief.
+# test_generic_fallback_has_no_raw_names fails on base by a missing symbol (_operation_text): NOT counted as a red.
+$ HOME=$(mktemp -d) PHILO6_WRITE_FIXTURE=1 uv run pytest -q tests/unit/test_philo6_02_brief_truth.py
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_________________________ test_the_real_producer_brief _________________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-856/test_the_real_producer_brief0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e0050f0>
+
+    def test_the_real_producer_brief(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        client = _hub(db, monkeypatch, tmp_path)
+        _seed(db, client, monkeypatch)
+    
+        first = client.post("/api/brief/generate")
+        assert first.status_code == 200, first.text
+        body = first.json()
+        changed = [i["text"] for i in body["sections"]["changed"]]
+        broke = [i["text"] for i in body["sections"]["broke"]]
+        assert body["sections"]["this_week"], body["sections"]
+        # One shelved row: Ack the brief-triage failure through the route.
+        triage = [
+            i for i in body["sections"]["broke"]
+            if "Unknown brief item" in str(i.get("detail") or "")
+        ]
+        assert len(triage) == 1, broke
+        acked = client.post(
+            f"/api/brief/items/{triage[0]['id']}/shelf", json={"state": "acknowledged"}
+        )
+        assert acked.status_code == 200, acked.text
+        latest = client.get("/api/brief/latest")
+        assert latest.status_code == 200
+        payload = _stable(latest.json())
+        # The hub's own label is in the hub's offset (07:19), the stamp is not.
+        assert payload["generated_label"] == "GENERATED SEP 25 07:19"
+        assert payload["generated_at"].endswith("-11:00")
+    
+        if os.environ.get("PHILO6_WRITE_FIXTURE") == "1":
+            FIXTURE.parent.mkdir(parents=True, exist_ok=True)
+            FIXTURE.write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
+        recorded = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        assert recorded == payload, (
+            "the vitest fixture drifted from the real producer; "
+            "re-run with PHILO6_WRITE_FIXTURE=1"
+        )
+    
+        # (c) no stored item carries Service.method text.
+        with db._connection() as conn:
+            stored = [str(r["text"]) for r in conn.execute("SELECT text FROM monday_brief_items")]
+        assert stored, "the producer stored no items"
+>       assert [t for t in stored if RAW.search(t)] == [], stored
+E       AssertionError: ['1 meeting this week', 'Next: Design review at 10:00', 'Meeting recorded: Architecture review', 'MeetingIntelService.run_intelligence', 'MondayBriefService.shelve failed', 'MeetingIntelService.run_intelligence failed']
+E       assert ['MeetingInte...gence failed'] == []
+E         
+E         Left contains 3 more items, first extra item: 'MeetingIntelService.run_intelligence'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_brief_truth.py:188: AssertionError
+____________________ test_generic_fallback_has_no_raw_names ____________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-856/test_generic_fallback_has_no_r0')
+
+    def test_generic_fallback_has_no_raw_names(tmp_path):
+        """Every observed call outside the word table still reads as words."""
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        db = Database(tmp_path / "hub.db")
+        service = MondayBriefService(db)
+        with db._connection() as conn:
+>           change = service._operation_text(conn, "NoteService", "create_note", "{}", broke=False)
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'MondayBriefService' object has no attribute '_operation_text'
+
+tests/unit/test_philo6_02_brief_truth.py:203: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo6_02_brief_truth.py::test_the_real_producer_brief
+FAILED tests/unit/test_philo6_02_brief_truth.py::test_generic_fallback_has_no_raw_names
+2 failed in 0.94s
+exit=1
+
+# the base producer's brief (texts):
+generated_at 2026-09-25T07:19:00-11:00 | generated_label GENERATED SEP 25 07:19 | shelf {'brief-break-pipeline-brief-philo6-00-philo6-02': 'acknowledged'}
+  broke | MeetingIntelService.run_intelligence failed | brief-break-pipeline-brief-philo6-00-philo6-01
+  broke | MondayBriefService.shelve failed | brief-break-pipeline-brief-philo6-00-philo6-02
+  changed | Meeting recorded: Architecture review | brief-item-philo6-03
+  changed | MeetingIntelService.run_intelligence | brief-item-philo6-04
+  this_week | 1 meeting this week | brief-cal-total-philo6-06
+  this_week | Next: Design review at 10:00 | brief-cal-next-philo6-07
+
+$ cd web && npx vitest run src/desk/chair/__tests__/briefTruth.philo602.test.tsx
+
+ RUN  v4.1.9 /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/base/web
+
+ ❯ src/desk/chair/__tests__/briefTruth.philo602.test.tsx (4 tests | 3 failed) 52ms
+     × (a) the caption and the receipt tell ONE time: the producer's instant in the viewer's zone 35ms
+     × (b) the head counts the rows waiting; the receipt counts the generated snapshot 7ms
+     × (c) no raw Service.method name renders on the Arrival 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/briefTruth.philo602.test.tsx > PHILO-6-02 the brief tells one time and counts what its labels say > (a) the caption and the receipt tell ONE time: the producer's instant in the viewer's zone
+AssertionError: expected '8:19 PM' to be 'SEP 25 07:19' // Object.is equality
+
+Expected: "SEP 25 07:19"
+Received: "8:19 PM"
+
+ ❯ src/desk/chair/__tests__/briefTruth.philo602.test.tsx:78:25
+     76|     const captionTime = caption.textContent?.match(STAMP)?.[0];
+     77|     const receiptTime = receipt.textContent?.match(STAMP)?.[0];
+     78|     expect(receiptTime).toBe(captionTime);
+       |                         ^
+     79|     expect(captionTime).toBe("SEP 25 20:19");
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/desk/chair/__tests__/briefTruth.philo602.test.tsx > PHILO-6-02 the brief tells one time and counts what its labels say > (b) the head counts the rows waiting; the receipt counts the generated snapshot
+AssertionError: expected 'BRIEF · 1 THING WAITINGTHIS DEVICEGen…' to contain 'BRIEF · 3 THINGS WAITING'
+
+Expected: "BRIEF · 3 THINGS WAITING"
+Received: "BRIEF · 1 THING WAITINGTHIS DEVICEGenerateMeeting recorded: Architecture reviewAckDeferSEP 21 – 25 · GENERATED SEP 25 07:19Brief ready · 6 items · 8:19 PM"
+
+ ❯ src/desk/chair/__tests__/briefTruth.philo602.test.tsx:90:33
+     88|     // The head: the Arrival rows still waiting, nothing hidden.
+     89|     const section = screen.getByTestId("arrival-brief");
+     90|     expect(section.textContent).toContain(`BRIEF · ${waiting.length} T…
+       |                                 ^
+     91|     const shown = within(section).getAllByTestId("arrival-brief-row").…
+     92|     const folded = Number(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/desk/chair/__tests__/briefTruth.philo602.test.tsx > PHILO-6-02 the brief tells one time and counts what its labels say > (c) no raw Service.method name renders on the Arrival
+AssertionError: expected 'MeetingIntelService.run_intelligence' not to match /[A-Z][A-Za-z]*(?:Service|Manager|Hand…/
+
+- Expected:
+/[A-Z][A-Za-z]*(?:Service|Manager|Handler|Provider)\.[a-z_]+/
+
++ Received:
+"MeetingIntelService.run_intelligence"
+
+ ❯ src/desk/chair/__tests__/briefTruth.philo602.test.tsx:106:53
+    104|     await screen.findByTestId("arrival-brief-receipt");
+    105|     expect(container.textContent ?? "").not.toMatch(RAW);
+    106|     for (const row of waiting) expect(row.text).not.toMatch(RAW);
+       |                                                     ^
+    107|   });
+    108| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  20:48:48
+   Duration  849ms (transform 338ms, setup 60ms, import 493ms, tests 52ms, environment 173ms)
+
+exit=1

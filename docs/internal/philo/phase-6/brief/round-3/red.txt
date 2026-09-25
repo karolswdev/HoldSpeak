@@ -1,0 +1,379 @@
+# PHILO-6 round 3 RED — git archive 27ee9559 (the round-two state) with the round-three fences overlaid
+# Interpreter: the worktree's .venv with PYTHONPATH=<archive> (holdspeak imports resolve to the archive: /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r2/holdspeak/services/monday_brief_service.py)
+# Clock: ADVANCING (1 ms per observer time.time() read), never frozen.
+# test_every_changed_row_has_a_real_producer fails on the archive by a missing symbol (changed_line_rows): NOT counted as a red.
+$ HOME=$(mktemp -d) PYTHONPATH=. .venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo6_02_round3_record_truth.py tests/unit/test_philo6_01_import_badge.py
+F.FFFF...FF.F.FFFF..F                                                    [100%]
+=================================== FAILURES ===================================
+______ test_nested_success_keeps_the_parents_title_on_an_advancing_clock _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_nested_success_keeps_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fa1d6e0>
+
+    def test_nested_success_keeps_the_parents_title_on_an_advancing_clock(
+        tmp_path, monkeypatch
+    ):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        decision_id = _desk_decision(db)
+        record = DecisionRecordService(
+            db, observer=SQLiteObserver(db._connection)
+        ).create_from_desk(OWNER, decision_id)
+    
+        events = _events(db)
+        parent = next(e for e in events if e["method"] == "create_from_desk")
+        child = next(e for e in events if e["method"] == "create")
+        # The real shape the collector reads: one correlation, the parent STARTED
+        # first, and the child's receipt was INSERTED first (it finished first).
+        assert parent["correlation_id"] == child["correlation_id"]
+        assert parent["timestamp"] < child["timestamp"], (parent, child)
+        assert child["id"] < parent["id"], (parent, child)
+    
+        changed = _brief(db)["changed"]
+        # DB evidence: the record the line names exists, minted from this desk
+        # decision.
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT source_type, source_id FROM decision_records WHERE id = ?",
+                (record["id"],),
+            ).fetchone()
+        assert (row["source_type"], row["source_id"]) == ("desk", decision_id)
+>       assert f"Decision recorded: {TITLE}" in changed, changed
+E       AssertionError: ['Decision recorded']
+E       assert 'Decision recorded: Keep retrieval local' in ['Decision recorded']
+
+tests/unit/test_philo6_02_round3_record_truth.py:130: AssertionError
+________________ test_an_existing_record_is_not_recorded_again _________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_an_existing_record_is_not0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10faa8b90>
+
+    def test_an_existing_record_is_not_recorded_again(tmp_path, monkeypatch):
+        """``create_from_desk`` returns the EXISTING record when one exists: the
+        call succeeded but recorded nothing, so it makes no Changed line."""
+        db = Database(tmp_path / "hub.db")
+        decision_id = _desk_decision(db)
+        DecisionRecordService(db).create_from_desk(OWNER, decision_id)  # unobserved
+        _advancing_clock(monkeypatch)
+        again = DecisionRecordService(
+            db, observer=SQLiteObserver(db._connection)
+        ).create_from_desk(OWNER, decision_id)
+        with db._connection() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0] == 1
+        assert [e["method"] for e in _events(db)] == ["create_from_desk"], again
+        changed = _brief(db)["changed"]
+>       assert _pipeline_changed(db) == [], changed
+E       AssertionError: ['Decision recorded: Keep retrieval local']
+E       assert ['Decision re...rieval local'] == []
+E         
+E         Left contains one more item: 'Decision recorded: Keep retrieval local'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:163: AssertionError
+______________ test_delegate_reopen_and_date_never_say_completed _______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_delegate_reopen_and_date_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f9dbbd0>
+
+    def test_delegate_reopen_and_date_never_say_completed(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        service = FollowThroughService(db, observer=SQLiteObserver(db._connection))
+        service.complete(OWNER, _action(db, "ai-delegate"), "delegate", {"to": "Ana"})
+        service.complete(OWNER, _action(db, "ai-reopen", status="done"), "reopen")
+        service.complete(OWNER, _action(db, "ai-due"), "due", {"due_at": "2026-09-30"})
+    
+        # DB evidence: none of the three is complete.
+        assert _action_row(db, "ai-delegate") == {"status": "pending", "owner": "Ana", "due": None}
+        assert _action_row(db, "ai-reopen")["status"] == "open"
+        assert _action_row(db, "ai-due") == {"status": "pending", "owner": None, "due": "2026-09-30"}
+    
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert [text for text in changed if "completed" in text.lower()] == [], changed
+E       AssertionError: ['Follow-up completed', 'Follow-up completed', 'Follow-up completed']
+E       assert ['Follow-up c...up completed'] == []
+E         
+E         Left contains 3 more items, first extra item: 'Follow-up completed'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:205: AssertionError
+______________ test_done_says_completed_and_a_replay_says_nothing ______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_done_says_completed_and_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f9dbce0>
+
+    def test_done_says_completed_and_a_replay_says_nothing(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        already = _action(db, "ai-already", status="done")
+        _advancing_clock(monkeypatch)
+        service = FollowThroughService(db, observer=SQLiteObserver(db._connection))
+        service.complete(OWNER, _action(db, "ai-done"), "done")
+        replay = service.complete(OWNER, already, "done")
+        assert replay.get("replayed") is True
+        assert _action_row(db, "ai-done")["status"] == "done"
+    
+        _brief(db)
+>       assert _pipeline_changed(db) == ["Follow-up completed: Task ai-done"]
+E       AssertionError: assert ['Follow-up c...up completed'] == ['Follow-up c...Task ai-done']
+E         
+E         At index 0 diff: 'Follow-up completed' != 'Follow-up completed: Task ai-done'
+E         Left contains one more item: 'Follow-up completed'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:224: AssertionError
+_____________________ test_dismiss_and_snooze_make_no_line _____________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_dismiss_and_snooze_make_n0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fc84150>
+
+    def test_dismiss_and_snooze_make_no_line(tmp_path, monkeypatch):
+        """No table row names these actions: the brief says nothing rather than
+        a word the record does not prove."""
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        service = FollowThroughService(db, observer=SQLiteObserver(db._connection))
+        service.complete(OWNER, _action(db, "ai-dismiss"), "dismiss")
+        service.complete(
+            OWNER, _action(db, "ai-snooze"), "snooze", {"until": "2026-09-30"}
+        )
+        assert _action_row(db, "ai-dismiss")["status"] == "dismissed"
+        _brief(db)
+>       assert _pipeline_changed(db) == []
+E       AssertionError: assert ['Follow-up c...up completed'] == []
+E         
+E         Left contains 2 more items, first extra item: 'Follow-up completed'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:239: AssertionError
+___ test_an_unknown_success_writes_nothing_and_its_failure_names_the_object ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_an_unknown_success_writes0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fa69a90>
+
+    def test_an_unknown_success_writes_nothing_and_its_failure_names_the_object(
+        tmp_path, monkeypatch
+    ):
+        """A lifecycle transition is outside the table: its success is omitted, its
+        failure is ``<Object> did not complete`` (the service's object)."""
+        from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+    
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        with pytest.raises(Exception):  # noqa: B017 - NotFound is the producer fact
+            DecisionLifecycleService(
+                db, observer=SQLiteObserver(db._connection)
+            ).transition(OWNER, "philo603-absent", "accept")
+        sections = _brief(db)
+        assert _pipeline_changed(db) == []
+>       assert sections["broke"] == ["Decision did not complete"], sections["broke"]
+E       AssertionError: ['Decision did not change']
+E       assert ['Decision did not change'] == ['Decision did not complete']
+E         
+E         At index 0 diff: 'Decision did not change' != 'Decision did not complete'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:301: AssertionError
+__________________ test_every_changed_row_has_a_real_producer __________________
+
+    def test_every_changed_row_has_a_real_producer():
+>       from holdspeak.services.monday_brief_service import changed_line_rows
+E       ImportError: cannot import name 'changed_line_rows' from 'holdspeak.services.monday_brief_service' (/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r2/holdspeak/services/monday_brief_service.py)
+
+tests/unit/test_philo6_02_round3_record_truth.py:406: ImportError
+_ test_each_changed_row_names_a_change_the_db_holds[('DecisionRecordService', 'create_from_desk', None)] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_each_changed_row_names_a_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f0c7290>
+row = ('DecisionRecordService', 'create_from_desk', None)
+
+    @pytest.mark.parametrize("row", sorted(PRODUCERS, key=str), ids=str)
+    def test_each_changed_row_names_a_change_the_db_holds(tmp_path, monkeypatch, row):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        produced = PRODUCERS[row](db, tmp_path, monkeypatch)
+        line, proof = produced[0], produced[1]
+        if len(produced) == 3:  # the summary rig keeps its own database
+            db = produced[2]
+        assert proof(), (row, "the change the line names is not in the DB")
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert changed == [line], (row, changed)
+E       AssertionError: (('DecisionRecordService', 'create_from_desk', None), ['Decision recorded'])
+E       assert ['Decision recorded'] == ['Decision re...rieval local']
+E         
+E         At index 0 diff: 'Decision recorded' != 'Decision recorded: Keep retrieval local'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:422: AssertionError
+_ test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'delegate')] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_each_changed_row_names_a_3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f1b7540>
+row = ('FollowThroughService', 'complete', 'delegate')
+
+    @pytest.mark.parametrize("row", sorted(PRODUCERS, key=str), ids=str)
+    def test_each_changed_row_names_a_change_the_db_holds(tmp_path, monkeypatch, row):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        produced = PRODUCERS[row](db, tmp_path, monkeypatch)
+        line, proof = produced[0], produced[1]
+        if len(produced) == 3:  # the summary rig keeps its own database
+            db = produced[2]
+        assert proof(), (row, "the change the line names is not in the DB")
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert changed == [line], (row, changed)
+E       AssertionError: (('FollowThroughService', 'complete', 'delegate'), ['Follow-up completed'])
+E       assert ['Follow-up completed'] == ['Follow-up d... ai-delegate']
+E         
+E         At index 0 diff: 'Follow-up completed' != 'Follow-up delegated: Task ai-delegate'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:422: AssertionError
+_ test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'done')] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_each_changed_row_names_a_4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f19dde0>
+row = ('FollowThroughService', 'complete', 'done')
+
+    @pytest.mark.parametrize("row", sorted(PRODUCERS, key=str), ids=str)
+    def test_each_changed_row_names_a_change_the_db_holds(tmp_path, monkeypatch, row):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        produced = PRODUCERS[row](db, tmp_path, monkeypatch)
+        line, proof = produced[0], produced[1]
+        if len(produced) == 3:  # the summary rig keeps its own database
+            db = produced[2]
+        assert proof(), (row, "the change the line names is not in the DB")
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert changed == [line], (row, changed)
+E       AssertionError: (('FollowThroughService', 'complete', 'done'), ['Follow-up completed'])
+E       assert ['Follow-up completed'] == ['Follow-up c...Task ai-done']
+E         
+E         At index 0 diff: 'Follow-up completed' != 'Follow-up completed: Task ai-done'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:422: AssertionError
+_ test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'due')] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_each_changed_row_names_a_5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fc33930>
+row = ('FollowThroughService', 'complete', 'due')
+
+    @pytest.mark.parametrize("row", sorted(PRODUCERS, key=str), ids=str)
+    def test_each_changed_row_names_a_change_the_db_holds(tmp_path, monkeypatch, row):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        produced = PRODUCERS[row](db, tmp_path, monkeypatch)
+        line, proof = produced[0], produced[1]
+        if len(produced) == 3:  # the summary rig keeps its own database
+            db = produced[2]
+        assert proof(), (row, "the change the line names is not in the DB")
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert changed == [line], (row, changed)
+E       AssertionError: (('FollowThroughService', 'complete', 'due'), ['Follow-up completed'])
+E       assert ['Follow-up completed'] == ['Follow-up d... Task ai-due']
+E         
+E         At index 0 diff: 'Follow-up completed' != 'Follow-up date set: Task ai-due'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:422: AssertionError
+_ test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'reopen')] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-909/test_each_changed_row_names_a_6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fcc4190>
+row = ('FollowThroughService', 'complete', 'reopen')
+
+    @pytest.mark.parametrize("row", sorted(PRODUCERS, key=str), ids=str)
+    def test_each_changed_row_names_a_change_the_db_holds(tmp_path, monkeypatch, row):
+        db = Database(tmp_path / "hub.db")
+        _advancing_clock(monkeypatch)
+        produced = PRODUCERS[row](db, tmp_path, monkeypatch)
+        line, proof = produced[0], produced[1]
+        if len(produced) == 3:  # the summary rig keeps its own database
+            db = produced[2]
+        assert proof(), (row, "the change the line names is not in the DB")
+        _brief(db)
+        changed = _pipeline_changed(db)
+>       assert changed == [line], (row, changed)
+E       AssertionError: (('FollowThroughService', 'complete', 'reopen'), ['Follow-up completed'])
+E       assert ['Follow-up completed'] == ['Follow-up r...sk ai-reopen']
+E         
+E         At index 0 diff: 'Follow-up completed' != 'Follow-up reopened: Task ai-reopen'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round3_record_truth.py:422: AssertionError
+____________ test_the_import_cause_is_short_and_names_no_temp_file _____________
+
+client = <starlette.testclient.TestClient object at 0x11283a850>
+no_transcriber = None
+
+    def test_the_import_cause_is_short_and_names_no_temp_file(client, no_transcriber):
+        """PHILO-6-01 round 3 (UX-CANON A.3; Astra's round-two check, finding 3).
+    
+        The worker's stored detail is what the Arrival shows as
+        ``LAST ERROR · <cause>``. Round two showed a paragraph naming the worker's
+        temp file (``TMPLYES_VQF.VTT``), a file the owner never selected. The
+        cause is the short class: no file name, no path, no sentence, <= 60.
+        """
+        meeting_id, row, detail = _mint_failed_import(client)
+        cause = (detail.get("intel_status") or {}).get("detail")
+        assert row.get("intel_status_detail", cause) == cause
+>       assert cause == "NO TRANSCRIPT LINES", cause
+E       AssertionError: No cues could be parsed from tmp1ynrm0d_.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported.
+E       assert 'No cues coul...was imported.' == 'NO TRANSCRIPT LINES'
+E         
+E         - NO TRANSCRIPT LINES
+E         + No cues could be parsed from tmp1ynrm0d_.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported.
+
+tests/unit/test_philo6_01_import_badge.py:166: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_nested_success_keeps_the_parents_title_on_an_advancing_clock
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_an_existing_record_is_not_recorded_again
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_delegate_reopen_and_date_never_say_completed
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_done_says_completed_and_a_replay_says_nothing
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_dismiss_and_snooze_make_no_line
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_an_unknown_success_writes_nothing_and_its_failure_names_the_object
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_every_changed_row_has_a_real_producer
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('DecisionRecordService', 'create_from_desk', None)]
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'delegate')]
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'done')]
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'due')]
+FAILED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'reopen')]
+FAILED tests/unit/test_philo6_01_import_badge.py::test_the_import_cause_is_short_and_names_no_temp_file
+13 failed, 8 passed in 5.34s
+
+# The rendered link: the round-two fixture (git show 27ee9559:web/src/desk/chair/__tests__/fixtures/philo6/import-failed-meeting.json) under the round-three vitest fence (ChairHome.tsx is unchanged in round 3).
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-a/web
+
+ ❯ src/desk/chair/__tests__/zzR2ImportCause.test.tsx (1 test | 1 failed) 31ms
+     × badge FAILED, well head IMPORT, the import's cause, and no summary claim 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/zzR2ImportCause.test.tsx > PHILO-6-01 round 2: the failed import's row names the IMPORT > badge FAILED, well head IMPORT, the import's cause, and no summary claim
+AssertionError: expected 'LAST ERROR · No cues could be parsed …' to be 'LAST ERROR · NO TRANSCRIPT LINES' // Object.is equality
+
+Expected: "LAST ERROR · NO TRANSCRIPT LINES"
+Received: "LAST ERROR · No cues could be parsed from upload.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported."
+
+ ❯ src/desk/chair/__tests__/zzR2ImportCause.test.tsx:64:23
+     62|       .map((node) => node.textContent ?? "")
+     63|       .find((line) => line.startsWith("LAST ERROR · "));
+     64|     expect(errorFact).toBe("LAST ERROR · NO TRANSCRIPT LINES");
+       |                       ^
+     65|     expect((errorFact ?? "").length).toBeLessThanOrEqual(60);
+     66|     expect(status.textContent ?? "").not.toMatch(/tmp|\.(vtt|srt|txt|w…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  22:28:59
+   Duration  792ms (transform 329ms, setup 60ms, import 447ms, tests 31ms, environment 180ms)
+

@@ -34,7 +34,7 @@ def _seed_window(db: Database) -> None:
                (event_id, timestamp, service, method, principal_kind, args_summary,
                 correlation_id, error)
                VALUES (?, ?, ?, ?, 'test', ?, ?, ?)""",
-            ("write-note", timestamp, "NoteService", "create_note", '{"title":"Plan"}', "note-1", None),
+            ("write-note", timestamp, "DecisionRecordService", "create", '{"title":"Plan"}', "note-1", None),
         )
         conn.execute(
             """INSERT INTO pipeline_events
@@ -69,8 +69,9 @@ def test_walk_generates_and_delivers_all_four_sections(db: Database) -> None:
     assert brief.sections["broke"]
     assert brief.sections["waiting"]
     assert brief.sections["decisions"]
-    assert any(item.text == "NoteService.create_note" for item in brief.sections["changed"])
-    assert brief.sections["broke"][0].text == "WorkflowService.run_workflow failed"
+    # PHILO-6-02 round 3: only a table row the record proves writes a line.
+    assert any(item.text == "Decision recorded" for item in brief.sections["changed"])
+    assert brief.sections["broke"][0].text == "Workflow did not complete"
     assert any("Call the customer" in item.text for item in brief.sections["waiting"])
     assert any("Adopt the Monday Brief" in item.text for item in brief.sections["decisions"])
 

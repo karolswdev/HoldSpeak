@@ -121,8 +121,9 @@ def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monke
         service,
         event_id="created-note",
         timestamp=_utc_timestamp(1),
-        service_name="NoteService",
-        method="create_note",
+        # PHILO-6-02 round 3: only a table row the record proves writes a line.
+        service_name="DecisionRecordService",
+        method="create",
         correlation_id="note-1",
         args_summary='{"title":"Plan"}',
     )
@@ -133,7 +134,7 @@ def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monke
 
     assert [
         (item.section, item.text, item.source_ref) for item in brief.sections["changed"]
-    ] == [("changed", "NoteService.create_note", "pipeline:note-1")]
+    ] == [("changed", "Decision recorded", "pipeline:note-1")]
     assert brief.headline == "1 thing changed."
     with service._db._connection() as conn:
         assert (
@@ -160,19 +161,24 @@ def test_collect_changes_excludes_read_only_operations(tmp_path):
 
 
 def test_collect_changes_collapses_a_correlated_retry(tmp_path):
+    """PHILO-6-02 round 3: the real correlated shape. A correlation is set by
+    the OUTERMOST observed call (``observer.py``), so a retry inside one
+    operation sits under the parent that STARTED first; the operation is one
+    line, from that parent."""
     service = MondayBriefService(Database(tmp_path / "brief.db"))
-    for event_id, timestamp, error in (
-        ("first-attempt", _utc_timestamp(1, 12), "connection reset"),
-        ("retry", _utc_timestamp(1, 12) + 10, None),
+    for event_id, timestamp, method, error in (
+        ("parent", _utc_timestamp(1, 12), "create_from_desk", None),
+        ("first-attempt", _utc_timestamp(1, 12) + 1, "create", "connection reset"),
+        ("retry", _utc_timestamp(1, 12) + 10, "create", None),
     ):
         _insert_pipeline_event(
             service,
             event_id=event_id,
             timestamp=timestamp,
-            service_name="SequenceWorkflowService",
-            method="run_workflow",
+            service_name="DecisionRecordService",
+            method=method,
             correlation_id="run-1",
-            args_summary='{"workflow_id":"weekly"}',
+            args_summary='{"desk_decision_id":"weekly"}' if method != "create" else "{}",
             error=error,
         )
 
@@ -181,7 +187,7 @@ def test_collect_changes_collapses_a_correlated_retry(tmp_path):
     )
 
     assert len(items) == 1
-    assert items[0].text == "SequenceWorkflowService.run_workflow"
+    assert items[0].text == "Decision recorded"
     assert items[0].source_ref == "pipeline:run-1"
 
 
@@ -195,9 +201,9 @@ def test_collect_changes_collapses_an_uncorrelated_failed_retry(tmp_path):
             service,
             event_id=event_id,
             timestamp=timestamp,
-            service_name="NoteService",
-            method="update_note",
-            args_summary='{"note_id":"weekly"}',
+            service_name="DecisionRecordService",
+            method="create",
+            args_summary='{"source_id":"weekly"}',
             error=error,
         )
 

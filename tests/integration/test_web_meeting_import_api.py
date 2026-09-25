@@ -175,7 +175,8 @@ def test_mid_transcription_failure_marks_the_row_honestly(client, db, monkeypatc
     meeting_id = response.json()["meeting_id"]
 
     failed = _wait_for_status(client, meeting_id, {"import_failed"})
-    assert "model fell over" in ((failed.get("intel_status") or {}).get("detail") or "")
+    # PHILO-6-01 round 3 (UX-CANON A.3): the short cause; the message is logged.
+    assert ((failed.get("intel_status") or {}).get("detail") or "") == "UNEXPECTED ERROR"
     # The honest row can be removed via the existing delete path.
     deleted = client.delete(f"/api/meetings/{meeting_id}")
     assert deleted.status_code in (200, 204)

@@ -3423,7 +3423,7 @@
           "predicate": {
             "kind": "protocol_field",
             "path": "/sections/broke/0/text",
-            "value": "DecisionLifecycleService.get_decision failed"
+            "value": "Decision did not load"
           },
           "why": "the day-one brief contains the real failed read"
         },
@@ -4972,10 +4972,10 @@
           },
           "predicate": {
             "kind": "op_field",
-            "path": "sections.broke",
-            "nonempty": true
+            "path": "sections.broke.0.text",
+            "value": "Decision did not load"
           },
-          "why": "the real failed read produces broke rows; the following capture selects the lifecycle failure by text rather than row order"
+          "why": "the real failed read produces the day-one broke row; PHILO-6-02 round 2: the desk read and the lifecycle read of one missing decision both read `Decision did not load` (no implementation word tells them apart), so the capture pins row 0 after this check, as the HTTP variant does"
         },
         {
           "kind": "op",
@@ -4983,12 +4983,8 @@
           "args": {},
           "adapter": "mcp-http",
           "capture_as": "old_breakage_id",
-          "capture_path": "sections.broke",
-          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief",
-          "capture_match": {
-            "text": "DecisionLifecycleService.get_decision failed"
-          },
-          "capture_field": "id"
+          "capture_path": "sections.broke.0.id",
+          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief"
         },
         {
           "kind": "op",
@@ -6540,6 +6536,306 @@
       },
       "completion_bound_s": 15,
       "viewports": []
+    },
+    {
+      "id": "case.philo601.import_failed.badge",
+      "job": "j4",
+      "edge_ids": [
+        "edge.route.meetings_import",
+        "edge.face.arrival_meeting_row"
+      ],
+      "state_id": "state.meetings.transcription.absent",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "A fresh isolated hub; the real import route and worker receive a header-only VTT and leave intel_status.state = import_failed with no segments (the PHILO-5-03 producer probe). The hub holds that one meeting, so the Arrival has one meeting badge."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo5_empty.vtt",
+          "sha256": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review \u2014 empty transcript"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/intel_status/state": "import_failed",
+              "/segments": []
+            },
+            "timeout_s": 60,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meeting-badge]"
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=arrival-meeting-badge]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "FAILED"
+          },
+          "timeout_s": 10,
+          "why": "PHILO-6-01: the Arrival row of the failed import shows the existing FAILED badge, never SAVED"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-status-well-head]",
+        "why": "The owner, on the Arrival after the import (setup: the real list and detail routes drew the FAILED row), reads down to the row's open status well. At 393 the well opens below the sticky capture bar. The rig has no scroll verb and the Arrival's scroller does not take End; the pointer on the well head scrolls it into view (Playwright scrolls a target before it acts). The head carries no handler: it sits outside the row's role=button line (web/src/desk/surface/Surface.tsx SurfaceLedgerRow), so the click fires nothing."
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "IMPORT"
+        },
+        "observe_at": "[data-testid=arrival-status-well-head]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings"
+          }
+        ],
+        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row shows the existing FAILED badge (setup check) and, round 2 (Astra's check on built, finding 2), its open status well names what failed: the head reads IMPORT, never SUMMARY. Round 3 (Astra's round-two check, finding 3; UX-CANON A.3): the well's cause line is the short class `LAST ERROR \u00b7 NO TRANSCRIPT LINES`, never the worker's temp file name. The trigger is an INSPECTION AFTER SCROLL (Astra's ruling): the inert click on the head only scrolls the well into view; it is not an owner-action transition."
+      },
+      "completion_bound_s": 60
+    },
+    {
+      "id": "case.philo602.brief_more.destination",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_more",
+        "edge.face.arrival_brief_generate",
+        "edge.route.brief_generate"
+      ],
+      "state_id": "state.briefs.populated",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "A fresh isolated hub with no engine. The real producers make the brief: a transcript import (a recorded meeting), a real summary run call that the hub refuses (a pipeline change receipt and a failure receipt) a real failing observed call (an Ack on an unknown item) and four proposed decisions. The Arrival has more than three brief rows, so the fold `N more` is drawn."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.txt",
+          "sha256": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 60,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run",
+          "body": {},
+          "expect_status": 409,
+          "adapter": "http-route",
+          "why": "the real summary run call; with no engine the hub refuses it and the observer records the call and its failure"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-missing/shelf",
+          "body": {
+            "state": "acknowledged"
+          },
+          "expect_status": 404,
+          "adapter": "http-route",
+          "why": "the PHILO-4-03 breakage producer: a real failing observed call"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Keep summary retrieval local",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Show a failed import as FAILED",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Tell the brief time once",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Word a request as a request",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "why": "the Chair's Generate makes the brief from the producers above"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-more]",
+          "why": "the fold is drawn: more than three rows wait"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "Service."
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "no raw Service.method name on the Arrival's BRIEF section"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-brief-more]",
+        "why": "the owner opens the fold; it opens the Brief view (ChairHome.tsx BriefSection, openIntelligence view brief)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_absent",
+          "value": "Service."
+        },
+        "observe_at": "[data-testid=brief-since-friday]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ],
+        "words": "PHILO-6-02 (c): the fold's DESTINATION, the Brief view's lookback rows, names no raw Service.method; the summary run call reads as a request and its refusal as `Summary did not start`."
+      },
+      "completion_bound_s": 60
     }
   ],
   "states": [

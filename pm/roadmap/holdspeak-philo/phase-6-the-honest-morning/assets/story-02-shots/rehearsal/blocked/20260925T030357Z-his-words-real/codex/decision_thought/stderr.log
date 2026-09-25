@@ -1,0 +1,1 @@
+2026-09-25T03:06:31.836945Z ERROR codex_core::tools::router: error=resources/templates/list failed: resources/templates/list failed for `holdspeak`: Mcp error: -32601: Method not found: resources/templates/list

@@ -132,7 +132,9 @@ def test_breakage_pipeline_event_with_error_appears(tmp_path):
 
     assert len(items) == 1
     assert items[0].section == "broke"
-    assert items[0].text == "SyncService.push failed"
+    # PHILO-6-02 round 3: a failed call outside the table is
+    # ``<Object> did not complete`` (no verb read from the method name).
+    assert items[0].text == "Sync did not complete"
     assert items[0].detail == "NETWORK: network unavailable"
     assert items[0].source_ref == "pipeline-event:evt-failed"
 

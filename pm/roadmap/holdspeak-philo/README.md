@@ -1,8 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 night — lane B PHILO-6-04 and PHILO-6-05 verified; PHILO-6-03 zero omission built; round-two provenance, canvas and 0/0 verb corrections recorded, placement awaits owner ratification. Lane PR #647, no merge.
-**Current phase:** [Phase 6 The Honest Morning](phase-6-the-honest-morning/current-phase-status.md) — RATIFIED 2026-09-24 ("Ratify, build it"); both lanes are in build. Phase 7 The Desk on the Contract follows (draft: [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md)).
-**Status:** Phases 1–5 delivered and merged. Phase 6 repairs the six morning-path defects found at Phase 5 closure. PHILO-6-04 and PHILO-6-05 are verified in lane B; the toast placement awaits owner ratification of its canvas. Integration rehearsal and owner review remain open.
+**Last updated:** 2026-09-24 (Phase 6: lanes A and B merged; 03 placement in build).
 
 ## Vision
 
