@@ -80,6 +80,8 @@ Lane law for this phase:
 
 ## Where we are
 
+2026-09-24 night: lane B merged (04 done, 05 done; 03's zero omission + the ratified canvas); Astra builds 03's placement; lane A in round three (the brief's outcome-blind wording and the import cause line).
+
 2026-09-24 night — lane B round two records the actual Muad’Dib counsel at `checks/lane-b-built-muaddib.md` and relabels the earlier Astra-invoked claude -p checks. Records and canvas corrections follow that counsel; 03 stays in-progress, with placement unbuilt and unratified. Off-Arrival proposal: a top-of-surface flow slot inside Meetings and the Floor. Phone ask 2 explicitly moves the reading position. The 0/0 proposal verb is withheld with a red-before-fix fence. Three follow-ups now also live in BACKLOG “PHILO-6 follow-ups”. One gated update to PR #647; no merge.
 
 2026-09-24 night — lane B PHILO-6-05 verified: cause found before repair, 29 frontend and 143 rig checks passed, actual S4 continuous fence FAIL → PASS at 393 and 1440, first read frame and all 129 frames readable in each green run. Astra-invoked claude -p check conditions paid, including an assertion after the failed rollback read commits. PHILO-6-04 is committed; 03 zero/canvas is committed and placement remains unratified. One lane PR: https://github.com/karolswdev/HoldSpeak/pull/647; no merge. Per-box proof and handover: `docs/internal/philo/phase-6/lane-report.md`.
@@ -107,6 +109,8 @@ Lane law for this phase:
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 night — the owner RATIFIED the story 03 placement canvas (in flow above the capture bar; top-of-surface off the Arrival; phone auto-scroll accepted). Lane B (04, 05, the zero omission, the canvas) MERGED `4d55d4d5` after Muad'Dib's counsel (conditions paid in r2). Astra builds the placement now — Muad'Dib.
 
 - 2026-09-24 night — PHILO-6-05 Astra-invoked claude -p built check RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-astra-invoked-claude.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
 - 2026-09-24 night — PHILO-6-05 criterion 2 strengthened on live evidence and the Astra-invoked claude -p design check: the first read frame is readable on main; the pre-fix red is a later stale refresh commit. Require readability on the first frame and every frame through terminal observation, with the observer armed before Done. Original passing first-frame probe retained and labelled; no first-frame red claimed. See `checks/story-05-design-astra-invoked-claude.md` and `docs/internal/philo/phase-6/body/diagnosis.md`. Owner may overrule.
