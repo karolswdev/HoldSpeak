@@ -69,8 +69,8 @@ def test_walk_generates_and_delivers_all_four_sections(db: Database) -> None:
     assert brief.sections["broke"]
     assert brief.sections["waiting"]
     assert brief.sections["decisions"]
-    assert any(item.text == "NoteService.create_note" for item in brief.sections["changed"])
-    assert brief.sections["broke"][0].text == "WorkflowService.run_workflow failed"
+    assert any(item.text == "Note: create note" for item in brief.sections["changed"])
+    assert brief.sections["broke"][0].text == "Workflow: run workflow did not complete"
     assert any("Call the customer" in item.text for item in brief.sections["waiting"])
     assert any("Adopt the Monday Brief" in item.text for item in brief.sections["decisions"])
 

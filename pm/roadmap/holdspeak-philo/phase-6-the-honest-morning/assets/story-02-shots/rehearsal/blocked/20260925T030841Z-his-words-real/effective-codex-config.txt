@@ -1,0 +1,21 @@
+$ codex mcp get holdspeak --json -c mcp_servers.holdspeak.command=/Users/karol/dev/tools/wt-philo-6-a/.venv/bin/holdspeak-mcp -c mcp_servers.holdspeak.cwd=/Users/karol/dev/tools/wt-philo-6-a -c mcp_servers.holdspeak.args=[] -c mcp_servers.holdspeak.required=true -c mcp_servers.holdspeak.env.HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-ssi05uk8 -c mcp_servers.holdspeak.startup_timeout_sec=60 -c mcp_servers.holdspeak.tool_timeout_sec=900
+exit=0
+{
+  "name": "holdspeak",
+  "enabled": true,
+  "disabled_reason": null,
+  "transport": {
+    "type": "stdio",
+    "command": "/Users/karol/dev/tools/wt-philo-6-a/.venv/bin/holdspeak-mcp",
+    "args": [],
+    "env": {
+      "HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-ssi05uk8"
+    },
+    "env_vars": [],
+    "cwd": "/Users/karol/dev/tools/wt-philo-6-a"
+  },
+  "enabled_tools": null,
+  "disabled_tools": null,
+  "startup_timeout_sec": 60.0,
+  "tool_timeout_sec": 900.0
+}

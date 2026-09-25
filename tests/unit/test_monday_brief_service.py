@@ -133,7 +133,7 @@ def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monke
 
     assert [
         (item.section, item.text, item.source_ref) for item in brief.sections["changed"]
-    ] == [("changed", "NoteService.create_note", "pipeline:note-1")]
+    ] == [("changed", "Note: create note", "pipeline:note-1")]
     assert brief.headline == "1 thing changed."
     with service._db._connection() as conn:
         assert (
@@ -181,7 +181,7 @@ def test_collect_changes_collapses_a_correlated_retry(tmp_path):
     )
 
     assert len(items) == 1
-    assert items[0].text == "SequenceWorkflowService.run_workflow"
+    assert items[0].text == "Sequence workflow: run workflow"
     assert items[0].source_ref == "pipeline:run-1"
 
 

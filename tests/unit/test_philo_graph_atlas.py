@@ -619,7 +619,7 @@ def test_breakage_cases_use_evening_wrapper_and_shelf_old_item() -> None:
         if is_op:
             assert capture['capture_path'] == 'sections.broke'
             assert capture['capture_match'] == {
-                'text': 'DecisionLifecycleService.get_decision failed'
+                'text': 'Decision did not load'
             }
             assert capture['capture_field'] == 'id'
         else:

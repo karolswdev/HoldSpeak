@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 (RATIFIED; in build; 01 done).
+**Last updated:** 2026-09-24 (RATIFIED; in build; 01 and 02 done).
 
 ## Goal
 
@@ -60,7 +60,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-6-01 | The honest import badge | done | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
+| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | done | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
 | PHILO-6-04 | One cause, one row | in-progress | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | - |
 | PHILO-6-05 | The decision body at once | in-progress | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | - |
@@ -79,6 +79,8 @@ Lane law for this phase:
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-24 night: PHILO-6-02 DONE in lane A: ONE clock (the producer's `generated_at` in the viewer's zone, the Brief view's existing stamp, on the caption and the receipt); the counts keep their labels and meanings (no canvas needed: the raw-id filter hid raw producer rows from the head); human producer words (`Summary requested: <title>`, `Summary did not start: <title>`, no `Service.method`). Fences red on `origin/main`, green on the branch; the fold-destination walk FAIL before / PASS after at 1440 and 393. OPEN: the story's rehearsal box — `scripts/philo5_his_words.py` blocked three times before the brief stage (the Codex decision turn used `desk.create`); carried to exit 3. Astra checks on built.
 
 2026-09-24 night: PHILO-6-01 DONE in lane A (`feat/philo-6-a-badge-brief`): a failed import reads FAILED on the Arrival (`web/src/desk/chair/intelBadge.ts:26`); the fence is red on `origin/main` (SAVED) and green on the branch; the rig case `case.philo601.import_failed.badge` PASS at 1440 and 393. Astra checks on built. Next in the lane: PHILO-6-02.
 
@@ -102,6 +104,7 @@ Lane law for this phase:
 
 ## Decisions made (this phase)
 
+- 2026-09-24 night — story 02: the brief's ONE clock is the producer's `generated_at` in the viewer's zone (the Brief view's stamp, HS-175 C8), on the caption and the receipt; exit 2(b) (the count canvas) is NOT needed: no count label or meaning changed — Muad'Dib (lane A).
 - 2026-09-24 night — the owner RATIFIED the charter ("Ratify, build it"); all five stories in progress in two lanes — Muad'Dib.
 
 - 2026-09-24 night — Astra's check of this charter: RATIFY-WITH-CONDITIONS (`checks/charter-astra.md`), paid: story 01's diagnosis corrected (the producer writes `intel_status`; the adapter finding retracted by Astra; the repair is the badge mapping); story 02 never conflates the counts and decides one clock with an offsets fence; the estimate reconciled (4.5–6.5 d provisional); the README's Phase 5 row corrected; story 05's proof armed before Done. The owner's ratification next — Muad'Dib.

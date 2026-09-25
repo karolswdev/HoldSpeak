@@ -3423,7 +3423,7 @@
           "predicate": {
             "kind": "protocol_field",
             "path": "/sections/broke/0/text",
-            "value": "DecisionLifecycleService.get_decision failed"
+            "value": "Decision did not load"
           },
           "why": "the day-one brief contains the real failed read"
         },
@@ -4986,7 +4986,7 @@
           "capture_path": "sections.broke",
           "why": "pin the failed decision read to the day-one brief-scoped item before the next brief",
           "capture_match": {
-            "text": "DecisionLifecycleService.get_decision failed"
+            "text": "Decision did not load"
           },
           "capture_field": "id"
         },
@@ -6623,6 +6623,197 @@
           }
         ],
         "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row of that meeting shows the existing FAILED badge, never SAVED."
+      },
+      "completion_bound_s": 60
+    },
+    {
+      "id": "case.philo602.brief_more.destination",
+      "job": "j10",
+      "edge_ids": [
+        "edge.face.arrival_brief_more",
+        "edge.face.arrival_brief_generate",
+        "edge.route.brief_generate"
+      ],
+      "state_id": "state.briefs.populated",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "A fresh isolated hub with no engine. The real producers make the brief: a transcript import (a recorded meeting), a real summary run call that the hub refuses (a pipeline change receipt and a failure receipt) a real failing observed call (an Ack on an unknown item) and four proposed decisions. The Arrival has more than three brief rows, so the fold `N more` is drawn."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.txt",
+          "sha256": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 60,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/intelligence/run",
+          "body": {},
+          "expect_status": 409,
+          "adapter": "http-route",
+          "why": "the real summary run call; with no engine the hub refuses it and the observer records the call and its failure"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/brief/items/brief-item-missing/shelf",
+          "body": {
+            "state": "acknowledged"
+          },
+          "expect_status": 404,
+          "adapter": "http-route",
+          "why": "the PHILO-4-03 breakage producer: a real failing observed call"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Keep summary retrieval local",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Show a failed import as FAILED",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Tell the brief time once",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Word a request as a request",
+            "status": "proposed"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "a human decision row, so the fold is drawn on the base face too"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "why": "the Chair's Generate makes the brief from the producers above"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-more]",
+          "why": "the fold is drawn: more than three rows wait"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "Service."
+          },
+          "observe_at": "[data-testid=arrival-brief]",
+          "why": "no raw Service.method name on the Arrival's BRIEF section"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-brief-more]",
+        "why": "the owner opens the fold; it opens the Brief view (ChairHome.tsx BriefSection, openIntelligence view brief)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_absent",
+          "value": "Service."
+        },
+        "observe_at": "[data-testid=brief-since-friday]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          }
+        ],
+        "words": "PHILO-6-02 (c): the fold's DESTINATION, the Brief view's lookback rows, names no raw Service.method; the summary run call reads as a request and its refusal as `Summary did not start`."
       },
       "completion_bound_s": 60
     }

@@ -10,6 +10,7 @@ import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
+import { generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
@@ -155,9 +156,15 @@ function briefLoadCause(error: unknown): string {
   return error instanceof ApiError ? `HTTP ${error.status}` : "NO ANSWER";
 }
 
-/** PHILO-3-03: the brief's period and generated date, one caption line. */
+/** PHILO-3-03: the brief's period and generated date, one caption line.
+ *  PHILO-6-02 (a): the generated time is the producer's `generated_at` in
+ *  the viewer's zone, the same clock as the receipt; the hub's own label
+ *  (formatted in the hub's offset) is the fallback only. */
 function BriefDate({ brief }: { brief: MondayBrief }) {
-  const parts = [brief.period_label, brief.generated_label].filter(Boolean);
+  const parts = [
+    brief.period_label,
+    generatedLabelLocal(brief.generated_at) ?? brief.generated_label,
+  ].filter(Boolean);
   if (parts.length === 0) return null;
   return (
     <span className="surface-receipt-line" data-testid="arrival-brief-date">

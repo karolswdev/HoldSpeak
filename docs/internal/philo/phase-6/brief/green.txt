@@ -1,0 +1,17 @@
+# PHILO-6-02 GREEN — branch feat/philo-6-a-badge-brief (working tree over 07224d0e7f5b31607370509d8a743c0a6f4b2127)
+$ HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo6_02_brief_truth.py
+..                                                                       [100%]
+2 passed in 0.93s
+exit=0
+
+$ cd web && npx vitest run src/desk/chair/__tests__/briefTruth.philo602.test.tsx
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-a/web
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:58:19
+   Duration  988ms (transform 357ms, setup 79ms, import 507ms, tests 39ms, environment 284ms)
+
+exit=0

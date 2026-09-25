@@ -78,6 +78,37 @@ _HUMAN_SERVICES: frozenset[str] = frozenset({
     "WatchService",
     "WorkbenchService",
 })
+# PHILO-6-02 (Tenet 4): the words a pipeline receipt gets on the brief. A
+# stored item never carries ``Service.method`` text. Each entry names what the
+# recorded call DID: a summary run call queues a request, it does not finish a
+# summary. Keyed by (service, method): (change words, breakage words); the
+# subject (a meeting or decision title) follows a ": " when the call names one.
+_OPERATION_WORDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("MeetingIntelService", "run_intelligence"): (
+        "Summary requested", "Summary did not start",
+    ),
+    ("DecisionRecordService", "create_from_desk"): (
+        "Decision recorded", "Decision did not record",
+    ),
+    ("DecisionLifecycleService", "get_decision"): (
+        "Decision read", "Decision did not load",
+    ),
+    ("MondayBriefService", "shelve"): (
+        "Brief triage saved", "Brief triage did not save",
+    ),
+}
+_SERVICE_SUFFIX = re.compile(r"(?:Service|Manager|Handler|Provider)$")
+_ARG_ID = re.compile(r'"(meeting_id|desk_decision_id)"\s*:\s*"([^"]+)"')
+
+
+def _service_noun(service: str) -> str:
+    """``MondayBriefService`` -> ``Monday brief`` (the generic fallback)."""
+    base = _SERVICE_SUFFIX.sub("", service) or service
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z0-9]+", base)
+    phrase = " ".join(words).lower() or base.lower()
+    return phrase[:1].upper() + phrase[1:]
+
+
 _CLOSE_HOUR = 17
 _RETRY_WINDOW_SECONDS = 5 * 60
 # HS-132-08: a recorded meeting is the most material thing a week contains, so
@@ -426,6 +457,38 @@ class MondayBriefService:
         except (TypeError, ValueError, OverflowError):
             return float("-inf")
 
+    def _operation_subject(self, conn: Any, args_summary: str) -> str | None:
+        """The title the recorded call names (a meeting or a desk decision)."""
+        match = _ARG_ID.search(str(args_summary or ""))
+        if match is None:
+            return None
+        key, value = match.group(1), match.group(2)
+        table = "meetings" if key == "meeting_id" else "desk_decisions"
+        try:
+            row = conn.execute(
+                f"SELECT title FROM {table} WHERE id = ?", (value,)
+            ).fetchone()
+        except Exception:  # noqa: BLE001 - a missing table names no subject.
+            return None
+        title = str(row["title"] or "").strip() if row is not None else ""
+        return title or None
+
+    def _operation_text(
+        self, conn: Any, service: str, method: str, args_summary: str, *, broke: bool
+    ) -> str:
+        """PHILO-6-02: human words for one pipeline receipt (no Service.method)."""
+        known = _OPERATION_WORDS.get((service, method))
+        if known is not None:
+            words = known[1] if broke else known[0]
+        else:
+            action = method.replace("_", " ").strip()
+            words = f"{_service_noun(service)}: {action}"
+            if broke:
+                words = f"{words} did not complete"
+            return words
+        subject = self._operation_subject(conn, args_summary)
+        return f"{words}: {subject}" if subject else words
+
     def _collect_changes(
         self, window_start: str, window_end: str
     ) -> tuple[list[BriefItem], LedgerSummary]:
@@ -493,11 +556,19 @@ class MondayBriefService:
                 continue
 
             detail = _sanitize_detail(str(first["args_summary"]))
+            with self._db._connection() as conn:
+                text = self._operation_text(
+                    conn,
+                    service_name,
+                    str(first["method"]),
+                    str(first["args_summary"]),
+                    broke=False,
+                )
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="changed",
-                    text=f"{service_name}.{first['method']}",
+                    text=text,
                     detail=detail,
                     source_ref=(
                         f"pipeline:{first['correlation_id']}"
@@ -570,7 +641,8 @@ class MondayBriefService:
 
         with self._db._connection() as conn:
             event_rows = conn.execute(
-                """SELECT event_id, timestamp, service, method, error, error_code
+                """SELECT event_id, timestamp, service, method, error, error_code,
+                          args_summary
                    FROM pipeline_events
                    WHERE error IS NOT NULL AND timestamp BETWEEN ? AND ?
                    ORDER BY timestamp DESC, id DESC""",
@@ -594,7 +666,10 @@ class MondayBriefService:
                     BriefItem(
                         id=f"brief-break-pipeline-{brief_id}-{row['event_id']}",
                         section="broke",
-                        text=f"{service}.{method} failed",
+                        text=self._operation_text(
+                            conn, service, method, str(row["args_summary"] or ""),
+                            broke=True,
+                        ),
                         detail=detail,
                         source_ref=f"pipeline-event:{row['event_id']}",
                         priority=2,

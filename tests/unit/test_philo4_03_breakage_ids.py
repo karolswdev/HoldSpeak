@@ -161,7 +161,7 @@ def test_a_pipeline_failure_in_two_lookbacks_generates_both_briefs(tmp_path, mon
 
     day_one, day_two = _two_days(client, clock, db, source_ref)
     row = [i for i in _broke(day_two) if i["source_ref"] == source_ref][0]
-    assert row["text"] == "MondayBriefService.shelve failed"
+    assert row["text"] == "Brief triage did not save"
     assert "Unknown brief item" in row["detail"]
 
 

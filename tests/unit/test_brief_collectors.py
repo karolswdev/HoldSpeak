@@ -132,7 +132,7 @@ def test_breakage_pipeline_event_with_error_appears(tmp_path):
 
     assert len(items) == 1
     assert items[0].section == "broke"
-    assert items[0].text == "SyncService.push failed"
+    assert items[0].text == "Sync: push did not complete"
     assert items[0].detail == "NETWORK: network unavailable"
     assert items[0].source_ref == "pipeline-event:evt-failed"
 

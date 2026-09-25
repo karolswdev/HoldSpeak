@@ -405,7 +405,7 @@ class TestBriefHumanVsLedger:
         )
 
         assert len(items) == 1
-        assert items[0].text == "NoteService.create_note"
+        assert items[0].text == "Note: create note"
         assert ledger.operations == 0
 
     def test_kernel_ops_go_to_ledger_not_items(self, tmp_path):
