@@ -1,0 +1,1109 @@
+{
+  "id": "obs-20260925T222620Z-case.p7.kb_member.refused_bad_ref.op-muaddib-1440",
+  "run_id": "20260925T222620Z-case.p7.kb_member.refused_bad_ref.op-muaddib-1440",
+  "case_id": "case.p7.kb_member.refused_bad_ref.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.kb_member"
+  ],
+  "state_id": "state.desk_presentation.p7_knowledge_membership",
+  "provenance": {
+    "revision": "e3a32308d4f87fd2d379d165e3c78dc19340d13f",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1f8c6b01ec3e1174c5c213696f32d1b901f426142f3c1716cdcb3f371c1d79b4",
+      "assets": [
+        "index-BfW51Gdg.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57408",
+      "port": 57408,
+      "pid": 30738,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-efu2y6yn",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-efu2y6yn/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T22:26:20.918755+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.4.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "886f2da45d2143dc87347f4ac4daf77533c1d89fb8ef67b5fc06a46e7a7a8288",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "kb.create",
+      "args": {
+        "name": "Atlas knowledge"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "kbs",
+            "data": {
+              "name": "Atlas knowledge"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-25T22:26:22Z",
+        "deleted": false,
+        "id": "kb_1ec9cffa64ca",
+        "last_modified": "2026-09-25T22:26:22Z",
+        "member_ids": [],
+        "name": "Atlas knowledge"
+      },
+      "domain_response": {
+        "created_at": "2026-09-25T22:26:22Z",
+        "deleted": false,
+        "id": "kb_1ec9cffa64ca",
+        "last_modified": "2026-09-25T22:26:22Z",
+        "member_ids": [],
+        "name": "Atlas knowledge"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-25T22:26:22Z\", \"deleted\": false, \"id\": \"kb_1ec9cffa64ca\", \"last_modified\": \"2026-09-25T22:26:22Z\", \"member_ids\": [], \"name\": \"Atlas knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "kb_id",
+        "path": "id",
+        "value": "kb_1ec9cffa64ca"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "kb_id": "kb_1ec9cffa64ca",
+    "refused_op": "op_5f12c103db78439ead9102e7c0ba2223"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "kb.member.add",
+    "args": {
+      "kb_id": "kb_1ec9cffa64ca",
+      "resource_ref": "p7-unqualified"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "tools/call",
+      "params": {
+        "name": "kb.add_member",
+        "arguments": {
+          "kb_id": "kb_1ec9cffa64ca",
+          "ref": "p7-unqualified"
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "error": "resource_ref must be qualified as kind:id",
+      "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790375182.467863,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "outcome": "invalid_value",
+        "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "kb:kb_1ec9cffa64ca"
+      },
+      "code": "mcp_refused"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\": \"resource_ref must be qualified as kind:id\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.003,
+    "named_refusal": {
+      "error": "resource_ref must be qualified as kind:id",
+      "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790375182.467863,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "outcome": "invalid_value",
+        "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "kb:kb_1ec9cffa64ca"
+      },
+      "code": "mcp_refused"
+    },
+    "captured": {
+      "name": "refused_op",
+      "path": "operation_id",
+      "value": "op_5f12c103db78439ead9102e7c0ba2223"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "055b5a39bc7e1ad96961702d288a80df07005f857d1d41317f5c0105fa63509f"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kb.members",
+          "args": {
+            "kb_id": "kb_1ec9cffa64ca"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+              "name": "kb.list_members",
+              "arguments": {
+                "kb_id": "kb_1ec9cffa64ca"
+              }
+            }
+          },
+          "response": [],
+          "domain_response": [],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kb.members",
+          "args": {
+            "kb_id": "kb_1ec9cffa64ca"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+              "name": "kb.list_members",
+              "arguments": {
+                "kb_id": "kb_1ec9cffa64ca"
+              }
+            }
+          },
+          "response": [],
+          "domain_response": [],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57408",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kernel.receipt.read",
+      "args": null
+    },
+    "op": {
+      "name": "kernel.receipt.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.members",
+        "args": {
+          "kb_id": "kb_1ec9cffa64ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "method": "tools/call",
+          "params": {
+            "name": "kb.list_members",
+            "arguments": {
+              "kb_id": "kb_1ec9cffa64ca"
+            }
+          }
+        },
+        "response": [],
+        "domain_response": [],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-25T22:26:22.465218+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57408",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kernel.receipt.read",
+      "args": {
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+      }
+    },
+    "op": {
+      "name": "kernel.receipt.read",
+      "args": {
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "kernel.receipt",
+          "arguments": {
+            "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        }
+      },
+      "response": {
+        "consistency": "committed",
+        "objects": [
+          {
+            "native_receipts": [],
+            "operation": {
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "claimed_by": "hub-desk-writer",
+              "correlation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "created_at": 1790375182.4665558,
+              "decision": "approve",
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+              "idempotency_key": "kb.member.add:c4290915-880d-409c-adb1-3400f784966f",
+              "name": "kb.member.add",
+              "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "parent_operation_id": "",
+              "placement": "node:hub-desk-writer",
+              "policy_version": "operation-policy/v2",
+              "principal_identity": "owner-session",
+              "principal_kind": "owner",
+              "request_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "revision": 5,
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca",
+              "updated_at": 1790375182.4678469,
+              "version": 1,
+              "warrant": {
+                "continuation_identities": [],
+                "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+                "execution_expires_at": 1790378782.467242,
+                "expires_at": 1790375212.467242,
+                "issued_at": 1790375182.467242,
+                "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+                "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "signature": "62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32",
+                "target_binding": "kb:kb_1ec9cffa64ca",
+                "target_ref": "kb:kb_1ec9cffa64ca",
+                "uses": 1,
+                "warrant_id": "war_5220b220bdd748588efe3479623c3095"
+              },
+              "warrant_revoked": 0
+            },
+            "receipt": {
+              "actor_identity": "owner-session",
+              "actor_kind": "owner",
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "created_at": 1790375182.467863,
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "outcome": "invalid_value",
+              "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+              "result_ref": "",
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca"
+            },
+            "ref": "operation:op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        ],
+        "view": "receipt"
+      },
+      "domain_response": {
+        "consistency": "committed",
+        "objects": [
+          {
+            "native_receipts": [],
+            "operation": {
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "claimed_by": "hub-desk-writer",
+              "correlation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "created_at": 1790375182.4665558,
+              "decision": "approve",
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+              "idempotency_key": "kb.member.add:c4290915-880d-409c-adb1-3400f784966f",
+              "name": "kb.member.add",
+              "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "parent_operation_id": "",
+              "placement": "node:hub-desk-writer",
+              "policy_version": "operation-policy/v2",
+              "principal_identity": "owner-session",
+              "principal_kind": "owner",
+              "request_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "revision": 5,
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca",
+              "updated_at": 1790375182.4678469,
+              "version": 1,
+              "warrant": {
+                "continuation_identities": [],
+                "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+                "execution_expires_at": 1790378782.467242,
+                "expires_at": 1790375212.467242,
+                "issued_at": 1790375182.467242,
+                "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+                "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "signature": "62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32",
+                "target_binding": "kb:kb_1ec9cffa64ca",
+                "target_ref": "kb:kb_1ec9cffa64ca",
+                "uses": 1,
+                "warrant_id": "war_5220b220bdd748588efe3479623c3095"
+              },
+              "warrant_revoked": 0
+            },
+            "receipt": {
+              "actor_identity": "owner-session",
+              "actor_kind": "owner",
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "created_at": 1790375182.467863,
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "outcome": "invalid_value",
+              "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+              "result_ref": "",
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca"
+            },
+            "ref": "operation:op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        ],
+        "view": "receipt"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"created_at\": 1790375182.4665558, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5\", \"idempotency_key\": \"kb.member.add:c4290915-880d-409c-adb1-3400f784966f\", \"name\": \"kb.member.add\", \"native_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"revision\": 5, \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\", \"updated_at\": 1790375182.4678469, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5\", \"execution_expires_at\": 1790378782.467242, \"expires_at\": 1790375212.467242, \"issued_at\": 1790375182.467242, \"native_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32\", \"target_binding\": \"kb:kb_1ec9cffa64ca\", \"target_ref\": \"kb:kb_1ec9cffa64ca\", \"uses\": 1, \"warrant_id\": \"war_5220b220bdd748588efe3479623c3095\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}, \"ref\": \"operation:op_5f12c103db78439ead9102e7c0ba2223\"}], \"view\": \"receipt\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "055b5a39bc7e1ad96961702d288a80df07005f857d1d41317f5c0105fa63509f",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.members",
+        "args": {
+          "kb_id": "kb_1ec9cffa64ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "method": "tools/call",
+          "params": {
+            "name": "kb.list_members",
+            "arguments": {
+              "kb_id": "kb_1ec9cffa64ca"
+            }
+          }
+        },
+        "response": [],
+        "domain_response": [],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-25T22:26:23.390806+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "kb.member.add",
+      "body_sha256": "ddfab3a6e9934125093366ca6681f4e6b46a40873d3d7975667c65c13895cf3a",
+      "body": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"resource_ref must be qualified as kind:id\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "kb.member.add",
+      "args": {
+        "kb_id": "kb_1ec9cffa64ca",
+        "resource_ref": "p7-unqualified"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "kb.add_member",
+          "arguments": {
+            "kb_id": "kb_1ec9cffa64ca",
+            "ref": "p7-unqualified"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"resource_ref must be qualified as kind:id\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.003,
+      "named_refusal": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "captured": {
+        "name": "refused_op",
+        "path": "operation_id",
+        "value": "op_5f12c103db78439ead9102e7c0ba2223"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57408",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kernel.receipt.read",
+      "args": {
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+      }
+    },
+    "op": {
+      "name": "kernel.receipt.read",
+      "args": {
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "kernel.receipt",
+          "arguments": {
+            "operation_id": "op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        }
+      },
+      "response": {
+        "consistency": "committed",
+        "objects": [
+          {
+            "native_receipts": [],
+            "operation": {
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "claimed_by": "hub-desk-writer",
+              "correlation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "created_at": 1790375182.4665558,
+              "decision": "approve",
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+              "idempotency_key": "kb.member.add:c4290915-880d-409c-adb1-3400f784966f",
+              "name": "kb.member.add",
+              "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "parent_operation_id": "",
+              "placement": "node:hub-desk-writer",
+              "policy_version": "operation-policy/v2",
+              "principal_identity": "owner-session",
+              "principal_kind": "owner",
+              "request_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "revision": 5,
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca",
+              "updated_at": 1790375182.4678469,
+              "version": 1,
+              "warrant": {
+                "continuation_identities": [],
+                "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+                "execution_expires_at": 1790378782.467242,
+                "expires_at": 1790375212.467242,
+                "issued_at": 1790375182.467242,
+                "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+                "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "signature": "62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32",
+                "target_binding": "kb:kb_1ec9cffa64ca",
+                "target_ref": "kb:kb_1ec9cffa64ca",
+                "uses": 1,
+                "warrant_id": "war_5220b220bdd748588efe3479623c3095"
+              },
+              "warrant_revoked": 0
+            },
+            "receipt": {
+              "actor_identity": "owner-session",
+              "actor_kind": "owner",
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "created_at": 1790375182.467863,
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "outcome": "invalid_value",
+              "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+              "result_ref": "",
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca"
+            },
+            "ref": "operation:op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        ],
+        "view": "receipt"
+      },
+      "domain_response": {
+        "consistency": "committed",
+        "objects": [
+          {
+            "native_receipts": [],
+            "operation": {
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "claimed_by": "hub-desk-writer",
+              "correlation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "created_at": 1790375182.4665558,
+              "decision": "approve",
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+              "idempotency_key": "kb.member.add:c4290915-880d-409c-adb1-3400f784966f",
+              "name": "kb.member.add",
+              "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "parent_operation_id": "",
+              "placement": "node:hub-desk-writer",
+              "policy_version": "operation-policy/v2",
+              "principal_identity": "owner-session",
+              "principal_kind": "owner",
+              "request_id": "c4290915-880d-409c-adb1-3400f784966f",
+              "revision": 5,
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca",
+              "updated_at": 1790375182.4678469,
+              "version": 1,
+              "warrant": {
+                "continuation_identities": [],
+                "envelope_sha256": "sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5",
+                "execution_expires_at": 1790378782.467242,
+                "expires_at": 1790375212.467242,
+                "issued_at": 1790375182.467242,
+                "native_id": "c4290915-880d-409c-adb1-3400f784966f",
+                "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "signature": "62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32",
+                "target_binding": "kb:kb_1ec9cffa64ca",
+                "target_ref": "kb:kb_1ec9cffa64ca",
+                "uses": 1,
+                "warrant_id": "war_5220b220bdd748588efe3479623c3095"
+              },
+              "warrant_revoked": 0
+            },
+            "receipt": {
+              "actor_identity": "owner-session",
+              "actor_kind": "owner",
+              "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+              "created_at": 1790375182.467863,
+              "delegator_identity": "",
+              "delegator_kind": "",
+              "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+              "outcome": "invalid_value",
+              "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+              "result_ref": "",
+              "state": "refused",
+              "target_ref": "kb:kb_1ec9cffa64ca"
+            },
+            "ref": "operation:op_5f12c103db78439ead9102e7c0ba2223"
+          }
+        ],
+        "view": "receipt"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"created_at\": 1790375182.4665558, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5\", \"idempotency_key\": \"kb.member.add:c4290915-880d-409c-adb1-3400f784966f\", \"name\": \"kb.member.add\", \"native_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"revision\": 5, \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\", \"updated_at\": 1790375182.4678469, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:3a6b43ecea202f777d33948320ddc2e3df12dba306ce629e01a94c73b7597ac5\", \"execution_expires_at\": 1790378782.467242, \"expires_at\": 1790375212.467242, \"issued_at\": 1790375182.467242, \"native_id\": \"c4290915-880d-409c-adb1-3400f784966f\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"62735873bd84366e44789217811ba7189a904d01c62913c898193a59402dcd32\", \"target_binding\": \"kb:kb_1ec9cffa64ca\", \"target_ref\": \"kb:kb_1ec9cffa64ca\", \"uses\": 1, \"warrant_id\": \"war_5220b220bdd748588efe3479623c3095\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}, \"ref\": \"operation:op_5f12c103db78439ead9102e7c0ba2223\"}], \"view\": \"receipt\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005
+    },
+    "op_digest": "055b5a39bc7e1ad96961702d288a80df07005f857d1d41317f5c0105fa63509f",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.members",
+        "args": {
+          "kb_id": "kb_1ec9cffa64ca"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "method": "tools/call",
+          "params": {
+            "name": "kb.list_members",
+            "arguments": {
+              "kb_id": "kb_1ec9cffa64ca"
+            }
+          }
+        },
+        "response": [],
+        "domain_response": [],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "at_utc": "2026-09-25T22:26:23.387019+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "kb.member.add",
+      "body_sha256": "ddfab3a6e9934125093366ca6681f4e6b46a40873d3d7975667c65c13895cf3a",
+      "body": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"resource_ref must be qualified as kind:id\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "kb.member.add",
+      "args": {
+        "kb_id": "kb_1ec9cffa64ca",
+        "resource_ref": "p7-unqualified"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "kb.add_member",
+          "arguments": {
+            "kb_id": "kb_1ec9cffa64ca",
+            "ref": "p7-unqualified"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\": \"resource_ref must be qualified as kind:id\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790375182.467863, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_5f12c103db78439ead9102e7c0ba2223\", \"outcome\": \"invalid_value\", \"receipt_id\": \"rcpt_6d3222c03fd24a66bc1ba0311994d71b\", \"result_ref\": \"\", \"state\": \"refused\", \"target_ref\": \"kb:kb_1ec9cffa64ca\"}}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.003,
+      "named_refusal": {
+        "error": "resource_ref must be qualified as kind:id",
+        "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790375182.467863,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_5f12c103db78439ead9102e7c0ba2223",
+          "outcome": "invalid_value",
+          "receipt_id": "rcpt_6d3222c03fd24a66bc1ba0311994d71b",
+          "result_ref": "",
+          "state": "refused",
+          "target_ref": "kb:kb_1ec9cffa64ca"
+        },
+        "code": "mcp_refused"
+      },
+      "captured": {
+        "name": "refused_op",
+        "path": "operation_id",
+        "value": "op_5f12c103db78439ead9102e7c0ba2223"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 6 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.target_ref holds; observe_at objects.0.operation.name holds; op read #0 (kb.members) <root> holds",
+    "elapsed_s": 0.922
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 6 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.target_ref holds; observe_at objects.0.operation.name holds; op read #0 (kb.members) <root> holds",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.925,
+    "first_satisfied_at_s": 0.922,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['refused_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 6 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.target_ref holds; observe_at objects.0.operation.name holds; op read #0 (kb.members) <root> holds"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "refused_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-efu2y6yn/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-efu2y6yn/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57408"
+  ],
+  "duration_s": 2.665
+}

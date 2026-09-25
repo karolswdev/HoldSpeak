@@ -1,0 +1,58 @@
+{
+  "declared": {
+    "kb_id": "kb_93f410fdb576",
+    "resource_ref": "note:first",
+    "ref": "note:second"
+  },
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "kb.add_member",
+      "arguments": {
+        "kb_id": "kb_93f410fdb576",
+        "ref": "note:second"
+      }
+    }
+  },
+  "response": {
+    "created_at": "2026-09-25T15:32:30.393798",
+    "deleted": false,
+    "id": "kb_93f410fdb576|note:second",
+    "knowledge_id": "kb_93f410fdb576",
+    "last_modified": "2026-09-25T15:32:30.393798",
+    "operation_id": "op_6faa5bee077d4ac285a7d193bb865376",
+    "receipt": {
+      "actor_identity": "owner-session",
+      "actor_kind": "owner",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "created_at": 1790371950.394208,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_6faa5bee077d4ac285a7d193bb865376",
+      "outcome": "succeeded",
+      "receipt_id": "rcpt_3bdb06ac69dd402d8c25d3c5146ea3bc",
+      "result_ref": "note:second",
+      "state": "succeeded",
+      "target_ref": "kb:kb_93f410fdb576"
+    },
+    "resource_ref": "note:second"
+  },
+  "refusal": null,
+  "members": [
+    {
+      "created_at": "2026-09-25T15:32:30.393798",
+      "deleted": false,
+      "id": "kb_93f410fdb576|note:second",
+      "knowledge_id": "kb_93f410fdb576",
+      "last_modified": "2026-09-25T15:32:30.393798",
+      "resource_ref": "note:second"
+    }
+  ]
+}
+Traceback (most recent call last):
+  File "/Users/karol/dev/tools/wt-philo-7-03/.tmp/philo7-atlas/probe-kb-alias.py", line 17, in <module>
+    assert result['refusal'] is not None, 'The rig collapsed resource_ref and ref and executed a different admitted write'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: The rig collapsed resource_ref and ref and executed a different admitted write
