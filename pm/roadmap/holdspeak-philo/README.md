@@ -1,8 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 night — PHILO-6-03 ratified placement built and verified at 1440/393 in Chromium. Six actual surface walks and Dismiss at both widths pass; [PR #649](https://github.com/karolswdev/HoldSpeak/pull/649) is open; main advanced with lane A; five shared-file conflicts and Muad’Dib counsel remain before this PR can merge.
-**Current phase:** [Phase 6 The Honest Morning](phase-6-the-honest-morning/current-phase-status.md) — RATIFIED 2026-09-24 ("Ratify, build it"); lane A has merged on main; Phase 6 integration remains open. Phase 7 The Desk on the Contract follows (draft: [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md)).
-**Status:** Phases 1–5 delivered and merged. Phase 6: PHILO-6-04/05 merged; PHILO-6-03 verified in its placement lane with [paired evidence](phase-6-the-honest-morning/evidence-story-03.md). The broad scoped suite retains one inherited fixture error, named in the lane report. Integration rehearsal and owner review remain open.
+**Last updated:** 2026-09-24 (Phase 6: all five stories merged; closing chain next).
 
 ## Vision
 

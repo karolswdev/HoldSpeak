@@ -1,0 +1,8 @@
+# PHILO-6-01 round 2 GREEN — the branch, round-two working tree
+$ cd web && npx vitest run src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx src/desk/chair/__tests__/importFailedBadge.philo601.test.tsx
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  21:47:58
+   Duration  785ms (transform 639ms, setup 121ms, import 882ms, tests 54ms, environment 369ms)
+

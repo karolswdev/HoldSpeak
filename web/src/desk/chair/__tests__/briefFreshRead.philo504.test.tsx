@@ -65,7 +65,7 @@ function wire() {
   });
 }
 
-const LATEST_RECEIPT = "Brief ready · 5 items · 6:08 PM";
+const LATEST_RECEIPT = "Brief ready · 5 items · SEP 25 18:08";
 
 async function actResolve<T>(pending: Deferred<T>, value: T) {
   await act(async () => {

@@ -19,6 +19,11 @@ export function intelBadge(status: string | null | undefined): string {
     pending: "QUEUED",
     error: "FAILED",
     failed: "FAILED",
+    // PHILO-6-01: the import worker writes `import_failed` when the file
+    // gives no transcript (holdspeak/services/meeting_service.py,
+    // `_set_import_status`). It fell to the SAVED fallback below, so a
+    // failed import looked like a saved meeting on the Arrival.
+    import_failed: "FAILED",
     partial: "PARTIAL",
     skipped: "SKIPPED",
     disabled: "OFF",

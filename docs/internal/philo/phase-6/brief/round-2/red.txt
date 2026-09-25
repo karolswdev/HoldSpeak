@@ -1,0 +1,1252 @@
+# PHILO-6 round 2 RED — git archive f6c0c0d1 (the round-one state, f6c0c0d14b3c627e55ec21146cfd4e6f800d7390) with the round-two tests overlaid
+# Interpreter: the worktree's .venv with PYTHONPATH=<archive> (holdspeak imports resolve to the archive: /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r1/holdspeak/services/monday_brief_service.py)
+# The producer link runs FIRST with PHILO6_WRITE_FIXTURE=1, so the rendered link reads the ROUND-ONE producer's own brief.
+# test_the_service_objects_name_every_observed_service fails on the archive by a missing symbol (_SERVICE_OBJECTS): NOT counted as a red.
+$ HOME=$(mktemp -d) PHILO6_WRITE_FIXTURE=1 PYTHONPATH=. .venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo6_02_round2_outcome_words.py
+FFFF.F.FFFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFFFFFFFFFFF                      [100%]
+=================================== FAILURES ===================================
+_________________ test_failed_operations_make_no_success_line __________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_failed_operations_make_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111a39f30>
+
+    def test_failed_operations_make_no_success_line(tmp_path, monkeypatch):
+        db = Database(tmp_path / "hub.db")
+        client = _hub(db, monkeypatch, tmp_path)
+        _seed_failures(db, client, monkeypatch)
+        with db._connection() as conn:
+            errors = [
+                (r["service"], r["method"])
+                for r in conn.execute(
+                    "SELECT service, method FROM pipeline_events WHERE error IS NOT NULL"
+                )
+            ]
+            records = conn.execute("SELECT COUNT(*) FROM decision_records").fetchone()[0]
+        assert ("DecisionRecordService", "create_from_desk") in errors, errors
+        assert ("PrimitiveService", "get_decision") in errors, errors
+        assert records == 0
+    
+        generated = client.post("/api/brief/generate")
+        assert generated.status_code == 200, generated.text
+        latest = client.get("/api/brief/latest")
+        assert latest.status_code == 200
+        payload = _stable(latest.json())
+        if os.environ.get("PHILO6_WRITE_FIXTURE") == "1":
+            FIXTURE.parent.mkdir(parents=True, exist_ok=True)
+            FIXTURE.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                               encoding="utf-8")
+    
+        with db._connection() as conn:
+            stored = [
+                (str(r["section"]), str(r["text"]), str(r["source_ref"] or ""))
+                for r in conn.execute("SELECT section, text, source_ref FROM monday_brief_items")
+            ]
+        texts = [text for _section, text, _ref in stored]
+        changed = [text for section, text, _ref in stored if section == "changed"]
+        broke = [text for section, text, _ref in stored if section == "broke"]
+        # A failed operation never yields a success line.
+>       assert [t for t in texts if t.startswith(SUCCESS_WORDS)] == [], stored
+E       AssertionError: [('changed', 'Meeting recorded: Architecture review', 'meeting:m-arch'), ('changed', 'Decision lifecycle: transition',...ce8-42e2c3382a4a'), ('broke', 'Brief triage did not save', 'pipeline-event:04e7fad3-eb31-4ce0-b73c-b877685439d3'), ...]
+E       assert ['Decision re...cture review'] == []
+E         
+E         Left contains 2 more items, first extra item: 'Decision recorded'
+E         Use -v to get more diff
+
+tests/unit/test_philo6_02_round2_outcome_words.py:147: AssertionError
+_______________ test_a_successful_record_keeps_its_success_line ________________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_a_successful_record_keeps0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111ca68b0>
+
+    def test_a_successful_record_keeps_its_success_line(tmp_path, monkeypatch):
+        """The positive control: the fence above is not vacuous."""
+        db = Database(tmp_path / "hub.db")
+        client = _hub(db, monkeypatch, tmp_path)
+        _clock(monkeypatch)
+        db.desk_decisions.upsert(
+            decision_id="philo602-present",
+            title="Keep retrieval local",
+            status="accepted",
+            decision_markdown="Keep retrieval local.",
+        )
+        record = DecisionRecordService(
+            db, observer=SQLiteObserver(db._connection)
+        ).create_from_desk(OWNER, "philo602-present")
+        assert record["id"]
+        generated = client.post("/api/brief/generate")
+        assert generated.status_code == 200, generated.text
+        changed = [i["text"] for i in generated.json()["sections"]["changed"]]
+>       assert "Decision recorded: Keep retrieval local" in changed, changed
+E       AssertionError: ['Decision record: create']
+E       assert 'Decision recorded: Keep retrieval local' in ['Decision record: create']
+
+tests/unit/test_philo6_02_round2_outcome_words.py:184: AssertionError
+____ test_every_observed_producer_has_a_human_line[AskService-list_models] _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h0')
+service = 'AskService', method = 'list_models'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Ask: list models did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Ask: list models did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+__ test_every_observed_producer_has_a_human_line[AuthorityService-get_policy] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h1')
+service = 'AuthorityService', method = 'get_policy'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Authority: get policy did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Authority: get policy did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[DecisionRecordService-create] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h3')
+service = 'DecisionRecordService', method = 'create'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Decision record: create did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Decision record: create did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[DecisionRecordService-due_for_review] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h5')
+service = 'DecisionRecordService', method = 'due_for_review'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Decision record: due for review did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Decision record: due for review did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+___ test_every_observed_producer_has_a_human_line[DecisionRecordService-get] ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h6')
+service = 'DecisionRecordService', method = 'get'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Decision record: get did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Decision record: get did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[DeliveryService-attempt_service] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h7')
+service = 'DeliveryService', method = 'attempt_service'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Delivery: attempt service did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Delivery: attempt service did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[DeliveryService-launch_service] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h8')
+service = 'DeliveryService', method = 'launch_service'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Delivery: launch service did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Delivery: launch service did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[DeliveryService-launch_sweep] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h9')
+service = 'DeliveryService', method = 'launch_sweep'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Delivery: launch sweep did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Delivery: launch sweep did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+______ test_every_observed_producer_has_a_human_line[DeskService-health] _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h10')
+service = 'DeskService', method = 'health'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Desk: health did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Desk: health did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_______ test_every_observed_producer_has_a_human_line[DeskService-seed] ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h11')
+service = 'DeskService', method = 'seed'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Desk: seed did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Desk: seed did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+__ test_every_observed_producer_has_a_human_line[FollowThroughService-board] ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h12')
+service = 'FollowThroughService', method = 'board'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Follow through: board did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Follow through: board did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[FollowThroughService-people_store_state] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h13')
+service = 'FollowThroughService', method = 'people_store_state'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Follow through: people store state did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Follow through: people store state did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[GateService-invalidate_held_on_startup] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h14')
+service = 'GateService', method = 'invalidate_held_on_startup'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Gate: invalidate held on startup did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Gate: invalidate held on startup did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MeetingAftercareService-get_aftercare] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h15')
+service = 'MeetingAftercareService', method = 'get_aftercare'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Meeting aftercare: get aftercare did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Meeting aftercare: get aftercare did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MeetingAftercareService-list_proposals] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h16')
+service = 'MeetingAftercareService', method = 'list_proposals'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Meeting aftercare: list proposals did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Meeting aftercare: list proposals did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MeetingIntelService-get_recovery] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h17')
+service = 'MeetingIntelService', method = 'get_recovery'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Meeting intel: get recovery did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Meeting intel: get recovery did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MeetingIntelService-list_jobs] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h18')
+service = 'MeetingIntelService', method = 'list_jobs'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Meeting intel: list jobs did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Meeting intel: list jobs did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MondayBriefService-compute_lookahead] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h20')
+service = 'MondayBriefService', method = 'compute_lookahead'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Monday brief: compute lookahead did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Monday brief: compute lookahead did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MondayBriefService-compute_window] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h21')
+service = 'MondayBriefService', method = 'compute_window'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Monday brief: compute window did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Monday brief: compute window did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+__ test_every_observed_producer_has_a_human_line[MondayBriefService-generate] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h22')
+service = 'MondayBriefService', method = 'generate'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Monday brief: generate did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Monday brief: generate did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[MondayBriefService-get_latest] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h23')
+service = 'MondayBriefService', method = 'get_latest'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Monday brief: get latest did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Monday brief: get latest did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_____ test_every_observed_producer_has_a_human_line[PluginJobService-list] _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h24')
+service = 'PluginJobService', method = 'list'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Plugin job: list did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Plugin job: list did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-create_decision] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h25')
+service = 'PrimitiveService', method = 'create_decision'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: create decision
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: create decision')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-get_decision] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h26')
+service = 'PrimitiveService', method = 'get_decision'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: get decision
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: get decision')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+___ test_every_observed_producer_has_a_human_line[PrimitiveService-get_note] ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h27')
+service = 'PrimitiveService', method = 'get_note'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: get note
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: get note')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-list_chains] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h28')
+service = 'PrimitiveService', method = 'list_chains'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list chains
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list chains')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-list_decisions] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h29')
+service = 'PrimitiveService', method = 'list_decisions'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list decisions
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list decisions')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-list_directories] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h30')
+service = 'PrimitiveService', method = 'list_directories'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list directories
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list directories')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+___ test_every_observed_producer_has_a_human_line[PrimitiveService-list_kbs] ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h31')
+service = 'PrimitiveService', method = 'list_kbs'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list kbs
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list kbs')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+__ test_every_observed_producer_has_a_human_line[PrimitiveService-list_notes] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h32')
+service = 'PrimitiveService', method = 'list_notes'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list notes
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list notes')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[PrimitiveService-list_workflows] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h33')
+service = 'PrimitiveService', method = 'list_workflows'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+>           assert not IMPLEMENTATION_WORDS.search(line), line
+E           AssertionError: Primitive: list workflows
+E           assert not <re.Match object; span=(0, 9), match='Primitive'>
+E            +  where <re.Match object; span=(0, 9), match='Primitive'> = <built-in method search of re.Pattern object at 0x111ba4900>('Primitive: list workflows')
+E            +    where <built-in method search of re.Pattern object at 0x111ba4900> = re.compile('Primitive|Service|Lifecycle|[a-z]_[a-z]').search
+
+tests/unit/test_philo6_02_round2_outcome_words.py:233: AssertionError
+_ test_every_observed_producer_has_a_human_line[ProfileService-list_inference_targets] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h34')
+service = 'ProfileService', method = 'list_inference_targets'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Profile: list inference targets did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Profile: list inference targets did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[ProjectService-list_projects] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h35')
+service = 'ProjectService', method = 'list_projects'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Project: list projects did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Project: list projects did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[ProjectService-list_resource_relationships] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h36')
+service = 'ProjectService', method = 'list_resource_relationships'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Project: list resource relationships did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Project: list resource relationships did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[ProjectService-recover_ask_tasks_on_startup] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h37')
+service = 'ProjectService', method = 'recover_ask_tasks_on_startup'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Project: recover ask tasks on startup did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Project: recover ask tasks on startup did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+____ test_every_observed_producer_has_a_human_line[ProjectionService-list] _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h38')
+service = 'ProjectionService', method = 'list'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Projection: list did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Projection: list did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[ReactionService-process_pending] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h39')
+service = 'ReactionService', method = 'process_pending'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Reaction: process pending did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Reaction: process pending did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[ReactionService-refresh_due_watches] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h40')
+service = 'ReactionService', method = 'refresh_due_watches'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Reaction: refresh due watches did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Reaction: refresh due watches did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+__ test_every_observed_producer_has_a_human_line[RecipeService-list_recipes] ___
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h41')
+service = 'RecipeService', method = 'list_recipes'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Recipe: list recipes did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Recipe: list recipes did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[SettingsService-get_redacted] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h42')
+service = 'SettingsService', method = 'get_redacted'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Settings: get redacted did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Settings: get redacted did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[SettingsService-get_settings] __
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h43')
+service = 'SettingsService', method = 'get_settings'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Settings: get settings did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Settings: get settings did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[SetupService-set_onboarding_disposition] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h44')
+service = 'SetupService', method = 'set_onboarding_disposition'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Setup: set onboarding disposition did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Setup: set onboarding disposition did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+______ test_every_observed_producer_has_a_human_line[SetupService-status] ______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h45')
+service = 'SetupService', method = 'status'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Setup: status did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Setup: status did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_______ test_every_observed_producer_has_a_human_line[SyncService-pull] ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h46')
+service = 'SyncService', method = 'pull'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Sync: pull did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Sync: pull did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_ test_every_observed_producer_has_a_human_line[WorkbenchService-list_workbenches] _
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-881/test_every_observed_producer_h47')
+service = 'WorkbenchService', method = 'list_workbenches'
+
+    @pytest.mark.parametrize(("service", "method"), OBSERVED)
+    def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
+        from holdspeak.services.monday_brief_service import MondayBriefService
+    
+        brief = MondayBriefService(Database(tmp_path / "hub.db"))
+        with brief._db._connection() as conn:
+            change = brief._operation_text(conn, service, method, "{}", broke=False)
+            broke = brief._operation_text(conn, service, method, "{}", broke=True)
+        for line in (change, broke):
+            assert not IMPLEMENTATION_WORDS.search(line), line
+            assert not RAW.search(line), line
+            assert line[:1].isupper(), line
+>       assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
+E       AssertionError: Workbench: list workbenches did not complete
+E       assert None
+E        +  where None = <function fullmatch at 0x10496d380>('[A-Z][A-Za-z -]* did not [a-z]+', 'Workbench: list workbenches did not complete')
+E        +    where <function fullmatch at 0x10496d380> = re.fullmatch
+
+tests/unit/test_philo6_02_round2_outcome_words.py:236: AssertionError
+_____________ test_the_service_objects_name_every_observed_service _____________
+
+    def test_the_service_objects_name_every_observed_service():
+        """``<Object> did not <verb>`` needs a known object: enumerated, never a
+        class name. Every ``@observe_service`` class in the package is named."""
+>       from holdspeak.services.monday_brief_service import _SERVICE_OBJECTS
+E       ImportError: cannot import name '_SERVICE_OBJECTS' from 'holdspeak.services.monday_brief_service' (/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r1/holdspeak/services/monday_brief_service.py)
+
+tests/unit/test_philo6_02_round2_outcome_words.py:242: ImportError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_failed_operations_make_no_success_line
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_a_successful_record_keeps_its_success_line
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[AskService-list_models]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[AuthorityService-get_policy]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DecisionRecordService-create]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DecisionRecordService-due_for_review]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DecisionRecordService-get]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DeliveryService-attempt_service]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DeliveryService-launch_service]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DeliveryService-launch_sweep]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DeskService-health]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[DeskService-seed]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[FollowThroughService-board]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[FollowThroughService-people_store_state]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[GateService-invalidate_held_on_startup]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MeetingAftercareService-get_aftercare]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MeetingAftercareService-list_proposals]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MeetingIntelService-get_recovery]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MeetingIntelService-list_jobs]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MondayBriefService-compute_lookahead]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MondayBriefService-compute_window]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MondayBriefService-generate]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[MondayBriefService-get_latest]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PluginJobService-list]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-create_decision]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-get_decision]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-get_note]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_chains]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_decisions]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_directories]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_kbs]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_notes]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[PrimitiveService-list_workflows]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ProfileService-list_inference_targets]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ProjectService-list_projects]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ProjectService-list_resource_relationships]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ProjectService-recover_ask_tasks_on_startup]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ProjectionService-list]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ReactionService-process_pending]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[ReactionService-refresh_due_watches]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[RecipeService-list_recipes]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[SettingsService-get_redacted]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[SettingsService-get_settings]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[SetupService-set_onboarding_disposition]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[SetupService-status]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[SyncService-pull]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_every_observed_producer_has_a_human_line[WorkbenchService-list_workbenches]
+FAILED tests/unit/test_philo6_02_round2_outcome_words.py::test_the_service_objects_name_every_observed_service
+48 failed, 3 passed in 8.31s
+exit=1
+
+$ cd web && npx vitest run src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx   (fixture written by the ROUND-ONE producer above)
+
+ RUN  v4.1.9 /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/r1/web
+
+ ❯ src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx (2 tests | 2 failed) 36ms
+     × the Arrival BRIEF section shows the failures and no success line 26ms
+     × the Brief view (the fold's destination) shows no success line and no implementation word 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx > PHILO-6-02 round 2: a failed operation never reads as a success > the Arrival BRIEF section shows the failures and no success line
+AssertionError: expected 'BRIEF · 9 THINGS WAITINGTHIS DEVICEGe…' not to match /Decision recorded|Summary requested|B…/
+
+- Expected:
+/Decision recorded|Summary requested|Brief triage saved|Decision changed|Decision loaded/
+
++ Received:
+"BRIEF · 9 THINGS WAITINGTHIS DEVICEGenerateMeeting recorded: Architecture reviewAckDeferDecision lifecycle: transitionAckDeferDecision recordedAckDefer6 moreSEP 21 – 25 · GENERATED SEP 25 12:19Brief ready · 9 items · SEP 25 12:19"
+
+ ❯ src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx:48:22
+     46|     const section = screen.getByTestId("arrival-brief");
+     47|     const text = section.textContent ?? "";
+     48|     expect(text).not.toMatch(SUCCESS);
+       |                      ^
+     49|     expect(text).not.toMatch(IMPLEMENTATION);
+     50|     // Every waiting row is a failure or the recorded meeting; the fol…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx > PHILO-6-02 round 2: a failed operation never reads as a success > the Brief view (the fold's destination) shows no success line and no implementation word
+AssertionError: expected 'SEP 21-25GENERATED SEP 25 12:19SINCE …' not to match /Decision recorded|Summary requested|B…/
+
+- Expected:
+/Decision recorded|Summary requested|Brief triage saved|Decision changed|Decision loaded/
+
++ Received:
+"SEP 21-25GENERATED SEP 25 12:19SINCE THURSDAYMEETING RECORDEDArchitecture review30 minMTGDECISION LIFECYCLEtransition{\"decision_id\":\"philo602-deliberately-absent\",\"action\":\"accept\"}SYSDecision recorded{\"principal\":\"Principal(kind=<PrincipalKind.OWNER: 'owner'>, identity='test-owner', allowed_operations=frozenset(), authority_basis='')\",\"desk_decision_id\":\"philo602-deliberately-absent\"}SYSSUMMARY REQUESTEDArchitecture review{\"meeting_id\":\"m-arch\",\"expected_selection_hash\":null}SYSBrief triage did not saveLookupError('Unknown brief item: brief-item-missing')SYSDecision did not recordKeyError('philo602-deliberately-absent')SYSDECISION LIFECYCLEtransition did not completenot_found: NotFound('Unknown decision: philo602-deliberately-absent')SYSPRIMITIVEget decision did not completenot_found: NotFound('Unknown decision: philo602-deliberately-absent')SYSSUMMARY DID NOT STARTArchitecture reviewroute_unavailable: ConflictError('The summary route is not available.')SYS○PEOPLE · UNAVAILABLEAcknowledgeDeferSpeak"
+
+ ❯ src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx:59:22
+     57|     await screen.findByText("Decision did not record");
+     58|     const text = document.body.textContent ?? "";
+     59|     expect(text).not.toMatch(SUCCESS);
+       |                      ^
+     60|     expect(text).not.toMatch(/Primitive|[A-Z][A-Za-z]*Service\./);
+     61|     expect(text).toContain("Decision did not load");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  21:47:33
+   Duration  819ms (transform 354ms, setup 59ms, import 474ms, tests 36ms, environment 178ms)
+
+exit=1

@@ -7,6 +7,7 @@ importing a web-layer type.
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
+import logging
 from datetime import datetime
 from pathlib import Path
 import threading
@@ -28,6 +29,8 @@ from ..meeting_import import (
 from ..meeting_session import MeetingState
 from ..principals import Principal
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+
+_LOG = logging.getLogger(__name__)
 
 
 class ActionItemTriageUnavailable(ServiceError):
@@ -311,12 +314,16 @@ class MeetingService:
                 progress=on_progress,
                 principal=principal,
             )
+        # PHILO-6-01 round 3 (UX-CANON A.3; Astra's round-two check, finding
+        # 3): the stored detail is the SHORT cause the face shows as
+        # ``LAST ERROR · <cause>`` -- never the worker's temp file name, a path
+        # or a sentence. The actionable message goes to the log.
         except MeetingImportError as exc:
-            self._set_import_status(meeting_id, "import_failed", str(exc))
+            _LOG.warning("meeting import %s failed: %s", meeting_id, exc)
+            self._set_import_status(meeting_id, "import_failed", exc.cause)
         except Exception as exc:  # noqa: BLE001 — preserve the durable failure state.
-            self._set_import_status(
-                meeting_id, "import_failed", f"{type(exc).__name__}: {exc}"
-            )
+            _LOG.warning("meeting import %s failed", meeting_id, exc_info=True)
+            self._set_import_status(meeting_id, "import_failed", "UNEXPECTED ERROR")
         finally:
             tmp_path.unlink(missing_ok=True)
             # HS-202-02 (coordinator item 9): the import worker finished in

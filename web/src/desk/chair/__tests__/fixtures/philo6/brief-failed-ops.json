@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-25T07:19:00-11:00",
+  "generated_label": "GENERATED SEP 25 07:19",
+  "headline": "1 thing changed, 5 things broke.",
+  "id": "brief-philo6-00",
+  "is_empty": false,
+  "ledger": {
+    "operations": 0,
+    "since": null
+  },
+  "period_end": "2026-09-25T07:19:00-11:00",
+  "period_label": "SEP 21 \u2013 25",
+  "period_start": "2026-09-24T17:00:00-11:00",
+  "person_sections_state": "unavailable",
+  "sections": {
+    "broke": [
+      {
+        "created_at": null,
+        "detail": "LookupError('Unknown brief item: brief-item-missing')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-01",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-01",
+        "text": "Brief triage did not save"
+      },
+      {
+        "created_at": null,
+        "detail": "not_found: NotFound('Unknown decision: philo602-deliberately-absent')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-02",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-02",
+        "text": "Decision did not complete"
+      },
+      {
+        "created_at": null,
+        "detail": "not_found: NotFound('Unknown decision: philo602-deliberately-absent')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-03",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-03",
+        "text": "Decision did not load"
+      },
+      {
+        "created_at": null,
+        "detail": "KeyError('philo602-deliberately-absent')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-04",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-04",
+        "text": "Decision did not record"
+      },
+      {
+        "created_at": null,
+        "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+        "id": "brief-break-pipeline-brief-philo6-00-philo6-05",
+        "priority": 2,
+        "section": "broke",
+        "source_ref": "pipeline-event:philo6-05",
+        "text": "Summary did not start: Architecture review"
+      }
+    ],
+    "changed": [
+      {
+        "created_at": null,
+        "detail": "30 min",
+        "id": "brief-item-philo6-06",
+        "priority": 50,
+        "section": "changed",
+        "source_ref": "meeting:m-arch",
+        "text": "Meeting recorded: Architecture review"
+      }
+    ],
+    "decisions": [],
+    "this_week": [],
+    "waiting": []
+  },
+  "shelf": {}
+}

@@ -133,7 +133,8 @@ def test_garbage_transcript_marks_the_row_honestly_and_is_removable(client, db, 
 
     failed = _wait_for_status(client, meeting_id, {"import_failed"})
     detail = ((failed.get("intel_status") or {}).get("detail") or "")
-    assert "does not look like a text transcript" in detail
+    # PHILO-6-01 round 3 (UX-CANON A.3): the stored detail is the short cause.
+    assert detail == "EMPTY OR BINARY FILE"
     deleted = client.delete(f"/api/meetings/{meeting_id}")
     assert deleted.status_code in (200, 204)
 
@@ -145,4 +146,4 @@ def test_header_only_vtt_fails_with_the_parser_message(client, db, no_transcribe
     )
     assert response.status_code == 202
     failed = _wait_for_status(client, response.json()["meeting_id"], {"import_failed"})
-    assert "no readable cue blocks" in ((failed.get("intel_status") or {}).get("detail") or "")
+    assert ((failed.get("intel_status") or {}).get("detail") or "") == "NO TRANSCRIPT LINES"

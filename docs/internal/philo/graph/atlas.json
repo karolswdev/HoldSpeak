@@ -47,7 +47,7 @@
           "value": "arrival-headline"
         },
         "observe_at": "[data-testid=arrival-headline]",
-        "words": "the gate closes and THE DESK is shown (the arrival headline is present); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards \u2014 recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
+        "words": "the gate closes and THE DESK is shown (the arrival headline is present); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards — recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
         "reads": []
       },
       "completion_bound_s": 20,
@@ -1838,7 +1838,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.1.43 \u00b7 LAN"
+          "value": "192.168.1.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "the planned host is named on the row beside Run summary, before the click [the audit's stated observation location: face: [data-testid=arrival-route]]",
@@ -2749,7 +2749,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "FAILED\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED"
+          "value": "FAILED\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -3083,7 +3083,7 @@
           "adapter": "http-route",
           "capture_path": "meeting_id",
           "form": {
-            "title": "Architecture boundary review \u2014 empty transcript"
+            "title": "Architecture boundary review — empty transcript"
           },
           "wait_for": {
             "method": "GET",
@@ -5661,10 +5661,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "BRIEF DID NOT GENERATE \u00b7 HTTP 500"
+          "value": "BRIEF DID NOT GENERATE · HTTP 500"
         },
         "observe_at": "[data-testid=arrival-brief-generate-failed]",
-        "words": "RE-POINTED by PHILO-4-01 round two (ratified canvas board 6b): a refused generation is named in the BRIEF section's own status slot, 'BRIEF DID NOT GENERATE \u00b7 HTTP 500' (ChairHome.tsx:718-726, the cause from briefLoadCause :152), and Generate stays in the section head (briefVerbs :695); it is never a silent no-op and never the old desk write-failure toast [the audit's stated observation location: face: the BRIEF section's failure line]"
+        "words": "RE-POINTED by PHILO-4-01 round two (ratified canvas board 6b): a refused generation is named in the BRIEF section's own status slot, 'BRIEF DID NOT GENERATE · HTTP 500' (ChairHome.tsx:718-726, the cause from briefLoadCause :152), and Generate stays in the section head (briefVerbs :695); it is never a silent no-op and never the old desk write-failure toast [the audit's stated observation location: face: the BRIEF section's failure line]"
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -7349,7 +7349,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.1.43 \u00b7 LAN"
+          "value": "192.168.1.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "Article III: the host this run WILL use is disclosed on the row BEFORE the click. Its text is recorded so the council can set it against the host that actually ran (case.j6.run_summary.host_named). [the audit's stated observation location: [data-testid=arrival-route]]",
@@ -7566,7 +7566,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "RETRYING\nLAST ATTEMPT \u00b7 192.168.1.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED"
+          "value": "RETRYING\nLAST ATTEMPT · 192.168.1.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -7602,7 +7602,7 @@
           "name": "meeting.import",
           "args": {
             "path": "tests/fixtures/philo5_empty.vtt",
-            "title": "Architecture boundary review \u2014 empty transcript"
+            "title": "Architecture boundary review — empty transcript"
           },
           "adapter": "mcp-http",
           "capture_as": "meeting_id",
@@ -9807,7 +9807,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1335,
+          "line": 1342,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -9826,13 +9826,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 528,
+          "line": 535,
           "claim": "the Chair starts with briefLoading true"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "SurfaceState",
-          "line": 294,
+          "line": 302,
           "claim": "the Brief pull-out draws the loading state first"
         }
       ],
@@ -9851,14 +9851,14 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "generating",
-          "line": 302,
+          "line": 310,
           "claim": "the pull-out's verb reads Generating... while the POST is in flight"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 738,
-          "claim": "the Chair's head Generate is disabled and GENERATING\u2026 holds the status slot in flight (PHILO-4-01)"
+          "line": 745,
+          "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
       "reachable_by": [
@@ -9876,7 +9876,7 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "SurfaceState",
-          "line": 296,
+          "line": 304,
           "claim": "a failed read draws the error state with a Retry"
         }
       ],
@@ -9895,8 +9895,8 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 713,
-          "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE \u00b7 <cause> in the status slot, no Retry (PHILO-4-01)"
+          "line": 720,
+          "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
       "reachable_by": [
@@ -9914,19 +9914,19 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1247,
+          "line": 1522,
           "claim": "is_empty is true when no section holds an item"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "is_empty",
-          "line": 304,
+          "line": 312,
           "claim": "the pull-out draws No changes for an empty brief"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "No changes",
-          "line": 346,
+          "line": 540,
           "claim": "the producer's headline for an empty brief is No changes"
         }
       ],
@@ -9945,13 +9945,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 117,
+          "line": 311,
           "claim": "is_empty is a field of the brief record"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 875,
+          "line": 882,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -9971,7 +9971,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1390,
+          "line": 1397,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -9992,13 +9992,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "untouched",
-          "line": 118,
+          "line": 312,
           "claim": "an absent shelf key is untouched work"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 883,
+          "line": 890,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -10017,7 +10017,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 86,
+          "line": 280,
           "claim": "acknowledged and deferred are the two shelf states"
         },
         {
@@ -10042,13 +10042,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 86,
+          "line": 280,
           "claim": "deferred is the second accepted shelf state"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1171,
+          "line": 1446,
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -10092,7 +10092,7 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "person-sections-unavailable",
-          "line": 447,
+          "line": 455,
           "claim": "the face draws that unavailability"
         }
       ],
@@ -10111,13 +10111,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 201,
+          "line": 395,
           "claim": "the brief is keyed by the period_end date"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "_load_brief",
-          "line": 216,
+          "line": 410,
           "claim": "a second generate on the same date returns the existing brief"
         }
       ],
@@ -10143,13 +10143,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "self._clock()",
-          "line": 200,
+          "line": 394,
           "claim": "generate reads the producer's one clock when no now is passed"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 201,
+          "line": 395,
           "claim": "the brief's identity is its period_end date, so a new producer-day mints a new brief"
         }
       ],
@@ -10360,7 +10360,7 @@
         {
           "path": "holdspeak/meeting_import.py",
           "symbol": "transcription_status",
-          "line": 401,
+          "line": 421,
           "claim": "an imported meeting is marked transcription complete"
         }
       ],
@@ -10422,7 +10422,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2309,
+          "line": 2326,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -12031,13 +12031,13 @@
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "setSelectedId",
-          "line": 154,
+          "line": 162,
           "claim": "the Brief pull-out holds one selected item"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "selectedPerson",
-          "line": 474,
+          "line": 482,
           "claim": "the selection decides which verbs the foot carries"
         }
       ],
@@ -12068,7 +12068,7 @@
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
           "line": 42,
-          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT \u00b7 time from the last successful write (PHILO-3-04)"
+          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT · time from the last successful write (PHILO-3-04)"
         }
       ],
       "reachable_by": [
@@ -12116,13 +12116,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 635,
+          "line": 642,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 531,
+          "line": 538,
           "claim": "the brief read is one of those re-reads"
         }
       ],
@@ -12288,7 +12288,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 201,
+          "line": 395,
           "claim": "the brief's identity is its period_end date"
         },
         {

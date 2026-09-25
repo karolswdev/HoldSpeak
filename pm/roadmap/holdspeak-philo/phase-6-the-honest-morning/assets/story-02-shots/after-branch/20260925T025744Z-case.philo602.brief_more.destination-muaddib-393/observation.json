@@ -1,0 +1,1091 @@
+{
+  "id": "obs-20260925T025744Z-case.philo602.brief_more.destination-muaddib-393",
+  "run_id": "20260925T025744Z-case.philo602.brief_more.destination-muaddib-393",
+  "case_id": "case.philo602.brief_more.destination",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j10",
+  "edge_ids": [
+    "edge.face.arrival_brief_more",
+    "edge.face.arrival_brief_generate",
+    "edge.route.brief_generate"
+  ],
+  "state_id": "state.briefs.populated",
+  "provenance": {
+    "revision": "07224d0e7f5b31607370509d8a743c0a6f4b2127",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "a753e31806315e71883e233ee836a8d82c4f6cb2ab24c92a55c0acb731fbd968",
+      "assets": [
+        "index-BtR-2vSd.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:51254",
+      "port": 51254,
+      "pid": 41410,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tcnl82yd",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tcnl82yd/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.txt": "7cc627789bd2114088916e0940bb8f66c2fd42f5dd7cfe5185929f472f98b3fc"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:57:44.675468+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "166d94700a8f890a60dc32a0c5503d93453299669ff96167645c05e095c9abdd",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.txt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "c3c7ceae",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "c3c7ceae"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/c3c7ceae",
+        "fields": {
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 1,
+        "elapsed_s": 0.005,
+        "payload": {
+          "id": "c3c7ceae",
+          "started_at": "2026-09-24T20:57:48.021952",
+          "ended_at": "2026-09-24T20:58:18.021952",
+          "duration": 30.0,
+          "formatted_duration": "00:30",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "HoldSpeak synthetic architect meeting.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 6.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "use SQLite for the local meeting ledger. Owner: Maya Chen. Action: Maya Chen will write the migration plan by Friday.",
+              "speaker": "Decision one",
+              "speaker_id": null,
+              "start_time": 6.0,
+              "end_time": 12.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "keep summary retrieval on the local desk after a hub restart. Owner: Leo Martinez. Action: Leo Martinez will test restart retrieval on Tuesday.",
+              "speaker": "Decision two",
+              "speaker_id": null,
+              "start_time": 12.0,
+              "end_time": 18.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "use a recorded provider reply for isolated rig tests. Owner: Priya Shah. Action: Priya Shah will add the named failure fence before ship.",
+              "speaker": "Decision three",
+              "speaker_id": null,
+              "start_time": 18.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "HoldSpeak synthetic architect three.",
+              "speaker": "Marker",
+              "speaker_id": null,
+              "start_time": 24.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 74,
+          "sync_modified_at": "2026-09-24T20:57:48.026313",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/meetings/c3c7ceae/intelligence/run",
+      "adapter": "http-route",
+      "status": 409,
+      "response": "{\"success\":false,\"error\":\"The summary route is not available.\",\"plainReason\":\"The summary route is not available.\",\"code\":\"route_unavailable\",\"planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"current_planned_route\":{\"status\":\"unavailable\",\"reason_code\":\"no assignment\",\"selection_hash\":null,\"legs\":[]},\"run_receipt\":{\"attempts\":[],\"job_id\":\"ij_a3f88b34e1c2f48e7ee25fd3ac0e67b5141634ba2539072775f6cc41acc2fb8b\",\"meeting_id\":\"c3c7ceae\",\"outcome\":\"refused\",\"receipt_id\":\"rr_7cb2f35df905a36c2d758a7d45c994c9\",\"selection_hash\":null},\"last_refusal\":{\"a",
+      "response_sha256": "6ac9cd56805429af67f77c41b2f47eeda1cb697daae4fd1577f0092d2589dd57"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/items/brief-item-missing/shelf",
+      "adapter": "http-route",
+      "status": 404,
+      "response": "{\"detail\":\"Unknown brief item: brief-item-missing\"}",
+      "response_sha256": "1b9d11beaf209a4c724ac60cb85b77d7a6c4903c3469901f6f16062919d28811"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_617f66d06411",
+          "title": "Keep summary retrieval local",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T02:57:48Z",
+          "updated_at": "2026-09-25T02:57:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "d77ab09a565393e97d493f5c3e1b11a58e917596a4e0870f2198255a2e16c5c6"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_baba3c50c616",
+          "title": "Show a failed import as FAILED",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T02:57:48Z",
+          "updated_at": "2026-09-25T02:57:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "0ff519caec40404f6bb85acf1db5160a880681f508c3d4882f6554c9700e7e73"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_297a1d74df9b",
+          "title": "Tell the brief time once",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T02:57:48Z",
+          "updated_at": "2026-09-25T02:57:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "83d14a007e9ead35a3716269a29bf27e9f3f7d3e893e40510d75a79cda31b6fa"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_49eb4676dc80",
+          "title": "Word a request as a request",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T02:57:48Z",
+          "updated_at": "2026-09-25T02:57:48Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "52fef79e924fe5eb93b9d6a9c84191e1fb6c8eac8612ed7b32d82d1e0e927745"
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-more]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-brief]",
+      "predicate": {
+        "kind": "text_absent",
+        "value": "Service."
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'Service.' absent at observe_at"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub with no engine. The real producers make the brief: a transcript import (a recorded meeting), a real summary run call that the hub refuses (a pipeline change receipt and a failure receipt) a real failing observed call (an Ack on an unknown item) and four proposed decisions. The Arrival has more than three brief rows, so the fold `N more` is drawn.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "c3c7ceae"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-more]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "SINCE WEDNESDAY\nSUMMARY REQUESTED\nArchitecture boundary review\n{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}\nSYS\nBrief triage did not save\nLookupError('Unknown brief item: brief-item-missing')\nSYS\nSUMMARY DID NOT START\nArchitecture boundary review\nroute_unavailable: ConflictError('The summary route is not available.')\nSYS\nREVIEW DECISION\nShow a failed import as FAILED\nREVIEW DECISION\nKeep summary retrieval local\nREVIEW DECISION\nWord a request as a request\nREVIEW DECISION\nTell the brief time once"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "intelligence-brief-section",
+        "data-testid": "brief-since-friday"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 14,
+        "y": 300,
+        "w": 365,
+        "h": 555
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div#pullout:desk"
+    },
+    "focus_label": {
+      "before": "HoldSpeak\nGo\n\u2302 THIS DEVICE\n1\nSearch\n08:57 PM\n2 need you\nNO C",
+      "after": "Intelligence"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Intelligence",
+          "rect": {
+            "x": 0,
+            "y": 48,
+            "w": 393,
+            "h": 629
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "a7ab0a84af4431ee9683c81c6480fabbdb7406428b10f27272416c666fb11be8",
+      "after": "b33e4ce0bb23c0f5d3f8340da198c06be5589bb3263ef47b44adc1efa3bbcca2"
+    },
+    "document_text_len": {
+      "before": 685,
+      "after": 1336
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=brief-since-friday]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 260,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\n1\nSearch\n08:57 PM\n2 need you\nNO C",
+    "url": "http://127.0.0.1:51254/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "a7ab0a84af4431ee9683c81c6480fabbdb7406428b10f27272416c666fb11be8",
+    "document_text_len": 685,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-a75b164d13c74830aa2eae11b161d83f",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T20:57:49.552883",
+          "headline": "1 thing changed, 2 things broke, 4 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-1522ab8aeb194b27b7f24e6a0971c85d",
+                "section": "changed",
+                "text": "Summary requested: Architecture boundary review",
+                "detail": "{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}",
+                "source_ref": "pipeline:dd63fdfd-82b2-4c95-95ee-a6dc1bdb8ee0",
+                "priority": 0,
+                "created_at": null
+              }
+            ],
+            "broke": [
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "section": "broke",
+                "text": "Brief triage did not save",
+                "detail": "LookupError('Unknown brief item: brief-item-missing')",
+                "source_ref": "pipeline-event:23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "priority": 2,
+                "created_at": null
+              },
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "section": "broke",
+                "text": "Summary did not start: Architecture boundary review",
+                "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+                "source_ref": "pipeline-event:b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "priority": 2,
+                "created_at": null
+              }
+            ],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-0212a87ed519463097363acd5ba96448",
+                "section": "decisions",
+                "text": "Review decision: Show a failed import as FAILED",
+                "detail": null,
+                "source_ref": "decision:decision_baba3c50c616",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-c12853d83d7c4c7cabd26ed37c49eb2b",
+                "section": "decisions",
+                "text": "Review decision: Keep summary retrieval local",
+                "detail": null,
+                "source_ref": "decision:decision_617f66d06411",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1f7943b9614341789a2fd28b16a5f34c",
+                "section": "decisions",
+                "text": "Review decision: Word a request as a request",
+                "detail": null,
+                "source_ref": "decision:decision_49eb4676dc80",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1aacad15200946c0b8a92ac9dbcff990",
+                "section": "decisions",
+                "text": "Review decision: Tell the brief time once",
+                "detail": null,
+                "source_ref": "decision:decision_297a1d74df9b",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T20:57:49.552883",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 20:57",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "c9431fbb1e5d7afe3d51d8bd3647767817f9a447349c1f19f3254e96c544b217"
+      }
+    ],
+    "at_utc": "2026-09-25T02:57:50.073634+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=brief-since-friday]",
+    "target_present": true,
+    "text": "SINCE WEDNESDAY\nSUMMARY REQUESTED\nArchitecture boundary review\n{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}\nSYS\nBrief triage did not save\nLookupError('Unknown brief item: brief-item-missing')\nSYS\nSUMMARY DID NOT START\nArchitecture boundary review\nroute_unavailable: ConflictError('The summary route is not available.')\nSYS\nREVIEW DECISION\nShow a failed import as FAILED\nREVIEW DECISION\nKeep summary retrieval local\nREVIEW DECISION\nWord a request as a request\nREVIEW DECISION\nTell the brief time once",
+    "attrs": {
+      "class": "intelligence-brief-section",
+      "data-testid": "brief-since-friday"
+    },
+    "rect": {
+      "x": 14,
+      "y": 300,
+      "w": 365,
+      "h": 555
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 14,
+        "y": 300,
+        "w": 365,
+        "h": 555
+      },
+      "in_viewport": false,
+      "samples": [
+        {
+          "x": 16,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 16,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 16,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 197,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 197,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 197,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 377,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 377,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 377,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 260,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:desk",
+    "focus_label": "Intelligence",
+    "url": "http://127.0.0.1:51254/",
+    "windows": [
+      {
+        "title": "Intelligence",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "b33e4ce0bb23c0f5d3f8340da198c06be5589bb3263ef47b44adc1efa3bbcca2",
+    "document_text_len": 1336,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-a75b164d13c74830aa2eae11b161d83f",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T20:57:49.552883",
+          "headline": "1 thing changed, 2 things broke, 4 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-1522ab8aeb194b27b7f24e6a0971c85d",
+                "section": "changed",
+                "text": "Summary requested: Architecture boundary review",
+                "detail": "{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}",
+                "source_ref": "pipeline:dd63fdfd-82b2-4c95-95ee-a6dc1bdb8ee0",
+                "priority": 0,
+                "created_at": null
+              }
+            ],
+            "broke": [
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "section": "broke",
+                "text": "Brief triage did not save",
+                "detail": "LookupError('Unknown brief item: brief-item-missing')",
+                "source_ref": "pipeline-event:23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "priority": 2,
+                "created_at": null
+              },
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "section": "broke",
+                "text": "Summary did not start: Architecture boundary review",
+                "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+                "source_ref": "pipeline-event:b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "priority": 2,
+                "created_at": null
+              }
+            ],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-0212a87ed519463097363acd5ba96448",
+                "section": "decisions",
+                "text": "Review decision: Show a failed import as FAILED",
+                "detail": null,
+                "source_ref": "decision:decision_baba3c50c616",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-c12853d83d7c4c7cabd26ed37c49eb2b",
+                "section": "decisions",
+                "text": "Review decision: Keep summary retrieval local",
+                "detail": null,
+                "source_ref": "decision:decision_617f66d06411",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1f7943b9614341789a2fd28b16a5f34c",
+                "section": "decisions",
+                "text": "Review decision: Word a request as a request",
+                "detail": null,
+                "source_ref": "decision:decision_49eb4676dc80",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1aacad15200946c0b8a92ac9dbcff990",
+                "section": "decisions",
+                "text": "Review decision: Tell the brief time once",
+                "detail": null,
+                "source_ref": "decision:decision_297a1d74df9b",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T20:57:49.552883",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 20:57",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "c9431fbb1e5d7afe3d51d8bd3647767817f9a447349c1f19f3254e96c544b217"
+      }
+    ],
+    "at_utc": "2026-09-25T02:57:51.228677+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=brief-since-friday]",
+    "target_present": true,
+    "text": "SINCE WEDNESDAY\nSUMMARY REQUESTED\nArchitecture boundary review\n{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}\nSYS\nBrief triage did not save\nLookupError('Unknown brief item: brief-item-missing')\nSYS\nSUMMARY DID NOT START\nArchitecture boundary review\nroute_unavailable: ConflictError('The summary route is not available.')\nSYS\nREVIEW DECISION\nShow a failed import as FAILED\nREVIEW DECISION\nKeep summary retrieval local\nREVIEW DECISION\nWord a request as a request\nREVIEW DECISION\nTell the brief time once",
+    "attrs": {
+      "class": "intelligence-brief-section",
+      "data-testid": "brief-since-friday"
+    },
+    "rect": {
+      "x": 14,
+      "y": 300,
+      "w": 365,
+      "h": 555
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 14,
+        "y": 300,
+        "w": 365,
+        "h": 555
+      },
+      "in_viewport": false,
+      "samples": [
+        {
+          "x": 16,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 16,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 16,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 197,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 197,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 197,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        },
+        {
+          "x": 377,
+          "y": 302,
+          "owned": true,
+          "owner": "div#pullout:desk > div.desk-pullout-body.desk-surface-body > section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-section-caption"
+        },
+        {
+          "x": 377,
+          "y": 577,
+          "owned": true,
+          "owner": "section.intelligence-view.intelligence-brief > div.intelligence-brief-section > div.intelligence-brief-flat > div.intelligence-brief-sf-row > div.intelligence-brief-sf-body > span.intelligence-brief-sf-detail"
+        },
+        {
+          "x": 377,
+          "y": 853,
+          "owned": false,
+          "owner": null
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 260,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:desk",
+    "focus_label": "Intelligence",
+    "url": "http://127.0.0.1:51254/",
+    "windows": [
+      {
+        "title": "Intelligence",
+        "rect": {
+          "x": 0,
+          "y": 48,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "b33e4ce0bb23c0f5d3f8340da198c06be5589bb3263ef47b44adc1efa3bbcca2",
+    "document_text_len": 1336,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-a75b164d13c74830aa2eae11b161d83f",
+          "period_start": "2026-09-23T17:00:00",
+          "period_end": "2026-09-24T20:57:49.552883",
+          "headline": "1 thing changed, 2 things broke, 4 decisions waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [
+              {
+                "id": "brief-item-1522ab8aeb194b27b7f24e6a0971c85d",
+                "section": "changed",
+                "text": "Summary requested: Architecture boundary review",
+                "detail": "{\"meeting_id\":\"c3c7ceae\",\"expected_selection_hash\":null}",
+                "source_ref": "pipeline:dd63fdfd-82b2-4c95-95ee-a6dc1bdb8ee0",
+                "priority": 0,
+                "created_at": null
+              }
+            ],
+            "broke": [
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "section": "broke",
+                "text": "Brief triage did not save",
+                "detail": "LookupError('Unknown brief item: brief-item-missing')",
+                "source_ref": "pipeline-event:23b4cb18-572b-40f0-ae81-ff5794ddb62e",
+                "priority": 2,
+                "created_at": null
+              },
+              {
+                "id": "brief-break-pipeline-brief-a75b164d13c74830aa2eae11b161d83f-b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "section": "broke",
+                "text": "Summary did not start: Architecture boundary review",
+                "detail": "route_unavailable: ConflictError('The summary route is not available.')",
+                "source_ref": "pipeline-event:b4870d48-105f-42b6-9ca6-05067a6d3226",
+                "priority": 2,
+                "created_at": null
+              }
+            ],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-0212a87ed519463097363acd5ba96448",
+                "section": "decisions",
+                "text": "Review decision: Show a failed import as FAILED",
+                "detail": null,
+                "source_ref": "decision:decision_baba3c50c616",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-c12853d83d7c4c7cabd26ed37c49eb2b",
+                "section": "decisions",
+                "text": "Review decision: Keep summary retrieval local",
+                "detail": null,
+                "source_ref": "decision:decision_617f66d06411",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1f7943b9614341789a2fd28b16a5f34c",
+                "section": "decisions",
+                "text": "Review decision: Word a request as a request",
+                "detail": null,
+                "source_ref": "decision:decision_49eb4676dc80",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              },
+              {
+                "id": "brief-item-1aacad15200946c0b8a92ac9dbcff990",
+                "section": "decisions",
+                "text": "Review decision: Tell the brief time once",
+                "detail": null,
+                "source_ref": "decision:decision_297a1d74df9b",
+                "priority": 200,
+                "created_at": "2026-09-25T02:57:48Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-24T20:57:49.552883",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 24",
+          "generated_label": "GENERATED SEP 24 20:57",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "c9431fbb1e5d7afe3d51d8bd3647767817f9a447349c1f19f3254e96c544b217"
+      }
+    ],
+    "at_utc": "2026-09-25T02:57:51.090391+00:00",
+    "predicate_satisfied": true,
+    "reading": "'Service.' absent at observe_at",
+    "elapsed_s": 0.96
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Service.' absent at observe_at",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.098,
+    "first_satisfied_at_s": 0.96,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Service.' absent at observe_at"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:51254) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:51254) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/cartridge.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-600-normal-DjKNqYRj.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-6-a/pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-02-shots/after-branch/20260925T025744Z-case.philo602.brief_more.destination-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-6-a/pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-02-shots/after-branch/20260925T025744Z-case.philo602.brief_more.destination-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tcnl82yd/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tcnl82yd/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:51254"
+  ],
+  "duration_s": 6.853
+}

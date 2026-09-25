@@ -616,14 +616,19 @@ def test_breakage_cases_use_evening_wrapper_and_shelf_old_item() -> None:
                 and step.get('method') == 'POST'
                 and step.get('path') == '/api/brief/items/{old_breakage_id}/shelf'
             )
+        # PHILO-6-02 round 2: the desk read and the lifecycle read of one
+        # missing decision both read `Decision did not load` (no
+        # implementation word tells them apart), so both variants check row
+        # 0's words and pin row 0.
+        assert capture['capture_path'] == 'sections.broke.0.id'
+        assert 'capture_match' not in capture
         if is_op:
-            assert capture['capture_path'] == 'sections.broke'
-            assert capture['capture_match'] == {
-                'text': 'DecisionLifecycleService.get_decision failed'
-            }
-            assert capture['capture_field'] == 'id'
-        else:
-            assert capture['capture_path'] == 'sections.broke.0.id'
+            check = next(
+                step for step in case['setup']
+                if step.get('kind') == 'check'
+                and (step.get('predicate') or {}).get('path') == 'sections.broke.0.text'
+            )
+            assert check['predicate']['value'] == 'Decision did not load'
         assert shelf.get('args', shelf.get('body', {})).get('state') == 'acknowledged'
 
 

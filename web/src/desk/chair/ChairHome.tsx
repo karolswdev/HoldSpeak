@@ -10,6 +10,7 @@ import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
+import { generatedLabelLocal } from "../pullouts/views/BriefView";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
@@ -155,9 +156,15 @@ function briefLoadCause(error: unknown): string {
   return error instanceof ApiError ? `HTTP ${error.status}` : "NO ANSWER";
 }
 
-/** PHILO-3-03: the brief's period and generated date, one caption line. */
+/** PHILO-3-03: the brief's period and generated date, one caption line.
+ *  PHILO-6-02 (a): the generated time is the producer's `generated_at` in
+ *  the viewer's zone, the same clock as the receipt; the hub's own label
+ *  (formatted in the hub's offset) is the fallback only. */
 function BriefDate({ brief }: { brief: MondayBrief }) {
-  const parts = [brief.period_label, brief.generated_label].filter(Boolean);
+  const parts = [
+    brief.period_label,
+    generatedLabelLocal(brief.generated_at) ?? brief.generated_label,
+  ].filter(Boolean);
   if (parts.length === 0) return null;
   return (
     <span className="surface-receipt-line" data-testid="arrival-brief-date">
@@ -2166,13 +2173,23 @@ function ArrivalMeetingWells({
   const summary = String(meeting.intelSummary ?? "").trim();
   const job = meeting.intelJob;
   const badge = arrivalIntelBadge(meeting);
+  // PHILO-6-01 round 2 (Astra's check on built, finding 2): the well names
+  // WHAT failed. A failed import is not a failed summary: its well head is
+  // IMPORT and its cause line is the import's (the worker's
+  // `intel_status_detail`, meeting_service.py `_set_import_status`).
+  const importFailed =
+    badge === "FAILED" &&
+    job?.status !== "failed" &&
+    String(meeting.intelStatus ?? "").toLowerCase() === "import_failed";
+  const wellHead = importFailed ? "IMPORT" : "SUMMARY";
+  const cause = importFailed ? meeting.intelStatusDetail : job?.lastError;
   const hasFailureFact = badge === "RETRYING" || badge === "FAILED" || Boolean(job?.lastError);
   const statusFacts = [
     hasFailureFact ? badge : "",
     hasFailureFact && job?.attempts && job.attempts > 0 && receipt
       ? `LAST ATTEMPT · ${egressFor(receipt.attempts[receipt.attempts.length - 1]?.host ?? "").label}`
       : "",
-    job?.lastError ? `LAST ERROR · ${job.lastError}` : "",
+    cause ? `LAST ERROR · ${cause}` : "",
   ].filter(Boolean);
   const hasStatusFacts = statusFacts.length > 0;
   const segments = (meeting.segments ?? []).map((segment) => ({
@@ -2221,7 +2238,7 @@ function ArrivalMeetingWells({
           </div>
         </SurfaceWell>
       ) : hasStatusFacts ? (
-        <SurfaceWell head="SUMMARY">
+        <SurfaceWell head={<span data-testid="arrival-status-well-head">{wellHead}</span>}>
           <div className="arrival-meeting-status-facts" data-testid="arrival-summary-status">
             {statusFacts.map((fact, index) => (
               <span

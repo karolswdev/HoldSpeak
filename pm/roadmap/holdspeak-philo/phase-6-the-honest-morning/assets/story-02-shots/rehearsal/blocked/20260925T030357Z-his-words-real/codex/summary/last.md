@@ -1,0 +1,1 @@
+The summary is saved and available on **Architecture review** (`5f77f8d7`). I read it back from the meeting record; HoldSpeak reports **ready**.

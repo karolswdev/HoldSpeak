@@ -41,13 +41,13 @@ describe("the brief's receipt (HS-202-02)", () => {
       sections: { changed: [{ id: "a" }], waiting: [{ id: "b" }] },
       generated_at: "2026-09-20T15:41:00",
     });
-    expect(line).toBe("Brief ready · 2 items · 3:41 PM");
+    expect(line).toBe("Brief ready · 2 items · SEP 20 15:41");
   });
 
   it("never counts zero (UX-CANON A.8)", () => {
     expect(
       briefReceipt({ sections: {}, generated_at: "2026-09-20T15:41:00" }),
-    ).toBe("Brief ready · 3:41 PM");
+    ).toBe("Brief ready · SEP 20 15:41");
   });
 
   it("states one item in the singular", () => {
@@ -56,6 +56,6 @@ describe("the brief's receipt (HS-202-02)", () => {
         sections: { changed: [{ id: "a" }] },
         generated_at: "2026-09-20T15:41:00",
       }),
-    ).toBe("Brief ready · 1 item · 3:41 PM");
+    ).toBe("Brief ready · 1 item · SEP 20 15:41");
   });
 });

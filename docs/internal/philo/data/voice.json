@@ -1046,7 +1046,7 @@
       "purpose": "Compare current and previous meeting artifacts and return read-only decisions, actions, closures, and provenance. Show a card when a meeting summary is ready.",
       "domain": "meeting",
       "status": "experimental",
-      "status_reason": "The read-only rollup, provenance guards, project comparison, quiet empty behavior, and the in-flow aftercare presentation are implemented; the Phase 6 placement still needs its live 1440/393 atlas validation, and external follow-up remains a separate actuator.",
+      "status_reason": "The read-only rollup, provenance guards, project comparison, quiet empty behavior, and the in-flow aftercare presentation are implemented; PHILO-6-03 validated the placement on the rig at 1440 and 393 on the Arrival, the Meetings window and the Floor list; the spatial WebGL Floor keeps the fixed card (ledgered); external follow-up remains a separate actuator.",
       "exposure": "user",
       "surfaces": [
         "meeting aftercare",
@@ -1121,7 +1121,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "data-testid=\"arrival-aftercare-slot\"",
-          "line": 1444,
+          "line": 1451,
           "claim": "Arrival provides the aftercare slot immediately before the capture bar."
         },
         {

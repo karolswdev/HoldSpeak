@@ -111,12 +111,20 @@ export function periodLabelLocal(generatedAt: string | null | undefined): string
   return `${monMonth} ${pad(monday.getDate())} - ${genMonth} ${pad(gen.getDate())}`;
 }
 
-/** `GENERATED SEP 05 08:00` in the viewer's local time. */
-export function generatedLabelLocal(generatedAt: string | null | undefined): string | null {
+/** `SEP 05 08:00` in the viewer's local time: the brief's one clock
+ *  (PHILO-6-02). The Arrival caption, the Arrival receipt and this view all
+ *  render the producer's `generated_at` through it. */
+export function generatedStampLocal(generatedAt: string | null | undefined): string | null {
   const gen = parseLocal(generatedAt);
   if (!gen) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `GENERATED ${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
+  return `${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
+}
+
+/** `GENERATED SEP 05 08:00` in the viewer's local time. */
+export function generatedLabelLocal(generatedAt: string | null | undefined): string | null {
+  const stamp = generatedStampLocal(generatedAt);
+  return stamp ? `GENERATED ${stamp}` : null;
 }
 
 /** Parse a lookback item into kind token + primary + detail.

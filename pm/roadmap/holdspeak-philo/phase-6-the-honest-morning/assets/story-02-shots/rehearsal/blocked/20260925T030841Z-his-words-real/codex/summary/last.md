@@ -1,0 +1,1 @@
+The summary is saved on **Architecture review** (`0b3e755f`) and ready to view. Verified that the meeting record contains the summary and reports `intel_status: ready`.

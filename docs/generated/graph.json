@@ -30,11 +30,11 @@
   },
   {
    "path": "docs/internal/philo/data/voice.json",
-   "sha256": "8aa56fc44695561ab6a8dd2f7a3b55938b4f3312c68c8f8cdea59f05556807a7"
+   "sha256": "296adf398e47d44cdd0809bb90a10381c4c7d11699b955c6059a1953198d225d"
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "aecba6c657ab6f3e9546cd941d0bb219958d235ad04e7b862cf970a5b33e3eef"
+   "sha256": "065d4d9eb2c20b27e9c297e810c9a308ef0c3894a68f08ec0a9960f3ecd89802"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",

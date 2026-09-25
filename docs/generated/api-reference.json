@@ -4307,6 +4307,8 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo6_02_brief_truth.py",
+        "tests/unit/test_philo6_02_round2_outcome_words.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4341,6 +4343,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_02_brief_truth.py",
+        "tests/unit/test_philo6_02_round2_outcome_words.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4378,6 +4382,8 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo6_02_brief_truth.py",
+        "tests/unit/test_philo6_02_round2_outcome_words.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19289,6 +19295,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19566,6 +19573,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19740,6 +19748,7 @@
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19845,6 +19854,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19950,6 +19960,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20061,6 +20072,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20162,6 +20174,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20267,6 +20280,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20373,6 +20387,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20473,6 +20488,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20583,6 +20599,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20688,6 +20705,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20791,6 +20809,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20889,6 +20908,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -20989,6 +21009,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21092,6 +21113,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21192,6 +21214,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21298,6 +21321,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21404,6 +21428,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21505,6 +21530,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21613,6 +21639,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21713,6 +21740,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21818,6 +21846,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -21920,6 +21949,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -22030,6 +22060,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -22133,6 +22164,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -22248,6 +22280,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",

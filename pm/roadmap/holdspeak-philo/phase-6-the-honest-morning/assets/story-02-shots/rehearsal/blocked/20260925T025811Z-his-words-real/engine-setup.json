@@ -1,0 +1,101 @@
+{
+  "define_endpoint": {
+    "response": {
+      "provider": {
+        "binding_id": "binding-engine-192-168-1-43-8080",
+        "binding_revision": 1,
+        "profile_id": "engine-192-168-1-43-8080",
+        "profile_revision": 1,
+        "provider_family": "openai_compatible",
+        "secret": {
+          "present": false,
+          "required": false
+        }
+      },
+      "receipt": {
+        "assignments_after": {
+          "heads": [
+            {
+              "assignment_id": "ia_99e19fdf92174fa9b0f162c4a5a9027b",
+              "assignment_key": "capability:speech.transcribe",
+              "cleared": false,
+              "revision": 1
+            }
+          ],
+          "sha256": "sha256:9e5649b4ec8df9870565788a6ddc90b720c1913ee0327f01bdd88b6fc9e59758"
+        },
+        "assignments_before": {
+          "heads": [
+            {
+              "assignment_id": "ia_99e19fdf92174fa9b0f162c4a5a9027b",
+              "assignment_key": "capability:speech.transcribe",
+              "cleared": false,
+              "revision": 1
+            }
+          ],
+          "sha256": "sha256:9e5649b4ec8df9870565788a6ddc90b720c1913ee0327f01bdd88b6fc9e59758"
+        },
+        "assignments_unchanged": true,
+        "kind": "model_library_provider",
+        "message": "Added to the Model Library. Assignments are unchanged."
+      }
+    },
+    "status": 200
+  },
+  "discover": {
+    "response": {
+      "detail": "Found 1 model.",
+      "models": [
+        "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf"
+      ],
+      "ok": true,
+      "status": 200
+    },
+    "status": 200
+  },
+  "endpoint": "http://192.168.1.43:8080",
+  "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+  "profile_id": "engine-192-168-1-43-8080",
+  "profile_revision": 1,
+  "summary_selection": {
+    "response": {
+      "capabilityId": "meeting.deferred_analysis",
+      "receipt": {
+        "id": "concierge-summary-2f7c7c2227da",
+        "visible": true
+      },
+      "result": {
+        "assignment": {
+          "entries": [
+            {
+              "boundary": "lan",
+              "label": "192.168.1.43:8080",
+              "profileId": "engine-192-168-1-43-8080",
+              "profileRevision": 1,
+              "readiness": "ready"
+            }
+          ],
+          "revision": 1
+        },
+        "capabilityId": "meeting.deferred_analysis",
+        "profileId": "engine-192-168-1-43-8080",
+        "profileRevision": 1,
+        "state": "READY"
+      },
+      "schema": "ConciergeSummaryAssignmentReceipt@1",
+      "status": "succeeded",
+      "summaryAssignment": {
+        "assignmentRevision": 1,
+        "boundary": "lan",
+        "capabilityId": "meeting.deferred_analysis",
+        "label": "192.168.1.43:8080",
+        "profileId": "engine-192-168-1-43-8080",
+        "profileRevision": 1,
+        "readiness": "ready",
+        "schema": "ConciergeSummaryAssignmentProjection@1",
+        "status": "assigned"
+      }
+    },
+    "status": 200
+  }
+}

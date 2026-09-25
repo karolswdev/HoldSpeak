@@ -339,16 +339,17 @@ class TestBriefHumanVsLedger:
             service,
             event_id="human-1",
             timestamp=base_ts + 2000,
-            service_name="NoteService",
-            method="create_note",
+            # PHILO-6-02 round 3: a success line only for a table row.
+            service_name="DecisionRecordService",
+            method="create",
             args_summary='{"title":"Plan"}',
         )
         self._insert_event(
             service,
             event_id="human-2",
             timestamp=base_ts + 2001,
-            service_name="MeetingService",
-            method="update",
+            service_name="MeetingIntelService",
+            method="run_intelligence",
             args_summary='{"meeting_id":"m1"}',
         )
 
@@ -395,8 +396,8 @@ class TestBriefHumanVsLedger:
             service,
             event_id="note-created",
             timestamp=base_ts,
-            service_name="NoteService",
-            method="create_note",
+            service_name="DecisionRecordService",
+            method="create",
             correlation_id="note-1",
         )
 
@@ -405,7 +406,7 @@ class TestBriefHumanVsLedger:
         )
 
         assert len(items) == 1
-        assert items[0].text == "NoteService.create_note"
+        assert items[0].text == "Decision recorded"
         assert ledger.operations == 0
 
     def test_kernel_ops_go_to_ledger_not_items(self, tmp_path):
