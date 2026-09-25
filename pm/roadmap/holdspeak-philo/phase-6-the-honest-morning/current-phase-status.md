@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-25 — the closing chain ran on merged main `f93e76fa`: exit 3 MET (rig cases PASS at 1440 and 393; the rehearsal driver BLOCKED three times on the inherited driver defects, recorded); exit 4 (owner review of the shots) OPEN. [Final summary](./final-summary.md).
+**Last updated:** 2026-09-25 (CLOSED).
 
 ## Goal
 
@@ -54,7 +54,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 - [x] 2. The two canvases are ratified by the owner BEFORE their build: (a) the toast placement at 1440 and 393 (story 03); (b) any count label or count meaning change, with the exact strings, at both widths (story 02). If story 02 changes no label and no meaning, (b) is recorded as not needed. **(flipped by Muad'Dib 2026-09-25: the toast placement canvas RATIFIED by the owner on 2026-09-24 night (`38cf713a`); the count canvas NOT needed — story 02 recorded why: no label or meaning changed, the raw-id filter caused the gap.)**
 - [x] 3. The closing chain on the rig at 1440 and 393: the Phase 4 exit-1 case `case.closure.chain.s5_next_day_brief_has_it` AS WRITTEN (`docs/internal/philo/graph/atlas-phase3.json:1946`) AND the Phase 5 rehearsal driver `scripts/philo5_his_words.py` re-run. The morning shots show: no SAVED on a failed import; one time format; counts that agree with their labels; no zero token; no overlap at 393; one broke row per cause; the decision body present at once after Done. **Assigned to this run (round 3, Astra's round-two ruling 5):** `case.closure.chain.s5_next_day_brief_with_breakage.op` (`docs/internal/philo/graph/atlas-phase3.json:4780`), whose check and capture were reworded in round 2 (row 0 is checked for `Decision did not load`, then its id is captured). It is UNVERIFIED LIVE until this run; a schema fence does not close it.
   **MET 2026-09-25 on the closing brief's rule** ([final summary](./final-summary.md) §"The morning on the rig"; captures `evidence-story-02.md` §"Captured run — 2026-09-25T05:59:16Z" … `06:08:54Z`): `case.closure.chain.s5_next_day_brief_has_it` PASS at 1440 (`20260925T055916Z`) and 393 (`20260925T060047Z`) with the real LAN engine; the reworded S5 `.op` case PASS (`20260925T060007Z`, row 0 `Decision did not load`, its id captured, one Broke row); `case.philo601.import_failed.badge` PASS at 1440 and 393. The rehearsal driver `scripts/philo5_his_words.py` BLOCKED three times on the INHERITED driver defects — tool selection twice (`door.add_item`), resource-list reconciliation once (after a correct `desk.create`) — recorded, not completed (`assets/closing/rehearsal/README.md`). Disclosed: at 393 the case's shot frames row 1 only; the receipt, the caption and the meeting badge are wire-proved there, not glass-proved.
-- [ ] 4. Rehearsed, owner-reviewed shots (never recorded as a sitting).
+- [x] 4. Rehearsed, owner-reviewed shots (never recorded as a sitting). **OWNER-REVIEWED 2026-09-25 ("Reviewed — close it"): the closing artifact https://claude.ai/artifact/HwzxBXWzmuLXwrDSUSuvLs; not a sitting.**
 
 ## Story status
 
@@ -81,6 +81,8 @@ Lane law for this phase:
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-25: PHASE CLOSED on the owner's review of the closing shots. All five repairs on main; the closing chain's three runs pass at both widths; the rehearsal driver's inherited defects stay owed before Phase 7 story 04.
 
 2026-09-25: THE CLOSING CHAIN on merged main `f93e76fa` (`feat/philo-6-close`, Muad'Dib's Fedaykin). Rig: the Phase 4 exit-1 case AS WRITTEN PASS at 1440 and 393 (real LAN engine; the decision in row 1, unobscured; at 1440 the head and the receipt agree `3`/`3`, one time format `SEP 26 00:00`, the row `RAN` + `192.168.1.43 · LAN`); the reworded S5 `.op` case PASS; the empty-VTT import PASS at both widths (FAILED, `LAST ERROR · NO TRANSCRIPT LINES`, no SAVED). The rehearsal driver: three attempts, three BLOCKED at turn 3 (tool selection ×2, reconciliation ×1) — the inherited defects; the summary-step shots of each attempt show MEETING READY in flow above the capture bar with no zero token at both widths. Exit 3 MET; exit 4 OPEN for the owner's review (Muad'Dib publishes the shots). [Final summary](./final-summary.md).
 
@@ -126,6 +128,8 @@ Publication update — Main advanced during this build: lane A merged as PR #646
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-25 — the owner reviewed the closing shots ("Reviewed — close it"): exit 4 closed as rehearsed, owner-reviewed; PHASE CLOSED — Muad'Dib.
 
 - 2026-09-25 — the closing chain ran (PR #651): runs 1 (the Phase 4 case as written, LAN engine), 2 (the breakage `.op`), 4 (the empty import) PASS at both widths; the rehearsal driver BLOCKED ×3 on its inherited defects (tool selection ×2 → `door.add_item`; the resource-template reconciliation ×1 — assigned to Muad'Dib before exit 3 and NOT paid: recorded as owed before Phase 7 story 04, which needs the driver). Exits 1–3 flipped (3 with the disclosed 393 caveat: three checklist items rest on API reads because the case frames row 1); exit 4 = the owner's review — Muad'Dib.
 

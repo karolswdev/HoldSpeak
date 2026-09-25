@@ -1,5 +1,7 @@
 # Phase 6 — The Honest Morning — final summary
 
+**CLOSED 2026-09-25** on the owner's review of the closing shots ("Reviewed — close it"): rehearsed, owner-reviewed, not a sitting.
+
 **Status: exit 3 MET on the closing brief's rule; exits 1 and 2 unflipped in the status file (their proof is the per-story evidence below; the flip is the orchestrator's); exit 4 OPEN (2026-09-25).** Five of five stories merged (#646 lane A 01/02, #647 lane B 04/05 and 03's zero omission, #648 the ratified canvas, #649 03's placement; main `f93e76fa`). The closing chain ran on merged main at 1440 and 393: the Phase 4 exit-1 case AS WRITTEN PASS at both widths with the real LAN engine; the reworded S5 `.op` case PASS; the empty-VTT import case PASS at both widths. The Phase 5 rehearsal driver ran three times and was BLOCKED three times by the two INHERITED driver defects (tool selection twice, resource-list reconciliation once); exit 3 closes with that block recorded, not with a completed rehearsal. At 393 the closing case's shot frames row 1 only: the receipt, the caption and the meeting badge sit below the sticky capture bar, so at 393 those three are wire-proved, not glass-proved (the checklist below). Exit 4 (rehearsed, owner-reviewed shots) stays OPEN: Muad'Dib publishes the shots for the owner's review. No sitting is claimed.
 
 ## What he can do now that he could not on 2026-09-24
