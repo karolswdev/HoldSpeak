@@ -337,7 +337,7 @@
   background: var(--wash-1);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-7-02: the 12 px floor (was 10px) */
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

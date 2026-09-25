@@ -4,22 +4,30 @@
   "credentials": [
     {
       "active": true,
-      "expires_at": 1790405919.1616879,
-      "id": "ce4265d2cb014cf1",
+      "expires_at": 1790407037.8923054,
+      "id": "e06a1f2811f84285",
       "identity": "desk-agent",
-      "last_used_at": 1790362719.16553,
+      "last_used_at": 1790363839.4028935,
       "palette": "ALL"
     },
     {
       "active": true,
-      "expires_at": 1790449119.1637976,
-      "id": "e74ddec4c1b648f7",
+      "expires_at": 1790450237.8935685,
+      "id": "78b3a351ced64535",
       "identity": "sweep-runner",
+      "last_used_at": null,
+      "palette": "PROJECT"
+    },
+    {
+      "active": false,
+      "expires_at": 1790363838.8946776,
+      "id": "bb6987a0575746c2",
+      "identity": "review-agent",
       "last_used_at": null,
       "palette": "PROJECT"
     }
   ],
   "enabled": true,
   "port": null,
-  "total_count": 2
+  "total_count": 3
 }

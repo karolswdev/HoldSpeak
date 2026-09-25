@@ -1,6 +1,10 @@
 .desk-next .surface-footer {
   min-height: 36px;
   padding: 0 8px;
+  /* PHILO-7-02: the window's resize grip (window-chrome.css:143, 16 px at
+     right 4 / bottom 4) owns the footer's last 20 px; the last verb must not
+     sit under it (elementFromPoint hit the grip at the verb's corner). */
+  padding-inline-end: 24px;
   background: var(--surface-2);
   border-top: 1px solid var(--border);
   box-shadow: var(--desk-window-bevel);

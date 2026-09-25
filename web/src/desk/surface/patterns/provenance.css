@@ -61,7 +61,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
   letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
   color: var(--text-muted);
@@ -119,4 +119,10 @@
 
 .surface-receipt-inspect:focus-visible {
   outline: var(--focus-ring);
+}
+
+/* PHILO-7-02: a Receipt that IS a Button's face (the footer receipt target)
+   takes the Button's cursor, not the receipt's default. */
+.btn > .surface-receipt {
+  cursor: inherit;
 }

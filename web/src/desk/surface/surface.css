@@ -369,7 +369,7 @@
   flex: none;
   padding: 6px 10px 4px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--desk-surface-label-size); /* PHILO-7-02: the 12 px floor (was 10px) */
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -594,7 +594,7 @@
   border-radius: 0;
   background: var(--desk-window-well, rgba(0,0,0,0.28));
   box-shadow: var(--desk-window-etch, inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light));
-  font: 600 10px/1 var(--font-mono);
+  font: 600 var(--desk-surface-label-size)/1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted, #9ba2b0);
@@ -2557,7 +2557,7 @@ button.surface-edit-in-place:hover {
     inset 1px 1px 0 var(--bevel-light),
     inset -1px -1px 0 var(--bevel-dark);
   color: var(--text);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
   letter-spacing: 0.06em;
   cursor: pointer;
 }

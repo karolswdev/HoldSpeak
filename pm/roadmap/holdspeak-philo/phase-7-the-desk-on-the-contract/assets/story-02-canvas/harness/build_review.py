@@ -10,15 +10,18 @@ REPO = HERE.parents[6]
 OUT = REPO / "docs/internal/philo/phase-7/grant-canvas/index.html"
 
 BOARDS = [
-    ("1-never", "1 · No grant ever", "No chip. The Allow verb beside Revoke."),
-    ("2-live", "2 · Grant live", "Chip ALLOWED. The Stop verb. The receipt in the foot."),
-    ("3-revoked", "3 · Grant stopped", "Chip STOPPED. The Allow verb. The receipt in the foot."),
-    ("4-expired", "4 · Expired by clock, credential active", "Credential ● active, chip STOPPED: two independent columns."),
-    ("5-orphan", "5 · Grant live, no credential (remote ON)", "The row stays: idle ●, NO CREDENTIAL, ALLOWED, the Stop verb only."),
+    ("1-never", "1 · No grant ever", "Stored: none. No chip. The Allow verb beside Revoke credential."),
+    ("2-live", "2 · Grant live", "Stored LIVE. Chip ALLOWED, the Stop verb, the receipt Button in the footer centre."),
+    ("3-revoked", "3 · Grant stopped", "Stored REVOKED. Chip STOPPED, the Allow verb, the receipt Button."),
+    ("4-expired", "4 · Grant expired, credential active", "Stored LIVE with expires_at one hour ago; the projection gives EXPIRED. Credential ● active, chip STOPPED."),
+    ("4b-cred-expired", "4b · Credential expired, grant live", "review-agent is the producer's real expired credential (active=false). ● idle, EXPIRED, chip ALLOWED."),
+    ("5-orphan", "5 · Grant live, no credential (remote ON)", "idle ●, NO CREDENTIAL, ALLOWED, the Stop verb only."),
     ("5b-orphan-off", "5b · Grant live, no credential (remote OFF)", "The ledger renders whatever the switch says."),
-    ("5c-orphan-expired", "5c · No credential, grant past expiry", "Chip STOPPED from the time-aware rule; no verb."),
-    ("6-refused", "6 · Refused", "The named refusal on its row: CAN'T STOP · NO GRANT; CAN'T ALLOW · OWNER ONLY."),
-    ("7-empty", "7 · Last row gone", "No ledger. The foot receipt's ℹ opens the receipt well."),
+    ("5c-orphan-expired", "5c · No credential, grant past expiry", "Stored LIVE with a past expires_at; the projection gives EXPIRED: chip STOPPED, no verb."),
+    ("5d-off-credential", "5d · Remote OFF, credential retained, grant live", "The credential-backed grant stays visible; the row without a grant is hidden."),
+    ("6-refused", "6 · Refused on the row", "CANNOT STOP · NO GRANT; CANNOT ALLOW · OWNER ONLY; the footer receipt says REFUSED."),
+    ("6b-refused-gone", "6b · Refused Stop, the reread removes the row", "Another owner request revoked it first. The row is gone; the footer receipt and its well keep the refused act (rendered open)."),
+    ("7-empty", "7 · Last row gone", "No ledger. The footer receipt and its well keep the act (rendered open)."),
 ]
 
 
@@ -79,9 +82,9 @@ code {{ font:12px ui-monospace, monospace; }}
 figure {{ margin:0; background:var(--card); border:1px solid var(--line); padding:6px; }}
 figure img {{ width:100%; height:auto; display:block; }}
 figcaption {{ font:12px ui-monospace, monospace; color:var(--muted); padding-top:4px; }}
-.set-b {{ display:none; }}
-body:has(#words-b:checked) .set-a {{ display:none; }}
-body:has(#words-b:checked) .set-b {{ display:block; }}
+.set-a {{ display:none; }}
+body:has(#words-a:checked) .set-b {{ display:none; }}
+body:has(#words-a:checked) .set-a {{ display:block; }}
 ol.q li {{ margin:4px 0; }}
 @media (max-width: 720px) {{ .pair {{ grid-template-columns:1fr; }} }}
 </style>
@@ -90,30 +93,44 @@ ol.q li {{ margin:4px 0; }}
 <main>
 <h1>Delegation grant canvas</h1>
 <p class="sub">PHILO-7-02 · the grant on the Remote Access ledger in Settings · rendered from the library species in the production window</p>
-<span class="status">PROPOSED · THE OWNER RATIFIES</span>
+<span class="status">PROPOSED · ROUND TWO · THE OWNER RATIFIES</span>
 <div class="switch" role="radiogroup" aria-label="Word set">
-  <label><input type="radio" name="words" id="words-a" checked><span>SET A · Allow filing / FILING ALLOWED</span></label>
-  <label><input type="radio" name="words" id="words-b"><span>SET B · Allow filing and decisions / FILING AND DECISIONS ALLOWED (recommended)</span></label>
+  <label><input type="radio" name="words" id="words-b" checked><span>SET B · Allow filing and decisions / FILING AND DECISIONS ALLOWED (recommended)</span></label>
+  <label><input type="radio" name="words" id="words-a"><span>SET A · Allow filing / FILING ALLOWED</span></label>
 </div>
 <table>
-<tr><th>Slot</th><th>Set A</th><th>Set B (recommended)</th></tr>
-<tr><td>Verb, no live grant</td><td><code>Allow filing</code></td><td><code>Allow filing and decisions</code></td></tr>
-<tr><td>Verb, live grant</td><td><code>Stop filing</code></td><td><code>Stop filing and decisions</code></td></tr>
-<tr><td>Chip, live</td><td><code>FILING ALLOWED</code></td><td><code>FILING AND DECISIONS ALLOWED</code></td></tr>
-<tr><td>Chip, stopped or expired</td><td><code>FILING STOPPED</code></td><td><code>FILING AND DECISIONS STOPPED</code></td></tr>
+<tr><th>Slot</th><th>Set B (recommended)</th><th>Set A</th></tr>
+<tr><td>Verb, grant not live</td><td><code>Allow filing and decisions</code></td><td><code>Allow filing</code></td></tr>
+<tr><td>Verb, grant live</td><td><code>Stop filing and decisions</code></td><td><code>Stop filing</code></td></tr>
+<tr><td>Chip, live</td><td><code>FILING AND DECISIONS ALLOWED</code></td><td><code>FILING ALLOWED</code></td></tr>
+<tr><td>Chip, stopped or expired</td><td><code>FILING AND DECISIONS STOPPED</code></td><td><code>FILING STOPPED</code></td></tr>
 <tr><td>Chip, never granted</td><td colspan="2">none</td></tr>
-<tr><td>Refusal</td><td colspan="2"><code>CAN'T ALLOW</code> / <code>CAN'T STOP</code> + <code>OWNER ONLY</code>, <code>NO GRANT</code>, <code>GRANT STOPPED</code>, <code>GRANT EXPIRED</code>, <code>BAD REQUEST</code></td></tr>
-<tr><td>Caption</td><td colspan="2"><code>AGENTS</code> (today <code>CREDENTIALS</code>)</td></tr>
-<tr><td>Order</td><td colspan="2">credential ● lead · grant chip first cell · credential facts · grant verb, then <code>Revoke</code></td></tr>
+<tr><td>Refusal</td><td colspan="2"><code>CANNOT ALLOW</code> / <code>CANNOT STOP</code> + <code>OWNER ONLY</code>, <code>NO GRANT</code>, <code>GRANT STOPPED</code>, <code>GRANT EXPIRED</code>, <code>BAD REQUEST</code></td></tr>
+<tr><td>Credential verb</td><td colspan="2"><code>Revoke credential</code> (today <code>Revoke</code>)</td></tr>
+<tr><td>Caption</td><td colspan="2"><code>AGENTS · N ACTIVE CREDENTIALS</code> (today <code>CREDENTIALS · N ACTIVE</code>)</td></tr>
+<tr><td>Order</td><td colspan="2">credential ● lead · grant chip first cell · credential facts · grant verb, then <code>Revoke credential</code></td></tr>
+<tr><td>Receipt</td><td colspan="2">the footer centre: one Button whose face is the receipt (<code>ALLOWED</code> / <code>STOPPED</code> / <code>REFUSED</code> + time); it opens the RECEIPT well in place</td></tr>
 </table>
-<p class="sub">Credential rows: the real <code>GET /api/settings/remote</code> from the real hub on an isolated database. Grant rows: the lifecycle beat's decided shape; the grant producer is unbuilt. Board 0 is the real module.</p>
+<p class="sub">Credential rows: the real <code>GET /api/settings/remote</code> from the real hub on an isolated database. Grant rows: stored rows projected to their effective state by the wire contract; the grant producer is unbuilt (see Limits). Board 0 is the real module.</p>
 {''.join(sections)}
+<section class="board">
+<h2>Limits</h2>
+<ul class="limits">
+<li>The grant producer does not exist. Credential rows come from the real <code>GET /api/settings/remote</code>. Grant rows are stored rows plus a clock, projected by the canvas's rule. That rule is now the defined wire contract: <code>credentials[].delegation</code> and <code>delegations[]</code> carry the EFFECTIVE state from <code>by_identity(now)</code> (README, "The wire contract").</li>
+<li>Refusals, operation ids and receipt times are fixture values, not kernel refusals or kernel receipts.</li>
+<li>The boards are static states. No click drives a transition. The open receipt well (6b, 7) is rendered open, not opened by a click.</li>
+<li>The Settings content above Remote access is omitted.</li>
+<li>Typography: round one showed chips, labels, facts, wing tabs and the footer receipt at 10 px, under the 12 px floor, on the real module too. This round repairs eight library species to the 12 px token. Every board is recaptured, with 0 text nodes under 12 px in the whole window, footer included. The repair has not been walked on the owner's desk.</li>
+<li>Pointer: 260 Buttons and 1300 points (centre and corners; the 44 × 44 target at 393), all owned, with <code>elementFromPoint</code> and a real pointer, footer included.</li>
+<li>Inherited: the producer labels a DESK credential ALL (desk-agent shows ALL). This is filed in the backlog, not fixed here.</li>
+</ul>
+</section>
 <section class="board">
 <h2>Three questions</h2>
 <ol class="q">
-<li>Words: set A or set B? Recommended: B, because R5 put decision delete in the grant.</li>
-<li>Caption: <code>AGENTS</code> in place of <code>CREDENTIALS</code>, always? Recommended: yes.</li>
-<li>Order: credential ● lead, grant chip first, grant verb before <code>Revoke</code>? Recommended: yes.</li>
+<li>Words: set B or set A? Recommended: B, because R5 put decision delete in the grant.</li>
+<li>Caption <code>AGENTS · N ACTIVE CREDENTIALS</code> and <code>Revoke credential</code> on the row? Recommended: yes.</li>
+<li>Order, and the receipt as the footer centre Button? Recommended: yes.</li>
 </ol>
 </section>
 </main>

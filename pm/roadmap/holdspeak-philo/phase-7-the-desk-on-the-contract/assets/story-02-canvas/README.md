@@ -1,86 +1,150 @@
 # PHILO-7-02 canvas: the delegation grant on the Remote Access ledger
 
-**Status: PROPOSED. The owner ratifies before the face is built** (UX canon A.2, E.1). Every decision below is proposed; none is ratified.
+**Status: PROPOSED, round two. The owner ratifies before the face is built** (UX canon A.2, E.1). Every decision below is proposed; none is ratified.
 
-Review page (all boards embedded, both widths, both word sets): `docs/internal/philo/phase-7/grant-canvas/index.html`.
+- Round one: PR #658 `f493fb1f`. Astra r1: BOUNCE (`../../checks/story-02-canvas-astra-r1.md`). It supported the composition, no prose / no modal / no zero, the single screen, set B, `AGENTS` and the order. Round two pays its eight findings (ledger at the end).
+- Review page (all boards embedded, both widths, both word sets, the limits): `docs/internal/philo/phase-7/grant-canvas/index.html`.
 
 ## What the boards are, exactly
 
-- **Frame:** the production window. `DeskChrome`, `DeskWindowFrame` with the Settings classes (`desk-surface-window desk-settings-window`), the foot slot and the wing slot wired as `SurfaceWindowHost` wires them (`web/src/desk/components/SurfaceWindows.tsx:155-211`), the real `useCoreWings` (SETTINGS / GUIDE), `Dock`. CSS: `styles/global.css`, `styles/react-app.css`, `desk/desk.css` (the product entry imports, `web/src/main.tsx:8-9`) plus a 15-line canvas `main.css` (page floor, the receipt well's token run).
-- **Board 0 (today)** mounts the REAL `RemoteAccessModule` (`web/src/pages/cores/SettingsCore.tsx:478`) fed the REAL producer's wire.
-- **Boards 1-7** mount `ProposedRemoteAccess` (`harness/main.tsx`): the same JSX as the real module, composed of the same library species (`GadgetGroup`, `GadgetRow`, `CycleGadget`, `SurfaceLedger`, `SurfaceLedgerRow`, `StateChip`, `Button`, `SurfaceWell`, `Receipt`, `SurfaceFooter`), plus the proposal. Nothing is hand-drawn; no product file changes.
-- **Credential half of the wire: the real producer.** `harness/produce_remote_wire.py` boots the real hub over an isolated database (the Phase 5 fence fixture), issues `desk-agent` (DESK, 12 H) and `sweep-runner` (PROJECT, 24 H) through `POST /api/settings/remote/credentials`, uses `desk-agent` once from a non-loopback host, and saves `GET /api/settings/remote` to `harness/fixtures/remote-wire.json`.
-- **Grant half of the wire: NOT a producer (unbuilt).** Orphan rows use the beat's decided shape `delegations: [{identity, state, grant_id, expires_at}]` (`design/grant-lifecycle-beat.md:155`). The per-credential field `credentials[].delegation: {state, grant_id, expires_at} | null` is a **canvas assumption**: the beat decides the chip's rule (`by_identity`, time-aware), not its wire field. Story 02 names the field.
-- **Clock:** `Date.now` is frozen at the capture's last use + 2 h (stable `LAST USED 2 H AGO`); `timezone_id=UTC`. The menu-bar clock is the real clock. Receipt times (`14:05`, `14:07`, `14:09`) are fixture strings.
+- **Frame:** the production window. `DeskChrome`, `DeskWindowFrame` with the Settings classes, the foot and wing slots wired as `SurfaceWindowHost` wires them (`web/src/desk/components/SurfaceWindows.tsx:155-211`), the real `useCoreWings` (SETTINGS / GUIDE), `Dock`. CSS: the product entry's (`web/src/main.tsx:8-9`) plus a 15-line canvas `main.css` (page floor; the receipt well's token run).
+- **Board 0 (today)** mounts the REAL `RemoteAccessModule` (`web/src/pages/cores/SettingsCore.tsx:478`) on the REAL producer's wire (its first two credentials).
+- **The other boards** mount `ProposedRemoteAccess` (`harness/main.tsx`): the real module's JSX, composed only of library species (`GadgetGroup`, `GadgetRow`, `CycleGadget`, `SurfaceLedger`, `SurfaceLedgerRow`, `StateChip`, `Button`, `SurfaceWell`, `Receipt`, `SurfaceFooter`), plus the proposal.
+- **Credential rows: the real producer.** `harness/produce_remote_wire.py` boots the real hub on an isolated database (the Phase 5 fence fixture). It issues `desk-agent` (DESK, 12 H), `sweep-runner` (PROJECT, 24 H) and `review-agent` (PROJECT, 1 s TTL, read after it lapses: the real store keeps it with `active=false`, the beat's matrix row :147). It uses `desk-agent` once from a non-loopback host, and saves `GET /api/settings/remote` to `harness/fixtures/remote-wire.json`.
+- **Grant rows: stored rows + a clock, projected by the rule below.** The grant producer is unbuilt. Each board states STORED `kernel_desk_delegations` rows; `serve()` in `harness/main.tsx` projects them to the wire with `project()`, the beat's time-aware rule. No board poses an effective state. Boards 4 and 5c store `state=LIVE` with a real past `expires_at` (now − 1 h); the projection returns EXPIRED.
+- **Clock:** `Date.now` frozen at the capture's last use + 2 h (`LAST USED 2 H AGO`); `timezone_id=UTC`. The menu-bar clock is the real clock. Receipt times and operation ids are fixture values.
 
-## Boards (`shots/<set>/<board>-<set>-<width>.png`, set `a` and `b`; board 0 in `shots/today/`)
+## The wire contract (the backend lane implements this)
 
-| # | Board | Row(s) |
+`GET /api/settings/remote` gains two things. Both carry the **EFFECTIVE** grant state, never the stored column:
+
+| Field | Shape | Rule |
 |---|---|---|
-| 0 | Today (real module) | caption `CREDENTIALS`; `Revoke` only |
-| 1 | No grant ever | no chip; `Allow filing`, `Revoke` |
-| 2 | LIVE | `FILING ALLOWED`; `Stop filing`, `Revoke`; foot receipt `FILING ALLOWED 14:05 ℹ` |
-| 3 | Stopped (REVOKED) | `FILING STOPPED`; `Allow filing`; foot receipt `FILING STOPPED 14:07 ℹ` |
-| 4 | Expired by clock, credential active | `FILING STOPPED`; `Allow filing`; no receipt (expiry is not an owner act) |
-| 5 | LIVE, no credential, remote ON | idle `●`, `FILING ALLOWED`, `NO CREDENTIAL`; `Stop filing` only |
-| 5b | LIVE, no credential, remote OFF | the ledger still renders (the beat: whatever the switch says); no `Issue credential` |
-| 5c | No credential, grant past its expiry (stored LIVE) | `FILING STOPPED`, `NO CREDENTIAL`; no verb (the beat: the verb only while not expired) |
-| 6 | Refused | `desk-agent`: `✗ CAN'T STOP` `NO GRANT` (`data-code=desk_delegation_required`), the row re-read to `FILING STOPPED`; `sweep-runner`: `✗ CAN'T ALLOW` `OWNER ONLY` (`owner_principal_required`); foot `REFUSED 14:09 ℹ` |
-| 7 | Last row gone | no ledger; foot `FILING STOPPED 14:07 ℹ` opened: a `SurfaceWell` `RECEIPT` with `✓ SUCCEEDED`, the act, `desk-agent`, `BY OWNER`, `SEP 25 14:07` |
+| `credentials[].delegation` | `{state, grant_id, expires_at} \| null` | The identity's grant through `by_identity(identity, now=read time)`, non-authoritative (beat :58, :154). `null` = never granted (`desk_delegation_required`). `state`: `LIVE` when the code is `""`; `EXPIRED` for `_expired` (incl. a stored LIVE row with `expires_at <= now`, check order row 2 before row 3, beat :52); `REVOKED` for `_revoked`. `grant_id` and `expires_at` are the selected row's. |
+| `delegations[]` | `{identity, state, grant_id, expires_at}` | One per grant row that is LIVE in STORAGE and whose identity has no credential row (beat :155); `state` by the same projection, so a stored LIVE row past its expiry says `EXPIRED`. |
 
-`shots/facts.json` records per board and width: the caption, each row's text, grant chip, verbs (with their Button species class), refusal code and chip order, the foot, the receipt well, raw buttons, horizontal overflow. Measured: 38 renders, 0 browser errors, 0 raw `<button>`, 0 horizontal overflow.
+The face reads `state` only. The chip: `LIVE` → the ALLOWED chip; `REVOKED`/`EXPIRED` → the STOPPED chip; `null` → no chip. The grant verb: `LIVE` → Stop; else Allow; on a `delegations[]` row, the Stop verb only while `LIVE`.
+
+**Visibility (proposed):** remote ON shows every credential row and every `delegations[]` row. Remote OFF shows every row whose effective state is `LIVE` (credential-backed or not) and hides the rest. The ledger renders when any row is visible (the beat's "any credential OR any delegation row"). A grant is authority; the owner must see it and be able to stop it whatever the switch says.
+
+## Boards (`shots/<set>/<board>-<set>-<width>.png`, sets `a` and `b`; board 0 in `shots/today/`)
+
+| # | Board | Stored grant → wire | Row(s) |
+|---|---|---|---|
+| 0 | Today (real module) | — | caption `CREDENTIALS`; `Revoke` only |
+| 1 | No grant ever | none → `null` | no chip; Allow verb, `Revoke credential` |
+| 2 | LIVE | LIVE → LIVE | ALLOWED chip; Stop verb; foot receipt `ALLOWED 14:05` |
+| 3 | Stopped | REVOKED → REVOKED | STOPPED chip; Allow verb; foot receipt `STOPPED 14:07` |
+| 4 | Grant expired, credential active | LIVE, `expires_at` = now − 1 h → EXPIRED | credential `●` active, STOPPED chip, Allow verb; no receipt (expiry is not an owner act) |
+| 4b | Credential expired, grant LIVE (real `active=false` row) | LIVE → LIVE | `review-agent`: `●` idle, ALLOWED chip, `⚠ EXPIRED`, Stop verb (both truths, beat :147, :154) |
+| 5 | LIVE, no credential, remote ON | LIVE → `delegations[]` LIVE | `●` idle, ALLOWED, `NO CREDENTIAL`; Stop verb only |
+| 5b | LIVE, no credential, remote OFF | same | the ledger still renders; no `Issue credential` |
+| 5c | No credential, grant past expiry | LIVE, `expires_at` = now − 1 h → EXPIRED | STOPPED, `NO CREDENTIAL`; no verb |
+| 5d | Remote OFF, credential retained, grant LIVE | LIVE → LIVE | `desk-agent` stays (Stop verb, `Revoke credential`); `sweep-runner` (no grant) hidden; caption `AGENTS · 1 ACTIVE CREDENTIAL` |
+| 6 | Refused on the row | REVOKED | `desk-agent`: `✗ CANNOT STOP` `NO GRANT` (`data-code=desk_delegation_required`); `sweep-runner`: `✗ CANNOT ALLOW` `OWNER ONLY` (`owner_principal_required`); foot `REFUSED 14:09` |
+| 6b | Refused Stop, and the reread removes the row | LIVE, then REVOKED by another owner request → no `delegations[]` row | the `desk-agent` row is gone; foot `REFUSED 14:11` (expanded); the well: `✗ REFUSED`, `STOP FILING AND DECISIONS`, `NO GRANT`, `desk-agent`, `BY OWNER`, `SEP 25 14:11` |
+| 7 | Last row gone | REVOKED; no credentials | no ledger; foot `STOPPED 14:07` (expanded); the well: `✓ SUCCEEDED`, the STOPPED words, `desk-agent`, `BY OWNER`, `SEP 25 14:07` |
+
+## The receipt: where it lives, and its target
+
+The Settings foot "carries the receipt and the refusals" (`SettingsCore.tsx:1-5`). The proposal: after each grant act, the footer's CENTRE slot (`SurfaceFooter`'s own `receipt` slot, `web/src/desk/surface/SurfaceFooter.tsx:24`) carries ONE plated library `Button` whose face is the library `Receipt` (lamp, outcome word, `HH:MM`). The whole receipt is the target; there is no `ℹ`. It toggles a `SurfaceWell` `RECEIPT` under the Remote access group (in-world, no modal, `aria-expanded`). One species for both outcomes: SUCCEEDED and REFUSED. The receipt lives outside the removable ledger, so it survives when its row disappears (boards 6b, 7). The durable read stays `GET /api/kernel/read?refs=operation:<id>&view=receipt`.
+
+**Pointer ownership (measured, `shots/facts.json` `pointer`):** every Button in the window body and footer, on every board, at both widths: 260 Buttons, 1300 points, **all owned**. The points are the centre + four corners inset 1 px of the painted face at 1440, and of the 44 × 44 target at 393. Each point is checked with `elementFromPoint` AND a real pointer move (the `pointermove` target). The 70 footer Buttons are included. Footer receipt: face 129.06 × 24 px; target 129.06 × 24 at 1440, 129.06 × 44 at 393. `« PREFS`: face 73.45 × 20; target 73.45 × 44 at 393.
+
+Round one's `« PREFS` verb (and any last footer verb) was under the window's resize grip at 1440: the bottom-right corner point hit `.desk-window-grip` on every board. This round measured it and paid it in the library (`surface-footer.css`, below).
+
+## The 12 px floor: paid in the library
+
+The whole window, footer included, now has **0** text nodes under 12 px on all 50 renders (`facts.json` `small_text`; a lone non-text glyph is exempt, UX-CANON C). The changes use the token `--desk-surface-label-size` (12 px, `web/src/styles/tokens.css:301`), the precedent of PHILO-4-01 (`924b8db6`, `.surface-section-head h3` and `.gadget-chip` 10 → 12):
+
+| Species | File:line | Was |
+|---|---|---|
+| `.gadget-group-label` | `web/src/desk/surface/gadgets.css:26` | 10px |
+| `.gadget-fact` | `web/src/desk/surface/gadgets.css:72` | 10px |
+| `.surface-well-head` | `web/src/desk/surface/surface.css:372` | 10px |
+| `.surface-token[data-chip]` | `web/src/desk/surface/surface.css:597` | 10px |
+| `.prefs-back`, `.prefs-defaults` | `web/src/desk/surface/surface.css:2560` | 10px |
+| `.desk-next .surface-state-chip` | `web/src/desk/surface/patterns/state-chip.css:15` | 10px |
+| `.desk-next .surface-receipt` (footer receipt words + time) | `web/src/desk/surface/patterns/provenance.css:64` | 10px |
+| `.desk-next .desk-wing` (the SETTINGS / GUIDE wings) | `web/src/desk/components/pullout.css:340` | 10px |
+
+Two further library lines: `.btn > .surface-receipt { cursor: inherit; }` (`provenance.css`, a Receipt that is a Button's face takes the Button's cursor), and `.desk-next .surface-footer { padding-inline-end: 24px; }` (`surface-footer.css:3-7`, the grip's 20 px corner reserved).
+
+Not changed (not in this window): `.surface-token` without `data-chip` (11px, `surface.css:570`), the provenance chip, `.desk-wing-door` (11px), and other 10 px rules in `surface.css` / `gadgets.css`. They are outside this canvas's window. The ratchet stays with the species owners.
+
+**Blast radius:** these species render desk-wide; every chip, state chip, gadget-group label, fact, well head, wing tab and footer receipt grows 10 → 12 px. Web baseline: `uv run python scripts/check_web_baseline.py --run` → 2872 passed, 0 failed; `VERDICT: baseline-subset, zero branch-new` (5 HEALED). Guards: `test_design_system_guard`, `test_frontend_density_guard`, `test_ux_canon_ratchet`, `test_ux_canon_scan` → 45 passed.
+
+**Set B at compliant sizes (measured at 393, 12 px):** the ledger line is 363 px; the B chip `FILING AND DECISIONS ALLOWED` is 259 px (one line); `Stop filing and decisions` (198) + `Revoke credential` (140) sit on one line; `Allow filing and decisions` (205) + `Revoke credential` (140) sit on one line. The receipt well wraps its tokens to three lines (board 6b). At 1440 every row is one line (board 4b's three rows included).
 
 ## The strings (proposed)
 
-| Slot | Set A (the charter, `current-phase-status.md:269`) | Set B (recommended) |
+| Slot | Set A (the charter, `current-phase-status.md:269`) | Set B (recommended; Astra r1 supports) |
 |---|---|---|
-| Verb, no LIVE grant | `Allow filing` | `Allow filing and decisions` |
-| Verb, LIVE grant | `Stop filing` | `Stop filing and decisions` |
+| Verb, effective state not LIVE | `Allow filing` | `Allow filing and decisions` |
+| Verb, LIVE | `Stop filing` | `Stop filing and decisions` |
 | Chip, LIVE (`StateChip success ✓`) | `FILING ALLOWED` | `FILING AND DECISIONS ALLOWED` |
 | Chip, REVOKED or EXPIRED (`StateChip idle ○`) | `FILING STOPPED` | `FILING AND DECISIONS STOPPED` |
 | Chip, never granted | none | none |
-| Refusal chip (`StateChip failure ✗`) | `CAN'T ALLOW` / `CAN'T STOP` | same |
+| Refusal chip (`StateChip failure ✗`) | `CANNOT ALLOW` / `CANNOT STOP` | same |
 | Refusal token (`surface-token`) | `owner_principal_required` → `OWNER ONLY`; `desk_delegation_required` → `NO GRANT`; `desk_delegation_revoked` → `GRANT STOPPED`; `desk_delegation_expired` → `GRANT EXPIRED`; `invalid_arguments` → `BAD REQUEST` | same |
+| Credential verb | `Revoke credential` (was `Revoke`) | same |
 | No-credential cell | `NO CREDENTIAL` | same |
-| Ledger caption | `AGENTS` (was `CREDENTIALS`) | same |
-| Foot receipt | library `Receipt`: the chip word + `HH:MM` + `ℹ`; `REFUSED HH:MM` for a refusal | same |
+| Ledger caption | `AGENTS · N ACTIVE CREDENTIAL(S)` (was `CREDENTIALS · N ACTIVE`); the count omitted at zero | same |
+| Foot receipt (the Button's face) | `ALLOWED` / `STOPPED` / `REFUSED` + `HH:MM` | same |
+| Receipt well | `RECEIPT` · `SUCCEEDED` or `REFUSED` · the act (the chip words on success; the verb words, upper case, on a refusal) · the refusal token · identity · `BY OWNER` · `MMM D HH:MM` | same |
 
-**Why B (proposed).** R5 put `decision.delete` in the grant; the set is file/unfile plus record/update/status/supersede/DELETE decisions plus the placement effects. `FILING ALLOWED` names half of it, and the half it hides can delete a decision. The owner's own D3 names the pair ("writes that FILE or DECIDE"). The verb and the chip use the same word pair, so the chip reads as the result of the verb (Allow → ALLOWED, Stop → STOPPED). Measured cost: at 393 the B chip takes one full line and the B verb sits beside `Revoke` without a wrap (shots `b/*-393.png`); at 1440 (the window renders 1392 px wide) the row stays one line; a narrower window wraps the cells under the name, as the room ledger does today. A stays available at no build cost.
+**Why B.** R5 put `decision.delete` in the grant. The set is file/unfile, record/update/status/supersede/DELETE decisions, and the placement effects (beat :14). `FILING ALLOWED` names half of it, and the half it hides can delete a decision. D3 names the pair ("writes that FILE or DECIDE"). Verb and chip use the same pair, so the chip reads as the verb's result.
 
-**Why `AGENTS`.** The grant is keyed by the agent identity and survives a reissue and a restart (beat, invariant 5), and a reissue replaces the old credential, so there is one row per identity. A row with no credential (boards 5, 5b, 5c) is still an agent, not a credential. One caption at all times, no branch. `N ACTIVE` still counts active credentials (board 5b omits it: no counter of zero); the toggle row's `N CREDENTIALS` token is unchanged.
+**Why `AGENTS`, and the count.** The grant is keyed by the agent identity and survives a reissue and a restart (beat invariant 5); a row with no credential is still an agent. One caption, no branch. The count names what it counts: `N ACTIVE CREDENTIAL(S)` (authentication), apart from the grant chip (authority). The toggle row's `N CREDENTIALS` token is unchanged.
 
-**Why this order.** Lead: the credential status `●` (unchanged, `SettingsCore.tsx:630`). First cell: the grant chip, so authority reads before the credential facts (palette, expiry, last use). Then a refusal, when one exists, beside the chip it concerns. Trailing: the grant verb, then `Revoke` last (the destructive credential verb stays at the edge, where it is today). The two columns stay independent: board 4 shows credential `●` active with `FILING STOPPED`; board 5 shows `●` idle with `FILING ALLOWED`.
-
-**Where the receipt lives (proposed).** The Settings foot already "carries the receipt and the refusals" (`SettingsCore.tsx:1-5`; `PrefStatusBar`, `settingsPrefs.tsx:607-658`). The proposal puts the library `Receipt` (`desk/surface/patterns/ProvenanceChip.tsx:37`) in that centre after each grant act, and its `ℹ` unfolds a `SurfaceWell` under the Remote access group (no modal). It is in-session; the durable read is `GET /api/kernel/read?refs=operation:<id>&view=receipt`, which F23 asserts at the API.
+**Why this order.** Lead: the credential status `●` (unchanged, `SettingsCore.tsx:630`). First cell: the grant chip, so authority reads before the credential facts. A refusal sits beside the chip it concerns. Trailing: the grant verb, then `Revoke credential` last, at the edge, where the credential verb is today. The two columns stay independent (boards 4 and 4b).
 
 ## Three questions for the owner
 
-1. Words: set A (`Allow filing` / `FILING ALLOWED`) or set B (`Allow filing and decisions` / `FILING AND DECISIONS ALLOWED`)? Recommended: B.
-2. Caption: `AGENTS` in place of `CREDENTIALS`, always? Recommended: yes.
-3. Order: credential `●` lead, grant chip first cell, grant verb before `Revoke`? Recommended: yes.
+1. Words: set B (`Allow filing and decisions` / `FILING AND DECISIONS ALLOWED`) or set A (`Allow filing` / `FILING ALLOWED`)? Recommended: B.
+2. Caption: `AGENTS · N ACTIVE CREDENTIALS` in place of `CREDENTIALS · N ACTIVE`, with `Revoke credential` on the row? Recommended: yes.
+3. Order and receipt: credential `●` lead, grant chip first, grant verb before `Revoke credential`, and the last act's receipt as the footer's centre Button? Recommended: yes.
 
-## What could not be rendered faithfully
+## Limits (what the boards are not)
 
-- The grant producer does not exist; the grant half of every board is the beat's shape plus one canvas assumption (above). Board 6's refusals are fixture codes, not kernel refusals.
-- The window is not a hub walk: no click drives a transition; each board is a state.
-- The Settings face above Remote access (the `This device` display, hub chips, runtime identity, Mesh) is omitted; the board shows the `System` module title and the Remote access group only.
-- **Inherited, measured, not this canvas's to fix:** the library chip species render at 10 px, under the 12 px floor, on board 0 (the real module) as on every board: `.surface-token[data-chip]` (`web/src/desk/surface/surface.css:587`, `font: 600 10px/1`), `.desk-next .surface-state-chip` (`web/src/desk/surface/patterns/state-chip.css:15`), `.gadget-group-label` (`web/src/desk/surface/gadgets.css:26`), `.surface-well-head` (`surface.css:372`). `facts.json` lists every sub-12 px text per board.
-- **Inherited, measured:** the real producer labels a DESK credential `ALL`: `resolve_palette("DESK") == resolve_palette("ALL")` (228 tools each), so the reverse map in `holdspeak/web/routes/mcp_http.py:209-214` returns the later name. The boards show the producer's `ALL` as it is.
+- The grant producer does not exist. The grant half of every board is stored rows projected by the canvas's statement of the wire contract (above), not a server response.
+- Refusals (boards 6, 6b), operation ids and receipt times are fixture values, not kernel refusals or kernel receipts.
+- The boards are static states. No click drives a transition; the expanded receipt (boards 6b, 7) is rendered open, not opened by a click.
+- The Settings face above Remote access (`This device`, hub chips, runtime identity, Mesh) is omitted.
+- The typography repair above is real library CSS on this branch. It has not been walked on the owner's desk.
+- Inherited, filed, not fixed here: the producer labels a DESK credential `ALL` (every board shows `desk-agent` as `ALL`). BACKLOG, "PHILO-7-02 canvas follow-ups".
 
 ## Fence sketch for story 02 (not built)
 
-Rendered assertions after each transition, through the real hub and the real route, at 1440 and 393, on `readable_text` (visible, in viewport, not obscured):
+Every fence runs the real producers: the real hub, the real `PUT`/`DELETE /api/settings/remote/delegations/{identity}` and credential routes, the real kernel, and the real `GET /api/settings/remote`. It asserts on the RENDERED Settings window at 1440 and 393, on `readable_text` (visible, in viewport, unobscured). Each fence shows a demonstrated red: behavioural (red on a copy of main through the real producer) or a named mutation. The ratified words and their fences change together: the fence reads the words from one constant the face imports.
 
-| After | Assert on the rendered row (`credential-row-<id>` / `delegation-row-<grant_id>`) |
+| After | Assert (rendered, and at the API) | Red |
+|---|---|---|
+| Load, never granted | no `[data-testid=grant-chip]`; the grant verb reads the Allow words; caption `AGENTS` | main: no grant verb |
+| Allow | the chip reads the ALLOWED words, `data-state=success`; the verb reads Stop; the foot receipt reads `ALLOWED`; its `operation_id` equals the route's `{operation_id}` and the kernel receipt's (`delegation.grant`, `result_ref=desk-delegation:<id>`) | main: 404 |
+| Stop | the chip reads the STOPPED words, `data-state=idle`; the verb reads Allow; the receipt is `delegation.revoke`, `revocation_reason=owner_revoked`, same operation id on face, route and kernel | mutation: the face reads the stored column |
+| Revoke credential (a LIVE grant) | a SEPARATE fence: the grant's `delegation.revoke` receipt has `credential_revoked` (not `owner_revoked`); the grant is revoked BEFORE the credential is removed (F21a); the row is gone; the foot receipt and its well read the grant receipt | mutation: the credential removed first; the reason written as `owner_revoked` |
+| Clock past `expires_at` | stored LIVE, the API says `EXPIRED`, the chip reads STOPPED (credential row and orphan row) | mutation: the projection reads the stored `state` (F23) |
+| Credential expired, grant LIVE | `●` idle, `EXPIRED`, the ALLOWED chip (beat :147) | mutation: the chip follows `active` |
+| Credential gone, grant LIVE (self-revoke; TTL cleanup) | the `delegation-row` renders with `NO CREDENTIAL`, ALLOWED, the Stop verb; repeat with remote OFF | main: ledger hidden (`SettingsCore.tsx:615`) |
+| Remote OFF, credential retained, grant LIVE | that credential row renders with the ALLOWED chip and the Stop verb | mutation: OFF drops all credential rows |
+| Stop on an orphan row | the row is gone; with nothing left, `.surface-ledger` is absent; the foot receipt Button is in view, `elementFromPoint` at centre + corners owns it; clicking it opens the well: `SUCCEEDED`, the STOPPED words, `desk-agent`, `BY OWNER`, the operation id matches | mutation: the receipt rendered inside the ledger |
+| Refused on the row | `[data-testid=grant-refused]` on that row, `data-code` equal to the kernel's code, the plain token; no modal, no toast; after the reread the chip equals `by_identity` (F15) | mutation: the refusal dropped on reread |
+| Refused Stop whose reread removes the row | the row is gone; the foot receipt reads `REFUSED`; its well shows `REFUSED`, the attempted act (the Stop words), `NO GRANT` (`desk_delegation_required`), the identity, `BY OWNER`; the operation id matches the route's refusal `{operation_id, receipt}` | mutation: the refusal rendered only on the row |
+| Every state | every verb in the window is `.btn`; no text reads `desk writes`; no text under 12 px in the window incl. the footer; every Button owned at centre + corners (44 × 44 at 393); chip order: lead `●`, grant chip first cell; `Revoke credential` last; no horizontal overflow | the shoot probe of this canvas |
+
+## Round two: Astra r1 → where paid
+
+| Finding | Paid |
 |---|---|
-| Load, never granted | no `[data-testid=grant-chip]`; `[data-testid=grant-verb]` reads the Allow verb; the ledger caption reads `AGENTS` |
-| Allow (grant) | the chip reads the LIVE word with `data-state=success`; the verb reads the Stop verb; the foot `Receipt` reads the LIVE word; the `delegation.grant` receipt exists with `result_ref=desk-delegation:<id>` |
-| Stop (revoke) | the chip reads the STOPPED word with `data-state=idle`; the verb reads the Allow verb; the foot `Receipt` reads the STOPPED word; the `delegation.revoke` receipt exists (`owner_revoked`) |
-| Clock past `expires_at` | the chip reads the STOPPED word while the stored state is still LIVE (F23 mutation: reading `state` says ALLOWED) |
-| Credential gone, grant LIVE (self-revoke; TTL cleanup) | the `delegation-row` renders with idle `●`, `NO CREDENTIAL`, the LIVE word and the Stop verb; repeat with remote OFF |
-| Stop on that row | the row is gone; with no credential left, `.surface-ledger` is absent; the foot `Receipt` and its `ℹ` well read the STOPPED act, `desk-agent`, `BY OWNER`, `SUCCEEDED` |
-| Refused grant / refused stop | `[data-testid=grant-refused]` on THAT row, `data-code` equal to the kernel's code, the plain token beside the failure chip; no modal, no toast; the chip equals `by_identity` after the re-read (F15) |
-| Every state | every verb in the row is `.btn` (library Button); no text reads `desk writes`; chip order: lead `●`, grant chip first cell; `Revoke` last in trailing; no horizontal overflow |
+| 1. Receipt `ℹ` under the grip / 6.61 × 10 px | The receipt itself is the Button, in the footer's centre slot; the footer reserves the grip's corner; pointer ownership measured on every Button, footer included (above) |
+| 2. Remote OFF hides a credential-backed LIVE grant | Visibility rule (wire contract); board 5d |
+| 3. 12 px floor in the library, footer included | Eight species to the token; the scan covers the whole window; B's fit re-measured; baseline + guards green |
+| 4. Expiry boards posed, not derived | Stored rows + `project()`; real past `expires_at`; the wire contract names the effective projection; board 4b from the real expired credential |
+| 5. Refused Stop whose reread removes the row; credential Revoke | Board 6b; one receipt species for both outcomes, outside the ledger; the fence sketch separates `credential_revoked` from `owner_revoked` and requires real producers, matching ids, rendered inspection after disappearance and demonstrated reds |
+| 6. Words | B kept; `Revoke credential`; `N ACTIVE CREDENTIAL(S)`; `CANNOT ALLOW` / `CANNOT STOP` |
+| 7. DESK → ALL | `pm/roadmap/holdspeak/BACKLOG.md`, "PHILO-7-02 canvas follow-ups" |
+| 8. Review page qualifications | The review page's Limits section; this README's board table, strings and Limits |
 
 ## Reproduce
 
@@ -89,7 +153,7 @@ Rendered assertions after each transition, through the real hub and the real rou
 HOME=$(mktemp -d) uv run pytest -q -s -p no:cacheprovider pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-02-canvas/harness/produce_remote_wire.py
 # 2. serve the harness (from web/)
 cd web && ./node_modules/.bin/vite --config ../pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-02-canvas/harness/vite.config.mjs
-# 3. shoot
+# 3. shoot (renders, the whole-window 12 px scan, the pointer probe)
 PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright uv run python pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-02-canvas/harness/shoot.py pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-02-canvas/shots a b
 # 4. the review page
 uv run python pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-02-canvas/harness/build_review.py
