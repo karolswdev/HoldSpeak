@@ -1,0 +1,1 @@
+The summary is saved and available on **Architecture review** (`813c1abc`). I read it back from the meeting record; status is `ready`.

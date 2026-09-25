@@ -1,0 +1,1064 @@
+{
+  "id": "obs-20260925T060021Z-case.philo601.import_failed.badge-muaddib-393",
+  "run_id": "20260925T060021Z-case.philo601.import_failed.badge-muaddib-393",
+  "case_id": "case.philo601.import_failed.badge",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.route.meetings_import",
+    "edge.face.arrival_meeting_row"
+  ],
+  "state_id": "state.meetings.transcription.absent",
+  "provenance": {
+    "revision": "f93e76fa20ba439441395b7a8808fe293f96a226",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "0225645446e0430505384234eac0ddd183406eb5b374b5da5d37580e8d30dd37",
+      "assets": [
+        "index-DMVJUkMB.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50391",
+      "port": 50391,
+      "pid": 71693,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-eiir700x",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-eiir700x/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo5_empty.vtt": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T06:00:22.009774+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.3.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "65f0da5833e79fa1a23f7332599aac3941729313c1c6e99f1df82c64029609d6",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo5_empty.vtt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "c0522ea3",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "c0522ea3"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/c0522ea3",
+        "fields": {
+          "/intel_status/state": "import_failed",
+          "/segments": []
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 1,
+        "elapsed_s": 0.007,
+        "payload": {
+          "id": "c0522ea3",
+          "started_at": "2026-09-25T00:00:25.874894",
+          "ended_at": null,
+          "duration": 0.016572,
+          "formatted_duration": "00:00",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-25T00:00:25.882319",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/intel_status/state": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meeting-badge]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-meeting-badge]",
+      "predicate": {
+        "kind": "readable_text",
+        "value": "FAILED"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'FAILED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 18, 'y': 543, 'w': 46, 'h': 18}"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; the real import route and worker receive a header-only VTT and leave intel_status.state = import_failed with no segments (the PHILO-5-03 producer probe). The hub holds that one meeting, so the Arrival has one meeting badge.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "meeting_id": "c0522ea3"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-status-well-head]",
+    "done": true
+  },
+  "diff": {
+    "rect": {
+      "before": {
+        "x": 22,
+        "y": 580,
+        "w": 40,
+        "h": 13
+      },
+      "after": {
+        "x": 22,
+        "y": 364,
+        "w": 40,
+        "h": 13
+      }
+    },
+    "focus": {
+      "before": "body",
+      "after": "main#main"
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/c0522ea3",
+          "status": 200,
+          "payload": {
+            "id": "c0522ea3",
+            "started_at": "2026-09-25T00:00:25.874894",
+            "ended_at": null,
+            "duration": 2.124255,
+            "formatted_duration": "00:02",
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "tags": [],
+            "segments": [],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "import_failed",
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "sync_modified_at": "2026-09-25T00:00:25.882319",
+            "devices": [],
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "f33cd33ed393ad1a2ad21282bcef795fcd893cf06836de4128e98b2039fa2cad"
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "payload": {
+            "meetings": [
+              {
+                "id": "c0522ea3",
+                "started_at": "2026-09-25T00:00:25.874894",
+                "ended_at": null,
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "duration_seconds": 0.0,
+                "segment_count": 0,
+                "action_item_count": 0,
+                "tags": [],
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "intel_model_host": null,
+                "intel_duration_s": null,
+                "capture_status": "finalized",
+                "capture_failure": null,
+                "capture_checkpoint_seconds": 0.0,
+                "provenance": "desktop",
+                "calendar_event_id": null,
+                "transcriptWords": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "status": "unavailable",
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "legs": []
+                },
+                "run_receipt": null,
+                "last_refusal": null,
+                "intel_job": null
+              }
+            ],
+            "total": 1
+          },
+          "body_sha256": "76136d5becd3b0c431e7d326c7b290745687c669a2157647a2cca8e05d5c0b90"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/meetings/c0522ea3",
+          "status": 200,
+          "payload": {
+            "id": "c0522ea3",
+            "started_at": "2026-09-25T00:00:25.874894",
+            "ended_at": null,
+            "duration": 3.236926,
+            "formatted_duration": "00:03",
+            "title": "Architecture boundary review \u2014 empty transcript",
+            "tags": [],
+            "segments": [],
+            "bookmarks": [],
+            "intel": null,
+            "intel_status": {
+              "state": "import_failed",
+              "detail": "NO TRANSCRIPT LINES",
+              "requested_at": null,
+              "completed_at": null
+            },
+            "mic_label": "Me",
+            "remote_label": "Remote",
+            "web_url": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "transcription_status": "active",
+            "transcription_status_detail": null,
+            "capture_checkpoint_at": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "transcriptWords": null,
+            "sync_modified_at": "2026-09-25T00:00:25.882319",
+            "devices": [],
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null,
+            "intel_model_host": null
+          },
+          "body_sha256": "55249c22bded445d47be48ffd416216847532c600e2868e19f2829cd7d5715ae"
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "payload": {
+            "meetings": [
+              {
+                "id": "c0522ea3",
+                "started_at": "2026-09-25T00:00:25.874894",
+                "ended_at": null,
+                "title": "Architecture boundary review \u2014 empty transcript",
+                "duration_seconds": 0.0,
+                "segment_count": 0,
+                "action_item_count": 0,
+                "tags": [],
+                "intel_status": "import_failed",
+                "intel_status_detail": "NO TRANSCRIPT LINES",
+                "intel_model_host": null,
+                "intel_duration_s": null,
+                "capture_status": "finalized",
+                "capture_failure": null,
+                "capture_checkpoint_seconds": 0.0,
+                "provenance": "desktop",
+                "calendar_event_id": null,
+                "transcriptWords": null,
+                "needs_you_count": 0,
+                "planned_route": {
+                  "status": "unavailable",
+                  "reason_code": "no assignment",
+                  "selection_hash": null,
+                  "legs": []
+                },
+                "run_receipt": null,
+                "last_refusal": null,
+                "intel_job": null
+              }
+            ],
+            "total": 1
+          },
+          "body_sha256": "76136d5becd3b0c431e7d326c7b290745687c669a2157647a2cca8e05d5c0b90"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-status-well-head]",
+    "target_present": true,
+    "text": "IMPORT",
+    "attrs": {
+      "data-testid": "arrival-status-well-head"
+    },
+    "rect": {
+      "x": 22,
+      "y": 580,
+      "w": 40,
+      "h": 13
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 22,
+        "y": 580,
+        "w": 40,
+        "h": 13
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 24,
+          "y": 582,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 24,
+          "y": 587,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 24,
+          "y": 591,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 42,
+          "y": 582,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 42,
+          "y": 587,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 42,
+          "y": 591,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar > span.arrival-capture-talk > button.btn--chrome.desk-mic"
+        },
+        {
+          "x": 60,
+          "y": 582,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 60,
+          "y": 587,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+        },
+        {
+          "x": 60,
+          "y": 591,
+          "owned": false,
+          "owner": "div#desk-next > div.chair > footer.arrival-capture-bar > span.arrival-capture-talk > button.btn--chrome.desk-mic"
+        }
+      ],
+      "all_owned": false
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n12:00 AM\n2 need you\nNO CAL",
+    "url": "http://127.0.0.1:50391/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c767c60cf6d08cf42faf6be2f567603c554ed3208875e101a03eca31061ae81f",
+    "document_text_len": 372,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/c0522ea3",
+        "status": 200,
+        "payload": {
+          "id": "c0522ea3",
+          "started_at": "2026-09-25T00:00:25.874894",
+          "ended_at": null,
+          "duration": 2.124255,
+          "formatted_duration": "00:02",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-25T00:00:25.882319",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "f33cd33ed393ad1a2ad21282bcef795fcd893cf06836de4128e98b2039fa2cad"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "c0522ea3",
+              "started_at": "2026-09-25T00:00:25.874894",
+              "ended_at": null,
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "duration_seconds": 0.0,
+              "segment_count": 0,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "transcriptWords": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "76136d5becd3b0c431e7d326c7b290745687c669a2157647a2cca8e05d5c0b90"
+      }
+    ],
+    "at_utc": "2026-09-25T06:00:28.000970+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-status-well-head]",
+    "target_present": true,
+    "text": "IMPORT",
+    "attrs": {
+      "data-testid": "arrival-status-well-head"
+    },
+    "rect": {
+      "x": 22,
+      "y": 364,
+      "w": 40,
+      "h": 13
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 22,
+        "y": 364,
+        "w": 40,
+        "h": 13
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 24,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 24,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 24,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 216,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "main#main",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n12:00 AM\n2 need you\nNO CAL",
+    "url": "http://127.0.0.1:50391/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c767c60cf6d08cf42faf6be2f567603c554ed3208875e101a03eca31061ae81f",
+    "document_text_len": 372,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/c0522ea3",
+        "status": 200,
+        "payload": {
+          "id": "c0522ea3",
+          "started_at": "2026-09-25T00:00:25.874894",
+          "ended_at": null,
+          "duration": 3.236926,
+          "formatted_duration": "00:03",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-25T00:00:25.882319",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "55249c22bded445d47be48ffd416216847532c600e2868e19f2829cd7d5715ae"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "c0522ea3",
+              "started_at": "2026-09-25T00:00:25.874894",
+              "ended_at": null,
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "duration_seconds": 0.0,
+              "segment_count": 0,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "transcriptWords": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "76136d5becd3b0c431e7d326c7b290745687c669a2157647a2cca8e05d5c0b90"
+      }
+    ],
+    "at_utc": "2026-09-25T06:00:29.113909+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-status-well-head]",
+    "target_present": true,
+    "text": "IMPORT",
+    "attrs": {
+      "data-testid": "arrival-status-well-head"
+    },
+    "rect": {
+      "x": 22,
+      "y": 364,
+      "w": 40,
+      "h": 13
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 22,
+        "y": 364,
+        "w": 40,
+        "h": 13
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 24,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 24,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 24,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 42,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 366,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 371,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        },
+        {
+          "x": 60,
+          "y": 375,
+          "owned": true,
+          "owner": "div.surface-ledger > li.surface-ledger-row > div.surface-ledger-open > div.surface-well > div.surface-well-head > span"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 216,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "main#main",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n12:00 AM\n2 need you\nNO CAL",
+    "url": "http://127.0.0.1:50391/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c767c60cf6d08cf42faf6be2f567603c554ed3208875e101a03eca31061ae81f",
+    "document_text_len": 372,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/c0522ea3",
+        "status": 200,
+        "payload": {
+          "id": "c0522ea3",
+          "started_at": "2026-09-25T00:00:25.874894",
+          "ended_at": null,
+          "duration": 3.10538,
+          "formatted_duration": "00:03",
+          "title": "Architecture boundary review \u2014 empty transcript",
+          "tags": [],
+          "segments": [],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "import_failed",
+            "detail": "NO TRANSCRIPT LINES",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "active",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": null,
+          "sync_modified_at": "2026-09-25T00:00:25.882319",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "b42ef32c1d8bf09dc5aa8d5795213ef9533211b84096b092288ed884ed1b9594"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "c0522ea3",
+              "started_at": "2026-09-25T00:00:25.874894",
+              "ended_at": null,
+              "title": "Architecture boundary review \u2014 empty transcript",
+              "duration_seconds": 0.0,
+              "segment_count": 0,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "import_failed",
+              "intel_status_detail": "NO TRANSCRIPT LINES",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "transcriptWords": null,
+              "needs_you_count": 0,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "76136d5becd3b0c431e7d326c7b290745687c669a2157647a2cca8e05d5c0b90"
+      }
+    ],
+    "at_utc": "2026-09-25T06:00:28.982018+00:00",
+    "predicate_satisfied": true,
+    "reading": "'IMPORT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 22, 'y': 364, 'w': 40, 'h': 13}",
+    "elapsed_s": 0.93
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'IMPORT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 22, 'y': 364, 'w': 40, 'h': 13}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.062,
+    "first_satisfied_at_s": 0.93,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'IMPORT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 22, 'y': 364, 'w': 40, 'h': 13}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50391) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50391) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060021Z-case.philo601.import_failed.badge-muaddib-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060021Z-case.philo601.import_failed.badge-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-eiir700x/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-eiir700x/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50391",
+    "meeting import c0522ea3 failed: No cues could be parsed from tmp1toayoij.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported."
+  ],
+  "duration_s": 7.441
+}
