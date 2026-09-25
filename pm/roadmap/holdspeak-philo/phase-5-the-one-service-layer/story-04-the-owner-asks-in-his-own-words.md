@@ -153,3 +153,4 @@ assertions remain in `briefLoadAndDate.philo303.test.tsx:135` and
 `triagedHeadline.philo404.test.tsx:225`; quiet-branch Generate remains in
 `generateAlwaysReachable.philo401.test.tsx:315`. These surviving fences
 are named in the lane report and closing-check evidence.
+- 2026-09-24 — Muad'Dib's counsel on built: RATIFY-WITH-CONDITIONS (`checks/story-04-built-muaddib.md`); C1–C5 paid (the boundary census regenerated; the rehearsal record's heading and reads corrected; box (b)'s cause stated unknown and the flash ledgered; the eight BACKLOG rows filed).

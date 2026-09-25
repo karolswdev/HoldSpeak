@@ -4305,6 +4305,7 @@
         "tests/unit/test_philo4_01_atlas_contracts.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -4337,8 +4338,10 @@
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_philo4_03_breakage_ids.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
-        "tests/unit/test_philo5_the_loop_r2.py"
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -4373,6 +4376,7 @@
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -4404,6 +4408,7 @@
         "tests/unit/test_brief_shelf.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py"
       ],
@@ -8050,7 +8055,9 @@
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8119,7 +8126,9 @@
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8205,7 +8214,9 @@
         "tests/unit/test_philo3_03_brief_clock.py",
         "tests/unit/test_philo4_04_atlas_contracts.py",
         "tests/unit/test_philo5_compat.py",
+        "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo5_one_decision.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8273,7 +8284,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8303,7 +8316,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8369,7 +8384,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8439,7 +8456,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8469,7 +8488,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8499,7 +8520,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8529,7 +8552,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8559,7 +8584,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8589,7 +8616,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8661,7 +8690,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8691,7 +8722,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8757,7 +8790,9 @@
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
-        "tests/unit/test_philo5_the_loop.py"
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -14585,6 +14620,7 @@
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
+        "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14656,6 +14692,7 @@
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
+        "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19232,7 +19269,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -19507,7 +19546,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -19681,6 +19722,7 @@
         "tests/integration/test_web_transcript_import_api.py",
         "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -19783,7 +19825,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -19886,7 +19930,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -19995,7 +20041,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20094,7 +20142,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20197,7 +20247,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20301,7 +20353,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20399,7 +20453,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20507,7 +20563,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20610,7 +20668,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20711,7 +20771,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20807,7 +20869,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -20905,7 +20969,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21006,7 +21072,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21104,7 +21172,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21208,7 +21278,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21312,7 +21384,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21411,7 +21485,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21517,7 +21593,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21615,7 +21693,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21718,7 +21798,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21818,7 +21900,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -21926,7 +22010,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -22027,7 +22113,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -22140,7 +22228,9 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -36153,6 +36243,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36234,6 +36325,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36561,6 +36653,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36643,6 +36736,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36716,6 +36810,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36804,6 +36899,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36874,6 +36970,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -36954,6 +37051,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37037,6 +37135,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37120,6 +37219,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37200,6 +37300,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37274,6 +37375,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37361,6 +37463,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37453,6 +37556,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37523,6 +37627,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -37606,6 +37711,7 @@
         "tests/e2e/test_hs201_12_thought_note_glass.py",
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
@@ -42618,6 +42724,7 @@
         "tests/unit/test_phase143_routing_authority_census.py",
         "tests/unit/test_phase143_surface_fallback_census.py",
         "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_placement_resolver.py",
         "tests/unit/test_thought_workbench_backend.py",

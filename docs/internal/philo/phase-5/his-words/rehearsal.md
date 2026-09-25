@@ -12,12 +12,11 @@ at 1440 × 900 and 393 × 852. The brief receipt and row crops are identical
 to their corresponding full shot (same SHA256), so all 14 retained PNGs
 are covered by those ten visual readings.
 
-## What the owner said
+## The four prompts (written by the lane in the owner's words)
 
 The lane expressed the assigned job as these four ordinary-word prompts.
 These are the actual strings sent to one fresh Codex session and its
-resumed turns. The owner did not type operation names, field names, a date,
-or a clock override. The rig alone advanced the brief producer's day
+resumed turns. No prompt contains an operation name, field name, date or clock override. The owner typed nothing; the lane wrote these prompts and Astra's Codex session executed them. The rig alone advanced the brief producer's day
 between the third and fourth turn. The machine clock did not change.
 
 > I have an architecture review recording at /Users/karol/dev/tools/wt-philo-5-04/tests/fixtures/philo3_architect_meeting.wav. Import it into HoldSpeak, wait until the transcript is ready, and tell me when the meeting is ready for the next request.
@@ -47,9 +46,7 @@ DB-path check ran before engine setup or the first Codex write.
 All 15 completed tool calls and results are retained; this final run has
 no tool refusal. The audit also accounts for refusals when present.
 The decision write used `desk.create` with `kind=decisions`; the two Thought
-writes were `thought.create` and `thought.update_working`. Codex also read
-repository documentation and source while finding the decision review
-fields. This proves ordinary prompts with client discovery in this repo;
+writes were `thought.create` and `thought.update_working`. Codex also read repository documentation and source while finding the decision review fields — and two things that are neither product docs nor source: the Phase 4 roadmap story `pm/roadmap/holdspeak-philo/phase-4-the-morning/story-02-decision-in-the-visible-rows.md` and `~/.codex/config.toml` (read-only); in turn 1 the `scripts/astra ask` preamble ("You are Astra … TWO-BRAINS.md") led it to read the canon documents (TWO-BRAINS, CONSTITUTION, UX-CANON, ORCHESTRATION, AGENTS.md, CLAUDE.md). It did not read the atlas, `graph.json`, the phase-5 records or the run folders. This proves ordinary prompts with client discovery in this repo;
 it does not prove discovery without repository access. The review date is
 text in the decision context, not a scheduled reminder. No shelf call was
 needed or chosen. The final run created no separate decision record.
@@ -192,3 +189,9 @@ original registry readbacks are the proof, not the incomplete files.
 - Pre-fix rendered reds: [000904Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T000904Z.out), [001056Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T001056Z.out), [001255Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T001255Z.out)
 - [First-open seed readback](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/first-open-seed-readback.txt)
 - [Closing check](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/../../checks/story-04-closing-muaddib.md)
+
+## Notes from Muad'Dib's counsel (2026-09-24)
+
+- `scripts/philo5_his_words.py:263` imports `holdspeak.mcp.tools`, which loads `holdspeak.operations` in-process for a READ-ONLY catalogue read under a throwaway HOME; that load sits OUTSIDE the story-03 AST fence (which covers `graph_walk.py` and `philo5_pairs.py`). It composes no service and writes nothing; recorded here so the fence's scope is honest.
+- The shots show a Sep 25 brief under a menu-bar clock reading Sep 24: the rig advanced ONLY the producer's day (`PRODUCER_CLOCK_READ advance_days=1`, `hub.log:7`); the machine clock never moved.
+- Carried box (b), S4 at 393: cause UNKNOWN. The DECISION body is empty ~0.4–1 s after Done at 393 (0.95 s empty, 1.363 s readable; 1440 readable at 0.955 s); suspected seam `DecisionPullout.tsx:69-71`; ledgered as a face flash in BACKLOG.
