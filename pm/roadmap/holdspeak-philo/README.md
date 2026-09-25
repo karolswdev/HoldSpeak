@@ -1,7 +1,7 @@
 # HoldSpeak Philo documentation initiative
 
 **Last updated:** 2026-09-24 (Phase 5 closed).
-**Current phase:** none active — Phase 5 [closed](phase-5-the-one-service-layer/final-summary.md) 2026-09-24. Next: the PHILO-5 follow-ups in `pm/roadmap/holdspeak/BACKLOG.md` (the owner's morning path) and the owner's Article XI ruling; no Phase 6 chartered.
+**Current phase:** none active — Phase 5 [closed](phase-5-the-one-service-layer/final-summary.md) 2026-09-24. Next: two DRAFTS await Astra's check and the owner's word — Phase 6 The Honest Morning (the morning-path repairs) and Phase 7 The Desk on the Contract (the next MCP slice): [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md).
 **Status:** Phases 1–5 delivered and merged. Phase 5 The One Service Layer closed 2026-09-24: the meeting loop on one declared contract; Codex drove the job in ordinary words; rehearsed, owner-reviewed.
 
 ## Vision
