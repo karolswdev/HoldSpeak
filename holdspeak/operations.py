@@ -93,10 +93,25 @@ class Admission:
     rule: str
     condition: str
     arguments: tuple[str, ...] = ()
+    #: For an argument condition: the condition itself, over the validated
+    #: arguments (PHILO-7-01 round two, Astra finding 2 -- the words alone let
+    #: a mapping ``member_ids`` read as exempt). ``None`` for a stored-state
+    #: condition, which the arguments cannot decide.
+    holds: Optional[Callable[[Mapping[str, Any]], bool]] = field(default=None, compare=False)
 
     def __post_init__(self) -> None:
         if self.rule not in {"exempt", "admitted", "admitted_if"}:
             raise ValueError(f"unknown admission rule: {self.rule}")
+        if self.rule == "admitted_if" and bool(self.arguments) != (self.holds is not None):
+            raise ValueError("an argument condition needs its predicate; a stored-state one has none")
+
+    def admits(self, args: Mapping[str, Any]) -> Optional[bool]:
+        """Whether these validated arguments are admitted; ``None``: stored state decides."""
+        if self.rule == "exempt":
+            return False
+        if self.rule == "admitted":
+            return True
+        return None if self.holds is None else bool(self.holds(args))
 
     def export(self) -> dict[str, Any]:
         return {"rule": self.rule, "condition": self.condition, "arguments": list(self.arguments)}
@@ -785,6 +800,7 @@ ZONE_CREATE = OperationDescriptor(
         "directory_id is given and not empty: over an existing zone the create sets its parent_id "
         "(to parent_id or null), so it can move that zone with its contents. Without directory_id: exempt.",
         ("directory_id",),
+        holds=lambda args: bool(args.get("directory_id")),
     ),
 )
 
@@ -839,6 +855,7 @@ ZONE_UPDATE = OperationDescriptor(
         "parent_id is present (null included): the zone moves with its contents. "
         "A rename alone (no parent_id) is exempt and writes the name only (PHILO-7-01 rename repair).",
         ("parent_id",),
+        holds=lambda args: "parent_id" in args,
     ),
 )
 
@@ -891,7 +908,7 @@ KB_CREATE = OperationDescriptor(
         "properties": {
             "kb_id": {"description": "Optional. A new id is made when absent. The id of an existing knowledge base REPLACES its members with member_ids."},
             "name": {"description": "Required text (not empty)."},
-            "member_ids": {"description": "Optional. A list of kind:id references, for example note:<id>."},
+            "member_ids": {"description": "Optional. A list of kind:id references, for example note:<id> (a mapping is also accepted: its keys are the references)."},
         },
         "additionalProperties": False,
     },
@@ -905,9 +922,12 @@ KB_CREATE = OperationDescriptor(
     method="create_kb",
     admission=Admission(
         "admitted_if",
-        "member_ids is a list that is not empty, or kb_id is given and not empty: knowledge memberships "
-        "are written (over an existing kb_id the membership set is REPLACED). Otherwise exempt.",
+        "member_ids is given and not empty, in any accepted form (a list; a mapping, whose keys the "
+        "repository files as references; any other non-empty value), or kb_id is given and not empty: "
+        "knowledge memberships can be written (over an existing kb_id the membership set is REPLACED). "
+        "Otherwise exempt.",
         ("member_ids", "kb_id"),
+        holds=lambda args: bool(args.get("member_ids")) or bool(args.get("kb_id")),
     ),
 )
 
@@ -959,9 +979,11 @@ KB_UPDATE = OperationDescriptor(
     method="update_kb",
     admission=Admission(
         "admitted_if",
-        "member_ids is present and not null: knowledge memberships are added and removed to match the list. "
-        "A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
+        "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the "
+        "repository files as references; an empty value removes every member): knowledge memberships are "
+        "added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
         ("member_ids",),
+        holds=lambda args: args.get("member_ids") is not None,
     ),
 )
 

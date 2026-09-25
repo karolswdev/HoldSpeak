@@ -1159,7 +1159,7 @@
             "description": "Required text (not empty)."
           },
           "member_ids": {
-            "description": "Optional. A list of kind:id references, for example note:<id>."
+            "description": "Optional. A list of kind:id references, for example note:<id> (a mapping is also accepted: its keys are the references)."
           }
         },
         "additionalProperties": false
@@ -1183,7 +1183,7 @@
       "owner_only": false,
       "admission": {
         "rule": "admitted_if",
-        "condition": "member_ids is a list that is not empty, or kb_id is given and not empty: knowledge memberships are written (over an existing kb_id the membership set is REPLACED). Otherwise exempt.",
+        "condition": "member_ids is given and not empty, in any accepted form (a list; a mapping, whose keys the repository files as references; any other non-empty value), or kb_id is given and not empty: knowledge memberships can be written (over an existing kb_id the membership set is REPLACED). Otherwise exempt.",
         "arguments": [
           "member_ids",
           "kb_id"
@@ -1270,7 +1270,7 @@
       "owner_only": false,
       "admission": {
         "rule": "admitted_if",
-        "condition": "member_ids is present and not null: knowledge memberships are added and removed to match the list. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
+        "condition": "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the repository files as references; an empty value removes every member): knowledge memberships are added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
         "arguments": [
           "member_ids"
         ]

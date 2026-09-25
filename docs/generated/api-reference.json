@@ -14650,6 +14650,7 @@
         "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14724,6 +14725,7 @@
         "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -23893,6 +23895,7 @@
         "tests/unit/test_notes_tag_query.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -23978,6 +23981,7 @@
         "tests/unit/test_notes_tag_query.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24057,6 +24061,7 @@
         "tests/integration/test_primitive_framework_sync.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24127,6 +24132,7 @@
         "tests/integration/test_primitive_framework_sync.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24207,6 +24213,7 @@
         "tests/integration/test_primitive_framework_sync.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -36321,6 +36328,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36405,6 +36413,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"

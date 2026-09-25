@@ -790,6 +790,26 @@ OP_READ_OBSERVATIONS = frozenset({
 })
 
 
+def _id_only(name: str, args: dict[str, Any], id_field: str) -> None:
+    """Refuse a read/delete step whose arguments ``desk.get``/``desk.delete`` cannot carry.
+
+    PHILO-7-01 round two (Astra's check on built, finding 1): those envelopes
+    carry ``kind`` and ``id`` only. Dropping the rest sent a DIFFERENT request:
+    a Thought note's revisions vanished (a valid delete was refused), and an
+    authority field the registry refuses vanished (a refused delete executed).
+    The rig never sends a request the case did not state: the step is blocked
+    by name, before any request, and records ``blocked``, never a refusal or a
+    success. A refusal proof for ``authority_in_arguments`` uses an operation
+    whose envelope carries the arguments (create, update).
+    """
+    extra = sorted(set(args) - {id_field})
+    if extra:
+        raise Blocked(
+            f"operation {name!r} cannot carry args {extra} through its MCP envelope "
+            f"(kind and id only); the rig refuses the step instead of dropping them"
+        )
+
+
 def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
     """Translate canonical operation arguments to the existing MCP envelope."""
     if name == "decision.create":
@@ -802,6 +822,7 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
                       if key != "decision_id"},
         }
     if name == "decision.read":
+        _id_only(name, args, "decision_id")
         return {"kind": "decisions", "id": args.get("decision_id")}
     if name == "decision.list":
         return {"kind": "decisions"}
@@ -814,6 +835,7 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
             return {"kind": kind, "id": args.get(id_field),
                     "data": {key: value for key, value in args.items() if key != id_field}}
         if verb in {"read", "delete"}:
+            _id_only(name, args, id_field)
             return {"kind": kind, "id": args.get(id_field)}
         if verb == "list":
             return {"kind": kind}

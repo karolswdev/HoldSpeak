@@ -81,7 +81,8 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
                 "data": {"type": "object", "description": (
-                    "Primitive fields, including optional id. notes: note_id, title, body_markdown, tags. "
+                    "Primitive fields. Each kind names its own optional id field (a new id is made when it is "
+                    "absent); a field named id is refused. notes: note_id, title, body_markdown, tags. "
                     "directories: directory_id, name, parent_id (a zone id from desk.list kind=directories). "
                     "kbs: kb_id, name, member_ids (kind:id references, for example note:<id>). "
                     "decisions: title, status (proposed puts it on the review list), and the other decision fields."

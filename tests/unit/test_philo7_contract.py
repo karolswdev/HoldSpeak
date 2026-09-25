@@ -118,6 +118,82 @@ def test_each_row_declares_its_admission_as_ruled(name) -> None:
         assert argument in _descriptor(name).args_schema["properties"], (name, argument)
 
 
+#: Round two (Astra finding 2): the condition's SEMANTICS, not only its words.
+#: (operation, validated arguments, admitted?) -- every accepted form.
+ADMISSION_PROBES = [
+    ("kb.create", {"name": "K"}, False),
+    ("kb.create", {"name": "K", "kb_id": None, "member_ids": []}, False),  # the HTTP adapter's empty create
+    ("kb.create", {"name": "K", "member_ids": ["note:a"]}, True),
+    ("kb.create", {"name": "K", "member_ids": {"note:n": True}}, True),   # a mapping: its keys are filed
+    ("kb.create", {"name": "K", "kb_id": "k1"}, True),
+    ("kb.update", {"kb_id": "k", "name": "K2"}, False),
+    ("kb.update", {"kb_id": "k", "name": "K2", "member_ids": None}, False),  # the HTTP adapter's rename
+    ("kb.update", {"kb_id": "k", "member_ids": {"note:n": True}}, True),
+    ("kb.update", {"kb_id": "k", "member_ids": {}}, True),                 # removes every member
+    ("kb.update", {"kb_id": "k", "member_ids": []}, True),
+    ("zone.create", {"name": "Z"}, False),
+    ("zone.create", {"name": "Z", "directory_id": None, "parent_id": None}, False),
+    ("zone.create", {"name": "Z", "directory_id": "d"}, True),
+    ("zone.update", {"directory_id": "d", "name": "N"}, False),
+    ("zone.update", {"directory_id": "d", "parent_id": None}, True),
+    ("zone.update", {"directory_id": "d", "parent_id": "p"}, True),
+    ("zone.delete", {"directory_id": "d"}, True),
+    ("kb.delete", {"kb_id": "k"}, False),
+    ("note.update", {"note_id": "n", "title": "t"}, False),
+]
+
+
+@pytest.mark.parametrize(("name", "args", "admitted"), ADMISSION_PROBES,
+                         ids=[f"{p[0]}:{json.dumps(p[1], sort_keys=True)}" for p in ADMISSION_PROBES])
+def test_the_admission_condition_classifies_every_accepted_form(name, args, admitted) -> None:
+    from jsonschema import Draft202012Validator
+
+    descriptor = _descriptor(name)
+    Draft202012Validator(dict(descriptor.args_schema)).validate(args)  # an accepted input
+    assert descriptor.admission.admits(args) is admitted
+
+
+def test_a_thoughts_note_delete_is_decided_by_stored_state() -> None:
+    assert _descriptor("note.delete").admission.admits({"note_id": "n"}) is None
+
+
+@pytest.mark.parametrize("tool_data", [
+    {"name": "K", "member_ids": {"note:n": True}},
+    {"name": "K", "member_ids": ["note:n"]},
+])
+def test_every_membership_producing_kb_create_is_admitted(tmp_path: Path, monkeypatch, tool_data) -> None:
+    """The EFFECT fence: a create that writes a live membership is never declared exempt.
+
+    Through the real MCP dispatch (main and built accept the mapping; the
+    acceptance is preserved), then the real database: a live
+    ``knowledge_memberships`` row exists, and the declaration admits the call.
+    """
+    from holdspeak.db import Database
+    from holdspeak.mcp import tools as mcp_tools
+    from holdspeak.mcp.tools import dispatch
+
+    db = Database(tmp_path / "kb-effect.db")
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: db)
+    made = dispatch("desk.create", {"kind": "kbs", "data": tool_data}, OWNER)
+    live = [m.resource_ref for m in db.knowledge_memberships.list_for_knowledge(made["id"])]
+    assert live == ["note:n"], live
+    assert _descriptor("kb.create").admission.admits(tool_data) is True
+
+
+def test_a_mapping_kb_update_changes_memberships_and_is_admitted(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak.db import Database
+    from holdspeak.mcp import tools as mcp_tools
+    from holdspeak.mcp.tools import dispatch
+
+    db = Database(tmp_path / "kb-update-effect.db")
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: db)
+    made = dispatch("desk.create", {"kind": "kbs", "data": {"name": "K", "member_ids": ["note:a"]}}, OWNER)
+    data = {"member_ids": {"note:b": True}}
+    dispatch("desk.update", {"kind": "kbs", "id": made["id"], "data": data}, OWNER)
+    assert [m.resource_ref for m in db.knowledge_memberships.list_for_knowledge(made["id"])] == ["note:b"]
+    assert _descriptor("kb.update").admission.admits({"kb_id": made["id"], **data}) is True
+
+
 def test_the_export_carries_the_admission() -> None:
     exported = {op["name"]: op for op in json.loads((REPO / "docs/generated/operations.json").read_text())["operations"]}
     for name in SLICE:
