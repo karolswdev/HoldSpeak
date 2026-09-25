@@ -12,7 +12,7 @@
   border-radius: 0;
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--desk-surface-label-size) / 1 var(--font-mono); /* PHILO-7-02: the 12 px floor (was 10px) */
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   white-space: nowrap;
