@@ -404,3 +404,66 @@ Source: db/primitives.py:384-437 maintains knowledge_memberships; schema.py:1312
 Source: services/setup_service.py:40-43 repeats additive apply_seed then writes onboarding_state.
 The final snapshot proves rows exist; it is not a per-statement SQL trace or a before/after allocation between the two calls.
 ```
+
+### Captured run — 2026-09-25T00:56:44Z
+
+- **Command:** `zsh .tmp/philo504-upstream-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** unknown
+
+```text
+........................................................................ [ 62%]
+...........................................                              [100%]
+115 passed in 3.28s
+```
+
+## Upstream counsel integrated — PR #637
+
+Main advanced to `29380711` while this lane was running. Its story-03
+counsel and six carried instructions are preserved. The four overlapping
+product/S4 items point to the checked dispositions; the two additional
+items are paid: an AST fence on both rig scripts with ten rejected source
+mutations, and an observation-schema description that identifies the
+headless `1440`/`-1440` values as legacy labels, not face evidence. The old
+observations are unchanged. The AST fence plus affected atlas/schema/
+reference suites pass **115 tests** (113 already covered, two new). No
+product source or fixture changed during integration; the same real
+rehearsal remains the face and durable-state proof. This brings the named
+Python scope to 242 distinct tests, verified by the recorded original and
+affected reruns, not by a claimed single 242-test run.
+
+### Captured run — 2026-09-25T01:05:45Z
+
+- **Command:** `zsh .tmp/philo504-upstream-checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 2f2bc56d2fb2e2bc557e1795fe57198cc9728651
+
+```text
+........................................................................ [ 62%]
+...........................................                              [100%]
+115 passed in 3.28s
+```
+
+
+The first upstream run has an unknown index tree because the main merge
+was unresolved. The post-merge capture above has a real stamp and repeats
+only the 115 affected tests, as [Muad'Dib required](checks/story-04-upstream-muaddib.md).
+The AST fence covers direct imports and literal dynamic import forms,
+not transitive dependencies. Merge-only commit `2ba52dd7` carries the five
+incoming documentation paths; this integration work ships separately in
+a normal stamped commit. Product source and the real rehearsal are
+unchanged. The failed-import fence-as-observed remains owed with its
+ledgered repair.
+
+
+The gate then exposed a report filename collision: `_index_story_status_for`
+(`.githooks/dw_pmo/gate.py:95-108`) selected `story-04-lane-report.md`
+before the actual done story. The report has no story status, so a later
+evidence amendment was refused as orphaned. The report is now
+`lane-report-story-04.md`, outside the reserved `story-04-*` pattern;
+its contents and current links are preserved. The original filename in
+archived briefs remains a historical reference. This is a bookkeeping
+rename under TWO-BRAINS §3; no gate code, story status or proof was changed
+to clear the refusal. [Exact pre-rename gate output](assets/story-04-shots/verification/gate-report-name-red.txt).

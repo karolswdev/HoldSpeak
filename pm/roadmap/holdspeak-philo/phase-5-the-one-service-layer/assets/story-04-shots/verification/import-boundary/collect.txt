@@ -1,0 +1,4 @@
+tests/unit/test_philo5_rig_import_boundary.py::test_rig_scripts_do_not_import_operation_registry
+tests/unit/test_philo5_rig_import_boundary.py::test_same_fence_rejects_forbidden_source_mutations
+
+2 tests collected in 0.03s

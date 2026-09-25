@@ -187,7 +187,7 @@ original registry readbacks are the proof, not the incomplete files.
 - [Stopped attempts](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/attempts/README.md)
 - [Receipt red](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/receipt-red/brief-read.json) and [green](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/receipt-green/brief-read.json)
 - [Structural audit](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/final-rehearsal-audit.txt)
-- [Lane report and ledger](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/../../story-04-lane-report.md)
+- [Lane report and ledger](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/../../lane-report-story-04.md)
 
 - Pre-fix rendered reds: [000904Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T000904Z.out), [001056Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T001056Z.out), [001255Z](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/receipt-tests/run-20260925T001255Z.out)
 - [First-open seed readback](../../../../../pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/verification/first-open-seed-readback.txt)

@@ -37,13 +37,13 @@ Technical acceptance proof: [rehearsal record](../../../../docs/internal/philo/p
 [final transcript and config](assets/story-04-shots/final/20260925T001407Z-his-words-real/observations.json),
 and [evidence](evidence-story-04.md). No replay was used for the closing rehearsal.
 
-## Carried in from story 03
+## Dispositions from the starting ledger
 
-The lane brief assigns these six items as work or as an explicit ledger
-entry with a reason. This section was absent from the lane's starting
-revision, `9c653937`; the items are traced to [story 03's ledger](story-03-lane-report.md#ledger)
-and the phase's Decisions deferred. A ledgered box means accounted for,
-not fixed.
+These six entries were traced to [story 03's ledger](story-03-lane-report.md#ledger)
+and the phase's Decisions deferred at the lane's starting `9c653937`.
+PR #637 later added the authoritative six-box counsel section below while
+this lane was running. Both sets are retained with their provenance. A
+ledgered box means accounted for, not fixed.
 
 - [x] **PAID — Import fixture hash:** the actual S1 op case cites the real
   fixture hash in both the op step and provenance. [Observation](assets/story-04-shots/carried/import-hash-op/20260924T234859Z-case.closure.chain.s1_import_complete.op-astra-1440/observation.json),
@@ -51,21 +51,21 @@ not fixed.
   Old observations remain intact.
 - [x] **LEDGERED — Shelf refusal before registry dispatch:** preserve the
   transport-schema origin and never count that branch as registry reach.
-  [Ledger, row 1](story-04-lane-report.md#ledger).
+  [Ledger, row 1](lane-report-story-04.md#ledger).
 - [x] **PAID / LEDGERED — Missing-decision refusal:** the actual HTTP/browser
   and canonical op pair both refuse, but observer parity is **FAIL: 2 rows
   versus 1**. [HTTP rows](assets/story-04-shots/carried/verification/missing-browser-missing-id-rows.txt),
   [op rows](assets/story-04-shots/carried/verification/missing-op-missing-id-rows.txt),
-  [repair ledger, row 2](story-04-lane-report.md#ledger).
+  [repair ledger, row 2](lane-report-story-04.md#ledger).
 - [x] **PAID — S4 at 393:** saved decision content is readable on the face;
   the real producer's before predicate is false and the after predicate passes.
   [393 shot](assets/story-04-shots/carried/s4-393/20260924T233554Z-case.closure.chain.s4_saved_content-astra-393/after.png),
   [observation](assets/story-04-shots/carried/s4-393/20260924T233554Z-case.closure.chain.s4_saved_content-astra-393/observation.json).
   The same case also passes at 1440; this closes missing proof, not a product repair.
 - [x] **LEDGERED — Empty import shown as SAVED:** named seams, owner cost,
-  and product follow-up owed. [Ledger, row 3](story-04-lane-report.md#ledger).
+  and product follow-up owed. [Ledger, row 3](lane-report-story-04.md#ledger).
 - [x] **LEDGERED — Transient zero-decided toast:** named seams, canon failure,
-  and product follow-up owed. [Ledger, row 4](story-04-lane-report.md#ledger).
+  and product follow-up owed. [Ledger, row 4](lane-report-story-04.md#ledger).
 
 The inherited decision-admission question remains separate, unruled, and
 assigned to the owner's ruling / later phase as recorded by story 02.
@@ -73,12 +73,39 @@ assigned to the owner's ruling / later phase as recorded by story 02.
 
 ## Carried in from story 03 (Muad'Dib's counsel C3 — work, not notes)
 
-- [ ] SAVED shown on the Arrival while the durable state is `import_failed` (an empty VTT import): the face must not lie — fix the honest state (no design; the existing failure idiom) with a fence red pre-fix, or a named follow-up with a fence-as-observed if the fix needs a canvas.
-- [ ] S4 at 393: after Done the reading view is blank — cause found; fixed if product-only, else ledgered with the shot.
-- [ ] One missing HTTP decision read produces TWO broke rows (`holdspeak/web/routes/decisions.py:58-61` falls through from the registry NotFound to the lifecycle service): one cause, one row; fence red pre-fix.
-- [ ] Shelf schema drift: the MCP tool enum refuses before dispatch while the descriptor says it will not pre-empt (`operations.py:421-431`) — align (descriptor or schema) with a schema-alignment fence.
-- [ ] Structural fence: the rig (`scripts/graph_walk.py`, `philo5_pairs.py`) never imports `holdspeak.operations` in-process (a second composition); red by mutation.
-- [ ] Ledgered: op observations carry a forced `viewport: 1440` label and a `-1440` run id — a reader can take an op run for a face; note it in the rig's observation schema or drop the label for op runs (small).
+The six instructions below arrived on main in PR #637 (`29380711`) while
+this lane was running. The owner's direct brief permits work **or an
+explicit ledger with a reason**. The checked six-row product ledger keeps
+unrepaired items visible; a checked ledger box does not claim a repair.
+
+- [x] **LEDGERED — SAVED on `import_failed`:** original empty-VTT failure
+  and named seams retained. No badge repair is included in the checked
+  receipt-only product scope. Its fence-as-observed is owed with the repair.
+  [Ledger row 3](lane-report-story-04.md#ledger).
+- [x] **PAID — S4 reading content at 393:** actual atlas case waits for the
+  saved content's readable predicate and retains both widths. No product
+  repair was needed to establish eventual rendering. [393 shot](assets/story-04-shots/carried/s4-393/20260924T233554Z-case.closure.chain.s4_saved_content-astra-393/after.png).
+- [x] **PAID PROOF / LEDGERED REPAIR — two broke rows for one cause:** the
+  actual missing-decision HTTP/op pair refuses but parity is **FAIL, 2:1**.
+  Legacy fallback compatibility needs a separate product repair; it is not
+  normalized away. [Ledger row 2](lane-report-story-04.md#ledger).
+- [x] **LEDGERED — shelf schema drift and alignment fence:** pre-dispatch
+  origin remains explicit and excluded from registry-reach proof. The
+  transport/descriptor alignment and its real-producer fence remain owed
+  together in the product follow-up. [Ledger row 1](lane-report-story-04.md#ledger).
+- [x] **PAID — Structural fence, no in-process `holdspeak.operations` import:**
+  `scripts/graph_walk.py` and `scripts/philo5_pairs.py` are fenced from their
+  actual ASTs. Ten mutations of the actual source are rejected. This fences
+  direct imports, not the transitive dependency graph.
+  [Fence](../../../../tests/unit/test_philo5_rig_import_boundary.py),
+  [mutation rejections](assets/story-04-shots/verification/import-boundary/mutation-rejections.txt),
+  [focused run](assets/story-04-shots/verification/upstream-counsel-tests.txt).
+- [x] **PAID RECORD — headless op viewport label:** the observation schema's
+  `viewport` description now states that `1440` and the `-1440` suffix are
+  legacy run labels for headless op records, not browser or face evidence.
+  [Schema](../../../../docs/internal/philo/graph/graph.schema.json); old
+  observations stay unchanged and their `headless`/`shots` fields identify
+  the proof tier.
 
 ## Effort (council-style estimate, not a promise)
 

@@ -1,0 +1,8 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PMO HYGIENE GATE — dw gate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✗ Orphan evidence — pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/evidence-story-04.md changed but its story is not done in this commit's index.
+  To proceed: Amend evidence only for a story that is (or is flipping) done.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exit code: 1

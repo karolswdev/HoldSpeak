@@ -195,7 +195,7 @@ Technical status is done. Build commit `4c56fa94` passed the gate;
 Muad'Dib's counsel on built and shot publication.
 Owner review and exit 5 stay open.
 [Rehearsal](../../../../docs/internal/philo/phase-5/his-words/rehearsal.md),
-[lane report and six-row repair ledger](story-04-lane-report.md),
+[lane report and six-row repair ledger](lane-report-story-04.md),
 [evidence](evidence-story-04.md).
 
 2026-09-24: PHILO-5-03 DONE; Muad'Dib's precommit check ratified with record conditions paid. Work is in
@@ -304,7 +304,7 @@ face limitations are recorded under Decisions deferred for PHILO-5-04.
 - PHILO-5-04: the shelf schema narrowing, duplicate missing-decision
   observer rows, failed-import SAVED badge, and zero-decided toast are
   inherited product defects, with reasons, seams and failing tenets in
-  [the six-row lane ledger](story-04-lane-report.md#ledger). **Product follow-up owed.**
+  [the six-row lane ledger](lane-report-story-04.md#ledger). **Product follow-up owed.**
   BACKLOG rows for these four to be filed by **Muad'Dib at counsel-on-built,
   before merge**, as he undertook in the scope check. No finding is repaired
   by being ledgered.

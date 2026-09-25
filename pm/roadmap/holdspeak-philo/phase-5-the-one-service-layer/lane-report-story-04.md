@@ -62,8 +62,11 @@ recorded in [evidence](evidence-story-04.md). No full suite was run.
 
 Actual atlas cases paid the direct import hash citation, the missing-
 decision refusal pair (with parity still failed), and S4 saved decision
-content at 393 and 1440. The six carried boxes link those proofs and the
-four carried repair dispositions; the closing check added two more ledger rows.
+content at 393 and 1440. The initial ledger dispositions link those proofs and four carried
+repairs; the closing check added two more product ledger rows. PR #637
+subsequently supplied the authoritative six-box counsel section, now
+reconciled in the story. Its two additional requirements are the structural
+rig import fence and the documented headless viewport label.
 
 ## LEDGER
 
@@ -77,7 +80,7 @@ seam; these six repairs remain outside that scope. Muad'Dib accepted the disposi
 | --- | --- | --- |
 | Shelf invalid-state schema pre-empts the registry | **b**. `holdspeak/mcp/tools.py:459` against `holdspeak/operations.py:421-423`; [story 03 counsel](checks/story-03-shelf-refusal-muaddib.md). | The transport answers before the service's named refusal. Tenet 3 and the phase's contract-reach criterion. Preserve `refusal_origin: transport_schema` and `registry_reached: false`; accepted shelf paths have separate reach proof. **Product follow-up owed**: align transport and contract with real-producer red/green evidence in a product story. The refused branch does not count toward exit 1. |
 | Missing-decision HTTP fallback records two failures | **b**. `holdspeak/web/routes/decisions.py:58-61`, `holdspeak/services/monday_brief_service.py:577-593`; [scope check finding 3](checks/story-04-scope-muaddib.md). | One missing object becomes two broken items in the brief. Tenet 3, Article VI and inherited Article XI compatibility debt. **Product follow-up owed**: settle legacy-ID dispatch/observer semantics without dropping legacy reads. The actual refusal pair must retain both row counts and a failed parity verdict. No normalization is an equivalence claim. |
-| Failed import shown as SAVED | **b**. `web/src/desk/chair/intelBadge.ts:26`, `web/src/desk/chair/ChairHome.tsx:265`, `holdspeak/services/meeting_service.py:315`; [story 03 glass reading](assets/story-03-shots/glass-review.md). | A failed transcript appears saved. Tenets 3/4 and Article VI. **Product follow-up owed**: map the real import failure on the Arrival row and fence the rendered state. This badge repair is outside the narrow receipt amendment. |
+| Failed import shown as SAVED | **b**. `web/src/desk/chair/intelBadge.ts:26`, `web/src/desk/chair/ChairHome.tsx:265`, `holdspeak/services/meeting_service.py:315`; [story 03 glass reading](assets/story-03-shots/glass-review.md). | A failed transcript appears saved. Tenets 3/4 and Article VI. **Product follow-up owed**: map the real import failure on the Arrival row; the fence-as-observed and rendered failure fence are owed with the repair. Neither fence is claimed here. This badge repair is outside the narrow receipt amendment. |
 | Transient zero-decided toast | **b**. `web/src/components/AmbientLayer.tsx:175`, `web/src/desk/intelligenceAttention.ts:95-96`; `docs/internal/UX-CANON.md:43`. | A zero count adds a false signal during meeting completion. Tenets 3/4 and UX-CANON A.8. **Product follow-up owed**: omit zero tokens and prove the rendered transition. The inherited toast remains visible if the rehearsal catches it. |
 | Conflicting brief counts and time formats on arrival | **b**, exposed on every fresh read by the checked receipt seam. `web/src/desk/chair/briefEgress.tsx:43-52` counts all raw sections and formats local time; `web/src/desk/chair/ChairHome.tsx:875-886` filters raw IDs for the human count; `holdspeak/web/routes/monday_brief.py:47-58` supplies a 24-hour label. [1440 shot](assets/story-04-shots/final/20260925T001407Z-his-words-real/shots/brief/1440.png). | Five things waiting versus six items, and 18:19 versus 6:19 PM, undermine the saved-result receipt. Tenets 3/4, Article III. **Product follow-up owed**: settle one understandable count and time presentation, then real-producer rendered red/green proof. No repair is claimed here. |
 | Raw pipeline service name retained and counted | **b**. `holdspeak/services/monday_brief_service.py:500` stores `MeetingIntelService.run_intelligence`; `web/src/desk/chair/briefEgress.tsx:43-46` counts it; `web/src/desk/chair/ChairHome.tsx:884-886` filters it from Arrival. [Readback](assets/story-04-shots/final/20260925T001407Z-his-words-real/observations/brief.json). | An internal method becomes a durable brief item and inflates the receipt. Tenets 3/4 and product-language canon. **Product follow-up owed**: human-readable producer wording and a consistent count/rendering fence. The raw name is not proven visible by expanding “2 more”; that interaction was not walked. |
@@ -148,3 +151,37 @@ text. The six product repairs and decision kernel admission remain owed.
 The failed missing-decision parity is not counted as equal by normalization.
 No final-run restart or full-suite claim is made. Muad'Dib's counsel on
 built and publication remain downstream; the branch must stay unmerged.
+
+## Upstream counsel integrated — PR #637
+
+Main advanced to `29380711` while this lane was running. Its story-03
+counsel and six carried instructions are preserved. The four overlapping
+product/S4 items point to the checked dispositions; the two additional
+items are paid: an AST fence on both rig scripts with ten rejected source
+mutations, and an observation-schema description that identifies the
+headless `1440`/`-1440` values as legacy labels, not face evidence. The old
+observations are unchanged. The AST fence plus affected atlas/schema/
+reference suites pass **115 tests** (113 already covered, two new). No
+product source or fixture changed during integration; the same real
+rehearsal remains the face and durable-state proof. This brings the named
+Python scope to 242 distinct tests, verified by the recorded original and
+affected reruns, not by a claimed single 242-test run.
+
+
+The AST check fences direct imports and literal dynamic import forms, not
+the transitive dependency graph. [Muad'Dib's integration check](checks/story-04-upstream-muaddib.md)
+required a merge-only commit followed by this normal stamped content
+commit; that separation is preserved. The post-merge capture at
+`2026-09-25T01:05:45Z` passes **115 tests in 3.28s** with a real index-tree
+stamp. The earlier unknown-tree capture remains as the honest first run.
+
+
+The gate then exposed a report filename collision: `_index_story_status_for`
+(`.githooks/dw_pmo/gate.py:95-108`) selected `story-04-lane-report.md`
+before the actual done story. The report has no story status, so a later
+evidence amendment was refused as orphaned. The report is now
+`lane-report-story-04.md`, outside the reserved `story-04-*` pattern;
+its contents and current links are preserved. The original filename in
+archived briefs remains a historical reference. This is a bookkeeping
+rename under TWO-BRAINS §3; no gate code, story status or proof was changed
+to clear the refusal. [Exact pre-rename gate output](assets/story-04-shots/verification/gate-report-name-red.txt).
