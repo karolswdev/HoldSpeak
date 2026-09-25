@@ -8513,7 +8513,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 515,
+      "line": 668,
       "kinds": [
         "http_client"
       ],
@@ -8523,17 +8523,17 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 563,
+      "line": 717,
       "kinds": [
         "http_client"
       ],
-      "excerpt": "await apiFetch(`/api/settings/remote/credentials/${id}`, {",
-      "line_sha256": "e55bc86c90d67ffd85314921e0f00c5a7ecd678f75f3696874e7c66f07d41e2b",
+      "excerpt": "const result = await apiFetch(`/api/settings/remote/delegations/${encodeURIComponent(identity)}`, {",
+      "line_sha256": "1a41dfd3311d1ff63121c65a6c040b1c9851b0f59ed15f24147a3f9cd743f87b",
       "review": "candidate_only"
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 981,
+      "line": 1227,
       "kinds": [
         "http_client"
       ],
@@ -8543,7 +8543,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 986,
+      "line": 1232,
       "kinds": [
         "http_client"
       ],
@@ -8553,7 +8553,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 990,
+      "line": 1236,
       "kinds": [
         "http_client"
       ],

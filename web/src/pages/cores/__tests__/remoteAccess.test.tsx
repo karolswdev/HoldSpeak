@@ -92,9 +92,10 @@ describe("RemoteAccessModule", () => {
     const totalToken = screen.getByTestId("remote-total-count");
     expect(totalToken.textContent).toBe("3 CREDENTIALS");
 
-    // N ACTIVE in the ledger head: 2 active
+    // N ACTIVE CREDENTIALS in the ledger head (PHILO-7-02, the ratified
+    // caption "AGENTS · N ACTIVE CREDENTIALS"): 2 active
     const activeToken = screen.getByTestId("remote-active-count");
-    expect(activeToken.textContent).toBe("2 ACTIVE");
+    expect(activeToken.textContent).toBe("2 ACTIVE CREDENTIALS");
   });
 
   it("token appears once after issue and is not re-rendered after refetch", async () => {
@@ -175,8 +176,9 @@ describe("RemoteAccessModule", () => {
       makeRemoteWire({ enabled: true, bind_host: "100.64.0.2", port: 8765, credentials: afterRevoke, total_count: 1, active_count: 1 }),
     );
 
-    // Find all Revoke buttons and click the second one (for "goner")
-    const revokeButtons = screen.getAllByText("Revoke");
+    // Find all Revoke credential buttons (PHILO-7-02: the ratified verb) and
+    // click the second one (for "goner")
+    const revokeButtons = screen.getAllByText("Revoke credential");
     expect(revokeButtons.length).toBe(2);
     fireEvent.click(revokeButtons[1]);
 

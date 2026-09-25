@@ -13,7 +13,7 @@ import type {
   CalendarSourceFact,
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { documentBuildId } from "../../lib/buildId";
 import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
@@ -261,14 +261,146 @@ type RemoteCredential = {
   active: boolean;
 };
 
+/* PHILO-7-02: the owner's desk delegation grant rides the credential ledger
+ * (the RATIFIED canvas, pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-
+ * contract/assets/story-02-canvas/README.md). The server sends the grant's
+ * EFFECTIVE state (the kernel's own time-aware rule); the face reads `state`
+ * only, never a stored column. */
+type GrantState = "LIVE" | "REVOKED" | "EXPIRED";
+type Delegation = { state: GrantState; grant_id: string; expires_at: number | null };
+type OrphanDelegation = Delegation & { identity: string };
+
 type RemoteWire = {
   enabled: boolean;
   bind_host: string | null;
   port: number | null;
-  credentials: RemoteCredential[];
+  credentials: (RemoteCredential & { delegation?: Delegation | null })[];
+  /** Grants LIVE in storage whose identity has no credential row. */
+  delegations?: OrphanDelegation[];
   active_count: number;
   total_count: number;
 };
+
+/** The ratified words (set A, the owner, 2026-09-25). The fences read them
+ *  from here, so the words and their fences change together. */
+export const GRANT_WORDS = {
+  allow: "Allow filing",
+  stop: "Stop filing",
+  live: "FILING ALLOWED",
+  stopped: "FILING STOPPED",
+  actAllow: "ALLOW FILING",
+  actStop: "STOP FILING",
+  cannotAllow: "CANNOT ALLOW",
+  cannotStop: "CANNOT STOP",
+  revokeCredential: "Revoke credential",
+  noCredential: "NO CREDENTIAL",
+  agents: "AGENTS",
+} as const;
+
+/** The kernel's refusal codes (verbatim) and their plain face tokens; the
+ *  code rides `data-code` for the fence. */
+export const GRANT_REFUSAL_TOKEN: Record<string, string> = {
+  owner_principal_required: "OWNER ONLY",
+  desk_delegation_required: "NO GRANT",
+  desk_delegation_revoked: "GRANT STOPPED",
+  desk_delegation_expired: "GRANT EXPIRED",
+  invalid_arguments: "BAD REQUEST",
+};
+
+type GrantVerbKind = "allow" | "stop";
+type GrantRefusal = { verb: GrantVerbKind; code: string };
+/** The last grant act's receipt, as its route returned it ({operation_id, receipt}). */
+export type GrantAct = {
+  operation_id: string;
+  outcome: "succeeded" | "refused";
+  verb: GrantVerbKind;
+  code?: string;
+  identity: string;
+  /** HH:MM, from the kernel receipt's created_at. */
+  time: string;
+  /** MMM D. */
+  date: string;
+};
+
+function receiptClock(createdAt: unknown): { time: string; date: string } {
+  const seconds = typeof createdAt === "number" ? createdAt : Date.now() / 1000;
+  const d = new Date(seconds * 1000);
+  return { time: d.toTimeString().slice(0, 5), date: formatExpiry(seconds) };
+}
+
+function grantActFrom(
+  body: unknown, outcome: GrantAct["outcome"], verb: GrantVerbKind, identity: string, code?: string,
+): GrantAct | null {
+  const record = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const receipt = (record.receipt && typeof record.receipt === "object" ? record.receipt : {}) as Record<string, unknown>;
+  const operationId = String(record.operation_id ?? receipt.operation_id ?? "");
+  if (!operationId) return null;
+  return { operation_id: operationId, outcome, verb, code, identity, ...receiptClock(receipt.created_at) };
+}
+
+function GrantChip({ grant }: { grant: Delegation | null | undefined }) {
+  if (!grant) return null; // never granted: no chip (no counters of zero)
+  return grant.state === "LIVE"
+    ? <StateChip state="success" label={GRANT_WORDS.live} data-testid="grant-chip" />
+    : <StateChip state="idle" label={GRANT_WORDS.stopped} data-testid="grant-chip" />;
+}
+
+function GrantRefusalChip({ refusal }: { refusal?: GrantRefusal }) {
+  if (!refusal) return null;
+  return (
+    <span data-testid="grant-refused" data-code={refusal.code}>
+      <StateChip state="failure" label={refusal.verb === "allow" ? GRANT_WORDS.cannotAllow : GRANT_WORDS.cannotStop} />{" "}
+      <span className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[refusal.code] ?? refusal.code}</span>
+    </span>
+  );
+}
+
+/** The grant's receipt, readable after its row is gone (one species for both outcomes). */
+export function GrantReceiptWell({ act }: { act: GrantAct }) {
+  const ok = act.outcome === "succeeded";
+  return (
+    <SurfaceWell head="RECEIPT">
+      <div
+        className="prefs-grant-receipt"
+        data-testid="grant-receipt"
+        data-operation-id={act.operation_id}
+        data-outcome={act.outcome}
+        data-code={act.code}
+      >
+        {ok ? <StateChip state="success" label="SUCCEEDED" /> : <StateChip state="failure" label="REFUSED" />}
+        <span className="surface-token" data-chip>
+          {ok
+            ? (act.verb === "stop" ? GRANT_WORDS.stopped : GRANT_WORDS.live)
+            : (act.verb === "stop" ? GRANT_WORDS.actStop : GRANT_WORDS.actAllow)}
+        </span>
+        {!ok && act.code ? (
+          <span className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[act.code] ?? act.code}</span>
+        ) : null}
+        <span className="gadget-fact">{act.identity}</span>
+        <span className="surface-token" data-chip>BY OWNER</span>
+        <span className="surface-token" data-chip data-muted>{act.date} {act.time}</span>
+      </div>
+    </SurfaceWell>
+  );
+}
+
+/** The footer's centre slot: ONE library Button whose face is the library Receipt. */
+export function GrantFootReceipt({ act, open, onToggle }: { act: GrantAct; open: boolean; onToggle: () => void }) {
+  const word = act.outcome === "succeeded" ? (act.verb === "stop" ? "STOPPED" : "ALLOWED") : "REFUSED";
+  return (
+    <Button
+      variant="ghost"
+      dense
+      aria-expanded={open}
+      aria-label={`Receipt ${word.toLowerCase()} ${act.time}`}
+      data-testid="foot-receipt"
+      data-operation-id={act.operation_id}
+      onClick={onToggle}
+    >
+      <Receipt status={act.outcome === "succeeded" ? "ok" : "danger"} label={word} timestamp={act.time} />
+    </Button>
+  );
+}
 
 /** Format an epoch-seconds timestamp as `MMM D` (e.g. `SEP 12`). */
 function formatExpiry(epochSeconds: number): string {
@@ -444,11 +576,17 @@ function SystemModule({
   deviceName,
   deskModule,
   rawWell,
+  grantAct,
+  receiptOpen,
+  onGrantAct,
 }: {
   hubSystem: { host: string; mesh: boolean; remote?: boolean };
   deviceName: ReactNode;
   deskModule: ReactNode;
   rawWell: ReactNode;
+  grantAct?: GrantAct | null;
+  receiptOpen?: boolean;
+  onGrantAct?: (act: GrantAct) => void;
 }) {
   const [remoteOn, setRemoteOn] = useState(hubSystem.remote ?? false);
   return (
@@ -468,7 +606,12 @@ function SystemModule({
       <GadgetGroup label="Mesh">
         {deviceName}
       </GadgetGroup>
-      <RemoteAccessModule onEnabledChange={setRemoteOn} />
+      <RemoteAccessModule
+        onEnabledChange={setRemoteOn}
+        grantAct={grantAct}
+        receiptOpen={receiptOpen}
+        onGrantAct={onGrantAct}
+      />
       {deskModule}
       {rawWell}
     </>
@@ -477,9 +620,17 @@ function SystemModule({
 
 export function RemoteAccessModule({
   onEnabledChange,
+  grantAct = null,
+  receiptOpen = false,
+  onGrantAct,
 }: {
   /** Report the live enabled state so the parent can update hub chips. */
   onEnabledChange?: (enabled: boolean) => void;
+  /** PHILO-7-02: the last grant act's receipt, and whether its well is open
+   *  (the footer's receipt Button toggles it; it outlives the row). */
+  grantAct?: GrantAct | null;
+  receiptOpen?: boolean;
+  onGrantAct?: (act: GrantAct) => void;
 } = {}) {
   const [wire, setWire] = useState<RemoteWire | null>(null);
   const [loading, setLoading] = useState(true);
@@ -492,6 +643,8 @@ export function RemoteAccessModule({
   const [oneTimeToken, setOneTimeToken] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [toggleBusy, setToggleBusy] = useState(false);
+  const [granting, setGranting] = useState<string | null>(null);
+  const [refusals, setRefusals] = useState<Record<string, GrantRefusal>>({});
 
   const fetchRemote = useCallback(async () => {
     try {
@@ -556,13 +709,53 @@ export function RemoteAccessModule({
     }
   };
 
-  const revokeCredential = async (id: string) => {
+  /** PHILO-7-02: Allow / Stop filing -- delegation.grant / delegation.revoke. */
+  const setGrant = async (identity: string, verb: GrantVerbKind) => {
+    setGranting(identity);
+    setError("");
+    try {
+      const result = await apiFetch(`/api/settings/remote/delegations/${encodeURIComponent(identity)}`, {
+        method: verb === "allow" ? "PUT" : "DELETE",
+        ...(verb === "allow" ? { json: {} } : {}),
+      });
+      setRefusals((current) => {
+        const next = { ...current };
+        delete next[identity];
+        return next;
+      });
+      const act = grantActFrom(result, "succeeded", verb, identity);
+      if (act) onGrantAct?.(act);
+    } catch (err) {
+      const payload = err instanceof ApiError ? err.payload : null;
+      const code = payload && typeof payload === "object"
+        ? String((payload as Record<string, unknown>).error ?? "")
+        : "";
+      if (code) {
+        setRefusals((current) => ({ ...current, [identity]: { verb, code } }));
+        const act = grantActFrom(payload, "refused", verb, identity, code);
+        if (act) onGrantAct?.(act);
+      } else {
+        setError(readableError(err));
+      }
+    } finally {
+      setGranting(null);
+      await fetchRemote();
+    }
+  };
+
+  const revokeCredential = async (id: string, identity: string) => {
     setRevoking(id);
     setError("");
     try {
-      await apiFetch(`/api/settings/remote/credentials/${id}`, {
+      const result = await apiFetch<Record<string, unknown>>(`/api/settings/remote/credentials/${id}`, {
         method: "DELETE",
       });
+      // Durable first: the credential's LIVE grant was revoked BEFORE the
+      // credential, with its own receipt (credential_revoked).
+      if (result?.grant_revoked) {
+        const act = grantActFrom(result, "succeeded", "stop", identity);
+        if (act) onGrantAct?.(act);
+      }
       await fetchRemote();
     } catch (err) {
       setError(readableError(err));
@@ -580,9 +773,16 @@ export function RemoteAccessModule({
   if (loading) return null;
 
   const enabled = wire?.enabled ?? false;
-  const credentials = wire?.credentials ?? [];
+  const allCredentials = wire?.credentials ?? [];
+  // PHILO-7-02: a grant is authority, whatever the transport switch says.
+  // ON: every credential row. OFF: the credential rows whose effective grant
+  // is LIVE. Always: every grant row with no credential.
+  const credentials = enabled
+    ? allCredentials
+    : allCredentials.filter((c) => c.delegation?.state === "LIVE");
+  const delegations = wire?.delegations ?? [];
   const activeCount = credentials.filter((c) => c.active).length;
-  const totalCount = credentials.length;
+  const totalCount = allCredentials.length;
   const addressToken = enabled && wire?.port
     ? `${wire.bind_host || "0.0.0.0"}:${wire.port}`
     : null;
@@ -608,57 +808,99 @@ export function RemoteAccessModule({
         ) : null}
       </GadgetRow>
 
+      {/* PHILO-7-02: the ledger renders when any credential row OR any
+          grant row is visible, whatever the switch says. */}
+      {credentials.length > 0 || delegations.length > 0 ? (
+        <SurfaceLedger
+          count={<>
+            {GRANT_WORDS.agents}
+            {activeCount > 0 ? (
+              <> · <span className="surface-token" data-chip data-testid="remote-active-count">
+                {countToken(activeCount, "ACTIVE CREDENTIAL", "ACTIVE CREDENTIALS")}
+              </span></>
+            ) : null}
+          </>}
+          cols="room"
+        >
+          {credentials.map((cred) => (
+            <SurfaceLedgerRow
+              key={cred.id}
+              lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
+              primary={cred.identity}
+              expands={false}
+              data-testid={`credential-row-${cred.id}`}
+              cells={<>
+                <GrantChip grant={cred.delegation} />
+                <GrantRefusalChip refusal={refusals[cred.identity]} />
+                <span className="surface-token" data-chip>{paletteLabel(cred.palette)}</span>
+                {cred.active ? (
+                  <span className="surface-token" data-chip>
+                    EXPIRES {formatExpiry(cred.expires_at)}
+                  </span>
+                ) : (
+                  <StateChip state="warning" label="EXPIRED" />
+                )}
+                <span className="surface-token" data-chip data-muted>
+                  {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
+                </span>
+              </>}
+              trailing={<>
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={granting === cred.identity}
+                  onClick={() => void setGrant(cred.identity, cred.delegation?.state === "LIVE" ? "stop" : "allow")}
+                  data-testid="grant-verb"
+                >
+                  {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
+                </Button>
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={revoking === cred.id}
+                  onClick={() => void revokeCredential(cred.id, cred.identity)}
+                  data-testid="credential-revoke"
+                >
+                  {GRANT_WORDS.revokeCredential}
+                </Button>
+              </>}
+            />
+          ))}
+          {delegations.map((grant) => (
+            <SurfaceLedgerRow
+              key={grant.grant_id}
+              lead={<StateChip state="idle" label="" icon="●" />}
+              primary={grant.identity}
+              expands={false}
+              data-testid={`delegation-row-${grant.grant_id}`}
+              cells={<>
+                <GrantChip grant={grant} />
+                <GrantRefusalChip refusal={refusals[grant.identity]} />
+                <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
+              </>}
+              trailing={grant.state === "LIVE" ? (
+                <Button
+                  variant="ghost"
+                  dense
+                  disabled={granting === grant.identity}
+                  onClick={() => void setGrant(grant.identity, "stop")}
+                  data-testid="grant-verb"
+                >
+                  {GRANT_WORDS.stop}
+                </Button>
+              ) : undefined}
+            />
+          ))}
+        </SurfaceLedger>
+      ) : null}
+
+      {/* The last grant act's receipt: outside the removable ledger, so it
+          survives when its row disappears; opened from the footer. */}
+      {receiptOpen && grantAct ? <GrantReceiptWell act={grantAct} /> : null}
+
       {/* Everything below only when ON */}
       {enabled ? (
         <>
-          {/* Credentials ledger */}
-          {credentials.length > 0 ? (
-            <SurfaceLedger
-              count={<>
-                CREDENTIALS
-                {activeCount > 0 ? (
-                  <> · <span className="surface-token" data-chip data-testid="remote-active-count">
-                    {countToken(activeCount, "ACTIVE", "ACTIVE")}
-                  </span></>
-                ) : null}
-              </>}
-              cols="room"
-            >
-              {credentials.map((cred) => (
-                  <SurfaceLedgerRow
-                    key={cred.id}
-                    lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
-                    primary={cred.identity}
-                    expands={false}
-                    data-testid={`credential-row-${cred.id}`}
-                    cells={<>
-                      <span className="surface-token" data-chip>{paletteLabel(cred.palette)}</span>
-                      {cred.active ? (
-                        <span className="surface-token" data-chip>
-                          EXPIRES {formatExpiry(cred.expires_at)}
-                        </span>
-                      ) : (
-                        <StateChip state="warning" label="EXPIRED" />
-                      )}
-                      <span className="surface-token" data-chip data-muted>
-                        {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
-                      </span>
-                    </>}
-                    trailing={
-                      <Button
-                        variant="ghost"
-                        dense
-                        disabled={revoking === cred.id}
-                        onClick={() => void revokeCredential(cred.id)}
-                      >
-                        Revoke
-                      </Button>
-                    }
-                  />
-                ))}
-            </SurfaceLedger>
-          ) : null}
-
           {/* One-time token display (after issue, before dismissal) */}
           {oneTimeToken ? (
             <SurfaceWell>
@@ -775,6 +1017,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
     writtenAt: null,
   });
   // null = the drawer face; a module id = that module owns the body.
+  // PHILO-7-02: the last grant act's receipt (the footer's centre Button)
+  // and whether its RECEIPT well is open under Remote access.
+  const [grantAct, setGrantAct] = useState<GrantAct | null>(null);
+  const [grantReceiptOpen, setGrantReceiptOpen] = useState(false);
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
   );
@@ -1866,6 +2112,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
         const device = (data.device ?? {}) as Record<string, unknown>;
         const deviceCount = Object.keys(device).length;
         return <SystemModule
+          grantAct={grantAct}
+          receiptOpen={grantReceiptOpen}
+          onGrantAct={(act) => { setGrantAct(act); setGrantReceiptOpen(false); }}
           hubSystem={hub.data.system}
           deviceName={str(["mesh", "device_name"], "Device name")}
           deskModule={<DeskModule />}
@@ -1939,6 +2188,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
               : undefined
           }
           receipt={receipt}
+          grantReceipt={module?.id === "system" && grantAct ? (
+            <GrantFootReceipt
+              act={grantAct}
+              open={grantReceiptOpen}
+              onToggle={() => setGrantReceiptOpen((open) => !open)}
+            />
+          ) : null}
           hubWrittenAt={
             hub.data.writtenAt != null
               ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)

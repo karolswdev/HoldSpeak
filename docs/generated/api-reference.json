@@ -19163,6 +19163,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_kernel_real_hub.py",
         "tests/integration/test_process_input_real_hub.py",
@@ -25757,6 +25758,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_principal_separation.py",
         "tests/unit/test_philo7_article_xi.py"
       ],
@@ -33946,6 +33948,7 @@
         "tests/e2e/test_hs171_shade_glass.py",
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -34059,6 +34062,7 @@
         "tests/e2e/test_hs171_shade_glass.py",
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -34432,6 +34436,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -34501,6 +34506,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -34578,6 +34584,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -34711,6 +34718,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_grant_restart.py"
       ],
@@ -34773,6 +34781,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_grant_restart.py"
       ],

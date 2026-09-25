@@ -108,3 +108,11 @@ m27 the startup recovery skipped (F11, real restart)
   fence: tests/unit/test_philo7_grant_restart.py
   E   AssertionError: assert [] == [('indetermin...ng_decision')]
   1 failed in 3.12s
+mf1 the face: the receipt well rendered inside the removable ledger
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_revoke_credential_ends_the_grant_first_and_the_receipt_survives_the_row
+  E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded.
+  1 failed in 16.64s
+mf2 the face: the grant chip follows the credential's active flag
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_allow_stop_and_a_refused_stop_on_the_rendered_row
+  E   assert 1 == 0
+  1 failed in 8.44s

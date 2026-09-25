@@ -108,15 +108,17 @@ def views(identities: list[str], *, database: Any = None, now: float | None = No
     ``by_identity`` maps each credential identity to its EFFECTIVE projection
     ``{state, grant_id, expires_at}`` (``None``: never granted), computed with
     the kernel's own time-aware rule; ``orphans`` lists, with the same
-    projection, every identity that has a grant row (LIVE or historical) and
-    NO credential row.
+    projection, every identity whose grant row is LIVE IN STORAGE and that has
+    NO credential row (the ratified canvas's wire contract; the beat :155) --
+    so a stored LIVE row past its expiry is listed as EXPIRED, and a stopped
+    orphan leaves the ledger.
     """
     database = database or _database()
     now = _now(database) if now is None else now
     with database._connection() as conn:
         by_identity = {identity: desk.grant_view(conn, identity, now) for identity in identities}
         granted = [str(row[0]) for row in conn.execute(
-            "SELECT DISTINCT agent_identity FROM kernel_desk_delegations ORDER BY agent_identity"
+            "SELECT DISTINCT agent_identity FROM kernel_desk_delegations WHERE state='LIVE' ORDER BY agent_identity"
         ).fetchall()]
         orphans = []
         for identity in granted:

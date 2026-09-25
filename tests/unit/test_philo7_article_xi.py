@@ -630,7 +630,8 @@ def test_the_remote_settings_carry_the_grants_effective_state(hub: Hub) -> None:
     revoked = hub.client.delete(f"/api/principals/agents/{AGENT_ID}")
     assert revoked.status_code == 200 and revoked.json()["grant_revoked"] is True and revoked.json()["revoked"] is False
     assert revoked.json()["receipt"]["state"] == "succeeded"
-    assert [(d["identity"], d["state"]) for d in hub.client.get("/api/settings/remote").json()["delegations"]] == [(AGENT_ID, "REVOKED")]
+    # The stopped orphan leaves the ledger (LIVE in storage only, the ratified wire contract).
+    assert hub.client.get("/api/settings/remote").json()["delegations"] == []
 
 
 # ── invariant 5: reissue, the credential's own ends, durable-first revoke ─

@@ -2373,6 +2373,9 @@ button.surface-edit-in-place:hover {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* PHILO-7-02: at the body's scroll end the last verb clears the footer
+     edge (the fence found "Issue credential" 1 px under the footer). */
+  padding-bottom: 8px;
 }
 .prefs-wallpaper-grid {
   display: grid;
@@ -3513,6 +3516,14 @@ button.surface-edit-in-place:hover {
   gap: 8px;
   padding: 4px 0;
 }
+/* PHILO-7-02: the grant's RECEIPT well -- one token run that wraps. */
+.prefs-grant-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
 .prefs-issue-start {
   display: flex;
   justify-content: flex-start;

@@ -1,0 +1,19 @@
+# PHILO-7-02 face: the glass fences (tests/e2e/test_philo7_02_grant_glass.py) run against the FACE AS ON MAIN
+# (web/src/pages/cores/SettingsCore.tsx, settingsPrefs.tsx, desk/surface/surface.css from origin/main c806c380, the bundle rebuilt),
+# over the branch's real hub and routes; files restored afterwards by copy (no git verb). HOME isolated.
+# The red: the rendered row has no grant verb, no grant chip, and no grant row without a credential.
+
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_allow_stop_and_a_refused_stop_on_the_rendered_row[1440]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator(".surface-ledger-row").filter(has=locator(".surface-ledger-primary").filter(has_text="desk-agent")).locator("[data-testid=\"grant-ve
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_allow_stop_and_a_refused_stop_on_the_rendered_row[393]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator(".surface-ledger-row").filter(has=locator(".surface-ledger-primary").filter(has_text="desk-agent")).locator("[data-testid=\"grant-ve
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_revoke_credential_ends_the_grant_first_and_the_receipt_survives_the_row[1440]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator(".surface-ledger-row").filter(has=locator(".surface-ledger-primary").filter(has_text="desk-agent")).locator("[data-testid=\"grant-ch
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_revoke_credential_ends_the_grant_first_and_the_receipt_survives_the_row[393]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator(".surface-ledger-row").filter(has=locator(".surface-ledger-primary").filter(has_text="desk-agent")).locator("[data-testid=\"grant-ch
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_a_grant_with_no_credential_shows_with_remote_off_and_stops[1440]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator("[data-testid^=\"delegation-row-\"]").first to be visible
+tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_a_grant_with_no_credential_shows_with_remote_off_and_stops[393]
+    E   TimeoutError (8 s) - waiting for locator(".gadget-group").filter(has=locator(".gadget-group-label").filter(has_text="Remote access")).last.locator("[data-testid^=\"delegation-row-\"]").first to be visible
+
+6 failed in 72.99s (0:01:12)

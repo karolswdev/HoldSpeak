@@ -5374,7 +5374,9 @@
         "DELETE"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/settings/remote/delegations/{identity}",
@@ -5382,7 +5384,9 @@
         "PUT"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/settings/secrets/{secret_id}",
