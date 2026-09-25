@@ -98,7 +98,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => dismissAftercare());
   vi.restoreAllMocks();
-  document.body.innerHTML = "";
+  document.body.replaceChildren();
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
 });
 
