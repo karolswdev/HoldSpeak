@@ -1,0 +1,11 @@
+PASS: live
+BRAIN: astra
+SOURCE: 66205729332ef66a6d16a186c04ae4801311734a dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-BQ1F_d58.js'] hub=http://127.0.0.1:49357 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xjjhziak/.local/share/holdspeak/holdspeak.db engine=real
+JOB: a1
+VERDICT: fail terminal=settled
+EVIDENCE: ['docs/internal/philo/phase-6/body/red-s4-393-continuous/20260925T025111Z-case.closure.chain.s4_saved_content-astra-393/before.png', 'docs/internal/philo/phase-6/body/red-s4-393-continuous/20260925T025111Z-case.closure.chain.s4_saved_content-astra-393/after.png', 'docs/internal/philo/phase-6/body/red-s4-393-continuous/20260925T025111Z-case.closure.chain.s4_saved_content-astra-393/framed.png']
+NOTE: framing is a separate scroll after the raw observation; it does not change the verdict or completion time
+NOTE: predicate: saved body became unreadable after Done: {'atMs': 159.09999999403954, 'editing': False, 'readable': False, 'target_present': True, 'text': 'DECISION', 'visible': True, 'hit_test': {'in_viewport': True, 'all_owned': True, 'viewport': {'width': 393, 'height': 852}, 'covered': []}, 'rect': {'x': 15, 'y': 407, 'w': 363, 'h': 34}}
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'values', 'visible', 'windows']).

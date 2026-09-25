@@ -4143,7 +4143,8 @@
       ],
       "docs": [
         "docs/MEETING_AFTERCARE.md",
-        "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md"
+        "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+        "docs/internal/philo/phase-6/body/README.md"
       ],
       "domain": "meeting",
       "egress": "Only model draft generation may egress; lifecycle transition itself is local.",
@@ -4215,6 +4216,12 @@
           "line": 40,
           "path": "holdspeak/web/routes/decisions.py",
           "symbol": "build_decisions_router"
+        },
+        {
+          "claim": "Desk decision saves protect optimistic text from overlapping refresh commits and restore the prior item with the existing receipt on current refusal.",
+          "line": 174,
+          "path": "web/src/desk/store/dataSlice.ts",
+          "symbol": "createDataSlice"
         }
       ],
       "status": "experimental",
@@ -4279,6 +4286,39 @@
           },
           "node": "test_each_real_service_failure_keeps_its_observer_receipt",
           "path": "tests/unit/test_philo6_04_one_cause_one_row.py"
+        },
+        {
+          "assertion": "A real store update survives a delayed pre-write collection result.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "keeps an optimistic body when a pre-write refresh resolves",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
+        },
+        {
+          "assertion": "A refused save keeps the prior rendered body and SAVE FAILED receipt even if its rollback read fails.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "keeps the prior body when a refused save's refresh fails",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
+        },
+        {
+          "assertion": "An obsolete refusal cannot replace a newer success or expose an obsolete Retry.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "does not let an older refusal roll back or receipt a newer decision write",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
         }
       ],
       "trust_boundary": "Decision lifecycle changes are owner-only; a model draft is admitted separately and remains a draft artifact."

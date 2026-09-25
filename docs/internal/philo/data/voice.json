@@ -2802,6 +2802,12 @@
           "symbol": "build_decisions_router",
           "line": 40,
           "claim": "GET by id chooses the durable desk or lifecycle owner before invoking one observed service; an absent id produces one failure row."
+        },
+        {
+          "path": "web/src/desk/store/dataSlice.ts",
+          "symbol": "createDataSlice",
+          "line": 174,
+          "claim": "Desk decision saves protect optimistic text from overlapping refresh commits and restore the prior item with the existing receipt on current refusal."
         }
       ],
       "tests": [
@@ -2859,11 +2865,45 @@
             "run": "PHILO-6-04 focused",
             "cases": 1
           }
+        },
+        {
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx",
+          "node": "keeps an optimistic body when a pre-write refresh resolves",
+          "assertion": "A real store update survives a delayed pre-write collection result.",
+          "execution": {
+            "status": "passed",
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx",
+          "node": "keeps the prior body when a refused save's refresh fails",
+          "assertion": "A refused save keeps the prior rendered body and SAVE FAILED receipt even if its rollback read fails.",
+          "execution": {
+            "status": "passed",
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx",
+          "node": "does not let an older refusal roll back or receipt a newer decision write",
+          "assertion": "An obsolete refusal cannot replace a newer success or expose an obsolete Retry.",
+          "execution": {
+            "status": "passed",
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "cases": 1
+          }
         }
       ],
       "docs": [
         "docs/MEETING_AFTERCARE.md",
-        "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md"
+        "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+        "docs/internal/philo/phase-6/body/README.md"
       ],
       "limitations": [
         "The model draft is not an accepted decision or external publication.",

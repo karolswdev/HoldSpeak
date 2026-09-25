@@ -1,0 +1,13 @@
+
+> holdspeak-web@0.0.1 typecheck
+> tsc --noEmit
+
+src/desk/store/dataSlice.ts(213,7): error TS2322: Type 'Meeting[] | Artifact[] | Note[] | Decision[] | Persona[] | KB[] | Directory[] | Project[] | Chain[] | Workflow[] | ... 9 more ... | Layout[]' is not assignable to type 'Meeting[] & Artifact[] & Note[] & Project[] & Workflow[] & Persona[] & Coder[] & Directory[] & KB[] & Chain[] & ... 9 more ... & Thread[]'.
+  Type 'Meeting[]' is not assignable to type 'Meeting[] & Artifact[] & Note[] & Project[] & Workflow[] & Persona[] & Coder[] & Directory[] & KB[] & Chain[] & ... 9 more ... & Thread[]'.
+    Type 'Meeting[]' is not assignable to type 'Artifact[]'.
+      Type 'Meeting' is missing the following properties from type 'Artifact': artifactType, bodyMarkdown, status
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice

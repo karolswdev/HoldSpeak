@@ -105,6 +105,33 @@ export function primitiveUpdateUrl(kind: string, id: string): string | null {
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
 let meetingsBeforeRecording = new Set<string>();
 
+type PrimitiveWriteState = {
+  version: number;
+  pending: boolean;
+  rollback?: { token: number };
+};
+
+type RollbackProtection = {
+  kind: string;
+  id: string;
+  version: number;
+  token: number;
+};
+
+type IdentifiedItem = { id: string };
+
+function writeKey(kind: string, id: string): string {
+  return `${kind}:${id}`;
+}
+
+function replaceItemsBucket<K extends keyof Items>(
+  items: Items,
+  kind: K,
+  bucket: Items[K],
+): void {
+  items[kind] = bucket;
+}
+
 // ---- the slice ----------------------------------------------------------
 
 export type DataSlice = Pick<
@@ -144,7 +171,110 @@ export type DataSlice = Pick<
   | "setZoneWidth"
 >;
 
-export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
+export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
+  const primitiveWrites = new Map<string, PrimitiveWriteState>();
+  let rollbackToken = 0;
+
+  const mergeRefreshItems = (
+    incoming: Items,
+    current: Items,
+    snapshot: ReadonlyMap<string, PrimitiveWriteState>,
+    status: DeskState["status"],
+    rollbackProtection?: RollbackProtection,
+  ): Items => {
+    const merged = { ...incoming } as Items;
+    for (const kind of Object.keys(incoming) as Array<keyof Items>) {
+      const incomingBucket = incoming[kind] as unknown as IdentifiedItem[];
+      const currentBucket = current[kind] as unknown as IdentifiedItem[];
+      const protectedItems = new Map<string, IdentifiedItem>();
+      const kindName = String(kind);
+      for (const item of currentBucket) {
+        const id = item.id;
+        const key = writeKey(kindName, id);
+        const before = snapshot.get(key);
+        const after = primitiveWrites.get(key);
+        const protectedByWrite = Boolean(
+          after &&
+            (after.version > (before?.version || 0) ||
+              (before?.pending && after.version === before.version)),
+        );
+        const protectedByRollback = Boolean(
+          rollbackProtection &&
+            rollbackProtection.kind === kindName &&
+            rollbackProtection.id === id &&
+            rollbackProtection.version === after?.version &&
+            rollbackProtection.token === after?.rollback?.token &&
+            status[kind] === "unreachable",
+        );
+        if (protectedByWrite || protectedByRollback) {
+          protectedItems.set(id, item);
+        }
+      }
+      if (!protectedItems.size) continue;
+      const incomingIds = new Set(incomingBucket.map((item) => item.id));
+      const bucket = incomingBucket.map((item) => {
+        return protectedItems.get(item.id) || item;
+      });
+      for (const [id, item] of protectedItems) {
+        if (!incomingIds.has(id)) bucket.push(item);
+      }
+      replaceItemsBucket(merged, kind, bucket as Items[typeof kind]);
+    }
+    return merged;
+  };
+
+  const runRefresh = async (rollbackProtection?: RollbackProtection) => {
+    const refreshSnapshot = new Map(
+      [...primitiveWrites].map(([key, state]) => [key, { ...state }]),
+    );
+    set({ loading: true, error: "" });
+    const [
+      { items, profiles, projects, inferenceTargets, models, status, error, failed },
+      setup,
+    ] = await Promise.all([loadAll(), loadSetup()]);
+    // PHILO-3-01 — a failed collection read is named on the face (the desk
+    // receipt line), with Retry; a pending write (CREATE, SAVE, ...) keeps its
+    // receipt and its Retry: a read failure never replaces it.
+    const standing = currentWriteFailure();
+    const readReceipt = !standing || standing.verb.startsWith("READ ");
+    if (failed) {
+      if (readReceipt)
+        reportWriteFailure(`READ ${failed.label}`, failed.cause, () => void get().refresh());
+    } else if (standing && standing.verb.startsWith("READ ")) {
+      clearWriteFailure();
+    }
+    const mergedItems = mergeRefreshItems(
+      items,
+      get().items,
+      refreshSnapshot,
+      status,
+      rollbackProtection,
+    );
+    set({
+      items: mergedItems,
+      profiles,
+      projects,
+      inferenceTargets,
+      models,
+      status,
+      error,
+      setup,
+      loading: false,
+      updatedAt: Date.now(),
+    });
+    if (rollbackProtection) {
+      const key = writeKey(rollbackProtection.kind, rollbackProtection.id);
+      const state = primitiveWrites.get(key);
+      if (
+        state?.version === rollbackProtection.version &&
+        state.rollback?.token === rollbackProtection.token
+      ) {
+        primitiveWrites.set(key, { ...state, rollback: undefined });
+      }
+    }
+  };
+
+  return {
   items: { ...EMPTY_ITEMS },
   profiles: [],
   projects: [],
@@ -159,36 +289,8 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
   zoneWidths: loadZoneWidths(),
   zoneRenameError: null,
 
-  async refresh() {
-    set({ loading: true, error: "" });
-    const [
-      { items, profiles, projects, inferenceTargets, models, status, error, failed },
-      setup,
-    ] = await Promise.all([loadAll(), loadSetup()]);
-    // PHILO-3-01 — a failed collection read is named on the face (the desk
-    // receipt line), with Retry; a clean read clears only a READ receipt.
-    // A pending write (CREATE, SAVE, ...) keeps its receipt and its Retry:
-    // a read failure never replaces it.
-    const standing = currentWriteFailure();
-    const readReceipt = !standing || standing.verb.startsWith("READ ");
-    if (failed) {
-      if (readReceipt)
-        reportWriteFailure(`READ ${failed.label}`, failed.cause, () => void get().refresh());
-    } else if (standing && standing.verb.startsWith("READ ")) {
-      clearWriteFailure();
-    }
-    set({
-      items,
-      profiles,
-      projects,
-      inferenceTargets,
-      models,
-      status,
-      error,
-      setup,
-      loading: false,
-      updatedAt: Date.now(),
-    });
+  refresh() {
+    return runRefresh();
   },
 
   async createPrimitive(kind, overrides = {}) {
@@ -317,6 +419,13 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     const itemsKind =
       kind === "directory" ? "directory" : (kind as keyof Items);
     const items = get().items;
+    const writeKind = String(itemsKind);
+    const key = writeKey(writeKind, id);
+    const currentItem = items[itemsKind]?.find((item) => item.id === id);
+    const previousItem = currentItem ? { ...currentItem } : undefined;
+    const previousState = primitiveWrites.get(key);
+    const writeVersion = (previousState?.version || 0) + 1;
+    primitiveWrites.set(key, { version: writeVersion, pending: true });
     if (items[itemsKind]) {
       set({
         items: {
@@ -345,10 +454,42 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     // refused write names itself in the desk's one receipt channel and the
     // desk re-reads, so the surface never keeps a name the hub rejected.
     const refused = async (cause: unknown) => {
+      const state = primitiveWrites.get(key);
+      // A refusal from an older request is superseded. It must not restore its
+      // prior value, publish a stale Retry, or start a refresh over a newer
+      // write.
+      if (!state || state.version !== writeVersion) return;
+      const token = ++rollbackToken;
+      const rollback = previousItem
+        ? { token }
+        : undefined;
+      primitiveWrites.set(key, {
+        version: writeVersion,
+        pending: false,
+        rollback,
+      });
+      if (previousItem) {
+        const latestItems = get().items;
+        const latestBucket = latestItems[itemsKind];
+        if (latestBucket) {
+          set({
+            items: {
+              ...latestItems,
+              [itemsKind]: latestBucket.map((item) =>
+                item.id === id ? previousItem : item,
+              ),
+            },
+          });
+        }
+      }
       reportWriteFailure(verb, cause, () =>
         void get().updatePrimitive(kind, id, patch, verb),
       );
-      await get().refresh();
+      await runRefresh(
+        rollback
+          ? { kind: writeKind, id, version: writeVersion, token }
+          : undefined,
+      );
     };
     try {
       const res = await apiRequest(url, {
@@ -360,6 +501,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
         await refused(res);
         return;
       }
+      const state = primitiveWrites.get(key);
+      if (!state || state.version !== writeVersion) return;
+      primitiveWrites.set(key, { ...state, pending: false });
       clearWriteFailure();
       // HS-202-02 — the hub answered ok: the object is KEPT, and the
       // editor's foot may say so (04-sober-eye.md, rank 5).
@@ -691,4 +835,5 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     await get().refresh();
     return counts;
   },
-});
+  };
+};

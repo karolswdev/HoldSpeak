@@ -109,7 +109,9 @@ PREDICATES (`expected.predicate.kind`):
   text_contains / text_equals / text_absent {value}
   readable_text {value}       the named face text is visible, has positive
                               geometry, is inside the viewport, and owns
-                              nine interior hit-test points
+                              nine interior hit-test points. Optional first_paint_after
+                              names the editor that leaves; every read-mode frame
+                              from the armed click through observation must stay readable
   attr_equals {attr, value}
   window_titled {value}          a window with that title, absent before
   presentation_change {fields}   focus | geometry | windows — a valid
@@ -202,7 +204,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.2.0"
+RIG_VERSION = "1.3.0"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -468,6 +470,84 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
 
 
 PROTOCOL_PREFIX = "protocol:"
+
+
+def arm_first_paint(page: Any, case: dict[str, Any]) -> None:
+    """Observe paint opportunities from the actual click, before React handles it.
+
+    Opt-in readable_text cases name the editor that disappears on commit.
+    The first read-mode animation frame and each later frame must be readable;
+    later polling cannot erase any blank, clipped or covered read-mode frame.
+    """
+    expected = case.get("expected") or {}
+    predicate = expected.get("predicate") or {}
+    editor = predicate.get("first_paint_after")
+    if not editor:
+        return
+    if page is None or predicate.get("kind") != "readable_text":
+        raise Blocked("first_paint_after needs a browser readable_text predicate")
+    page.evaluate(
+        """([selector, editor, want, snapshotSource]) => {
+          const snapshot = (0, eval)('(' + snapshotSource + ')');
+          const probe = window.__graphFirstPaint = {
+            armedAt: performance.now(), clickedAt: null, frames: [],
+            firstReadFrame: null, firstReadableFrame: null,
+            firstUnreadableReadFrame: null, complete: false
+          };
+          const onClick = () => {
+            probe.clickedAt = performance.now();
+            const frame = () => {
+              const raw = snapshot([selector, null, null]);
+              const editing = !!document.querySelector(editor);
+              const hit = raw.hit_test || {};
+              const readable = !!raw.target_present && !!raw.visible &&
+                (raw.text || '').includes(want) && hit.in_viewport && hit.all_owned;
+              const sample = {
+                atMs: performance.now() - probe.clickedAt, editing, readable,
+                target_present: raw.target_present, text: raw.text,
+                visible: raw.visible, hit_test: {
+                  in_viewport: hit.in_viewport, all_owned: hit.all_owned,
+                  viewport: hit.viewport,
+                  covered: (hit.samples || []).filter(point => !point.owned)
+                }, rect: raw.rect
+              };
+              probe.frames.push(sample);
+              if (!editing && probe.firstReadFrame === null)
+                probe.firstReadFrame = sample;
+              if (!editing && readable && probe.firstReadableFrame === null)
+                probe.firstReadableFrame = sample;
+              if (!editing && !readable && probe.firstUnreadableReadFrame === null)
+                probe.firstUnreadableReadFrame = sample;
+              if (probe.complete || probe.frames.length >= 3600) {
+                probe.complete = true;
+                return;
+              }
+              requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+          };
+          document.addEventListener('click', onClick, {capture: true, once: true});
+        }""",
+        [expected.get("observe_at"), editor, predicate.get("value", ""), _SNAPSHOT_JS],
+    )
+
+
+_DECISION_TRAFFIC_JS = r"""(() => {
+  window.__graphDecisionTraffic = [];
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    const url = typeof input === 'string' ? input : input.url;
+    if (!String(url).includes('/api/decisions')) return originalFetch.call(this, input, init);
+    const entry = {url: String(url), method: init?.method || input?.method || 'GET',
+      startedAt: performance.now()};
+    window.__graphDecisionTraffic.push(entry);
+    return originalFetch.call(this, input, init).then(response => {
+      entry.resolvedAt = performance.now(); entry.status = response.status;
+      response.clone().json().then(body => {entry.body = body;}).catch(() => {});
+      return response;
+    }, error => {entry.error = String(error); throw error;});
+  };
+})()"""
 
 
 def protocol_target(observe_at: Any) -> tuple[str, str] | None:
@@ -744,6 +824,9 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
              predicate.get("selector") if isinstance(predicate, dict) else None],
         )
     raw["observe_at"] = expected.get("observe_at")
+    if page is not None and isinstance(predicate, dict) and predicate.get("first_paint_after"):
+        raw["transition_probe"] = page.evaluate("window.__graphFirstPaint || null")
+        raw["decision_traffic"] = page.evaluate("window.__graphDecisionTraffic || []")
     if target is not None:
         method, path = target
         # A `{name}` not yet bound is never sent literally (PHILO-3 closure:
@@ -1171,6 +1254,15 @@ def check_predicate(
 
     if kind == "readable_text":
         want = predicate.get("value", "")
+        if predicate.get("first_paint_after"):
+            probe = after.get("transition_probe") or {}
+            first = probe.get("firstReadFrame")
+            if not first:
+                return False, "no first read-mode paint was observed after the armed click"
+            if not first.get("readable"):
+                return False, f"first read-mode paint was not readable: {first}"
+            if probe.get("firstUnreadableReadFrame"):
+                return False, f"saved body became unreadable after Done: {probe['firstUnreadableReadFrame']}"
         if not after.get("target_present") or not after.get("visible"):
             return False, "the named text scope is absent or hidden"
         if want not in text:
@@ -4283,6 +4375,7 @@ def exercise(
     # what follows it) issued are candidates.
     ui_capture = (_UiResponseCapture(page, trigger, case, variables)
                   if trigger.get("kind") == "ui" and page is not None else None)
+    arm_first_paint(page, pre_case)
     fired_at = time.monotonic()
     try:
         trigger_record = run_step(trigger, page, hub, provenance, pre_case,
@@ -4475,6 +4568,8 @@ def exercise(
     state = terminal["state"]
     if page is not None:
         page.screenshot(path=str(shots / "after.png"))
+        if isinstance(predicate, dict) and predicate.get("first_paint_after"):
+            page.evaluate("if (window.__graphFirstPaint) window.__graphFirstPaint.complete = true")
     if ui_capture is not None:
         recorder.set(trigger_response_capture=ui_capture.record())
         ui_capture.close()
@@ -4819,6 +4914,8 @@ def run_case(
                           "--use-fake-ui-for-media-stream"],
                 )
                 page = context.new_page()
+                if (case.get("expected", {}).get("predicate") or {}).get("first_paint_after"):
+                    page.add_init_script(_DECISION_TRAFFIC_JS)
                 errors: list[str] = []
                 page.on("pageerror", lambda e: errors.append(repr(e)[:300]))
                 try:

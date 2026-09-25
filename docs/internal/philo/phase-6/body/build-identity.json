@@ -1,0 +1,33 @@
+{
+  "verified_at": "2026-09-25T03:31:59.361899+00:00",
+  "method": "Recomputed web/vite.config.ts computeBuildId digest over all source/public inputs, package.json/index.html/vite.config.ts; equals existing build-id.json. Both actual S4 runs identify the matching index and assets. Recorded before final test-only post-rollback assertion amendment.",
+  "build_stamp": {
+    "build_id": "44a94f96174290f0",
+    "built_at": "2026-09-25T03:19:53.739Z"
+  },
+  "computed_build_id": "44a94f96174290f0",
+  "data_slice_sha256": "686bb03df23dd5d21159a994edc6d0bf97ca0ca02df3dcb2f2c29ab74ba49683",
+  "test_file_sha256_at_build": "e18dc462234270a4fe24bed67697fb9f5007867a267db501cfd9d68fb892b43d",
+  "observations": [
+    {
+      "path": "docs/internal/philo/phase-6/body/green-s4-393/20260925T032039Z-case.closure.chain.s4_saved_content-astra-393/observation.json",
+      "index_sha256": "19fcdcf86a0abbed5ce419a7754a81de41faff0713cc71af3ce1bfe2b66d30db",
+      "assets": [
+        {
+          "path": "index-CvfCFuGX.js",
+          "sha256": "77db208bd89f3c63cc7b58cf9dcaae9f6eccb042870a236aea6ac8b948eb750b"
+        }
+      ]
+    },
+    {
+      "path": "docs/internal/philo/phase-6/body/green-s4-1440/20260925T032131Z-case.closure.chain.s4_saved_content-astra-1440/observation.json",
+      "index_sha256": "19fcdcf86a0abbed5ce419a7754a81de41faff0713cc71af3ce1bfe2b66d30db",
+      "assets": [
+        {
+          "path": "index-CvfCFuGX.js",
+          "sha256": "77db208bd89f3c63cc7b58cf9dcaae9f6eccb042870a236aea6ac8b948eb750b"
+        }
+      ]
+    }
+  ]
+}

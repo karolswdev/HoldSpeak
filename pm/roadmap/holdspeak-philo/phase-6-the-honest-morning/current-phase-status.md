@@ -63,7 +63,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 | PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
 | PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
 | PHILO-6-04 | One cause, one row | done | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | [evidence-story-04](./evidence-story-04.md) |
-| PHILO-6-05 | The decision body at once | in-progress | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | - |
+| PHILO-6-05 | The decision body at once | done | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | [evidence-story-05](./evidence-story-05.md) |
 
 ## Lanes
 
@@ -79,6 +79,8 @@ Lane law for this phase:
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-24 night — lane B PHILO-6-05 verified: cause found before repair, 29 frontend and 143 rig checks passed, actual S4 continuous fence FAIL → PASS at 393 and 1440, first read frame and all 129 frames readable in each green run. Muad'Dib built conditions paid, including an assertion after the failed rollback read commits. PHILO-6-04 is committed; 03 zero/canvas is committed and placement remains unratified. One lane PR: https://github.com/karolswdev/HoldSpeak/pull/647; no merge. Per-box proof and handover: `docs/internal/philo/phase-6/lane-report.md`.
 
 2026-09-24 night — Astra lane B partial 03: zero omission is verified (archive 3 failed / 6 controls passed, built 13 passed). The checked canvas has today/proposed/summary-open/capture boards at both widths and a ChairHome proposal patch. Placement remains unbuilt, pending owner ratification of normal flow and the phone auto-scroll mechanism. Muad'Dib publishes the artifact.
 
@@ -96,13 +98,16 @@ Lane law for this phase:
 |---|---|---|---|
 | "One count" over-simplifies: the head count and the receipt count have different lawful meanings (the generated snapshot vs the currently unhandled rows; THIS WEEK excluded from the Arrival) | high | story 02 keeps both meanings and the historical snapshot; the labels say what each counts; a label or meaning change goes on a small canvas first | a count changes meaning without a ratified canvas |
 | The toast placement is design, not a repair | high | story 03 draws the unobstructed placement at both widths; the owner ratifies before build | placement code lands before the canvas is ratified |
-| S4's cause is unconfirmed: `dataSlice.ts:297` already patches the text optimistically, so "await the refresh" is not a diagnosis | medium | story 05 finds the cause first and records it; the fence covers the first transition and the failed save | a fix that only waits for eventual text |
+| Whole-desk reads overlap optimistic writes; the slow sibling is still unidentified | medium | story 05 diagnosed and fenced the delayed CREATE refresh commit; delete/rename and repeated refusals remain in the phase-local ledger | a new write seam relies only on eventual text |
 | The duplicate-row fix hides failures globally | medium | story 04 changes the dispatch only; legacy decision reads stay; a real failure still makes a row | fewer failure rows for a real failure |
 | Raw wording stays in breakage titles after the brief item is fixed | medium | story 02 covers `monday_brief_service.py:500` AND `:597` together | a breakage title still carries `Service.method` |
 | Two lanes collide on `ChairHome.tsx` or on the atlas | medium | one owner for `ChairHome.tsx`; the seam by patch; one shipping owner per shared file per commit | a merge conflict in `ChairHome.tsx` between lanes |
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 night — PHILO-6-05 built counsel RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-muaddib.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
+- 2026-09-24 night — PHILO-6-05 criterion 2 strengthened on live evidence and Muad'Dib's design check: the first read frame is readable on main; the pre-fix red is a later stale refresh commit. Require readability on the first frame and every frame through terminal observation, with the observer armed before Done. Original passing first-frame probe retained and labelled; no first-frame red claimed. See `checks/story-05-design-muaddib.md` and `docs/internal/philo/phase-6/body/diagnosis.md`. Owner may overrule.
 
 - 2026-09-24 night — PHILO-6-03 canvas/zero counsel RATIFY-WITH-CONDITIONS, paid before partial commit: sticky-phone geometry disclosed, distinct capture board, one parked rejected candidate, counsel under checks. Owner ratification still owed; `checks/story-03-canvas-zero-muaddib.md`.
 
@@ -115,6 +120,8 @@ Lane law for this phase:
 - 2026-09-24 — the owner ruled D2: repairs first; Phase 6 before Phase 7.
 
 ## Decisions deferred
+
+- S4 follow-ups (slow whole-desk refresh, delete/rename races, setup-read rejection): recorded with evidence and disposition in `docs/internal/philo/phase-6/ledger.md`; no widening of this lane's repair.
 
 - The toast placement (story 03 canvas) — the owner's ratification.
 - Any change of a count label or a count meaning (story 02 canvas, only if needed) — the owner's ratification.
