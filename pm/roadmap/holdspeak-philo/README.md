@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5 closed).
-**Current phase:** none active — Phase 5 [closed](phase-5-the-one-service-layer/final-summary.md) 2026-09-24. Next: two DRAFTS await Astra's check and the owner's word — Phase 6 The Honest Morning (the morning-path repairs) and Phase 7 The Desk on the Contract (the next MCP slice): [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md).
-**Status:** Phases 1–5 delivered and merged. Phase 5 The One Service Layer closed 2026-09-24: the meeting loop on one declared contract; Codex drove the job in ordinary words; rehearsed, owner-reviewed.
+**Last updated:** 2026-09-24 (Phase 6 The Honest Morning chartered; unratified).
+**Current phase:** [Phase 6 The Honest Morning](phase-6-the-honest-morning/current-phase-status.md) — CHARTERED 2026-09-24 by the two brains (the owner's D2: repairs first); Astra's check of the charter and the owner's ratification owed. Phase 7 The Desk on the Contract follows (draft: [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md)).
+**Status:** Phases 1–5 delivered and merged. Phase 6 The Honest Morning chartered 2026-09-24: five stories repair the six morning-path defects the Phase 5 closure found; nothing built.
 
 ## Vision
 
@@ -27,6 +27,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | closed by ruling 2026-09-23; exit 1 proved in Phase 4; sitting waived by owner 2026-09-24 ([final summary](phase-3-the-meeting-loop/final-summary.md)) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
 | 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | closed 2026-09-24 ([final summary](phase-4-the-morning/final-summary.md)) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
 | 5 | The One Service Layer — one application-operation contract; routes, MCP and the rig over it; the Phase 3+4 loop as pilot | RATIFIED; 01–03 merged, 04 technically done; OWNER REVIEW PENDING | [Phase 5](phase-5-the-one-service-layer/current-phase-status.md) |
+| 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | CHARTERED 2026-09-24; unratified | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
 
 ## Operating cadence
 
