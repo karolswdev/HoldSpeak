@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useUndoReceipt } from "../useUndoReceipt";
+import { OUTCOME_LINGER_MS } from "../../linger";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -30,6 +31,18 @@ describe("useUndoReceipt", () => {
     expect(result.current.phase).toBe("committed");
   });
 
+  it("keeps the committed receipt for the desk's outcome linger", () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useUndoReceipt(1));
+    act(() => result.current.remove("item", vi.fn(), vi.fn()));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(result.current.phase).toBe("committed");
+    act(() => vi.advanceTimersByTime(OUTCOME_LINGER_MS - 1));
+    expect(result.current.phase).toBe("committed");
+    act(() => vi.advanceTimersByTime(1));
+    expect(result.current.receipt).toBeNull();
+  });
+
   it("reverts on undo click before expiry", () => {
     vi.useFakeTimers();
     const fire = vi.fn();
@@ -53,7 +66,9 @@ describe("useUndoReceipt", () => {
     act(() => result.current.undo());
     expect(result.current.phase).toBe("restored");
 
-    act(() => vi.advanceTimersByTime(1600));
+    act(() => vi.advanceTimersByTime(OUTCOME_LINGER_MS - 1));
+    expect(result.current.phase).toBe("restored");
+    act(() => vi.advanceTimersByTime(1));
     expect(result.current.receipt).toBeNull();
     expect(result.current.phase).toBe("idle");
   });

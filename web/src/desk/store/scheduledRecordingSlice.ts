@@ -2,6 +2,7 @@
  * state from conductor broadcasts, and the create-window lifecycle. */
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import type { DeskState, ScheduledArmingState, ScheduledRecording, SliceCreator } from "./types";
+import { OUTCOME_LINGER_MS } from "../linger";
 
 export type ScheduledRecordingSlice = Pick<
   DeskState,
@@ -18,8 +19,6 @@ export type ScheduledRecordingSlice = Pick<
   | "closeScheduleCreate"
 >;
 
-/** How long (ms) a terminal outcome badge lingers on the hero. */
-const OUTCOME_LINGER_MS = 6000;
 
 export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice> = (set, get) => ({
   scheduledRecordings: [],

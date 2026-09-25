@@ -242,14 +242,6 @@ export function WorldStage() {
       style={{ "--rows": scene.rows } as React.CSSProperties}
     >
       <canvas ref={canvasRef} className="desk-world-canvas" />
-      {deleteReceipt ? (
-        <div
-          className="desk-next"
-          style={{ position: "fixed", right: 12, bottom: 12, zIndex: 60 }}
-        >
-          {deleteReceipt}
-        </div>
-      ) : null}
       {deskVoiceAvailable ? (
         <div style={{ position: "fixed", left: 12, bottom: 12, zIndex: 20 }}>
           <MicButton
@@ -348,7 +340,12 @@ export function WorldStage() {
           }}
         />
       )}
-      <AskBar />
+      {/* The world's foot: the delete receipt sits in flow directly above
+          the selection bar it acted on, so neither covers the other. */}
+      <div className="desk-world-foot">
+        {deleteReceipt}
+        <AskBar />
+      </div>
       {askOpen && <AskPanel />}
       <div className="desk-world-a11y">
         {scene.zones.map((z) => (

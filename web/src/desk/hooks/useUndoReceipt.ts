@@ -1,4 +1,5 @@
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
+import { OUTCOME_LINGER_MS } from "../linger";
 
 interface UndoState {
   phase: "pending" | "restored" | "committed";
@@ -40,7 +41,7 @@ export function useUndoReceipt(window = 8) {
               : null,
           );
           fire();
-          postRef.current = setTimeout(() => setState(null), 1200);
+          postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
         } else {
           setState((previous) =>
             previous ? { ...previous, remaining: left } : null,
@@ -56,7 +57,7 @@ export function useUndoReceipt(window = 8) {
     cleanup();
     state.revert();
     setState({ ...state, phase: "restored", remaining: 0 });
-    postRef.current = setTimeout(() => setState(null), 1600);
+    postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
   }, [state, cleanup]);
 
   const segments =
