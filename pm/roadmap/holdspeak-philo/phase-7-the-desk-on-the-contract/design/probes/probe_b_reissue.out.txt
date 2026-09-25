@@ -1,0 +1,10 @@
+# probe_b_reissue — run 2026-09-25T18:19:46Z on main 02a862f2, isolated HOME
+$ HOME=$(mktemp -d) uv run pytest -q -s -p no:cacheprovider pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/design/probes/probe_b_reissue.py
+
+issue #1 -> id=a5fe2c04097a4a71 identity=probe-desk-agent; old token /api/mcp -> 200
+issue #2 (reissue) -> id=95411d10c8714bbe identity=probe-desk-agent
+after reissue: old token /api/mcp -> 401; new token /api/mcp -> 200
+credential ledger rows after reissue: [('95411d10c8714bbe', 'probe-desk-agent')]
+.
+1 passed in 1.25s
+exit=0
