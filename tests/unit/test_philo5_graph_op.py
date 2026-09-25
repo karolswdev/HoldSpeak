@@ -36,13 +36,17 @@ def _resource_result(value):
 
 
 def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target():
-    assert len(gw.OP_MCP_PROJECTIONS) == 17
+    # PHILO-5's seventeen, then PHILO-7-01's fifteen desk-slice rows.
+    assert len(gw.OP_MCP_PROJECTIONS) == 32
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
         "thought.create", "thought.save", "thought.read",
         "thought.workbench.read", "thought.list",
+        "note.create", "note.read", "note.update", "note.delete", "note.list",
+        "zone.create", "zone.read", "zone.update", "zone.delete", "zone.list",
+        "kb.create", "kb.read", "kb.update", "kb.delete", "kb.list",
     }
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())

@@ -76,6 +76,48 @@ class OperationOwnerRequired(ServiceError):
 
 
 @dataclass(frozen=True)
+class Admission:
+    """Article XI admission, as the owner ruled it (PHILO-7 phase status, "The admission table").
+
+    DECLARED by the descriptor; PHILO-7-02 enforces it (kernel admission and a
+    receipt). ``rule`` is one of:
+
+    * ``exempt`` -- no admission (a plain edit, a rename, a read);
+    * ``admitted`` -- every call is admitted;
+    * ``admitted_if`` -- admitted when ``condition`` holds. ``arguments`` names
+      the arguments the condition reads, decided from the validated arguments
+      BEFORE the service acts; an empty tuple means the condition reads stored
+      state (the Thought-owned note).
+    """
+
+    rule: str
+    condition: str
+    arguments: tuple[str, ...] = ()
+    #: For an argument condition: the condition itself, over the validated
+    #: arguments (PHILO-7-01 round two, Astra finding 2 -- the words alone let
+    #: a mapping ``member_ids`` read as exempt). ``None`` for a stored-state
+    #: condition, which the arguments cannot decide.
+    holds: Optional[Callable[[Mapping[str, Any]], bool]] = field(default=None, compare=False)
+
+    def __post_init__(self) -> None:
+        if self.rule not in {"exempt", "admitted", "admitted_if"}:
+            raise ValueError(f"unknown admission rule: {self.rule}")
+        if self.rule == "admitted_if" and bool(self.arguments) != (self.holds is not None):
+            raise ValueError("an argument condition needs its predicate; a stored-state one has none")
+
+    def admits(self, args: Mapping[str, Any]) -> Optional[bool]:
+        """Whether these validated arguments are admitted; ``None``: stored state decides."""
+        if self.rule == "exempt":
+            return False
+        if self.rule == "admitted":
+            return True
+        return None if self.holds is None else bool(self.holds(args))
+
+    def export(self) -> dict[str, Any]:
+        return {"rule": self.rule, "condition": self.condition, "arguments": list(self.arguments)}
+
+
+@dataclass(frozen=True)
 class OperationDescriptor:
     """One application operation, stated once."""
 
@@ -110,6 +152,9 @@ class OperationDescriptor:
     #: read. A transport that touches the filesystem for the operation calls
     #: ``authorize`` first.
     owner_only: bool = False
+    #: Article XI admission (PHILO-7-01 declares it for the desk slice; story
+    #: 02 enforces it). ``None``: not yet declared for this operation.
+    admission: Optional[Admission] = None
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -134,6 +179,7 @@ class OperationDescriptor:
             "exposure": list(self.exposure),
             "held": list(self.held),
             "owner_only": self.owner_only,
+            "admission": self.admission.export() if self.admission is not None else None,
         }
 
 
@@ -233,7 +279,7 @@ DECISION_READ = OperationDescriptor(
     result="the decision record",
     refusals=_CONTRACT_REFUSALS + ("NotFound: unknown decision",),
     completion="synchronous",
-    exposure=("http:GET /api/decisions/{decision_id}", "mcp:desk.get[kind=decisions]"),
+    exposure=("http:GET /api/decisions/{decision_id}", "mcp:desk.get[kind=decisions]", "mcp-resource:holdspeak://primitives/decisions/{id}"),
     service="primitive_service",
     method="get_decision",
 )
@@ -565,12 +611,459 @@ THOUGHT_LIST = OperationDescriptor(
     method="list_unfinished",
 )
 
+# ── PHILO-7-01: notes, zones (directories) and knowledge bases ────────────
+#
+# One explicit row per (kind, verb): the Phase 7 slice table. Each row names
+# the real PrimitiveService callable; no row resolves a callable from a kind
+# string. The fields are type-permissive for the reason the decision fields
+# are: both transports passed any value straight to the service before this
+# contract, and the service or repository coerces it (``title=123`` is stored
+# as "123"). Argument NAMES are closed: an unknown name was a Python
+# ``TypeError`` before (the service takes closed keyword arguments); it is now
+# refused by name. Each row declares its Article XI admission (story 02
+# enforces it).
+
+_DESK_PRINCIPAL = (
+    "derived by the transport (HTTP auth middleware; MCP auth resolver); "
+    "the desk primitive service performs no principal check of its own "
+    "(a Thought's note: the Thought service's own owner check applies)"
+)
+_EXEMPT_READ = Admission("exempt", "A read: computation without effect (Article XI.5).")
+_NOTE_RECORD = "the note record (id, title, body_markdown, tags, created_at, updated_at, last_modified, deleted)"
+_THOUGHT_NOTE = (
+    "; for a Thought's note, the working note plus its retry cursors "
+    "(state, aggregate_revision, lifecycle_revision, working_revision, attachment_revision)"
+)
+_THOUGHT_REFUSALS = (
+    "ConflictError thought_expected_revision_required: the note belongs to a Thought and the expected revisions are absent",
+    "ConflictError / ValidationError with the Thought service's own codes (revision_conflict ...)",
+)
+_ZONE_RECORD = "the zone record (id, name, name_normalized, parent_id, created_at, last_modified, deleted)"
+_KB_RECORD = "the knowledge base record (id, name, member_ids, created_at, last_modified, deleted)"
+_ZONE_NAME_REFUSALS = (
+    "ValidationError: zone name is required | zone name must be 64 characters or fewer",
+    "ConflictError zone_name_taken (existing_name): another live zone has this name, ignoring case",
+)
+
+NOTE_CREATE = OperationDescriptor(
+    name="note.create",
+    version=1,
+    description="Make one desk note. Every field is optional; a new id is made when note_id is absent.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "note_id": {"description": "Optional. A new id is made when absent. The id of a Thought's note is refused."},
+            "title": {"description": "Text; defaults to empty."},
+            "body_markdown": {"description": "Markdown text; defaults to empty."},
+            "tags": {"description": "A list of tags."},
+        },
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_NOTE_RECORD,
+    refusals=_CONTRACT_REFUSALS + _THOUGHT_REFUSALS[:1],
+    completion="synchronous; note.read returns it; one desk_changed frame (kind note, op create) on the hub bus",
+    exposure=("http:POST /api/notes", "mcp:desk.create[kind=notes]", "mcp:desk.verb[verb_id=desk.create,kind=notes]"),
+    service="primitive_service",
+    method="create_note",
+    admission=Admission("exempt", "A plain edit: no placement field (D3)."),
+)
+
+NOTE_READ = OperationDescriptor(
+    name="note.read",
+    version=1,
+    description="Read one desk note by id.",
+    args_schema={
+        "type": "object",
+        "properties": {"note_id": {"type": "string"}},
+        "required": ["note_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result=_NOTE_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note",),
+    completion="synchronous",
+    exposure=("http:GET /api/notes/{note_id}", "mcp:desk.get[kind=notes]", "mcp-resource:holdspeak://primitives/notes/{id}"),
+    service="primitive_service",
+    method="get_note",
+    admission=_EXEMPT_READ,
+)
+
+NOTE_UPDATE = OperationDescriptor(
+    name="note.update",
+    version=1,
+    description=(
+        "Change fields of one desk note. Only the supplied fields change; null leaves a field as it is. "
+        "A Thought's note is saved through the Thought service and needs both expected revisions."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "note_id": {"type": "string"},
+            "title": {"description": "Text."},
+            "body_markdown": {"description": "Markdown text."},
+            "tags": {"description": "A list of tags."},
+            "expected_aggregate_revision": {"description": "A Thought's note only: aggregate_revision from the last read."},
+            "expected_working_revision": {"description": "A Thought's note only: working_revision from the last read."},
+        },
+        "required": ["note_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_NOTE_RECORD + _THOUGHT_NOTE,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note",) + _THOUGHT_REFUSALS,
+    completion="synchronous; note.read returns the new state; one desk_changed frame (kind note, op update) for a plain note",
+    exposure=("http:PUT /api/notes/{note_id}", "mcp:desk.update[kind=notes]", "mcp:desk.verb[verb_id=desk.update,kind=notes]"),
+    service="primitive_service",
+    method="update_note",
+    admission=Admission("exempt", "A plain edit (title, body, tags) or a Thought save (D3)."),
+)
+
+NOTE_DELETE = OperationDescriptor(
+    name="note.delete",
+    version=1,
+    description=(
+        "Delete one desk note (a tombstone). A Thought's note is tombstoned through the Thought service "
+        "and needs both expected revisions."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "note_id": {"type": "string"},
+            "expected_aggregate_revision": {"description": "A Thought's note only: aggregate_revision from the last read."},
+            "expected_lifecycle_revision": {"description": "A Thought's note only: lifecycle_revision from the last read."},
+        },
+        "required": ["note_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result="true for a plain note" + _THOUGHT_NOTE + " (the tombstoned note)",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown note",) + _THOUGHT_REFUSALS,
+    completion="synchronous; note.read then refuses the id (NotFound); one desk_changed frame (kind note, op delete) for a plain note",
+    exposure=("http:DELETE /api/notes/{note_id}", "mcp:desk.delete[kind=notes]", "mcp:desk.verb[verb_id=desk.delete,kind=notes]"),
+    service="primitive_service",
+    method="delete_note",
+    admission=Admission(
+        "admitted_if",
+        "The note belongs to a Thought: its tombstone unfiles the note from its zone "
+        "(db/refinement_thoughts.py:236). A plain note's delete is exempt: its zone membership row stays.",
+    ),
+)
+
+NOTE_LIST = OperationDescriptor(
+    name="note.list",
+    version=1,
+    description="List the desk notes that are not deleted (up to 500). With tag, only the notes that carry it.",
+    args_schema={
+        "type": "object",
+        "properties": {"tag": {**_NULLABLE_STRING, "description": "Optional. One tag."}},
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="a list of note records",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/notes", "mcp:desk.list[kind=notes]"),
+    service="primitive_service",
+    method="list_notes",
+    admission=_EXEMPT_READ,
+)
+
+ZONE_CREATE = OperationDescriptor(
+    name="zone.create",
+    version=1,
+    description="Make one zone (a desk directory), at the desk root or inside another zone.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "directory_id": {"description": "Optional. A new id is made when absent. The id of an existing zone sets that zone's parent_id (it can move it)."},
+            "name": {"description": "1 to 64 characters after trimming; unique among the live zones, ignoring case."},
+            "parent_id": {"description": "Optional. The id of the zone to put this zone in; absent or null: the desk root."},
+        },
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_ZONE_RECORD,
+    refusals=_CONTRACT_REFUSALS + _ZONE_NAME_REFUSALS,
+    completion="synchronous; zone.read returns it; one desk_changed frame (kind directory, op create) on the hub bus",
+    exposure=("http:POST /api/directories", "mcp:desk.create[kind=directories]", "mcp:desk.verb[verb_id=desk.create,kind=directories]"),
+    service="primitive_service",
+    method="create_directory",
+    admission=Admission(
+        "admitted_if",
+        "directory_id is given and not empty: over an existing zone the create sets its parent_id "
+        "(to parent_id or null), so it can move that zone with its contents. Without directory_id: exempt.",
+        ("directory_id",),
+        holds=lambda args: bool(args.get("directory_id")),
+    ),
+)
+
+ZONE_READ = OperationDescriptor(
+    name="zone.read",
+    version=1,
+    description="Read one zone and what is filed in it.",
+    args_schema={
+        "type": "object",
+        "properties": {"directory_id": {"type": "string"}},
+        "required": ["directory_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="{directory: the zone record, member_ids: the filed primitive refs, members: the membership records}",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown directory",),
+    completion="synchronous",
+    exposure=("http:GET /api/directories/{directory_id}", "mcp:desk.get[kind=directories]", "mcp-resource:holdspeak://primitives/directories/{id}"),
+    service="primitive_service",
+    method="get_directory",
+    admission=_EXEMPT_READ,
+)
+
+ZONE_UPDATE = OperationDescriptor(
+    name="zone.update",
+    version=1,
+    description=(
+        "Rename a zone or move it. A rename (no parent_id) writes the name only. "
+        "parent_id moves the zone with its contents: absent leaves it where it is; null moves it to the desk root."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "directory_id": {"type": "string"},
+            "name": {"description": "The new name; null or absent keeps the name."},
+            "parent_id": {"description": "Optional. The id of the new parent zone, or null for the desk root. Absent: the zone does not move."},
+        },
+        "required": ["directory_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_ZONE_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown directory",) + _ZONE_NAME_REFUSALS,
+    completion="synchronous; zone.read returns the new state; one desk_changed frame (kind directory, op update) on the hub bus",
+    exposure=("http:PUT /api/directories/{directory_id}", "mcp:desk.update[kind=directories]", "mcp:desk.verb[verb_id=desk.update,kind=directories]"),
+    service="primitive_service",
+    method="update_directory",
+    admission=Admission(
+        "admitted_if",
+        "parent_id is present (null included): the zone moves with its contents. "
+        "A rename alone (no parent_id) is exempt and writes the name only (PHILO-7-01 rename repair).",
+        ("parent_id",),
+        holds=lambda args: "parent_id" in args,
+    ),
+)
+
+ZONE_DELETE = OperationDescriptor(
+    name="zone.delete",
+    version=1,
+    description="Delete one zone. What is filed in it goes back to the desk root; its child zones move to the root.",
+    args_schema={
+        "type": "object",
+        "properties": {"directory_id": {"type": "string"}},
+        "required": ["directory_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result="true",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown directory",),
+    completion="synchronous; zone.read then refuses the id (NotFound); one desk_changed frame (kind directory, op delete) on the hub bus",
+    exposure=("http:DELETE /api/directories/{directory_id}", "mcp:desk.delete[kind=directories]", "mcp:desk.verb[verb_id=desk.delete,kind=directories]"),
+    service="primitive_service",
+    method="delete_directory",
+    admission=Admission(
+        "admitted",
+        "Every member unfiled and every child zone moved to the root, in the same transaction (db/primitives.py:1182-1204).",
+    ),
+)
+
+ZONE_LIST = OperationDescriptor(
+    name="zone.list",
+    version=1,
+    description="List the zones that are not deleted, by name. Each row carries member_ids: what is filed in it.",
+    args_schema=_EMPTY,
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="a list of zone records, each with member_ids",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/directories", "mcp:desk.list[kind=directories]"),
+    service="primitive_service",
+    method="list_directories",
+    admission=_EXEMPT_READ,
+)
+
+KB_CREATE = OperationDescriptor(
+    name="kb.create",
+    version=1,
+    description="Make one knowledge base: a named set of references to desk objects.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "kb_id": {"description": "Optional. A new id is made when absent. The id of an existing knowledge base REPLACES its members with member_ids."},
+            "name": {"description": "Required text (not empty)."},
+            "member_ids": {"description": "Optional. A list of kind:id references, for example note:<id> (a mapping is also accepted: its keys are the references)."},
+        },
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_KB_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("ValidationError: kb name is required",),
+    completion="synchronous; kb.read returns it; one desk_changed frame (kind kb, op create) on the hub bus",
+    exposure=("http:POST /api/kbs", "mcp:desk.create[kind=kbs]", "mcp:desk.verb[verb_id=desk.create,kind=kbs]"),
+    service="primitive_service",
+    method="create_kb",
+    admission=Admission(
+        "admitted_if",
+        "member_ids is given and not empty, in any accepted form (a list; a mapping, whose keys the "
+        "repository files as references; any other non-empty value), or kb_id is given and not empty: "
+        "knowledge memberships can be written (over an existing kb_id the membership set is REPLACED). "
+        "Otherwise exempt.",
+        ("member_ids", "kb_id"),
+        holds=lambda args: bool(args.get("member_ids")) or bool(args.get("kb_id")),
+    ),
+)
+
+KB_READ = OperationDescriptor(
+    name="kb.read",
+    version=1,
+    description="Read one knowledge base by id.",
+    args_schema={
+        "type": "object",
+        "properties": {"kb_id": {"type": "string"}},
+        "required": ["kb_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result=_KB_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown kb",),
+    completion="synchronous",
+    exposure=("http:GET /api/kbs/{kb_id}", "mcp:desk.get[kind=kbs]", "mcp-resource:holdspeak://primitives/kbs/{id}"),
+    service="primitive_service",
+    method="get_kb",
+    admission=_EXEMPT_READ,
+)
+
+KB_UPDATE = OperationDescriptor(
+    name="kb.update",
+    version=1,
+    description=(
+        "Rename a knowledge base or set its members. A rename (no member_ids) writes the name only. "
+        "member_ids makes the member set exactly that list."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "kb_id": {"type": "string"},
+            "name": {"description": "The new name; null or absent keeps the name."},
+            "member_ids": {"description": "Optional. The complete new list of kind:id references. Absent or null: the members do not change."},
+        },
+        "required": ["kb_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_KB_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown kb",),
+    completion="synchronous; kb.read returns the new state; one desk_changed frame (kind kb, op update) on the hub bus",
+    exposure=("http:PUT /api/kbs/{kb_id}", "mcp:desk.update[kind=kbs]", "mcp:desk.verb[verb_id=desk.update,kind=kbs]"),
+    service="primitive_service",
+    method="update_kb",
+    admission=Admission(
+        "admitted_if",
+        "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the "
+        "repository files as references; an empty value removes every member): knowledge memberships are "
+        "added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
+        ("member_ids",),
+        holds=lambda args: args.get("member_ids") is not None,
+    ),
+)
+
+KB_DELETE = OperationDescriptor(
+    name="kb.delete",
+    version=1,
+    description="Delete one knowledge base (a tombstone). Its membership rows are not changed.",
+    args_schema={
+        "type": "object",
+        "properties": {"kb_id": {"type": "string"}},
+        "required": ["kb_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result="true",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown kb",),
+    completion="synchronous; kb.read then refuses the id (NotFound); one desk_changed frame (kind kb, op delete) on the hub bus",
+    exposure=("http:DELETE /api/kbs/{kb_id}", "mcp:desk.delete[kind=kbs]", "mcp:desk.verb[verb_id=desk.delete,kind=kbs]"),
+    service="primitive_service",
+    method="delete_kb",
+    admission=Admission("exempt", "The knowledge base row is tombstoned; its membership rows are not touched (R4)."),
+)
+
+KB_LIST = OperationDescriptor(
+    name="kb.list",
+    version=1,
+    description="List the knowledge bases that are not deleted, by name.",
+    args_schema=_EMPTY,
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="a list of knowledge base records",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/kbs", "mcp:desk.list[kind=kbs]"),
+    service="primitive_service",
+    method="list_kbs",
+    admission=_EXEMPT_READ,
+)
+
+#: The Phase 7 slice table: (desk kind, verb) -> operation. The MCP ``desk.*``
+#: tools, the ``desk.verb`` aliases and the primitive resource read it; every
+#: row names a descriptor above. Workflows and chains are not in it (their
+#: owning slice), and ``decision.delete`` is story 02's.
+DESK_OPERATIONS: Mapping[tuple[str, str], str] = MappingProxyType({
+    ("decision", "list"): "decision.list",
+    ("decision", "get"): "decision.read",
+    ("decision", "create"): "decision.create",
+    ("decision", "update"): "decision.update",
+    ("note", "list"): "note.list",
+    ("note", "get"): "note.read",
+    ("note", "create"): "note.create",
+    ("note", "update"): "note.update",
+    ("note", "delete"): "note.delete",
+    ("directory", "list"): "zone.list",
+    ("directory", "get"): "zone.read",
+    ("directory", "create"): "zone.create",
+    ("directory", "update"): "zone.update",
+    ("directory", "delete"): "zone.delete",
+    ("kb", "list"): "kb.list",
+    ("kb", "get"): "kb.read",
+    ("kb", "create"): "kb.create",
+    ("kb", "update"): "kb.update",
+    ("kb", "delete"): "kb.delete",
+})
+
+#: The id argument of each kind's operations (the path or tool id supplies it).
+DESK_ID_ARGUMENT: Mapping[str, str] = MappingProxyType({
+    "decision": "decision_id", "note": "note_id", "directory": "directory_id", "kb": "kb_id",
+})
+
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
     MEETING_LIST, MEETING_READ, MEETING_IMPORT, MEETING_SUMMARY_RUN,
     BRIEF_GENERATE, BRIEF_LATEST, BRIEF_SHELF_WRITE, BRIEF_SHELF_READ,
     THOUGHT_CREATE, THOUGHT_SAVE, THOUGHT_READ, THOUGHT_WORKBENCH_READ, THOUGHT_LIST,
+    NOTE_CREATE, NOTE_READ, NOTE_UPDATE, NOTE_DELETE, NOTE_LIST,
+    ZONE_CREATE, ZONE_READ, ZONE_UPDATE, ZONE_DELETE, ZONE_LIST,
+    KB_CREATE, KB_READ, KB_UPDATE, KB_DELETE, KB_LIST,
 )
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
@@ -659,20 +1152,27 @@ class OperationRegistry:
         return bound.call(principal, **dict(payload), **given_held)
 
 
-def update_args(data: Mapping[str, Any], decision_id: str) -> dict[str, Any]:
-    """``decision.update`` arguments from a transport's body and its path/tool id.
+def update_args(
+    data: Mapping[str, Any],
+    item_id: str,
+    *,
+    operation: str = "decision.update",
+    id_field: str = "decision_id",
+) -> dict[str, Any]:
+    """An update operation's arguments from a transport's body and its path/tool id.
 
     The id comes from the path (HTTP) or the tool's ``id`` (MCP). A body that
-    also carries ``decision_id`` was refused before this contract (a Python
-    ``TypeError``: "multiple values for argument 'decision_id'"); it stays
-    refused, now by name.
+    also carries the id argument was refused before this contract (a Python
+    ``TypeError``: "multiple values for argument ..."); it stays refused, now
+    by name. PHILO-7-01: the same rule for ``note.update``, ``zone.update`` and
+    ``kb.update`` (``operation`` and ``id_field``).
     """
-    if "decision_id" in data:
+    if id_field in data:
         raise OperationRefused(
-            "invalid_arguments", "decision.update",
-            "Invalid arguments for decision.update: decision_id comes from the path or the tool id, not the data",
+            "invalid_arguments", operation,
+            f"Invalid arguments for {operation}: {id_field} comes from the path or the tool id, not the data",
         )
-    return {**data, "decision_id": decision_id}
+    return {**data, id_field: item_id}
 
 
 def bind(services: Mapping[str, Any], descriptors: tuple[OperationDescriptor, ...] = DESCRIPTORS) -> OperationRegistry:

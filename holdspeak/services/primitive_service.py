@@ -269,11 +269,19 @@ class PrimitiveService:
         existing = self._db.kbs.get(kb_id)
         if existing is None:
             raise NotFound("kb", kb_id)
-        kb = self._db.kbs.upsert(
-            kb_id=kb_id,
-            name=name if name is not None else existing.name,
-            member_ids=member_ids if member_ids is not None else existing.member_ids,
-        )
+        if member_ids is None:
+            # PHILO-7-01 rename repair: a rename writes the name only. It never
+            # writes back the membership snapshot it read (that tombstoned a
+            # member added between the read and the write).
+            if not self._db.kbs.rename(kb_id, name):
+                raise NotFound("kb", kb_id)
+            kb = self._db.kbs.get(kb_id, include_deleted=True)
+        else:
+            kb = self._db.kbs.upsert(
+                kb_id=kb_id,
+                name=name if name is not None else existing.name,
+                member_ids=member_ids,
+            )
         self._changed("kb", kb.id, "update")
         return kb.to_dict()
 
@@ -369,11 +377,19 @@ class PrimitiveService:
         new_name = name if name is not None else existing.name
         self._validate_zone_name(new_name)
         try:
-            directory = self._db.directories.upsert(
-                directory_id=directory_id,
-                name=new_name,
-                parent_id=parent_id if parent_id is not ... else existing.parent_id,
-            )
+            if parent_id is ...:
+                # PHILO-7-01 rename repair: a rename writes the name only. It
+                # never writes back the parent_id it read (that reversed a move
+                # made between the read and the write).
+                if not self._db.directories.rename(directory_id, name):
+                    raise NotFound("directory", directory_id)
+                directory = self._db.directories.get(directory_id, include_deleted=True)
+            else:
+                directory = self._db.directories.upsert(
+                    directory_id=directory_id,
+                    name=new_name,
+                    parent_id=parent_id,
+                )
         except ZoneNameTaken as exc:
             raise ConflictError(
                 "zone_name_taken", existing_name=exc.existing_name

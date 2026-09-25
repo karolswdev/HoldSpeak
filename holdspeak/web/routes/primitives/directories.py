@@ -1,4 +1,10 @@
-"""Directories (zones) + membership edges — thin adapter (HS-122-01)."""
+"""Directories (zones) + membership edges — thin adapter (HS-122-01).
+
+PHILO-7-01: the zone routes are calls to the application-operation contract
+(zone.create / read / update / delete / list), bound at hub composition to the
+hub's one live ``PrimitiveService``. The membership routes are not on the
+contract yet (PHILO-7-02); they use the SAME instance the contract is bound to.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -6,9 +12,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from .... import operations
 from ....logging_config import get_logger
 from ....services.errors import ConflictError, NotFound, ValidationError
-from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
@@ -19,15 +25,15 @@ log = get_logger("web.routes.primitives")
 def build_directories_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _svc() -> PrimitiveService:
-        # HS-200-45: the hub's ONE composed instance (it carries the
-        # ``on_changed`` hook that puts a ``desk_changed`` frame on the bus).
-        # A bare instance is built only for a partially-wired context -- a
-        # route test that supplies just the fields it exercises.
-        if getattr(ctx, "primitive_service", None) is not None:
-            return ctx.primitive_service
-        from ....db import get_database, get_observer
-        return PrimitiveService(get_database(), observer=get_observer())
+    def _ops() -> operations.OperationRegistry:
+        # In the hub: ctx.operations, bound to the ONE composed instance (it
+        # carries the ``desk_changed`` hook, HS-200-45). A partially wired
+        # context binds the bare service (``operations.for_context``).
+        return operations.for_context(ctx, "primitive_service")
+
+    def _svc() -> Any:
+        # The instance the contract is bound to (the membership routes, 7-02).
+        return _ops().target("zone.read")
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
@@ -35,7 +41,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/directories")
     async def api_list_directories(request: Request) -> Any:
         try:
-            return JSONResponse({"directories": _svc().list_directories(_principal(request))})
+            return JSONResponse({"directories": _ops().invoke(_principal(request), "zone.list", {})})
         except Exception as exc:
             return error_500(exc, log, "Failed to list directories")
 
@@ -45,12 +51,11 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            directory = _svc().create_directory(
-                _principal(request),
-                directory_id=str(body.get("id") or "") or None,
-                name=str(body.get("name") or ""),
-                parent_id=body.get("parent_id") or None,
-            )
+            directory = _ops().invoke(_principal(request), "zone.create", {
+                "directory_id": str(body.get("id") or "") or None,
+                "name": str(body.get("name") or ""),
+                "parent_id": body.get("parent_id") or None,
+            })
             return JSONResponse({"directory": directory}, status_code=201)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
@@ -67,7 +72,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/directories/{directory_id}")
     async def api_get_directory(directory_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(_svc().get_directory(_principal(request), directory_id))
+            return JSONResponse(_ops().invoke(_principal(request), "zone.read", {"directory_id": directory_id}))
         except NotFound:
             return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
         except Exception as exc:
@@ -79,12 +84,11 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            directory = _svc().update_directory(
-                _principal(request),
-                directory_id,
-                name=body.get("name"),
-                parent_id=body.get("parent_id") if "parent_id" in body else ...,
-            )
+            args: dict[str, Any] = {"directory_id": directory_id, "name": body.get("name")}
+            if "parent_id" in body:
+                # Absent is not null: absent keeps the parent, null is the root.
+                args["parent_id"] = body.get("parent_id")
+            directory = _ops().invoke(_principal(request), "zone.update", args)
             return JSONResponse({"directory": directory})
         except NotFound:
             return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
@@ -101,7 +105,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/directories/{directory_id}")
     async def api_delete_directory(directory_id: str, request: Request) -> Any:
         try:
-            _svc().delete_directory(_principal(request), directory_id)
+            _ops().invoke(_principal(request), "zone.delete", {"directory_id": directory_id})
             return JSONResponse({"success": True})
         except NotFound:
             return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
