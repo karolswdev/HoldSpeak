@@ -11,6 +11,9 @@
 
 ## Problem
 
+**Diagnosis corrected by Astra's charter check (2026-09-24 night; retracting its own earlier adapter finding):** the producer writes `intel_status` (`meeting_service.py:335`), NOT `transcription_status`; the wire adapter already adapts both its string and nested `.state` forms (`api.ts:498`); `ChairHome.tsx:266` passes it to `intelBadge`, whose fallback (`intelBadge.ts:26`) returns SAVED for `import_failed`. The retained observation `phase-5-…/assets/story-03-shots/none/browser/20260924T222258Z-case.j6.route_intelligence_run.refusal-astra-1440/observation.json:126` shows `intel_status.state=import_failed` with `transcription_status=active`. The repair is the badge mapping (FAILED for `import_failed`), fenced producer → adapter → rendered badge; NO transcription-field change and NO adapter repair.
+
+
 A failed import shows SAVED on the Arrival. The producer marks it: `MeetingService` sets the transcription status `import_failed` (`holdspeak/services/meeting_service.py:315`). Then the face loses it in two places:
 
 - The wire adapter `fromWireMeeting` (`web/src/desk/api.ts:463`) drops the transcription status, so the Meeting the face holds never carries `import_failed`.

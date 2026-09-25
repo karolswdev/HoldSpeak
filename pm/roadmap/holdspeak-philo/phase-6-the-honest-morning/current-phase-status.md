@@ -82,7 +82,7 @@ Lane law for this phase:
 
 2026-09-24: CHARTERED by the two brains from handover XXVIII r2 and Astra's check of the drafts (RATIFY-WITH-CONDITIONS, paid). The owner ruled D2 (repairs first). Nothing is built. Owed next: Astra's check of this charter; then the owner's ratification; then the canvas-free parts start (01, 02 a/c, 03 zero tokens, 04, 05), and the two canvases go to the owner.
 
-**Estimate:** 3–4 engineering days, PROVISIONAL. It includes the toast canvas, the S4 diagnosis, the counsel rounds and the closing runs. Two lanes do not halve it (Astra, finding 3).
+**Estimate:** story effort 3.5–5 engineering days (01 0.5 · 02 1–1.5 · 03 1–1.5 · 04 0.5 · 05 0.5–1) + the toast canvas and its ratification + the conditional count canvas + counsel rounds + the closing runs (allow 1–1.5 d) = **4.5–6.5 engineering days PROVISIONAL**; elapsed time is longer than effort (two lanes, counsel between them, the owner's canvas word).
 
 ## Active risks
 
@@ -97,6 +97,8 @@ Lane law for this phase:
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 night — Astra's check of this charter: RATIFY-WITH-CONDITIONS (`checks/charter-astra.md`), paid: story 01's diagnosis corrected (the producer writes `intel_status`; the adapter finding retracted by Astra; the repair is the badge mapping); story 02 never conflates the counts and decides one clock with an offsets fence; the estimate reconciled (4.5–6.5 d provisional); the README's Phase 5 row corrected; story 05's proof armed before Done. The owner's ratification next — Muad'Dib.
 
 - 2026-09-24 — CHARTERED by the two brains from handover XXVIII r2; Astra's check of the drafts (RATIFY-WITH-CONDITIONS) paid: the per-repair canvas rulings (finding 2), the estimate and the lane split (finding 3), raw breakage wording covered (MISSED 2) — Muad'Dib.
 - 2026-09-24 — the owner ruled D2: repairs first; Phase 6 before Phase 7.

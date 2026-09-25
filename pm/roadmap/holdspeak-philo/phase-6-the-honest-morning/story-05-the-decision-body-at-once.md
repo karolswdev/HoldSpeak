@@ -38,3 +38,4 @@ After Done in the decision pullout at 393, the DECISION body is empty for about 
 ## Notes
 
 - 2026-09-24 — chartered from XXVIII r2 + Astra's check (finding 2 row 6: the seam is `DecisionPullout.tsx:66`; `dataSlice.ts:297` already patches optimistically; find the cause; fence the first transition and the failed save).
+- 2026-09-24 — Astra's charter check: the proof plan REQUIRES the observation ARMED BEFORE Done — the rig waits 900 ms before its initial observation (`graph_walk.py:4393`) and the S4 atlas case allows 60 s (`atlas-phase3.json:6449`), so a passing rerun of the existing case cannot certify the first frame; keep the actual-atlas run AND add a transition probe (a browser-side observer registered before the click that records the DECISION body's text at first paint and every frame until readable); the fence fails if the first paint after Done is empty.
