@@ -312,6 +312,12 @@ def _p_thought_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "thought.list", {})
 
 
+def _p_zone_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # PHILO-7-01: zone.read declares {directory, member_ids, members}.
+    made = hub.root.operations.invoke(OWNER, "zone.create", {"name": "Shape"})
+    return hub.root.operations.invoke(OWNER, "zone.read", {"directory_id": made["id"]})
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -321,6 +327,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "thought.create": _p_thought_create,
     "thought.save": _p_thought_save,
     "thought.list": _p_thought_list,
+    "zone.read": _p_zone_read,
 }
 
 

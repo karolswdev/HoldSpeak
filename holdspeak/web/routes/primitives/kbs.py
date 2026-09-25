@@ -1,4 +1,11 @@
-"""Knowledge bases CRUD — thin adapter over PrimitiveService (HS-122-01)."""
+"""Knowledge bases CRUD — thin adapter (HS-122-01).
+
+PHILO-7-01: the knowledge base routes are calls to the application-operation
+contract (kb.create / read / update / delete / list), bound at hub composition
+to the hub's one live ``PrimitiveService``. The membership routes are not on
+the contract yet (PHILO-7-02); they use the SAME instance the contract is bound
+to.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -6,9 +13,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from .... import operations
 from ....logging_config import get_logger
 from ....services.errors import NotFound, ValidationError
-from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
@@ -19,15 +26,15 @@ log = get_logger("web.routes.primitives")
 def build_kbs_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _svc() -> PrimitiveService:
-        # HS-200-45: the hub's ONE composed instance (it carries the
-        # ``on_changed`` hook that puts a ``desk_changed`` frame on the bus).
-        # A bare instance is built only for a partially-wired context -- a
-        # route test that supplies just the fields it exercises.
-        if getattr(ctx, "primitive_service", None) is not None:
-            return ctx.primitive_service
-        from ....db import get_database, get_observer
-        return PrimitiveService(get_database(), observer=get_observer())
+    def _ops() -> operations.OperationRegistry:
+        # In the hub: ctx.operations, bound to the ONE composed instance (it
+        # carries the ``desk_changed`` hook, HS-200-45). A partially wired
+        # context binds the bare service (``operations.for_context``).
+        return operations.for_context(ctx, "primitive_service")
+
+    def _svc() -> Any:
+        # The instance the contract is bound to (the membership routes, 7-02).
+        return _ops().target("kb.read")
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
@@ -35,7 +42,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/kbs")
     async def api_list_kbs(request: Request) -> Any:
         try:
-            return JSONResponse({"kbs": _svc().list_kbs(_principal(request))})
+            return JSONResponse({"kbs": _ops().invoke(_principal(request), "kb.list", {})})
         except Exception as exc:
             return error_500(exc, log, "Failed to list kbs")
 
@@ -45,12 +52,11 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            kb = _svc().create_kb(
-                _principal(request),
-                kb_id=str(body.get("id") or "") or None,
-                name=str(body.get("name") or ""),
-                member_ids=list(body.get("member_ids") or []),
-            )
+            kb = _ops().invoke(_principal(request), "kb.create", {
+                "kb_id": str(body.get("id") or "") or None,
+                "name": str(body.get("name") or ""),
+                "member_ids": list(body.get("member_ids") or []),
+            })
             return JSONResponse({"kb": kb}, status_code=201)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
@@ -62,7 +68,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/kbs/{kb_id}")
     async def api_get_kb(kb_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"kb": _svc().get_kb(_principal(request), kb_id)})
+            return JSONResponse({"kb": _ops().invoke(_principal(request), "kb.read", {"kb_id": kb_id})})
         except NotFound:
             return JSONResponse({"error": f"Unknown kb: {kb_id}"}, status_code=404)
         except Exception as exc:
@@ -74,12 +80,11 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            kb = _svc().update_kb(
-                _principal(request),
-                kb_id,
-                name=body.get("name"),
-                member_ids=body.get("member_ids"),
-            )
+            kb = _ops().invoke(_principal(request), "kb.update", {
+                "kb_id": kb_id,
+                "name": body.get("name"),
+                "member_ids": body.get("member_ids"),
+            })
             return JSONResponse({"kb": kb})
         except NotFound:
             return JSONResponse({"error": f"Unknown kb: {kb_id}"}, status_code=404)
@@ -89,7 +94,7 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/kbs/{kb_id}")
     async def api_delete_kb(kb_id: str, request: Request) -> Any:
         try:
-            _svc().delete_kb(_principal(request), kb_id)
+            _ops().invoke(_principal(request), "kb.delete", {"kb_id": kb_id})
             return JSONResponse({"success": True})
         except NotFound:
             return JSONResponse({"error": f"Unknown kb: {kb_id}"}, status_code=404)

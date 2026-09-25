@@ -753,6 +753,29 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "kind": "resource", "uri": "holdspeak://thoughts/{thought_id}/workbench",
     },
     "thought.list": {"kind": "resource", "uri": "holdspeak://thoughts/unfinished"},
+    # PHILO-7-01: the desk slice, one row per (kind, verb).
+    "note.create": {"kind": "tool", "name": "desk.create"},
+    "note.read": {"kind": "tool", "name": "desk.get"},
+    "note.update": {"kind": "tool", "name": "desk.update"},
+    "note.delete": {"kind": "tool", "name": "desk.delete"},
+    "note.list": {"kind": "tool", "name": "desk.list"},
+    "zone.create": {"kind": "tool", "name": "desk.create"},
+    "zone.read": {"kind": "tool", "name": "desk.get"},
+    "zone.update": {"kind": "tool", "name": "desk.update"},
+    "zone.delete": {"kind": "tool", "name": "desk.delete"},
+    "zone.list": {"kind": "tool", "name": "desk.list"},
+    "kb.create": {"kind": "tool", "name": "desk.create"},
+    "kb.read": {"kind": "tool", "name": "desk.get"},
+    "kb.update": {"kind": "tool", "name": "desk.update"},
+    "kb.delete": {"kind": "tool", "name": "desk.delete"},
+    "kb.list": {"kind": "tool", "name": "desk.list"},
+}
+
+# PHILO-7-01: the desk kind and id argument of each slice prefix.
+_DESK_OP_KINDS: dict[str, tuple[str, str]] = {
+    "note": ("notes", "note_id"),
+    "zone": ("directories", "directory_id"),
+    "kb": ("kbs", "kb_id"),
 }
 
 # An ``observe_at`` operation is a read of durable state.  A refusal predicate
@@ -763,6 +786,7 @@ OP_READ_OBSERVATIONS = frozenset({
     "meeting.list", "meeting.read",
     "brief.latest", "brief.shelf.read",
     "thought.read", "thought.workbench.read", "thought.list",
+    "note.read", "note.list", "zone.read", "zone.list", "kb.read", "kb.list",
 })
 
 
@@ -781,6 +805,18 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
         return {"kind": "decisions", "id": args.get("decision_id")}
     if name == "decision.list":
         return {"kind": "decisions"}
+    prefix, _, verb = name.partition(".")
+    if prefix in _DESK_OP_KINDS:
+        kind, id_field = _DESK_OP_KINDS[prefix]
+        if verb == "create":
+            return {"kind": kind, "data": args}
+        if verb == "update":
+            return {"kind": kind, "id": args.get(id_field),
+                    "data": {key: value for key, value in args.items() if key != id_field}}
+        if verb in {"read", "delete"}:
+            return {"kind": kind, "id": args.get(id_field)}
+        if verb == "list":
+            return {"kind": kind}
     if name == "meeting.summary.run":
         # The existing MCP schema requires this envelope member even when the
         # canonical operation deliberately uses an empty value for an
@@ -813,6 +849,9 @@ def _op_request(name: str, args: dict[str, Any], request_id: int) -> dict[str, A
         "decision.list": "desk.list only exposes its established kind envelope",
         "thought.list": "the unfinished resource URI has no pagination envelope",
         "brief.latest": "monday_brief.get's latest projection takes no canonical args",
+        "note.list": "desk.list only exposes its established kind envelope (no tag)",
+        "zone.list": "desk.list only exposes its established kind envelope",
+        "kb.list": "desk.list only exposes its established kind envelope",
     }
     if name in unsupported and args:
         raise Blocked(f"operation {name!r} cannot preserve args {sorted(args)}: "

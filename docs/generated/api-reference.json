@@ -4309,6 +4309,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_02_brief_truth.py",
         "tests/unit/test_philo6_02_round2_outcome_words.py",
+        "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4345,6 +4346,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_02_brief_truth.py",
         "tests/unit/test_philo6_02_round2_outcome_words.py",
+        "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -4416,7 +4418,8 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
-        "tests/unit/test_philo5_the_loop_r2.py"
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_shelf_alignment.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -8066,6 +8069,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8138,6 +8142,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8227,6 +8232,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14613,7 +14619,7 @@
             "GET"
           ],
           "symbol": "api_list_directories",
-          "line": 36,
+          "line": 42,
           "parameters": [
             {
               "name": "request",
@@ -14626,9 +14632,9 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_directories",
             "error_500",
             "router.get"
           ],
@@ -14642,6 +14648,8 @@
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14674,7 +14682,7 @@
             "POST"
           ],
           "symbol": "api_create_directory",
-          "line": 43,
+          "line": 49,
           "parameters": [
             {
               "name": "request",
@@ -14692,9 +14700,9 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().create_directory",
             "body.get",
             "error_500",
             "router.post",
@@ -14714,6 +14722,8 @@
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14746,7 +14756,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_directory",
-          "line": 102,
+          "line": 106,
           "parameters": [
             {
               "name": "directory_id",
@@ -14765,9 +14775,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().delete_directory",
             "error_500",
             "router.delete"
           ],
@@ -14779,6 +14789,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14811,7 +14822,7 @@
             "GET"
           ],
           "symbol": "api_get_directory",
-          "line": 68,
+          "line": 73,
           "parameters": [
             {
               "name": "directory_id",
@@ -14830,9 +14841,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().get_directory",
             "error_500",
             "router.get"
           ],
@@ -14844,6 +14855,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14876,7 +14888,7 @@
             "PUT"
           ],
           "symbol": "api_update_directory",
-          "line": 77,
+          "line": 82,
           "parameters": [
             {
               "name": "directory_id",
@@ -14899,9 +14911,9 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().update_directory",
             "body.get",
             "error_500",
             "router.put",
@@ -14918,6 +14930,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14948,7 +14961,7 @@
             "GET"
           ],
           "symbol": "api_list_directory_members",
-          "line": 112,
+          "line": 116,
           "parameters": [
             {
               "name": "directory_id",
@@ -14981,6 +14994,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15013,7 +15027,7 @@
             "DELETE"
           ],
           "symbol": "api_unfile_member",
-          "line": 134,
+          "line": 138,
           "parameters": [
             {
               "name": "directory_id",
@@ -15050,6 +15064,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15082,7 +15097,7 @@
             "PUT"
           ],
           "symbol": "api_file_member",
-          "line": 122,
+          "line": 126,
           "parameters": [
             {
               "name": "directory_id",
@@ -15121,6 +15136,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_compat.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -18179,7 +18195,7 @@
             "GET"
           ],
           "symbol": "api_list_kbs",
-          "line": 36,
+          "line": 43,
           "parameters": [
             {
               "name": "request",
@@ -18192,9 +18208,9 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_kbs",
             "error_500",
             "router.get"
           ],
@@ -18234,7 +18250,7 @@
             "POST"
           ],
           "symbol": "api_create_kb",
-          "line": 43,
+          "line": 50,
           "parameters": [
             {
               "name": "request",
@@ -18250,9 +18266,9 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().create_kb",
             "body.get",
             "error_500",
             "list",
@@ -18299,7 +18315,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_kb",
-          "line": 90,
+          "line": 95,
           "parameters": [
             {
               "name": "kb_id",
@@ -18318,9 +18334,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().delete_kb",
             "error_500",
             "router.delete"
           ],
@@ -18360,7 +18376,7 @@
             "GET"
           ],
           "symbol": "api_get_kb",
-          "line": 63,
+          "line": 69,
           "parameters": [
             {
               "name": "kb_id",
@@ -18379,9 +18395,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().get_kb",
             "error_500",
             "router.get"
           ],
@@ -18421,7 +18437,7 @@
             "PUT"
           ],
           "symbol": "api_update_kb",
-          "line": 72,
+          "line": 78,
           "parameters": [
             {
               "name": "kb_id",
@@ -18442,9 +18458,9 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().update_kb",
             "body.get",
             "error_500",
             "router.put"
@@ -18486,7 +18502,7 @@
             "GET"
           ],
           "symbol": "api_list_kb_members",
-          "line": 100,
+          "line": 105,
           "parameters": [
             {
               "name": "kb_id",
@@ -18547,7 +18563,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_kb_member",
-          "line": 120,
+          "line": 125,
           "parameters": [
             {
               "name": "kb_id",
@@ -18613,7 +18629,7 @@
             "PUT"
           ],
           "symbol": "api_add_kb_member",
-          "line": 110,
+          "line": 115,
           "parameters": [
             {
               "name": "kb_id",
@@ -23838,7 +23854,7 @@
             "GET"
           ],
           "symbol": "api_list_notes",
-          "line": 44,
+          "line": 47,
           "parameters": [
             {
               "name": "request",
@@ -23851,9 +23867,9 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_notes",
             "error_500",
             "request.query_params.get",
             "router.get"
@@ -23875,6 +23891,8 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -23910,7 +23928,7 @@
             "POST"
           ],
           "symbol": "api_create_note",
-          "line": 54,
+          "line": 56,
           "parameters": [
             {
               "name": "request",
@@ -23926,10 +23944,10 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
             "_service_error",
-            "_svc",
-            "_svc().create_note",
             "body.get",
             "error_500",
             "list",
@@ -23958,6 +23976,8 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24013,10 +24033,10 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
             "_service_error",
-            "_svc",
-            "_svc().delete_note",
             "body.get",
             "error_500",
             "isinstance",
@@ -24035,6 +24055,8 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24068,7 +24090,7 @@
             "GET"
           ],
           "symbol": "api_get_note",
-          "line": 75,
+          "line": 76,
           "parameters": [
             {
               "name": "note_id",
@@ -24087,9 +24109,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().get_note",
             "error_500",
             "router.get"
           ],
@@ -24103,6 +24125,8 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24136,7 +24160,7 @@
             "PUT"
           ],
           "symbol": "api_update_note",
-          "line": 84,
+          "line": 85,
           "parameters": [
             {
               "name": "note_id",
@@ -24157,10 +24181,10 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_ops",
+            "_ops().invoke",
             "_principal",
             "_service_error",
-            "_svc",
-            "_svc().update_note",
             "body.get",
             "error_500",
             "router.put"
@@ -24181,6 +24205,8 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -36293,6 +36319,8 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36375,6 +36403,8 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_contract.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"

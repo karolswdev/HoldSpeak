@@ -208,12 +208,17 @@ def registry(tmp_path: Path):
 
 def test_the_catalogue_is_explicit_descriptors() -> None:
     names = [d.name for d in operations.DESCRIPTORS]
-    # PHILO-5-01's four, then PHILO-5-02's loop -- an explicit list, no framework.
+    # PHILO-5-01's four, then PHILO-5-02's loop, then PHILO-7-01's desk slice
+    # -- an explicit list, no framework.
     assert names == [
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
         "thought.create", "thought.save", "thought.read", "thought.workbench.read", "thought.list",
+        # PHILO-7-01: the desk slice, one row per (kind, verb).
+        "note.create", "note.read", "note.update", "note.delete", "note.list",
+        "zone.create", "zone.read", "zone.update", "zone.delete", "zone.list",
+        "kb.create", "kb.read", "kb.update", "kb.delete", "kb.list",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

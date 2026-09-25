@@ -1,4 +1,11 @@
-"""Notes CRUD — thin adapter over PrimitiveService (HS-122-01)."""
+"""Notes CRUD — thin adapter (HS-122-01).
+
+PHILO-7-01: every route is a call to the application-operation contract
+(``holdspeak.operations``: note.create / read / update / delete / list), bound
+at hub composition to the hub's one live ``PrimitiveService``. Each route maps
+its request onto the operation's arguments and maps the result back exactly as
+before.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -6,9 +13,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from .... import operations
 from ....logging_config import get_logger
 from ....services.errors import ConflictError, NotFound, ValidationError
-from ....services.primitive_service import PrimitiveService
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body
@@ -27,15 +34,11 @@ def _service_error(exc: Exception) -> JSONResponse:
 def build_notes_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    def _svc() -> PrimitiveService:
-        # HS-200-45: the hub's ONE composed instance (it carries the
-        # ``on_changed`` hook that puts a ``desk_changed`` frame on the bus).
-        # A bare instance is built only for a partially-wired context -- a
-        # route test that supplies just the fields it exercises.
-        if getattr(ctx, "primitive_service", None) is not None:
-            return ctx.primitive_service
-        from ....db import get_database, get_observer
-        return PrimitiveService(get_database(), observer=get_observer())
+    def _ops() -> operations.OperationRegistry:
+        # In the hub: ctx.operations, bound to the ONE composed instance (it
+        # carries the ``desk_changed`` hook, HS-200-45). A partially wired
+        # context binds the bare service (``operations.for_context``).
+        return operations.for_context(ctx, "primitive_service")
 
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
@@ -44,9 +47,8 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     async def api_list_notes(request: Request) -> Any:
         try:
             tag = request.query_params.get("tag")
-            if tag is not None:
-                return JSONResponse({"notes": _svc().list_notes(_principal(request), tag=tag)})
-            return JSONResponse({"notes": _svc().list_notes(_principal(request))})
+            args = {"tag": tag} if tag is not None else {}
+            return JSONResponse({"notes": _ops().invoke(_principal(request), "note.list", args)})
         except Exception as exc:
             return error_500(exc, log, "Failed to list notes")
 
@@ -56,13 +58,12 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            note = _svc().create_note(
-                _principal(request),
-                note_id=str(body.get("id") or "") or None,
-                title=str(body.get("title") or ""),
-                body_markdown=str(body.get("body_markdown") or ""),
-                tags=list(body.get("tags") or []),
-            )
+            note = _ops().invoke(_principal(request), "note.create", {
+                "note_id": str(body.get("id") or "") or None,
+                "title": str(body.get("title") or ""),
+                "body_markdown": str(body.get("body_markdown") or ""),
+                "tags": list(body.get("tags") or []),
+            })
             return JSONResponse({"note": note}, status_code=201)
         except (ConflictError, ValidationError) as exc:
             return _service_error(exc)
@@ -74,7 +75,7 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/notes/{note_id}")
     async def api_get_note(note_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"note": _svc().get_note(_principal(request), note_id)})
+            return JSONResponse({"note": _ops().invoke(_principal(request), "note.read", {"note_id": note_id})})
         except NotFound:
             return JSONResponse({"error": f"Unknown note: {note_id}"}, status_code=404)
         except Exception as exc:
@@ -86,15 +87,14 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            note = _svc().update_note(
-                _principal(request),
-                note_id,
-                title=body.get("title"),
-                body_markdown=body.get("body_markdown"),
-                tags=body.get("tags"),
-                expected_aggregate_revision=body.get("expected_aggregate_revision"),
-                expected_working_revision=body.get("expected_working_revision"),
-            )
+            note = _ops().invoke(_principal(request), "note.update", {
+                "note_id": note_id,
+                "title": body.get("title"),
+                "body_markdown": body.get("body_markdown"),
+                "tags": body.get("tags"),
+                "expected_aggregate_revision": body.get("expected_aggregate_revision"),
+                "expected_working_revision": body.get("expected_working_revision"),
+            })
             return JSONResponse({"note": note})
         except (ConflictError, ValidationError) as exc:
             return _service_error(exc)
@@ -107,11 +107,11 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     async def api_delete_note(note_id: str, request: Request) -> Any:
         try:
             body = await _json_body(request)
-            result = _svc().delete_note(
-                _principal(request), note_id,
-                expected_aggregate_revision=body.get("expected_aggregate_revision") if body else None,
-                expected_lifecycle_revision=body.get("expected_lifecycle_revision") if body else None,
-            )
+            result = _ops().invoke(_principal(request), "note.delete", {
+                "note_id": note_id,
+                "expected_aggregate_revision": body.get("expected_aggregate_revision") if body else None,
+                "expected_lifecycle_revision": body.get("expected_lifecycle_revision") if body else None,
+            })
             return JSONResponse({"success": True, "note": result} if isinstance(result, dict) else {"success": True})
         except (ConflictError, ValidationError) as exc:
             return _service_error(exc)

@@ -596,9 +596,10 @@ def test_phase4_mcp_shelf_writes_are_the_hubs_shelf(hub: Hub) -> None:
     # null returns an item to untouched, as the face's toggle does.
     assert hub.mcp("monday_brief.shelf", {"item_id": items[1], "state": None}) == (False, {"item_id": items[1], "state": None})
     assert hub.client.get("/api/brief/shelf").json() == {items[0]: "acknowledged"}
-    # Refusals: an unknown state is refused at the MCP schema; an unknown item by the service.
+    # Refusals: an unknown state and an unknown item, both by the brief service
+    # (PHILO-7-01 shelf-enum alignment: the MCP schema no longer pre-empts it).
     is_error, bad_state = hub.mcp("monday_brief.shelf", {"item_id": items[0], "state": "filed"})
-    assert is_error is True and "Invalid arguments" in bad_state["error"]
+    assert is_error is True and bad_state["error"] == "Unknown shelf state: filed"
     is_error, bad_item = hub.mcp("monday_brief.shelf", {"item_id": "nope", "state": "deferred"})
     assert is_error is True and "Unknown brief item" in bad_item["error"]
     assert hub.client.post("/api/brief/items/nope/shelf", json={"state": "deferred"}).status_code == 404

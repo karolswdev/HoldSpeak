@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** Phase 6 closed (the owner's D2); the owner's ratification of this charter
 - **Unblocks:** PHILO-7-02
 - **Owner:** Muad'Dib (Opus 5.5); Astra checks on built

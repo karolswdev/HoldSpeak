@@ -1,0 +1,63 @@
+# Deliberate mutations on the branch; each applied, its fence run, the file copied back (no git verb).
+=== m1 drop the (note, update) row
+E       AssertionError: a slice operation has no (kind, verb) row
+E       assert ['kb.create',....create', ...] == ['kb.create',....create', ...]
+E         
+E         At index 9 diff: 'zone.create' != 'note.update'
+E         Right contains one more item: 'zone.update'
+E         Use -v to get more diff
+=== m5 remove the words find a note
+E       AssertionError: 'find a note' is named by [], expected ['desk.list']
+E       assert [] == ['desk.list']
+E         
+E         Right contains one more item: 'desk.list'
+E         Use -v to get more diff
+1 failed, 17 passed in 1.38s
+=== m6 kb rename writes the membership snapshot back
+E       AssertionError: assert set() == {'note:a', 'note:b'}
+E         
+E         Extra items in the right set:
+E         'note:a'
+E         'note:b'
+E         Use -v to get more diff
+=== m7 restore the MCP shelf enum
+E       AssertionError: the MCP refusal never reached the registry: {'error': "Invalid arguments for monday_brief.shelf: state: 'filed' is not one of ['acknowledged', 'deferred', None]"}
+E       assert [] == ['brief.shelf.write']
+E         
+E         Right contains one more item: 'brief.shelf.write'
+E         Use -v to get more diff
+1 failed, 1 passed in 1.87s
+=== m2 zone.delete admission -> exempt
+E       AssertionError: assert ('exempt', ()) == ('admitted', ())
+E         
+E         At index 0 diff: 'exempt' != 'admitted'
+E         Use -v to get more diff
+1 failed, 14 passed, 17 deselected in 0.38s
+=== m3 GET /api/notes/{id} calls the service by hand
+E       AssertionError: assert ['note.create...'note.delete'] == ['note.create...'note.delete']
+E         
+E         At index 1 diff: 'note.update' != 'note.read'
+E         Right contains one more item: 'note.delete'
+E         Use -v to get more diff
+1 failed, 2 passed, 29 deselected in 2.47s
+=== m4 the primitive resource bypasses the contract
+E       AssertionError: assert ['zone.create....update', ...] == ['zone.create....create', ...]
+E         
+E         At index 4 diff: 'zone.create' != 'zone.read'
+E         Right contains one more item: 'zone.delete'
+E         Use -v to get more diff
+E       AssertionError: assert ['kb.create',....update', ...] == ['kb.create',....create', ...]
+=== m8 restore the directorie alias
+E       AssertionError: the zone call never reached the zone service: {'error': "'PrimitiveService' object has no attribute 'create_directorie'"}
+E       assert 'has no attribute' not in '{"error": "...rectorie\'"}'
+E         
+E         'has no attribute' is contained here:
+E           {"error": "'PrimitiveService' object has no attribute 'create_directorie'"}
+E         ?                                      ++++++++++++++++
+=== m9 zone rename writes the parent_id snapshot back
+E       AssertionError: the rename reversed the move made during it: parent_id='Ellipsis'
+E       assert 'Ellipsis' == 'p2'
+E         
+E         - p2
+E         + Ellipsis
+1 failed, 4 passed in 1.02s
