@@ -1,0 +1,36 @@
+/* Canvas-only positioning. Species and shell styles remain imported from web. */
+body {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.toast-canvas-headline {
+  margin: 0;
+  color: var(--text-muted);
+  font: 650 26px / 1.1 var(--font-display);
+}
+
+.toast-canvas .chair {
+  max-width: 960px;
+}
+
+.toast-canvas-today {
+  top: auto;
+  right: auto;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toast-canvas-flow-slot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-block: var(--space-3);
+}
+
+.toast-canvas-flow-card {
+  position: static;
+  width: min(560px, 100%);
+  transform: none;
+}

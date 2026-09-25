@@ -80,6 +80,8 @@ Lane law for this phase:
 
 ## Where we are
 
+2026-09-24 night — Astra lane B partial 03: zero omission is verified (archive 3 failed / 6 controls passed, built 13 passed). The checked canvas has today/proposed/summary-open/capture boards at both widths and a ChairHome proposal patch. Placement remains unbuilt, pending owner ratification of normal flow and the phone auto-scroll mechanism. Muad'Dib publishes the artifact.
+
 2026-09-24 night — Astra lane B: 04 is verified (33 focused tests; missing-decision parity 2:1 → 1:1 at 1440/393; legacy reads stop creating false failures). Muad'Dib pre-flip conditions paid. 03 placement remains canvas-only and unratified; 05 is in cause-first repair. One lane PR will carry the gated commits; no merge in this lane.
 
 2026-09-24 night: RATIFIED; lanes started (`../wt-philo-6-a` Muad'Dib 01/02; `../wt-philo-6-b` Astra 03/04/05).
@@ -101,6 +103,9 @@ Lane law for this phase:
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 night — PHILO-6-03 canvas/zero counsel RATIFY-WITH-CONDITIONS, paid before partial commit: sticky-phone geometry disclosed, distinct capture board, one parked rejected candidate, counsel under checks. Owner ratification still owed; `checks/story-03-canvas-zero-muaddib.md`.
+
 
 - 2026-09-24 night — the owner RATIFIED the charter ("Ratify, build it"); all five stories in progress in two lanes — Muad'Dib.
 
