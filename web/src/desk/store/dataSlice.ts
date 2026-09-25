@@ -184,8 +184,10 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
   ): Items => {
     const merged = { ...incoming } as Items;
     for (const kind of Object.keys(incoming) as Array<keyof Items>) {
-      const incomingBucket = incoming[kind] as unknown as IdentifiedItem[];
-      const currentBucket = current[kind] as unknown as IdentifiedItem[];
+      const incomingBucket = (incoming[kind] ?? []) as unknown as IdentifiedItem[];
+      // A kind the store has not loaded yet has no current bucket: nothing
+      // there is protected, and the incoming bucket stands as read.
+      const currentBucket = (current[kind] ?? []) as unknown as IdentifiedItem[];
       const protectedItems = new Map<string, IdentifiedItem>();
       const kindName = String(kind);
       for (const item of currentBucket) {
