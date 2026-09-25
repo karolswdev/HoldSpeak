@@ -17,3 +17,5 @@ Census basis: `docs/internal/philo/phase-5/residual-set.json` at main `189a6b52`
 - **D4** Phase 7's closing use: Codex WITHOUT repository access (discovery from the catalogue alone is an acceptance criterion); a reopened Desk read accepted; already-open refresh not claimed.
 
 Phase 6 is being chartered (folder `phase-6-the-honest-morning/`); Astra's check and the owner's ratification of the charter text follow.
+
+Phase 7 charter drafted at `phase-7-the-desk-on-the-contract/` (2026-09-25); Astra's check owed.
