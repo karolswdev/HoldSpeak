@@ -46,3 +46,4 @@ PROVISIONAL: 3–4 engineering days (r3: the rename repair and its two interleav
 
 - 2026-09-25 — drafted by Muad'Dib from handover XXVIII r2 §Road B and Astra's check of the drafts; unratified.
 - 2026-09-25 — r3 (Astra's charter check r2, finding 2): the rename repair added — renames update only the requested fields; two real-producer interleaving fences, red on main.
+- 2026-09-25 — r4 (Astra's charter check r3, finding 6): the rename repair and its two survival fences confirmed by Astra's independent real-service interleavings (a KB rename tombstoned a newly added `note:b`; a zone rename restored `parent_id="p1"` after a move to `p2`); genuinely plain renames stay exempt. No change to this story's scope.
