@@ -6538,6 +6538,93 @@
       },
       "completion_bound_s": 15,
       "viewports": []
+    },
+    {
+      "id": "case.philo601.import_failed.badge",
+      "job": "j4",
+      "edge_ids": [
+        "edge.route.meetings_import",
+        "edge.face.arrival_meeting_row"
+      ],
+      "state_id": "state.meetings.transcription.absent",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "A fresh isolated hub; the real import route and worker receive a header-only VTT and leave intel_status.state = import_failed with no segments (the PHILO-5-03 producer probe). The hub holds that one meeting, so the Arrival has one meeting badge."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo5_empty.vtt",
+          "sha256": "8eb5aec53542eaedb7502b22fb677161abba1e265b1338f1af1369a1f689837c",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review \u2014 empty transcript"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/intel_status/state": "import_failed",
+              "/segments": []
+            },
+            "timeout_s": 60,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "adapter": "ui-navigation",
+        "url": "/",
+        "why": "The owner opens the Arrival after the import; the face reads the failed import from the real list and detail routes."
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "FAILED"
+        },
+        "observe_at": "[data-testid=arrival-meeting-badge]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings"
+          }
+        ],
+        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row of that meeting shows the existing FAILED badge, never SAVED."
+      },
+      "completion_bound_s": 60
     }
   ],
   "states": [

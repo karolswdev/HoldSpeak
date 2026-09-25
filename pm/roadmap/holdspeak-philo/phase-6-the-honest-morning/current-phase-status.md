@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 (RATIFIED; in build).
+**Last updated:** 2026-09-24 (RATIFIED; in build; 01 done).
 
 ## Goal
 
@@ -59,7 +59,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-6-01 | The honest import badge | in-progress | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | - |
+| PHILO-6-01 | The honest import badge | done | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
 | PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
 | PHILO-6-04 | One cause, one row | in-progress | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | - |
@@ -79,6 +79,8 @@ Lane law for this phase:
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-24 night: PHILO-6-01 DONE in lane A (`feat/philo-6-a-badge-brief`): a failed import reads FAILED on the Arrival (`web/src/desk/chair/intelBadge.ts:26`); the fence is red on `origin/main` (SAVED) and green on the branch; the rig case `case.philo601.import_failed.badge` PASS at 1440 and 393. Astra checks on built. Next in the lane: PHILO-6-02.
 
 2026-09-24 night: RATIFIED; lanes started (`../wt-philo-6-a` Muad'Dib 01/02; `../wt-philo-6-b` Astra 03/04/05).
 
