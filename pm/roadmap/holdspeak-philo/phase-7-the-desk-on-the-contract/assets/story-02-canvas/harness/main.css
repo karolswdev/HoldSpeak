@@ -1,0 +1,15 @@
+/* Canvas-only: page floor and the receipt well's token run. Every species
+ * style is imported from web/src. */
+body {
+  min-width: 0;
+  overflow: hidden;
+}
+.grant-canvas {
+  min-height: 100vh;
+}
+.grant-canvas-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
