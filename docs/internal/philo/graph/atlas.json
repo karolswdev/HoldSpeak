@@ -8896,7 +8896,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1322,
+          "line": 1490,
           "claim": "is_empty is true when no section holds an item"
         },
         {
@@ -8908,7 +8908,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "No changes",
-          "line": 377,
+          "line": 542,
           "claim": "the producer's headline for an empty brief is No changes"
         }
       ],
@@ -8927,7 +8927,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 148,
+          "line": 313,
           "claim": "is_empty is a field of the brief record"
         },
         {
@@ -8974,7 +8974,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "untouched",
-          "line": 149,
+          "line": 314,
           "claim": "an absent shelf key is untouched work"
         },
         {
@@ -8999,7 +8999,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 117,
+          "line": 282,
           "claim": "acknowledged and deferred are the two shelf states"
         },
         {
@@ -9024,13 +9024,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 117,
+          "line": 282,
           "claim": "deferred is the second accepted shelf state"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1246,
+          "line": 1414,
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -9093,13 +9093,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 232,
+          "line": 397,
           "claim": "the brief is keyed by the period_end date"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "_load_brief",
-          "line": 247,
+          "line": 412,
           "claim": "a second generate on the same date returns the existing brief"
         }
       ],
@@ -9125,13 +9125,13 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "self._clock()",
-          "line": 231,
+          "line": 396,
           "claim": "generate reads the producer's one clock when no now is passed"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 232,
+          "line": 397,
           "claim": "the brief's identity is its period_end date, so a new producer-day mints a new brief"
         }
       ],
@@ -9404,7 +9404,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2312,
+          "line": 2322,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -11270,7 +11270,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "date_key",
-          "line": 232,
+          "line": 397,
           "claim": "the brief's identity is its period_end date"
         },
         {

@@ -1,0 +1,11 @@
+# PHILO-6-02 round 2 GREEN — the branch (feat/philo-6-a-badge-brief), round-two working tree
+$ HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider tests/unit/test_philo6_02_round2_outcome_words.py tests/unit/test_philo6_02_brief_truth.py
+.....................................................                    [100%]
+53 passed in 8.47s
+$ cd web && npx vitest run src/desk/chair/__tests__/briefOutcome.philo602r2.test.tsx src/desk/chair/__tests__/briefTruth.philo602.test.tsx
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  21:47:56
+   Duration  833ms (transform 697ms, setup 122ms, import 949ms, tests 71ms, environment 373ms)
+

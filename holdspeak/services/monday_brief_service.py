@@ -79,10 +79,13 @@ _HUMAN_SERVICES: frozenset[str] = frozenset({
     "WorkbenchService",
 })
 # PHILO-6-02 (Tenet 4): the words a pipeline receipt gets on the brief. A
-# stored item never carries ``Service.method`` text. Each entry names what the
-# recorded call DID: a summary run call queues a request, it does not finish a
-# summary. Keyed by (service, method): (change words, breakage words); the
-# subject (a meeting or decision title) follows a ": " when the call names one.
+# stored item never carries ``Service.method`` text and never implementation
+# vocabulary ("Primitive", a class name). Each entry names what the recorded
+# call DID: a summary run call queues a request, it does not finish a summary.
+# Keyed by (service, method): (change words, breakage words); the subject (a
+# meeting or decision title) follows a ": " when the call names one. The change
+# words are used ONLY for a call whose recorded outcome is success (round 2,
+# Astra's check on built, finding 1).
 _OPERATION_WORDS: dict[tuple[str, str], tuple[str, str]] = {
     ("MeetingIntelService", "run_intelligence"): (
         "Summary requested", "Summary did not start",
@@ -90,23 +93,185 @@ _OPERATION_WORDS: dict[tuple[str, str], tuple[str, str]] = {
     ("DecisionRecordService", "create_from_desk"): (
         "Decision recorded", "Decision did not record",
     ),
-    ("DecisionLifecycleService", "get_decision"): (
-        "Decision read", "Decision did not load",
+    ("DecisionRecordService", "create_from_meeting"): (
+        "Decision recorded", "Decision did not record",
     ),
+    ("DecisionRecordService", "create"): (
+        "Decision recorded", "Decision did not record",
+    ),
+    ("DecisionLifecycleService", "get_decision"): (
+        "Decision loaded", "Decision did not load",
+    ),
+    # The desk decision read (``GET /api/decisions/{id}`` tries it first).
+    ("PrimitiveService", "get_decision"): (
+        "Decision loaded", "Decision did not load",
+    ),
+    ("PrimitiveService", "create_decision"): (
+        "Decision saved", "Decision did not save",
+    ),
+    ("PrimitiveService", "get_note"): ("Note loaded", "Note did not load"),
     ("MondayBriefService", "shelve"): (
         "Brief triage saved", "Brief triage did not save",
     ),
+    ("MondayBriefService", "get_latest"): ("Brief loaded", "Brief did not load"),
+    ("MondayBriefService", "generate"): ("Brief made", "Brief did not complete"),
+    ("DecisionRecordService", "due_for_review"): (
+        "Decision reviews loaded", "Decision reviews did not load",
+    ),
+    ("FollowThroughService", "people_store_state"): (
+        "People list loaded", "People list did not load",
+    ),
+    ("ReactionService", "refresh_due_watches"): (
+        "Watches changed", "Watches did not change",
+    ),
+    ("ReactionService", "process_pending"): (
+        "Watch results started", "Watch results did not start",
+    ),
+    ("SetupService", "set_onboarding_disposition"): (
+        "Setup changed", "Setup did not change",
+    ),
+    ("ProjectService", "recover_ask_tasks_on_startup"): (
+        "Project tasks changed", "Project tasks did not change",
+    ),
+    ("GateService", "invalidate_held_on_startup"): (
+        "Approvals changed", "Approvals did not change",
+    ),
+    ("ProfileService", "list_inference_targets"): (
+        "Models loaded", "Models did not load",
+    ),
 }
+# The generic line for a call outside the table: ``<Object> did not <verb>``.
+# The OBJECT is the thing the method names (``list_notes`` -> Notes), else the
+# object the service keeps (enumerated below for every observed service; a
+# fence holds the enumeration complete). Never a class name.
+_SERVICE_OBJECTS: dict[str, str] = {
+    "ActivityEnrichmentService": "Activity",
+    "ActivityLedgerService": "Activity",
+    "ActivityMeetingCandidateService": "Meeting suggestion",
+    "ActivityNudgeService": "Reminder",
+    "ActivityRulesService": "Activity rule",
+    "ActuatorProposalService": "Proposal",
+    "AskService": "Question",
+    "AuthorityService": "Permission",
+    "CadenceService": "Schedule",
+    "CoderService": "Code task",
+    "CredentialService": "Credential",
+    "DecisionLifecycleService": "Decision",
+    "DecisionRecordService": "Decision",
+    "DeliveryService": "Delivery",
+    "DeskService": "Desk",
+    "DictationService": "Dictation",
+    "FollowThroughService": "Follow-up",
+    "GateService": "Approval",
+    "InvocationService": "Action",
+    "MeetingAftercareService": "Meeting follow-up",
+    "MeetingIntelService": "Summary",
+    "MeetingService": "Meeting",
+    "MemoryService": "Memory",
+    "MissionControlService": "Status",
+    "MondayBriefService": "Brief",
+    "NoteService": "Note",
+    "PeopleService": "Person",
+    "PluginJobService": "Plugin job",
+    "PrimitiveService": "Desk item",
+    "ProfileService": "Model",
+    "ProjectionService": "View",
+    "ProjectDeltaService": "Project change",
+    "ProjectService": "Project",
+    "ProjectSetupService": "Project setup",
+    "ProjectStewardService": "Project steward",
+    "ProjectUpdateService": "Project update",
+    "ReactionService": "Watch",
+    "RecipeService": "Recipe",
+    "RefinementThoughtService": "Thought",
+    "ScheduledRecordingService": "Scheduled recording",
+    "SequenceWorkflowService": "Workflow",
+    "SettingsService": "Settings",
+    "SetupService": "Setup",
+    "SyncService": "Sync",
+    "ThoughtService": "Thought",
+    "ThreadService": "Thread",
+    "WatchService": "Watch",
+    "WorkbenchService": "Workbench",
+}
+# The objects a method name can name, as the brief says them.
+_METHOD_OBJECTS: dict[str, str] = {
+    "decision": "Decision", "decisions": "Decisions",
+    "meeting": "Meeting", "meetings": "Meetings",
+    "note": "Note", "notes": "Notes",
+    "brief": "Brief",
+    "thought": "Thought", "thoughts": "Thoughts",
+    "project": "Project", "projects": "Projects",
+    "task": "Task", "tasks": "Tasks",
+    "kb": "Knowledge base", "kbs": "Knowledge bases",
+    "directory": "Folder", "directories": "Folders",
+    "workflow": "Workflow", "workflows": "Workflows",
+    "chain": "Chain", "chains": "Chains",
+    "recipe": "Recipe", "recipes": "Recipes",
+    "workbench": "Workbench", "workbenches": "Workbenches",
+    "model": "Model", "models": "Models",
+    "settings": "Settings",
+    "policy": "Policy",
+    "proposal": "Proposal", "proposals": "Proposals",
+    "job": "Job", "jobs": "Jobs",
+    "person": "Person", "people": "People",
+    "watch": "Watch", "watches": "Watches",
+    "record": "Decision", "records": "Decisions",
+    "summary": "Summary", "intelligence": "Summary",
+    "transcript": "Transcript", "recording": "Recording",
+    "thread": "Thread", "threads": "Threads",
+    "aftercare": "Meeting follow-up",
+}
+# The plain verb for the method's first word: (change words, breakage verb).
+_VERB_WORDS: dict[str, tuple[str, str]] = {}
+for _verbs, _words in (
+    (("get", "list", "read", "load", "board", "status", "health", "due", "compute",
+      "search", "find", "fetch", "count", "describe", "preview", "resolve"),
+     ("loaded", "load")),
+    (("create", "add", "mint", "import", "seed", "new", "save", "record", "write",
+      "capture", "store", "put", "upsert", "register"),
+     ("saved", "save")),
+    (("update", "edit", "set", "rename", "transition", "move", "shelve", "apply",
+      "mark", "refresh", "reorder", "assign", "bind", "unbind", "invalidate",
+      "recover", "reconcile", "accept", "reject", "supersede"),
+     ("changed", "change")),
+    (("delete", "remove", "archive", "drop", "cancel", "purge", "clear"),
+     ("deleted", "delete")),
+    (("run", "start", "launch", "attempt", "sweep", "process", "pull", "push",
+      "sync", "trigger", "execute", "dispatch", "schedule", "retry"),
+     ("started", "start")),
+    (("complete", "finish", "close", "commit", "approve"),
+     ("completed", "complete")),
+):
+    for _verb in _verbs:
+        _VERB_WORDS[_verb] = _words
+del _verbs, _words, _verb
 _SERVICE_SUFFIX = re.compile(r"(?:Service|Manager|Handler|Provider)$")
 _ARG_ID = re.compile(r'"(meeting_id|desk_decision_id)"\s*:\s*"([^"]+)"')
 
 
-def _service_noun(service: str) -> str:
-    """``MondayBriefService`` -> ``Monday brief`` (the generic fallback)."""
+def _service_object(service: str) -> str:
+    """The object a service keeps; the enumeration first, then plain words."""
+    known = _SERVICE_OBJECTS.get(service)
+    if known is not None:
+        return known
     base = _SERVICE_SUFFIX.sub("", service) or service
     words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z0-9]+", base)
     phrase = " ".join(words).lower() or base.lower()
     return phrase[:1].upper() + phrase[1:]
+
+
+def _generic_words(service: str, method: str) -> tuple[str, str]:
+    """``(change words, breakage words)`` for a call outside the table."""
+    tokens = [token for token in method.lower().split("_") if token]
+    verb = tokens[0] if tokens else ""
+    past, plain = _VERB_WORDS.get(verb, ("completed", "complete"))
+    rest = tokens[1:] if verb in _VERB_WORDS else tokens
+    thing = next(
+        (_METHOD_OBJECTS[token] for token in rest if token in _METHOD_OBJECTS),
+        _service_object(service),
+    )
+    return f"{thing} {past}", f"{thing} did not {plain}"
 
 
 _CLOSE_HOUR = 17
@@ -477,15 +642,8 @@ class MondayBriefService:
         self, conn: Any, service: str, method: str, args_summary: str, *, broke: bool
     ) -> str:
         """PHILO-6-02: human words for one pipeline receipt (no Service.method)."""
-        known = _OPERATION_WORDS.get((service, method))
-        if known is not None:
-            words = known[1] if broke else known[0]
-        else:
-            action = method.replace("_", " ").strip()
-            words = f"{_service_noun(service)}: {action}"
-            if broke:
-                words = f"{words} did not complete"
-            return words
+        known = _OPERATION_WORDS.get((service, method)) or _generic_words(service, method)
+        words = known[1] if broke else known[0]
         subject = self._operation_subject(conn, args_summary)
         return f"{words}: {subject}" if subject else words
 
@@ -555,13 +713,23 @@ class MondayBriefService:
                     ledger_since = ts_str
                 continue
 
-            detail = _sanitize_detail(str(first["args_summary"]))
+            # PHILO-6-02 round 2 (Astra's check on built, finding 1): the
+            # wording follows the recorded OUTCOME. The last event of a group
+            # is the operation's outcome (the outermost observed call emits
+            # last; a retry follows its failed attempt). A failed operation
+            # changed nothing, so it makes no Changed row: its one honest line
+            # is the Broke row `_collect_breakage` writes for the same event.
+            # A success line for it would claim what the DB does not hold.
+            outcome = events[-1]
+            if outcome["error"] is not None:
+                continue
+            detail = _sanitize_detail(str(outcome["args_summary"]))
             with self._db._connection() as conn:
                 text = self._operation_text(
                     conn,
-                    service_name,
-                    str(first["method"]),
-                    str(first["args_summary"]),
+                    str(outcome["service"]),
+                    str(outcome["method"]),
+                    str(outcome["args_summary"]),
                     broke=False,
                 )
             items.append(

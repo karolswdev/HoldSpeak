@@ -4972,10 +4972,10 @@
           },
           "predicate": {
             "kind": "op_field",
-            "path": "sections.broke",
-            "nonempty": true
+            "path": "sections.broke.0.text",
+            "value": "Decision did not load"
           },
-          "why": "the real failed read produces broke rows; the following capture selects the lifecycle failure by text rather than row order"
+          "why": "the real failed read produces the day-one broke row; PHILO-6-02 round 2: the desk read and the lifecycle read of one missing decision both read `Decision did not load` (no implementation word tells them apart), so the capture pins row 0 after this check, as the HTTP variant does"
         },
         {
           "kind": "op",
@@ -4983,12 +4983,8 @@
           "args": {},
           "adapter": "mcp-http",
           "capture_as": "old_breakage_id",
-          "capture_path": "sections.broke",
-          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief",
-          "capture_match": {
-            "text": "Decision did not load"
-          },
-          "capture_field": "id"
+          "capture_path": "sections.broke.0.id",
+          "why": "pin the failed decision read to the day-one brief-scoped item before the next brief"
         },
         {
           "kind": "op",
@@ -6597,21 +6593,43 @@
             "poll_s": 0.5
           },
           "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meeting-badge]"
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=arrival-meeting-badge]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "FAILED"
+          },
+          "timeout_s": 10,
+          "why": "PHILO-6-01: the Arrival row of the failed import shows the existing FAILED badge, never SAVED"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "action": "goto",
-        "adapter": "ui-navigation",
-        "url": "/",
-        "why": "The owner opens the Arrival after the import; the face reads the failed import from the real list and detail routes."
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-status-well-head]",
+        "why": "The owner, on the Arrival after the import (setup: the real list and detail routes drew the FAILED row), reads down to the row's open status well. At 393 the well opens below the sticky capture bar. The rig has no scroll verb and the Arrival's scroller does not take End; the pointer on the well head scrolls it into view (Playwright scrolls a target before it acts). The head carries no handler: it sits outside the row's role=button line (web/src/desk/surface/Surface.tsx SurfaceLedgerRow), so the click fires nothing."
       },
       "expected": {
         "predicate": {
           "kind": "readable_text",
-          "value": "FAILED"
+          "value": "IMPORT"
         },
-        "observe_at": "[data-testid=arrival-meeting-badge]",
+        "observe_at": "[data-testid=arrival-status-well-head]",
         "reads": [
           {
             "method": "GET",
@@ -6622,7 +6640,7 @@
             "path": "/api/meetings"
           }
         ],
-        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row of that meeting shows the existing FAILED badge, never SAVED."
+        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row shows the existing FAILED badge (setup check) and, round 2 (Astra's check on built, finding 2), its open status well names what failed: the head reads IMPORT, never SUMMARY."
       },
       "completion_bound_s": 60
     },

@@ -57,15 +57,25 @@ Rig case `case.philo602.brief_more.destination` (`docs/internal/philo/graph/atla
 
 ## The Phase 5 rehearsal — BLOCKED (not claimed)
 
-`scripts/philo5_his_words.py run` on the branch, three times (real LAN engine at 192.168.1.43, Codex through MCP): none reached the brief stage. Two runs blocked on `Codex turn decision_thought did not produce through MCP: ['desk.create']` (Codex recorded the decision through `desk.create`), one on `MCP exchange reconciliation for 'list_mcp_resource_templates' found no unused matching /api/mcp row`. Retained under `assets/story-02-shots/rehearsal/blocked/` with a README. This story changed no decision, desk or MCP code; whether `origin/main` blocks the same way today was not run (unknown). The rehearsal AC stays OPEN; the phase's exit 3 re-runs the same driver. The brief's one time and its counts at both widths are shown by the fold-destination walk above instead.
+`scripts/philo5_his_words.py run` on the branch, three times (real LAN engine at 192.168.1.43, Codex through MCP): none reached the brief stage. Two runs blocked on `Codex turn decision_thought did not produce through MCP: ['desk.create']` (**corrected in round 2, Astra's check on built, finding 6:** in those two runs Codex created a follow-through TASK through `door.add_item`, not a decision through `desk.create`; the driver expects `desk.create` and failed; `rehearsal/blocked/20260925T025811Z-…/codex/decision_thought/last.md` and `20260925T030841Z-…/` read "Added 'Review decision: …' for tomorrow"), one on `MCP exchange reconciliation for 'list_mcp_resource_templates' found no unused matching /api/mcp row`. Retained under `assets/story-02-shots/rehearsal/blocked/` with a README. This story changed no decision, desk or MCP code; whether `origin/main` blocks the same way today was not run here; Astra ran it (round 2 record below): the failures are INHERITED. The rehearsal AC is moved to the phase's exit 3 by a SCOPE AMENDMENT (story 02, round 2); the exit re-runs the same driver. The brief's one time and its counts at both widths are shown by the fold-destination walk above instead.
 
 ## The first capture (exit 1) — why
 
 The first captured run below exits 1 only on its last command: `dw check` refuses an evidence file whose story is not `done` (`evidence exists but matching story is not done`). Every test and every `--check` before it passed (627 pytest, 178 vitest). The story was then flipped `done` with the rehearsal box OPEN (the lint pairs evidence with done; the open box is stated in the story file and above), and the run was captured again.
 
+## Round 2 (Astra's check on built: BOUNCE; `checks/lane-a-built-astra.md`)
+
+- **Outcome-dependent words (finding 1).** `_collect_changes` takes the outcome from the group's LAST event (`holdspeak/services/monday_brief_service.py:723-724`); a failed operation makes no Changed row; its one line is the Broke row. Real producers: `DecisionRecordService.create_from_desk` on a missing decision (zero `decision_records`), the refused summary request, the failed triage, a lifecycle transition, the desk decision read. Positive control: a successful `create_from_desk` stores `Decision recorded: Keep retrieval local` (round one stored `Decision record: create`, the inner call's words).
+- **The fallback without implementation words (finding 5).** `<Object> did not <verb>`: the explicit table (`:89-146`) covers every observed producer of the Phase 5/6 runs; otherwise the object is the method's noun (`_METHOD_OBJECTS`) or the service's enumerated object (`_SERVICE_OBJECTS`, all 36 `@observe_service` classes, fenced complete), the verb from `_VERB_WORDS`. Changed old pins: `Note: create note` -> `Note saved`; `Sync: push did not complete` -> `Sync did not start`; `Workflow: run workflow did not complete` -> `Workflow did not start`; `Sequence workflow: run workflow` -> `Workflow started`; `Primitive: get decision did not complete` -> `Decision did not load`.
+- **Atlas.** `case.closure.chain.s5_next_day_brief_with_breakage.op`: the desk read and the lifecycle read of one missing decision both say `Decision did not load`, so the capture no longer matches one row by text: a check on `sections.broke.0.text` then a capture of `sections.broke.0.id` (the HTTP variant's form). Not run on the rig here (needs the LAN engine); schema fence `tests/unit/test_philo_graph_atlas.py`.
+- **Reds and greens:** `docs/internal/philo/phase-6/brief/round-2/red.txt` (archive `f6c0c0d1`, the round-two tests overlaid: `48 failed, 3 passed`; the enumeration test's failure is a missing symbol and is NOT counted; rendered `Tests 2 failed (2)`), `green.txt` (`53 passed`; `Tests 6 passed (6)`).
+- **Round-2 captures (below):** 2026-09-25T03:54:38Z exits 1 — `test_every_source_reference_lands_on_its_symbol[atlas.json]`: the edit moved lines in `monday_brief_service.py` and `ChairHome.tsx` that 13 atlas state sources cite; they were re-pointed to the same symbols (`docs/internal/philo/graph/atlas.json`, `atlas-phase3.json`) and the generated files regenerated. 2026-09-25T03:56:44Z exits 0 (`678 passed`; vitest `181 passed`; three `--check`s; `dw check: ok`).
+- **The rehearsal:** SCOPE AMENDMENT in the story and the phase status (carried to exit 3); line 60 above corrected.
+- **The first capture (exit 1) below** records the round-one flip to DONE with the box open; that flip is now covered by the scope amendment, not by the lint.
+
 ## Not claimed
 
-- The pipeline item's `detail` still carries the observer's raw argument JSON (`{"meeting_id":"…","expected_selection_hash":null}`) and the breakage detail the raw exception repr (`LookupError('Unknown brief item: …')`, `route_unavailable: ConflictError(…)`). The Brief view renders both (after-branch shots; at 393 the JSON runs past the right edge). Out of this story's text scope (`:500`, `:597`); a BACKLOG candidate.
+- The pipeline item's `detail` still carries the observer's raw argument JSON (`{"meeting_id":"…","expected_selection_hash":null}`) and the breakage detail the raw exception repr (`LookupError('Unknown brief item: …')`, `route_unavailable: ConflictError(…)`). The Brief view renders both (after-branch shots; at 393 the JSON runs past the right edge). Out of this story's text scope (`:500`, `:597`); a BACKLOG candidate. **Round 2:** assigned, not a candidate: BACKLOG "PHILO-6 follow-ups" row 4 (Muad'Dib, lane A).
 - The period label (`SEP 21 – 25`) is still the hub's, formatted from the timestamp's own offset. With a hub and a browser in different zones near midnight the period day and the stamp day can differ. Not seen in any retained run; not claimed.
 - A producer on the default clock writes a NAIVE `generated_at` (the hub's wall time, no offset). Both lines agree (one function, one input), but with hub and browser in different zones the digits are the hub's wall time: a naive value has no offset to convert. The owner's hub and browser share one machine. The cross-zone fence uses an aware producer clock.
 - The imported transcript meeting did not produce a `Meeting recorded` row in the rig case's brief (seven items: four decisions and three pipeline rows). Cause not investigated; recorded as unknown.
@@ -151,6 +161,136 @@ bringing up nodes...
    Start at  21:16:42
    Duration  3.94s (transform 4.60s, setup 3.09s, import 13.52s, tests 9.92s, environment 11.02s)
 
+API reference checked
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+Boundary candidate census checked
+dw check: ok
+```
+
+### Captured run — 2026-09-25T03:54:38Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -p no:cacheprovider -n 8 tests/unit/test_monday_brief*.py tests/unit/test_philo3_*.py tests/unit/test_philo4_*.py tests/unit/test_philo5_*.py tests/unit/test_philo6_*.py tests/unit/test_philo_graph_atlas.py tests/unit/test_brief_collectors.py tests/unit/test_hs171_aggregate_notify.py tests/unit/test_walk_monday_brief_126.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_4_01_generate.py tests/unit/test_hs175_week_brief.py tests/unit/test_scheduled_recording_mcp.py tests/unit/test_hs202_desk_memory_recent.py tests/unit/test_thread_tool_gate.py tests/unit/test_brief_shelf.py tests/unit/test_event_linked_arm.py tests/unit/test_brief_mcp.py tests/unit/test_person_overlay.py tests/unit/test_hs175_cancel_owner.py tests/unit/test_graph_walk_calibration.py tests/integration/test_phase200_attention_coverage.py  && (cd web && npx vitest run src/desk/chair src/desk/pullouts) && HOME=$(mktemp -d) uv run python scripts/philo_api_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_graph_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_boundary_census.py --check && HOME=$(mktemp -d) .githooks/dw check holdspeak-philo`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 0d164c58227ee48708df9c55ad0f76b618543412
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 31%]
+........................................................................ [ 42%]
+........................................................................ [ 53%]
+........................................................................ [ 63%]
+........................F............................................... [ 74%]
+........................................................................ [ 84%]
+........................................................................ [ 95%]
+..............................                                           [100%]
+=================================== FAILURES ===================================
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+[gw4] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-6-a/.venv/bin/python
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+    
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1322 no longer holds 'is_empty' (line reads 'text=f"{count} commitment{\'s\' if count != 1 else \'\'} due this week",')
+E         state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:377 no longer holds 'No changes' (line reads 'HS-175-05: used by the calendar-events and meeting-watch')
+E         state.briefs.populated: holdspeak/services/monday_brief_service.py:148 no longer holds 'is_empty' (line reads '"ActivityEnrichmentService": "Activity",')
+E         state.briefs.item.untouched: holdspeak/services/monday_brief_service.py:149 no longer holds 'untouched' (line reads '"ActivityLedgerService": "Activity",')
+E         state.briefs.item.acknowledged: holdspeak/services/monday_brief_service.py:117 no longer holds 'SHELF_STATES' (line reads '("MondayBriefService", "generate"): ("Brief made", "Brief did not complete"),')
+E         state.briefs.item.deferred: holdspeak/services/monday_brief_service.py:117 no longer holds 'SHELF_STATES' (line reads '("MondayBriefService", "generate"): ("Brief made", "Brief did not complete"),')
+E         state.briefs.item.deferred: holdspeak/services/monday_brief_service.py:1246 no longer holds 'SHELF_STATES' (line reads 'decisions are a "since the last brief" fact, so their fallback')
+E         state.briefs.same_day_idempotent: holdspeak/services/monday_brief_service.py:232 no longer holds 'date_key' (line reads '"capture", "store", "put", "upsert", "register"),')
+E         state.briefs.same_day_idempotent: holdspeak/services/monday_brief_service.py:247 no longer holds '_load_brief' (line reads '_VERB_WORDS[_verb] = _words')
+E         state.briefs.next_day_window: holdspeak/services/monday_brief_service.py:231 no longer holds 'self._clock()' (line reads '(("create", "add", "mint", "import", "seed", "new", "save", "record", "write",')
+E         state.briefs.next_day_window: holdspeak/services/monday_brief_service.py:232 no longer holds 'date_key' (line reads '"capture", "store", "put", "upsert", "register"),')
+E         state.meetings.transcription.present: web/src/desk/chair/ChairHome.tsx:2312 no longer holds 'hasTranscript' (line reads "// job with nothing to execute it says so here, in the badge species'")
+E         state.time.next_day: holdspeak/services/monday_brief_service.py:232 no longer holds 'date_key' (line reads '"capture", "store", "put", "upsert", "register"),')
+E       assert not ['state.briefs.generated_empty: holdspeak/services/monday_brief_service.py:1322 no longer holds \'is_empty\' (line rea... \'SHELF_STATES\' (line reads \'("MondayBriefService", "generate"): ("Brief made", "Brief did not complete"),\')', ...]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+1 failed, 677 passed in 84.64s (0:01:24)
+```
+
+### Captured run — 2026-09-25T03:56:44Z
+
+- **Command:** `bash -c set -o pipefail; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -p no:cacheprovider -n 8 tests/unit/test_monday_brief*.py tests/unit/test_philo3_*.py tests/unit/test_philo4_*.py tests/unit/test_philo5_*.py tests/unit/test_philo6_*.py tests/unit/test_philo_graph_atlas.py tests/unit/test_brief_collectors.py tests/unit/test_hs171_aggregate_notify.py tests/unit/test_walk_monday_brief_126.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_4_01_generate.py tests/unit/test_hs175_week_brief.py tests/unit/test_scheduled_recording_mcp.py tests/unit/test_hs202_desk_memory_recent.py tests/unit/test_thread_tool_gate.py tests/unit/test_brief_shelf.py tests/unit/test_event_linked_arm.py tests/unit/test_brief_mcp.py tests/unit/test_person_overlay.py tests/unit/test_hs175_cancel_owner.py tests/unit/test_graph_walk_calibration.py tests/integration/test_phase200_attention_coverage.py  && (cd web && npx vitest run src/desk/chair src/desk/pullouts) && HOME=$(mktemp -d) uv run python scripts/philo_api_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_graph_reference.py --check && HOME=$(mktemp -d) uv run python scripts/philo_boundary_census.py --check && HOME=$(mktemp -d) .githooks/dw check holdspeak-philo`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0d164c58227ee48708df9c55ad0f76b618543412
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 31%]
+........................................................................ [ 42%]
+........................................................................ [ 53%]
+........................................................................ [ 63%]
+........................................................................ [ 74%]
+........................................................................ [ 84%]
+........................................................................ [ 95%]
+..............................                                           [100%]
+678 passed in 95.90s (0:01:35)
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-a/web
+
+
+ Test Files  31 passed (31)
+      Tests  181 passed (181)
+   Start at  21:58:21
+   Duration  3.79s (transform 4.69s, setup 3.30s, import 12.83s, tests 8.62s, environment 10.91s)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
 API reference checked
 note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
 note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load

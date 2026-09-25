@@ -6,7 +6,7 @@ One brief from the REAL producer, served by the REAL brief routes:
   -11:00 offset), so the rendered link can run the browser in another zone;
 * a real summary run call through ``MeetingIntelService`` and the REAL
   ``@observe_service`` + ``SQLiteObserver`` (no engine is assigned, so the
-  run is refused: one change receipt and one failure receipt);
+  run is refused: one failure receipt, and since round 2 one Broke row only);
 * a real failing observed call (an Ack on an unknown item ->
   ``MondayBriefService.shelve``), the PHILO-4-03 breakage producer;
 * a THIS WEEK item (a calendar event later this week);
@@ -187,8 +187,10 @@ def test_the_real_producer_brief(tmp_path, monkeypatch):
     assert stored, "the producer stored no items"
     assert [t for t in stored if RAW.search(t)] == [], stored
     # A summary run call is a REQUEST, never a completion; the refusal is
-    # worded `<what> did not <verb>`, and both name the meeting.
-    assert f"Summary requested: {MEETING_TITLE}" in changed, changed
+    # worded `<what> did not <verb>` and names the meeting. Round 2 (Astra's
+    # check on built, finding 1): a REFUSED request changed nothing, so it
+    # makes no Changed row; its one line is the Broke row.
+    assert not any(t.startswith("Summary requested") for t in changed), changed
     assert f"Summary did not start: {MEETING_TITLE}" in broke, broke
     assert "Brief triage did not save" in broke, broke
 
@@ -202,6 +204,6 @@ def test_generic_fallback_has_no_raw_names(tmp_path):
     with db._connection() as conn:
         change = service._operation_text(conn, "NoteService", "create_note", "{}", broke=False)
         broke = service._operation_text(conn, "SyncService", "push", "{}", broke=True)
-    assert change == "Note: create note"
-    assert broke == "Sync: push did not complete"
+    assert change == "Note saved"
+    assert broke == "Sync did not start"
     assert not RAW.search(change) and not RAW.search(broke)
