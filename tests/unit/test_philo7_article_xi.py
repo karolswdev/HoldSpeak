@@ -36,6 +36,7 @@ from typing import Any
 
 import pytest
 
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -521,7 +522,13 @@ def test_class_4_each_adapter_refusal_before_invoke(hub: Hub, path: str) -> None
 
 BOUNDARY: dict[str, Any] = {
     "unknown tool": lambda hub, ids: _rpc(hub.client, "zone.fil", {})["result"]["isError"] is True,
-    "unknown operation": lambda hub, ids: _raises(lambda: hub.root.operations.invoke(None, "no.such.operation", {})),
+    # Round three (Astra r2 finding 1): AUTHENTICATED principals, and the named
+    # error asserted. A principal=None call could never journal (no receipt is
+    # written without an authenticated principal), so it hid a mutation.
+    "unknown operation, owner": lambda hub, ids: _refused_as(
+        lambda: hub.root.operations.invoke(_OWNER, "no.such.operation", {}), "unknown_operation"),
+    "unknown operation, agent": lambda hub, ids: _refused_as(
+        lambda: hub.root.operations.invoke(_AGENT, "no.such.operation", {"kind": "notes"}), "unknown_operation"),
     "failed read": lambda hub, ids: hub.mcp("desk.get", {"kind": "notes", "id": "missing"})[0] is True,
     "palette refusal of a read": lambda hub, ids: "error" in _rpc(ids["project"], "desk.list", {"kind": "notes"}),
     "palette refusal of an exempt write": lambda hub, ids: "error" in _rpc(ids["project"], "desk.create", {"kind": "notes", "data": {"title": "x"}}),
@@ -531,12 +538,17 @@ BOUNDARY: dict[str, Any] = {
 }
 
 
-def _raises(call: Any) -> bool:
-    try:
+_OWNER = Principal(PrincipalKind.OWNER, "owner-session")
+_AGENT = Principal(PrincipalKind.AGENT, AGENT_ID)
+
+
+def _refused_as(call: Any, code: str) -> bool:
+    from holdspeak.operations import OperationRefused
+
+    with pytest.raises(OperationRefused) as refused:
         call()
-    except Exception:
-        return True
-    return False
+    assert refused.value.code == code, refused.value.code
+    return True
 
 
 @pytest.mark.parametrize("path", sorted(BOUNDARY))

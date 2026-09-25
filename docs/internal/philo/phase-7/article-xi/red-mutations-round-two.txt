@@ -13,3 +13,27 @@ m27 the startup recovery skipped (F11, real restart)
   1 failed in 2.91s
 
 # the per-path protocol-boundary mutations (m24, m24b): docs/internal/philo/phase-7/article-xi/red-main-per-path.txt
+
+# Round three (Astra's check on built r2, findings 1-2): the four boundary paths' mutation reds. Each mutation broadens refusal journaling
+# through the REAL broker (services/desk_kernel.refuse, an authenticated principal) at one refusal site; restored by copy.
+
+mb1 refusal journaling broadened to the unknown-tool refusal
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt[unknown tool]
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.18s
+mb2 refusal journaling broadened to a failed read (a service refusal of any tool)
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt[failed read]
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.16s
+mb3 refusal journaling broadened to every palette refusal (a read tool included)
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt[palette refusal of a read]
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.19s
+mb4 refusal journaling broadened to the unknown-operation refusal (owner)
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt[unknown operation, owner]
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.17s
+mb4b the same broadening, the agent's call
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt[unknown operation, agent]
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.21s

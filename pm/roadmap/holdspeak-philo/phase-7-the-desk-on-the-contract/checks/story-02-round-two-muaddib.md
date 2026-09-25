@@ -68,7 +68,7 @@ Main let both of these write. Astra ruled them lawful (a NODE has only `NODE_LIN
 
 **The story's acceptance boxes, flipped honestly (16 of 17).**
 
-- **Fence-law box: UNCHECKED.** Four of the eight protocol-boundary paths (unknown tool, unknown operation, failed read, palette refusal of a read) have no demonstrated mutation red. Nothing on those paths identifies a consequential operation, so no plausible mutation reaches the receipt path. The other four are red under m24 / m24b.
+- **Fence-law box: UNCHECKED in round two. CORRECTED in round three:** the round-two sentence here said nothing on four boundary paths (unknown tool, unknown operation, failed read, palette refusal of a read) "identifies a consequential operation, so no plausible mutation reaches the receipt path". That was WRONG (Astra r2 finding 2): broadening refusal journaling at each of those refusal sites turns its fence red (Round three, below). The other four were red under m24 / m24b.
 - **Face box: flipped.** The rendered fences cover allow, stop and a refused stop. A refused ALLOW is not rendered-fenced; the criterion reads "a refused grant OR revoke", so the box stands.
 
 ## MISSED 3 — one fence per path
@@ -106,3 +106,24 @@ The HS-174 rig's shots went to `.tmp/evidence-shots` (no evidence write). `pm/ro
 None with the findings.
 
 One judgment call, stated: decision creation with a non-iterable list field changes from a crash (500) to a named 400. Main did not "accept" it; it crashed. Every value main accepted is still accepted, because the coercion is unchanged.
+
+
+## Round three — Astra's check on built r2 (`checks/story-02-built-astra-r2.md`, RATIFY-WITH-CONDITIONS)
+
+**Finding 1 — a false-negative fence.** The unknown-operation boundary fence called `invoke(None, …)`. `services/desk_kernel.py` `refuse` writes nothing without an authenticated principal, so journaling broadened to that refusal could never show on it. Astra's broadening through the real broker left the fence green, while an authenticated owner call wrote a wrong receipt. **Rewritten:** `tests/unit/test_philo7_article_xi.py:528` has two separate paths, `unknown operation, owner` and `unknown operation, agent`. They use `_OWNER` / `_AGENT` (authenticated `Principal`s) and assert the named error through `_refused_as(…, "unknown_operation")` (`OperationRefused.code`). Like every boundary path, they also assert zero operations and zero receipts. Every other boundary path already ran under an authenticated principal (the owner's hub client, or the PROJECT agent credential).
+
+**Finding 2 — every boundary path now has its own red.** Each mutation broadens refusal journaling through the REAL broker (`desk_kernel.refuse`, authenticated principal, a desk operation name) at ONE refusal site. Each was applied, run and restored by copy (`red-mutations-round-two.txt`):
+
+| Mutation | Site | Fence (path) | Red |
+|---|---|---|---|
+| mb1 | `mcp/server.py`, the `Unknown tool` ToolError | `[unknown tool]` | `AssertionError: an exempt or protocol-refused call made a kernel operation` |
+| mb2 | `mcp/server.py` (`/api/mcp` handler), the ServiceError answer | `[failed read]` | the same line |
+| mb3 | `mcp/tools.py` `dispatch_for_palette`, every palette refusal | `[palette refusal of a read]` | the same line |
+| mb4 | `operations.py` `invoke`, the unknown-operation refusal | `[unknown operation, owner]` | the same line |
+| mb4b | the same site | `[unknown operation, agent]` | the same line |
+| m24 | `operations.consequential`, exempt made consequential | `[malformed exempt operation]`, `[palette refusal of an exempt write]` | (round two, `red-main-per-path.txt`) |
+| m24b | `operations.consequential`, non-object conditional made consequential | `[non-object payload, conditional operation]`, `[http non-object body, conditional operation]` | (round two) |
+
+All nine boundary paths have a demonstrated red. The fence-law box in the story is FLIPPED in this round. Every behavioural fence is red pre-fix through the real producers (`red-main-behaviour.txt`, `red-main-per-path.txt`, `red-round-two.txt`, `red-face.txt`, `red-scroll-edge.txt`); every structural invariant is red under a named mutation (`red-mutations.txt`, `red-mutations-round-two.txt`).
+
+**Finding 3 / CI.** Astra read the fast jobs green on `5b0d6ff5`: Documentation Navigation, Web Quality (2872 passed), G0, Linux Smoke, Route screenshots. Unit, Integration and macOS E2E were pending at its check, and remain for the orchestrator to read before merge.
