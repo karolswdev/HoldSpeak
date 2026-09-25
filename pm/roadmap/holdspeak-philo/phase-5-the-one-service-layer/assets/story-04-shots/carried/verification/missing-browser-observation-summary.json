@@ -1,0 +1,39 @@
+{
+  "verdict": "pass",
+  "complete": true,
+  "case_id": "case.philo504.decision_missing.refusal",
+  "viewport": 1440,
+  "provenance": {
+    "home": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb",
+    "db": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb/.local/share/holdspeak/holdspeak.db"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "GET",
+    "path": "/api/decisions/philo504-deliberately-absent",
+    "adapter": "http-route",
+    "status": 404,
+    "response": "{\"error\":\"decision_not_found\"}",
+    "response_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+  },
+  "trigger_response_capture": null,
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.038,
+    "first_satisfied_at_s": 0.909,
+    "completion_bound_s": 15.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "shots": [
+    ".tmp/philo504-carried/missing-browser-2/20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440/before.png",
+    ".tmp/philo504-carried/missing-browser-2/20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440/after.png"
+  ],
+  "notes": [
+    "predicate: GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts"
+  ]
+}

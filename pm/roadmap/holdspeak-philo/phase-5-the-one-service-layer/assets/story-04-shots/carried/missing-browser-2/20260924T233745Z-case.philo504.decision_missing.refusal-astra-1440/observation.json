@@ -1,0 +1,312 @@
+{
+  "id": "obs-20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440",
+  "run_id": "20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440",
+  "case_id": "case.philo504.decision_missing.refusal",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_list"
+  ],
+  "state_id": "state.decisions.desk.recorded",
+  "provenance": {
+    "revision": "9c653937d29377f3a3e3d81852c82f6c5401c745",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "9fe28ed0e1a28798d991e0a808591c868739181d846c7949372325df8f2d028c",
+      "assets": [
+        "index-yOpsX1bz.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:58583",
+      "port": 58583,
+      "pid": 19450,
+      "home": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb",
+      "scheduler_thread": false
+    },
+    "db_path": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-24T23:37:45.711628+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "755487b3e636d12cf82d071670d43dfd10c77d49e95be3a53b84900f09aa5bb2",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub with no decision rows; the browser is open. This is transport proof only, not a visible refusal claim.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "api",
+    "method": "GET",
+    "path": "/api/decisions/philo504-deliberately-absent",
+    "adapter": "http-route",
+    "status": 404,
+    "response": "{\"error\":\"decision_not_found\"}",
+    "response_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: GET /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:58583/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 200,
+      "collection": "decisions",
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18",
+      "rows": [],
+      "payload": {
+        "decisions": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18"
+    },
+    "document_text_sha256": "076b3878ea6b1aa7b6e889913ec1b5c56244217054eb937121b55a0bc6d45dd0",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T23:37:51.750891+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:58583/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 200,
+      "collection": "decisions",
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18",
+      "rows": [],
+      "payload": {
+        "decisions": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18"
+    },
+    "document_text_sha256": "076b3878ea6b1aa7b6e889913ec1b5c56244217054eb937121b55a0bc6d45dd0",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T23:37:52.876094+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/decisions/philo504-deliberately-absent",
+      "status": 404,
+      "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9",
+      "body": "{\"error\":\"decision_not_found\"}"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/decisions",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nThu,",
+    "url": "http://127.0.0.1:58583/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions",
+      "status": 200,
+      "collection": "decisions",
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18",
+      "rows": [],
+      "payload": {
+        "decisions": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "1672e9728a2079c90e1a3de3b2279d199f0bc1a90b366656915700a3922c7f18"
+    },
+    "document_text_sha256": "076b3878ea6b1aa7b6e889913ec1b5c56244217054eb937121b55a0bc6d45dd0",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T23:37:52.746705+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/decisions/philo504-deliberately-absent",
+      "status": 404,
+      "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9",
+      "body": "{\"error\":\"decision_not_found\"}"
+    },
+    "predicate_satisfied": true,
+    "reading": "GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts",
+    "elapsed_s": 0.909
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.038,
+    "first_satisfied_at_s": 0.909,
+    "completion_bound_s": 15.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts"
+  ],
+  "complete": true,
+  "shots": [
+    ".tmp/philo504-carried/missing-browser-2/20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440/before.png",
+    ".tmp/philo504-carried/missing-browser-2/20260924T233745Z-case.philo504.decision_missing.refusal-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp-2/graph-walk-home-hd204ykb/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:58583"
+  ],
+  "duration_s": 7.497
+}

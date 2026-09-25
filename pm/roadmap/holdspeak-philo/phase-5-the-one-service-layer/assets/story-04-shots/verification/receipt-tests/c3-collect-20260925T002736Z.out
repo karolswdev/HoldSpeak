@@ -1,0 +1,12 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest list --maxWorkers=2 src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > renders the latest producer receipt without pressing Generate
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > leaves the receipt slot absent when latest answers null
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > names a latest read failure instead of claiming no brief exists
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > retains the first receipt when StrictMode's later mount read fails
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > clears the first receipt when StrictMode's later mount read answers null
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+EXIT: 0

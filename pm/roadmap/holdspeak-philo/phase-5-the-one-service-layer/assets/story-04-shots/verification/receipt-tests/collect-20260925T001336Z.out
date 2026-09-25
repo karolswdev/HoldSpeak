@@ -1,0 +1,25 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest list --maxWorkers=2 src/desk/chair/__tests__/briefReceiptRendered202.test.tsx src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > renders the latest producer receipt without pressing Generate
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > leaves the receipt slot absent when latest answers null
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > names a latest read failure instead of claiming no brief exists
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > shows the latest receipt before Generate and replaces it with the new receipt
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > names the destination on the row before the press
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > keeps the receipt when the generated response has no countable rows
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says No brief yet only when the read answered null
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says READING… while the read is open
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > names a failed read with its status and Retry reads again
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says NO ANSWER when the fetch got no response
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the period and the generated date under a populated brief
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the date under an empty brief's headline too
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > names the destination the hub actually uses
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > carries the local scope, not a bare chip
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > says nothing before the verb is pressed
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > names what was built and when
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > never counts zero (UX-CANON A.8)
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > states one item in the singular
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+EXIT: 0

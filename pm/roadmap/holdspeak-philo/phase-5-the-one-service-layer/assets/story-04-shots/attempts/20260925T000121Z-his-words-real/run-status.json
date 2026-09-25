@@ -1,0 +1,10 @@
+{
+  "elapsed_s": 170.455,
+  "error": {
+    "message": "Locator.inner_text: Timeout 10ms exceeded.\nCall log:\n  - waiting for locator(\"body\")\n",
+    "type": "TimeoutError"
+  },
+  "finished_at": "2026-09-25T00:04:12.010610+00:00",
+  "outcome": "blocked",
+  "started_at": "2026-09-25T00:01:21.555627+00:00"
+}

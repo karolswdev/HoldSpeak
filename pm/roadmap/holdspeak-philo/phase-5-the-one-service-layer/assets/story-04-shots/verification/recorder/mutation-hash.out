@@ -1,0 +1,17 @@
+COMMAND (disposable copy /tmp/holdspeak-philo504-hash.oBboay):
+(cd /tmp/holdspeak-philo504-hash.oBboay && PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH PYTHONPATH=/tmp/holdspeak-philo504-hash.oBboay HOME=$(mktemp -d) uv run --project /Users/karol/dev/tools/wt-philo-5-04 pytest -q --disable-warnings tests/unit/test_philo5_rehearsal_capture.py::test_import_op_cites_the_hash_already_computed_for_the_real_fixture)
+exit_code=1
+
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_import_op_cites_the_hash_already_computed_for_the_real_fixture ______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-789/test_import_op_cites_the_hash_0')
+
+>       assert result["fixture"] == {"path": str(fixture), "sha256": expected_hash}
+E       KeyError: 'fixture'
+
+tests/unit/test_philo5_rehearsal_capture.py:131: KeyError
+=========================== short test summary info ============================
+FAILED test_import_op_cites_the_hash_already_computed_for_the_real_fixture
+1 failed in 0.50s

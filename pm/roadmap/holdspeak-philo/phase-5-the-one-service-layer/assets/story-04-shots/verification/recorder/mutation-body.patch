@@ -1,0 +1,7 @@
+@@ _RehearsalRecorder.write
+         entry: dict[str, Any] = {
+             "method": method,
+             "path": path,
+             "status": status,
++            "request_body": self._body(request_body),  # deliberate mutation: leak non-MCP body
+         }

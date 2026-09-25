@@ -1,0 +1,51 @@
+........................................................................ [ 30%]
+.......................................F................................ [ 60%]
+........................................................................ [ 90%]
+........................                                                 [100%]
+=================================== FAILURES ===================================
+_________ test_every_source_reference_lands_on_its_symbol[atlas.json] __________
+
+every_atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_every_source_reference_lands_on_its_symbol(every_atlas: dict) -> None:
+        """A line number is evidence, not identity (brief section 1).
+    
+        The cited line must still hold the cited symbol, or the reference has
+        drifted and the claim behind it is no longer proven.
+        """
+        problems: list[str] = []
+        for state in every_atlas["states"]:
+            for ref in state["sources"]:
+                target = REPO / ref["path"]
+                if not target.is_file():
+                    problems.append(f"{state['id']}: missing file {ref['path']}")
+                    continue
+                lines = target.read_text(errors="replace").splitlines()
+                if not 1 <= ref["line"] <= len(lines):
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} is past the end of the file"
+                    )
+                    continue
+                line = lines[ref["line"] - 1]
+                if ref["symbol"] not in line:
+                    problems.append(
+                        f"{state['id']}: {ref['path']}:{ref['line']} no longer holds "
+                        f"{ref['symbol']!r} (line reads {line.strip()[:80]!r})"
+                    )
+>       assert not problems, "\n".join(problems)
+E       AssertionError: state.briefs.absent: web/src/desk/chair/ChairHome.tsx:1334 no longer holds '!briefLoading && !brief' (line reads '</div>')
+E         state.briefs.loading: web/src/desk/chair/ChairHome.tsx:524 no longer holds 'setBriefLoading' (line reads 'head Generate repeats the same POST. */')
+E         state.briefs.generating: web/src/desk/chair/ChairHome.tsx:737 no longer holds 'generating' (line reads 'idiom) or failed (BRIEF DID NOT GENERATE · <cause>). */')
+E         state.briefs.generation_failure: web/src/desk/chair/ChairHome.tsx:712 no longer holds 'setGenerateFailed' (line reads '} catch (error) {')
+E         state.briefs.populated: web/src/desk/chair/ChairHome.tsx:874 no longer holds 'briefItems' (line reads '});')
+E         state.briefs.reload_persisted: web/src/desk/chair/ChairHome.tsx:1389 no longer holds 'arrival-brief' (line reads 'PHILO-4-01 boards 7a, 7b, 8a, 8b, 9. */')
+E         state.briefs.item.untouched: web/src/desk/chair/ChairHome.tsx:882 no longer holds 'briefShelf' (line reads ': [];')
+E         state.meetings.transcription.present: web/src/desk/chair/ChairHome.tsx:2304 no longer holds 'hasTranscript' (line reads ': serverBadge;')
+E         state.desk_presentation.reload_reconnect: web/src/desk/chair/ChairHome.tsx:628 no longer holds 're-reads' (line reads '}')
+E         state.desk_presentation.reload_reconnect: web/src/desk/chair/ChairHome.tsx:527 no longer holds 'apiFetch' (line reads 'const readBrief = useCallback(() => {')
+E       assert not ["state.briefs.absent: web/src/desk/chair/ChairHome.tsx:1334 no longer holds '!briefLoading && !brief' (line reads '</.../chair/ChairHome.tsx:1389 no longer holds 'arrival-brief' (line reads 'PHILO-4-01 boards 7a, 7b, 8a, 8b, 9. */')", ...]
+
+tests/unit/test_philo_graph_atlas.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas.json]
+1 failed, 239 passed in 117.48s (0:01:57)

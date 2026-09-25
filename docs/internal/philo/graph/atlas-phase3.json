@@ -70,7 +70,7 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "ui",
@@ -312,13 +312,13 @@
           "action": "click",
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
-          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and ⌘⇧N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
+          "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "CREATE DECISION FAILED · HTTP 500"
+            "value": "CREATE DECISION FAILED \u00b7 HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "the failed create is named, and the read failure that follows (refresh) does not replace it or its Retry"
@@ -372,7 +372,7 @@
       "id": "case.a1.decisions_read.failure_named",
       "job": "a1",
       "edge_ids": [
-        "edge.route.decisions_list"
+        "edge.route.decisions_read"
       ],
       "state_id": "state.decisions.desk.read_failed",
       "applicability": "applicable",
@@ -427,7 +427,7 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "READ DECISIONS FAILED · HTTP 500"
+            "value": "READ DECISIONS FAILED \u00b7 HTTP 500"
           },
           "observe_at": ".write-receipt",
           "why": "a failed decisions read is named with Retry"
@@ -519,10 +519,10 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "KEPT ·"
+          "value": "KEPT \u00b7"
         },
         "observe_at": ".thought-note-foot .surface-footer-receipt-line",
-        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT · <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING…` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
+        "words": "PHILO-3-04 (canvas ratified 2026-09-23): after autosave the Thought foot's FIRST receipt line (the write) reads `KEPT \u00b7 <local time>`, bound to the hub's `working_note.last_modified` on the PATCH /api/thoughts/{id}/working response (useThoughtNoteWriter.ts success path, thoughtReceipt.ts thoughtWriteLine). The fill flips that line to `SAVING\u2026` in the same discrete input event, so the predicate cannot hold again until the 450 ms wait and the PATCH are over: the observation's `first_satisfied_at_s` must be at or above 0.45 s, or the pass read the open-time stamp and is void. The filing state is the SECOND line ([data-line=filing]); observe_at's first match is the write line. The row in the store is the sibling case case.j11.thought_keep.kept (protocol_rows on GET /api/notes).",
         "reads": [
           {
             "method": "GET",
@@ -909,7 +909,7 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "BRIEF DID NOT LOAD · HTTP 500"
+            "value": "BRIEF DID NOT LOAD \u00b7 HTTP 500"
           },
           "observe_at": "[data-testid=arrival-brief]",
           "timeout_s": 10,
@@ -948,7 +948,7 @@
           "value": "No brief yet"
         },
         "observe_at": "[data-testid=arrival-brief]",
-        "words": "setup: every brief read fails at the browser boundary; after a reload the BRIEF section says 'BRIEF DID NOT LOAD · HTTP 500' with Retry and NOT 'No brief yet'; the fault lifts. trigger: Retry reads again; the hub answers null (a fresh HOME has no brief), so the section now says 'No brief yet'. before.png is the failure line, after.png the answered read.",
+        "words": "setup: every brief read fails at the browser boundary; after a reload the BRIEF section says 'BRIEF DID NOT LOAD \u00b7 HTTP 500' with Retry and NOT 'No brief yet'; the fault lifts. trigger: Retry reads again; the hub answers null (a fresh HOME has no brief), so the section now says 'No brief yet'. before.png is the failure line, after.png the answered read.",
         "reads": [
           {
             "method": "GET",
@@ -6128,6 +6128,416 @@
         "words": "replayed provider variant; chain step 3: the hub is stopped and started on the same HOME and database; the reloaded face shows the same summary text; the restart record retains the meeting id, summary and run receipt before and after."
       },
       "completion_bound_s": 180
+    },
+    {
+      "id": "case.closure.chain.s4_saved_content",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_create"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "the PHILO-3 closure chain: a fresh isolated HOME and browser profile, one hub; every earlier link of the chain runs in this same hub before the trigger"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-engines]",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-blocker-verb-summary]",
+          "optional": true,
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-engine-row] input",
+          "value": "http://192.168.1.43:8080"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-check]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=concierge-add-submit]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-concierge .desk-window-title",
+          "state": "hidden",
+          "adapter": "ui-pointer",
+          "why": "the Models setup window is closed before Arrival is observed"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo3_architect_meeting.wav",
+          "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "adapter": "http-route",
+          "capture_path": "meeting_id",
+          "form": {
+            "title": "Architecture boundary review"
+          },
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/duration": {
+                "positive": true
+              },
+              "/segments": {
+                "min_items": 1
+              }
+            },
+            "timeout_s": 300,
+            "poll_s": 0.5
+          },
+          "expect_status": 202
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 1
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-meetings]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]",
+          "why": "the Run verb is drawn only when the route is ready"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-run-intel]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=meeting-summary-text]",
+          "timeout_s": 300,
+          "why": "the one Run produced rendered summary material"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}",
+          "body": null,
+          "capture_as": "persisted_summary",
+          "capture_path": "intel.summary",
+          "adapter": "http-route",
+          "why": "the summary the restart must keep"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/run_receipt/attempts/0/host",
+            "value": "192.168.1.43"
+          },
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}",
+          "why": "the durable receipt names the actual LAN host"
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the rig stops and starts its own hub on the same HOME and database"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=meeting-summary-text]",
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_equals",
+            "value": "{persisted_summary}"
+          },
+          "observe_at": "[data-testid=meeting-summary-text]",
+          "why": "the same summary after the restart"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]",
+          "why": "day one: the Chair's Generate makes the brief before the decision exists"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-receipt]"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_brief_id",
+          "capture_path": "id",
+          "adapter": "http-route",
+          "why": "the day-one brief's id"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "adapter": "ui-pointer",
+          "why": "the menubar Search, present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Decision",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[id='desk-palette-option-desk.new-decision']",
+          "adapter": "ui-pointer",
+          "why": "the face create verb desk.new-decision (POST /api/decisions)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "adapter": "ui-pointer",
+          "why": "the create opens the decision face in Edit"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decisions",
+          "body": null,
+          "capture_as": "decision_id",
+          "capture_path": "decisions.0.id",
+          "adapter": "http-route",
+          "why": "the id the face create minted; the desk had no decision before"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": ".desk-decision-card textarea[aria-label=Context]",
+          "value": "Source: Architecture boundary review (imported meeting)",
+          "adapter": "ui-keyboard"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": ".desk-decision-card textarea[aria-label=Decision]",
+          "value": "Keep summary retrieval on the local desk\nafter a hub restart. Owner: Leo Martinez.",
+          "adapter": "ui-keyboard",
+          "why": "planted decision two of tests/fixtures/philo3_architect_meeting.txt"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "role": "button",
+        "name": "Done",
+        "adapter": "ui-pointer",
+        "why": "DecisionPullout Done -> PUT /api/decisions/{id}; the title is the first line"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Keep summary retrieval on the local desk"
+        },
+        "observe_at": ".desk-decision-card > section:nth-of-type(2)",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "words": "PHILO-5-04 carried S4 proof: the actual saved decision text is rendered after Done, within the viewport and owning its hit points. The existing S4 chain and its real producers are unchanged; this waits for the face rather than closing on its DB row.",
+        "frame_selector": ".desk-decision-card > section:nth-of-type(2)"
+      },
+      "completion_bound_s": 60
+    },
+    {
+      "id": "case.philo504.decision_missing.refusal",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_read"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with no decision rows; the browser is open. This is transport proof only, not a visible refusal claim."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 10,
+          "adapter": "ui-pointer"
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "GET",
+        "path": "/api/decisions/philo504-deliberately-absent",
+        "body": null,
+        "adapter": "http-route",
+        "why": "One missing decision read, from the browser rig; capture its refusal without retry. Compare actual observer rows against the op sibling; inherited HTTP fallback may differ."
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/decisions",
+        "predicate": {
+          "kind": "protocol_status",
+          "method": "GET",
+          "path": "/api/decisions/philo504-deliberately-absent",
+          "status": 404,
+          "body_contains": "decision_not_found"
+        },
+        "words": "The trigger refuses the unknown decision. No missing-id poll is used; independent readonly DB proof counts the actual observer failure rows. This does not assert parity. The atlas route name edge.route.decisions_read denotes GET /api/decisions/{decision_id}, generated edge edge.http.get.api_decisions_decision_id (holdspeak/web/routes/decisions.py); it is not the list route. Existing recorded observations retain their original route label and are not rewritten."
+      },
+      "completion_bound_s": 15,
+      "viewports": [
+        1440
+      ]
+    },
+    {
+      "id": "case.philo504.decision_missing.refusal.op",
+      "job": "a1",
+      "edge_ids": [
+        "edge.route.decisions_list"
+      ],
+      "state_id": "state.decisions.desk.recorded",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with no decision rows; no browser is needed."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.read",
+        "args": {
+          "decision_id": "philo504-deliberately-absent"
+        },
+        "adapter": "mcp-http",
+        "why": "One missing decision read through the canonical registry; compare refusal and actual observer rows with the HTTP/browser sibling."
+      },
+      "expected": {
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "philo504-deliberately-absent"
+          }
+        },
+        "predicate": {
+          "kind": "op_refusal",
+          "code": "not_found",
+          "error_contains": "Unknown decision: philo504-deliberately-absent"
+        },
+        "words": "The trigger refuses the unknown decision once. Compare the independently retained DB failure rows; do not assert equivalence merely because both calls refuse. The atlas route name edge.route.decisions_read denotes GET /api/decisions/{decision_id}, generated edge edge.http.get.api_decisions_decision_id (holdspeak/web/routes/decisions.py); it is not the list route. Existing recorded observations retain their original route label and are not rewritten."
+      },
+      "completion_bound_s": 15,
+      "viewports": []
     }
   ],
   "states": [
@@ -6154,7 +6564,7 @@
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
           "line": 42,
-          "claim": "its foot states the write (KEPT · <time>, SAVING…, DID NOT SAVE · <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
+          "claim": "its foot states the write (KEPT \u00b7 <time>, SAVING\u2026, DID NOT SAVE \u00b7 <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
         }
       ],
       "reachable_by": [

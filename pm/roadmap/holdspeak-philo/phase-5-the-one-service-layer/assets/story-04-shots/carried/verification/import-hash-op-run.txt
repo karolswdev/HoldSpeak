@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: astra
+SOURCE: 9c653937d29377f3a3e3d81852c82f6c5401c745 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-yOpsX1bz.js'] hub=http://127.0.0.1:59212 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ij843n9d/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)
+NOTE: predicate: transcription_status equals the declared value

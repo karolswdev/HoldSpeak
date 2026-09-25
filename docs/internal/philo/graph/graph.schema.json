@@ -752,6 +752,7 @@
           ]
         },
         "viewport": {
+          "description": "For a browser observation this is the measured viewport width. Headless op observations retain the runner's legacy 1440 label and -1440 run-id suffix; those are run labels, not evidence of a browser, a viewport measurement, or a face. Read the trigger adapter, before/after headless fields and shots to identify the proof tier.",
           "type": "integer",
           "minimum": 1
         },

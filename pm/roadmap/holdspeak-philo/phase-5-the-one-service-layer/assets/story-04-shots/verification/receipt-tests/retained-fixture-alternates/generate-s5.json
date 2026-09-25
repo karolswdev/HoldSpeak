@@ -1,0 +1,52 @@
+{
+  "id": "brief-ae21bca3453d448ca1e97296fd85775b",
+  "period_start": "2026-09-24T17:00:00",
+  "period_end": "2026-09-25T16:12:42.547968",
+  "headline": "2 things waiting, 1 decision waiting.",
+  "sections": {
+    "this_week": [],
+    "changed": [],
+    "broke": [],
+    "waiting": [
+      {
+        "id": "brief-item-7afe060389194fdb880b6119992eeee9",
+        "section": "waiting",
+        "text": "Unassigned: Write the Migration Plan",
+        "detail": "Due Friday",
+        "source_ref": "action_item:action_bd45531292caaeb038440b3e",
+        "priority": 200,
+        "created_at": null
+      },
+      {
+        "id": "brief-item-7f8fb44509ca436eada825bab0ae1c15",
+        "section": "waiting",
+        "text": "Unassigned: Test restart retrieval",
+        "detail": "Due Tuesday",
+        "source_ref": "action_item:action_fbe58cf3c7cdeb679a0ce931",
+        "priority": 200,
+        "created_at": null
+      }
+    ],
+    "decisions": [
+      {
+        "id": "brief-item-b7990fe46cc2412e8da137dadd6cf552",
+        "section": "decisions",
+        "text": "Review decision: Keep summary retrieval on the local desk",
+        "detail": null,
+        "source_ref": "decision:decision_9212e89730b8",
+        "priority": 200,
+        "created_at": "2026-09-24T22:12:40Z"
+      }
+    ]
+  },
+  "generated_at": "2026-09-25T16:12:42.547968",
+  "is_empty": false,
+  "shelf": {},
+  "ledger": {
+    "operations": 0,
+    "since": null
+  },
+  "period_label": "SEP 21 – 25",
+  "generated_label": "GENERATED SEP 25 16:12",
+  "person_sections_state": "unavailable"
+}

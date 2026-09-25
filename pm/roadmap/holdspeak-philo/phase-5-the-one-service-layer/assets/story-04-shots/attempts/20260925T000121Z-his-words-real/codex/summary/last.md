@@ -1,0 +1,1 @@
+The summary is saved and available on **Architecture review** (`31e70ae2`). The meeting record reports summary status **ready**.

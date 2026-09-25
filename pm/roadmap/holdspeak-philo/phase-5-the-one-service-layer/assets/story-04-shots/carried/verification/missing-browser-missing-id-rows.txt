@@ -1,0 +1,7 @@
+id  service                   method        args_summary                                    error                                                       error_code  origin
+--  ------------------------  ------------  ----------------------------------------------  ----------------------------------------------------------  ----------  ------
+67  PrimitiveService          get_decision  {"decision_id":"philo504-deliberately-absent"}  NotFound('Unknown decision: philo504-deliberately-absent')  not_found   local 
+68  DecisionLifecycleService  get_decision  {"decision_id":"philo504-deliberately-absent"}  NotFound('Unknown decision: philo504-deliberately-absent')  not_found   local 
+--- counts ---
+DecisionLifecycleService|get_decision|1
+PrimitiveService|get_decision|1

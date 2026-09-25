@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (01 and 02 merged; 03 done on `feat/philo-5-03-the-atlas`, Astra lane; precommit conditions paid; PR held for counsel on built).
+**Last updated:** 2026-09-24 (01–03 merged; 04 technically done on Astra's lane. OWNER REVIEW PENDING.)
 
 ## Goal
 
@@ -32,7 +32,7 @@ RATIFIED by the owner 2026-09-24 (AskUserQuestion): "Ratify, build it" — the f
 ## Scope
 
 - **In:** the pilot per D1 — the corrected inventory below (Astra r2 finding 3); a small application-operation contract (a descriptor module: name, version, args schema, description, result and refusal shapes, asynchronous completion/read identity, intended transport exposure); per-hub eager binding of the pilot services (callbacks, clock) with both transports bound to it; the MCP resources that read the pilot's objects; the retirement of the standalone MCP entry (D2); the Codex seams (D3); the rig's headless `op` execution against the owning isolated hub; compatibility guards, the residual fence and the complete-roster doc check shipped with each conversion; the rehearsal (proof mode).
-- **Out:** migrating the other tools/routes (the residual set pays story by story, later phases); CLI and connectors; any face change; new kernel admissions (existing service-owned admissions and receipts are preserved, never double-admitted, never exempted by a label — `CONSTITUTION.md:169`); native recording; the generic `desk.*` tools for kinds other than decisions; the brief's freshness on an already-open Desk: **a fresh/reopened Desk read is accepted for the brief; already-open brief refresh is NOT claimed** (Arrival reads the brief on mount; its `desk_changed` subscription refreshes assignments, not the brief — `web/src/desk/chair/ChairHome.tsx:523,634,917`). A stronger freshness promise needs a named scope amendment.
+- **Out:** migrating the other tools/routes (the residual set pays story by story, later phases); CLI and connectors; face changes except the PHILO-5-04 latest-brief receipt amendment below; new kernel admissions (existing service-owned admissions and receipts are preserved, never double-admitted, never exempted by a label — `CONSTITUTION.md:169`); native recording; the generic `desk.*` tools for kinds other than decisions; the brief's freshness on an already-open Desk: **a fresh/reopened Desk read is accepted for the brief; already-open brief refresh is NOT claimed** (Arrival reads the brief on mount; its `desk_changed` subscription refreshes assignments, not the brief — `web/src/desk/chair/ChairHome.tsx:523,634,917`). A stronger freshness promise needs a named scope amendment.
 
 ### The pilot inventory (Astra r2 finding 3, verbatim)
 
@@ -160,7 +160,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | PHILO-5-01 | One decision through one contract (and the Codex path proved) | done | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-5-02 | The loop shares the contract | done | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-5-03 | The atlas proves the three paths | done | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-5-04 | The owner asks in his own words (rehearsed, owner-reviewed shots) | backlog | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | - |
+| PHILO-5-04 | OWNER REVIEW PENDING — The owner asks in his own words | done — OWNER REVIEW PENDING (2026-09-24) | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Lanes
 
@@ -172,6 +172,31 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+The phase is **technically done and open — OWNER REVIEW PENDING**.
+`dw check` reports one expected phase-close receipt lint:
+`ERROR pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer: all stories are done but final-summary.md is missing`.
+`dw_pmo/validate.py:189-194` emits it. A summary file would mark this phase
+CLOSED by existence alone (`statefeed.py:111-118`; `api.py:30-34`), so it
+must not be created now. The stamped commit gate does not consume this
+phase lint and remains unchanged. `.githooks/dw phase close`
+(`mutations.py:400-415`) is deferred until the owner's review closes exit 5
+and the phase close is verified. [Both brains' receipt disposition](checks/story-04-phase-receipt-muaddib.md).
+
+OWNER REVIEW PENDING (2026-09-24). PHILO-5-04's real-engine rehearsal
+completed in 326.090 seconds from four ordinary prompts through Codex.
+The summary arrived without manual refresh. The decision, saved Thought
+and next-day brief were read back through the registry and inspected at
+1440 and 393. A fresh Desk read shows `Brief ready` after the checked
+receipt seam. Worktree `../wt-philo-5-04`, branch
+`feat/philo-5-04-his-words`, from main `9c653937`. Muad'Dib ratified the technical close with record conditions paid.
+Technical status is done. Build commit `4c56fa94` passed the gate;
+[PR #638](https://github.com/karolswdev/HoldSpeak/pull/638) is OPEN and unmerged for
+Muad'Dib's counsel on built and shot publication.
+Owner review and exit 5 stay open.
+[Rehearsal](../../../../docs/internal/philo/phase-5/his-words/rehearsal.md),
+[lane report and six-row repair ledger](lane-report-story-04.md),
+[evidence](evidence-story-04.md).
 
 2026-09-24: PHILO-5-03 DONE; Muad'Dib's precommit check ratified with record conditions paid. Work is in
 `../wt-philo-5-03`, branch `feat/philo-5-03-the-atlas`, from main `c4d46498`.
@@ -218,6 +243,25 @@ face limitations are recorded under Decisions deferred for PHILO-5-04.
 
 ## Decisions made (this phase)
 
+- 2026-09-24 — PHILO-5-04 receipt amendment, ratified by Muad'Dib:
+  the owner's brief requires `Brief ready …` after a fresh/reopened read of
+  Codex's next-day brief. The existing Article III receipt now also identifies
+  the latest durable brief on arrival. Reuse its current formatter and slots;
+  hydrate only from the successful latest GET, clear on null, preserve on
+  failed read. No already-open brief refresh is added or claimed. This is
+  the one exception to the no-face-change scope, with a real missing-receipt
+  red required before the surgical edit. [Settled seam and check](../../../../docs/internal/philo/phase-5/his-words/receipt-seam.md).
+
+- 2026-09-24 — PHILO-5-04 technical completion and owner review are split
+  by the owner's direct lane brief: "flip via `dw story status … done` after evidence"
+  and "push; PR to main; do NOT merge — Muad'Dib counsels on built and PUBLISHES the shots for the owner's review."
+  Muad'Dib ratified the visible split. Technical completion may flip only
+  after its actual proof and check; the owner's review stays plainly
+  pending, the PR stays unmerged, and exit 5 stays unchecked until the
+  review is recorded. The original "Unit: none new" plan is amended for
+  prompt/transcript and real-hub recorder fences, each with mutation reds.
+  [Check and response](checks/story-04-scope-muaddib.md).
+
 - 2026-09-24 — Muad'Dib's counsel on story 03: RATIFY-WITH-CONDITIONS, paid; the `op` tier is trusted (registry inside the owning hub via `/api/mcp`; headless; 18 pairs; durable-state comparator); three defects the lane found carried into story 04 as work (SAVED on `import_failed`; S4 blank at 393; two broke rows for one cause) — Muad'Dib.
 
 - 2026-09-24 — Astra r2 on story 02: RATIFY-WITH-CONDITIONS, paid (the import tool advertises "Owner only."; the merge record states the owner boundary and the inherited, unruled admission debt). Merged on both brains' verdicts + the fast CI jobs — Muad'Dib.
@@ -248,12 +292,29 @@ face limitations are recorded under Decisions deferred for PHILO-5-04.
 
 ## Decisions deferred
 
+- 2026-09-24 — PHILO-5-04 disposition of story 03's carried proof: the
+  direct op import hash and S4 saved content at 393 are PAID. The actual
+  missing-decision HTTP/op refusal pair is now observed, with parity
+  **FAIL: two HTTP observer rows versus one MCP row**. The older entries
+  below preserve the original findings; the six carried boxes and lane
+  ledger are the current disposition. Six product repairs remain owed after the closing check added the brief
+  count/time conflict and persisted raw pipeline item.
+
+
+- PHILO-5-04: the shelf schema narrowing, duplicate missing-decision
+  observer rows, failed-import SAVED badge, and zero-decided toast are
+  inherited product defects, with reasons, seams and failing tenets in
+  [the six-row lane ledger](lane-report-story-04.md#ledger). **Product follow-up owed.**
+  BACKLOG rows for these four to be filed by **Muad'Dib at counsel-on-built,
+  before merge**, as he undertook in the scope check. No finding is repaired
+  by being ledgered.
+
 - PHILO-5-03 record follow-up for PHILO-5-04: an op import records its fixture SHA256 in `provenance.fixture_hashes`, not on the op step itself. The hash is retained; consider a direct step citation. Registry-reach unit instrumentation uses the real root in-process; the spawned-hub claim comes from the actual op atlas runs.
 
 - PHILO-5-03 rehearsed observations, assigned to PHILO-5-04: S4 at393 saved the decision in the DB but its raw after shot had blank reading content; eventual rendering was not verified. Empty VTT import leaves an Arrival meeting labelled SAVED while the durable state is import_failed. The HTTP missing-decision route falls through from registry NotFound to DecisionLifecycleService (`holdspeak/web/routes/decisions.py:58-61`), so one HTTP read produces two observer failure rows; MCP produces only the primitive row. The brief says two things broke for one cause. This inherited Article XI compatibility projection debt goes to PHILO-5-04. The S5 pair uses the same HTTP failure seed on both sides; it does not establish missing-decision refusal parity. See checks/story-03-breakage-source-muaddib.md. The existing transient meeting toast also shows a zero decided count. These are presentation/debt findings against Tenets3/4 and UX-CANON, not new product changes in the atlas lane. See assets/story-03-shots/glass-review.md and checks/story-03-breakage-window-muaddib.md.
 - PHILO-5-03 Thought comparison scope: browser blank-note create and MCP typed create have different immutable raw-source custody. MCP requires nonempty raw_text and substitutes it for a blank initial body. The op case starts from distinct draft text and proves the same saved working body plus revision/time/ID/cursor relationships; it does not claim identical immutable raw content across these create affordances. The rejected blank-raw attempt and the first same-body attempt are retained, unselected.
 
-- PHILO-5-03 shelf refusal: the MCP `monday_brief.shelf` schema rejects an unknown state before the registry, while `brief.shelf.write` declares the service's unknown-state refusal. This is contract/transport drift, assigned to the PHILO-5-04 sitting for a follow-up decision. The refused pair can show equal prohibited-state outcomes and unchanged shelf state; it cannot prove registry reach or count that refusal branch toward exit criterion 1. Preserve `refusal_origin: transport_schema`, `registry_reached: false` and both actual envelopes. Counsel: [story-03-shelf-refusal-muaddib.md](checks/story-03-shelf-refusal-muaddib.md). No schema-alignment fence exists across every transport; that missing coverage has the same follow-up home.
+- PHILO-5-03 shelf refusal: the MCP `monday_brief.shelf` schema rejects an unknown state before the registry, while `brief.shelf.write` declares the service's unknown-state refusal. This is contract/transport drift, assigned to the PHILO-5-04 rehearsal for a follow-up decision. The refused pair can show equal prohibited-state outcomes and unchanged shelf state; it cannot prove registry reach or count that refusal branch toward exit criterion 1. Preserve `refusal_origin: transport_schema`, `registry_reached: false` and both actual envelopes. Counsel: [story-03-shelf-refusal-muaddib.md](checks/story-03-shelf-refusal-muaddib.md). No schema-alignment fence exists across every transport; that missing coverage has the same follow-up home.
 - The Info-window rename of a decision (the face sends `name`; `decision.update` ignores it; `web/src/desk/components/InfoWindow.tsx:31`) — a real bug, fenced as observed in 01, not fixed there; parked in `pm/roadmap/holdspeak/BACKLOG.md` (PHILO-5-01 follow-ups).
 - The owner's ratification of this charter.
 - ~~The MCP import intake's client contract~~ — settled by Muad'Dib for story 02 and built (Decisions made, 2026-09-24); Astra checks on built.

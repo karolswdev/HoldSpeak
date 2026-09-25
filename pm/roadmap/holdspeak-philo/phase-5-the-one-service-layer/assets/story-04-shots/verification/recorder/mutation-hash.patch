@@ -1,0 +1,8 @@
+@@ _op_step
+-    if name == "meeting.import" and isinstance(raw_args, dict):
+-        declared_path = raw_args.get("path")
+-        if isinstance(declared_path, str):
+-            fixture_hash = provenance.get("fixture_hashes", {}).get(declared_path)
+-            if fixture_hash:
+-                record["fixture"] = {"path": declared_path, "sha256": fixture_hash}
++    # deliberate mutation: remove the fixture citation

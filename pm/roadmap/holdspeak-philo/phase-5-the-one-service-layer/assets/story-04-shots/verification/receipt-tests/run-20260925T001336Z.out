@@ -1,0 +1,209 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/desk/chair/__tests__/briefReceiptRendered202.test.tsx src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-5-04/web
+
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx (3 tests | 1 failed) 1058ms
+     × keeps the receipt when the generated response has no countable rows 1010ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > keeps the receipt when the generated response has no countable rows
+Error: expect(element).toBeEnabled()
+
+Received element is not enabled:
+  <button
+  class="btn btn--ghost btn--sm "
+  data-testid="arrival-brief-generate"
+  disabled=""
+  type="button"
+/>
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"chair"[39m
+        [33mdata-testid[39m=[32m"chair"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"arrival-headline"[39m
+          [33mdata-testid[39m=[32m"arrival-headline"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+            [33mdata-testid[39m=[32m"arrival-display"[39m
+          [36m>[39m
+            [0mNothing needs you[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-brief"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBRIEF · 3 THINGS WAITING[0m
+              [36m</h3>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                [33mdata-scope[39m=[32m"local"[39m
+                [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+              [36m>[39m
+                [0mTHIS DEVICE[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGenerate[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"surface-ledger"[39m
+              [33mdata-cols[39m=[32m"room"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"surface-ledger-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"surface-ledger-count"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mMeeting recorded: Architecture review[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"-1"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mUnassigned: Write the Migration Plan[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"surface-ledger-row"[39m
+                [33mdata-wrap[39m=[32m"true"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"surface-ledger-line"[39m
+                  [33mdata-has-trailing[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"arrival-brief-row"[39m
+                  [33mrole[39m=[32m"button"[39m
+                  [33mtabindex[39m=[32m"-1"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-primary"[39m
+                  [36m>[39m
+                    [0mUnassigned: Test restart retrieval[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"surface-ledger-trailing"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mAck[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mDefer[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</li>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"surface-receipt-l...
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx:100:42
+     98|     render(<ChairHome />);
+     99|     const generate = await screen.findByTestId("arrival-brief-generate…
+    100|     await waitFor(() => expect(generate).toBeEnabled());
+       |                                          ^
+    101|
+    102|     await act(async () => {
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 17 passed (18)
+   Start at  18:13:38
+   Duration  1.84s (transform 700ms, setup 194ms, import 1.17s, tests 1.35s, environment 685ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+EXIT: 1

@@ -1,0 +1,61 @@
+{
+  "id": "brief-3fd895dc032c4c7da5a5d69b97f41cd4",
+  "period_start": "2026-09-23T17:00:00",
+  "period_end": "2026-09-24T17:35:04.179773",
+  "headline": "2 things changed, 2 things waiting.",
+  "sections": {
+    "this_week": [],
+    "changed": [
+      {
+        "id": "brief-item-5c2cef5f59cc45efb302887baf394219",
+        "section": "changed",
+        "text": "Meeting recorded: Architecture boundary review",
+        "detail": "1 min · 2 action items",
+        "source_ref": "meeting:5f48806b",
+        "priority": 50,
+        "created_at": null
+      },
+      {
+        "id": "brief-item-cdb0b9355d7b49da8a42872e1bf6b0e2",
+        "section": "changed",
+        "text": "MeetingIntelService.run_intelligence",
+        "detail": "{\"meeting_id\":\"5f48806b\",\"expected_selection_hash\":\"sha256:95d3b4f10e1bebe618b7a881df074c8915530e0ca01e012c01a12fd629c24dd6\"}",
+        "source_ref": "pipeline:d39d236d-766e-48d9-b68d-84989624594c",
+        "priority": 0,
+        "created_at": null
+      }
+    ],
+    "broke": [],
+    "waiting": [
+      {
+        "id": "brief-item-1ac4704b502541939d7827f01130056d",
+        "section": "waiting",
+        "text": "Unassigned: Write the Migration Plan",
+        "detail": "Due Friday",
+        "source_ref": "action_item:action_9cd419a7f9480f5dc1d35e13",
+        "priority": 200,
+        "created_at": null
+      },
+      {
+        "id": "brief-item-ead31dac4d1b40a093a79d0a4353e38c",
+        "section": "waiting",
+        "text": "Unassigned: Test restart retrieval",
+        "detail": "Due Tuesday",
+        "source_ref": "action_item:action_b32f191543a3f82b77ac5052",
+        "priority": 200,
+        "created_at": null
+      }
+    ],
+    "decisions": []
+  },
+  "generated_at": "2026-09-24T17:35:04.179773",
+  "is_empty": false,
+  "shelf": {},
+  "ledger": {
+    "operations": 0,
+    "since": null
+  },
+  "period_label": "SEP 21 – 24",
+  "generated_label": "GENERATED SEP 24 17:35",
+  "person_sections_state": "unavailable"
+}

@@ -1,0 +1,63 @@
+{
+  "command": [
+    "curl",
+    "--fail",
+    "--show-error",
+    "--silent",
+    "--max-time",
+    "20",
+    "http://192.168.1.43:8080/v1/models"
+  ],
+  "exit_code": 0,
+  "payload": {
+    "data": [
+      {
+        "aliases": [],
+        "created": 1790294481,
+        "id": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "meta": {
+          "n_ctx_train": 262144,
+          "n_embd": 2048,
+          "n_params": 34660610688,
+          "n_vocab": 248320,
+          "size": 26581518848,
+          "vocab_type": 2
+        },
+        "object": "model",
+        "owned_by": "llamacpp",
+        "tags": []
+      }
+    ],
+    "models": [
+      {
+        "capabilities": [
+          "completion"
+        ],
+        "description": "",
+        "details": {
+          "families": [
+            ""
+          ],
+          "family": "",
+          "format": "gguf",
+          "parameter_size": "",
+          "parent_model": "",
+          "quantization_level": ""
+        },
+        "digest": "",
+        "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "modified_at": "",
+        "name": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "parameters": "",
+        "size": "",
+        "tags": [
+          ""
+        ],
+        "type": "model"
+      }
+    ],
+    "object": "list"
+  },
+  "stderr": "",
+  "stdout_sha256": "6d880e39182fb4571a74707d58e156e9d2bff86e6347bbaf24a2d2f585c94cfd"
+}

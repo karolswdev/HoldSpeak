@@ -1,0 +1,16 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-5-04/web
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  18:27:37
+   Duration  794ms (transform 327ms, setup 56ms, import 436ms, tests 72ms, environment 161ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+EXIT: 0

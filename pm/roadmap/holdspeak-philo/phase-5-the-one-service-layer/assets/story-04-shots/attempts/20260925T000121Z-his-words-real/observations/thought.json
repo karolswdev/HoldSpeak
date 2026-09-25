@@ -1,0 +1,21 @@
+{
+  "pages": [
+    {
+      "body_sha256": "449dacbfab7830e22002194de94a6f9a2993f9a3a3ad22e0b5a31187ba7099b0",
+      "body_text_excerpt": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 192.168.1.43:8080\nSearch\n\u2318K\nThu, Sep 24\n06:04 PM\n3 need you\nRANKED\nOVERDUE\nDUE TODAY\nNOT RUN\nNO DUE DATE\nWAITING\nNO CALENDAR Connect calendar\nNEEDS YOU 3\nMTG\nWrite the Migration Plan\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nMTG\nUse a recorded provider reply for isolated rig tests\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nMTG\nTest restart retrieval\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nTHOUGHTS 1\nPhase 5 rehearsal\nContinue\nBRIEF\nTHIS DEVICE\nGenerate\nNo brief yet\nMEETINGS 1\nSEP 24\nArchitecture review\n35 S\n76 WORDS\n\u25cf\nRAN\n192.168.1.43 \u00b7 LAN\nOpen\nSUMMARY\n192.168.1.43 \u00b7 LAN\n\nThe meeting covered three key decisions: Mayyachan is tasked with writing a migration plan by Friday, Leo Martinez will test restart retrieval on Tuesday, and Priya Shah will handle isolated rig tests using recorded provider replies.\n\nSYNTHETIC ARCHITECT MEETING\nMIGRATION PLAN\nRESTART RETRIEVAL TESTING\nISOLATED RIG TESTS\n\u25b8\nTRANSCRIPT\n76 WORDS\nTALK\nWrite a thought\nRecord meeting\nSchedule\nThought\nPhase 5 rehearsal\nThe meeting loop stays on the local desk. Saved after the meeting review.\nONE QUESTION\nNO ENGINE YET\nChoose an engine\nREADS \u00b7 NOTHING\nKEPT \u00b7 6:03 PM\nIN INBOX\nChange\nFinish\n\u25c8\nInte",
+      "expected_text_present": true,
+      "receipt_present": null,
+      "receipt_shot": null,
+      "receipt_text": null,
+      "ref": "note:note_thought_845bec3c3abe8be8",
+      "reopened": true,
+      "row_shot": null,
+      "row_texts": null,
+      "shot": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo5-04-runs/20260925T000121Z-his-words-real/shots/thought/1440.png",
+      "validation_error": null,
+      "viewport": 1440
+    }
+  ],
+  "ref": "note:note_thought_845bec3c3abe8be8",
+  "stage": "thought"
+}

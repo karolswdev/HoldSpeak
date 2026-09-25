@@ -1,0 +1,74 @@
+COMMAND (disposable copy /tmp/holdspeak-philo504-body.lY4vJV):
+(cd /tmp/holdspeak-philo504-body.lY4vJV && PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH PYTHONPATH=/tmp/holdspeak-philo504-body.lY4vJV HOME=$(mktemp -d) uv run --project /Users/karol/dev/tools/wt-philo-5-04 pytest -q --disable-warnings tests/unit/test_philo5_rehearsal_capture.py::test_real_hub_records_complete_mcp_bodies_and_redacts_other_requests)
+exit_code=1
+
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_real_hub_records_complete_mcp_bodies_and_redacts_other_requests _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-788/test_real_hub_records_complete0')
+
+    @pytest.mark.timeout(180)
+    def test_real_hub_records_complete_mcp_bodies_and_redacts_other_requests(
+        tmp_path: Path,
+    ) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        hub = gw.Hub(home, token=TOKEN, record_rehearsal=True).start()
+        try:
+            # Hub.start() performs the real health request. These two calls are the
+            # same endpoint used by the Codex proxy: catalogue, then operation.
+            listed = hub.mcp({"jsonrpc": "2.0", "id": 1,
+                              "method": "tools/list", "params": {}})
+            called = hub.mcp({
+                "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                "params": {"name": "desk.list", "arguments": {"kind": "decisions"}},
+            })
+            restart = hub.restart()
+            after_restart = hub.mcp({"jsonrpc": "2.0", "id": 3,
+                                     "method": "tools/list", "params": {}})
+            assert listed.get("jsonrpc") == "2.0"
+            assert called.get("jsonrpc") == "2.0"
+            assert after_restart.get("jsonrpc") == "2.0"
+            assert restart["same_db_path"]
+            assert hub.transcript_path is not None
+            assert hub.transcript_path.is_relative_to(home.resolve())
+            transcript_path = hub.transcript_path
+        finally:
+            hub.stop()
+        rows = _lines(transcript_path)
+
+        mcp_rows = [row for row in rows if row["path"] == "/api/mcp"]
+        assert len(mcp_rows) >= 2
+        by_id = {
+            row["request_body"]["id"]: row
+            for row in mcp_rows
+            if isinstance(row.get("request_body"), dict)
+        }
+        assert by_id[1]["request_body"] == {
+            "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {},
+        }
+        assert by_id[1]["response_body"] == listed
+        assert by_id[2]["request_body"]["method"] == "tools/call"
+        assert by_id[2]["response_body"] == called
+        assert by_id[3]["response_body"] == after_restart
+        for row in (by_id[1], by_id[2]):
+            assert row["method"] == "POST"
+            assert row["status"] == 200
+            assert row["path"] == "/api/mcp"
+            assert row["started_at"] <= row["finished_at"]
+            assert isinstance(row["duration_ms"], (int, float))
+
+        non_mcp = [row for row in rows if row["path"] != "/api/mcp"]
+        health = next(row for row in non_mcp if row["path"] == "/health")
+>       assert health == {"method": "GET", "path": "/health", "status": 200}
+E       AssertionError: assert {'method': 'G...'status': 200} == {'method': 'G...'status': 200}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'request_body': None}
+
+tests/unit/test_philo5_rehearsal_capture.py:90: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_rehearsal_capture.py::test_real_hub_records_complete_mcp_bodies_and_redacts_other_requests
+1 failed in 3.46s

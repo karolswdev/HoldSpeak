@@ -1,0 +1,1 @@
+PASS: same saved Codex brief, both widths show its receipt without Generate.

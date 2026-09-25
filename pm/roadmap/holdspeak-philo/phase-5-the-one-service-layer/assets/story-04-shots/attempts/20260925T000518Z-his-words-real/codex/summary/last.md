@@ -1,0 +1,1 @@
+The summary is saved on **Architecture review** (`00613634`) and available on its meeting record. HoldSpeak reports **ready**; I verified the saved summary through `meeting.get`.

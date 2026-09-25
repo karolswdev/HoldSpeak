@@ -1,0 +1,20 @@
+EXPECTED REJECTION: scripts/graph_walk.py <- 'import holdspeak.operations'
+  scripts/graph_walk.py:4965: import holdspeak.operations
+EXPECTED REJECTION: scripts/graph_walk.py <- 'from holdspeak.operations import OperationRegistry'
+  scripts/graph_walk.py:4965: from holdspeak.operations import ...
+EXPECTED REJECTION: scripts/graph_walk.py <- 'from holdspeak import operations'
+  scripts/graph_walk.py:4965: from holdspeak import operations
+EXPECTED REJECTION: scripts/graph_walk.py <- "import importlib\nimportlib.import_module('holdspeak.operations')"
+  scripts/graph_walk.py:4966: dynamic import holdspeak.operations
+EXPECTED REJECTION: scripts/graph_walk.py <- "__import__('holdspeak.operations')"
+  scripts/graph_walk.py:4965: dynamic import holdspeak.operations
+EXPECTED REJECTION: scripts/philo5_pairs.py <- 'import holdspeak.operations'
+  scripts/philo5_pairs.py:1706: import holdspeak.operations
+EXPECTED REJECTION: scripts/philo5_pairs.py <- 'from holdspeak.operations import OperationRegistry'
+  scripts/philo5_pairs.py:1706: from holdspeak.operations import ...
+EXPECTED REJECTION: scripts/philo5_pairs.py <- 'from holdspeak import operations'
+  scripts/philo5_pairs.py:1706: from holdspeak import operations
+EXPECTED REJECTION: scripts/philo5_pairs.py <- "import importlib\nimportlib.import_module('holdspeak.operations')"
+  scripts/philo5_pairs.py:1707: dynamic import holdspeak.operations
+EXPECTED REJECTION: scripts/philo5_pairs.py <- "__import__('holdspeak.operations')"
+  scripts/philo5_pairs.py:1706: dynamic import holdspeak.operations

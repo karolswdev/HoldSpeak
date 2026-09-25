@@ -1,0 +1,178 @@
+{
+  "verdict": "pass",
+  "complete": true,
+  "case_id": "case.closure.chain.s4_saved_content",
+  "viewport": 1440,
+  "provenance": {
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f_89e6ui",
+    "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f_89e6ui/.local/share/holdspeak/holdspeak.db"
+  },
+  "shots": [
+    ".tmp/philo504-carried/s4-1440/20260924T233409Z-case.closure.chain.s4_saved_content-astra-1440/before.png",
+    ".tmp/philo504-carried/s4-1440/20260924T233409Z-case.closure.chain.s4_saved_content-astra-1440/after.png",
+    ".tmp/philo504-carried/s4-1440/20260924T233409Z-case.closure.chain.s4_saved_content-astra-1440/framed.png"
+  ],
+  "notes": [
+    "framing is a separate scroll after the raw observation; it does not change the verdict or completion time",
+    "predicate: 'Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 219, 'w': 370, 'h': 82}"
+  ],
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 219, 'w': 370, 'h': 82}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.091,
+    "first_satisfied_at_s": 0.955,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:58163) non-GET response after the click",
+    "chosen": {
+      "method": "PUT",
+      "path": "/api/decisions/decision_7a82ae88cb17",
+      "status": 200,
+      "body_sha256": "61370853582926ce816e1bceda58d356c93585717d1976696a9d05ec5731536b",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:58163) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:58163) non-GET response after the click",
+    "seen": [
+      {
+        "method": "PUT",
+        "path": "/api/decisions/decision_7a82ae88cb17",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  }
+}

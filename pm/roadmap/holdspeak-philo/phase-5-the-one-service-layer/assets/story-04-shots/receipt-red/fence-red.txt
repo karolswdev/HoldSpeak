@@ -1,0 +1,1 @@
+brief ready receipt is not visible at 1440px: ''

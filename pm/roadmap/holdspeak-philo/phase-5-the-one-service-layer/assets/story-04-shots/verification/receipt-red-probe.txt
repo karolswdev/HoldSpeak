@@ -1,0 +1,1 @@
+EXPECTED RED: both widths show the saved Codex brief but lack its receipt.

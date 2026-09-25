@@ -1,0 +1,3 @@
+Command: .githooks/dw check holdspeak-philo
+Exit code: 1
+ERROR pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer: all stories are done but final-summary.md is missing

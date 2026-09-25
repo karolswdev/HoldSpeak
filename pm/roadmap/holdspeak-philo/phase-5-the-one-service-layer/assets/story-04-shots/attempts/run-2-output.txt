@@ -1,0 +1,7 @@
+PHILO5_HIS_WORDS_BLOCKED Error: Locator.inner_text: Error: strict mode violation: locator("[data-testid=summary-record-attempts]") resolved to 2 elements:
+    1) <span class="summary-route" data-testid="summary-record-attempts">…</span> aka get_by_test_id("arrival-meetings").get_by_test_id("summary-record-attempts")
+    2) <span class="summary-route" data-testid="summary-record-attempts">…</span> aka get_by_role("region", name="Meetings").get_by_test_id("summary-record-attempts")
+
+Call log:
+  - waiting for locator("[data-testid=summary-record-attempts]")
+

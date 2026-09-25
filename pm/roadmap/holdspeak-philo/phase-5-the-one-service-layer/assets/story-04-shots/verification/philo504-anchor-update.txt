@@ -1,0 +1,10 @@
+state.briefs.absent: 1334 -> 1335: !briefLoading && !brief
+state.briefs.loading: 524 -> 528: setBriefLoading
+state.briefs.generating: 737 -> 738: generating
+state.briefs.generation_failure: 712 -> 713: setGenerateFailed
+state.briefs.populated: 874 -> 875: briefItems
+state.briefs.reload_persisted: 1389 -> 1390: arrival-brief
+state.briefs.item.untouched: 882 -> 883: briefShelf
+state.meetings.transcription.present: 2304 -> 2305: hasTranscript
+state.desk_presentation.reload_reconnect: 628 -> 635: re-reads
+state.desk_presentation.reload_reconnect: 527 -> 531: apiFetch
