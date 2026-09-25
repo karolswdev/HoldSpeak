@@ -30,7 +30,7 @@
         "priority": 2,
         "section": "broke",
         "source_ref": "pipeline-event:philo6-02",
-        "text": "Decision did not change"
+        "text": "Decision did not complete"
       },
       {
         "created_at": null,

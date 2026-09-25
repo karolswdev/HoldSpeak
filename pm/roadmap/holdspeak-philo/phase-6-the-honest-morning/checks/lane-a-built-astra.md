@@ -42,3 +42,61 @@ MISSED:
 TUESDAY: Not yet: he can see the failed import, but the face names the wrong failure, and his brief can claim a decision was recorded when none exists.
 
 UNKNOWN: No full suite, completed closing rehearsal, updated S5 closing walk, or owner sitting was verified. At final inspection, CI unit tests were running and macOS integration/E2E jobs remained queued.
+## Round two — Astra, 2026-09-24 night (PR #646 @ 27ee9559)
+
+VERDICT: BOUNCE — do not merge #646 at `27ee9559`. The original failures are repaired, but the new fallback introduces another false completion claim.
+
+FINDINGS:
+
+1. **P1 — Delegating, reopening, or dating work now says “Follow-up completed.”** I exercised the real observed `FollowThroughService.complete` producer and generated the stored brief. Delegation leaves the action `pending`; reopening leaves it `open`; setting a date leaves it `pending`. All three produce **`Follow-up completed`**. The same probe passes before round two, where the wording is `Follow through: complete`. The method accepts six different actions, but the fallback interprets its name as their outcome. Evidence: `holdspeak/services/follow_through_service.py:346`, `holdspeak/services/monday_brief_service.py:243`, [real DB comparison](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r2-tofjtcho/follow-head-check/follow-proof.json:3). **Fails Tenets 3/4 and Article VI.**
+
+2. **P2 — The “last event is the outermost outcome” invariant is false.** The collector orders by `timestamp`, then insertion ID; the observer stores **call-start time**, not completion time. Consequently, a nested call normally sorts after its parent. The new positive control freezes time, making insertion order decide instead. With the real producer and an advancing clock, `create_from_desk` stores **`Decision recorded`**, losing the title that the frozen-clock test claims preserved. Evidence: `holdspeak/services/monday_brief_service.py:669`, `holdspeak/services/observer.py:113`, `tests/unit/test_philo6_02_round2_outcome_words.py:170`, [comparative DB proof:33](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r2-tofjtcho/nested-order-proof.json:33). The five isolated failures pass; they do not prove the grouping rule. **Fails Tenet 3 and Article IX.**
+
+3. **P2 — The newly displayed import cause blocks as written.** The `IMPORT` attribution is correct. However, the repair exposes a technical paragraph naming `TMPLYES_VQF.VTT`, a file the owner never selected. This is newly displayed text, despite its producer being inherited. “Outside this story” does not excuse the new presentation. Use a short, accurate cause; retain the original filename if a filename is needed. Evidence: `web/src/desk/chair/ChairHome.tsx:2181`, `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-01-shots/20260925T035149Z-case.philo601.import_failed.badge-muaddib-1440/after.png`, `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-01-shots/20260925T035156Z-case.philo601.import_failed.badge-muaddib-393/after.png`. **Fails Tenets 3/4 and UX-CANON A.3.**
+
+4. **The vocabulary fence proves spelling shape, not truthful meaning.** Its 48 pairs call the formatter with `"{}"` and check regexes; they do not execute those producers (`tests/unit/test_philo6_02_round2_outcome_words.py:224`). My rulings on the `holdspeak/services/monday_brief_service.py:89`:
+
+   | Pair or group | Ruling |
+   |---|---|
+   | Summary requested / did not start | Accept for the observed admission/refusal. |
+   | Decision recorded / did not record — all three producers | Accept the words; grouping remains finding 2. |
+   | Decision loaded / did not load — both readers | Accept. |
+   | Decision saved / did not save | Accept. |
+   | Note loaded / did not load | Accept. |
+   | Brief triage saved / did not save | Accept as the shelf-operation label. |
+   | Brief loaded / did not load | Accept. |
+   | Brief made / did not complete | “Made” is acceptable vocabulary; do not infer a newly created brief when `generate` returns its cached brief. |
+   | Decision reviews loaded / did not load | Accept as the review-list label. |
+   | People list loaded / did not load | Incorrect object: this reads store readiness, not the People list (`holdspeak/services/follow_through_service.py:248`). |
+   | Watches changed / did not change | Overstates a refresh that can find nothing due or return failed outcomes (`holdspeak/services/reaction_service.py:355`). |
+   | Watch results started / did not start | Reject: this processes events into work items; “results started” does not describe that operation (`holdspeak/services/reaction_service.py:523`). |
+   | Setup changed / did not change | Accept for saving the disposition. |
+   | Project tasks changed / did not change | Too strong for reconciliation that can change nothing (`holdspeak/services/project_service.py:2248`). |
+   | Approvals changed / did not change | Same no-change problem (`holdspeak/services/gate_service.py:147`). |
+   | Models loaded / did not load | Incorrect object: these are execution destinations, explicitly distinct from models (`holdspeak/inference_targets.py:1`). |
+
+   Several success arms are currently unreachable through the Changed filter; I am not claiming each appeared on glass. **Tenet 4 requires meaning as well as simple words.** `MAKE/MADE` is approved vocabulary in [ASD-STE100 Issue 9, dictionary M2](https://www.asd-ste100.org/assets/files/ASD-STE100_ISSUE9.pdf); that alone does not certify a whole label.
+
+5. **Deviation rulings:**
+   - **Import trigger:** accept the shots as inspection **after scrolling**, not as an owner-action transition. At 393 the heading moves from `y=580`, covered by the capture bar, to `y=307`; scroll position changes from 0 to 273. The inert click fires no request. Moving FAILED to a setup assertion retains that check. `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-01-shots/20260925T035156Z-case.philo601.import_failed.badge-muaddib-393/observation.json:1028`.
+   - **S5 selector:** structurally reasonable to check row 0’s words, then capture that persisted row’s ID. Accept only as **unverified until exit 3**; explicitly include the changed `.op` case there. A schema fence does not close its live run. `docs/internal/philo/graph/atlas-phase3.json:4972`.
+   - **Rehearsal amendment:** ratify the explicit deferral to exit 3. It now distinguishes amendment from completed rehearsal and assigns the inherited failures. `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/story-02-the-briefs-truth.md:34`.
+   - **Evidence appends:** lawful. Modified evidence is explicitly permitted while its story remains done; newly added orphan evidence is a different rule. Both commits pass `dw verify`. The files should retain the new captures. `.githooks/dw_pmo/gate.py:456`.
+
+6. **Requested verification reproduced.** Archive P1: **48 failed, 3 passed**, including the actual false-success assertion; the missing enumeration symbol is not behavioral proof. Archive rendered tests: both brief tests and the import-row test fail, including `FAILEDSUMMARYFAILED`. Current: **169 scoped Python tests pass**, including fallback coverage; all **3 corresponding rendered tests pass**. The 54 producer/wording tests also pass without fixture rewriting, and generated fixtures match the reviewed tree. [Python output](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r2-tofjtcho/head-python.txt), [rendered output](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r2-tofjtcho/head-web-node22.txt). I read the fast CI logs: [Web Quality](https://github.com/karolswdev/HoldSpeak/actions/runs/36092595149/job/107937971725) has **2,851 passing tests** and a passing bundle gate; G0 has **11 passing tests**; Linux Smoke and Documentation Navigation pass.
+
+CONDITIONS:
+
+- Correct the false completion fallback and the event-selection rule; fence real action variants and distinct nested-call timestamps.
+- Replace the newly exposed import paragraph and correct misleading table entries. Change words and their fences together.
+- Preserve the narrow walk claims, assign the changed S5 `.op` run explicitly to exit 3, and complete the orchestrator’s verification and CI assessment before merge.
+
+MISSED:
+
+1. A successful method call does not establish the user-facing outcome implied by its method name.
+2. The frozen clock masks the ordering field the implementation actually reads.
+3. Route screenshots reports success, but its upload step says **no PNG files found**; that job supplies no uploaded screenshot evidence.
+
+TUESDAY: Not yet: he can identify the failed import, but delegating or reopening work can tell him it is completed.
+
+UNKNOWN: No full suite, live S5 rerun, completed rehearsal, or owner sitting was verified in this check. Final CI inspection: Unit Tests running; macOS integration/E2E queued. HEAD and the reviewed worktree remain unchanged.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -78,72 +79,109 @@ _HUMAN_SERVICES: frozenset[str] = frozenset({
     "WatchService",
     "WorkbenchService",
 })
-# PHILO-6-02 (Tenet 4): the words a pipeline receipt gets on the brief. A
-# stored item never carries ``Service.method`` text and never implementation
-# vocabulary ("Primitive", a class name). Each entry names what the recorded
-# call DID: a summary run call queues a request, it does not finish a summary.
-# Keyed by (service, method): (change words, breakage words); the subject (a
-# meeting or decision title) follows a ": " when the call names one. The change
-# words are used ONLY for a call whose recorded outcome is success (round 2,
-# Astra's check on built, finding 1).
-_OPERATION_WORDS: dict[tuple[str, str], tuple[str, str]] = {
+# PHILO-6-02 (Tenet 4; round 3, Article VI): the words a pipeline receipt gets
+# on the brief. A brief line states only what the RECORD proves: a method name
+# proves nothing about the outcome, and a call that started proves nothing
+# about what it changed. A stored item never carries ``Service.method`` text
+# and never implementation vocabulary ("Primitive", a class name).
+#
+# Keyed by (service, method): (change words, breakage words). The change words
+# are written ONLY for a call whose recorded outcome is success, and ONLY where
+# the method's one effect is the change they name. ``None`` means the call
+# gets no Changed line: a read, a reconciliation that may change nothing, a
+# call whose result can be a cached value, or a method with several actions
+# (those read the action from the record: ``_RESULT_WORDS``). The breakage
+# words are the Broke line (``<Object> did not <verb>`` is factual on failure).
+# The subject (a meeting, desk-decision or follow-up title) follows ": " when
+# the recorded call names one.
+_OPERATION_WORDS: dict[tuple[str, str], tuple[str | None, str]] = {
+    # Success returns ``state: queued`` only: the request is in the queue.
     ("MeetingIntelService", "run_intelligence"): (
         "Summary requested", "Summary did not start",
     ),
+    # Success is one INSERT into decision_records.
+    ("DecisionRecordService", "create"): (
+        "Decision recorded", "Decision did not record",
+    ),
+    # These return the EXISTING record when one exists; the line is written
+    # only when the same operation holds a successful ``create`` (_PROVEN_BY).
     ("DecisionRecordService", "create_from_desk"): (
         "Decision recorded", "Decision did not record",
     ),
     ("DecisionRecordService", "create_from_meeting"): (
         "Decision recorded", "Decision did not record",
     ),
-    ("DecisionRecordService", "create"): (
-        "Decision recorded", "Decision did not record",
-    ),
-    ("DecisionLifecycleService", "get_decision"): (
-        "Decision loaded", "Decision did not load",
-    ),
-    # The desk decision read (``GET /api/decisions/{id}`` tries it first).
-    ("PrimitiveService", "get_decision"): (
-        "Decision loaded", "Decision did not load",
-    ),
-    ("PrimitiveService", "create_decision"): (
-        "Decision saved", "Decision did not save",
-    ),
-    ("PrimitiveService", "get_note"): ("Note loaded", "Note did not load"),
-    ("MondayBriefService", "shelve"): (
-        "Brief triage saved", "Brief triage did not save",
-    ),
-    ("MondayBriefService", "get_latest"): ("Brief loaded", "Brief did not load"),
-    ("MondayBriefService", "generate"): ("Brief made", "Brief did not complete"),
+    # Reads: nothing changed, nothing to tell on success.
+    ("DecisionLifecycleService", "get_decision"): (None, "Decision did not load"),
+    ("PrimitiveService", "get_decision"): (None, "Decision did not load"),
+    ("PrimitiveService", "get_note"): (None, "Note did not load"),
+    ("MondayBriefService", "get_latest"): (None, "Brief did not load"),
     ("DecisionRecordService", "due_for_review"): (
-        "Decision reviews loaded", "Decision reviews did not load",
+        None, "Decision reviews did not load",
     ),
+    # Reads the People store READINESS, not a people list.
     ("FollowThroughService", "people_store_state"): (
-        "People list loaded", "People list did not load",
+        None, "People status did not load",
     ),
-    ("ReactionService", "refresh_due_watches"): (
-        "Watches changed", "Watches did not change",
-    ),
-    ("ReactionService", "process_pending"): (
-        "Watch results started", "Watch results did not start",
-    ),
-    ("SetupService", "set_onboarding_disposition"): (
-        "Setup changed", "Setup did not change",
-    ),
+    # Lists execution destinations (``inference_targets.py:1``), not models.
+    ("ProfileService", "list_inference_targets"): (None, "Destinations did not load"),
+    # May return the CACHED brief of the day: a success proves no new brief.
+    ("MondayBriefService", "generate"): (None, "Brief did not complete"),
+    # Writes outside the Changed collector (no change marker / not a human
+    # service): their success is never told here, their failure is.
+    ("PrimitiveService", "create_decision"): (None, "Decision did not save"),
+    ("MondayBriefService", "shelve"): (None, "Brief triage did not save"),
+    ("SetupService", "set_onboarding_disposition"): (None, "Setup did not change"),
+    # Reconciliations: they may change nothing.
+    ("ReactionService", "refresh_due_watches"): (None, "Watch check did not complete"),
+    ("ReactionService", "process_pending"): (None, "Watch events did not complete"),
     ("ProjectService", "recover_ask_tasks_on_startup"): (
-        "Project tasks changed", "Project tasks did not change",
+        None, "Project task check did not complete",
     ),
     ("GateService", "invalidate_held_on_startup"): (
-        "Approvals changed", "Approvals did not change",
+        None, "Approval check did not complete",
     ),
-    ("ProfileService", "list_inference_targets"): (
-        "Models loaded", "Models did not load",
+    # Six actions: the Changed line comes from the recorded action.
+    ("FollowThroughService", "complete"): (None, "Follow-up did not complete"),
+}
+# A change line that needs the same operation to hold another successful call:
+# the call that actually wrote the row.
+_PROVEN_BY: dict[tuple[str, str], tuple[str, str]] = {
+    ("DecisionRecordService", "create_from_desk"): ("DecisionRecordService", "create"),
+    ("DecisionRecordService", "create_from_meeting"): (
+        "DecisionRecordService", "create",
     ),
 }
-# The generic line for a call outside the table: ``<Object> did not <verb>``.
-# The OBJECT is the thing the method names (``list_notes`` -> Notes), else the
-# object the service keeps (enumerated below for every observed service; a
-# fence holds the enumeration complete). Never a class name.
+# Multi-action methods: (result field, {recorded action: change words}). The
+# action is read from the call's RECORDED RESULT; an action outside the table,
+# a replay (``replayed: true``: nothing written), or an unreadable result gets
+# no Changed line.
+_RESULT_WORDS: dict[tuple[str, str], tuple[str, dict[str, str]]] = {
+    ("FollowThroughService", "complete"): ("verb", {
+        "done": "Follow-up completed",
+        "delegate": "Follow-up delegated",
+        "reopen": "Follow-up reopened",
+        "due": "Follow-up date set",
+    }),
+}
+
+
+def changed_line_rows() -> list[tuple[str, str, str | None]]:
+    """Every (service, method, action) that can write a Changed line."""
+    rows: list[tuple[str, str, str | None]] = [
+        (service, method, None)
+        for (service, method), (change, _broke) in _OPERATION_WORDS.items()
+        if change is not None and (service, method) not in _RESULT_WORDS
+    ]
+    for (service, method), (_field, actions) in _RESULT_WORDS.items():
+        rows.extend((service, method, action) for action in actions)
+    return rows
+
+
+# The Broke line for a failed call outside the table: ``<Object> did not
+# complete``, the object the service keeps (enumerated below for every observed
+# service; a fence holds the enumeration complete). Never a class name. A
+# successful call outside the table writes NOTHING.
 _SERVICE_OBJECTS: dict[str, str] = {
     "ActivityEnrichmentService": "Activity",
     "ActivityLedgerService": "Activity",
@@ -194,60 +232,13 @@ _SERVICE_OBJECTS: dict[str, str] = {
     "WatchService": "Watch",
     "WorkbenchService": "Workbench",
 }
-# The objects a method name can name, as the brief says them.
-_METHOD_OBJECTS: dict[str, str] = {
-    "decision": "Decision", "decisions": "Decisions",
-    "meeting": "Meeting", "meetings": "Meetings",
-    "note": "Note", "notes": "Notes",
-    "brief": "Brief",
-    "thought": "Thought", "thoughts": "Thoughts",
-    "project": "Project", "projects": "Projects",
-    "task": "Task", "tasks": "Tasks",
-    "kb": "Knowledge base", "kbs": "Knowledge bases",
-    "directory": "Folder", "directories": "Folders",
-    "workflow": "Workflow", "workflows": "Workflows",
-    "chain": "Chain", "chains": "Chains",
-    "recipe": "Recipe", "recipes": "Recipes",
-    "workbench": "Workbench", "workbenches": "Workbenches",
-    "model": "Model", "models": "Models",
-    "settings": "Settings",
-    "policy": "Policy",
-    "proposal": "Proposal", "proposals": "Proposals",
-    "job": "Job", "jobs": "Jobs",
-    "person": "Person", "people": "People",
-    "watch": "Watch", "watches": "Watches",
-    "record": "Decision", "records": "Decisions",
-    "summary": "Summary", "intelligence": "Summary",
-    "transcript": "Transcript", "recording": "Recording",
-    "thread": "Thread", "threads": "Threads",
-    "aftercare": "Meeting follow-up",
-}
-# The plain verb for the method's first word: (change words, breakage verb).
-_VERB_WORDS: dict[str, tuple[str, str]] = {}
-for _verbs, _words in (
-    (("get", "list", "read", "load", "board", "status", "health", "due", "compute",
-      "search", "find", "fetch", "count", "describe", "preview", "resolve"),
-     ("loaded", "load")),
-    (("create", "add", "mint", "import", "seed", "new", "save", "record", "write",
-      "capture", "store", "put", "upsert", "register"),
-     ("saved", "save")),
-    (("update", "edit", "set", "rename", "transition", "move", "shelve", "apply",
-      "mark", "refresh", "reorder", "assign", "bind", "unbind", "invalidate",
-      "recover", "reconcile", "accept", "reject", "supersede"),
-     ("changed", "change")),
-    (("delete", "remove", "archive", "drop", "cancel", "purge", "clear"),
-     ("deleted", "delete")),
-    (("run", "start", "launch", "attempt", "sweep", "process", "pull", "push",
-      "sync", "trigger", "execute", "dispatch", "schedule", "retry"),
-     ("started", "start")),
-    (("complete", "finish", "close", "commit", "approve"),
-     ("completed", "complete")),
-):
-    for _verb in _verbs:
-        _VERB_WORDS[_verb] = _words
-del _verbs, _words, _verb
 _SERVICE_SUFFIX = re.compile(r"(?:Service|Manager|Handler|Provider)$")
-_ARG_ID = re.compile(r'"(meeting_id|desk_decision_id)"\s*:\s*"([^"]+)"')
+_ARG_ID = re.compile(r'"(meeting_id|desk_decision_id|card_id)"\s*:\s*"([^"]+)"')
+_SUBJECT_SQL = {
+    "meeting_id": "SELECT title FROM meetings WHERE id = ?",
+    "desk_decision_id": "SELECT title FROM desk_decisions WHERE id = ?",
+    "card_id": "SELECT task AS title FROM action_items WHERE id = ?",
+}
 
 
 def _service_object(service: str) -> str:
@@ -261,17 +252,24 @@ def _service_object(service: str) -> str:
     return phrase[:1].upper() + phrase[1:]
 
 
-def _generic_words(service: str, method: str) -> tuple[str, str]:
-    """``(change words, breakage words)`` for a call outside the table."""
-    tokens = [token for token in method.lower().split("_") if token]
-    verb = tokens[0] if tokens else ""
-    past, plain = _VERB_WORDS.get(verb, ("completed", "complete"))
-    rest = tokens[1:] if verb in _VERB_WORDS else tokens
-    thing = next(
-        (_METHOD_OBJECTS[token] for token in rest if token in _METHOD_OBJECTS),
-        _service_object(service),
-    )
-    return f"{thing} {past}", f"{thing} did not {plain}"
+def _breakage_words(service: str, method: str) -> str:
+    """The Broke line for one failed call (no Service.method, no class name)."""
+    known = _OPERATION_WORDS.get((service, method))
+    if known is not None:
+        return known[1]
+    return f"{_service_object(service)} did not complete"
+
+
+def _outermost(events: list[Any]) -> Any:
+    """The OUTERMOST call of one correlated operation.
+
+    The observer stores CALL-START time (``observer.py`` ``_emit``:
+    ``timestamp=t0``), so the enclosing call STARTED first; it emits its
+    receipt in ``finally`` AFTER the calls it encloses, so on a start-time tie
+    the enclosing call holds the HIGHEST insertion id. Inner calls are never
+    the headline.
+    """
+    return min(events, key=lambda row: (float(row["timestamp"]), -int(row["id"])))
 
 
 _CLOSE_HOUR = 17
@@ -623,28 +621,55 @@ class MondayBriefService:
             return float("-inf")
 
     def _operation_subject(self, conn: Any, args_summary: str) -> str | None:
-        """The title the recorded call names (a meeting or a desk decision)."""
+        """The title the recorded call names (a meeting, desk decision, follow-up)."""
         match = _ARG_ID.search(str(args_summary or ""))
         if match is None:
             return None
         key, value = match.group(1), match.group(2)
-        table = "meetings" if key == "meeting_id" else "desk_decisions"
         try:
-            row = conn.execute(
-                f"SELECT title FROM {table} WHERE id = ?", (value,)
-            ).fetchone()
+            row = conn.execute(_SUBJECT_SQL[key], (value,)).fetchone()
         except Exception:  # noqa: BLE001 - a missing table names no subject.
             return None
         title = str(row["title"] or "").strip() if row is not None else ""
         return title or None
 
-    def _operation_text(
-        self, conn: Any, service: str, method: str, args_summary: str, *, broke: bool
+    def _breakage_text(
+        self, conn: Any, service: str, method: str, args_summary: str
     ) -> str:
-        """PHILO-6-02: human words for one pipeline receipt (no Service.method)."""
-        known = _OPERATION_WORDS.get((service, method)) or _generic_words(service, method)
-        words = known[1] if broke else known[0]
+        """PHILO-6-02: the Broke line for one failed call."""
+        words = _breakage_words(service, method)
         subject = self._operation_subject(conn, args_summary)
+        return f"{words}: {subject}" if subject else words
+
+    def _change_text(self, conn: Any, events: list[Any], outcome: Any) -> str | None:
+        """PHILO-6-02 round 3: the Changed line the RECORD proves, else None.
+
+        *outcome* is the operation's outermost call and it succeeded. The words
+        come from the explicit table only; a call outside it writes nothing.
+        """
+        key = (str(outcome["service"]), str(outcome["method"]))
+        result_rule = _RESULT_WORDS.get(key)
+        if result_rule is not None:
+            field_name, actions = result_rule
+            try:
+                result = json.loads(str(outcome["result_summary"] or ""))
+            except (TypeError, ValueError):
+                return None
+            if not isinstance(result, dict) or result.get("replayed"):
+                return None
+            words = actions.get(str(result.get(field_name) or ""))
+        else:
+            words = _OPERATION_WORDS.get(key, (None, ""))[0]
+            proof = _PROVEN_BY.get(key)
+            if words is not None and proof is not None and not any(
+                (str(event["service"]), str(event["method"])) == proof
+                and event["error"] is None
+                for event in events
+            ):
+                return None
+        if not words:
+            return None
+        subject = self._operation_subject(conn, str(outcome["args_summary"]))
         return f"{words}: {subject}" if subject else words
 
     def _collect_changes(
@@ -662,8 +687,8 @@ class MondayBriefService:
         end_timestamp = self._window_timestamp(window_end)
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT event_id, timestamp, service, method, args_summary,
-                          correlation_id, error
+                """SELECT id, event_id, timestamp, service, method, args_summary,
+                          result_summary, correlation_id, error
                    FROM pipeline_events
                    WHERE timestamp BETWEEN ? AND ?
                    ORDER BY timestamp ASC, id ASC""",
@@ -674,11 +699,13 @@ class MondayBriefService:
         uncorrelated_retries: dict[tuple[str, str, str], tuple[str, Any]] = {}
         for row in rows:
             method = str(row["method"])
-            if not any(marker in method.lower() for marker in _CHANGE_METHOD_MARKERS):
-                continue
-            correlation_id = str(row["correlation_id"])
+            correlation_id = str(row["correlation_id"] or "")
             if correlation_id:
+                # PHILO-6-02 round 3: EVERY call of the operation, so its
+                # outermost call is found even when that call is not a change.
                 groups.setdefault(correlation_id, []).append(row)
+                continue
+            if not any(marker in method.lower() for marker in _CHANGE_METHOD_MARKERS):
                 continue
 
             # Observer calls without a correlation are independent unless they
@@ -701,9 +728,24 @@ class MondayBriefService:
         items: list[BriefItem] = []
         ledger_count = 0
         ledger_since: str | None = None
-        for events in groups.values():
+        for group_key, events in groups.items():
             first = events[0]
-            service_name = str(first["service"])
+            # PHILO-6-02 round 3 (Astra's round-two check, finding 2): the
+            # operation's outcome is its OUTERMOST call -- the one that
+            # STARTED first (``_outermost``). The collector orders by start
+            # time, so a nested call sorts AFTER its parent: "the last event"
+            # was an inner call. An uncorrelated group is a failed call and
+            # its retries (siblings): the last attempt is the outcome.
+            if group_key.startswith("event:"):
+                outcome = events[-1]
+            else:
+                outcome = _outermost(events)
+                if not any(
+                    marker in str(outcome["method"]).lower()
+                    for marker in _CHANGE_METHOD_MARKERS
+                ):
+                    continue
+            service_name = str(outcome["service"])
 
             # HS-171-06: only human-meaningful services become items.
             if service_name not in _HUMAN_SERVICES:
@@ -713,25 +755,16 @@ class MondayBriefService:
                     ledger_since = ts_str
                 continue
 
-            # PHILO-6-02 round 2 (Astra's check on built, finding 1): the
-            # wording follows the recorded OUTCOME. The last event of a group
-            # is the operation's outcome (the outermost observed call emits
-            # last; a retry follows its failed attempt). A failed operation
-            # changed nothing, so it makes no Changed row: its one honest line
-            # is the Broke row `_collect_breakage` writes for the same event.
-            # A success line for it would claim what the DB does not hold.
-            outcome = events[-1]
+            # PHILO-6-02 round 2: a failed operation changed nothing, so it
+            # makes no Changed row; its one line is the Broke row.
             if outcome["error"] is not None:
                 continue
-            detail = _sanitize_detail(str(outcome["args_summary"]))
             with self._db._connection() as conn:
-                text = self._operation_text(
-                    conn,
-                    str(outcome["service"]),
-                    str(outcome["method"]),
-                    str(outcome["args_summary"]),
-                    broke=False,
-                )
+                text = self._change_text(conn, events, outcome)
+            # Round 3: no line the record does not prove.
+            if text is None:
+                continue
+            detail = _sanitize_detail(str(outcome["args_summary"]))
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
@@ -834,9 +867,8 @@ class MondayBriefService:
                     BriefItem(
                         id=f"brief-break-pipeline-{brief_id}-{row['event_id']}",
                         section="broke",
-                        text=self._operation_text(
+                        text=self._breakage_text(
                             conn, service, method, str(row["args_summary"] or ""),
-                            broke=True,
                         ),
                         detail=detail,
                         source_ref=f"pipeline-event:{row['event_id']}",

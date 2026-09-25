@@ -1,0 +1,35 @@
+# PHILO-6 round 3 GREEN — the branch (worktree on 27ee9559 + the round-three change), same fences, ADVANCING clock
+$ HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider -rA tests/unit/test_philo6_02_round3_record_truth.py tests/unit/test_philo6_01_import_badge.py
+____________ test_empty_vtt_import_leaves_import_failed_on_the_wire ____________
+WARNING  holdspeak.services.meeting_service:meeting_service.py:322 meeting import 30c8c674 failed: No cues could be parsed from tmpboyqxpjv.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported.
+WARNING  holdspeak.services.meeting_service:meeting_service.py:322 meeting import ddcbf125 failed: No cues could be parsed from tmpmjdw1nb9.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported.
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_nested_success_keeps_the_parents_title_on_an_advancing_clock
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_nested_failure_stores_only_the_broke_line
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_an_existing_record_is_not_recorded_again
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_delegate_reopen_and_date_never_say_completed
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_done_says_completed_and_a_replay_says_nothing
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_dismiss_and_snooze_make_no_line
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_a_failed_follow_up_is_told_once_in_broke
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_a_cached_brief_is_not_a_made_brief
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_a_reconciliation_that_changed_nothing_makes_no_line
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_an_unknown_success_writes_nothing_and_its_failure_names_the_object
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_every_changed_row_has_a_real_producer
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('DecisionRecordService', 'create', None)]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('DecisionRecordService', 'create_from_desk', None)]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('DecisionRecordService', 'create_from_meeting', None)]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'delegate')]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'done')]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'due')]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('FollowThroughService', 'complete', 'reopen')]
+PASSED tests/unit/test_philo6_02_round3_record_truth.py::test_each_changed_row_names_a_change_the_db_holds[('MeetingIntelService', 'run_intelligence', None)]
+PASSED tests/unit/test_philo6_01_import_badge.py::test_empty_vtt_import_leaves_import_failed_on_the_wire
+PASSED tests/unit/test_philo6_01_import_badge.py::test_the_import_cause_is_short_and_names_no_temp_file
+21 passed in 5.21s
+
+$ (cd web && npx vitest run src/desk/chair/__tests__/importFailedRow.philo601r2.test.tsx)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:35:57
+   Duration  783ms (transform 326ms, setup 58ms, import 441ms, tests 28ms, environment 185ms)
+

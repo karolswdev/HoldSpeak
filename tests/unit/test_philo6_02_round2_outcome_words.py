@@ -56,7 +56,8 @@ FAILURE_WORDS = (
     "Decision did not record",
     "Summary did not start",
     "Brief triage did not save",
-    "Decision did not change",
+    # round 3: a call outside the table fails as ``<Object> did not complete``.
+    "Decision did not complete",
     "Decision did not load",
 )
 IMPLEMENTATION_WORDS = re.compile(r"Primitive|Service|Lifecycle|[a-z]_[a-z]")
@@ -163,26 +164,11 @@ def test_failed_operations_make_no_success_line(tmp_path, monkeypatch):
     )
 
 
-def test_a_successful_record_keeps_its_success_line(tmp_path, monkeypatch):
-    """The positive control: the fence above is not vacuous."""
-    db = Database(tmp_path / "hub.db")
-    client = _hub(db, monkeypatch, tmp_path)
-    _clock(monkeypatch)
-    db.desk_decisions.upsert(
-        decision_id="philo602-present",
-        title="Keep retrieval local",
-        status="accepted",
-        decision_markdown="Keep retrieval local.",
-    )
-    record = DecisionRecordService(
-        db, observer=SQLiteObserver(db._connection)
-    ).create_from_desk(OWNER, "philo602-present")
-    assert record["id"]
-    generated = client.post("/api/brief/generate")
-    assert generated.status_code == 200, generated.text
-    changed = [i["text"] for i in generated.json()["sections"]["changed"]]
-    assert "Decision recorded: Keep retrieval local" in changed, changed
-    assert not any("did not" in text for text in changed), changed
+# Round 3 (Astra's round-two check, finding 2): the frozen-clock positive
+# control that stood here let insertion order decide and masked the start-time
+# field the collector reads. It is replaced by the advancing-clock fences in
+# ``tests/unit/test_philo6_02_round3_record_truth.py`` (the real
+# ``create_from_desk``, parent started before child, asserted in the DB).
 
 
 # The observed producers of every retained Phase 5 and Phase 6 run
@@ -222,17 +208,16 @@ OBSERVED = (
 
 
 @pytest.mark.parametrize(("service", "method"), OBSERVED)
-def test_every_observed_producer_has_a_human_line(tmp_path, service, method):
-    from holdspeak.services.monday_brief_service import MondayBriefService
+def test_every_observed_producer_has_a_plain_broke_line(service, method):
+    """SPELLING SHAPE only (Astra's round-two check, finding 4): the Broke line
+    of every observed producer is ``<Object> did not <verb>`` in plain words.
+    The MEANING of every Changed line is proven by running its real producer
+    against the DB (``test_philo6_02_round3_record_truth.py``)."""
+    from holdspeak.services.monday_brief_service import _breakage_words
 
-    brief = MondayBriefService(Database(tmp_path / "hub.db"))
-    with brief._db._connection() as conn:
-        change = brief._operation_text(conn, service, method, "{}", broke=False)
-        broke = brief._operation_text(conn, service, method, "{}", broke=True)
-    for line in (change, broke):
-        assert not IMPLEMENTATION_WORDS.search(line), line
-        assert not RAW.search(line), line
-        assert line[:1].isupper(), line
+    broke = _breakage_words(service, method)
+    assert not IMPLEMENTATION_WORDS.search(broke), broke
+    assert not RAW.search(broke), broke
     assert re.fullmatch(r"[A-Z][A-Za-z -]* did not [a-z]+", broke), broke
 
 

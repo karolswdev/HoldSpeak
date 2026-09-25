@@ -195,15 +195,12 @@ def test_the_real_producer_brief(tmp_path, monkeypatch):
     assert "Brief triage did not save" in broke, broke
 
 
-def test_generic_fallback_has_no_raw_names(tmp_path):
-    """Every observed call outside the word table still reads as words."""
-    from holdspeak.services.monday_brief_service import MondayBriefService
+def test_generic_fallback_has_no_raw_names():
+    """A failed call outside the word table reads ``<Object> did not complete``
+    (round 3: never a verb read from the method name); its SUCCESS writes no
+    line at all (the real producers: ``test_philo6_02_round3_record_truth.py``)."""
+    from holdspeak.services.monday_brief_service import _breakage_words
 
-    db = Database(tmp_path / "hub.db")
-    service = MondayBriefService(db)
-    with db._connection() as conn:
-        change = service._operation_text(conn, "NoteService", "create_note", "{}", broke=False)
-        broke = service._operation_text(conn, "SyncService", "push", "{}", broke=True)
-    assert change == "Note saved"
-    assert broke == "Sync did not start"
-    assert not RAW.search(change) and not RAW.search(broke)
+    broke = _breakage_words("SyncService", "push")
+    assert broke == "Sync did not complete"
+    assert not RAW.search(broke)
