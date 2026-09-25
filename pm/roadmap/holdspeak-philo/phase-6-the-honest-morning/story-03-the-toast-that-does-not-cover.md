@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** - (the placement build depends on its canvas ratification)
 - **Unblocks:** exit 3 (no zero token, no overlap at 393)
 - **Owner:** Astra (Luna); Muad'Dib checks

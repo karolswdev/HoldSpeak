@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** exit 3 (no SAVED on a failed import)
 - **Owner:** Muad'Dib (Opus 5.5); Astra checks

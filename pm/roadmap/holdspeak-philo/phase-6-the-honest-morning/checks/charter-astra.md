@@ -37,4 +37,4 @@ TUESDAY: This is the right repair set for his morning; trustworthy failure badge
 
 UNKNOWN: S4’s runtime cause, final canvas choices, and delivery duration remain unverified. I inspected the pinned code, retained observations and failure-row extracts, and two retained shots; ran roadmap lint; ran no new hub, suites, atlas cases, or owner sitting. HEAD remained `88b58912`; the tree remained clean and unchanged.
 
-Conditions and MISSED paid by Muad'Dib in this commit.
+Conditions and MISSED paid by Muad'Dib in d8bfd1a3 (#644).
