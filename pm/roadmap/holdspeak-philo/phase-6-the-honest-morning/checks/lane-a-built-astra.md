@@ -100,3 +100,36 @@ MISSED:
 TUESDAY: Not yet: he can identify the failed import, but delegating or reopening work can tell him it is completed.
 
 UNKNOWN: No full suite, live S5 rerun, completed rehearsal, or owner sitting was verified in this check. Final CI inspection: Unit Tests running; macOS integration/E2E queued. HEAD and the reviewed worktree remain unchanged.
+## Round three — Astra, 2026-09-24 night (PR #646 @ 552bad5f)
+
+VERDICT: RATIFY-WITH-CONDITIONS — PR #646 at `552bad5f`. The three r2 blockers are repaired; merge verification remains incomplete.
+
+FINDINGS:
+
+1. **Event selection and tie deviation: ratify.** I reproduced the advancing-clock failure on `27ee9559`: `Decision recorded` loses the parent’s title. HEAD passes. A separate real-producer tie control confirms child insertion ID 1, parent ID 2; choosing the highest ID preserves the parent. This agrees with the observer’s `finally` emission. Evidence: `holdspeak/services/monday_brief_service.py:263`, [reproduced red](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/red.txt), [tie probe](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/head-probe.txt).
+
+2. **Recorded outcomes: ratify.** The follow-through red reproduces all three false “completed” lines. HEAD reads the result’s `verb`, suppresses replays, and requires the successful inner `create`. The coverage checks pass: **eight real-producer variants plus one table-completeness check**, each producer variant checking durable state. `Follow-up date set` accurately describes the tested write. Evidence: `holdspeak/services/monday_brief_service.py:650`, `tests/unit/test_philo6_02_round3_record_truth.py:387`.
+
+3. **Import cause: ratify.** The old temporary-filename paragraph reproduces on r2; HEAD stores `NO TRANSCRIPT LINES`. Both retained observations use isolated databases and report PASS; both shots show the short cause clearly: `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-01-shots/20260925T043228Z-case.philo601.import_failed.badge-muaddib-1440/after.png`, `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/story-01-shots/20260925T043240Z-case.philo601.import_failed.badge-muaddib-393/after.png`. These prove inspection after scrolling. The observations identify `27ee9559`, dirty—not an exact clean-HEAD walk.
+
+4. **Compatibility edits preserve their intended checks.** Repointing success fixtures to supported table entries retains persistence, grouping, section and ledger assertions. The import assertions now pin the intended cause classes. The correlated-retry fixture remains synthetic; the advancing-clock producer test supplies the real nesting proof. My verification: **266 scoped Python tests and 10 rendered tests passed**, without fixture rewriting. Evidence: [137 tests](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/head.txt), [129 tests](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/fixture-atlas.txt), [rendered tests](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/head-web.txt).
+
+5. **Double-Broke: ledger, not another product-code condition for this PR.** A real `create_from_meeting` with SQLite rejecting the child INSERT produces two identical `Decision did not record` rows on **both r2 and HEAD**. Deduplication is by service/method, so it retains parent and child failures. This inherited defect fails **Tenets 3/7** by inflating the owner’s apparent problems. Evidence: `holdspeak/services/monday_brief_service.py:853`, [reproduction](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/head-probe.txt). Story 04’s `pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/story-04-one-cause-one-row.md:18` does not automatically cover it.
+
+6. **CI does not yet verify this revision.** I read the fast-job logs: [Web Quality](https://github.com/karolswdev/HoldSpeak/actions/runs/36092595149/job/107937971725) passed 2,851 tests and its bundle gate; G0 passed 11; Linux Smoke and Documentation Navigation passed. Those jobs belong to **`27ee9559`**. Final inspection found [zero check runs for `552bad5f`](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-philo6-r3-wpz2q43g/head-check-runs.json).
+
+CONDITIONS:
+
+- Complete the orchestrator’s required full-suite verification and CI assessment for the merge revision; classify every failure before merge.
+- Record double-Broke with an owner and a scoped home. Preserve the explicit exit-3 obligation for the changed S5 `.op` case and rehearsal; neither is closed by this review.
+
+MISSED:
+
+1. The “unknown success” test exercises only failure (`tests/unit/test_philo6_02_round3_record_truth.py:286`). My separate real `update_record` probe confirms successful unknown calls now emit nothing, but the committed fence does not protect that claim.
+2. The import evidence’s “Not claimed” section still says the `SUMMARY` well was unchanged, contradicting the repaired face (`pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-01.md:67`).
+
+TUESDAY: Yes for these repairs: he can identify the failed import and distinguish delegated, reopened, dated and completed work; the complete morning loop remains unverified.
+
+UNKNOWN: No full suite, fresh rig run, completed S5/rehearsal, or owner sitting performed here. I read the retained 863/181 capture; it is scoped verification. The reviewed tree remains clean and unchanged.
+
+Conditions paid by Muad'Dib in this commit: double-Broke and the unknown-success fence gap given BACKLOG homes; the evidence's 'Not claimed' line corrected; the exit-3 obligations preserved; the fast CI jobs read at the merge revision per the owner's merge law.
