@@ -1,6 +1,6 @@
 # PHILO-7-02 canvas: the delegation grant on the Remote Access ledger
 
-**Status: PROPOSED, round two. The owner ratifies before the face is built** (UX canon A.2, E.1). Every decision below is proposed; none is ratified.
+**Status: RATIFIED by the owner, 2026-09-25 (AskUserQuestion, after Astra's r2 RATIFY-WITH-CONDITIONS, `../../checks/story-02-canvas-astra-r2.md`).** His answers: (1) WORDS = **SET A** (`Allow filing` / `Stop filing`; chip `FILING ALLOWED` / `FILING STOPPED`) — he overruled both brains' recommendation of B; (2) the caption `AGENTS · N ACTIVE CREDENTIALS` and the verb `Revoke credential` RATIFIED; (3) the order, the footer receipt Button and the desk-wide 12 px library repair RATIFIED ("Ratify all"). Build exactly this: set A's strings, every other decision as drawn.
 
 - Round one: PR #658 `f493fb1f`. Astra r1: BOUNCE (`../../checks/story-02-canvas-astra-r1.md`). It supported the composition, no prose / no modal / no zero, the single screen, set B, `AGENTS` and the order. Round two pays its eight findings (ledger at the end).
 - Review page (all boards embedded, both widths, both word sets, the limits): `docs/internal/philo/phase-7/grant-canvas/index.html`.
@@ -25,7 +25,7 @@
 
 The face reads `state` only. The chip: `LIVE` → the ALLOWED chip; `REVOKED`/`EXPIRED` → the STOPPED chip; `null` → no chip. The grant verb: `LIVE` → Stop; else Allow; on a `delegations[]` row, the Stop verb only while `LIVE`.
 
-**Visibility (proposed):** remote ON shows every credential row and every `delegations[]` row. Remote OFF shows every row whose effective state is `LIVE` (credential-backed or not) and hides the rest. The ledger renders when any row is visible (the beat's "any credential OR any delegation row"). A grant is authority; the owner must see it and be able to stop it whatever the switch says.
+**Visibility (proposed):** remote ON shows every credential row and every `delegations[]` row. Remote OFF shows every credential row whose effective grant is `LIVE` and every `delegations[]` row whatever its state (the beat, `design/grant-lifecycle-beat.md:155`: a grant with no credential is always listed so the owner can find and stop it); a credential row with no LIVE grant is hidden while OFF (r2 correction, Astra r2 finding 1: this sentence and `harness/main.tsx:263` now say the same thing). The ledger renders when any row is visible (the beat's "any credential OR any delegation row"). A grant is authority; the owner must see it and be able to stop it whatever the switch says.
 
 ## Boards (`shots/<set>/<board>-<set>-<width>.png`, sets `a` and `b`; board 0 in `shots/today/`)
 
@@ -74,7 +74,7 @@ Not changed (not in this window): `.surface-token` without `data-chip` (11px, `s
 
 **Blast radius:** these species render desk-wide; every chip, state chip, gadget-group label, fact, well head, wing tab and footer receipt grows 10 → 12 px. Web baseline: `uv run python scripts/check_web_baseline.py --run` → 2872 passed, 0 failed; `VERDICT: baseline-subset, zero branch-new` (5 HEALED). Guards: `test_design_system_guard`, `test_frontend_density_guard`, `test_ux_canon_ratchet`, `test_ux_canon_scan` → 45 passed.
 
-**Set B at compliant sizes (measured at 393, 12 px):** the ledger line is 363 px; the B chip `FILING AND DECISIONS ALLOWED` is 259 px (one line); `Stop filing and decisions` (198) + `Revoke credential` (140) sit on one line; `Allow filing and decisions` (205) + `Revoke credential` (140) sit on one line. The receipt well wraps its tokens to three lines (board 6b). At 1440 every row is one line (board 4b's three rows included).
+**Set B at compliant sizes (measured at 393, 12 px):** the ledger line is 363 px; the B chip `FILING AND DECISIONS ALLOWED` is 259 px (one line); `Stop filing and decisions` (198) + `Revoke credential` (140) sit on one line; `Allow filing and decisions` (205) + `Revoke credential` (140) sit on one line. The receipt well wraps its tokens to three lines (board 6b). At 1440 every row is one line except board 6's refused `desk-agent` row, whose verbs wrap onto a second line beside the refusal chip and stay readable (r2 correction, Astra r2 finding 6).
 
 ## The strings (proposed)
 
