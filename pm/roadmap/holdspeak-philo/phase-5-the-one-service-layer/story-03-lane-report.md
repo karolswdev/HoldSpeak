@@ -96,3 +96,8 @@ Additional exact restart, decoder, clock, scope, receipt, shelf and Thought reds
 No named pair is omitted. This is rehearsed isolated-hub evidence, not an owner sitting or a completed owner review of the shots. The real ASR output varies on the synthetic audio; transcription quality is not established. The replay retains parsed model output, not wire bytes. S4's 393 saved-content rendering remains unverified. The two inherited transport drifts and decision-admission debt remain for PHILO-5-04. A full test suite was not run, as instructed.
 
 TUESDAY: the owner can inspect a saved decision, retrieve the same summary after restart, see that decision in a dated brief, handle rows, and keep a Thought through the proved paths. These rehearsals do not substitute for his review of the screens.
+
+## Corrections by Muad'Dib's counsel (2026-09-24) — these correct `evidence-story-03.md` too (the gate forbids amending a done story's evidence file; this report is the record)
+
+- `receipt_lan_identity` proves the receipt's route/host identity only; replayed runs pass it because the replay seam (`scripts/graph_walk.py:1754-1773`) sits below the product receipt. Real-engine status rests on the run's `engine_mode`, the absent `engine_replay_sha256` and the `engine_identity` probe — never on that check.
+- 31 of the 40 selected observations ran against earlier atlas bytes (`provenance.atlas.sha256` ≠ the committed file) on a dirty tree against c4d46498, and no observation records a rig-source hash. `verify_pairs.py` has NO case-level equality check (executed setup/trigger/expected vs the committed case); a spot check found representational differences only. Recorded, not claimed as full proof.

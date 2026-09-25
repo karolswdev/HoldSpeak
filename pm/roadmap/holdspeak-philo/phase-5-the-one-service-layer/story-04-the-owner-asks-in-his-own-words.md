@@ -70,6 +70,16 @@ not fixed.
 The inherited decision-admission question remains separate, unruled, and
 assigned to the owner's ruling / later phase as recorded by story 02.
 
+
+## Carried in from story 03 (Muad'Dib's counsel C3 — work, not notes)
+
+- [ ] SAVED shown on the Arrival while the durable state is `import_failed` (an empty VTT import): the face must not lie — fix the honest state (no design; the existing failure idiom) with a fence red pre-fix, or a named follow-up with a fence-as-observed if the fix needs a canvas.
+- [ ] S4 at 393: after Done the reading view is blank — cause found; fixed if product-only, else ledgered with the shot.
+- [ ] One missing HTTP decision read produces TWO broke rows (`holdspeak/web/routes/decisions.py:58-61` falls through from the registry NotFound to the lifecycle service): one cause, one row; fence red pre-fix.
+- [ ] Shelf schema drift: the MCP tool enum refuses before dispatch while the descriptor says it will not pre-empt (`operations.py:421-431`) — align (descriptor or schema) with a schema-alignment fence.
+- [ ] Structural fence: the rig (`scripts/graph_walk.py`, `philo5_pairs.py`) never imports `holdspeak.operations` in-process (a second composition); red by mutation.
+- [ ] Ledgered: op observations carry a forced `viewport: 1440` label and a `-1440` run id — a reader can take an op run for a face; note it in the rig's observation schema or drop the label for op runs (small).
+
 ## Effort (council-style estimate, not a promise)
 
 1 day (Astra r2)

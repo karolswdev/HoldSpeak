@@ -43,3 +43,4 @@ Proof for each box: [lane report, per-box table](story-03-lane-report.md#proof),
 ## Notes
 
 - 2026-09-24 — chartered from draft r3 + Astra r2 (`checks/charter-astra-r2.md`, the named atlas coverage and the Proof position; Muad'Dib's acceptance: the headless path is charted here before any `op` verdict is trusted).
+- 2026-09-24 — Muad'Dib's counsel on built: RATIFY-WITH-CONDITIONS (`checks/story-03-built-muaddib.md`); C1–C3 paid (the LAN-receipt check's meaning; the older-atlas-bytes fact; the ledger carried into story 04 as work).
