@@ -1,6 +1,6 @@
 # Phase 5 — The One Service Layer — final summary
 
-**Status:** four of four stories merged 2026-09-24 (#634, #635, #636, #638). Exits 1–4 flipped on retained evidence. **Exit 5 is open pending the owner's review of the rehearsal shots** (https://claude.ai/artifact/Q6AqpXtUmtTQgrrR9WhzKM). This phase closes on his word that he has looked; it is recorded as "rehearsed, owner-reviewed shots", never as a sitting.
+**Status: CLOSED 2026-09-24.** Four of four stories merged (#634, #635, #636, #638). Exits 1–4 on retained evidence; exit 5 closed on the owner's review of the rehearsal shots (https://claude.ai/artifact/Q6AqpXtUmtTQgrrR9WhzKM — "sitting approved"): rehearsed, owner-reviewed shots, not a sitting.
 
 ## What the owner's ruling bought
 
