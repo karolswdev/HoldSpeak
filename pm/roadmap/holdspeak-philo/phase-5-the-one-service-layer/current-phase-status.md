@@ -190,7 +190,9 @@ and next-day brief were read back through the registry and inspected at
 1440 and 393. A fresh Desk read shows `Brief ready` after the checked
 receipt seam. Worktree `../wt-philo-5-04`, branch
 `feat/philo-5-04-his-words`, from main `9c653937`. Muad'Dib ratified the technical close with record conditions paid.
-Technical status is done; the gated commit and PR carry this record.
+Technical status is done. Build commit `4c56fa94` passed the gate;
+[PR #638](https://github.com/karolswdev/HoldSpeak/pull/638) is OPEN and unmerged for
+Muad'Dib's counsel on built and shot publication.
 Owner review and exit 5 stay open.
 [Rehearsal](../../../../docs/internal/philo/phase-5/his-words/rehearsal.md),
 [lane report and six-row repair ledger](story-04-lane-report.md),

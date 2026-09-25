@@ -7,7 +7,9 @@
 
 PHILO-5-04, technically done; Astra owns; Muad'Dib checks. Worktree `../wt-philo-5-04`,
 branch `feat/philo-5-04-his-words`, from main `9c653937`.
-PR: publication follows the gated technical commit; no merge is authorized.
+PR: [#638](https://github.com/karolswdev/HoldSpeak/pull/638), OPEN and unmerged. Build commit `4c56fa94`
+passed the stamped gate (7/7, one story with evidence). Muad'Dib counsels
+on built and publishes the shots next; owner review remains pending.
 
 ## OUTCOME
 
