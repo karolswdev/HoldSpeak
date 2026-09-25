@@ -1,0 +1,42 @@
+PASS: live
+BRAIN: astra
+SOURCE: 66205729332ef66a6d16a186c04ae4801311734a dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=None hub=None db=None engine=none
+JOB: a1
+VERDICT: not_applicable terminal=None
+EVIDENCE: []
+NOTE: the case declares viewports [1440]; 393 is not one of them
+{
+  "case": "case.philo504.decision_missing.refusal",
+  "viewport": 393,
+  "source_root": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline",
+  "route_sha256": "b366cbf1ae81501c990f73099385fbb630498c75938d513212f62da7ba25f6a4",
+  "source": {
+    "revision": "66205729332ef66a6d16a186c04ae4801311734a",
+    "dirty": true,
+    "frontend_build": null,
+    "hub": null,
+    "db_path": null,
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:43:11.834599+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance"
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "e302feab62a2ac35533b9f3631acd9312ce4230bfb4c398a67f0823efa6fad70",
+      "version": "phase3-closure"
+    }
+  },
+  "rig_verdict": "not_applicable",
+  "one_cause_one_row": false
+}
+ONE CAUSE ONE ROW: FAIL (None failure rows; expected 1)

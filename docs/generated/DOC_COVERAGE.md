@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 250 / 250 |
-| Test paths | 185 / 185 |
-| Documentation paths | 219 / 219 |
-| Assertions inspected | 185 |
-| Tests executed | 157 |
+| Source paths | 251 / 251 |
+| Test paths | 188 / 188 |
+| Documentation paths | 220 / 220 |
+| Assertions inspected | 188 |
+| Tests executed | 160 |
 | Records with an executed assertion | 73 |
 | Semantic records unresolved | 74 |
 
@@ -67,7 +67,7 @@ Validation errors at generation: **0**.
 | `voice.language_settings` | capabilities | 1/1 | 1/1 | 1 | 0 | 0 | unresolved |
 | `voice.wake` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `voice.browser_remote_dictation` | capabilities | 2/2 | 2/2 | 2 | 2 | 2 | partially_evidenced |
-| `meeting.decision_lifecycle` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
+| `meeting.decision_lifecycle` | capabilities | 2/2 | 5/5 | 5 | 5 | 0 | partially_evidenced |
 | `meeting.action_lifecycle` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `model.download` | capabilities | 1/1 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `model.inventory` | capabilities | 2/2 | 2/2 | 2 | 2 | 1 | partially_evidenced |

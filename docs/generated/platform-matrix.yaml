@@ -1944,7 +1944,8 @@
       "id": "meeting.decision_lifecycle@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/services/decision_lifecycle_service.py"
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/decisions.py"
       ],
       "status": "experimental"
     },
@@ -1954,7 +1955,8 @@
       "id": "meeting.decision_lifecycle@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/services/decision_lifecycle_service.py"
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/decisions.py"
       ],
       "status": "experimental"
     },
@@ -1964,7 +1966,8 @@
       "id": "meeting.decision_lifecycle@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/services/decision_lifecycle_service.py"
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/decisions.py"
       ],
       "status": "experimental"
     },
@@ -1974,7 +1977,8 @@
       "id": "meeting.decision_lifecycle@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/services/decision_lifecycle_service.py"
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/decisions.py"
       ],
       "status": "experimental"
     },
@@ -1984,7 +1988,8 @@
       "id": "meeting.decision_lifecycle@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/services/decision_lifecycle_service.py"
+        "holdspeak/services/decision_lifecycle_service.py",
+        "holdspeak/web/routes/decisions.py"
       ],
       "status": "experimental"
     },
