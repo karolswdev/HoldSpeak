@@ -187,7 +187,10 @@ def test_reconcile_refuses_resource_call_without_its_row(tmp_path: Path, row: in
         driver._reconcile_mcp_calls(stage, hub, 0)
 
 
-@pytest.mark.parametrize("mutation", ["method", "error", "resources", "uri", "success-for-error"])
+@pytest.mark.parametrize(
+    "mutation",
+    ["method", "error", "resources", "uri", "success-for-error", "extra-field", "short-message"],
+)
 def test_reconcile_rejects_resource_row_mutations(tmp_path: Path, mutation: str) -> None:
     stage, hub = _mint_resource_turn(tmp_path)
     rows = [json.loads(line) for line in hub.transcript_path.read_text().splitlines()]
@@ -199,6 +202,10 @@ def test_reconcile_rejects_resource_row_mutations(tmp_path: Path, mutation: str)
         rows[1]["response_body"]["result"]["resources"][0]["name"] = "changed"
     elif mutation == "uri":
         rows[2]["request_body"]["params"]["uri"] = "holdspeak://desk/verbs"
+    elif mutation == "extra-field":
+        rows[1]["response_body"]["result"]["nextCursor"] = "page2"
+    elif mutation == "short-message":
+        rows[0]["response_body"]["error"]["message"] = "Method not found"
     else:
         rows[0]["response_body"] = {"jsonrpc": "2.0", "id": 2, "result": {"resourceTemplates": []}}
     hub.transcript_path.write_text("".join(json.dumps(r) + "\n" for r in rows))

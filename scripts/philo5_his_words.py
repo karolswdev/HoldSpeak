@@ -436,6 +436,21 @@ CODEX_RESOURCE_BUILTINS: dict[str, tuple[str, str]] = {
     "read_mcp_resource": ("resources/read", "contents"),
 }
 
+# Hub result fields that Codex discards from its echo, as retained in the
+# 20260925T060854Z run: the ``resources/list`` reply also carries
+# ``resourceTemplates``, and Codex's ``list_mcp_resources`` omits them.
+CODEX_RESOURCE_DROPPED_FIELDS: dict[str, frozenset[str]] = {
+    "resources/list": frozenset({"resourceTemplates"}),
+}
+
+
+def _codex_resource_error_message(rpc_method: str, code: Any, message: Any) -> str:
+    """Codex's exact wrapper around a hub JSON-RPC error, as retained."""
+    return (
+        f"{rpc_method} failed: {rpc_method} failed for `holdspeak`: "
+        f"Mcp error: {code}: {message}"
+    )
+
 
 def _resource_row_matches(
     call: dict[str, Any],
@@ -446,10 +461,11 @@ def _resource_row_matches(
 
     The request must carry the mapped method and the same arguments (the
     ``server`` argument names the Codex server and is not sent; ``_meta`` is
-    Codex transport bookkeeping).  A Codex error item needs the hub's JSON-RPC
-    error, code and message, inside the Codex message.  A Codex success needs
-    a hub success whose echoed field is equal once the ``server`` labels that
-    Codex adds are removed.
+    Codex transport bookkeeping).  A Codex error item needs Codex's exact
+    wrapper around the hub's complete JSON-RPC error code and message.  A
+    Codex success needs a hub success equal to the echo, in both directions,
+    once the ``server`` labels (and the read ``uri``) that Codex adds and the
+    hub fields Codex is recorded to drop are removed.
     """
     rpc_method, field = CODEX_RESOURCE_BUILTINS[call["tool"]]
     if request.get("method") != rpc_method or not isinstance(response, dict):
@@ -469,9 +485,8 @@ def _resource_row_matches(
         error = response.get("error")
         if not isinstance(error, dict) or "result" in response:
             return False
-        message = codex_error.get("message")
-        return isinstance(message, str) and (
-            f"{error.get('code')}: {error.get('message')}" in message
+        return codex_error.get("message") == _codex_resource_error_message(
+            rpc_method, error.get("code"), error.get("message"),
         )
     hub_result = response.get("result")
     if "error" in response or not isinstance(hub_result, dict):
@@ -488,7 +503,7 @@ def _resource_row_matches(
         return False
     if field == "contents" and echoed.pop("uri", None) != arguments.get("uri"):
         return False
-    entries = echoed.pop(field, None)
+    entries = echoed.get(field)
     if not isinstance(entries, list):
         return False
     stripped: list[Any] = []
@@ -498,9 +513,12 @@ def _resource_row_matches(
             if entry.pop("server") != "holdspeak":
                 return False
         stripped.append(entry)
-    if stripped != hub_result.get(field):
-        return False
-    return all(hub_result.get(key) == value for key, value in echoed.items())
+    echoed[field] = stripped
+    dropped = CODEX_RESOURCE_DROPPED_FIELDS.get(rpc_method, frozenset())
+    hub_view = {key: value for key, value in hub_result.items() if key not in dropped}
+    # Both directions: the key sets and every value must be equal, so an
+    # extra hub field or an extra echoed field refuses the pair.
+    return echoed == hub_view
 
 
 def _reconcile_mcp_calls(
