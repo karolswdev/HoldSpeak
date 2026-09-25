@@ -1,3 +1,7 @@
+Astra-invoked `claude -p` (fable-5-1) from Astra's brief — NOT Muad'Dib's check of record
+
+Current raw response: `docs/internal/philo/phase-6/body/built-check-response-astra-invoked-claude.json`. Original filenames in the historical check text below are retained as provenance.
+
 Reading is done and the scoped fences reran green here. Here is the check.
 
 **VERDICT: RATIFY-WITH-CONDITIONS** — story 05 is ready to flip done, commit, and open the lane PR once the three small conditions below are paid. Nothing I found invalidates the evidence.

@@ -74,17 +74,19 @@ The six defects come from retained evidence, not from taste. The source is the P
 
 Lane law for this phase:
 
-- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. Story 03 may need the capture-clearance seam at `ChairHome.tsx:685`. Astra hands that change to lane 01/02 as a patch; the two lanes never co-edit the file.
+- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The future build needs this slot, an AmbientLayer portal and auto-scroll, plus an off-Arrival slot in the current surface shell. The patch alone places nothing.
 - Shared atlas and generated files (`docs/internal/philo/graph/atlas*.json`, `docs/generated/*`) have one shipping owner per commit. The second lane rebases and regenerates.
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
 
-2026-09-24 night — lane B PHILO-6-05 verified: cause found before repair, 29 frontend and 143 rig checks passed, actual S4 continuous fence FAIL → PASS at 393 and 1440, first read frame and all 129 frames readable in each green run. Muad'Dib built conditions paid, including an assertion after the failed rollback read commits. PHILO-6-04 is committed; 03 zero/canvas is committed and placement remains unratified. One lane PR: https://github.com/karolswdev/HoldSpeak/pull/647; no merge. Per-box proof and handover: `docs/internal/philo/phase-6/lane-report.md`.
+2026-09-24 night — lane B round two records the actual Muad’Dib counsel at `checks/lane-b-built-muaddib.md` and relabels the earlier Astra-invoked claude -p checks. Records and canvas corrections follow that counsel; 03 stays in-progress, with placement unbuilt and unratified. Off-Arrival proposal: a top-of-surface flow slot inside Meetings and the Floor. Phone ask 2 explicitly moves the reading position. The 0/0 proposal verb is withheld with a red-before-fix fence. Three follow-ups now also live in BACKLOG “PHILO-6 follow-ups”. One gated update to PR #647; no merge.
+
+2026-09-24 night — lane B PHILO-6-05 verified: cause found before repair, 29 frontend and 143 rig checks passed, actual S4 continuous fence FAIL → PASS at 393 and 1440, first read frame and all 129 frames readable in each green run. Astra-invoked claude -p check conditions paid, including an assertion after the failed rollback read commits. PHILO-6-04 is committed; 03 zero/canvas is committed and placement remains unratified. One lane PR: https://github.com/karolswdev/HoldSpeak/pull/647; no merge. Per-box proof and handover: `docs/internal/philo/phase-6/lane-report.md`.
 
 2026-09-24 night — Astra lane B partial 03: zero omission is verified (archive 3 failed / 6 controls passed, built 13 passed). The checked canvas has today/proposed/summary-open/capture boards at both widths and a ChairHome proposal patch. Placement remains unbuilt, pending owner ratification of normal flow and the phone auto-scroll mechanism. Muad'Dib publishes the artifact.
 
-2026-09-24 night — Astra lane B: 04 is verified (33 focused tests; missing-decision parity 2:1 → 1:1 at 1440/393; legacy reads stop creating false failures). Muad'Dib pre-flip conditions paid. 03 placement remains canvas-only and unratified; 05 is in cause-first repair. One lane PR will carry the gated commits; no merge in this lane.
+2026-09-24 night — Astra lane B: 04 is verified (33 focused tests; missing-decision parity 2:1 → 1:1 at 1440/393; legacy reads stop creating false failures). Astra-invoked claude -p check conditions paid. 03 placement remains canvas-only and unratified; 05 is in cause-first repair. One lane PR will carry the gated commits; no merge in this lane.
 
 2026-09-24 night: RATIFIED; lanes started (`../wt-philo-6-a` Muad'Dib 01/02; `../wt-philo-6-b` Astra 03/04/05).
 
@@ -106,10 +108,10 @@ Lane law for this phase:
 
 ## Decisions made (this phase)
 
-- 2026-09-24 night — PHILO-6-05 built counsel RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-muaddib.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
-- 2026-09-24 night — PHILO-6-05 criterion 2 strengthened on live evidence and Muad'Dib's design check: the first read frame is readable on main; the pre-fix red is a later stale refresh commit. Require readability on the first frame and every frame through terminal observation, with the observer armed before Done. Original passing first-frame probe retained and labelled; no first-frame red claimed. See `checks/story-05-design-muaddib.md` and `docs/internal/philo/phase-6/body/diagnosis.md`. Owner may overrule.
+- 2026-09-24 night — PHILO-6-05 Astra-invoked claude -p built check RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-astra-invoked-claude.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
+- 2026-09-24 night — PHILO-6-05 criterion 2 strengthened on live evidence and the Astra-invoked claude -p design check: the first read frame is readable on main; the pre-fix red is a later stale refresh commit. Require readability on the first frame and every frame through terminal observation, with the observer armed before Done. Original passing first-frame probe retained and labelled; no first-frame red claimed. See `checks/story-05-design-astra-invoked-claude.md` and `docs/internal/philo/phase-6/body/diagnosis.md`. Owner may overrule.
 
-- 2026-09-24 night — PHILO-6-03 canvas/zero counsel RATIFY-WITH-CONDITIONS, paid before partial commit: sticky-phone geometry disclosed, distinct capture board, one parked rejected candidate, counsel under checks. Owner ratification still owed; `checks/story-03-canvas-zero-muaddib.md`.
+- 2026-09-24 night — PHILO-6-03 Astra-invoked claude -p canvas/zero check RATIFY-WITH-CONDITIONS, paid before partial commit: sticky-phone geometry disclosed, distinct capture board, one parked rejected candidate, counsel under checks. Owner ratification still owed; `checks/story-03-canvas-zero-astra-invoked-claude.md`.
 
 
 - 2026-09-24 night — the owner RATIFIED the charter ("Ratify, build it"); all five stories in progress in two lanes — Muad'Dib.

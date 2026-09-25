@@ -6543,7 +6543,7 @@
     },
     {
       "path": "web/src/components/AmbientLayer.tsx",
-      "line": 265,
+      "line": 267,
       "kinds": [
         "http_client"
       ],

@@ -61,7 +61,7 @@ output cap; the final concise build capture is complete. An invocation missing
   archive, despite the reused Python environment's editable installation.
 - Continuous baseline traces used the new probe before its rig version was
   bumped (raw provenance 1.2.0). Green traces use 1.3.0. Raw records remain
-  unchanged. `red-s4-393/` is the earlier first-frame-only prototype that
+  unchanged. `negative-control-first-frame-393/` is the earlier first-frame-only prototype that
   passed despite a later blank; it is a negative control, not the red fence.
 - The original held-prop unit hypothesis was rejected: the real DeskApp
   subscribes to items and derives the object on each render. The retained
@@ -73,11 +73,17 @@ output cap; the final concise build capture is complete. An invocation missing
 Tuesday: Done keeps the sentence readable. A current refusal shows the prior
 sentence with the existing SAVE FAILED / Retry receipt.
 
-Muad'Dib's built check is recorded in the phase roadmap
-`checks/story-05-built-muaddib.md`; all pre-flip conditions are paid. The final
+The Astra-invoked claude -p built check is recorded in the phase roadmap
+`checks/story-05-built-astra-invoked-claude.md`; all pre-flip conditions are paid. The final
 test-only amendment asserts the prior body and receipt after the failed
 rollback read commits: archive still 5 failed / 2 passed, built 7 passed.
 `build-identity.json` ties the green runtime index/assets to the source digest
 and dataSlice hash before that additional assertion. Generated references and
 the architecture/API checks passed (15 tests); no source runtime changed
 after the green S4 runs.
+
+Round-two provenance: `checks/lane-b-built-muaddib.md` in the phase roadmap is
+Muad’Dib’s check of record. The design/built JSON responses and Markdown
+checks with `astra-invoked-claude` in their names are Astra’s self-checks.
+The first-frame PASS run is under `negative-control-first-frame-393/`; raw
+observation paths retain the old name as historical provenance.

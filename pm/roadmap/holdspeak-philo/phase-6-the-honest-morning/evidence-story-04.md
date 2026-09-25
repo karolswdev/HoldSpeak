@@ -6,6 +6,13 @@
 
 ## Proof
 
+The `FAIL 2:1 → PASS 1:1` parity verdict comes from the lane’s sidecar
+verifier, `docs/internal/philo/phase-6/rows/verify_parity.py`, over observer rows
+collected by `walk_one_row.py`. The actual atlas refusal cases report `pass`
+on both archive and lane; the rig’s own predicate does not assert row parity.
+The HTTP case gained viewport 393 at `docs/internal/philo/graph/atlas-phase3.json:6500`.
+
+
 ### Captured run — 2026-09-25T02:45:45Z
 
 - **Command:** `bash -c set -o pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); uv run --extra dev pytest --collect-only -q tests/unit/test_philo6_04_one_cause_one_row.py tests/unit/test_philo5_one_decision.py tests/unit/test_philo3_01_decision_route.py; uv run --extra dev pytest -q tests/unit/test_philo6_04_one_cause_one_row.py tests/unit/test_philo5_one_decision.py tests/unit/test_philo3_01_decision_route.py`

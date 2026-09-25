@@ -24,7 +24,7 @@ One missing decision read over HTTP records two observer failures. `GET /api/dec
 - [x] Legacy decision reads are preserved: a lifecycle-only decision id still answers through `GET /api/decisions/{id}` with its lineage; fenced. Proof: `test_lifecycle_only_id_uses_one_observed_lineage_read` and `test_desk_owner_wins_when_real_producers_share_an_id`; evidence-story-04.md, 33-pass capture.
 - [x] Failures are not suppressed globally: a real failure of either service still records its row; fenced (a mutation that silences the observer turns the fence red). Proof: `test_each_real_service_failure_keeps_its_observer_receipt`; `docs/internal/philo/phase-6/rows/observer-mutation.txt` (zero-row red).
 - [x] Fence red pre-fix: the real route with the real observer (`SQLiteObserver`) and a missing id records two rows on a `git archive origin/main` copy; one after. Proof: `docs/internal/philo/phase-6/rows/pre-fix-missing-id.txt` (`assert 2 == 1`); `rows/baseline.json`.
-- [x] The op/browser parity pair `missing-decision` (`case.philo504.decision_missing.refusal` and `.op`, `docs/internal/philo/graph/atlas-phase3.json:6452,6504`) goes from FAIL 2:1 to PASS on the rig. Proof: `docs/internal/philo/phase-6/rows/verify_parity.py`; evidence-story-04.md: 1440 and 393 `FAIL 2:1 -> PASS 1:1`.
+- [x] The op/browser parity pair `missing-decision` (`case.philo504.decision_missing.refusal` and `.op`, `docs/internal/philo/graph/atlas-phase3.json:6452,6504`) has a sidecar-verifier verdict of FAIL 2:1 → PASS 1:1 at 1440 and 393 (`rows/verify_parity.py` over `walk_one_row.py` observer rows). The rig’s atlas refusal verdict is `pass` on both sides; it does not assert row parity. Proof: `docs/internal/philo/phase-6/rows/verify_parity.py`; evidence-story-04.md. The HTTP case gained viewport 393 at `atlas-phase3.json:6500` so the same actual case runs at both widths.
 
 ## Effort (council-style estimate, not a promise)
 
@@ -39,4 +39,4 @@ One missing decision read over HTTP records two observer failures. `GET /api/dec
 ## Notes
 
 - 2026-09-24 — chartered from XXVIII r2 + Astra's check (finding 2 row 5: canvas-free; preserve legacy reads; parity never by global suppression).
-- 2026-09-24 night — built and verified in lane B. Muad'Dib pre-flip check RATIFY-WITH-CONDITIONS, both bookkeeping conditions paid (`checks/story-04-built-muaddib.md`). Full phase rehearsal and lane-PR counsel remain separate.
+- 2026-09-24 night — built and verified in lane B. Astra-invoked claude -p check RATIFY-WITH-CONDITIONS, both bookkeeping conditions paid (`checks/story-04-built-astra-invoked-claude.md`). Full phase rehearsal and lane-PR counsel remain separate.

@@ -177,16 +177,18 @@ function AftercareNote() {
       <strong>{signal.title}</strong>
       {countLine ? <p>{countLine}</p> : null}
       <div className="button-row">
-        <Button
-          dense
-          variant="primary"
-          onClick={() => {
-            openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}`);
-            dismissAftercare();
-          }}
-        >
-          Open proposals
-        </Button>
+        {signal.openTotal > 0 || signal.decidedTotal > 0 ? (
+          <Button
+            dense
+            variant="primary"
+            onClick={() => {
+              openSurfaceWhenReady("review-meetings", `meeting:${signal.meetingId}`);
+              dismissAftercare();
+            }}
+          >
+            Open proposals
+          </Button>
+        ) : null}
         <Button dense variant="ghost" onClick={() => dismissAftercare()}>
           Dismiss
         </Button>

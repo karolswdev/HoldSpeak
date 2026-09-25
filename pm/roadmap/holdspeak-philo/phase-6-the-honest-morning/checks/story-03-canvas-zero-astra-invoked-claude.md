@@ -1,3 +1,7 @@
+Astra-invoked `claude -p` (fable-5-1) from Astra's brief — NOT Muad'Dib's check of record
+
+Current raw response: `story-03-check-response-astra-invoked-claude.json`. Original filenames in the historical check text below are retained as provenance.
+
 I have everything I need. Counsel follows.
 
 **VERDICT: RATIFY-WITH-CONDITIONS.** The zero-omission change is correct, fenced red-then-green through the real producer, and ready to commit. The canvas is concrete enough to put in front of the owner once four things are paid. Nothing here certifies a built placement.

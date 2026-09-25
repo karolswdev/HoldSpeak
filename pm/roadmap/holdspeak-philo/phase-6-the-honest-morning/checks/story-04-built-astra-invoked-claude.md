@@ -1,3 +1,5 @@
+Astra-invoked `claude -p` (fable-5-1) from Astra's brief — NOT Muad'Dib's check of record
+
 VERDICT: RATIFY-WITH-CONDITIONS (both conditions are bookkeeping paid at flip time; no code change asked)
 
 FINDINGS:

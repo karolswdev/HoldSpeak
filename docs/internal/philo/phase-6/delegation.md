@@ -33,5 +33,18 @@ breakage cause, and keeps readable saved decision text. A canvas is a proposal,
 a scripted walk is a rehearsal, and neither is recorded as an owner sitting.
 
 One lane PR carries separately gated commits. No merge is authorized in this
-pass. Muad'Dib's recorded pre-flip/design checks supplement his requested
-counsel on the built lane after push.
+pass. The recorded pre-flip/design checks were Astra-invoked claude -p self-checks.
+Muad’Dib’s actual counsel on built is now recorded at the phase roadmap’s
+`checks/lane-b-built-muaddib.md`.
+
+
+## Round two — 2026-09-24 night
+
+Astra session `01a0d6ab-801c-75c2-ae0d-bb7829583be6` delegated two disjoint
+workers through spawn_agent: `zero_verb` owns only the named render fence and
+its tests; `off_arrival_canvas` owns only the canvas artifact and its README.
+Both executed as `gpt-5.6-luna`, `xhigh`, verified from their persisted
+turn_context records in `round-two-worker-runtime.json`. Astra owns the
+counsel copy, relabels, roadmap, ledger, independent checks and one gated
+records/canvas commit. No story flips and no merge. The scoped test law from
+the brief applies; no full-suite claim.

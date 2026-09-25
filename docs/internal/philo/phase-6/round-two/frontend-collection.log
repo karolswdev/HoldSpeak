@@ -1,0 +1,14 @@
+src/components/AftercareNote.test.tsx > aftercare without the mascot > seats the finished meeting on the desk with the mascot off
+src/components/AftercareNote.test.tsx > aftercare without the mascot > reaches the meeting's proposals in one click
+src/components/AftercareNote.test.tsx > aftercare without the mascot > omits the opener for 0/0, keeps dismissal, and restores it on a nonzero transition
+src/components/AftercareNote.test.tsx > aftercare without the mascot > dismisses without opening anything
+src/components/AftercareNote.test.tsx > aftercare without the mascot > ignores a frame that names no meeting
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Secure and Normal-with-preference: the hub-armed preview gates before any commit
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Type it commits exactly once, by token only, and closes the gate
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Discard burns the preview without ever committing
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > a failed commit keeps the words and the gate for an explicit retry
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > YOLO and Normal-without-preference: no hub frame means no HoldSpeak prompt
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 2 decided)

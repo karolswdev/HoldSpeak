@@ -1,3 +1,7 @@
+Astra-invoked `claude -p` (fable-5-1) from Astra's brief — NOT Muad'Dib's check of record
+
+Current raw response: `docs/internal/philo/phase-6/body/design-check-response-astra-invoked-claude.json`. Original filenames in the historical check text below are retained as provenance.
+
 Reading is done. Here is the check.
 
 **VERDICT: RATIFY-WITH-CONDITIONS**

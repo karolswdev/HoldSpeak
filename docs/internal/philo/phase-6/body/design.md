@@ -3,7 +3,7 @@
 Date: 2026-09-24
 
 Status: checked and implemented; hold for SHIP. Check:
-`pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/checks/story-05-design-muaddib.md`.
+`pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/checks/story-05-design-astra-invoked-claude.md`.
 
 ## Evidence the design addresses
 

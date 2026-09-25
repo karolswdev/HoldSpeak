@@ -14,7 +14,7 @@
 After a summary the Arrival shows a transient toast `MEETING READY · N open · 0 decided`.
 
 - **Zero token.** `AmbientLayer.tsx:175` renders `{signal.openTotal} open · {signal.decidedTotal} decided` with no guard. A count of zero breaks UX-CANON A.8. The numeric facts are correct and stay: `intelligenceAttention.ts:95-96` stores `openTotal` and `decidedTotal`.
-- **Overlap.** The toast is fixed with a hard-coded bottom offset (`web/src/components/AmbientLayer.tsx:170`, `bottom: "104px"`). At 393 it covers the summary text and the capture bar (`../phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real/shots/summary/393-after.png`). The Arrival already measures the capture bar and sets `--arrival-capture-clearance` (`web/src/desk/chair/ChairHome.tsx:685`); the toast does not use it.
+- **Overlap.** The toast is fixed with a hard-coded bottom offset (`web/src/components/AmbientLayer.tsx:170`, `bottom: "104px"`). At 393 it covers the summary text and the capture bar (`../phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real/shots/summary/393-after.png`). The proposed patch inserts an empty `data-aftercare-slot` div at `web/src/desk/chair/ChairHome.tsx:1442`, immediately before `<CaptureBar />`. It does not change the existing capture-clearance measurement. The build needs the slot, an `AmbientLayer` portal and auto-scroll; the patch alone places no card.
 
 ## Scope
 
@@ -42,5 +42,8 @@ After a summary the Arrival shows a transient toast `MEETING READY · N open · 
 
 ## Notes
 
+- Round two — the canvas also covers a Meetings window and the Floor at 1440 and 393. Recommended off Arrival: a top-of-current-surface flow slot, with no assumption that every surface has a CaptureBar. `AppShell.tsx:24` mounts AmbientLayer on every surface, so the future portal must follow the current surface. Ask 2 states that phone auto-scroll moves the owner’s reading position and scrolls the Arrival head off. Owner ratification remains pending.
+- Round two — omit `Open proposals` at 0/0 as an authorized render-only correction (UX-CANON A.11, Tenet 3); retain Dismiss and unchanged numeric facts. Focused red/green proof is recorded in the lane round-two validation, not a placement-completion claim.
+
 - 2026-09-24 night — partial delivery only: zero omission built; placement canvas at `docs/internal/philo/phase-6/toast/toast-placement.html` has today/proposed/summary-open/capture boards at 1440 and 393. Parent independently recaptured all boards and longer-summary probes (`toast/parent-shots/`, `toast/canvas-dw-validation.md`). Owner ratification, placement build and actual rehearsal remain open; no paired done evidence is claimed. Exact strings and two owner asks are in `toast/README.md`. Muad'Dib publishes the canvas.
-- 2026-09-24 — chartered from XXVIII r2 + Astra's check (finding 2 row 3: zero tokens canvas-free; placement is design and needs a canvas; finding 3: the `ChairHome.tsx:685` seam by patch).
+- 2026-09-24 — chartered from XXVIII r2 + Astra's check (finding 2 row 3: zero tokens canvas-free; placement is design and needs a canvas; finding 3: the ChairHome seam by patch; corrected to `ChairHome.tsx:1442` in round two).

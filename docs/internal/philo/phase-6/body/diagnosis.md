@@ -86,7 +86,7 @@ camel-case field mapping; only the network response is replaced.
 ## Live S4 evidence
 
 The actual-atlas S4 run at
-`docs/internal/philo/phase-6/body/red-s4-393/20260925T024432Z-case.closure.chain.s4_saved_content-astra-393/observation.json`
+`docs/internal/philo/phase-6/body/negative-control-first-frame-393/20260925T024432Z-case.closure.chain.s4_saved_content-astra-393/observation.json`
 records:
 
 ```text

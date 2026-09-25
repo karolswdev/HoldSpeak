@@ -18,10 +18,19 @@ import { MicButton } from "@w/desk/components/MicButton";
 import { SYSTEM } from "@w/desk/systemSprites";
 import { MeetingSummarySlab } from "@w/meetings/MeetingSummarySlab";
 import { Chair } from "@w/desk/chair/Chair";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "@w/desk/surface";
+import {
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+} from "@w/desk/surface";
 import { BriefEgress } from "@w/desk/chair/briefEgress";
 import { DeskChrome } from "@w/desk/components/DeskChrome";
-import { Dock } from "@w/desk/components/DeskWindow";
+import { DeskWindowFrame, Dock } from "@w/desk/components/DeskWindow";
+import { DeskListView } from "@w/desk/components/DeskListView";
+import { EMPTY_ITEMS } from "@w/desk/api";
+import { useDesk } from "@w/desk/store";
 import { RuntimeBusProvider } from "@w/runtime/RuntimeBus";
 
 /* Keep shell-only reads local to this canvas. The product walk owns real hub
@@ -41,6 +50,39 @@ window.fetch = async (input, init) => {
 const SUMMARY =
   "The Synthetic Architect Meeting established three decisions: using SQLite for the local meeting ledger, keeping summary retrieval on the local desk after a hub restart, and using recorded provider replies for isolated rig tests. Action items were assigned to Mayyachan, Leo Martinez, and Priya Shah with specific deadlines or tasks.";
 const LONG_SUMMARY = `${SUMMARY} The owner also recorded the migration boundary, the recovery check, and the follow-up review window so the summary remains a deliberately longer readable region for placement fencing.`;
+
+// The Floor board uses the production DeskListView with a small fixture set so
+// the card can be seen displacing the actual Floor work area. This is canvas
+// data only; no hub read or write is made by the review page.
+useDesk.setState({
+  items: {
+    ...EMPTY_ITEMS,
+    meeting: [
+      {
+        kind: "meeting",
+        id: "meeting-architecture",
+        title: "Architecture review",
+        startedAt: "2026-09-24T15:00:00Z",
+      },
+    ],
+    note: [
+      {
+        kind: "note",
+        id: "note-recovery",
+        title: "Hub restart recovery",
+        body: "Keep the local meeting ledger available after a hub restart.",
+      },
+    ],
+    decision: [
+      {
+        kind: "decision",
+        id: "decision-sqlite",
+        title: "Use SQLite for the local ledger",
+        status: "open",
+      },
+    ],
+  },
+});
 
 function MeetingSummary({ open, long }: { open: boolean; long: boolean }) {
   return (
@@ -132,6 +174,84 @@ function CaptureBar({ pressed }: { pressed: boolean }) {
   );
 }
 
+function MeetingsWindowContent() {
+  return (
+    <>
+      <div className="toast-meetings-headline surface-display">Meeting memory</div>
+      <SurfaceSection label="MEETINGS · 1">
+        <SurfaceRows>
+          <SurfaceRow
+            title="Architecture review"
+            detail="SEP 24 · 30 MIN · 1,204 WORDS"
+            meta={<span className="surface-token" data-chip>SAVED</span>}
+            verbs={<Button dense variant="ghost">Open</Button>}
+          />
+        </SurfaceRows>
+      </SurfaceSection>
+      <SurfaceSection label="OUTCOMES">
+        <SurfaceRows>
+          <SurfaceRow
+            title="Keep the local meeting ledger"
+            detail="Architecture review"
+            verbs={<Button dense variant="ghost">Open</Button>}
+          />
+        </SurfaceRows>
+      </SurfaceSection>
+    </>
+  );
+}
+
+function MeetingsBoard() {
+  return (
+    <RuntimeBusProvider>
+      <div className="toast-canvas desk-next toast-canvas-meetings" data-testid="meetings-board">
+        <DeskChrome showDailyStarts={false} />
+        <DeskWindowFrame
+          id="surface-meetings"
+          glyph="▣"
+          title="Meetings"
+          label="Meetings"
+          eyebrow="Meeting memory"
+          minW={420}
+          defaultH={620}
+          open
+          entrance={false}
+          onClose={() => undefined}
+          className="desk-surface-window toast-meetings-window"
+        >
+          <div className="desk-surface-body toast-meetings-body" data-testid="meetings-window-body">
+            <div className="toast-off-arrival-slot toast-meetings-flow-slot" data-testid="off-arrival-slot">
+              <AftercareCard flow />
+            </div>
+            <div data-testid="meetings-window-content">
+              <MeetingsWindowContent />
+            </div>
+          </div>
+        </DeskWindowFrame>
+        <Dock />
+      </div>
+    </RuntimeBusProvider>
+  );
+}
+
+function FloorBoard() {
+  return (
+    <RuntimeBusProvider>
+      <div className="toast-canvas desk-next toast-canvas-floor" data-testid="floor-board">
+        <DeskChrome showDailyStarts={false} />
+        <div className="toast-floor-flow-slot toast-off-arrival-slot" data-testid="off-arrival-slot">
+          <AftercareCard flow />
+        </div>
+        <div className="toast-floor-work-area" data-testid="floor-work-area">
+          <div className="toast-floor-mode-label">Floor · list view</div>
+          <DeskListView />
+        </div>
+        <Dock />
+      </div>
+    </RuntimeBusProvider>
+  );
+}
+
 function AftercareCard({ flow }: { flow: boolean }) {
   return (
     <aside
@@ -155,6 +275,8 @@ function Canvas() {
   const board = params.get("board") ?? "today";
   const longSummary = params.get("summary") === "long";
   const pressedCapture = board === "capture";
+  if (board === "meetings") return <MeetingsBoard />;
+  if (board === "floor") return <FloorBoard />;
   const flow = board !== "today";
   const summaryOpen = board !== "proposed";
   const measuredScroll = longSummary

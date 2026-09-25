@@ -1,6 +1,6 @@
 """Build the self-contained PHILO-6-03 placement review page.
 
-The eight PNGs are produced by the real-species Vite canvas and then inlined
+The PNG board captures are produced by the real-species Vite canvas and then inlined
 so the owner can review every board without a running server or network fetch.
 """
 from base64 import b64encode
@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 SHOTS = ROOT / "shots"
-BOARDS = ("today", "proposed", "summary-open", "capture")
+BOARDS = ("today", "proposed", "summary-open", "capture", "meetings", "floor")
 
 
 def image_data(name: str) -> str:
@@ -38,16 +38,16 @@ img { display:block; width:100%; height:auto; }
 @media (max-width:720px) { .pair { grid-template-columns:minmax(0,1fr); } }
 </style></head><body>
 <h1>PHILO-6-03 · CANVAS ONLY · PROPOSED · OWNER RATIFICATION PENDING</h1>
-<p class="status">The today board preserves the current fixed aftercare defect as a comparison. The proposed, summary-open, and capture boards show the existing card in a normal-flow slot immediately before the existing capture bar. The card keeps its existing words, species and two verbs. At 393 the production capture bar is sticky: a flow card can pass under it at an intermediate scroll, so the phone no-overlap figures hold at the measured scroll or end-of-scroll clearance. The capture board is distinct because its bar shows the existing pressed-mic visual as a canvas-only fixture with no microphone or backend call.</p>
+<p class="status">The today board preserves the current fixed aftercare defect as a comparison. The proposed, summary-open, and capture boards show the existing card in a normal-flow slot immediately before the existing capture bar. The meetings board shows a real Meetings window open: its flow slot is inside the active window body below the production titlebar and before the Meetings content. The floor board shows the card in the Floor shell above the production DeskListView work area. The card keeps its existing words, species and two verbs. At 393 the production capture bar is sticky: a flow card can pass under it at an intermediate scroll, so the phone no-overlap figures hold at the measured scroll or end-of-scroll clearance. The capture board is distinct because its bar shows the existing pressed-mic visual as a canvas-only fixture with no microphone or backend call.</p>
 __BOARDS__
 <section class="facts">
 <h2>GEOMETRY AND FENCE</h2>
 <p>The canvas fence measures the card, Arrival sections, complete summary well, readable summary text and capture bar at 1440 × 900 and 393 × 852. It asserts no card intersection with those regions on every flow board at the recorded scroll, no horizontal overflow and exactly two card Button verbs. Browser errors are recorded in shots/browser-errors.json.</p>
 <h2>OWNER ASKS</h2>
-<p>1. Ratify the normal-flow slot immediately before the existing CaptureBar.</p>
-<p>2. Ratify auto-scroll to the measured phone slot as the phone mechanism; at another scroll position the sticky CaptureBar can cover the flow card.</p>
+<p>1. Ratify the Arrival slot before CaptureBar, plus top-of-current-surface flow slots off Arrival: inside an active Meetings window body below its titlebar and before content; in Floor above the work area.</p>
+<p>2. Ratify auto-scroll to the measured Arrival phone slot. This MOVES the owner's reading position and scrolls the Arrival head off the phone. At another scroll position the sticky CaptureBar can cover the flow card.</p>
 <h2>PROVENANCE</h2>
-<p>Canvas source: canvas/harness/main.tsx and main.css. It imports the production DeskChrome, Dock, RuntimeBusProvider, Chair, SurfaceSection, SurfaceLedger, SurfaceLedgerRow, MeetingSummarySlab, Button, MicButton and BriefEgress, plus production web/src CSS. The capture board pressed-mic visual uses the production listening sprite and Button styling only; it does not invoke microphone capture or a backend. The harness follows the Phase 4 methods in pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-canvas/ and story-04-canvas/. The retained phase-5 defect was inspected at pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real/shots/summary/393-after.png.</p>
+<p>Canvas source: canvas/harness/main.tsx and main.css. It imports the production DeskChrome, Dock, RuntimeBusProvider, Chair, DeskWindowFrame, DeskListView, SurfaceSection, SurfaceRows, SurfaceRow, SurfaceLedger, SurfaceLedgerRow, MeetingSummarySlab, Button, MicButton and BriefEgress, plus production web/src CSS. The Floor board seeds three local fixture primitives for the production Floor list species; it makes no hub request or write. The capture board pressed-mic visual uses the production listening sprite and Button styling only; it does not invoke microphone capture or a backend. The harness follows the Phase 4 methods in pm/roadmap/holdspeak-philo/phase-4-the-morning/assets/story-01-canvas/ and story-04-canvas/. The retained phase-5 defect was inspected at pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real/shots/summary/393-after.png.</p>
 <p>Review artifact only. No product placement file or ChairHome.tsx was edited. The seam proposal is in chairhome.patch and is explicitly not applied. Zero-count implementation and focused proof are in zero/.</p>
 </section>
 </body></html>

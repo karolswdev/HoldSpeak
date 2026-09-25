@@ -14,6 +14,7 @@
       "right": 1000,
       "bottom": 796
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 296,
       "y": 359.59375,
@@ -64,10 +65,35 @@
         "bottom": 295.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": true,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 1440,
     "button_count": 2,
@@ -88,6 +114,7 @@
       "right": 1000,
       "bottom": 543.59375
     },
+    "card_in_viewport": true,
     "summary_well": null,
     "summary_text": null,
     "capture_bar": {
@@ -124,10 +151,35 @@
         "bottom": 295.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 1440,
     "button_count": 2,
@@ -148,6 +200,7 @@
       "right": 1000,
       "bottom": 647.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 296,
       "y": 359.59375,
@@ -198,10 +251,35 @@
         "bottom": 295.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 1440,
     "button_count": 2,
@@ -222,6 +300,7 @@
       "right": 1000,
       "bottom": 647.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 296,
       "y": 359.59375,
@@ -272,14 +351,196 @@
         "bottom": 295.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 1440,
     "button_count": 2,
     "capture_state": "pressed-mic"
+  },
+  "meetings-1440": {
+    "board": "meetings",
+    "query": "?board=meetings",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "card": {
+      "x": 39,
+      "y": 133,
+      "width": 610,
+      "height": 152,
+      "right": 649,
+      "bottom": 285
+    },
+    "card_in_viewport": true,
+    "summary_well": null,
+    "summary_text": null,
+    "capture_bar": null,
+    "active_sections": {
+      "MEETINGS \u00b7 1": {
+        "x": 39,
+        "y": 341.890625,
+        "width": 610,
+        "height": 27,
+        "right": 649,
+        "bottom": 368.890625
+      }
+    },
+    "surface_regions": {
+      "titlebar": {
+        "x": 25,
+        "y": 73,
+        "width": 638,
+        "height": 40,
+        "right": 663,
+        "bottom": 113
+      },
+      "content": {
+        "x": 39,
+        "y": 312,
+        "width": 610,
+        "height": 186.890625,
+        "right": 649,
+        "bottom": 498.890625
+      }
+    },
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 258.2890625,
+        "y": 849,
+        "width": 923.421875,
+        "height": 51,
+        "right": 1181.7109375,
+        "bottom": 900
+      }
+    },
+    "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
+    "card_overlaps_summary_text": false,
+    "card_overlaps_summary_well": false,
+    "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {
+      "titlebar": false,
+      "content": false
+    },
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
+    "chair_scroll_top": null,
+    "scroll_width": 1440,
+    "button_count": 2,
+    "capture_state": "idle-mic"
+  },
+  "floor-1440": {
+    "board": "floor",
+    "query": "?board=floor",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "card": {
+      "x": 440,
+      "y": 66,
+      "width": 560,
+      "height": 152,
+      "right": 1000,
+      "bottom": 218
+    },
+    "card_in_viewport": true,
+    "summary_well": null,
+    "summary_text": null,
+    "capture_bar": null,
+    "active_sections": {},
+    "surface_regions": {
+      "work_area": {
+        "x": 0,
+        "y": 230,
+        "width": 1440,
+        "height": 598,
+        "right": 1440,
+        "bottom": 828
+      },
+      "floor_content": {
+        "x": 160,
+        "y": 323.390625,
+        "width": 1120,
+        "height": 266,
+        "right": 1280,
+        "bottom": 589.390625
+      }
+    },
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
+    "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
+    "card_overlaps_summary_text": false,
+    "card_overlaps_summary_well": false,
+    "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {
+      "work_area": false,
+      "floor_content": false
+    },
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": true,
+    "chair_scroll_top": null,
+    "scroll_width": 1440,
+    "button_count": 2,
+    "capture_state": "idle-mic"
   },
   "summary-open-long-1440": {
     "board": "summary-open-long",
@@ -296,6 +557,7 @@
       "right": 1000,
       "bottom": 665.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 296,
       "y": 359.59375,
@@ -346,10 +608,35 @@
         "bottom": 295.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 28,
+        "right": 1440,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 288.2890625,
+        "y": 849,
+        "width": 863.421875,
+        "height": 51,
+        "right": 1151.7109375,
+        "bottom": 900
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 1440,
     "button_count": 2,
@@ -370,6 +657,7 @@
       "right": 377,
       "bottom": 748
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 12,
       "y": 456.59375,
@@ -420,10 +708,35 @@
         "bottom": 323.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": true,
     "card_overlaps_summary_well": true,
     "card_overlaps_capture_bar": true,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": true
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 0,
     "scroll_width": 393,
     "button_count": 2,
@@ -444,6 +757,7 @@
       "right": 381,
       "bottom": 561.59375
     },
+    "card_in_viewport": true,
     "summary_well": null,
     "summary_text": null,
     "capture_bar": {
@@ -480,10 +794,35 @@
         "bottom": 224.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 99,
     "scroll_width": 393,
     "button_count": 2,
@@ -504,6 +843,7 @@
       "right": 381,
       "bottom": 553.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 12,
       "y": 191.59375,
@@ -554,10 +894,35 @@
         "bottom": 58.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 265,
     "scroll_width": 393,
     "button_count": 2,
@@ -578,6 +943,7 @@
       "right": 381,
       "bottom": 553.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 12,
       "y": 191.59375,
@@ -628,14 +994,196 @@
         "bottom": 58.59375
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 265,
     "scroll_width": 393,
     "button_count": 2,
     "capture_state": "pressed-mic"
+  },
+  "meetings-393": {
+    "board": "meetings",
+    "query": "?board=meetings",
+    "viewport": {
+      "width": 393,
+      "height": 852
+    },
+    "card": {
+      "x": 15,
+      "y": 289.109375,
+      "width": 363,
+      "height": 180,
+      "right": 378,
+      "bottom": 469.109375
+    },
+    "card_in_viewport": true,
+    "summary_well": null,
+    "summary_text": null,
+    "capture_bar": null,
+    "active_sections": {
+      "MEETINGS \u00b7 1": {
+        "x": 15,
+        "y": 526,
+        "width": 363,
+        "height": 27,
+        "right": 378,
+        "bottom": 553
+      }
+    },
+    "surface_regions": {
+      "titlebar": {
+        "x": 1,
+        "y": 229.109375,
+        "width": 391,
+        "height": 40,
+        "right": 392,
+        "bottom": 269.109375
+      },
+      "content": {
+        "x": 15,
+        "y": 496.109375,
+        "width": 363,
+        "height": 215.890625,
+        "right": 378,
+        "bottom": 712.0
+      }
+    },
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
+    "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
+    "card_overlaps_summary_text": false,
+    "card_overlaps_summary_well": false,
+    "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {
+      "titlebar": false,
+      "content": false
+    },
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
+    "chair_scroll_top": null,
+    "scroll_width": 393,
+    "button_count": 2,
+    "capture_state": "idle-mic"
+  },
+  "floor-393": {
+    "board": "floor",
+    "query": "?board=floor",
+    "viewport": {
+      "width": 393,
+      "height": 852
+    },
+    "card": {
+      "x": 12,
+      "y": 62,
+      "width": 369,
+      "height": 180,
+      "right": 381,
+      "bottom": 242
+    },
+    "card_in_viewport": true,
+    "summary_well": null,
+    "summary_text": null,
+    "capture_bar": null,
+    "active_sections": {},
+    "surface_regions": {
+      "work_area": {
+        "x": 0,
+        "y": 250,
+        "width": 393,
+        "height": 477,
+        "right": 393,
+        "bottom": 727
+      },
+      "floor_content": {
+        "x": 0,
+        "y": 343.390625,
+        "width": 393,
+        "height": 338,
+        "right": 393,
+        "bottom": 681.390625
+      }
+    },
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
+    "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
+    "card_overlaps_summary_text": false,
+    "card_overlaps_summary_well": false,
+    "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {
+      "work_area": false,
+      "floor_content": false
+    },
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": true,
+    "chair_scroll_top": null,
+    "scroll_width": 393,
+    "button_count": 2,
+    "capture_state": "idle-mic"
   },
   "summary-open-long-393": {
     "board": "summary-open-long",
@@ -652,6 +1200,7 @@
       "right": 381,
       "bottom": 542.59375
     },
+    "card_in_viewport": true,
     "summary_well": {
       "x": 12,
       "y": 126.59375,
@@ -702,10 +1251,35 @@
         "bottom": -6.40625
       }
     },
+    "surface_regions": {},
+    "chrome_regions": {
+      "menubar": {
+        "x": 0,
+        "y": 0,
+        "width": 393,
+        "height": 28,
+        "right": 393,
+        "bottom": 28
+      },
+      "dock": {
+        "x": 0,
+        "y": 727,
+        "width": 393,
+        "height": 125,
+        "right": 393,
+        "bottom": 852
+      }
+    },
     "card_text": "MEETING READY\nArchitecture review\n\n3 open\n\nOpen proposals\nDismiss",
     "card_overlaps_summary_text": false,
     "card_overlaps_summary_well": false,
     "card_overlaps_capture_bar": false,
+    "card_overlaps_surface": {},
+    "card_overlaps_chrome": {
+      "menubar": false,
+      "dock": false
+    },
+    "floor_content_visible": null,
     "chair_scroll_top": 330,
     "scroll_width": 393,
     "button_count": 2,
