@@ -1,0 +1,34 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_each_real_service_failure_keeps_its_observer_receipt ___________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-824/test_each_real_service_failure0')
+
+    def test_each_real_service_failure_keeps_its_observer_receipt(tmp_path):
+        db = Database(tmp_path / "service-failures.db")
+        observer = SQLiteObserver(db._connection)
+        primitive = PrimitiveService(db)
+        lifecycle = DecisionLifecycleService(db, kernel=None)
+    
+        with pytest.raises(NotFound):
+            primitive.get_decision(OWNER, "missing-desk-service")
+        with pytest.raises(NotFound):
+            lifecycle.get_decision(OWNER, "missing-lifecycle-service")
+    
+        rows = _events(db)
+>       assert [(row["service"], row["method"], row["error_code"]) for row in rows] == [
+            ("PrimitiveService", "get_decision", "not_found"),
+            ("DecisionLifecycleService", "get_decision", "not_found"),
+        ]
+E       AssertionError: assert [] == [('PrimitiveS... 'not_found')]
+E         
+E         Right contains 2 more items, first extra item: ('PrimitiveService', 'get_decision', 'not_found')
+E         Use -v to get more diff
+
+tests/unit/test_philo6_04_one_cause_one_row.py:186: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo6_04_one_cause_one_row.py::test_each_real_service_failure_keeps_its_observer_receipt
+1 failed in 1.43s
+mutation=PrimitiveService and DecisionLifecycleService observers omitted
+archive=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Z3Zy07jLQB
+exit=1

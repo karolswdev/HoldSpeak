@@ -1,0 +1,107 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/web
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx (7 tests | 5 failed) 364ms
+     × rolls a failed save back to the prior body before a slow refresh resolves 125ms
+     × keeps the prior body when a refused save's refresh fails 14ms
+     × keeps an optimistic body when a pre-write refresh resolves 61ms
+     × keeps an optimistic body when a refresh starts during a pending write 13ms
+     × does not let an older refusal roll back or receipt a newer decision write 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > rolls a failed save back to the prior body before a slow refresh resolves
+AssertionError: expected 'Rejected new decision' to be 'Prior saved decision' // Object.is equality
+
+Expected: "Prior saved decision"
+Received: "Rejected new decision"
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:172:67
+    170|       "SAVE FAILED",
+    171|     );
+    172|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe…
+       |                                                                   ^
+    173|     expect(body?.textContent).toContain("Prior saved decision");
+    174|     expect(body?.textContent).not.toContain("Rejected new decision");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps the prior body when a refused save's refresh fails
+AssertionError: expected undefined to be 'Prior saved decision' // Object.is equality
+
+- Expected:
+"Prior saved decision"
+
++ Received:
+undefined
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:199:68
+    197|       "SAVE FAILED",
+    198|     );
+    199|     expect(useDesk.getState().items.decision[0]?.decisionMarkdown).toB…
+       |                                                                    ^
+    200|       "Prior saved decision",
+    201|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a pre-write refresh resolves
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:290:67
+    288|     // This is the red acceptance assertion: a refresh that began befo…
+    289|     // write must not replace the newer optimistic item when it resolv…
+    290|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    291|       "Keep the local ledger",
+    292|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a refresh starts during a pending write
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:321:67
+    319|       document.querySelectorAll(".desk-decision-card > section"),
+    320|     );
+    321|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    322|       "Keep the local ledger",
+    323|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not let an older refusal roll back or receipt a newer decision write
+AssertionError: expected '' to be 'Second decision' // Object.is equality
+
+- Expected
++ Received
+
+- Second decision
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:367:67
+    365|       document.querySelectorAll(".desk-decision-card > section"),
+    366|     );
+    367|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    368|       "Second decision",
+    369|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  21:31:59
+   Duration  1.84s (transform 697ms, setup 80ms, import 1.06s, tests 364ms, environment 264ms)
+

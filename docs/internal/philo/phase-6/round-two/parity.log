@@ -1,0 +1,11 @@
+red-http-1440-import-corrected rows: [(67, 'PrimitiveService', 'get_decision', 'not_found'), (68, 'DecisionLifecycleService', 'get_decision', 'not_found')]
+red-op-1440 rows: [(6, 'PrimitiveService', 'get_decision', 'not_found')]
+green-http-1440 rows: [(67, 'PrimitiveService', 'get_decision', 'not_found')]
+green-op-1440 rows: [(6, 'PrimitiveService', 'get_decision', 'not_found')]
+1440: missing-decision parity FAIL 2:1 -> PASS 1:1
+red-http-393-atlas-width rows: [(67, 'PrimitiveService', 'get_decision', 'not_found'), (68, 'DecisionLifecycleService', 'get_decision', 'not_found')]
+red-op-393 rows: [(6, 'PrimitiveService', 'get_decision', 'not_found')]
+green-http-393 rows: [(67, 'PrimitiveService', 'get_decision', 'not_found')]
+green-op-393 rows: [(6, 'PrimitiveService', 'get_decision', 'not_found')]
+393: missing-decision parity FAIL 2:1 -> PASS 1:1
+PASS: both real atlas transports at both widths; no missing-id observation retry

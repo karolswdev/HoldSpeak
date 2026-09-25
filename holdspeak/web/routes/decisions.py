@@ -55,10 +55,23 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         except ServiceError as exc: return _error(exc)
     @router.get("/{decision_id}")
     async def get_decision(decision_id: str,request: Request) -> Any:
-        try: return JSONResponse({"decision": desk_ops().invoke(_principal(request), "decision.read", {"decision_id": decision_id})})
-        except NotFound: pass  # not a desk decision: the lifecycle record, with lineage
-        try: return JSONResponse(service().get_decision(_principal(request),decision_id))
-        except ServiceError as exc: return _error(exc)
+        # Probe the two durable owners before invoking either service.  The
+        # probes are repository reads, so they do not create observer rows;
+        # the selected service is then called exactly once.  A genuinely
+        # missing id takes the desk path once so its real NotFound remains an
+        # honest, observable cause instead of falling through to a second
+        # observer failure from the lifecycle service.
+        db = _database()
+        legacy_only = (
+            db.desk_decisions.get(decision_id) is None
+            and db.decisions.get(decision_id) is not None
+        )
+        try:
+            if legacy_only:
+                return JSONResponse(service().get_decision(_principal(request),decision_id))
+            return JSONResponse({"decision": desk_ops().invoke(_principal(request), "decision.read", {"decision_id": decision_id})})
+        except ServiceError as exc:
+            return _error(exc)
     @router.get("/{decision_id}/moment")
     async def get_decision_moment(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().get_moment(_principal(request),decision_id))

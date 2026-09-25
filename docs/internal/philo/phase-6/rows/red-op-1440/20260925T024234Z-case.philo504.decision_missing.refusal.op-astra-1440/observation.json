@@ -1,0 +1,458 @@
+{
+  "id": "obs-20260925T024234Z-case.philo504.decision_missing.refusal.op-astra-1440",
+  "run_id": "20260925T024234Z-case.philo504.decision_missing.refusal.op-astra-1440",
+  "case_id": "case.philo504.decision_missing.refusal.op",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json",
+  "job": "a1",
+  "edge_ids": [
+    "edge.route.decisions_list"
+  ],
+  "state_id": "state.decisions.desk.recorded",
+  "provenance": {
+    "revision": "66205729332ef66a6d16a186c04ae4801311734a",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "83e4803156a6671535258c37a96acf325d041eeadabc34ef34c93f0ced1c5e66",
+      "assets": [
+        "index-BQ1F_d58.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64864",
+      "port": 64864,
+      "pid": 28916,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-i_6drhhi",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-i_6drhhi/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:42:34.253236+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "e302feab62a2ac35533b9f3631acd9312ce4230bfb4c398a67f0823efa6fad70",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub with no decision rows; no browser is needed.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.read",
+    "args": {
+      "decision_id": "philo504-deliberately-absent"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.get",
+        "arguments": {
+          "kind": "decisions",
+          "id": "philo504-deliberately-absent"
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "not_found",
+      "error": "Unknown decision: philo504-deliberately-absent",
+      "id": "philo504-deliberately-absent",
+      "kind": "decision"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.009,
+    "named_refusal": {
+      "code": "not_found",
+      "error": "Unknown decision: philo504-deliberately-absent",
+      "id": "philo504-deliberately-absent",
+      "kind": "decision"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": null,
+      "after": "49e29426f5f2989dba0b5986eddd42faa18c35f8ef09978b8bec363be5fd5943"
+    }
+  },
+  "before": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:64864",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-25T02:42:35.794531+00:00"
+  },
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:64864",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-25T02:42:36.705776+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.read",
+      "body_sha256": "c1f5a414b0d5cde15ba6fe9c1b62fa763c4d3eea34f73ada145fff1e76f07401",
+      "body": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "op_digest": "49e29426f5f2989dba0b5986eddd42faa18c35f8ef09978b8bec363be5fd5943"
+  },
+  "initial_feedback": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:64864",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-25T02:42:36.704246+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.read",
+      "body_sha256": "c1f5a414b0d5cde15ba6fe9c1b62fa763c4d3eea34f73ada145fff1e76f07401",
+      "body": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "op_digest": "49e29426f5f2989dba0b5986eddd42faa18c35f8ef09978b8bec363be5fd5943",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'not_found': Unknown decision: philo504-deliberately-absent",
+    "elapsed_s": 0.91
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'not_found': Unknown decision: philo504-deliberately-absent",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.911,
+    "first_satisfied_at_s": 0.91,
+    "completion_bound_s": 15.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: operation refused by name 'not_found': Unknown decision: philo504-deliberately-absent"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-i_6drhhi/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-i_6drhhi/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64864"
+  ],
+  "duration_s": 2.643
+}

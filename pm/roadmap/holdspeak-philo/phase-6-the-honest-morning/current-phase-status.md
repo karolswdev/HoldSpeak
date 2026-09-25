@@ -62,19 +62,19 @@ The six defects come from retained evidence, not from taste. The source is the P
 | PHILO-6-01 | The honest import badge | done | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-6-02 | The brief's truth (one time, honest counts, human words) | done | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
-| PHILO-6-04 | One cause, one row | in-progress | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | - |
-| PHILO-6-05 | The decision body at once | in-progress | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | - |
+| PHILO-6-04 | One cause, one row | done | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | [evidence-story-04](./evidence-story-04.md) |
+| PHILO-6-05 | The decision body at once | done | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | [evidence-story-05](./evidence-story-05.md) |
 
 ## Lanes
 
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
-| The Arrival (owns `ChairHome.tsx`) | 01, 02 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-6-01, ../wt-philo-6-02 | feat/philo-6-01-import-badge, feat/philo-6-02-briefs-truth |
-| The toast, the row, the body | 03, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-03, ../wt-philo-6-04, ../wt-philo-6-05 | feat/philo-6-03-toast, feat/philo-6-04-one-row, feat/philo-6-05-decision-body |
+| The Arrival (owns `ChairHome.tsx`) | 01, 02 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-6-a | feat/philo-6-a-badge-brief |
+| The toast, the row, the body | 03, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-b | feat/philo-6-b-toast-rows-body |
 
 Lane law for this phase:
 
-- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. Story 03 may need the capture-clearance seam at `ChairHome.tsx:685`. Astra hands that change to lane 01/02 as a patch; the two lanes never co-edit the file.
+- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The future build needs this slot, an AmbientLayer portal and auto-scroll, plus an off-Arrival slot in the current surface shell. The patch alone places nothing.
 - Shared atlas and generated files (`docs/internal/philo/graph/atlas*.json`, `docs/generated/*`) have one shipping owner per commit. The second lane rebases and regenerates.
 - Two lanes do not halve the time (Astra, finding 3).
 
@@ -87,6 +87,15 @@ Lane law for this phase:
 2026-09-24 night: PHILO-6-02 DONE in lane A: ONE clock (the producer's `generated_at` in the viewer's zone, the Brief view's existing stamp, on the caption and the receipt); the counts keep their labels and meanings (no canvas needed: the raw-id filter hid raw producer rows from the head); human producer words (`Summary requested: <title>`, `Summary did not start: <title>`, no `Service.method`). Fences red on `origin/main`, green on the branch; the fold-destination walk FAIL before / PASS after at 1440 and 393. OPEN: the story's rehearsal box — `scripts/philo5_his_words.py` blocked three times before the brief stage (the Codex decision turn used `desk.create`); carried to exit 3. Astra checks on built.
 
 2026-09-24 night: PHILO-6-01 DONE in lane A (`feat/philo-6-a-badge-brief`): a failed import reads FAILED on the Arrival (`web/src/desk/chair/intelBadge.ts:26`); the fence is red on `origin/main` (SAVED) and green on the branch; the rig case `case.philo601.import_failed.badge` PASS at 1440 and 393. Astra checks on built. Next in the lane: PHILO-6-02.
+2026-09-24 night: lane B merged (04 done, 05 done; 03's zero omission + the ratified canvas); Astra builds 03's placement; lane A in round three (the brief's outcome-blind wording and the import cause line).
+
+2026-09-24 night — lane B round two records the actual Muad’Dib counsel at `checks/lane-b-built-muaddib.md` and relabels the earlier Astra-invoked claude -p checks. Records and canvas corrections follow that counsel; 03 stays in-progress, with placement unbuilt and unratified. Off-Arrival proposal: a top-of-surface flow slot inside Meetings and the Floor. Phone ask 2 explicitly moves the reading position. The 0/0 proposal verb is withheld with a red-before-fix fence. Three follow-ups now also live in BACKLOG “PHILO-6 follow-ups”. One gated update to PR #647; no merge.
+
+2026-09-24 night — lane B PHILO-6-05 verified: cause found before repair, 29 frontend and 143 rig checks passed, actual S4 continuous fence FAIL → PASS at 393 and 1440, first read frame and all 129 frames readable in each green run. Astra-invoked claude -p check conditions paid, including an assertion after the failed rollback read commits. PHILO-6-04 is committed; 03 zero/canvas is committed and placement remains unratified. One lane PR: https://github.com/karolswdev/HoldSpeak/pull/647; no merge. Per-box proof and handover: `docs/internal/philo/phase-6/lane-report.md`.
+
+2026-09-24 night — Astra lane B partial 03: zero omission is verified (archive 3 failed / 6 controls passed, built 13 passed). The checked canvas has today/proposed/summary-open/capture boards at both widths and a ChairHome proposal patch. Placement remains unbuilt, pending owner ratification of normal flow and the phone auto-scroll mechanism. Muad'Dib publishes the artifact.
+
+2026-09-24 night — Astra lane B: 04 is verified (33 focused tests; missing-decision parity 2:1 → 1:1 at 1440/393; legacy reads stop creating false failures). Astra-invoked claude -p check conditions paid. 03 placement remains canvas-only and unratified; 05 is in cause-first repair. One lane PR will carry the gated commits; no merge in this lane.
 
 2026-09-24 night: RATIFIED; lanes started (`../wt-philo-6-a` Muad'Dib 01/02; `../wt-philo-6-b` Astra 03/04/05).
 
@@ -100,7 +109,7 @@ Lane law for this phase:
 |---|---|---|---|
 | "One count" over-simplifies: the head count and the receipt count have different lawful meanings (the generated snapshot vs the currently unhandled rows; THIS WEEK excluded from the Arrival) | high | story 02 keeps both meanings and the historical snapshot; the labels say what each counts; a label or meaning change goes on a small canvas first | a count changes meaning without a ratified canvas |
 | The toast placement is design, not a repair | high | story 03 draws the unobstructed placement at both widths; the owner ratifies before build | placement code lands before the canvas is ratified |
-| S4's cause is unconfirmed: `dataSlice.ts:297` already patches the text optimistically, so "await the refresh" is not a diagnosis | medium | story 05 finds the cause first and records it; the fence covers the first transition and the failed save | a fix that only waits for eventual text |
+| Whole-desk reads overlap optimistic writes; the slow sibling is still unidentified | medium | story 05 diagnosed and fenced the delayed CREATE refresh commit; delete/rename and repeated refusals remain in the phase-local ledger | a new write seam relies only on eventual text |
 | The duplicate-row fix hides failures globally | medium | story 04 changes the dispatch only; legacy decision reads stay; a real failure still makes a row | fewer failure rows for a real failure |
 | Raw wording stays in breakage titles after the brief item is fixed | medium | story 02 covers `monday_brief_service.py:500` AND `:597` together | a breakage title still carries `Service.method` |
 | Two lanes collide on `ChairHome.tsx` or on the atlas | medium | one owner for `ChairHome.tsx`; the seam by patch; one shipping owner per shared file per commit | a merge conflict in `ChairHome.tsx` between lanes |
@@ -114,6 +123,14 @@ Lane law for this phase:
 - 2026-09-24 night — **SCOPE AMENDMENT, story 02** (`docs/internal/ORCHESTRATION.md:69`; the owner may overrule at the sitting): the Phase 5 rehearsal re-run (`scripts/philo5_his_words.py` at 1440 and 393) moves from story 02 to exit 3 (the closing chain). The driver failures are inherited (Astra, `checks/lane-a-built-astra.md` finding 6: main `66205729` fails on tool selection, Codex chose `door.add_item`; the branch fails MCP resource-list reconciliation after a correct `desk.create`). Homes: tool selection = BACKLOG "PHILO-5-04 follow-ups" MCP discoverability row (Phase 7 story 01/04); reconciliation = BACKLOG "PHILO-6 follow-ups" row 2 (Muad'Dib, before exit 3). Story 02 stays DONE only with this amendment — Muad'Dib (lane A, round 2).
 - 2026-09-24 night — story 02 round 2: a failed operation makes NO Changed row (its one line is the Broke row), rather than a failure-worded Changed row: one cause, one row — Muad'Dib (lane A).
 - 2026-09-24 night — story 02: the brief's ONE clock is the producer's `generated_at` in the viewer's zone (the Brief view's stamp, HS-175 C8), on the caption and the receipt; exit 2(b) (the count canvas) is NOT needed: no count label or meaning changed — Muad'Dib (lane A).
+- 2026-09-24 night — the owner RATIFIED the story 03 placement canvas (in flow above the capture bar; top-of-surface off the Arrival; phone auto-scroll accepted). Lane B (04, 05, the zero omission, the canvas) MERGED `4d55d4d5` after Muad'Dib's counsel (conditions paid in r2). Astra builds the placement now — Muad'Dib.
+
+- 2026-09-24 night — PHILO-6-05 Astra-invoked claude -p built check RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-astra-invoked-claude.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
+- 2026-09-24 night — PHILO-6-05 criterion 2 strengthened on live evidence and the Astra-invoked claude -p design check: the first read frame is readable on main; the pre-fix red is a later stale refresh commit. Require readability on the first frame and every frame through terminal observation, with the observer armed before Done. Original passing first-frame probe retained and labelled; no first-frame red claimed. See `checks/story-05-design-astra-invoked-claude.md` and `docs/internal/philo/phase-6/body/diagnosis.md`. Owner may overrule.
+
+- 2026-09-24 night — PHILO-6-03 Astra-invoked claude -p canvas/zero check RATIFY-WITH-CONDITIONS, paid before partial commit: sticky-phone geometry disclosed, distinct capture board, one parked rejected candidate, counsel under checks. Owner ratification still owed; `checks/story-03-canvas-zero-astra-invoked-claude.md`.
+
+
 - 2026-09-24 night — the owner RATIFIED the charter ("Ratify, build it"); all five stories in progress in two lanes — Muad'Dib.
 
 - 2026-09-24 night — Astra's check of this charter: RATIFY-WITH-CONDITIONS (`checks/charter-astra.md`), paid: story 01's diagnosis corrected (the producer writes `intel_status`; the adapter finding retracted by Astra; the repair is the badge mapping); story 02 never conflates the counts and decides one clock with an offsets fence; the estimate reconciled (4.5–6.5 d provisional); the README's Phase 5 row corrected; story 05's proof armed before Done. The owner's ratification next — Muad'Dib.
@@ -122,6 +139,8 @@ Lane law for this phase:
 - 2026-09-24 — the owner ruled D2: repairs first; Phase 6 before Phase 7.
 
 ## Decisions deferred
+
+- S4 follow-ups (slow whole-desk refresh, delete/rename races, setup-read rejection): recorded with evidence and disposition in `docs/internal/philo/phase-6/ledger.md`; no widening of this lane's repair.
 
 - The toast placement (story 03 canvas) — the owner's ratification.
 - Any change of a count label or a count meaning (story 02 canvas, only if needed) — the owner's ratification.

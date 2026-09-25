@@ -1,8 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 night (Phase 6 in build; PHILO-6-01 and 02 done; lane A round 3 after Astra's round-two BOUNCE).
-**Current phase:** [Phase 6 The Honest Morning](phase-6-the-honest-morning/current-phase-status.md) — CHARTERED 2026-09-24 by the two brains (the owner's D2: repairs first); Astra's check of the charter and the owner's ratification owed. Phase 7 The Desk on the Contract follows (draft: [PHASE-6-7-CHARTER-DRAFTS.md](PHASE-6-7-CHARTER-DRAFTS.md)).
-**Status:** Phases 1–5 delivered and merged. Phase 6 The Honest Morning chartered 2026-09-24: five stories repair the six morning-path defects the Phase 5 closure found; nothing built.
+**Last updated:** 2026-09-24 (Phase 6: lanes A and B merged; 03 placement in build).
 
 ## Vision
 
@@ -27,7 +25,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | closed by ruling 2026-09-23; exit 1 proved in Phase 4; sitting waived by owner 2026-09-24 ([final summary](phase-3-the-meeting-loop/final-summary.md)) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
 | 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | closed 2026-09-24 ([final summary](phase-4-the-morning/final-summary.md)) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
 | 5 | The One Service Layer — the meeting loop on one declared contract; routes, MCP and the rig over one registry; Codex drove the job in ordinary words | CLOSED 2026-09-24 (4/4; rehearsed, owner-reviewed shots, not a sitting) — [final summary](phase-5-the-one-service-layer/final-summary.md) |
-| 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | CHARTERED 2026-09-24; unratified | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
+| 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | RATIFIED 2026-09-24; in build | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
 
 ## Operating cadence
 

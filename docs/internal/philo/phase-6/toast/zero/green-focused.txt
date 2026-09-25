@@ -1,0 +1,14 @@
+Command:
+  cd web
+  PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
+  HOME=$(mktemp -d) ./node_modules/.bin/vitest run src/components/AmbientLayer.test.tsx src/components/AftercareNote.test.tsx --maxWorkers=2
+
+Exit: 0
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  21:03:42
+   Duration  776ms (transform 424ms, setup 123ms, import 619ms, tests 254ms, environment 372ms)

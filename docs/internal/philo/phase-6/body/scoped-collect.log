@@ -1,0 +1,29 @@
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > flags a write caught into an empty block
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > flags a bare apiRequest swallow with a named binding
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > passes a write that reports into the receipt channel
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > ignores bare catches that guard no write
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps the debt ledger pointed at real files
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > leaves the wired surfaces with no swallowed write at all
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused ADD ITEM and keeps the typed instruction
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > re-issues the refused add when RETRY is pressed
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused DISMISS ITEM
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RE-RUN ITEM
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RETRY MINT
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RUN
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused DROP TO WORK and a malformed drop
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > stays quiet when the hub takes the write
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > names a refused SEED DESK on the empty floor
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > names a refused CREATE NOTE on the empty floor
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > keeps a landed create quiet
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 populated-floor write receipts > names a refused floor-menu create in the system bar, and retries
+src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 populated-floor write receipts > prints one receipt only: a nearer line silences the system bar
+src/desk/__tests__/philo301DecisionNoLoss.test.tsx > PHILO-3-01 no data loss on an immediate reopen > save -> close -> reopen inside the marker -> Done keeps the text
+src/desk/__tests__/philo301RetryKept.test.tsx > PHILO-3-01 a read failure never takes a pending write's Retry > create fails, read fails, both recover, Retry creates the record
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > rolls a failed save back to the prior body before a slow refresh resolves
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps the prior body when a refused save's refresh fails
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > negative control: a held pullout prop stays stale after the store write
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not reproduce when the production host derives the object from items
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a pre-write refresh resolves
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a refresh starts during a pending write
+src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not let an older refusal roll back or receipt a newer decision write

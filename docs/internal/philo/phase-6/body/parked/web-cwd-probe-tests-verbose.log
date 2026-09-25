@@ -1,0 +1,113 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+ × src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > rolls a failed save back to the prior body before a slow refresh resolves 231ms
+   → expected 'Rejected new decision' to be 'Prior saved decision' // Object.is equality
+ × src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps the prior body when a refused save's refresh fails 82ms
+   → expected undefined to be 'Prior saved decision' // Object.is equality
+ ✓ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > negative control: a held pullout prop stays stale after the store write 49ms
+ ✓ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not reproduce when the production host derives the object from items 57ms
+ × src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a pre-write refresh resolves 57ms
+   → expected '' to be 'Keep the local ledger' // Object.is equality
+ × src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a refresh starts during a pending write 16ms
+   → expected '' to be 'Keep the local ledger' // Object.is equality
+ × src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not let an older refusal roll back or receipt a newer decision write 18ms
+   → expected '' to be 'Second decision' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > rolls a failed save back to the prior body before a slow refresh resolves
+AssertionError: expected 'Rejected new decision' to be 'Prior saved decision' // Object.is equality
+
+Expected: "Prior saved decision"
+Received: "Rejected new decision"
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:172:67
+    170|       "SAVE FAILED",
+    171|     );
+    172|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe…
+       |                                                                   ^
+    173|     expect(body?.textContent).toContain("Prior saved decision");
+    174|     expect(body?.textContent).not.toContain("Rejected new decision");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps the prior body when a refused save's refresh fails
+AssertionError: expected undefined to be 'Prior saved decision' // Object.is equality
+
+- Expected:
+"Prior saved decision"
+
++ Received:
+undefined
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:196:68
+    194|       "SAVE FAILED",
+    195|     );
+    196|     expect(useDesk.getState().items.decision[0]?.decisionMarkdown).toB…
+       |                                                                    ^
+    197|       "Prior saved decision",
+    198|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a pre-write refresh resolves
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:276:67
+    274|     // This is the red acceptance assertion: a refresh that began befo…
+    275|     // write must not replace the newer optimistic item when it resolv…
+    276|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    277|       "Keep the local ledger",
+    278|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a refresh starts during a pending write
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:306:67
+    304|       document.querySelectorAll(".desk-decision-card > section"),
+    305|     );
+    306|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    307|       "Keep the local ledger",
+    308|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not let an older refusal roll back or receipt a newer decision write
+AssertionError: expected '' to be 'Second decision' // Object.is equality
+
+- Expected
++ Received
+
+- Second decision
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:347:67
+    345|       document.querySelectorAll(".desk-decision-card > section"),
+    346|     );
+    347|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    348|       "Second decision",
+    349|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  21:08:40
+   Duration  1.67s (transform 605ms, setup 55ms, import 867ms, tests 512ms, environment 166ms)
+

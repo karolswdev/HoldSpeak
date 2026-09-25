@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AmbientLayer } from "./AmbientLayer";
+import { dismissAftercare, publishAftercare } from "../desk/intelligenceAttention";
 
 /**
  * HS-93-05 criterion 6, Web side. The hub owns the posture decision
@@ -181,4 +182,48 @@ describe("posture-aware dictation preview gate", () => {
       ),
     ).toHaveLength(0);
   });
+});
+
+describe("meeting aftercare counts", () => {
+  beforeEach(() => {
+    act(() => dismissAftercare());
+  });
+  afterEach(() => {
+    act(() => dismissAftercare());
+  });
+
+  it.each([
+    [0, 0, []],
+    [3, 0, ["3 open"]],
+    [0, 2, ["2 decided"]],
+    [3, 2, ["3 open · 2 decided"]],
+  ] as const)(
+    "renders only nonzero count tokens (%d open, %d decided)",
+    (openTotal, decidedTotal, expected) => {
+      render(<AmbientLayer />);
+      act(() => {
+        publishAftercare({
+          meeting_id: "meeting-counts",
+          title: "Count test",
+          open_total: openTotal,
+          decided_total: decidedTotal,
+        });
+      });
+
+      const aftercare = screen.getByRole("complementary", {
+        name: "Meeting aftercare",
+      });
+      const count = within(aftercare).queryByText((_, element) =>
+        element?.tagName === "P" && element.textContent === expected[0],
+      );
+      if (expected.length === 0) {
+        expect(within(aftercare).queryByText(/open|decided/)).toBeNull();
+        expect(aftercare.querySelector("p")).toBeNull();
+        expect(count).toBeNull();
+      } else {
+        expect(count).toBeInTheDocument();
+        expect(within(aftercare).queryByText(/\b0 (open|decided)\b/)).toBeNull();
+      }
+    },
+  );
 });

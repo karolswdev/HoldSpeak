@@ -1,0 +1,30 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused ADD ITEM and keeps the typed instruction 320ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > re-issues the refused add when RETRY is pressed 187ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused DISMISS ITEM 90ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RE-RUN ITEM 100ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RETRY MINT 86ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused RUN 56ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > names a refused DROP TO WORK and a malformed drop 25ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 workbench write receipts > stays quiet when the hub takes the write 129ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > names a refused SEED DESK on the empty floor 39ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > names a refused CREATE NOTE on the empty floor 22ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 desk-floor write receipts > keeps a landed create quiet 1ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 populated-floor write receipts > names a refused floor-menu create in the system bar, and retries 49ms
+ ✓ src/desk/components/__tests__/writeReceipts.test.tsx > HS-132-06 populated-floor write receipts > prints one receipt only: a nearer line silences the system bar 8ms
+ ✓ src/desk/__tests__/philo301RetryKept.test.tsx > PHILO-3-01 a read failure never takes a pending write's Retry > create fails, read fails, both recover, Retry creates the record 43ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > flags a write caught into an empty block 2ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > flags a bare apiRequest swallow with a named binding 0ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > passes a write that reports into the receipt channel 0ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > ignores bare catches that guard no write 0ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch 4ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps the debt ledger pointed at real files 1ms
+ ✓ src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > leaves the wired surfaces with no swallowed write at all 0ms
+
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Start at  21:00:11
+   Duration  3.89s (transform 1.45s, setup 130ms, import 1.90s, tests 1.17s, environment 493ms)
+

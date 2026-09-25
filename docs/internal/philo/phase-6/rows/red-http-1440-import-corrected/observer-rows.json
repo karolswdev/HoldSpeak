@@ -1,0 +1,106 @@
+{
+  "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-arnmq_i8/.local/share/holdspeak/holdspeak.db",
+  "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-arnmq_i8",
+  "rows": [
+    {
+      "id": 67,
+      "event_id": "0f4be7fb-b884-462e-9f29-6b79105c2180",
+      "timestamp": 1790304108.287775,
+      "service": "PrimitiveService",
+      "method": "get_decision",
+      "principal_kind": "owner",
+      "principal_identity": "owner-session",
+      "args_summary": "{\"decision_id\":\"philo504-deliberately-absent\"}",
+      "result_summary": "",
+      "error": "NotFound('Unknown decision: philo504-deliberately-absent')",
+      "error_code": "not_found",
+      "duration_ms": 0.16188621520996094,
+      "correlation_id": "683ce777-4e99-4a3b-b241-82354a8a9e0a",
+      "is_async": 0,
+      "origin": "local",
+      "caller": "",
+      "caller_identity": ""
+    },
+    {
+      "id": 68,
+      "event_id": "050ba80f-be0e-4aa9-8933-77e644b3337a",
+      "timestamp": 1790304108.28815,
+      "service": "DecisionLifecycleService",
+      "method": "get_decision",
+      "principal_kind": "owner",
+      "principal_identity": "owner-session",
+      "args_summary": "{\"decision_id\":\"philo504-deliberately-absent\"}",
+      "result_summary": "",
+      "error": "NotFound('Unknown decision: philo504-deliberately-absent')",
+      "error_code": "not_found",
+      "duration_ms": 0.11801719665527344,
+      "correlation_id": "e3d5ea43-2d8c-481a-906e-cd9c3b32c20e",
+      "is_async": 0,
+      "origin": "local",
+      "caller": "",
+      "caller_identity": ""
+    }
+  ],
+  "count": 2,
+  "case": "case.philo504.decision_missing.refusal",
+  "viewport": 1440,
+  "source_root": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline",
+  "route_sha256": "b366cbf1ae81501c990f73099385fbb630498c75938d513212f62da7ba25f6a4",
+  "source": {
+    "revision": "66205729332ef66a6d16a186c04ae4801311734a",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "83e4803156a6671535258c37a96acf325d041eeadabc34ef34c93f0ced1c5e66",
+      "assets": [
+        "index-BQ1F_d58.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64766",
+      "port": 64766,
+      "pid": 28243,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-arnmq_i8",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-arnmq_i8/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T02:41:40.502663+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.2.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "e302feab62a2ac35533b9f3631acd9312ce4230bfb4c398a67f0823efa6fad70",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "rig_verdict": "pass",
+  "one_cause_one_row": false
+}

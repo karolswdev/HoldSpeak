@@ -1,0 +1,10 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+ ✓ src/desk/__tests__/philo301DecisionNoLoss.test.tsx > PHILO-3-01 no data loss on an immediate reopen > save -> close -> reopen inside the marker -> Done keeps the text 185ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:01:47
+   Duration  895ms (transform 278ms, setup 63ms, import 391ms, tests 186ms, environment 180ms)
+

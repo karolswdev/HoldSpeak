@@ -1,0 +1,22 @@
+{
+  "archive_commit": "66205729332ef66a6d16a186c04ae4801311734a",
+  "archive_root": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline",
+  "sources": [
+    {
+      "path": "web/src/desk/store/dataSlice.ts",
+      "archive_sha256": "68b3793c4fe590810e9c60e39ece981128058ebe7dc37c7e556d50514d36dfc7",
+      "green_sha256": "686bb03df23dd5d21159a994edc6d0bf97ca0ca02df3dcb2f2c29ab74ba49683"
+    },
+    {
+      "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+      "archive_sha256": "6413e5ca9f7b6601e1c607eca309f22b9fb724f5bd7f6999341f352071c55e5e",
+      "green_sha256": "6413e5ca9f7b6601e1c607eca309f22b9fb724f5bd7f6999341f352071c55e5e"
+    },
+    {
+      "path": "web/src/desk/DeskApp.tsx",
+      "archive_sha256": "ef2cc2d14f71defc3e0fbff77d1b0b62d6bdee8c59a11a284113c603a32ae677",
+      "green_sha256": "ef2cc2d14f71defc3e0fbff77d1b0b62d6bdee8c59a11a284113c603a32ae677"
+    }
+  ],
+  "note": "Raw observations nested in archive inherit outer git revision; source hashes and explicit archive PYTHONPATH identify baseline."
+}

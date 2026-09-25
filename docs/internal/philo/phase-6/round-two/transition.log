@@ -1,0 +1,4 @@
+393 red: FAIL; first read 10.8 ms readable; first blank 159.1 ms; 3600 read-mode frames
+393 green: PASS; first read 10.8 ms readable; first blank none; 129 read-mode frames
+1440 red: FAIL; first read 10.1 ms readable; first blank 77.3 ms; 3600 read-mode frames
+1440 green: PASS; first read 10.4 ms readable; first blank none; 129 read-mode frames

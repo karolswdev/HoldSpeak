@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AmbientLayer } from "./AmbientLayer";
 import { dismissAftercare } from "../desk/intelligenceAttention";
@@ -100,6 +100,59 @@ describe("aftercare without the mascot", () => {
       "meeting:meeting-42",
     );
     expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
+  });
+
+  it("omits the opener for 0/0, keeps dismissal, and restores it on a nonzero transition", () => {
+    render(<AmbientLayer />);
+    broadcastAftercare({
+      meeting_id: "meeting-empty",
+      title: "No proposals",
+      open_total: 0,
+      decided_total: 0,
+    });
+
+    const aftercare = screen.getByLabelText("Meeting aftercare");
+    expect(
+      within(aftercare).queryByRole("button", { name: "Open proposals" }),
+    ).toBeNull();
+    expect(
+      within(aftercare).getByRole("button", { name: "Dismiss" }),
+    ).toBeInTheDocument();
+
+    broadcastAftercare({
+      meeting_id: "meeting-decided",
+      title: "Decided proposals",
+      open_total: 0,
+      decided_total: 2,
+    });
+
+    const transitioned = screen.getByLabelText("Meeting aftercare");
+    expect(
+      within(transitioned).getByRole("button", { name: "Open proposals" }),
+    ).toBeInTheDocument();
+    expect(within(transitioned).getByText("2 decided")).toBeInTheDocument();
+
+    fireEvent.click(
+      within(transitioned).getByRole("button", { name: "Open proposals" }),
+    );
+    expect(mocks.openSurfaceWhenReady).toHaveBeenCalledWith(
+      "review-meetings",
+      "meeting:meeting-decided",
+    );
+    expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
+
+    mocks.openSurfaceWhenReady.mockClear();
+    broadcastAftercare({
+      meeting_id: "meeting-empty-again",
+      title: "No proposals again",
+      open_total: 0,
+      decided_total: 0,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss" }),
+    );
+    expect(screen.queryByLabelText("Meeting aftercare")).toBeNull();
+    expect(mocks.openSurfaceWhenReady).not.toHaveBeenCalled();
   });
 
   it("dismisses without opening anything", () => {

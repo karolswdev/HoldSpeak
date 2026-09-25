@@ -1,0 +1,8 @@
+{
+  "archive_commit": "66205729332ef66a6d16a186c04ae4801311734a",
+  "archive_root": "/Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline",
+  "source": "web/src/components/AmbientLayer.tsx",
+  "source_sha256": "1c41b35f182810249b7a0cc9c1e3687f692f9fdf67d9de1cff052a8c0e70f6b1",
+  "overlay": "web/src/components/AmbientLayer.test.tsx",
+  "excluded": "red-lane-behavior-control.txt temporarily changed the lane renderer and is not the required archive proof"
+}

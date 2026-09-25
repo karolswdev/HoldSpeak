@@ -4142,7 +4142,9 @@
         "route execution"
       ],
       "docs": [
-        "docs/MEETING_AFTERCARE.md"
+        "docs/MEETING_AFTERCARE.md",
+        "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+        "docs/internal/philo/phase-6/body/README.md"
       ],
       "domain": "meeting",
       "egress": "Only model draft generation may egress; lifecycle transition itself is local.",
@@ -4208,6 +4210,18 @@
           "line": 36,
           "path": "holdspeak/services/decision_lifecycle_service.py",
           "symbol": "DecisionLifecycleService.transition"
+        },
+        {
+          "claim": "GET by id chooses the durable desk or lifecycle owner before invoking one observed service; an absent id produces one failure row.",
+          "line": 40,
+          "path": "holdspeak/web/routes/decisions.py",
+          "symbol": "build_decisions_router"
+        },
+        {
+          "claim": "Desk decision saves protect optimistic text from overlapping refresh commits and restore the prior item with the existing receipt on current refusal.",
+          "line": 174,
+          "path": "web/src/desk/store/dataSlice.ts",
+          "symbol": "createDataSlice"
         }
       ],
       "status": "experimental",
@@ -4239,6 +4253,72 @@
           },
           "node": "test_promote_route_is_idempotent_and_queryable_both_ways",
           "path": "tests/integration/test_decision_records.py"
+        },
+        {
+          "assertion": "A missing HTTP decision read writes exactly one real SQLiteObserver failure.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+            "run": "PHILO-6-04 focused",
+            "status": "passed"
+          },
+          "node": "test_missing_id_has_one_real_observer_failure_row",
+          "path": "tests/unit/test_philo6_04_one_cause_one_row.py"
+        },
+        {
+          "assertion": "A producer-created lifecycle-only id preserves its lineage response.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+            "run": "PHILO-6-04 focused",
+            "status": "passed"
+          },
+          "node": "test_lifecycle_only_id_uses_one_observed_lineage_read",
+          "path": "tests/unit/test_philo6_04_one_cause_one_row.py"
+        },
+        {
+          "assertion": "Missing reads from either real service retain their observer failure rows.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-04.md",
+            "run": "PHILO-6-04 focused",
+            "status": "passed"
+          },
+          "node": "test_each_real_service_failure_keeps_its_observer_receipt",
+          "path": "tests/unit/test_philo6_04_one_cause_one_row.py"
+        },
+        {
+          "assertion": "A real store update survives a delayed pre-write collection result.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "keeps an optimistic body when a pre-write refresh resolves",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
+        },
+        {
+          "assertion": "A refused save keeps the prior rendered body and SAVE FAILED receipt even if its rollback read fails.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "keeps the prior body when a refused save's refresh fails",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
+        },
+        {
+          "assertion": "An obsolete refusal cannot replace a newer success or expose an obsolete Retry.",
+          "execution": {
+            "cases": 1,
+            "record": "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/evidence-story-05.md",
+            "run": "PHILO-6-05 scoped frontend",
+            "status": "passed"
+          },
+          "node": "does not let an older refusal roll back or receipt a newer decision write",
+          "path": "web/src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx"
         }
       ],
       "trust_boundary": "Decision lifecycle changes are owner-only; a model draft is admitted separately and remains a draft artifact."

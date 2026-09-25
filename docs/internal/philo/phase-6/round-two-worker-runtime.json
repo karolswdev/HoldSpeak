@@ -1,0 +1,40 @@
+[
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T21-47-31-01a0d6ac-e868-7f71-9274-64f9ac63523f.jsonl",
+    "session_id": "01a0d6ac-e868-7f71-9274-64f9ac63523f",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a0d6ab-801c-75c2-ae0d-bb7829583be6",
+          "depth": 1,
+          "agent_path": "/root/zero_verb",
+          "agent_nickname": "Sagan",
+          "agent_role": null
+        }
+      }
+    },
+    "model": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report"
+  },
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T21-48-15-01a0d6ad-946c-73b1-ae7a-3e5e707e0b1e.jsonl",
+    "session_id": "01a0d6ad-946c-73b1-ae7a-3e5e707e0b1e",
+    "source": {
+      "subagent": {
+        "thread_spawn": {
+          "parent_thread_id": "01a0d6ab-801c-75c2-ae0d-bb7829583be6",
+          "depth": 1,
+          "agent_path": "/root/off_arrival_canvas",
+          "agent_nickname": "Turing",
+          "agent_role": null
+        }
+      }
+    },
+    "model": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report"
+  }
+]
