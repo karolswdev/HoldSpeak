@@ -143,6 +143,10 @@ class PrimitiveService:
         self._changed("note", note_id, "delete")
         return True
 
+    def thought_owns_note(self, note_id: str) -> bool:
+        """Whether *note_id* belongs to a Thought: its delete is an admitted tombstone (PHILO-7-02)."""
+        return self._db.refinement_thoughts.get_by_note(str(note_id or "")) is not None
+
     @staticmethod
     def _owned_note_response(thought: dict[str, Any]) -> dict[str, Any]:
         """A normal Note payload plus mandatory aggregate retry cursors."""
@@ -218,10 +222,12 @@ class PrimitiveService:
         return decision.to_dict()
 
     def supersede_decision(
-        self, principal: Principal, decision_id: str
+        self, principal: Principal, decision_id: str, *, successor_id: str | None = None
     ) -> dict[str, Any]:
+        # PHILO-7-02: the admitted path mints the successor id BEFORE
+        # submission, so the two-row write is one immutable payload.
         successor = self._db.desk_decisions.supersede(
-            decision_id, _new_id("decision")
+            decision_id, successor_id or _new_id("decision")
         )
         if successor is None:
             raise NotFound("decision", decision_id)

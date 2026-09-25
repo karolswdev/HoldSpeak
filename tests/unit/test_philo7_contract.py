@@ -89,7 +89,8 @@ def test_the_slice_is_fifteen_explicit_rows_each_naming_a_real_method() -> None:
     from holdspeak.services.primitive_service import PrimitiveService
 
     names = [d.name for d in operations.DESCRIPTORS]
-    assert [n for n in names if n.split(".")[0] in {"note", "zone", "kb"}] == list(SLICE)
+    # PHILO-7-02 adds the membership rows (zone.file ... kb.members) after these.
+    assert [n for n in names if n.split(".")[0] in {"note", "zone", "kb"}][:len(SLICE)] == list(SLICE)
     rows = {(kind, verb): op for (kind, verb), op in operations.DESK_OPERATIONS.items() if kind != "decision"}
     assert sorted(rows.values()) == sorted(SLICE), "a slice operation has no (kind, verb) row"
     for name in SLICE:
@@ -474,11 +475,7 @@ def test_the_residual_set_paid_exactly_the_enumerated_identities() -> None:
     listed = {census._key(e) for e in committed["entries"]}
     assert not (paid & listed)
     assert census.check(REPO, committed) == []
-    # Still residual, story 02's: decisions' delete and the membership tools.
-    assert ("mcp", "desk.delete", "kind=decisions") in listed
-    assert ("mcp", "zone.file", "") in listed and ("mcp", "kb.add_member", "") in listed
-    # Two measurements: the residual set shrank; the public tool count did not move.
-    measurements = committed["measurements"]
-    assert (measurements["residual_mcp"], measurements["residual_http"]) == (232, 61)
-    assert measurements["public_tools"] == 228
+    # PHILO-7-02 paid the rest of the slice (#1, #6, #25, #28-33) and moved the
+    # measurements (320 -> 293 here, then -> 284): its own fence,
+    # tests/unit/test_philo7_membership_decisions.py, holds the numbers.
     assert not [a for a in committed.get("public_tools_added", []) if a["story"] == "PHILO-7-01"]

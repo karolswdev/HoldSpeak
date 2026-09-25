@@ -86,6 +86,21 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/supersede")
     async def supersede_decision(decision_id: str,request: Request,payload: dict[str,Any]=Body(default={})) -> Any:
+        # PHILO-7-02: this router answers the path in the hub (it is included
+        # before the primitives router). A DESK decision's supersede is the
+        # contract's admitted decision.supersede on the hub's one
+        # PrimitiveService (one operation, one receipt, the desk_changed
+        # frames); before, this branch wrote both rows by hand, outside the
+        # contract and without a frame. A meeting decision keeps the lifecycle.
+        if _database().desk_decisions.get(decision_id) is not None:
+            try:
+                decision, kernel = desk_ops().invoke_receipted(
+                    _principal(request), "decision.supersede", {"decision_id": decision_id})
+                return JSONResponse({"decision": decision, **(kernel or {})}, status_code=201)
+            except NotFound:
+                return JSONResponse({"error": "decision_not_found"}, status_code=404)
+            except ServiceError as exc:
+                return _error(exc)
         try:
             result=service().supersede(_principal(request),decision_id,payload)
             return JSONResponse({k:v for k,v in result.items() if k != "_status"},status_code=result.get("_status",200))

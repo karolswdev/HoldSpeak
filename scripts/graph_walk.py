@@ -769,7 +769,23 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "kb.update": {"kind": "tool", "name": "desk.update"},
     "kb.delete": {"kind": "tool", "name": "desk.delete"},
     "kb.list": {"kind": "tool", "name": "desk.list"},
+    # PHILO-7-02: membership, the remaining decision operations, the receipt read.
+    # ``decision.status`` has no MCP tool (HTTP only; over MCP the same status
+    # change is ``decision.update``), so it is not in this map: the rig blocks
+    # it by name.
+    "zone.file": {"kind": "tool", "name": "zone.file"},
+    "zone.unfile": {"kind": "tool", "name": "zone.unfile"},
+    "zone.members": {"kind": "tool", "name": "zone.list_members"},
+    "kb.member.add": {"kind": "tool", "name": "kb.add_member"},
+    "kb.member.remove": {"kind": "tool", "name": "kb.remove_member"},
+    "kb.members": {"kind": "tool", "name": "kb.list_members"},
+    "decision.delete": {"kind": "tool", "name": "desk.delete"},
+    "decision.supersede": {"kind": "tool", "name": "decision.supersede"},
+    "kernel.receipt.read": {"kind": "tool", "name": "kernel.receipt"},
 }
+
+#: Declared operations with no MCP exposure: the rig refuses them by name.
+OP_HTTP_ONLY = frozenset({"decision.status"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
@@ -787,6 +803,7 @@ OP_READ_OBSERVATIONS = frozenset({
     "brief.latest", "brief.shelf.read",
     "thought.read", "thought.workbench.read", "thought.list",
     "note.read", "note.list", "zone.read", "zone.list", "kb.read", "kb.list",
+    "zone.members", "kb.members", "kernel.receipt.read",
 })
 
 
@@ -826,6 +843,12 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
         return {"kind": "decisions", "id": args.get("decision_id")}
     if name == "decision.list":
         return {"kind": "decisions"}
+    if name == "decision.delete":
+        _id_only(name, args, "decision_id")
+        return {"kind": "decisions", "id": args.get("decision_id")}
+    if name in {"kb.member.add", "kb.member.remove"}:
+        # The MCP tools name the reference ``ref``; nothing else is dropped.
+        return {("ref" if key == "resource_ref" else key): value for key, value in args.items()}
     prefix, _, verb = name.partition(".")
     if prefix in _DESK_OP_KINDS:
         kind, id_field = _DESK_OP_KINDS[prefix]
@@ -862,6 +885,9 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
 
 def _op_request(name: str, args: dict[str, Any], request_id: int) -> dict[str, Any]:
     projection = OP_MCP_PROJECTIONS.get(name)
+    if name in OP_HTTP_ONLY:
+        raise Blocked(f"operation {name!r} has no MCP exposure (HTTP only); "
+                      "over MCP the same change is decision.update")
     if projection is None:
         raise Blocked(f"operation {name!r} is not in the rig's canonical MCP map")
     # These projections have no place to carry the canonical pagination or

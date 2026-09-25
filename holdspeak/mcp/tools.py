@@ -24,6 +24,7 @@ from holdspeak.services.meeting_intel_service import MeetingIntelService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.services.kernel_read_service import KernelReadService
 from holdspeak.services.model_library_service import ModelLibraryApplicationService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
@@ -425,6 +426,14 @@ TOOLS.extend([
         {"decision_id": {"type": "string", "description": "Decision to supersede."}},
         ["decision_id"],
     ),
+    # PHILO-7-02: the ONE new public tool -- the receipt readback (read-only).
+    _mcp_tool(
+        "kernel.receipt",
+        "Read the receipt of a filing or decision write: operation_id from that write's result. "
+        "Shows the outcome, the actor and, for an agent's write, the delegation that approved it.",
+        {"operation_id": {"type": "string", "description": "The operation_id a filing or decision write returned."}},
+        ["operation_id"],
+    ),
     _mcp_tool(
         "pipeline.events",
         "Query observed pipeline events with optional filters.",
@@ -612,16 +621,26 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
         InferenceAssignmentService._require_owner(principal)
 
 
-# PHILO-5-01 / PHILO-7-01: for decisions, notes, zones (directories) and
-# knowledge bases, each (kind, verb) is ONE declared operation
+# PHILO-5-01 / PHILO-7-01 / PHILO-7-02: for decisions, notes, zones
+# (directories) and knowledge bases, each (kind, verb) is ONE declared operation
 # (``operations.DESK_OPERATIONS``), bound to the hub's live PrimitiveService and
 # reached through the registry's ``invoke``. The generic getattr path below
-# serves only the kinds with no row: workflows and chains (their owning slice),
-# and ``desk.delete kind=decisions`` (PHILO-7-02).
+# serves only the kinds with no row: workflows and chains (their owning slice).
 
 
 def _desk_operation(kind: str, verb: str) -> str | None:
     return operations.DESK_OPERATIONS.get((kind, verb))
+
+
+def _receipted(value: Any, kernel: dict[str, Any] | None) -> Any:
+    """PHILO-7-02: an ADMITTED write's result carries ``operation_id`` and its receipt."""
+    if kernel and isinstance(value, dict):
+        return {**value, **kernel}
+    return value
+
+
+def _invoke(ops: Callable[[], operations.OperationRegistry], principal: Principal, name: str, args: dict[str, Any]) -> tuple[Any, dict[str, Any] | None]:
+    return ops().invoke_receipted(principal, name, args)
 
 
 def _primitive_list(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str) -> Any:
@@ -638,23 +657,24 @@ def _primitive_get(ops: Callable[[], operations.OperationRegistry], service: Pri
 
 def _primitive_create(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, data: dict[str, Any]) -> Any:
     if (operation := _desk_operation(kind, "create")) is not None:
-        return ops().invoke(principal, operation, data)
+        return _receipted(*_invoke(ops, principal, operation, data))
     return getattr(service, f"create_{kind}")(principal, **data)
 
 
 def _primitive_update(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
     if (operation := _desk_operation(kind, "update")) is not None:
-        return ops().invoke(principal, operation, operations.update_args(
-            data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind]))
+        return _receipted(*_invoke(ops, principal, operation, operations.update_args(
+            data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind])))
     return getattr(service, f"update_{kind}")(principal, item_id, **data)
 
 
 def _primitive_delete(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
+    kernel = None
     if (operation := _desk_operation(kind, "delete")) is not None:
-        deleted = ops().invoke(principal, operation, {operations.DESK_ID_ARGUMENT[kind]: item_id})
+        deleted, kernel = _invoke(ops, principal, operation, {operations.DESK_ID_ARGUMENT[kind]: item_id})
     else:
         deleted = getattr(service, f"delete_{kind}")(principal, item_id)
-    return {"deleted": deleted, "id": item_id}
+    return _receipted({"deleted": deleted, "id": item_id}, kernel)
 
 
 def _card_dict(card: Any) -> dict[str, Any]:
@@ -842,6 +862,9 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             monday_brief_service=lambda: runtime_service(
                 "monday_brief_service", lambda: MondayBriefService(db, observer=obs)
             ),
+            kernel_read_service=lambda: runtime_service(
+                "kernel_read_service", lambda: KernelReadService(db)
+            ),
         )
 
     if name == "desk.list":
@@ -903,22 +926,29 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             "replaced it. Post the turn to /api/threads/{id}/turns instead, or "
             "call thought.* for the refinement loop."
         )
+    # PHILO-7-02: the membership tools are the declared zone.file/unfile/members
+    # and kb.member.add/remove/kb.members operations, through the one registry.
     if name == "zone.file":
-        return primitives.file_member(principal, str(args.get("directory_id") or ""), str(args.get("primitive_id") or ""))
+        return _receipted(*_invoke(ops, principal, "zone.file", {
+            "directory_id": str(args.get("directory_id") or ""), "primitive_id": str(args.get("primitive_id") or "")}))
     if name == "zone.unfile":
         primitive_id = str(args.get("primitive_id") or "")
-        primitives.unfile_member(principal, str(args.get("directory_id") or ""), primitive_id)
-        return {"deleted": True, "id": primitive_id}
+        _unfiled, kernel = _invoke(ops, principal, "zone.unfile", {
+            "directory_id": str(args.get("directory_id") or ""), "primitive_id": primitive_id})
+        return _receipted({"deleted": True, "id": primitive_id}, kernel)
     if name == "zone.list_members":
-        return primitives.list_directory_members(principal, str(args.get("directory_id") or ""))
+        return ops().invoke(principal, "zone.members", {"directory_id": str(args.get("directory_id") or "")})
     if name == "kb.add_member":
-        return primitives.add_kb_member(principal, str(args.get("kb_id") or ""), str(args.get("ref") or ""))
+        return _receipted(*_invoke(ops, principal, "kb.member.add", {
+            "kb_id": str(args.get("kb_id") or ""), "resource_ref": str(args.get("ref") or "")}))
     if name == "kb.remove_member":
         ref = str(args.get("ref") or "")
-        primitives.remove_kb_member(principal, str(args.get("kb_id") or ""), ref)
-        return {"deleted": True, "id": ref}
+        _removed, kernel = _invoke(ops, principal, "kb.member.remove", {"kb_id": str(args.get("kb_id") or ""), "resource_ref": ref})
+        return _receipted({"deleted": True, "id": ref}, kernel)
     if name == "kb.list_members":
-        return primitives.list_kb_members(principal, str(args.get("kb_id") or ""))
+        return ops().invoke(principal, "kb.members", {"kb_id": str(args.get("kb_id") or "")})
+    if name == "kernel.receipt":
+        return ops().invoke(principal, "kernel.receipt.read", {"operation_id": str(args.get("operation_id") or "")})
     if name == "meeting.list":
         allowed = ("query", "from_date", "to_date", "limit", "cursor", "speaker", "tag", "has_open_actions")
         return ops().invoke(principal, "meeting.list", {key: args[key] for key in allowed if key in args})
@@ -1083,7 +1113,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             **({"limit": args["limit"]} if "limit" in args else {}),
         )
     if name == "decision.supersede":
-        return primitives.supersede_decision(principal, str(args.get("decision_id") or ""))
+        return _receipted(*_invoke(ops, principal, "decision.supersede", {"decision_id": str(args.get("decision_id") or "")}))
     if name == "pipeline.events":
         allowed = ("service", "method", "principal_kind", "since", "until", "correlation_id", "errors_only", "limit")
         filters = {key: args[key] for key in allowed if key in args}

@@ -342,7 +342,7 @@ Added for this phase (Astra's check of the drafts, finding 5):
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-7-01 | Notes and directories on the contract (and discovery) | done | [story-01-notes-and-directories-on-the-contract](./story-01-notes-and-directories-on-the-contract.md) | [evidence-story-01](./evidence-story-01.md) |
-| PHILO-7-02 | Membership and decisions under Article XI | backlog | [story-02-membership-and-decisions-under-article-xi](./story-02-membership-and-decisions-under-article-xi.md) | - |
+| PHILO-7-02 | Membership and decisions under Article XI | in-progress | [story-02-membership-and-decisions-under-article-xi](./story-02-membership-and-decisions-under-article-xi.md) | - |
 | PHILO-7-03 | The atlas for the desk | backlog | [story-03-the-atlas-for-the-desk](./story-03-the-atlas-for-the-desk.md) | - |
 | PHILO-7-04 | File it and find it without the repo | backlog | [story-04-file-it-and-find-it-without-the-repo](./story-04-file-it-and-find-it-without-the-repo.md) | - |
 

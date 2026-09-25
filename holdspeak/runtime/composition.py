@@ -86,6 +86,8 @@ class RuntimeServices:
     # through ``WebContext.operations``; MCP dispatch through this field. The
     # same object in both places is the identity fence.
     operations: Optional[Any] = None
+    # PHILO-7-02: the kernel receipt readback (``kernel.receipt.read``).
+    kernel_read_service: Optional[Any] = None
 
     # --- meetings --------------------------------------------------------
     # ``meeting_service`` carries ``bind_lifecycle`` (on_start / on_stop /
@@ -488,6 +490,7 @@ def install_from_web_context(
     from holdspeak.services.meeting_service import MeetingService
     from holdspeak.services.monday_brief_service import MondayBriefService
     from holdspeak.services.refinement_application_service import RefinementApplicationService
+    from holdspeak.services.kernel_read_service import KernelReadService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -505,6 +508,7 @@ def install_from_web_context(
         "refinement_service": lambda: RefinementApplicationService(
             resolved_db, coordinator=getattr(ctx, "refinement_coordinator", None)
         ),
+        "kernel_read_service": lambda: KernelReadService(resolved_db),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

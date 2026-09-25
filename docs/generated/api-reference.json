@@ -8102,7 +8102,7 @@
             "GET"
           ],
           "symbol": "api_list_desk_decisions",
-          "line": 42,
+          "line": 48,
           "parameters": [
             {
               "name": "request",
@@ -8175,7 +8175,7 @@
             "POST"
           ],
           "symbol": "api_create_decision",
-          "line": 49,
+          "line": 55,
           "parameters": [
             {
               "name": "request",
@@ -8191,9 +8191,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "list",
@@ -8265,7 +8268,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_decision",
-          "line": 99,
+          "line": 109,
           "parameters": [
             {
               "name": "decision_id",
@@ -8284,9 +8287,12 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().delete_decision",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "router.delete"
           ],
@@ -8367,7 +8373,7 @@
             "GET"
           ],
           "symbol": "api_get_desk_decision",
-          "line": 73,
+          "line": 81,
           "parameters": [
             {
               "name": "decision_id",
@@ -8436,7 +8442,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision",
-          "line": 83,
+          "line": 91,
           "parameters": [
             {
               "name": "decision_id",
@@ -8457,9 +8463,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "operations.update_args",
             "router.put",
@@ -8674,7 +8683,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision_status",
-          "line": 109,
+          "line": 122,
           "parameters": [
             {
               "name": "decision_id",
@@ -8695,9 +8704,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().update_decision_status",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "router.put",
@@ -8782,7 +8794,7 @@
             "POST"
           ],
           "symbol": "api_supersede_decision",
-          "line": 126,
+          "line": 140,
           "parameters": [
             {
               "name": "decision_id",
@@ -8801,9 +8813,12 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().supersede_decision",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "router.post"
           ],
@@ -14619,7 +14634,7 @@
             "GET"
           ],
           "symbol": "api_list_directories",
-          "line": 42,
+          "line": 46,
           "parameters": [
             {
               "name": "request",
@@ -14683,7 +14698,7 @@
             "POST"
           ],
           "symbol": "api_create_directory",
-          "line": 49,
+          "line": 53,
           "parameters": [
             {
               "name": "request",
@@ -14701,9 +14716,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "router.post",
@@ -14758,7 +14776,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_directory",
-          "line": 106,
+          "line": 114,
           "parameters": [
             {
               "name": "directory_id",
@@ -14777,9 +14795,12 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "router.delete"
           ],
@@ -14824,7 +14845,7 @@
             "GET"
           ],
           "symbol": "api_get_directory",
-          "line": 73,
+          "line": 79,
           "parameters": [
             {
               "name": "directory_id",
@@ -14890,7 +14911,7 @@
             "PUT"
           ],
           "symbol": "api_update_directory",
-          "line": 82,
+          "line": 88,
           "parameters": [
             {
               "name": "directory_id",
@@ -14913,9 +14934,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "router.put",
@@ -14963,7 +14987,7 @@
             "GET"
           ],
           "symbol": "api_list_directory_members",
-          "line": 116,
+          "line": 126,
           "parameters": [
             {
               "name": "directory_id",
@@ -14982,9 +15006,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_directory_members",
             "error_500",
             "router.get"
           ],
@@ -15029,7 +15053,7 @@
             "DELETE"
           ],
           "symbol": "api_unfile_member",
-          "line": 138,
+          "line": 149,
           "parameters": [
             {
               "name": "directory_id",
@@ -15052,9 +15076,11 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().unfile_member",
+            "_refusal_kernel",
             "error_500",
             "router.delete"
           ],
@@ -15099,7 +15125,7 @@
             "PUT"
           ],
           "symbol": "api_file_member",
-          "line": 126,
+          "line": 136,
           "parameters": [
             {
               "name": "directory_id",
@@ -15123,9 +15149,11 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().file_member",
+            "_refusal_kernel",
             "error_500",
             "router.put",
             "str"
@@ -18197,7 +18225,7 @@
             "GET"
           ],
           "symbol": "api_list_kbs",
-          "line": 43,
+          "line": 46,
           "parameters": [
             {
               "name": "request",
@@ -18252,7 +18280,7 @@
             "POST"
           ],
           "symbol": "api_create_kb",
-          "line": 50,
+          "line": 53,
           "parameters": [
             {
               "name": "request",
@@ -18268,9 +18296,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "list",
@@ -18317,7 +18348,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_kb",
-          "line": 95,
+          "line": 102,
           "parameters": [
             {
               "name": "kb_id",
@@ -18378,7 +18409,7 @@
             "GET"
           ],
           "symbol": "api_get_kb",
-          "line": 69,
+          "line": 74,
           "parameters": [
             {
               "name": "kb_id",
@@ -18439,7 +18470,7 @@
             "PUT"
           ],
           "symbol": "api_update_kb",
-          "line": 78,
+          "line": 83,
           "parameters": [
             {
               "name": "kb_id",
@@ -18460,9 +18491,12 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
+            "_service_refusal",
             "body.get",
             "error_500",
             "router.put"
@@ -18504,7 +18538,7 @@
             "GET"
           ],
           "symbol": "api_list_kb_members",
-          "line": 105,
+          "line": 112,
           "parameters": [
             {
               "name": "kb_id",
@@ -18523,9 +18557,9 @@
           ],
           "calls": [
             "JSONResponse",
+            "_ops",
+            "_ops().invoke",
             "_principal",
-            "_svc",
-            "_svc().list_kb_members",
             "error_500",
             "router.get"
           ],
@@ -18565,7 +18599,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_kb_member",
-          "line": 125,
+          "line": 135,
           "parameters": [
             {
               "name": "kb_id",
@@ -18588,9 +18622,12 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().remove_kb_member",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "router.delete",
             "str"
@@ -18631,7 +18668,7 @@
             "PUT"
           ],
           "symbol": "api_add_kb_member",
-          "line": 115,
+          "line": 122,
           "parameters": [
             {
               "name": "kb_id",
@@ -18654,9 +18691,12 @@
           ],
           "calls": [
             "JSONResponse",
+            "_kernel_fields",
+            "_ops",
+            "_ops().invoke_receipted",
             "_principal",
-            "_svc",
-            "_svc().add_kb_member",
+            "_refusal_kernel",
+            "_service_refusal",
             "error_500",
             "router.put",
             "str"
@@ -24037,12 +24077,16 @@
           "calls": [
             "JSONResponse",
             "_json_body",
+            "_kernel_fields",
             "_ops",
-            "_ops().invoke",
+            "_ops().invoke_receipted",
             "_principal",
+            "_refusal_kernel",
             "_service_error",
             "body.get",
             "error_500",
+            "exc.context.get",
+            "int",
             "isinstance",
             "router.delete"
           ],

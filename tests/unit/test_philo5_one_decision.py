@@ -219,6 +219,10 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "note.create", "note.read", "note.update", "note.delete", "note.list",
         "zone.create", "zone.read", "zone.update", "zone.delete", "zone.list",
         "kb.create", "kb.read", "kb.update", "kb.delete", "kb.list",
+        # PHILO-7-02: membership, the remaining decision operations, the receipt read.
+        "zone.file", "zone.unfile", "zone.members", "kb.member.add", "kb.member.remove", "kb.members",
+        "decision.delete", "decision.status", "decision.supersede",
+        "kernel.receipt.read",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

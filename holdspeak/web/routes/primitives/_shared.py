@@ -84,6 +84,16 @@ def capability_descriptor(
     }
 
 
+def _kernel_fields(kernel: Any) -> dict[str, Any]:
+    """PHILO-7-02: ``{operation_id, receipt}`` of an admitted write (``{}`` when exempt)."""
+    return dict(kernel) if isinstance(kernel, dict) else {}
+
+
+def _refusal_kernel(exc: BaseException) -> dict[str, Any]:
+    """PHILO-7-02: the refusal receipt an admitted, refused write carries (``{}`` when none)."""
+    return _kernel_fields(getattr(exc, "kernel", None))
+
+
 async def _json_body(request: Request) -> Optional[dict[str, Any]]:
     try:
         body = await request.json()

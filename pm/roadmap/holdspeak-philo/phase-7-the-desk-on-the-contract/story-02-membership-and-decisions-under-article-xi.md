@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-7-01; the owner's rulings R1 (bounded delegation), R2 (refusal receipts) and R4 (admissions confirmed), 2026-09-25 (phase status, Authority); THE LIFECYCLE DESIGN BEAT, checked by the other brain before this story's implementation brief (Preconditions below); the owner's ratification of the delegation-grant canvas before its face is built
 - **Unblocks:** PHILO-7-03
 - **Owner:** Muad'Dib (Opus 5.5); Astra checks on built
