@@ -6640,7 +6640,7 @@
             "path": "/api/meetings"
           }
         ],
-        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row shows the existing FAILED badge (setup check) and, round 2 (Astra's check on built, finding 2), its open status well names what failed: the head reads IMPORT, never SUMMARY."
+        "words": "PHILO-6-01: the real empty-VTT import leaves intel_status import_failed; the Arrival row shows the existing FAILED badge (setup check) and, round 2 (Astra's check on built, finding 2), its open status well names what failed: the head reads IMPORT, never SUMMARY. Round 3 (Astra's round-two check, finding 3; UX-CANON A.3): the well's cause line is the short class `LAST ERROR \u00b7 NO TRANSCRIPT LINES`, never the worker's temp file name. The trigger is an INSPECTION AFTER SCROLL (Astra's ruling): the inert click on the head only scrolls the well into view; it is not an owner-action transition."
       },
       "completion_bound_s": 60
     },

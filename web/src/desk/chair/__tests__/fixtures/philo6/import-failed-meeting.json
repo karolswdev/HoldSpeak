@@ -16,7 +16,7 @@
     "intel_model_host": null,
     "intel_status": {
       "completed_at": null,
-      "detail": "No cues could be parsed from upload.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+      "detail": "NO TRANSCRIPT LINES",
       "requested_at": null,
       "state": "import_failed"
     },
@@ -54,7 +54,7 @@
     "intel_job": null,
     "intel_model_host": null,
     "intel_status": "import_failed",
-    "intel_status_detail": "No cues could be parsed from upload.vtt. The file has a WEBVTT header but no readable cue blocks \u2014 nothing was imported.",
+    "intel_status_detail": "NO TRANSCRIPT LINES",
     "last_refusal": null,
     "needs_you_count": 0,
     "planned_route": {

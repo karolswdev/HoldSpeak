@@ -150,3 +150,19 @@ def test_empty_vtt_import_leaves_import_failed_on_the_wire(client, no_transcribe
         "the vitest fixture drifted from the real producer; "
         "re-run with PHILO6_WRITE_FIXTURE=1"
     )
+
+
+def test_the_import_cause_is_short_and_names_no_temp_file(client, no_transcriber):
+    """PHILO-6-01 round 3 (UX-CANON A.3; Astra's round-two check, finding 3).
+
+    The worker's stored detail is what the Arrival shows as
+    ``LAST ERROR · <cause>``. Round two showed a paragraph naming the worker's
+    temp file (``TMPLYES_VQF.VTT``), a file the owner never selected. The
+    cause is the short class: no file name, no path, no sentence, <= 60.
+    """
+    meeting_id, row, detail = _mint_failed_import(client)
+    cause = (detail.get("intel_status") or {}).get("detail")
+    assert row.get("intel_status_detail", cause) == cause
+    assert cause == "NO TRANSCRIPT LINES", cause
+    assert len(f"LAST ERROR · {cause}") <= 60, cause
+    assert not re.search(r"tmp|\.(?:vtt|srt|txt|wav)|[/\\]|\.\s|\.$", cause, re.I), cause

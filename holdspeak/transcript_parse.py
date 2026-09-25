@@ -43,9 +43,16 @@ SYNTHETIC_CUE_SECONDS = 6.0
 
 
 class TranscriptParseError(_TranscriptionErrorBase):
-    """Raised when a file yields no usable cues; the message is actionable."""
+    """Raised when a file yields no usable cues; the message is actionable.
+
+    PHILO-6-01 round 3: ``cause`` is the short class the face shows.
+    """
 
     code: str = "TRANSCRIPT_PARSE_ERROR"
+
+    def __init__(self, *args: object, cause: str = "IMPORT ERROR", **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self.cause = cause
 
 
 @dataclass(frozen=True)
@@ -147,7 +154,8 @@ def _parse_vtt(content: str, filename: str, fallback_speaker: str) -> ParsedTran
     first = next((l for l in lines if l.strip()), "")
     if not first.strip().upper().startswith("WEBVTT"):
         raise TranscriptParseError(
-            f"{filename} has a .vtt suffix but no WEBVTT header — not a WebVTT file."
+            f"{filename} has a .vtt suffix but no WEBVTT header — not a WebVTT file.",
+            cause="NOT A WEBVTT FILE"
         )
 
     cues: list[TranscriptCue] = []
@@ -200,7 +208,8 @@ def _parse_vtt(content: str, filename: str, fallback_speaker: str) -> ParsedTran
     if not cues:
         raise TranscriptParseError(
             f"No cues could be parsed from {filename}. The file has a WEBVTT "
-            "header but no readable cue blocks — nothing was imported."
+            "header but no readable cue blocks — nothing was imported.",
+            cause="NO TRANSCRIPT LINES"
         )
     cues.sort(key=lambda c: c.start)
     return ParsedTranscript(cues=cues, has_real_timestamps=True, speakers_found=speakers)
@@ -256,7 +265,8 @@ def _parse_srt(content: str, filename: str, fallback_speaker: str) -> ParsedTran
         raise TranscriptParseError(
             f"No cues could be parsed from {filename}. Expected SubRip blocks "
             "(an index, a `00:00:01,000 --> 00:00:04,000` timing line, text) — "
-            "nothing was imported."
+            "nothing was imported.",
+            cause="NO TRANSCRIPT LINES"
         )
     cues.sort(key=lambda c: c.start)
     return ParsedTranscript(cues=cues, has_real_timestamps=True, speakers_found=speakers)
@@ -294,7 +304,8 @@ def _parse_txt(content: str, filename: str, fallback_speaker: str) -> ParsedTran
 
     if not cues:
         raise TranscriptParseError(
-            f"{filename} contains no transcript lines — nothing was imported."
+            f"{filename} contains no transcript lines — nothing was imported.",
+            cause="NO TRANSCRIPT LINES"
         )
     return ParsedTranscript(cues=cues, has_real_timestamps=False, speakers_found=speakers)
 
@@ -316,13 +327,15 @@ def parse_transcript(
     if not _looks_like_text(content):
         raise TranscriptParseError(
             f"{filename} does not look like a text transcript (empty or "
-            "binary content) — nothing was imported."
+            "binary content) — nothing was imported.",
+            cause="EMPTY OR BINARY FILE"
         )
     suffix = Path(filename).suffix.lower()
     if suffix not in TRANSCRIPT_SUFFIXES:
         raise TranscriptParseError(
             f"Unsupported transcript format: {suffix or filename}. "
-            "Supported: .vtt, .srt, .txt."
+            "Supported: .vtt, .srt, .txt.",
+            cause="UNSUPPORTED TYPE"
         )
     fallback = (fallback_speaker or "Transcript").strip() or "Transcript"
 
