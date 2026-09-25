@@ -1,0 +1,3290 @@
+{
+  "0-today-1440": {
+    "caption": "CREDENTIALS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "1-never-a-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "2-live-a-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED ALL EXPIRES SEP 26 LAST USED 2 H AGO Stop filing Revoke",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING ALLOWED 14:05 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "3-revoked-a-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "4-expired-a-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5-orphan-a-1440": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED NO CREDENTIAL Stop filing",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5b-orphan-off-a-1440": {
+    "caption": "AGENTS",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED NO CREDENTIAL Stop filing",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5c-orphan-expired-a-1440": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ○ FILING STOPPED NO CREDENTIAL",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "6-refused-a-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ✗ CAN'T STOP NO GRANT ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "desk_delegation_required",
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "✗\nCAN'T STOP",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner ✗ CAN'T ALLOW OWNER ONLY PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "owner_principal_required",
+        "chip_order": [
+          "●",
+          "✗\nCAN'T ALLOW",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS REFUSED 14:09 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T STOP",
+        "fs": 10
+      },
+      {
+        "text": "NO GRANT",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T ALLOW",
+        "fs": 10
+      },
+      {
+        "text": "OWNER ONLY",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "7-empty-a-1440": {
+    "caption": null,
+    "rows": [],
+    "ledger_present": false,
+    "receipt_well": "✓ SUCCEEDED FILING STOPPED desk-agent BY OWNER SEP 25 14:07",
+    "foot": "« PREFS FILING STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "RECEIPT",
+        "fs": 10
+      },
+      {
+        "text": "✓SUCCEEDED",
+        "fs": 10
+      },
+      {
+        "text": "FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "desk-agent",
+        "fs": 10
+      },
+      {
+        "text": "BY OWNER",
+        "fs": 10
+      },
+      {
+        "text": "SEP 25 14:07",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "1-never-b-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "2-live-b-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED ALL EXPIRES SEP 26 LAST USED 2 H AGO Stop filing and decisions Revoke",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING AND DECISIONS ALLOWED 14:05 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "3-revoked-b-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING AND DECISIONS STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "4-expired-b-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5-orphan-b-1440": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED NO CREDENTIAL Stop filing and decisions",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5b-orphan-off-b-1440": {
+    "caption": "AGENTS",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED NO CREDENTIAL Stop filing and decisions",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "5c-orphan-expired-b-1440": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED NO CREDENTIAL",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "6-refused-b-1440": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ✗ CAN'T STOP NO GRANT ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "desk_delegation_required",
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "✗\nCAN'T STOP",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner ✗ CAN'T ALLOW OWNER ONLY PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "owner_principal_required",
+        "chip_order": [
+          "●",
+          "✗\nCAN'T ALLOW",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS REFUSED 14:09 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T STOP",
+        "fs": 10
+      },
+      {
+        "text": "NO GRANT",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T ALLOW",
+        "fs": 10
+      },
+      {
+        "text": "OWNER ONLY",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "7-empty-b-1440": {
+    "caption": null,
+    "rows": [],
+    "ledger_present": false,
+    "receipt_well": "✓ SUCCEEDED FILING AND DECISIONS STOPPED desk-agent BY OWNER SEP 25 14:07",
+    "foot": "« PREFS FILING AND DECISIONS STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "RECEIPT",
+        "fs": 10
+      },
+      {
+        "text": "✓SUCCEEDED",
+        "fs": 10
+      },
+      {
+        "text": "FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "desk-agent",
+        "fs": 10
+      },
+      {
+        "text": "BY OWNER",
+        "fs": 10
+      },
+      {
+        "text": "SEP 25 14:07",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 1440,
+    "window_width": 1392,
+    "body_overflow_x": false
+  },
+  "0-today-393": {
+    "caption": "CREDENTIALS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "1-never-a-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "2-live-a-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED ALL EXPIRES SEP 26 LAST USED 2 H AGO Stop filing Revoke",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING ALLOWED 14:05 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "3-revoked-a-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "4-expired-a-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5-orphan-a-393": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED NO CREDENTIAL Stop filing",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5b-orphan-off-a-393": {
+    "caption": "AGENTS",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING ALLOWED NO CREDENTIAL Stop filing",
+        "grant_chip": "✓\nFILING ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "✓FILING ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5c-orphan-expired-a-393": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ○ FILING STOPPED NO CREDENTIAL",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "6-refused-a-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING STOPPED ✗ CAN'T STOP NO GRANT ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing Revoke",
+        "grant_chip": "○\nFILING STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "desk_delegation_required",
+        "chip_order": [
+          "●",
+          "○\nFILING STOPPED",
+          "✗\nCAN'T STOP",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner ✗ CAN'T ALLOW OWNER ONLY PROJECT EXPIRES SEP 26 NEVER USED Allow filing Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "owner_principal_required",
+        "chip_order": [
+          "●",
+          "✗\nCAN'T ALLOW",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS REFUSED 14:09 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T STOP",
+        "fs": 10
+      },
+      {
+        "text": "NO GRANT",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T ALLOW",
+        "fs": 10
+      },
+      {
+        "text": "OWNER ONLY",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "7-empty-a-393": {
+    "caption": null,
+    "rows": [],
+    "ledger_present": false,
+    "receipt_well": "✓ SUCCEEDED FILING STOPPED desk-agent BY OWNER SEP 25 14:07",
+    "foot": "« PREFS FILING STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "RECEIPT",
+        "fs": 10
+      },
+      {
+        "text": "✓SUCCEEDED",
+        "fs": 10
+      },
+      {
+        "text": "FILING STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "desk-agent",
+        "fs": 10
+      },
+      {
+        "text": "BY OWNER",
+        "fs": 10
+      },
+      {
+        "text": "SEP 25 14:07",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "1-never-b-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "2-live-b-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED ALL EXPIRES SEP 26 LAST USED 2 H AGO Stop filing and decisions Revoke",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING AND DECISIONS ALLOWED 14:05 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "3-revoked-b-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS FILING AND DECISIONS STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "4-expired-b-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5-orphan-b-393": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED NO CREDENTIAL Stop filing and decisions",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5b-orphan-off-b-393": {
+    "caption": "AGENTS",
+    "rows": [
+      {
+        "text": "● desk-agent ✓ FILING AND DECISIONS ALLOWED NO CREDENTIAL Stop filing and decisions",
+        "grant_chip": "✓\nFILING AND DECISIONS ALLOWED",
+        "verbs": [
+          {
+            "text": "Stop filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "✓\nFILING AND DECISIONS ALLOWED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "✓FILING AND DECISIONS ALLOWED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "5c-orphan-expired-b-393": {
+    "caption": "AGENTS · 1 ACTIVE",
+    "rows": [
+      {
+        "text": "● sweep-runner PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      },
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED NO CREDENTIAL",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [],
+        "refused_code": null,
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "NO CREDENTIAL"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "1 CREDENTIAL",
+        "fs": 10
+      },
+      {
+        "text": "1 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "NO CREDENTIAL",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "6-refused-b-393": {
+    "caption": "AGENTS · 2 ACTIVE",
+    "rows": [
+      {
+        "text": "● desk-agent ○ FILING AND DECISIONS STOPPED ✗ CAN'T STOP NO GRANT ALL EXPIRES SEP 26 LAST USED 2 H AGO Allow filing and decisions Revoke",
+        "grant_chip": "○\nFILING AND DECISIONS STOPPED",
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "desk_delegation_required",
+        "chip_order": [
+          "●",
+          "○\nFILING AND DECISIONS STOPPED",
+          "✗\nCAN'T STOP",
+          "ALL",
+          "EXPIRES SEP 26",
+          "LAST USED 2 H AGO"
+        ]
+      },
+      {
+        "text": "● sweep-runner ✗ CAN'T ALLOW OWNER ONLY PROJECT EXPIRES SEP 26 NEVER USED Allow filing and decisions Revoke",
+        "grant_chip": null,
+        "verbs": [
+          {
+            "text": "Allow filing and decisions",
+            "species": "btn btn--ghost btn--sm "
+          },
+          {
+            "text": "Revoke",
+            "species": "btn btn--ghost btn--sm "
+          }
+        ],
+        "refused_code": "owner_principal_required",
+        "chip_order": [
+          "●",
+          "✗\nCAN'T ALLOW",
+          "PROJECT",
+          "EXPIRES SEP 26",
+          "NEVER USED"
+        ]
+      }
+    ],
+    "ledger_present": true,
+    "receipt_well": null,
+    "foot": "« PREFS REFUSED 14:09 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "2 CREDENTIALS",
+        "fs": 10
+      },
+      {
+        "text": "2 ACTIVE",
+        "fs": 10
+      },
+      {
+        "text": "○FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T STOP",
+        "fs": 10
+      },
+      {
+        "text": "NO GRANT",
+        "fs": 10
+      },
+      {
+        "text": "ALL",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "LAST USED 2 H AGO",
+        "fs": 10
+      },
+      {
+        "text": "✗CAN'T ALLOW",
+        "fs": 10
+      },
+      {
+        "text": "OWNER ONLY",
+        "fs": 10
+      },
+      {
+        "text": "PROJECT",
+        "fs": 10
+      },
+      {
+        "text": "EXPIRES SEP 26",
+        "fs": 10
+      },
+      {
+        "text": "NEVER USED",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  },
+  "7-empty-b-393": {
+    "caption": null,
+    "rows": [],
+    "ledger_present": false,
+    "receipt_well": "✓ SUCCEEDED FILING AND DECISIONS STOPPED desk-agent BY OWNER SEP 25 14:07",
+    "foot": "« PREFS FILING AND DECISIONS STOPPED 14:07 ℹ",
+    "small_text": [
+      {
+        "text": "Remote access",
+        "fs": 10
+      },
+      {
+        "text": "↻",
+        "fs": 11
+      },
+      {
+        "text": "RECEIPT",
+        "fs": 10
+      },
+      {
+        "text": "✓SUCCEEDED",
+        "fs": 10
+      },
+      {
+        "text": "FILING AND DECISIONS STOPPED",
+        "fs": 10
+      },
+      {
+        "text": "desk-agent",
+        "fs": 10
+      },
+      {
+        "text": "BY OWNER",
+        "fs": 10
+      },
+      {
+        "text": "SEP 25 14:07",
+        "fs": 10
+      }
+    ],
+    "raw_buttons": 0,
+    "scroll_width": 393,
+    "window_width": 393,
+    "body_overflow_x": false
+  }
+}

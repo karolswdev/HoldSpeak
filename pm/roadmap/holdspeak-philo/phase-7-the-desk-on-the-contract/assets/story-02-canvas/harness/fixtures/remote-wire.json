@@ -1,0 +1,25 @@
+{
+  "active_count": 2,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "expires_at": 1790405919.1616879,
+      "id": "ce4265d2cb014cf1",
+      "identity": "desk-agent",
+      "last_used_at": 1790362719.16553,
+      "palette": "ALL"
+    },
+    {
+      "active": true,
+      "expires_at": 1790449119.1637976,
+      "id": "e74ddec4c1b648f7",
+      "identity": "sweep-runner",
+      "last_used_at": null,
+      "palette": "PROJECT"
+    }
+  ],
+  "enabled": true,
+  "port": null,
+  "total_count": 2
+}
