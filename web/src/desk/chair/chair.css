@@ -641,6 +641,21 @@
   .chair > :nth-last-child(2) {
     margin-bottom: max(112px, var(--arrival-capture-clearance));
   }
+  /* An empty aftercare slot is removed from layout. Preserve the original
+     capture clearance on the content row before that slot. */
+  .chair > :has(+ [data-aftercare-slot="before-capture"]:empty) {
+    margin-bottom: max(112px, var(--arrival-capture-clearance));
+  }
+  /* Keep the live aftercare slot as the browser's scroll anchor while the
+     async Chair summary can still grow above it. When the card is dismissed,
+     the selectors stop matching and the Chair's normal anchoring returns. */
+  .chair:has(> [data-aftercare-slot="before-capture"]:not(:empty))
+    > *:has(~ [data-aftercare-slot="before-capture"]) {
+    overflow-anchor: none;
+  }
+  .chair > [data-aftercare-slot="before-capture"]:not(:empty) {
+    overflow-anchor: auto;
+  }
   /* HS-200-15 (counsel P0-2): the @container block above cannot reach the
      chair (it is the container ancestor), so the 393 row grammar lives
      HERE: name on line 1, then ONE meta line that wraps (reason · Project

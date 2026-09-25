@@ -1156,6 +1156,14 @@
             "frame_selector": {
               "type": "string",
               "description": "Optional separately labelled scroll capture after the raw verdict; never changes the predicate or completion time."
+            },
+            "dismiss_selector": {
+              "type": "string",
+              "description": "Optional rendered Button selector for a post-verdict Dismiss transition proof."
+            },
+            "dismiss_slot_selector": {
+              "type": "string",
+              "description": "Optional slot selector paired with dismiss_selector for the post-verdict transition proof."
             }
           }
         },

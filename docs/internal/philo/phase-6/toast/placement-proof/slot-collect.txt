@@ -1,0 +1,93 @@
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the head speaks one total > adds what asks outside the attention list
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > counts the setup row, and the calendar offer beside it never moves it
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear beside a calendar offer
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear with the calendar connected too
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster when the window takes focus again
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the product's settings-updated signal
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the hub's desk_changed frame
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > headline: the true total; the Project clause only over several Projects
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > shows five rows with reason, source and one action; the caption carries the cap; the rest is reachable
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws the dedup disclosure naming every source of a merged row
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws exactly ONE filled primary on the whole face, and the selected filter is not it
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > states the ranking key on the face as a filter strip and filters by class
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > withholds the Project button over one Project and says `3 need you`
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > keeps coverage ABOVE the answer: each unreadable source with its reason, token, observation and verb
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > stamps a remembered row STILL TRUE with its observation, and never speaks the all-clear over a partial result
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > speaks the all-clear with the coverage chip only when complete
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > a Room commitment is one row with one lawful verb; the Door's card for it is not drawn twice
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > Mark done is the verb only when owner and date are known, and it posts the explicit act
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders imported duration and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the ready summary and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a failed lineage as RETRYING after its scheduled time and names the producer cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the terminal producer failure and keeps the named cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a persisted summary visible with a later producer failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > reads only the top three visible meeting details per desk refresh
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > drops a stale response when the visible meeting identity changes
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps the open summary and user-open transcript through an unresolved desk refresh
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > names a response whose identity does not match the requested meeting
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > clicks Run once, then follows desk_changed to a ready summary and durable receipt
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps the durable receipt and producer cause through retry to terminal failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > refreshes running to ready to retry to failed from desk_changed and keeps durable receipts
+src/desk/chair/ChairHome.test.tsx > Chair write recovery > keeps a failed generation actionable and clears the receipt after retry
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says No brief yet only when the read answered null
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says READING… while the read is open
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > names a failed read with its status and Retry reads again
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says NO ANSWER when the fetch got no response
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the period and the generated date under a populated brief
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the date under an empty brief's headline too
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > says Nothing needs you only when the empty result is complete
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > never speaks the all-clear over an empty PARTIAL result
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > shows the coverage row beside healthy items and marks a remembered row
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > treats a read that never landed as a coverage gap, not as quiet
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > keeps the arrival honest at the narrow viewport rule (no prose row)
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 headline > never says the all-clear while something is pending
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row with ONE Button when no engine makes summaries
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > is gone once the summary capability is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > stays while only a global head exists (the queue cannot use it)
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws no setup row while the roster read is still in flight
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > names the unknown as its own row when the roster could not be read
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws a row when no engine transcribes speech
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row when neither engine is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > clears the speech row when the speech capability is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 a microphone action never opens Models > draws no blocker row for a microphone primary_action
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > names the destination the hub actually uses
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > carries the local scope, not a bare chip
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > says nothing before the verb is pressed
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > names what was built and when
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > never counts zero (UX-CANON A.8)
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > states one item in the singular
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > sends the disclosed selection hash, and shows the host first
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > withholds Run and says the reason when no route resolves
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > shows a 409 as ONE short refusal fact, the reason on its title
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > opens the meeting with the `meeting:<id>` grammar History parses
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > renders the latest producer receipt without pressing Generate
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > leaves the receipt slot absent when latest answers null
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > names a latest read failure instead of claiming no brief exists
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > retains the first receipt when StrictMode's later mount read fails
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > clears the first receipt when StrictMode's later mount read answers null
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > shows the latest receipt before Generate and replaces it with the new receipt
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > names the destination on the row before the press
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > keeps the receipt when the generated response has no countable rows
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with an ABSENT drainer reads NOT DRAINING
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with a RUNNING drainer reads QUEUED
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > no frame is UNKNOWN, never reported as absent
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > shows the newest decision first with an honest cap and fold
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > keeps the result ordered after Generate replaces an existing brief
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate in the head while a day-one row is untriaged
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > disables Generate while the read is open
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says GENERATING… in the status slot and disables Generate while it runs
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > names a failed generation with no Retry and Generate enabled
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says NO ANSWER when the generation got no response
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps Retry on a failed read, with Generate in the head
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps the badge, the caption and the receipt through every transition
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > never touches the old rows' triage when it generates
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate on the quiet branch (every row triaged), not Generate again
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > puts a failed generation in the place of No brief yet

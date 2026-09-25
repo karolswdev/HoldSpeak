@@ -1,0 +1,261 @@
+
+ RUN  v4.1.9 /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo603-red-z5r_bw9b/web
+
+ ❯ src/components/aftercarePlacement.test.tsx (9 tests | 8 failed) 8233ms
+     × publishes into the actual ChairHome slot and Dismiss clears it at 1440 1022ms
+     × publishes into the actual ChairHome slot and Dismiss clears it at 393 1006ms
+     × renders into the actual active SurfaceWindowHost slot 1137ms
+     × renders into the actual Floor list host when no window is open 1018ms
+     × scrolls an obscured phone slot once and does not scroll a desktop slot 1006ms
+     × scrolls an off-Arrival phone slot once even when it is already visible 1006ms
+     × scrolls an active window phone slot once 1019ms
+     × does not move the owner while a field has focus 1010ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 1440
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 393
+TestingLibraryElementError: Unable to find an element by: [data-testid="arrival-aftercare-slot"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"chair"[39m
+      [33mdata-testid[39m=[32m"chair"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"arrival-headline"[39m
+        [33mdata-testid[39m=[32m"arrival-headline"[39m
+      [36m...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/aftercarePlacement.test.tsx:114:31
+    112|       </>,
+    113|     );
+    114|     const slot = await screen.findByTestId("arrival-aftercare-slot");
+       |                               ^
+    115|
+    116|     publish();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual active SurfaceWindowHost slot
+AssertionError: expected null to be truthy
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div[39m
+      [33mdata-aftercare-slot[39m=[32m"before-capture"[39m
+    [36m/>[39m
+    [36m<div>[39m
+      [36m<aside[39m
+        [33maria-label[39m=[32m"Meeting aftercare"[39m
+        [33mclass[39m=[32m"ambient-prev...
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/components/aftercarePlacement.test.tsx:154:9
+    152|       expect(
+    153|         container.querySelector('[data-aftercare-window-slot="top"] as…
+    154|       ).toBeTruthy(),
+       |         ^
+    155|     );
+    156|     const slot = container.querySelector('[data-aftercare-window-slot=…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual Floor list host when no window is open
+AssertionError: expected null to be truthy
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<aside[39m
+        [33maria-label[39m=[32m"Meeting aftercare"[39m
+        [33mclass[39m=[32m"ambient-preview ambient-aftercare"[39m
+        [33mstyle[39m=[32m"bottom: 104px;"[39m
+      [36m>[39m
+  ...
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/components/aftercarePlacement.test.tsx:174:9
+    172|       expect(
+    173|         container.querySelector('[data-aftercare-floor-slot="top"] asi…
+    174|       ).toBeTruthy(),
+       |         ^
+    175|     );
+    176|     const slot = container.querySelector('[data-aftercare-floor-slot="…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an obscured phone slot once and does not scroll a desktop slot
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div[39m
+      [33mdata-aftercare-slot[39m=[32m"before-capture"[39m
+    [36m/>[39m
+    [36m<footer[39m
+      [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+    [36m/>[39m
+    [36m<div>[39m
+      [36m<aside[39m
+  ...
+ ❯ src/components/aftercarePlacement.test.tsx:233:40
+    231|     publish("meeting-placement-phone", "Architecture review phone");
+    232|
+    233|     await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+       |                                        ^
+    234|     expect(scroll).toHaveBeenCalledWith({ block: "nearest", behavior: …
+    235|     publish("meeting-placement-phone", "Architecture review phone");
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an off-Arrival phone slot once even when it is already visible
+AssertionError: expected null to be truthy
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"desk-listmode"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"desk-list-title"[39m
+          [33mclass[39m=[32m"desk-list-f...
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/components/aftercarePlacement.test.tsx:264:21
+    262|         '[data-aftercare-floor-slot="top"]',
+    263|       );
+    264|       expect(found).toBeTruthy();
+       |                     ^
+    265|       return found!;
+    266|     });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an active window phone slot once
+AssertionError: expected null to be truthy
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div[39m
+      [33mdata-aftercare-slot[39m=[32m"before-capture"[39m
+    [36m/>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Meetings"[39m
+        [33mclass[39m=[32m"desk-surface-window des...
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/components/aftercarePlacement.test.tsx:303:21
+    301|         '[data-aftercare-window-slot="top"]',
+    302|       );
+    303|       expect(found).toBeTruthy();
+       |                     ^
+    304|       return found!;
+    305|     });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > does not move the owner while a field has focus
+AssertionError: expected null to be truthy
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div[39m
+      [33mdata-aftercare-slot[39m=[32m"before-capture"[39m
+    [36m/>[39m
+    [36m<footer[39m
+      [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+    [36m/>[39m
+    [36m<input />[39m
+    [36m<div>[39m
+ ...
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/components/aftercarePlacement.test.tsx:356:61
+    354|     publish();
+    355|
+    356|     await waitFor(() => expect(slot.querySelector("aside")).toBeTruthy…
+       |                                                             ^
+    357|     expect(scroll).not.toHaveBeenCalled();
+    358|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  8 failed | 10 passed (18)
+   Start at  22:44:28
+   Duration  9.63s (transform 924ms, setup 125ms, import 1.36s, tests 8.39s, environment 374ms)
+

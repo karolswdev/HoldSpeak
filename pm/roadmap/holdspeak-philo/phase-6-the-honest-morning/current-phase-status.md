@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 night (RATIFIED; in build; 01 and 02 done, round 2 after Astra's BOUNCE on built).
+**Last updated:** 2026-09-24 night — all five stories done and merged or reconciled (01/02 lane A, 04/05 lane B, 03 placement reconciled with main in PR #649); the closing chain (exit 3) is next.
 
 ## Goal
 
@@ -61,7 +61,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 |---|---|---|---|---|
 | PHILO-6-01 | The honest import badge | done | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-6-02 | The brief's truth (one time, honest counts, human words) | done | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | [evidence-story-02](./evidence-story-02.md) |
-| PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
+| PHILO-6-03 | The toast that does not cover | done | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-6-04 | One cause, one row | done | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-6-05 | The decision body at once | done | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | [evidence-story-05](./evidence-story-05.md) |
 
@@ -70,15 +70,22 @@ The six defects come from retained evidence, not from taste. The source is the P
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
 | The Arrival (owns `ChairHome.tsx`) | 01, 02 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-6-a | feat/philo-6-a-badge-brief |
-| The toast, the row, the body | 03, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-b | feat/philo-6-b-toast-rows-body |
+| The toast, the row, the body (merged) | 03 zero/canvas, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-b | feat/philo-6-b-toast-rows-body |
+| Ratified toast placement | 03 build | Astra (Luna) | Muad'Dib | ../wt-philo-6-03 | feat/philo-6-03-placement |
 
 Lane law for this phase:
 
-- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The future build needs this slot, an AmbientLayer portal and auto-scroll, plus an off-Arrival slot in the current surface shell. The patch alone places nothing.
+- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx`; the build brief grants Astra only the exact four-line slot patch in its own gated commit (`d1e355f2`), with lane A reconciliation. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` (`:1450-1453` after the main reconcile) before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The built lane adds the AmbientLayer portal, auto-scroll and off-Arrival slots separately from this exact patch.
 - Shared atlas and generated files (`docs/internal/philo/graph/atlas*.json`, `docs/generated/*`) have one shipping owner per commit. The second lane rebases and regenerates.
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-24 night: PR #649 reconciled with main `e64114df` (lane A merged as PR #646). The five conflicts are resolved: the atlas takes main and re-applies the branch's placement cases with anchors regenerated on the merged tree; the generated files are regenerated. Muad'Dib's counsel on built (RATIFY-WITH-CONDITIONS, `checks/story-03-placement-built-muaddib.md`) is paid in the reconcile commit. All five stories are done; the closing chain (exit 3) and owner review remain.
+
+Publication update — Main advanced during this build: lane A merged as PR #646 (`e64114df`). PR #649 is open but reports five conflicts: `docs/internal/philo/graph/atlas.json`, `docs/generated/graph.json`, `docs/generated/boundary-candidates.json`, this project README, and the Phase 6 status file. The read-only merge preflight auto-merges ChairHome and the atlas tests; no combined-tree test or glass result is claimed. Muad’Dib’s integration and counsel remain before merge. The table on this lane still reflects its fork’s lane-A story files; integration brings their merged status with their evidence.
+
+2026-09-24 night: PHILO-6-03 placement verified in `feat/philo-6-03-placement`: six actual Chromium surface walks pass, one phone scroll and zero desktop scrolls; live Dismiss passes at both widths. [Lane report](../../../../docs/internal/philo/phase-6/toast/placement-proof/lane-report.md) carries per-box proof and limits. Focused tests pass (30 Vitest, 104 Python); broader scoped 235 assertions pass with one inherited fixture error, reproduced on untouched main and ledgered. Lane B is merged (04/05 done). Lane A remains in round three on the brief/import seams and reconciles the exact ChairHome slot commit. [PR #649](https://github.com/karolswdev/HoldSpeak/pull/649) is open after gated build commit `c6aafa8e`; no merge before calling Muad’Dib counsel. Phase-wide rehearsal and owner review remain open.
 
 2026-09-24 night: lane A ROUND 3 after Astra's round-two check (BOUNCE, `checks/lane-a-built-astra.md` "Round two"). 02: a brief line states only what the record proves — the outcome is the OUTERMOST call (earliest start; a nested call sorts after its parent because the observer stores call-start time); a Changed line only from the truthful table (story 02), the follow-up line from the recorded `verb` (`Follow-up completed` only for `done`), `Decision recorded` from `create_from_*` only with its inner `create`; reads, reconciliations and a cached brief tell only their failure; an unknown success writes nothing. 01: the import cause is a short class at the producer (`LAST ERROR · NO TRANSCRIPT LINES`, no temp file name); the rig case re-run PASS at 1440 and 393. Fences on an ADVANCING clock, red on a `git archive 27ee9559` copy, green on the branch (`docs/internal/philo/phase-6/brief/round-3/`). The changed S5 `.op` case is assigned to exit 3. Astra checks round 3.
 
@@ -117,6 +124,8 @@ Lane law for this phase:
 
 ## Decisions made (this phase)
 
+- 2026-09-24 night — PHILO-6-03 build brief grants Astra only the provided four-line ChairHome slot patch, in its own gated commit (`d1e355f2`); lane A reconciles. The brief names three actual atlas surface cases at both widths and scoped validation. The phase-wide rehearsal remains an integration exit; spatial WebGL Floor stays a shot-backed fixed-placement limitation. This records the owner’s build scope, not a new design.
+
 - 2026-09-24 night — **Round 3, the event-selection tie rule** (lane A): a correlated operation's outcome is the call with the EARLIEST start; on a start-time tie, the HIGHEST insertion id. The brief said "lowest insertion id"; that picks the CHILD, because the observer emits in `finally` and the enclosing call finishes (and inserts) last (`holdspeak/services/observer.py:113` stores `t0`; `:158,185` emit in `finally`). Astra may overrule.
 - 2026-09-24 night — **Round 3, `Follow-up date set`** (lane A) instead of the brief's `Follow-up dated`: ASD-STE100 has no verb "date"; the face verb is `Set a date`. `dismiss` and `snooze` get no Changed line (no row names them). Astra may overrule.
 
@@ -142,6 +151,6 @@ Lane law for this phase:
 
 - S4 follow-ups (slow whole-desk refresh, delete/rename races, setup-read rejection): recorded with evidence and disposition in `docs/internal/philo/phase-6/ledger.md`; no widening of this lane's repair.
 
-- The toast placement (story 03 canvas) — the owner's ratification.
+- Story 03 placement canvas ratification is resolved (2026-09-24 night); actual Muad'Dib counsel on the built PR remains before merge.
 - Any change of a count label or a count meaning (story 02 canvas, only if needed) — the owner's ratification.
 - The Info-window rename field (`name` vs `title`) — out; BACKLOG "PHILO-5-01 follow-ups".

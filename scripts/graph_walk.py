@@ -469,6 +469,142 @@ _SNAPSHOT_JS = r"""([selector, pending, valueSelector]) => {
 }"""
 
 
+# PHILO-6-03 placement probe.  This is deliberately opt-in through fields on
+# the existing `readable_text` predicate: placement is a rendering fence on
+# the same card, not a new graph predicate.  The probe is armed before the
+# producer trigger and is sealed before optional post-verdict framing, so the
+# scroll count cannot include the rig's own evidence capture.
+_PLACEMENT_ARM_JS = r"""([cardSelector, clearSelectors, slotSelector, scrollTarget]) => {
+  const path = (el) => {
+    if (!el || el === document.body) return el ? "body" : null;
+    const bits = [];
+    let node = el;
+    while (node && node.nodeType === 1 && bits.length < 6) {
+      let bit = node.tagName.toLowerCase();
+      if (node.id) { bits.unshift(bit + "#" + node.id); break; }
+      if (node.className && typeof node.className === "string")
+        bit += "." + node.className.trim().split(/\s+/).slice(0, 2).join(".");
+      bits.unshift(bit);
+      node = node.parentElement;
+    }
+    return bits.join(" > ");
+  };
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return {x: r.x, y: r.y, w: r.width, h: r.height};
+  };
+  const hitTest = (node) => {
+    if (!node) return null;
+    const r = node.getBoundingClientRect();
+    const insetX = Math.min(2, Math.max(0, r.width / 4));
+    const insetY = Math.min(2, Math.max(0, r.height / 4));
+    const xs = [r.left + insetX, r.left + r.width / 2, r.right - insetX];
+    const ys = [r.top + insetY, r.top + r.height / 2, r.bottom - insetY];
+    const samples = [];
+    for (const x of xs) for (const y of ys) {
+      const owner = document.elementFromPoint(x, y);
+      samples.push({owned: !!owner && (owner === node || node.contains(owner)),
+                    owner: owner ? path(owner) : null});
+    }
+    return {
+      rect: box(node),
+      visible: !!(node.offsetWidth || node.offsetHeight || node.getClientRects().length),
+      in_viewport: r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight
+        && r.right <= window.innerWidth,
+      samples,
+      all_owned: samples.every((sample) => sample.owned),
+    };
+  };
+  const matches = (target, selector) => {
+    if (!target || !selector) return false;
+    try { return target.matches(selector); } catch (_) { return false; }
+  };
+  const scrollOwner = (target) => {
+    let node = target;
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node);
+      if (/(auto|scroll|overlay)/.test(style.overflowY) &&
+          node.scrollHeight > node.clientHeight) return node;
+      node = node.parentElement;
+    }
+    return document.scrollingElement;
+  };
+  const initialTarget = scrollTarget ? document.querySelector(scrollTarget) : null;
+  const initialOwner = scrollOwner(initialTarget);
+  const initialScrollTop = initialOwner ? initialOwner.scrollTop : window.scrollY;
+  const state = {
+    armedAt: performance.now(), cardSelector, clearSelectors,
+    slotSelector, scrollTarget, scrollCalls: [], scrollEvents: 0, sealed: false,
+    initialScrollTop,
+  };
+  const recordScroll = (method, target) => {
+    if (state.sealed) return;
+    state.scrollCalls.push({method, target: target ? path(target) : null,
+      target_matches: matches(target, scrollTarget),
+      atMs: Math.round(performance.now() - state.armedAt)});
+  };
+  const originalElementScroll = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function(...args) {
+    recordScroll("scrollIntoView", this);
+    return originalElementScroll.apply(this, args);
+  };
+  const originalElementScrollTo = Element.prototype.scrollTo;
+  if (originalElementScrollTo) {
+    Element.prototype.scrollTo = function(...args) {
+      recordScroll("element.scrollTo", this);
+      return originalElementScrollTo.apply(this, args);
+    };
+  }
+  const originalWindowScrollTo = window.scrollTo;
+  window.scrollTo = function(...args) {
+    recordScroll("window.scrollTo", null);
+    return originalWindowScrollTo.apply(this, args);
+  };
+  window.addEventListener("scroll", () => {
+    if (!state.sealed) state.scrollEvents += 1;
+  }, {passive: true, capture: true});
+  window.__graphPlacementProbe = {
+    seal: () => { state.sealed = true; },
+    snapshot: () => {
+      const card = document.querySelector(cardSelector);
+      const slot = slotSelector ? document.querySelector(slotSelector) : null;
+      const clear = (clearSelectors || []).flatMap((selector) => {
+        const elements = Array.from(document.querySelectorAll(selector));
+        if (!elements.length)
+          return [{selector, present: false, hit_test: null}];
+        return elements.map((element) => ({
+          selector, present: true, hit_test: hitTest(element),
+        }));
+      });
+      return {
+        card: {selector: cardSelector, present: !!card, hit_test: hitTest(card),
+               computed_position: card ? getComputedStyle(card).position : null},
+        slot: {selector: slotSelector, present: !!slot,
+               contains_card: !!slot && !!card && slot.contains(card)},
+        clear,
+        scroll: {calls: state.scrollCalls.slice(), count: state.scrollCalls.length,
+                 target_count: state.scrollCalls.filter((call) => call.target_matches).length,
+                 events: state.scrollEvents,
+                 scroll_top_before: state.initialScrollTop,
+                 scroll_top_after: initialOwner ? initialOwner.scrollTop : window.scrollY,
+                 scroll_top_delta: (initialOwner ? initialOwner.scrollTop : window.scrollY)
+                   - state.initialScrollTop},
+        focused_field: !!document.activeElement &&
+          /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName),
+      };
+    },
+  };
+  return window.__graphPlacementProbe.snapshot();
+}""";
+
+_PLACEMENT_SNAPSHOT_JS = r"""() =>
+  window.__graphPlacementProbe ? window.__graphPlacementProbe.snapshot() : null"""
+
+_PLACEMENT_SEAL_JS = r"""() => {
+  if (window.__graphPlacementProbe) window.__graphPlacementProbe.seal();
+}"""
+
+
 PROTOCOL_PREFIX = "protocol:"
 
 
@@ -827,6 +963,8 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
     if page is not None and isinstance(predicate, dict) and predicate.get("first_paint_after"):
         raw["transition_probe"] = page.evaluate("window.__graphFirstPaint || null")
         raw["decision_traffic"] = page.evaluate("window.__graphDecisionTraffic || []")
+    if page is not None and placement_contract(predicate):
+        raw["placement"] = page.evaluate(_PLACEMENT_SNAPSHOT_JS)
     if target is not None:
         method, path = target
         # A `{name}` not yet bound is never sent literally (PHILO-3 closure:
@@ -931,6 +1069,38 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
             raw["op_reads"] = op_collected
     raw["at_utc"] = datetime.now(timezone.utc).isoformat()
     return raw
+
+
+def placement_contract(predicate: Any) -> bool:
+    """True for the opt-in Phase 6 card placement fence."""
+    return isinstance(predicate, dict) and predicate.get("kind") == "readable_text" and any(
+        key in predicate
+        for key in ("slot_selector", "clear_of", "auto_scroll_calls_by_viewport")
+    )
+
+
+def arm_placement_probe(page: Any, case: dict[str, Any]) -> dict[str, Any] | None:
+    """Arm the placement/scroll probe before the case trigger fires."""
+    if page is None:
+        return None
+    predicate = case_predicate(case)
+    if not placement_contract(predicate):
+        return None
+    clear_of = predicate.get("clear_of") or []
+    selectors = []
+    for entry in clear_of:
+        selector = entry.get("selector") if isinstance(entry, dict) else entry
+        if isinstance(selector, str) and selector:
+            selectors.append(selector)
+    return page.evaluate(
+        _PLACEMENT_ARM_JS,
+        [
+            case.get("expected", {}).get("observe_at"),
+            selectors,
+            predicate.get("slot_selector"),
+            predicate.get("scroll_target_selector"),
+        ],
+    )
 
 
 def identity_spec(predicate: Any) -> dict[str, Any] | None:
@@ -1279,6 +1449,76 @@ def check_predicate(
         height = float(rect.get("h", 0))
         if width <= 0 or height <= 0:
             return False, f"text scope geometry is not positive: {rect!r}"
+        if placement_contract(predicate):
+            placement = after.get("placement")
+            if not placement:
+                return False, "BLOCKED: placement fence was not armed before the trigger"
+            card = placement.get("card") or {}
+            if not card.get("present"):
+                return False, "the placement card is absent"
+            slot_selector = predicate.get("slot_selector")
+            slot = placement.get("slot") or {}
+            if slot_selector and (not slot.get("present") or not slot.get("contains_card")):
+                return False, (
+                    f"the card is not rendered inside its declared slot {slot_selector!r}: "
+                    f"{slot}"
+                )
+            if slot.get("present") and card.get("computed_position") == "fixed":
+                return False, (
+                    "the card keeps fixed positioning inside a declared flow slot; "
+                    f"computed position={card.get('computed_position')!r}"
+                )
+            if predicate.get("no_field_focus") and placement.get("focused_field"):
+                return False, "the owner still has a field focused when the card mounts"
+            card_rect = (card.get("hit_test") or {}).get("rect") or {}
+            card_x2 = float(card_rect.get("x", 0)) + float(card_rect.get("w", 0))
+            card_y2 = float(card_rect.get("y", 0)) + float(card_rect.get("h", 0))
+            missing: list[str] = []
+            declared_clear = predicate.get("clear_of") or []
+            declarations_by_selector = {
+                declaration.get("selector"): declaration
+                for declaration in declared_clear
+                if isinstance(declaration, dict) and declaration.get("selector")
+            }
+            for target in placement.get("clear") or []:
+                declaration = declarations_by_selector.get(target.get("selector"), {})
+                if not target.get("present"):
+                    if declaration.get("required"):
+                        missing.append(f"{target.get('selector')}: required geometry is absent")
+                    continue  # "where present" is explicit in the story fence
+                target_hit = target.get("hit_test") or {}
+                target_rect = target_hit.get("rect") or {}
+                target_x = float(target_rect.get("x", 0))
+                target_y = float(target_rect.get("y", 0))
+                target_x2 = target_x + float(target_rect.get("w", 0))
+                target_y2 = target_y + float(target_rect.get("h", 0))
+                intersects = (
+                    max(float(card_rect.get("x", 0)), target_x) < min(card_x2, target_x2)
+                    and max(float(card_rect.get("y", 0)), target_y) < min(card_y2, target_y2)
+                )
+                if intersects:
+                    missing.append(f"{target.get('selector')}: rectangle intersects")
+                # A sticky or in-flow target which is visible must own all nine
+                # interior samples.  Off-screen summary rows are not a cover.
+                if (declaration.get("require_hit_test")
+                        and target_hit.get("visible")
+                        and not target_hit.get("all_owned")):
+                    missing.append(f"{target.get('selector')}: hit-test is covered")
+            if missing:
+                return False, "placement clearance failed: " + "; ".join(missing)
+            calls_by_viewport = predicate.get("auto_scroll_calls_by_viewport")
+            if calls_by_viewport is not None:
+                viewport = str((after.get("hit_test") or {}).get("viewport", {}).get("width"))
+                expected_calls = calls_by_viewport.get(viewport)
+                scroll = placement.get("scroll") or {}
+                got = int(scroll.get("target_count", scroll.get("count", 0)))
+                if expected_calls is None:
+                    return False, f"no expected auto-scroll count for viewport {viewport}"
+                if got != int(expected_calls):
+                    return False, (
+                        f"programmatic auto-scroll calls={got} in viewport {viewport}, "
+                        f"wanted {expected_calls}; events={scroll.get('events', 0)}"
+                    )
         return True, (
             f"{want!r} is readable in viewport {hit.get('viewport')} "
             f"with rect {rect}")
@@ -3247,7 +3487,10 @@ _PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 #: The fields of `expected` the rig actually READS. `words` is prose for the
 #: council and may carry `{attempt_id}` as English, not as a placeholder.
-_EXPECTED_READ_FIELDS = ("observe_at", "predicate", "reads", "pending_marker")
+_EXPECTED_READ_FIELDS = (
+    "observe_at", "predicate", "reads", "pending_marker",
+    "dismiss_selector", "dismiss_slot_selector",
+)
 
 #: The step fields a captured value may travel into.
 _SUBSTITUTED_FIELDS = ("path", "selector", "name", "value", "url", "key", "body",
@@ -4370,6 +4613,13 @@ def exercise(
     if probe:
         recorder.set(replay_identity_probe=probe)
 
+    # PHILO-6-03: arm the card's placement and scroll observer before the
+    # aftercare producer signal.  Framing happens only after this probe is
+    # sealed, so evidence capture cannot masquerade as product auto-scroll.
+    placement_probe = arm_placement_probe(page, pre_case)
+    if placement_probe is not None:
+        recorder.set(placement_probe_armed=placement_probe)
+
     # A clicked verb's own network response (Astra round three, finding 3):
     # the listener is armed BEFORE the click, so only requests the click (or
     # what follows it) issued are candidates.
@@ -4570,6 +4820,8 @@ def exercise(
         page.screenshot(path=str(shots / "after.png"))
         if isinstance(predicate, dict) and predicate.get("first_paint_after"):
             page.evaluate("if (window.__graphFirstPaint) window.__graphFirstPaint.complete = true")
+        if placement_probe is not None:
+            page.evaluate(_PLACEMENT_SEAL_JS)
     if ui_capture is not None:
         recorder.set(trigger_response_capture=ui_capture.record())
         ui_capture.close()
@@ -4579,6 +4831,20 @@ def exercise(
     undecidable = why.startswith(("BLOCKED:", "UNDECIDABLE:"))
     decidable = isinstance(predicate, dict) and not undecidable
     verdict = "pass" if satisfied else ("fail" if decidable else "blocked")
+
+    # PHILO-6-03: an opt-in post-verdict transition proof.  It is deliberately
+    # after the raw observation and placement seal, so this click cannot alter
+    # the primary result or its auto-scroll evidence.
+    dismissal = capture_dismissal(page, case, shots)
+    if dismissal is not None:
+        recorder.set(dismissal=dismissal)
+        if not dismissal.get("done"):
+            verdict = "fail"
+            recorder.note(
+                "the primary predicate result is retained, but the declared "
+                "post-verdict Dismiss transition failed its separate fence"
+            )
+
     recorded_diff = diff(_clean(before), _clean(after))
     recorder.set(
         after=_clean(after),
@@ -4588,6 +4854,9 @@ def exercise(
         shots=([str(shots / "before.png"), str(shots / "after.png")]
                if page is not None else []),
     )
+    if dismissal is not None and dismissal.get("shot"):
+        recorder.set(shots=[str(shots / "before.png"), str(shots / "after.png"),
+                            dismissal["shot"]])
     framing = capture_framed_view(page, case, hub, shots)
     if framing is not None:
         recorder.set(framing=framing)
@@ -4650,6 +4919,96 @@ def capture_framed_view(page: Any, case: dict[str, Any], hub: Hub | None,
         record.update(done=True, shot=str(shots / "framed.png"))
     except Exception as exc:  # raw verdict and shots remain intact
         record["error"] = f"{type(exc).__name__}: {exc}"
+    return record
+
+
+def capture_dismissal(page: Any, case: dict[str, Any], shots: Path) -> dict[str, Any] | None:
+    """Exercise an opt-in rendered Dismiss transition after the raw verdict.
+
+    The primary observation and its placement probe are already complete when
+    this runs.  This is a second, explicitly declared face transition: it
+    clicks the product's Button, settles, and snapshots the card, its Arrival
+    slot, and the real capture bar. It preserves the primary terminal record
+    and auto-scroll count; a failed transition fails the overall verdict.
+    """
+    expected = case.get("expected") or {}
+    dismiss_selector = expected.get("dismiss_selector")
+    slot_selector = expected.get("dismiss_slot_selector")
+    if not dismiss_selector and not slot_selector:
+        return None
+    record: dict[str, Any] = {
+        "done": False,
+        "dismiss_selector": dismiss_selector,
+        "dismiss_slot_selector": slot_selector,
+    }
+    if page is None:
+        record["reading"] = "headless mode refuses rendered Dismiss proof"
+        return record
+    if not isinstance(dismiss_selector, str) or not dismiss_selector:
+        record["reading"] = "dismiss_selector is missing or is not a string"
+        return record
+    if not isinstance(slot_selector, str) or not slot_selector:
+        record["reading"] = "dismiss_slot_selector is missing or is not a string"
+        return record
+
+    try:
+        # This is the real Button selected by the case, after the primary
+        # after.png and placement observer seal.  It is not a setup shortcut.
+        page.locator(dismiss_selector).first.click(timeout=5000)
+        _settle_fn()(page)
+        card = page.evaluate(_SNAPSHOT_JS, [expected.get("observe_at"), None, None])
+        slot = page.evaluate(_SNAPSHOT_JS, [slot_selector, None, None])
+        capture = page.evaluate(
+            _SNAPSHOT_JS,
+            ["[data-testid=arrival-capture-bar]", None, None],
+        )
+        slot_state = page.evaluate(
+            """([slotSelector, cardSelector]) => {
+              const slot = document.querySelector(slotSelector);
+              const card = slot && slot.querySelector(cardSelector);
+              return {
+                present: !!slot,
+                card_present: !!card,
+                empty: !!slot && !card,
+                hidden: !!slot && !(slot.offsetWidth || slot.offsetHeight || slot.getClientRects().length),
+              };
+            }""",
+            [slot_selector, expected.get("observe_at")],
+        )
+        page.screenshot(path=str(shots / "dismissed.png"))
+        capture_hit = capture.get("hit_test") or {}
+        capture_samples = capture_hit.get("samples") or []
+        card_gone = not bool(card.get("target_present"))
+        slot_empty = bool(slot_state.get("present") and slot_state.get("empty")
+                          and slot_state.get("hidden"))
+        capture_clear = bool(
+            capture.get("target_present")
+            and capture.get("visible")
+            and len(capture_samples) == 9
+            and capture_hit.get("all_owned")
+        )
+        record.update({
+            "card": _clean(card),
+            "slot": _clean({**slot, "state": slot_state}),
+            "capture": _clean(capture),
+            "shot": str(shots / "dismissed.png"),
+            "checks": {
+                "card_dom_absent": card_gone,
+                "slot_present_empty_and_hidden": slot_empty,
+                "capture_nine_of_nine": capture_clear,
+            },
+            "done": card_gone and slot_empty and capture_clear,
+        })
+        record["reading"] = (
+            "Dismiss removed the card, left the declared Arrival slot empty, and "
+            f"restored capture-bar ownership at {len(capture_samples)}/9 points"
+            if record["done"] else
+            "Dismiss transition fence failed: "
+            f"card_absent={card_gone}, slot_empty={slot_empty}, "
+            f"capture_clear={capture_clear} ({len(capture_samples)}/9 points)"
+        )
+    except Exception as exc:  # raw primary evidence remains intact
+        record["reading"] = f"Dismiss transition could not be exercised: {type(exc).__name__}: {exc}"
     return record
 
 

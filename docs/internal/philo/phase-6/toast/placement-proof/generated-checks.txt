@@ -1,0 +1,5 @@
+Architecture documentation checked (10 outputs).
+Documentation coverage checked.
+API reference checked
+Boundary candidate census checked
+philo_graph_reference.py --check: exit 0 (all graph rows checked; full console in .tmp/philo603/graph-check.txt)

@@ -1125,7 +1125,14 @@
       "platform": "aipi",
       "source_ids": [
         "holdspeak/meeting_aftercare.py",
-        "holdspeak/meeting_aftercare.py"
+        "holdspeak/meeting_aftercare.py",
+        "web/src/desk/intelligenceAttention.ts",
+        "web/src/components/AmbientLayer.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/components/SurfaceWindows.tsx",
+        "web/src/desk/components/DeskListView.tsx",
+        "web/src/styles/react-app.css",
+        "web/src/desk/chair/chair.css"
       ],
       "status": "experimental"
     },
@@ -1136,7 +1143,14 @@
       "platform": "ipad",
       "source_ids": [
         "holdspeak/meeting_aftercare.py",
-        "holdspeak/meeting_aftercare.py"
+        "holdspeak/meeting_aftercare.py",
+        "web/src/desk/intelligenceAttention.ts",
+        "web/src/components/AmbientLayer.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/components/SurfaceWindows.tsx",
+        "web/src/desk/components/DeskListView.tsx",
+        "web/src/styles/react-app.css",
+        "web/src/desk/chair/chair.css"
       ],
       "status": "experimental"
     },
@@ -1147,7 +1161,14 @@
       "platform": "linux_wayland",
       "source_ids": [
         "holdspeak/meeting_aftercare.py",
-        "holdspeak/meeting_aftercare.py"
+        "holdspeak/meeting_aftercare.py",
+        "web/src/desk/intelligenceAttention.ts",
+        "web/src/components/AmbientLayer.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/components/SurfaceWindows.tsx",
+        "web/src/desk/components/DeskListView.tsx",
+        "web/src/styles/react-app.css",
+        "web/src/desk/chair/chair.css"
       ],
       "status": "experimental"
     },
@@ -1158,7 +1179,14 @@
       "platform": "linux_x11",
       "source_ids": [
         "holdspeak/meeting_aftercare.py",
-        "holdspeak/meeting_aftercare.py"
+        "holdspeak/meeting_aftercare.py",
+        "web/src/desk/intelligenceAttention.ts",
+        "web/src/components/AmbientLayer.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/components/SurfaceWindows.tsx",
+        "web/src/desk/components/DeskListView.tsx",
+        "web/src/styles/react-app.css",
+        "web/src/desk/chair/chair.css"
       ],
       "status": "experimental"
     },
@@ -1169,7 +1197,14 @@
       "platform": "macos",
       "source_ids": [
         "holdspeak/meeting_aftercare.py",
-        "holdspeak/meeting_aftercare.py"
+        "holdspeak/meeting_aftercare.py",
+        "web/src/desk/intelligenceAttention.ts",
+        "web/src/components/AmbientLayer.tsx",
+        "web/src/desk/chair/ChairHome.tsx",
+        "web/src/desk/components/SurfaceWindows.tsx",
+        "web/src/desk/components/DeskListView.tsx",
+        "web/src/styles/react-app.css",
+        "web/src/desk/chair/chair.css"
       ],
       "status": "experimental"
     },

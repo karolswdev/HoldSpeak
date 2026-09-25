@@ -1,0 +1,18 @@
+[
+  {
+    "agent": "toast_placement",
+    "rollout": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T22-21-55-01a0d6cc-677b-79f3-a48a-f095a72b518f.jsonl",
+    "last_turn_context": {
+      "model": "gpt-5.6-luna",
+      "effort": "xhigh"
+    }
+  },
+  {
+    "agent": "toast_atlas",
+    "rollout": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T22-22-25-01a0d6cc-def3-7f81-8336-6c978452fb3e.jsonl",
+    "last_turn_context": {
+      "model": "gpt-5.6-luna",
+      "effort": "xhigh"
+    }
+  }
+]

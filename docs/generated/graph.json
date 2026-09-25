@@ -30,11 +30,11 @@
   },
   {
    "path": "docs/internal/philo/data/voice.json",
-   "sha256": "b052a2a1d816f5f8f8ae8a878ba6f7bd293bc165ee1f89bc1d1ea089a3cf5b09"
+   "sha256": "296adf398e47d44cdd0809bb90a10381c4c7d11699b955c6059a1953198d225d"
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "2d0a4e7de5b47422f6b114c7fcc45b62f0d7c8a2525e831a8f70484e2e34d69c"
+   "sha256": "065d4d9eb2c20b27e9c297e810c9a308ef0c3894a68f08ec0a9960f3ecd89802"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",
@@ -149435,6 +149435,1024 @@
    },
    "completion_bound_s": 180,
    "viewports": []
+  },
+  {
+   "id": "case.philo603.toast.arrival",
+   "job": "j6",
+   "edge_ids": [
+    "edge.face.arrival_run_intel"
+   ],
+   "state_id": "state.meetings.intel.ready",
+   "applicability": "applicable",
+   "preconditions": [
+    "A real imported architect meeting reaches the summary producer through the recorded provider boundary.",
+    {
+     "kind": "check",
+     "predicate": {
+      "kind": "attr_equals",
+      "attr": "data-testid",
+      "value": "arrival-run-intel"
+     },
+     "observe_at": "[data-testid=arrival-run-intel]",
+     "why": "the real Arrival route is ready before the producer trigger"
+    },
+    {
+     "kind": "check",
+     "predicate": {
+      "kind": "protocol_field",
+      "path": "/meetings/0/id",
+      "value": "{meeting_id}"
+     },
+     "observe_at": "protocol: GET /api/meetings",
+     "why": "the import boundary minted the meeting named by the later run"
+    }
+   ],
+   "setup": [
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-engines]",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-summary]",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "fill",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine-row] input",
+     "value": "http://192.168.1.43:8080"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-check]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "#surface-concierge .desk-window-title",
+     "state": "hidden",
+     "why": "the setup window closes before the Arrival producer path"
+    },
+    {
+     "kind": "boundary",
+     "substitute": "engine_reply",
+     "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+     "adapter": "labelled-substitution",
+     "reply": "tests/fixtures/philo5_summary_reply.json"
+    },
+    {
+     "kind": "fixture",
+     "path": "tests/fixtures/philo3_architect_meeting.wav",
+     "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+     "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+     },
+     "field": "file",
+     "capture_as": "meeting_id",
+     "capture_path": "meeting_id",
+     "adapter": "http-route",
+     "form": {
+      "title": "Architecture boundary review"
+     },
+     "wait_for": {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}",
+      "fields": {
+       "/transcription_status": "complete",
+       "/duration": {
+        "positive": true
+       },
+       "/segments": {
+        "min_items": 1
+       }
+      },
+      "timeout_s": 300,
+      "poll_s": 0.5
+     },
+     "expect_status": 202
+    },
+    {
+     "kind": "api",
+     "method": "POST",
+     "path": "/api/decisions",
+     "body": {
+      "title": "Philo 6-03 toast placement decision",
+      "status": "proposed"
+     },
+     "adapter": "http-route",
+     "expect_status": 201,
+     "why": "mint a real proposed decision through the production route so the generated Arrival brief has an actual BRIEF row"
+    },
+    {
+     "kind": "api",
+     "method": "POST",
+     "path": "/api/brief/generate",
+     "body": null,
+     "adapter": "http-route",
+     "expect_status": 200,
+     "why": "generate that real brief through its production route before the summary admission"
+    },
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-brief-row]",
+     "why": "the production brief generation populated the actual Arrival BRIEF row before the summary trigger"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-meetings]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-run-intel]"
+    }
+   ],
+   "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-run-intel]",
+    "trigger_route": {
+     "method": "POST",
+     "path": "/api/meetings/{meeting_id}/intelligence/run"
+    },
+    "why": "the real Arrival gesture admits the deferred producer job; the drainer's aftercare_ready signal reaches intelligenceAttention.ts"
+   },
+   "expected": {
+    "predicate": {
+     "kind": "readable_text",
+     "value": "MEETING READY",
+     "slot_selector": "[data-testid=arrival-aftercare-slot]",
+     "scroll_target_selector": "[data-testid=arrival-aftercare-slot]",
+     "clear_of": [
+      {
+       "selector": "[data-testid=meeting-summary-text]",
+       "required": true,
+       "require_hit_test": true
+      },
+      {
+       "selector": "[data-testid=arrival-capture-bar]",
+       "required": true,
+       "require_hit_test": true
+      },
+      {
+       "selector": "[data-testid=arrival-brief-row]",
+       "required": false,
+       "require_hit_test": false
+      }
+     ],
+     "auto_scroll_calls_by_viewport": {
+      "393": 1,
+      "1440": 0
+     },
+     "no_field_focus": true
+    },
+    "observe_at": ".ambient-aftercare",
+    "dismiss_selector": ".ambient-aftercare button:has-text('Dismiss')",
+    "dismiss_slot_selector": "[data-testid=arrival-aftercare-slot]",
+    "words": "the real deferred summary reaches intel ready, publishes aftercare_ready, and renders the readable card inside the Arrival slot with no overlap; the 393 slot scrolls once before observation",
+    "reads": [
+     {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}"
+     }
+    ]
+   },
+   "completion_bound_s": 30,
+   "viewports": [
+    1440,
+    393
+   ]
+  },
+  {
+   "id": "case.philo603.toast.floor_list",
+   "job": "j6",
+   "edge_ids": [
+    "edge.timer.intel_drainer"
+   ],
+   "state_id": "state.meetings.intel.ready",
+   "applicability": "applicable",
+   "preconditions": [
+    "A real imported architect meeting reaches intel ready while the Floor list is active.",
+    {
+     "kind": "check",
+     "predicate": {
+      "kind": "attr_equals",
+      "attr": "class",
+      "value": "desk-listmode"
+     },
+     "observe_at": ".desk-listmode",
+     "why": "the existing Floor list is active; the placement predicate owns the new slot check"
+    }
+   ],
+   "setup": [
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-engines]",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-summary]",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "fill",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine-row] input",
+     "value": "http://192.168.1.43:8080"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-check]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "#surface-concierge .desk-window-title",
+     "state": "hidden"
+    },
+    {
+     "kind": "boundary",
+     "substitute": "engine_reply",
+     "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+     "adapter": "labelled-substitution",
+     "reply": "tests/fixtures/philo5_summary_reply.json"
+    },
+    {
+     "kind": "fixture",
+     "path": "tests/fixtures/philo3_architect_meeting.wav",
+     "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+     "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+     },
+     "field": "file",
+     "capture_as": "meeting_id",
+     "capture_path": "meeting_id",
+     "adapter": "http-route",
+     "form": {
+      "title": "Architecture boundary review"
+     },
+     "wait_for": {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}",
+      "fields": {
+       "/transcription_status": "complete",
+       "/segments": {
+        "min_items": 1
+       }
+      },
+      "timeout_s": 300,
+      "poll_s": 0.5
+     },
+     "expect_status": 202
+    },
+    {
+     "kind": "api",
+     "method": "GET",
+     "path": "/api/meetings/{meeting_id}",
+     "body": null,
+     "capture_as": "selection_hash",
+     "capture_path": "planned_route.selection_hash",
+     "adapter": "http-route",
+     "expect_status": 200,
+     "why": "capture the route hash from the real meeting read before admitting the producer job"
+    },
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-run-intel]"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Floor"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "HoldSpeak",
+     "why": "the current chrome exposes List view in the HoldSpeak menu (DeskListView.test.tsx chrome-toggle fence)"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "menuitem",
+     "name": "List view",
+     "optional": true,
+     "timeout_s": 1,
+     "why": "select list mode when needed; the phone can already start in list mode"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": ".desk-hub-dot",
+     "why": "an outside pointer-down closes the mode menu even when no mode change was needed"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[role=menu][aria-label=HoldSpeak]",
+     "state": "hidden",
+     "why": "a setup menu must not cover the surface during its aftercare observation"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": ".desk-listmode",
+     "why": "the existing Floor list face is active before the producer trigger"
+    }
+   ],
+   "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/{meeting_id}/intelligence/run",
+    "body": {
+     "expected_selection_hash": "{selection_hash}"
+    },
+    "adapter": "http-route",
+    "expect_status": 200,
+    "why": "admit the real summary producer after the Floor list is active; its aftercare_ready signal reaches intelligenceAttention.ts"
+   },
+   "expected": {
+    "predicate": {
+     "kind": "readable_text",
+     "value": "MEETING READY",
+     "slot_selector": "[data-aftercare-floor-slot=\"top\"]",
+     "scroll_target_selector": "[data-aftercare-floor-slot=\"top\"]",
+     "clear_of": [
+      {
+       "selector": "[data-testid=meeting-summary-text]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": "[data-testid=arrival-capture-bar]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": "[data-testid=arrival-brief-row]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": ".desk-list-census",
+       "required": true,
+       "require_hit_test": true
+      }
+     ],
+     "auto_scroll_calls_by_viewport": {
+      "393": 1,
+      "1440": 0
+     },
+     "no_field_focus": true
+    },
+    "observe_at": ".ambient-aftercare",
+    "words": "The real deferred summary reaches intel ready and the aftercare card renders above the Floor list. At 393, one nearest-scroll call brings the slot into view; it can be a no-op when the slot is already visible.",
+    "reads": [
+     {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}"
+     }
+    ]
+   },
+   "completion_bound_s": 30,
+   "viewports": [
+    1440,
+    393
+   ]
+  },
+  {
+   "id": "case.philo603.toast.floor_spatial_fallback",
+   "job": "j6",
+   "edge_ids": [
+    "edge.timer.intel_drainer"
+   ],
+   "state_id": "state.meetings.intel.ready",
+   "applicability": "applicable",
+   "preconditions": [
+    {
+     "kind": "check",
+     "predicate": {
+      "kind": "attr_equals",
+      "attr": "class",
+      "value": "desk-world-canvas"
+     },
+     "observe_at": ".desk-world-canvas",
+     "why": "the spatial WebGL Floor is mounted; its fixed fallback is explicitly outside the placement build"
+    }
+   ],
+   "setup": [
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-engines]",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-summary]",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "fill",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine-row] input",
+     "value": "http://192.168.1.43:8080"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-check]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "#surface-concierge .desk-window-title",
+     "state": "hidden"
+    },
+    {
+     "kind": "boundary",
+     "substitute": "engine_reply",
+     "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+     "adapter": "labelled-substitution",
+     "reply": "tests/fixtures/philo5_summary_reply.json"
+    },
+    {
+     "kind": "fixture",
+     "path": "tests/fixtures/philo3_architect_meeting.wav",
+     "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+     "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+     },
+     "field": "file",
+     "capture_as": "meeting_id",
+     "capture_path": "meeting_id",
+     "adapter": "http-route",
+     "form": {
+      "title": "Architecture boundary review"
+     },
+     "wait_for": {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}",
+      "fields": {
+       "/transcription_status": "complete",
+       "/segments": {
+        "min_items": 1
+       }
+      },
+      "timeout_s": 300,
+      "poll_s": 0.5
+     },
+     "expect_status": 202
+    },
+    {
+     "kind": "api",
+     "method": "GET",
+     "path": "/api/meetings/{meeting_id}",
+     "body": null,
+     "capture_as": "selection_hash",
+     "capture_path": "planned_route.selection_hash",
+     "adapter": "http-route",
+     "expect_status": 200,
+     "why": "capture the route hash from the real meeting read before admitting the producer job"
+    },
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-run-intel]"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Floor"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "HoldSpeak"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "menuitem",
+     "name": "Spatial view",
+     "optional": true,
+     "timeout_s": 1,
+     "why": "select spatial mode when the device defaults to list"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": ".desk-hub-dot",
+     "why": "an outside pointer-down closes the mode menu even when no mode change was needed"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[role=menu][aria-label=HoldSpeak]",
+     "state": "hidden",
+     "why": "a setup menu must not cover the surface during its aftercare observation"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": ".desk-world-canvas"
+    }
+   ],
+   "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/{meeting_id}/intelligence/run",
+    "body": {
+     "expected_selection_hash": "{selection_hash}"
+    },
+    "adapter": "http-route",
+    "expect_status": 200,
+    "why": "admit the real summary producer with the spatial Floor mounted; retain its existing fixed fallback as an explicit limitation"
+   },
+   "expected": {
+    "predicate": {
+     "kind": "readable_text",
+     "value": "MEETING READY",
+     "clear_of": [],
+     "auto_scroll_calls_by_viewport": {
+      "393": 0,
+      "1440": 0
+     },
+     "no_field_focus": true
+    },
+    "observe_at": ".ambient-aftercare",
+    "words": "The existing card remains readable in its fixed spatial Floor fallback. The observation records its computed position; this case makes no claim of a spatial flow slot or unobstructed WebGL furniture.",
+    "reads": [
+     {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}"
+     }
+    ]
+   },
+   "completion_bound_s": 30,
+   "viewports": [
+    1440,
+    393
+   ]
+  },
+  {
+   "id": "case.philo603.toast.meetings_window",
+   "job": "j6",
+   "edge_ids": [
+    "edge.timer.intel_drainer"
+   ],
+   "state_id": "state.meetings.intel.ready",
+   "applicability": "applicable",
+   "preconditions": [
+    "A real imported architect meeting reaches intel ready while the Meetings window is open.",
+    {
+     "kind": "check",
+     "predicate": {
+      "kind": "attr_equals",
+      "attr": "data-testid",
+      "value": "meetings-headline"
+     },
+     "observe_at": "[data-testid=meetings-headline]",
+     "why": "the Meetings window is the active off-Arrival surface"
+    }
+   ],
+   "setup": [
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-engines]",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-blocker-verb-summary]",
+     "optional": true,
+     "timeout_s": 10
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine]"
+    },
+    {
+     "kind": "ui",
+     "action": "fill",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-engine-row] input",
+     "value": "http://192.168.1.43:8080"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-check]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "click",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=concierge-add-submit]"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "#surface-concierge .desk-window-title",
+     "state": "hidden"
+    },
+    {
+     "kind": "boundary",
+     "substitute": "engine_reply",
+     "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+     "adapter": "labelled-substitution",
+     "reply": "tests/fixtures/philo5_summary_reply.json"
+    },
+    {
+     "kind": "fixture",
+     "path": "tests/fixtures/philo3_architect_meeting.wav",
+     "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2",
+     "route": {
+      "method": "POST",
+      "path": "/api/meetings/import"
+     },
+     "field": "file",
+     "capture_as": "meeting_id",
+     "capture_path": "meeting_id",
+     "adapter": "http-route",
+     "form": {
+      "title": "Architecture boundary review"
+     },
+     "wait_for": {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}",
+      "fields": {
+       "/transcription_status": "complete",
+       "/segments": {
+        "min_items": 1
+       }
+      },
+      "timeout_s": 300,
+      "poll_s": 0.5
+     },
+     "expect_status": 202
+    },
+    {
+     "kind": "api",
+     "method": "GET",
+     "path": "/api/meetings/{meeting_id}",
+     "body": null,
+     "capture_as": "selection_hash",
+     "capture_path": "planned_route.selection_hash",
+     "adapter": "http-route",
+     "expect_status": 200,
+     "why": "capture the route hash from the real meeting read before admitting the producer job"
+    },
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/"
+    },
+    {
+     "kind": "ui",
+     "action": "click_role",
+     "adapter": "ui-pointer",
+     "role": "button",
+     "name": "Continue later",
+     "optional": true,
+     "timeout_s": 1
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=arrival-run-intel]"
+    },
+    {
+     "kind": "ui",
+     "action": "goto",
+     "adapter": "ui-navigation",
+     "url": "/history"
+    },
+    {
+     "kind": "ui",
+     "action": "wait_for",
+     "adapter": "ui-pointer",
+     "selector": "[data-testid=meetings-headline]"
+    }
+   ],
+   "trigger": {
+    "kind": "api",
+    "method": "POST",
+    "path": "/api/meetings/{meeting_id}/intelligence/run",
+    "body": {
+     "expected_selection_hash": "{selection_hash}"
+    },
+    "adapter": "http-route",
+    "expect_status": 200,
+    "why": "admit the real summary producer after the Meetings window is active; its aftercare_ready signal reaches intelligenceAttention.ts"
+   },
+   "expected": {
+    "predicate": {
+     "kind": "readable_text",
+     "value": "MEETING READY",
+     "slot_selector": "[data-aftercare-window-slot=\"top\"]",
+     "scroll_target_selector": "[data-aftercare-window-slot=\"top\"]",
+     "clear_of": [
+      {
+       "selector": "[data-testid=meeting-summary-text]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": "[data-testid=arrival-capture-bar]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": "[data-testid=arrival-brief-row]",
+       "required": false,
+       "require_hit_test": false
+      },
+      {
+       "selector": "[data-testid=meetings-headline]",
+       "required": true,
+       "require_hit_test": true
+      }
+     ],
+     "auto_scroll_calls_by_viewport": {
+      "393": 1,
+      "1440": 0
+     },
+     "no_field_focus": true
+    },
+    "observe_at": ".ambient-aftercare",
+    "words": "The real deferred summary reaches intel ready and the aftercare card renders inside the open Meetings window top slot. At 393, one nearest-scroll call brings the slot into view; it can be a no-op when the slot is already visible.",
+    "reads": [
+     {
+      "method": "GET",
+      "path": "/api/meetings/{meeting_id}"
+     }
+    ]
+   },
+   "completion_bound_s": 30,
+   "viewports": [
+    1440,
+    393
+   ]
   }
  ],
  "observations": [

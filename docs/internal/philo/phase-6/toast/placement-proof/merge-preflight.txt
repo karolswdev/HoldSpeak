@@ -1,0 +1,32 @@
+Read-only git merge-tree --write-tree --messages c6aafa8e6f424b0dbeced455ca490c15afdafd4b e64114df
+Exit: 1 (five content conflicts); no working-tree merge performed.
+
+e7081455ba2f095787d3ec3402264ae545629ddf
+100644 4360d8d54b5fe236ae47f1acceb4930bc73b707d 1	docs/generated/boundary-candidates.json
+100644 24282f9a13f9ed846afc77d1aa0db89c6d77e6a2 2	docs/generated/boundary-candidates.json
+100644 dd79768ba6a61bbb21840e81b5d06747f33a00c4 3	docs/generated/boundary-candidates.json
+100644 6a18365476847f7a1b2ee34804592f12c092465a 1	docs/generated/graph.json
+100644 424349bc928a647b68ac70ebfb6cc041bf3ee77c 2	docs/generated/graph.json
+100644 659f1d6c32d41c489c90428b919fa1102419a430 3	docs/generated/graph.json
+100644 a3108339103de221e6fe2d14eb2f92ebf039be3f 1	docs/internal/philo/graph/atlas.json
+100644 4b16acad634bc55c4cb63f061f1fec3d6ddb6bcc 2	docs/internal/philo/graph/atlas.json
+100644 0be5bb2eb4e68e0b0150a82dc3c2ef5400848fb4 3	docs/internal/philo/graph/atlas.json
+100644 06ce0e13a4413331883dfdd28d1912a90c670472 1	pm/roadmap/holdspeak-philo/README.md
+100644 e0eaa59ea0170d069ecb12c68dbf38836fb37abe 2	pm/roadmap/holdspeak-philo/README.md
+100644 ffab612f30724cb33f3075c47837d6dc8a2aec78 3	pm/roadmap/holdspeak-philo/README.md
+100644 114608f2dfebb773d246f53f3713ee9a6429e498 1	pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/current-phase-status.md
+100644 6a6992986856f8e8752acebba6749169abab30b7 2	pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/current-phase-status.md
+100644 52826566248c364c4dc5f7d503deb099f3efe99d 3	pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/current-phase-status.md
+
+Auto-merging docs/generated/boundary-candidates.json
+CONFLICT (content): Merge conflict in docs/generated/boundary-candidates.json
+Auto-merging docs/generated/graph.json
+CONFLICT (content): Merge conflict in docs/generated/graph.json
+Auto-merging docs/internal/philo/graph/atlas.json
+CONFLICT (content): Merge conflict in docs/internal/philo/graph/atlas.json
+Auto-merging pm/roadmap/holdspeak-philo/README.md
+CONFLICT (content): Merge conflict in pm/roadmap/holdspeak-philo/README.md
+Auto-merging pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/current-phase-status.md
+CONFLICT (content): Merge conflict in pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/current-phase-status.md
+Auto-merging tests/unit/test_philo_graph_atlas.py
+Auto-merging web/src/desk/chair/ChairHome.tsx
