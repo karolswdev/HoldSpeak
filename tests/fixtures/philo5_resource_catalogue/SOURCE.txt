@@ -1,0 +1,4 @@
+Verbatim lines copied from the retained Phase 6 closing rehearsal run
+pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/rehearsal/20260925T060854Z-his-words-real
+codex-events.jsonl = codex/decision_thought/events.jsonl lines 8, 9, 13, 38
+hub-transcript.jsonl = rehearsal-transcript.jsonl lines 354, 355, 356, 435
