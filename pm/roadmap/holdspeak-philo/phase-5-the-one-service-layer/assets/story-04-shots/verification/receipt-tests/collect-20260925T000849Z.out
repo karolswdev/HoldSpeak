@@ -1,0 +1,20 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest run --collect-only --maxWorkers=2 src/desk/chair/__tests__/briefReceiptRendered202.test.tsx src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx
+file:///Users/karol/dev/tools/wt-philo-5-04/web/node_modules/vitest/dist/chunks/cac.D3xHeqeL.js:406
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+                ^
+
+CACError: Unknown option `--collectOnly`
+    at Command.checkUnknownOptions (file:///Users/karol/dev/tools/wt-philo-5-04/web/node_modules/vitest/dist/chunks/cac.D3xHeqeL.js:406:17)
+    at CAC.runMatchedCommand (file:///Users/karol/dev/tools/wt-philo-5-04/web/node_modules/vitest/dist/chunks/cac.D3xHeqeL.js:606:13)
+    at CAC.parse (file:///Users/karol/dev/tools/wt-philo-5-04/web/node_modules/vitest/dist/chunks/cac.D3xHeqeL.js:547:12)
+    at file:///Users/karol/dev/tools/wt-philo-5-04/web/node_modules/vitest/dist/cli.js:11:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.21.0
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice

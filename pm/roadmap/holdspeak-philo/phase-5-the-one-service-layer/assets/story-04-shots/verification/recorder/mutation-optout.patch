@@ -1,0 +1,4 @@
+@@ Hub.__init__
+-        if record_rehearsal:
++        if True:  # deliberate mutation: opt-in guard removed
+             candidate = transcript_path or (self.home / "rehearsal-transcript.jsonl")

@@ -1,0 +1,24 @@
+COMMAND (disposable copy /tmp/holdspeak-philo504-path.iKvlug):
+(cd /tmp/holdspeak-philo504-path.iKvlug && PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH PYTHONPATH=/tmp/holdspeak-philo504-path.iKvlug HOME=$(mktemp -d) uv run --project /Users/karol/dev/tools/wt-philo-5-04 pytest -q --disable-warnings tests/unit/test_philo5_rehearsal_capture.py::test_recording_is_opt_in_and_transcript_path_is_fenced)
+exit_code=1
+
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_recording_is_opt_in_and_transcript_path_is_fenced ____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-787/test_recording_is_opt_in_and_t0')
+
+    def test_recording_is_opt_in_and_transcript_path_is_fenced(tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        plain = gw.Hub(home, token=TOKEN)
+        assert plain.transcript_path is None
+
+>       with pytest.raises(gw.Refused, match="not under the hub's temporary HOME"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'scripts.graph_walk.Refused'>
+
+tests/unit/test_philo5_rehearsal_capture.py:32: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_rehearsal_capture.py::test_recording_is_opt_in_and_transcript_path_is_fenced
+1 failed in 0.30s

@@ -1,0 +1,9 @@
+COMMAND:
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) uv run pytest --collect-only -q tests/unit/test_philo5_rehearsal_capture.py tests/unit/test_philo5_codex_seams.py
+
+tests/unit/test_philo5_rehearsal_capture.py::test_recording_is_opt_in_and_transcript_path_is_fenced
+tests/unit/test_philo5_rehearsal_capture.py::test_real_hub_records_complete_mcp_bodies_and_redacts_other_requests
+tests/unit/test_philo5_rehearsal_capture.py::test_import_op_cites_the_hash_already_computed_for_the_real_fixture
+tests/unit/test_philo5_codex_seams.py::test_a_rig_hub_is_found_and_accepted_by_the_real_proxy_across_a_restart
+
+4 tests collected in 0.10s

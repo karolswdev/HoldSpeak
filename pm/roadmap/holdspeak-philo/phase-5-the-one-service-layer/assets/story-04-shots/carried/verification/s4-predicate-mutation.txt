@@ -1,0 +1,3 @@
+actual: ok=True; 'Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 219, 'w': 370, 'h': 82}
+mutated_saved_text_removed: ok=False; 'Keep summary retrieval on the local desk' NOT in observe_at text
+before_target_present=False

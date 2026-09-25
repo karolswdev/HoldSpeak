@@ -1,0 +1,59 @@
+{
+  "command": [
+    "codex",
+    "mcp",
+    "get",
+    "holdspeak",
+    "--json",
+    "-c",
+    "mcp_servers.holdspeak.command=/Users/karol/dev/tools/wt-philo-5-04/.venv/bin/holdspeak-mcp",
+    "-c",
+    "mcp_servers.holdspeak.cwd=/Users/karol/dev/tools/wt-philo-5-04",
+    "-c",
+    "mcp_servers.holdspeak.args=[]",
+    "-c",
+    "mcp_servers.holdspeak.required=true",
+    "-c",
+    "mcp_servers.holdspeak.env.HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fwr4xfur",
+    "-c",
+    "mcp_servers.holdspeak.startup_timeout_sec=60",
+    "-c",
+    "mcp_servers.holdspeak.tool_timeout_sec=900"
+  ],
+  "effective": {
+    "disabled_reason": null,
+    "disabled_tools": null,
+    "enabled": true,
+    "enabled_tools": null,
+    "name": "holdspeak",
+    "startup_timeout_sec": 60.0,
+    "tool_timeout_sec": 900.0,
+    "transport": {
+      "args": [],
+      "command": "/Users/karol/dev/tools/wt-philo-5-04/.venv/bin/holdspeak-mcp",
+      "cwd": "/Users/karol/dev/tools/wt-philo-5-04",
+      "env": {
+        "HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fwr4xfur"
+      },
+      "env_vars": [],
+      "type": "stdio"
+    }
+  },
+  "exit_code": 0,
+  "requested": {
+    "args": [],
+    "command": "/Users/karol/dev/tools/wt-philo-5-04/.venv/bin/holdspeak-mcp",
+    "cwd": "/Users/karol/dev/tools/wt-philo-5-04",
+    "env": {
+      "HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fwr4xfur"
+    },
+    "name": "holdspeak",
+    "required": true,
+    "timeout": {
+      "startup_seconds": 60,
+      "tool_seconds": 900
+    },
+    "transport": "stdio"
+  },
+  "stderr": ""
+}

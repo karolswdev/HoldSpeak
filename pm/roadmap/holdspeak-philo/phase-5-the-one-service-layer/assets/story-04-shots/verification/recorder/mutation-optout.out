@@ -1,0 +1,22 @@
+COMMAND (disposable copy /tmp/holdspeak-philo504-optout.4pit8h):
+(cd /tmp/holdspeak-philo504-optout.4pit8h && PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH PYTHONPATH=/tmp/holdspeak-philo504-optout.4pit8h HOME=$(mktemp -d) uv run --project /Users/karol/dev/tools/wt-philo-5-04 pytest -q --disable-warnings tests/unit/test_philo5_rehearsal_capture.py::test_recording_is_opt_in_and_transcript_path_is_fenced)
+exit_code=1
+
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_recording_is_opt_in_and_transcript_path_is_fenced ____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-786/test_recording_is_opt_in_and_t0')
+
+    def test_recording_is_opt_in_and_transcript_path_is_fenced(tmp_path: Path) -> None:
+        home = tmp_path / "home"
+        home.mkdir()
+        plain = gw.Hub(home, token=TOKEN)
+>       assert plain.transcript_path is None
+E       AssertionError: assert PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-786/test_recording_is_opt_in_and_t0/home/rehearsal-transcript.jsonl') is None
+E        +  where PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-786/test_recording_is_opt_in_and_t0/home/rehearsal-transcript.jsonl') = <scripts.graph_walk.Hub object at 0x109bd57f0>.transcript_path
+
+tests/unit/test_philo5_rehearsal_capture.py:30: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo5_rehearsal_capture.py::test_recording_is_opt_in_and_transcript_path_is_fenced
+1 failed in 0.30s

@@ -1,0 +1,10 @@
+{
+  "elapsed_s": 80.969,
+  "error": {
+    "message": "Locator.inner_text: Error: strict mode violation: locator(\"[data-testid=summary-record-attempts]\") resolved to 2 elements:\n    1) <span class=\"summary-route\" data-testid=\"summary-record-attempts\">\u2026</span> aka get_by_test_id(\"arrival-meetings\").get_by_test_id(\"summary-record-attempts\")\n    2) <span class=\"summary-route\" data-testid=\"summary-record-attempts\">\u2026</span> aka get_by_role(\"region\", name=\"Meetings\").get_by_test_id(\"summary-record-attempts\")\n\nCall log:\n  - waiting for locator(\"[data-testid=summary-record-attempts]\")\n",
+    "type": "Error"
+  },
+  "finished_at": "2026-09-24T23:53:09.036968+00:00",
+  "outcome": "blocked",
+  "started_at": "2026-09-24T23:51:48.067693+00:00"
+}

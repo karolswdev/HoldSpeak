@@ -1,0 +1,8 @@
+{
+  "adapter": "producer-clock",
+  "advance_days": 1,
+  "advance_days_total": 1,
+  "clock": "clock.python_wall",
+  "done": true,
+  "kind": "clock"
+}

@@ -1,0 +1,214 @@
+{
+  "verdict": "pass",
+  "complete": true,
+  "case_id": "case.philo504.decision_missing.refusal.op",
+  "viewport": 1440,
+  "provenance": {
+    "home": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-op-tmp/graph-walk-home-6zzc9scf",
+    "db": "/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-op-tmp/graph-walk-home-6zzc9scf/.local/share/holdspeak/holdspeak.db"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.read",
+    "args": {
+      "decision_id": "philo504-deliberately-absent"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.get",
+        "arguments": {
+          "kind": "decisions",
+          "id": "philo504-deliberately-absent"
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "not_found",
+      "error": "Unknown decision: philo504-deliberately-absent",
+      "id": "philo504-deliberately-absent",
+      "kind": "decision"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.009,
+    "named_refusal": {
+      "code": "not_found",
+      "error": "Unknown decision: philo504-deliberately-absent",
+      "id": "philo504-deliberately-absent",
+      "kind": "decision"
+    }
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "operation refused by name 'not_found': Unknown decision: philo504-deliberately-absent",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.92,
+    "first_satisfied_at_s": 0.92,
+    "completion_bound_s": 15.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "shots": [],
+  "notes": [
+    "predicate: operation refused by name 'not_found': Unknown decision: philo504-deliberately-absent"
+  ],
+  "after": {
+    "target_present": false,
+    "text": "",
+    "attrs": {},
+    "visible": false,
+    "url": "http://127.0.0.1:58645",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "headless_refusal": "headless mode cannot observe a face selector",
+    "observe_at": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-24T23:38:36.428938+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.read",
+      "body_sha256": "c1f5a414b0d5cde15ba6fe9c1b62fa763c4d3eea34f73ada145fff1e76f07401",
+      "body": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "op": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.read",
+      "args": {
+        "decision_id": "philo504-deliberately-absent"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "decisions",
+            "id": "philo504-deliberately-absent"
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"not_found\", \"error\": \"Unknown decision: philo504-deliberately-absent\", \"id\": \"philo504-deliberately-absent\", \"kind\": \"decision\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.009,
+      "named_refusal": {
+        "code": "not_found",
+        "error": "Unknown decision: philo504-deliberately-absent",
+        "id": "philo504-deliberately-absent",
+        "kind": "decision"
+      }
+    },
+    "op_digest": "49e29426f5f2989dba0b5986eddd42faa18c35f8ef09978b8bec363be5fd5943"
+  }
+}

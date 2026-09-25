@@ -1,0 +1,133 @@
+PHILO-5-04 FINAL REHEARSAL ARTIFACT AUDIT — PASS
+RUN: /Users/karol/dev/tools/wt-philo-5-04/pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real
+MODE: read-only retained artifacts; no hub, browser, Codex, or pytest process
+PASS  retained file: rehearsal-transcript.jsonl
+PASS  retained file: db-proof.sqlite
+PASS  retained file: run-status.json
+PASS  retained file: codex/import/events.jsonl
+PASS  retained file: codex/summary/events.jsonl
+PASS  retained file: codex/decision_thought/events.jsonl
+PASS  retained file: codex/tomorrow_brief/events.jsonl
+
+Transport and catalog
+PASS  tools/list retained: 4 tools/list responses; 228 tool names
+PASS  recorded MCP transport: POST /api/mcp tools/call rows are present
+
+Codex turns
+PASS  import retained window start: transcript-window=5; mcp-audit=5
+PASS  summary retained window start: transcript-window=182; mcp-audit=182
+PASS  decision_thought retained window start: transcript-window=312; mcp-audit=312
+PASS  tomorrow_brief retained window start: transcript-window=857; mcp-audit=857
+PASS  transcript window bounds: ranges={'import': (5, 10), 'summary': (182, 311), 'decision_thought': (312, 624), 'tomorrow_brief': (857, 880)}; rows=1003
+PASS  import call reconciliation: 2/2 calls matched occurrence-by-occurrence
+PASS  import required producer: required=['meeting.import']
+PASS  import non-MCP write fence: 0 unmatched write rows in indexed transcript window
+PASS  import shell mutation fence: 3 shell commands; 0 mutation commands
+PASS  import process outcome: {"elapsed_s": 34.427, "finished_at": "2026-09-25T00:14:43.935209+00:00", "outcome": "process_completed", "started_at": "2026-09-25T00:14:09.508114+00:00"}
+NOTE  import tool sequence: meeting.import -> meeting.get
+NOTE  import duration: 34.427s; transcript window=5:10; MCP call rows=2
+PASS  summary call reconciliation: 4/4 calls matched occurrence-by-occurrence
+PASS  summary required producer: required=['meeting.run_intelligence']
+PASS  summary non-MCP write fence: 0 unmatched write rows in indexed transcript window
+PASS  summary shell mutation fence: 0 shell commands; 0 mutation commands
+PASS  summary process outcome: {"elapsed_s": 38.466, "finished_at": "2026-09-25T00:15:30.767047+00:00", "outcome": "process_completed", "started_at": "2026-09-25T00:14:52.301205+00:00"}
+NOTE  summary tool sequence: meeting.get -> meeting.run_intelligence -> meeting.get -> meeting.get
+NOTE  summary duration: 38.466s; transcript window=182:311; MCP call rows=4
+PASS  decision_thought call reconciliation: 7/7 calls matched occurrence-by-occurrence
+PASS  decision_thought required producer: required=['desk.create', 'thought.create', 'thought.update_working']
+PASS  decision_thought non-MCP write fence: 0 unmatched write rows in indexed transcript window
+PASS  decision_thought shell mutation fence: 25 shell commands; 0 mutation commands
+PASS  decision_thought process outcome: {"elapsed_s": 201.398, "finished_at": "2026-09-25T00:18:52.619998+00:00", "outcome": "process_completed", "started_at": "2026-09-25T00:15:31.221362+00:00"}
+NOTE  decision_thought tool sequence: thought.create -> thought.update_working -> desk.get -> meeting.proposals -> desk.create -> desk.get -> desk.get
+NOTE  decision_thought duration: 201.398s; transcript window=312:624; MCP call rows=7
+PASS  tomorrow_brief call reconciliation: 2/2 calls matched occurrence-by-occurrence
+PASS  tomorrow_brief required producer: required=['monday_brief.generate']
+PASS  tomorrow_brief non-MCP write fence: 0 unmatched write rows in indexed transcript window
+PASS  tomorrow_brief shell mutation fence: 0 shell commands; 0 mutation commands
+PASS  tomorrow_brief process outcome: {"elapsed_s": 23.333, "finished_at": "2026-09-25T00:19:29.459424+00:00", "outcome": "process_completed", "started_at": "2026-09-25T00:19:06.126078+00:00"}
+NOTE  tomorrow_brief tool sequence: monday_brief.generate -> monday_brief.get
+NOTE  tomorrow_brief duration: 23.333s; transcript window=857:880; MCP call rows=2
+PASS  all completed calls reconciled: 15/15 retained completed holdspeak MCP calls
+NOTE  refused/error calls: 0 (retained and included in reconciliation)
+PASS  no shell mutation commands: 28 commands inspected
+
+Ordinary-language prompts
+PASS  import prompt fence: catalog/tool/technical tokens=[]
+PASS  summary prompt fence: catalog/tool/technical tokens=[]
+PASS  decision_thought prompt fence: catalog/tool/technical tokens=[]
+PASS  tomorrow_brief prompt fence: catalog/tool/technical tokens=[]
+PASS  all prompts ordinary: all retained as-sent prompts pass the actual tools/list catalog fence
+
+In-memory rejection cases
+EXPECTED REJECTION  prompt operation-name mutation: the retained catalog name 'meeting.import' was detected
+EXPECTED REJECTION  MCP result mismatch: no POST /api/mcp occurrence for meeting.import with exact args/result hash 11fb166d1d75c8e0ec1c0c2e5e70b5ecf24f3265d169319a89711e3220997292
+EXPECTED REJECTION  method/path bypass: no POST /api/mcp occurrence for meeting.import with exact args/result hash 11fb166d1d75c8e0ec1c0c2e5e70b5ecf24f3265d169319a89711e3220997292
+EXPECTED REJECTION  extra non-MCP write: detected POST /api/desk/direct-write
+
+Readbacks and identity
+PASS  canonical meeting id: '1a1f7ce7'
+PASS  canonical decision id: 'decision_96c04b1b7a13'
+PASS  canonical Thought id: 'thought_2b4148a5b1f8'
+PASS  canonical brief id: 'brief-de8a52459de14125bc7ed351be8451b9'
+PASS  meeting import readback: meeting id and complete transcript readback retained
+PASS  summary readback: summary=328 chars; LAN host receipt=True
+PASS  decision readback: decision content and identity retained
+PASS  Thought saved body: final appended sentence and original body retained
+PASS  Thought revision advanced: 1 -> 2
+PASS  brief decision source: 'decision:decision_96c04b1b7a13'; 1 matching retained items
+PASS  SQLite immutable read-only open: query_only=1
+PASS  SQLite integrity: integrity_check=ok
+PASS  meeting id in immutable DB backup: 1a1f7ce7
+PASS  decision id in immutable DB backup: decision_96c04b1b7a13
+PASS  Thought id in immutable DB backup: thought=thought_2b4148a5b1f8; note=note_thought_c6f90ab0fab106d0
+PASS  brief id in immutable DB backup: brief=brief-de8a52459de14125bc7ed351be8451b9; items=6
+PASS  DB Thought final body/revision: working_revision=2
+PASS  DB brief decision source: decision:decision_96c04b1b7a13
+PASS  unexpected audited created objects: none in meeting/decision/Thought/brief tables
+
+Browser predicates and retained shots
+PASS  summary both widths: pages=2
+PASS  summary 1440px visible: summary text present
+PASS  summary 1440px host: LAN host receipt visible
+PASS  summary 1440px in place: same page, no refresh/navigation
+PASS  summary 1440px hit-test: {"hit": true, "in_viewport": true, "viewport": {"height": 900, "width": 1440}, "visible": true}
+PASS  summary 393px visible: summary text present
+PASS  summary 393px host: LAN host receipt visible
+PASS  summary 393px in place: same page, no refresh/navigation
+PASS  summary 393px hit-test: {"hit": true, "in_viewport": true, "viewport": {"height": 852, "width": 393}, "visible": true}
+PASS  decision both widths: pages=2
+PASS  decision 1440px content: expected content visible
+PASS  decision 1440px shot: 1440.png
+PASS  decision 393px content: expected content visible
+PASS  decision 393px shot: 393.png
+PASS  thought both widths: pages=2
+PASS  thought 1440px content: expected content visible
+PASS  thought 1440px shot: 1440.png
+PASS  thought 393px content: expected content visible
+PASS  thought 393px shot: 393.png
+PASS  brief both widths: pages=2
+PASS  brief 1440px receipt: Brief ready · 6 items · 6:19 PM
+PASS  brief 1440px decision row: ["Review decision: Keep summary retrieval on the local desk.\nAck\nDefer", "Meeting recorded: Architecture review\nAck\nDefer", "Unassigned: Test restart retrieval\nAck\nDefer"]
+PASS  brief 1440px shot: 1440.png
+PASS  brief 1440px receipt_shot: 1440-receipt.png
+PASS  brief 1440px row_shot: 1440-row.png
+PASS  brief 393px receipt: Brief ready · 6 items · 6:19 PM
+PASS  brief 393px decision row: ["Review decision: Keep summary retrieval on the local desk.\nAck\nDefer", "Meeting recorded: Architecture review\nAck\nDefer", "Unassigned: Test restart retrieval\nAck\nDefer"]
+PASS  brief 393px shot: 393.png
+PASS  brief 393px receipt_shot: 393-receipt.png
+PASS  brief 393px row_shot: 393-row.png
+
+Run proof and limitations
+PASS  run completed: {"elapsed_s": 326.09, "error": null, "finished_at": "2026-09-25T00:19:33.786633+00:00", "outcome": "completed", "started_at": "2026-09-25T00:14:07.695632+00:00"}
+NOTE  total duration: 326.09s; started=2026-09-25T00:14:07.695632+00:00; finished=2026-09-25T00:19:33.786633+00:00
+PASS  Codex hub HOME separation: Codex config points at fresh hub HOME
+PASS  MCP config exact: {"args": [], "command": "/Users/karol/dev/tools/wt-philo-5-04/.venv/bin/holdspeak-mcp", "cwd": "/Users/karol/dev/tools/wt-philo-5-04", "env": {"HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fx3inucg"}, "name": "holdspeak", "required": true, "timeout": {"startup_seconds": 60, "tool_seconds": 900}, "transport": "stdio"}
+PASS  effective Codex config: codex mcp get succeeded and holdspeak enabled
+PASS  owner review label: review remains pending
+PASS  real engine preflight: LAN model endpoint returned successfully
+NOTE  hub shutdown warning: resource_tracker reported one leaked semaphore; run completed and DB proof is intact
+NOTE  tool catalog: 228 names retained from 4 tools/list responses
+NOTE  proof boundary: Codex calls and shell/transcript writes are audited; browser/setup reads and rig producer writes are outside Codex timing windows
+
+Counts
+Codex stages=4; completed MCP calls=15; refusals/errors=0; shell commands=28

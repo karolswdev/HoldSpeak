@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5: stories 01 and 02 merged; story 03 done in Astra's atlas lane, with Muad'Dib's precommit conditions paid. All 18 named pairs and 2 separate replay pairs pass. The PR remains held for counsel on built. The inherited decision-admission debt remains unruled.)
-**Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — chartered 2026-09-24 by the two brains, unratified (the owner's ratification owed).
-**Status:** Phases 1–4 delivered and merged. Phase 5 The One Service Layer is ratified and in progress. Stories 01 and 02 are merged; story 03 proves the atlas paths; story 04 will rehearse the loop through Codex. Proof mode is an isolated rehearsal with owner-reviewed shots, not a sitting.
+**Last updated:** 2026-09-24 (Phase 5: stories 01–03 merged; story 04 technically done after the real Codex rehearsal. OWNER REVIEW PENDING. The inherited decision-admission debt remains unruled.)
+**Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — ratified by the owner 2026-09-24.
+**Status:** OWNER REVIEW PENDING. Phases 1–4 delivered and merged. Phase 5 is ratified and in progress. Stories 01–03 are merged; story 04 completed the technical rehearsal through Codex; its PR stays unmerged for counsel and publication. The owner reviews published shots after technical completion. This is not a sitting.
 
 ## Vision
 
@@ -26,7 +26,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | 2 | The Graph — edges → interfaces → connections → actions; both brains, both passes; a council; Phase 3 for what must be built | done | [Phase 2](phase-2-the-graph/current-phase-status.md) |
 | 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | closed by ruling 2026-09-23; exit 1 proved in Phase 4; sitting waived by owner 2026-09-24 ([final summary](phase-3-the-meeting-loop/final-summary.md)) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
 | 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | closed 2026-09-24 ([final summary](phase-4-the-morning/final-summary.md)) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
-| 5 | The One Service Layer — one application-operation contract; routes, MCP and the rig over it; the Phase 3+4 loop as pilot | RATIFIED 2026-09-24; in build (01) | [Phase 5](phase-5-the-one-service-layer/current-phase-status.md) |
+| 5 | The One Service Layer — one application-operation contract; routes, MCP and the rig over it; the Phase 3+4 loop as pilot | RATIFIED; 01–03 merged, 04 technically done; OWNER REVIEW PENDING | [Phase 5](phase-5-the-one-service-layer/current-phase-status.md) |
 
 ## Operating cadence
 

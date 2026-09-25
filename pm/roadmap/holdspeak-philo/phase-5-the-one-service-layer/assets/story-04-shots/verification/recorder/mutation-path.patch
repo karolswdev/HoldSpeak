@@ -1,0 +1,3 @@
+@@ Hub.__init__
+-            self.transcript_path = _guard_transcript_path(candidate, self.home)
++            self.transcript_path = Path(candidate)  # deliberate mutation: HOME fence removed

@@ -479,7 +479,9 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         for case in json.loads(path.read_text())['cases']
         if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
     ]
-    assert len(siblings) == 20  # 18 real op siblings plus two replay variants
+    assert len(siblings) == 21  # 19 real op siblings plus two replay variants
+    sibling_ids = {case["id"] for case in siblings}
+    assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
         'decision.create', 'decision.update', 'meeting.import',
         'meeting.summary.run', 'brief.generate', 'brief.shelf.write',
@@ -510,7 +512,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
                 problems.append(f"{case['id']}: operation sibling carries a UI step")
         trigger = case.get('trigger') or {}
         if trigger.get('kind') == 'op' and trigger.get('name') not in mutating:
-            problems.append(f"{case['id']}: trigger is not a producer operation")
+            if case["id"] not in READ_REFUSAL_SIBLINGS or trigger.get("name") not in readable:
+                problems.append(f"{case['id']}: trigger is not a producer operation")
     assert not problems, '\n'.join(problems)
 
 
@@ -1281,6 +1284,12 @@ KEPT = "case.j11.thought_keep.kept"
 BRIEF_HEADLINE = "[data-testid=arrival-brief-headline]"
 GENERATE = "[data-testid=arrival-brief-generate]"
 TEXT_KINDS = frozenset({"text_contains", "text_absent", "text_equals"})
+
+# PHILO-5-04 adds a read-refusal sibling. Keep the exception named so the
+# producer-operation fence does not silently widen for future cases.
+READ_REFUSAL_SIBLINGS = frozenset({
+    "case.philo504.decision_missing.refusal.op",
+})
 
 
 def _case(atlas: dict, case_id: str) -> dict:

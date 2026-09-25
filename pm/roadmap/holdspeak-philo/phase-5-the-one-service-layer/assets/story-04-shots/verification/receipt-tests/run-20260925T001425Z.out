@@ -1,0 +1,142 @@
+COMMAND: cd web && env PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) npx vitest run --maxWorkers=2 src/desk/chair/__tests__/briefReceiptRendered202.test.tsx src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-5-04/web
+
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx (3 tests | 1 failed) 1063ms
+     × keeps the receipt when the generated response has no countable rows 1014ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > keeps the receipt when the generated response has no countable rows
+AssertionError: expected 'Brief ready · 4:42 PM' to be 'Brief ready · 5:35 PM' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"chair"[39m
+        [33mdata-testid[39m=[32m"chair"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"arrival-headline"[39m
+          [33mdata-testid[39m=[32m"arrival-headline"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"arrival-display arrival-display--muted"[39m
+            [33mdata-testid[39m=[32m"arrival-display"[39m
+          [36m>[39m
+            [0mNothing needs you[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mdata-testid[39m=[32m"arrival-brief"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"surface-section"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"surface-section-head"[39m
+            [36m>[39m
+              [36m<h3>[39m
+                [0mBRIEF[0m
+              [36m</h3>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"gadget-chip gadget-chip-egress"[39m
+                [33mdata-scope[39m=[32m"local"[39m
+                [33mtitle[39m=[32m"The brief is built from this desk's own records."[39m
+              [36m>[39m
+                [0mTHIS DEVICE[0m
+              [36m</span>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+                [33mdata-testid[39m=[32m"arrival-brief-generate"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mGenerate[0m
+              [36m</button>[39m
+            [36m</header>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"arrival-brief-headline"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-headline"[39m
+            [36m>[39m
+              [0mNo changes[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"surface-receipt-line"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-date"[39m
+            [36m>[39m
+              [0mSEP 21 – 24 · GENERATED SEP 24 16:42[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"surface-receipt-line"[39m
+              [33mdata-testid[39m=[32m"arrival-brief-receipt"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mBrief ready · 4:42 PM[0m
+            [36m</span>[39m
+          [36m</section>[39m
+        [36m</div>[39m
+        [36m<footer[39m
+          [33mclass[39m=[32m"arrival-capture-bar"[39m
+          [33mdata-testid[39m=[32m"arrival-capture-bar"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"arrival-capture-talk"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn--ghost "[39m
+            [33mdata-testid[39m=[32m"arrival-develop-thought"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mWrite a thought[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn--ghost "[39m
+            [33mdata-testid[39m=[32m"arrival-record-meeting"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRecord meeting[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn btn--ghost "[39m
+            [33mdata-testid[39m=[32m"arrival-schedule"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mSchedule[0m
+          [36m</button>[39m
+        [36m</footer>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m...
+
+Expected: "Brief ready · 5:35 PM"
+Received: "Brief ready · 4:42 PM"
+
+ ❯ src/desk/chair/__tests__/briefReceiptRendered202.test.tsx:107:71
+    105|
+    106|     await waitFor(() =>
+    107|       expect(screen.getByTestId("arrival-brief-receipt").textContent).…
+       |                                                                       ^
+    108|         "Brief ready · 5:35 PM",
+    109|       ),
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 17 passed (18)
+   Start at  18:14:25
+   Duration  1.84s (transform 690ms, setup 194ms, import 1.15s, tests 1.35s, environment 685ms)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.20.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.20.0
+npm notice To update run: npm install -g npm@11.20.0
+npm notice
+EXIT: 1

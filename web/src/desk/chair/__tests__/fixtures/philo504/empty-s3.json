@@ -1,0 +1,23 @@
+{
+  "id": "brief-6851c263cb5544449a611a0ab56d2c83",
+  "period_start": "2026-09-23T17:00:00",
+  "period_end": "2026-09-24T16:42:39.649297",
+  "headline": "No changes",
+  "sections": {
+    "this_week": [],
+    "changed": [],
+    "broke": [],
+    "waiting": [],
+    "decisions": []
+  },
+  "generated_at": "2026-09-24T16:42:39.649297",
+  "is_empty": true,
+  "shelf": {},
+  "ledger": {
+    "operations": 0,
+    "since": null
+  },
+  "period_label": "SEP 21 – 24",
+  "generated_label": "GENERATED SEP 24 16:42",
+  "person_sections_state": "unavailable"
+}

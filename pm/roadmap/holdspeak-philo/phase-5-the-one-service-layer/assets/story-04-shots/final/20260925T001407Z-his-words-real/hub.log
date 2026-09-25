@@ -1,0 +1,9 @@
+DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fx3inucg/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fx3inucg/.config/holdspeak/config.json
+PRODUCER_CLOCK /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fx3inucg/graph-walk-producer-clock.json
+TRANSCRIPT_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-fx3inucg/rehearsal-transcript.jsonl
+WIRING {"has": ["MeetingWebServer routes", "the brief producer clock seam (wall clock + the run's offset file)", "bounded HTTP rehearsal recording", "the database owner lock (port published)", "the intelligence queue drainer"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyListener (no native keystrokes)", "voice_session / device registry", "transcriber warm-up", "the deferred plugin-queue thread", "the Cadence Engine tick", "the heartbeat conductor loop (not requested by the case)"]}
+HUB_READY http://127.0.0.1:61059
+PRODUCER_CLOCK_READ advance_days=1 now=2026-09-25T18:19:14
+/Users/karol/.local/share/uv/python/cpython-3.14.2-macos-aarch64-none/lib/python3.14/multiprocessing/resource_tracker.py:396: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-mjdyokrw'}
+  warnings.warn(

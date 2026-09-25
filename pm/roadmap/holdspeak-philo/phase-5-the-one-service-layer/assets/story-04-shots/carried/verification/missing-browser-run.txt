@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 9c653937d29377f3a3e3d81852c82f6c5401c745 dirty=True
+CONTRACT: rig=1.2.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-yOpsX1bz.js'] hub=http://127.0.0.1:58533 db=/Users/karol/dev/tools/wt-philo-5-04/.tmp/philo504-carried/missing-browser-tmp/graph-walk-home-mlubpcxj/.local/share/holdspeak/holdspeak.db engine=none
+JOB: a1
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/philo504-carried/missing-browser/20260924T233716Z-case.philo504.decision_missing.refusal-astra-1440/before.png', '.tmp/philo504-carried/missing-browser/20260924T233716Z-case.philo504.decision_missing.refusal-astra-1440/after.png']
+NOTE: predicate: GET /api/decisions/philo504-deliberately-absent answered 404, wanted 404 (body sha256 e96c1febd835); response body contains the declared admission facts

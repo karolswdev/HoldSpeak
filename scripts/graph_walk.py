@@ -1408,15 +1408,189 @@ def _free_port() -> int:
     return port
 
 
+def _guard_transcript_path(path: str | Path, home: Path) -> Path:
+    """Resolve an opted-in transcript and keep it inside this hub's HOME."""
+    resolved = guard_path(path, "the rehearsal transcript")
+    if not _under(resolved, home.resolve()):
+        raise Refused(
+            f"refusing to record: transcript {resolved} is not under the "
+            f"hub's temporary HOME {home.resolve()}"
+        )
+    return resolved
+
+
+class _RehearsalRecorder:
+    """Append one bounded HTTP exchange per JSONL line.
+
+    The recorder is deliberately transport-only. It sees ASGI messages after
+    the real app has been composed and forwards every message unchanged. Only
+    the MCP endpoint keeps bodies; all other routes keep method, path and
+    status, so auth tokens, query strings and headers cannot enter the file.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._lock = threading.Lock()
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with self.path.open("a", encoding="utf-8"):
+                pass
+        except OSError as exc:
+            raise RuntimeError(
+                f"rehearsal recording cannot open {self.path}: {exc}"
+            ) from exc
+
+    @staticmethod
+    def _body(raw: bytes) -> Any:
+        if not raw:
+            return None
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return raw.decode("utf-8", errors="replace")
+
+    def write(
+        self,
+        *,
+        method: str,
+        path: str,
+        status: int | None,
+        started_at: datetime,
+        finished_at: datetime,
+        started_mono: float,
+        request_body: bytes = b"",
+        response_body: bytes = b"",
+        error: BaseException | None = None,
+    ) -> None:
+        entry: dict[str, Any] = {
+            "method": method,
+            "path": path,
+            "status": status,
+        }
+        if path == "/api/mcp":
+            request = self._body(request_body)
+            response = self._body(response_body)
+            entry.update({
+                "started_at": started_at.isoformat(),
+                "finished_at": finished_at.isoformat(),
+                "duration_ms": round((time.monotonic() - started_mono) * 1000, 3),
+                "request_body": request,
+                "response_body": response,
+                # Short aliases keep the transcript readable to the rehearsal
+                # driver while the explicit names document that these are
+                # bodies, never headers.
+                "request": request,
+                "response": response,
+            })
+            if error is not None:
+                entry["error"] = f"{type(error).__name__}: {error}"
+        try:
+            line = json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
+            with self._lock:
+                with self.path.open("a", encoding="utf-8") as stream:
+                    stream.write(line)
+                    stream.write("\n")
+                    stream.flush()
+                    os.fsync(stream.fileno())
+        except (OSError, TypeError, ValueError) as exc:
+            # Opted-in recording is proof. A partial transcript must fail the
+            # rehearsal loudly instead of producing an unqualified claim.
+            raise RuntimeError(
+                f"rehearsal recording failed for {method} {path}: {exc}"
+            ) from exc
+
+
+class _RehearsalASGI:
+    """Passive ASGI wrapper installed around the already composed real app."""
+
+    def __init__(self, app: Any, recorder: _RehearsalRecorder) -> None:
+        self.app = app
+        self.recorder = recorder
+
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> Any:
+        if scope.get("type") != "http":
+            return await self.app(scope, receive, send)
+
+        path = str(scope.get("path") or "")
+        method = str(scope.get("method") or "")
+        is_mcp = path == "/api/mcp"
+        request_chunks: list[bytes] = []
+        response_chunks: list[bytes] = []
+        status: int | None = None
+        recorded = False
+        started_at = datetime.now(timezone.utc)
+        started_mono = time.monotonic()
+
+        async def recording_receive() -> dict[str, Any]:
+            message = await receive()
+            if is_mcp and message.get("type") == "http.request":
+                request_chunks.append(message.get("body", b"") or b"")
+            return message
+
+        async def recording_send(message: dict[str, Any]) -> None:
+            nonlocal status, recorded
+            if message.get("type") == "http.response.start":
+                status = int(message.get("status"))
+            elif is_mcp and message.get("type") == "http.response.body":
+                response_chunks.append(message.get("body", b"") or b"")
+            if (message.get("type") == "http.response.body"
+                    and not message.get("more_body", False)
+                    and not recorded):
+                # Persist before forwarding the final body bytes. The caller
+                # can then safely read the complete exchange immediately
+                # after its HTTP response returns, including before a hub
+                # restart.
+                self.recorder.write(
+                    method=method,
+                    path=path,
+                    status=status,
+                    started_at=started_at,
+                    finished_at=datetime.now(timezone.utc),
+                    started_mono=started_mono,
+                    request_body=b"".join(request_chunks) if is_mcp else b"",
+                    response_body=b"".join(response_chunks) if is_mcp else b"",
+                )
+                recorded = True
+            await send(message)
+
+        error: BaseException | None = None
+        try:
+            return await self.app(scope, recording_receive, recording_send)
+        except BaseException as exc:
+            error = exc
+            raise
+        finally:
+            if not recorded:
+                self.recorder.write(
+                    method=method,
+                    path=path,
+                    status=status,
+                    started_at=started_at,
+                    finished_at=datetime.now(timezone.utc),
+                    started_mono=started_mono,
+                    request_body=b"".join(request_chunks) if is_mcp else b"",
+                    response_body=b"".join(response_chunks) if is_mcp else b"",
+                    error=error,
+                )
+
+
 class Hub:
     """A real hub in its own process, with its own fresh isolated HOME."""
 
     def __init__(self, home: Path, token: str = TOKEN, *, scheduler: bool = False,
                  engine_replay: Path | None = None,
-                 producer_clock: bool = False) -> None:
+                 producer_clock: bool = False,
+                 record_rehearsal: bool = False,
+                 transcript_path: Path | None = None) -> None:
         self.home = guard_home(home)
         self.token = token
         self.scheduler = scheduler
+        self.record_rehearsal = record_rehearsal
+        if record_rehearsal:
+            candidate = transcript_path or (self.home / "rehearsal-transcript.jsonl")
+            self.transcript_path = _guard_transcript_path(candidate, self.home)
+        else:
+            self.transcript_path = None
         # PHILO-3-03: the brief producer's clock offset lives in the run's
         # own HOME; the `producer-clock` step writes it, the hub reads it.
         self.producer_clock_path: Path | None = (
@@ -1475,6 +1649,10 @@ class Hub:
             command += ["--engine-replay", str(self.engine_replay_path)]
         if self.producer_clock_path is not None:
             command += ["--producer-clock", str(self.producer_clock_path)]
+        if self.record_rehearsal:
+            command.append("--record-rehearsal")
+            assert self.transcript_path is not None
+            command += ["--transcript-path", str(self.transcript_path)]
         self.proc = subprocess.Popen(
             command,
             cwd=str(REPO), env=env, text=True,
@@ -1544,12 +1722,51 @@ class Hub:
         try:
             with urllib.request.urlopen(req, timeout=300) as response:
                 raw = response.read().decode()
-                return json.loads(raw) if raw else {}
+                result = json.loads(raw) if raw else {}
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace")[:2000]
             raise Blocked(
                 f"POST /api/mcp answered HTTP {exc.code}: {detail}"
             ) from exc
+        if self.record_rehearsal:
+            self._wait_for_mcp_record(request)
+        return result
+
+    def _wait_for_mcp_record(self, request: dict[str, Any], timeout: float = 5.0) -> None:
+        """Wait until the opted-in child has flushed this MCP exchange."""
+        assert self.transcript_path is not None
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                for line in self.transcript_path.read_text().splitlines():
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if row.get("path") == "/api/mcp" and row.get("request_body") == request:
+                        return
+            except FileNotFoundError:
+                pass
+            time.sleep(0.01)
+        raise RuntimeError(
+            f"rehearsal transcript did not flush MCP request {request.get('id')!r} "
+            f"at {self.transcript_path}"
+        )
+
+    @property
+    def http_exchanges(self) -> list[dict[str, Any]]:
+        """Read the opted-in transcript for a rehearsal driver."""
+        if self.transcript_path is None or not self.transcript_path.exists():
+            return []
+        rows: list[dict[str, Any]] = []
+        for line in self.transcript_path.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
+        return rows
 
     def upload(self, method: str, path: str, wav: Path, field: str,
                form: dict[str, Any] | None = None) -> tuple[int, Any]:
@@ -1801,7 +2018,9 @@ def _producer_clock(path: Path) -> Any:
 
 def _serve(port: int, token: str, host: str = "127.0.0.1",
            scheduler: bool = False, engine_replay: str | None = None,
-           producer_clock: str | None = None) -> None:
+           producer_clock: str | None = None,
+           record_rehearsal: bool = False,
+           transcript_path: str | None = None) -> None:
     """The rig's hub subprocess: a real MeetingWebServer on a fresh HOME.
 
     It takes the product's OWN database owner lock and runs the product's own
@@ -1862,6 +2081,19 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
     else:
         lacks.append("the brief producer clock seam (not requested; the wall clock)")
 
+    rehearsal_recorder: _RehearsalRecorder | None = None
+    if record_rehearsal:
+        record_path = _guard_transcript_path(
+            transcript_path or (Path(os.environ["HOME"]) / "rehearsal-transcript.jsonl"),
+            Path(os.environ["HOME"]).resolve(),
+        )
+        # Open and validate the transcript before it can be installed around
+        # the app. An opted-in rehearsal must fail at boot if proof cannot be
+        # written; it must never silently run without its record.
+        rehearsal_recorder = _RehearsalRecorder(record_path)
+        print(f"TRANSCRIPT_PATH {record_path}", flush=True)
+        has.append("bounded HTTP rehearsal recording")
+
     # PHILO-5-01 (the Codex seam): publish the loopback endpoint in the lock
     # body through the product's own lock producer, so `discover_hub()`
     # (holdspeak/mcp/server.py) finds this hub. Without a port it refuses.
@@ -1891,6 +2123,11 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
         host=host, port=port, auth_token=token,
         brief_clock=brief_clock,
     )
+    if rehearsal_recorder is not None:
+        # Keep the product's app and dispatch untouched. This wrapper only
+        # observes ASGI messages and forwards them unchanged, including WS and
+        # lifespan messages (which it does not record).
+        server.app = _RehearsalASGI(server.app, rehearsal_recorder)
     url = server.start()
 
     drainer = None
@@ -3198,6 +3435,17 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
         args = {**args, "path": str(candidate)}
     result = _op_call(hub, name, args)
     record = {"kind": "op", "adapter": step.get("adapter", "mcp-http"), **result}
+    if name == "meeting.import" and isinstance(raw_args, dict):
+        declared_path = raw_args.get("path")
+        if isinstance(declared_path, str):
+            fixture_hash = provenance.get("fixture_hashes", {}).get(declared_path)
+            if fixture_hash:
+                # Cite the hash already computed above. Do not reopen or
+                # re-hash a caller path after the real producer ran.
+                record["fixture"] = {
+                    "path": declared_path,
+                    "sha256": fixture_hash,
+                }
     if result.get("refusal"):
         record["named_refusal"] = result["refusal"]
     capture_as = step.get("capture_as")
@@ -4669,6 +4917,10 @@ def main(argv: list[str] | None = None) -> int:
                          help="a recorded provider reply to install at the seam")
     p_serve.add_argument("--producer-clock", default=None,
                          help="the brief producer's clock offset file (in HOME)")
+    p_serve.add_argument("--record-rehearsal", action="store_true",
+                         help="record bounded HTTP exchanges to JSONL under HOME")
+    p_serve.add_argument("--transcript-path", default=None,
+                         help="opt-in rehearsal JSONL path (must be under HOME)")
 
     p_cal_serve = sub.add_parser("serve-calibration",
                                  help="(internal) the calibration fixture server")
@@ -4685,7 +4937,9 @@ def main(argv: list[str] | None = None) -> int:
         _serve(args.port or _free_port(), args.token,
                scheduler=bool(getattr(args, "scheduler", False)),
                engine_replay=getattr(args, "engine_replay", None),
-               producer_clock=getattr(args, "producer_clock", None))
+               producer_clock=getattr(args, "producer_clock", None),
+               record_rehearsal=bool(getattr(args, "record_rehearsal", False)),
+               transcript_path=getattr(args, "transcript_path", None))
         return 0
 
     if args.mode == "calibrate":

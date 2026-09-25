@@ -1,0 +1,5 @@
+COMMAND:
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo5_rehearsal_capture.py tests/unit/test_philo5_codex_seams.py
+
+....                                                                     [100%]
+4 passed in 8.22s

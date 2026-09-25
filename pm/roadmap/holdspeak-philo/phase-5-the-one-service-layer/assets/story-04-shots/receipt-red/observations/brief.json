@@ -1,0 +1,44 @@
+{
+  "pages": [
+    {
+      "body_sha256": "5f62ce51f7423aecace1873e3181ed35551f66eb9120415bc1cf16b3cfc70a30",
+      "body_text_excerpt": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2192 192.168.1.43:8080\nSearch\n\u2318K\nThu, Sep 24\n06:10 PM\n2 need you\nRANKED\nOVERDUE\nDUE TODAY\nNOT RUN\nNO DUE DATE\nWAITING\nNO CALENDAR Connect calendar\nNEEDS YOU 2\nMTG\nTest restart retrieval\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nMTG\nWrite the Migration Plan\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nTHOUGHTS 1\nPhase 5 rehearsal\nContinue\nBRIEF \u00b7 3 THINGS WAITING\nTHIS DEVICE\nGenerate\nMeeting recorded: Architecture review\nAck\nDefer\nUnassigned: Write the Migration Plan\nAck\nDefer\nUnassigned: Test restart retrieval\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 18:08\nMEETINGS 1\nSEP 24\nArchitecture review\n35 S\n80 WORDS\n\u25cf\nRAN\n192.168.1.43 \u00b7 LAN\nOpen\nSUMMARY\n192.168.1.43 \u00b7 LAN\n\nThe Synthetic Architect Meeting covered three decisions: Mayyachan is tasked with writing a migration plan by Friday, Leo Martinez will test restart retrieval on Tuesday, and Priya Shah is assigned to use a recorded provider reply for isolated rig tests.\n\nSYNTHETIC ARCHITECT MEETING\nLOCAL MEETING LEDGER\nMIGRATION PLAN\nHUB RESTART RETRIEVAL\nISOLATED RIG TESTS\n\u25b8\nTRANSCRIPT\n80 WORDS\nTALK\nWrite a thought\nRecord meeting\nSchedule\n\u25c8\nIntelligence\n\u2022\nSpeak\nMeetings\nAgents\nSettings\nFloor\n\u25ce\nDesk memory\n\u25a4\nDelivery\n",
+      "expected_text_present": true,
+      "receipt_present": false,
+      "receipt_shot": ".tmp/philo504-receipt-red/shots/brief/1440-receipt.png",
+      "receipt_text": "",
+      "ref": "intelligence:desk",
+      "reopened": true,
+      "row_shot": ".tmp/philo504-receipt-red/shots/brief/1440-row.png",
+      "row_texts": [
+        "Meeting recorded: Architecture review\nAck\nDefer",
+        "Unassigned: Write the Migration Plan\nAck\nDefer",
+        "Unassigned: Test restart retrieval\nAck\nDefer"
+      ],
+      "shot": ".tmp/philo504-receipt-red/shots/brief/1440.png",
+      "validation_error": "brief ready receipt is not visible at 1440px: ''",
+      "viewport": 1440
+    },
+    {
+      "body_sha256": "9fc8efc6109154d176709cb4cc86b2a0f0807c08575d9a1674a6a9a4636b58f6",
+      "body_text_excerpt": "HoldSpeak\nGo\n\u2192 192.168.1.43:8080\nSearch\n06:10 PM\n2 need you\nRANKED\nOVERDUE\nDUE TODAY\nNOT RUN\nNO DUE DATE\nWAITING\nNO CALENDAR Connect calendar\nNEEDS YOU 2\nMTG\nTest restart retrieval\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nMTG\nWrite the Migration Plan\nNO DUE DATE \u00b7 UNASSIGNED\nName an owner\nTHOUGHTS 1\nPhase 5 rehearsal\nContinue\nBRIEF \u00b7 3 THINGS WAITING\nTHIS DEVICE\nGenerate\nMeeting recorded: Architecture review\nAck\nDefer\nUnassigned: Write the Migration Plan\nAck\nDefer\nUnassigned: Test restart retrieval\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 18:08\nMEETINGS 1\nSEP 24\nArchitecture review\n35 S\n80 WORDS\n\u25cf\nRAN\n192.168.1.43 \u00b7 LAN\nOpen\nSUMMARY\n192.168.1.43 \u00b7 LAN\n\nThe Synthetic Architect Meeting covered three decisions: Mayyachan is tasked with writing a migration plan by Friday, Leo Martinez will test restart retrieval on Tuesday, and Priya Shah is assigned to use a recorded provider reply for isolated rig tests.\n\nSYNTHETIC ARCHITECT MEETING\nLOCAL MEETING LEDGER\nMIGRATION PLAN\nHUB RESTART RETRIEVAL\nISOLATED RIG TESTS\n\u25b8\nTRANSCRIPT\n80 WORDS\nTALK\nWrite a thought\nRecord meeting\nSchedule\n\u25c8\n\u2022\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces",
+      "expected_text_present": true,
+      "receipt_present": false,
+      "receipt_shot": ".tmp/philo504-receipt-red/shots/brief/393-receipt.png",
+      "receipt_text": "",
+      "ref": "intelligence:desk",
+      "reopened": true,
+      "row_shot": ".tmp/philo504-receipt-red/shots/brief/393-row.png",
+      "row_texts": [
+        "Meeting recorded: Architecture review\nAck\nDefer",
+        "Unassigned: Write the Migration Plan\nAck\nDefer",
+        "Unassigned: Test restart retrieval\nAck\nDefer"
+      ],
+      "shot": ".tmp/philo504-receipt-red/shots/brief/393.png",
+      "validation_error": "brief ready receipt is not visible at 393px: ''",
+      "viewport": 393
+    }
+  ],
+  "ref": "intelligence:desk",
+  "stage": "brief"
+}

@@ -9,7 +9,7 @@ import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
-import { BriefEgress, briefReceipt, type GeneratedBrief } from "./briefEgress";
+import { BriefEgress, briefReceipt } from "./briefEgress";
 import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { reportWriteFailure, clearWriteFailure } from "../hooks/useWriteReceipt";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
@@ -143,6 +143,7 @@ interface MondayBrief {
   headline: string;
   sections: Record<string, BriefItem[]>;
   is_empty: boolean;
+  generated_at?: string;
   shelf?: Record<string, string>;
   /* PHILO-3-03: the route's own date labels (holdspeak/web/routes/monday_brief.py). */
   period_label?: string | null;
@@ -511,6 +512,9 @@ function Arrival() {
 
   // ── brief ──
   const [brief, setBrief] = useState<MondayBrief | null>(null);
+  /* PHILO-5-04: the existing Article III receipt also identifies the
+     latest durable brief on arrival. A failed read retains it. */
+  const [briefKept, setBriefKept] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(true);
   /* PHILO-3-03: a failed read is NOT an absent brief. `null` = the read
      answered (or has not failed); a string = the cause the face names. */
@@ -525,7 +529,10 @@ function Arrival() {
     setBriefLoadFailed(null);
     setGenerateFailed(null);
     void apiFetch<MondayBrief | null>("/api/brief/latest")
-      .then((data) => setBrief(data))
+      .then((data) => {
+        setBrief(data);
+        setBriefKept(briefReceipt(data));
+      })
       .catch((error) => setBriefLoadFailed(briefLoadCause(error)))
       .finally(() => setBriefLoading(false));
   }, []);
@@ -672,12 +679,6 @@ function Arrival() {
 
   // ── brief generate ──
   const [generating, setGenerating] = useState(false);
-  /* HS-202-02 — Article III on this verb: the badge before (BriefEgress,
-     beside the verb) and the receipt after (this line). The walk fired
-     this exact POST and the screen said nothing either way
-     (03-interaction-walk.md finding 4). */
-  const [briefKept, setBriefKept] = useState<string | null>(null);
-
   // The capture bar wraps at the phone width. Keep its measured height on the
   // existing Chair so the narrow scroll well can reserve the actual clearance
   // without making the face depend on a viewport-specific constant.
@@ -706,7 +707,7 @@ function Arrival() {
       generatedBriefScrollPending.current = true;
       setBrief(data);
       setBriefLoadFailed(null);
-      setBriefKept(briefReceipt(data as unknown as GeneratedBrief));
+      setBriefKept(briefReceipt(data));
       clearWriteFailure();
     } catch (error) {
       setGenerateFailed(briefLoadCause(error));

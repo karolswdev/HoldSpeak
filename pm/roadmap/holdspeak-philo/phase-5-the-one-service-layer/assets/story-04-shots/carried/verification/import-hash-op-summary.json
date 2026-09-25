@@ -1,0 +1,110 @@
+{
+  "verdict": "pass",
+  "complete": true,
+  "case_id": "case.closure.chain.s1_import_complete.op",
+  "provenance": {
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ij843n9d/.local/share/holdspeak/holdspeak.db",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ij843n9d"
+  },
+  "trigger": {
+    "kind": "op",
+    "name": "meeting.import",
+    "args": {
+      "path": "/Users/karol/dev/tools/wt-philo-5-04/tests/fixtures/philo3_architect_meeting.wav",
+      "title": "Architecture boundary review"
+    },
+    "fixture": {
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "sha256": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "response": {
+      "meeting_id": "bbe50ffb",
+      "transcription_status": "importing"
+    },
+    "domain_response": {
+      "meeting_id": "bbe50ffb",
+      "transcription_status": "importing"
+    },
+    "refusal": null
+  },
+  "after": {
+    "op": {
+      "name": "meeting.read",
+      "args": {
+        "meeting_id": "bbe50ffb"
+      },
+      "fixture": null,
+      "response": {
+        "bookmarks": [],
+        "calendar_event_id": null,
+        "capture_checkpoint_at": null,
+        "capture_checkpoint_seconds": 0.0,
+        "capture_failure": null,
+        "capture_status": "finalized",
+        "devices": [],
+        "duration": 34.67525,
+        "ended_at": "2026-09-24T17:49:36.321784",
+        "formatted_duration": "00:34",
+        "id": "bbe50ffb",
+        "intel": null,
+        "intel_job": null,
+        "intel_model_host": null,
+        "intel_status": {
+          "completed_at": null,
+          "detail": "No summary yet. Import does not run the summary — ask for it on the meeting.",
+          "requested_at": null,
+          "state": "disabled"
+        },
+        "last_refusal": null,
+        "mic_label": "Me",
+        "planned_route": {
+          "legs": [],
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "status": "unavailable"
+        },
+        "provenance": "desktop",
+        "remote_label": "Remote",
+        "run_receipt": null,
+        "segments": [
+          {
+            "device_id": null,
+            "end_time": 30.0,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 0.0,
+            "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. emba."
+          },
+          {
+            "device_id": null,
+            "end_time": 34.67525,
+            "is_bookmarked": false,
+            "speaker": "Recording",
+            "speaker_id": null,
+            "start_time": 30.0,
+            "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3."
+          }
+        ],
+        "started_at": "2026-09-24T17:49:01.646534",
+        "sync_modified_at": "2026-09-24T17:49:03.625635",
+        "tags": [],
+        "title": "Architecture boundary review",
+        "transcriptWords": 77,
+        "transcription_status": "complete",
+        "transcription_status_detail": null,
+        "web_url": null
+      },
+      "refusal": null
+    },
+    "terminal_outcome": null
+  },
+  "shots": [],
+  "notes": [
+    "placeholder(s) ['meeting_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: transcription_status equals the declared value"
+  ]
+}
