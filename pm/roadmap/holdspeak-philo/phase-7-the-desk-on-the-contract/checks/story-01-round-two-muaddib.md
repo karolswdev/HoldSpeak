@@ -74,3 +74,13 @@ Main `4d427d9c` (after `dcf3eaeb`, PR #655: the owner ratified the charter; R5 p
 
 - No published schema changed in round two; the only word changes are the `data` description (MISSED 4) and the `kb.create` `member_ids` description.
 - Residual set unchanged: `RESIDUAL FENCE GREEN: 293 identities`.
+
+## The scoped re-run (after the merge of main `4d427d9c`, merge commit `3513faa9`)
+
+The round-one scoped set (70 files) plus `tests/unit/test_philo7_rig_faithful.py`, isolated HOME, `-n 8`:
+
+```text
+1326 passed in 56.50s
+```
+
+(1293 in round one + 10 rig fences + 23 new admission probes and effect fences.) Beside it: `RESIDUAL FENCE GREEN: 293 identities`; `OK docs/generated/operations.json`; `API reference checked`; `Boundary candidate census checked`; `check_docs.py` green. The full suite is CI's.
