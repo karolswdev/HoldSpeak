@@ -1,4 +1,5 @@
 set -euo pipefail
+mkdir -p .tmp/philo603
 export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
 export HOME=$(mktemp -d)
 export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright

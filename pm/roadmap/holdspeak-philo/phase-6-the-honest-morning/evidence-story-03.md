@@ -1947,3 +1947,21 @@ dw check: ok
 ```
 
 Workbench closure: PHILO-only check is clean after the story-status CLI flip. The global check is not clean: six other-project errors match the pinned origin/main archive exactly (both failed commands retained above). Those files remain untouched; the phase-local ledger assigns existing roadmap maintenance. C3 is paid by the clean owning-project check.
+
+## Publication
+
+[PR #649](https://github.com/karolswdev/HoldSpeak/pull/649) is open, unmerged. The exact slot is gated in `d1e355f2`; the build, story flip and paired evidence are gated in `c6aafa8e6f424b0dbeced455ca490c15afdafd4b` (7/7 boxes, one story, contract digest `sha256:52ef8ad8406a3f1f80940b511b3e7280c903dee06ce93cd871480417fba39f67`). Post-commit `git log -1` was read. Calling Muad’Dib counsel and lane A reconciliation remain before merge.
+
+### Captured run — 2026-09-25T05:41:16Z
+
+- **Command:** `bash -c set -euo pipefail; bash -n docs/internal/philo/phase-6/toast/placement-proof/final-validation.sh; .githooks/dw check holdspeak-philo; .githooks/dw verify d8f608c812e540678ed3f945156aeeccc46d795a..HEAD; git diff --check; test -z "$(git status --porcelain -- pm/roadmap/holdspeak/)"`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d9f32f686cdef6547fd98dd0036a1baf5ba4da16
+
+```text
+dw check: ok
+dw verify: ok (1 commits verified, 0 pre-epoch skipped)
+```
+
+Publication qualification: Main advanced during this build: lane A merged as PR #646 (`e64114df`). PR #649 is open but reports five conflicts: `docs/internal/philo/graph/atlas.json`, `docs/generated/graph.json`, `docs/generated/boundary-candidates.json`, this project README, and the Phase 6 status file. The read-only merge preflight auto-merges ChairHome and the atlas tests; no combined-tree test or glass result is claimed. Muad’Dib’s integration and counsel remain before merge. Raw output: `docs/internal/philo/phase-6/toast/placement-proof/merge-preflight.txt`.

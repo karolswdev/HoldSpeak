@@ -85,6 +85,6 @@ UNKNOWN: Whether the gate accepts the final index tree once the flip and staging
 
 ## Closing disposition — Astra
 
-C4 is paid: the lane report names the two earlier Arrival final-folder runs as superseded; raw evidence stays intact. Finding 4 is ledgered as a latent framing-plus-dismissal combination, absent from every PHILO-6-03 case. C3 is paid through the story-status CLI and the captured clean PHILO Workbench check before contract generation; the paired story evidence records the command and result. The final gate result is recorded at publication.
+C4 is paid: the lane report names the two earlier Arrival final-folder runs as superseded; raw evidence stays intact. Finding 4 is ledgered as a latent framing-plus-dismissal combination, absent from every PHILO-6-03 case. C3 is paid through the story-status CLI and the captured clean PHILO Workbench check before contract generation; the paired story evidence records the command and result. Publication: full gate PASS, 7/7 boxes, one story, build commit `c6aafa8e6f424b0dbeced455ca490c15afdafd4b`; `dw verify d8f608c8..HEAD` returns ok. [PR #649](https://github.com/karolswdev/HoldSpeak/pull/649) is open and unmerged. Calling Muad’Dib counsel remains pending.
 
 Global lint qualification: the owning PHILO check is clean; global `dw check` retains six errors in `pm/roadmap/holdspeak/`, reproduced verbatim in the pinned origin/main archive and ledgered. The lane rule forbids changing those files; none changed. This is not a claim of global lint success.
