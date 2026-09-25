@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from . import desk_broker
 from .model import KernelRefused
 
 
@@ -36,21 +37,27 @@ def reap_expired(broker: Any) -> dict[str, Any]:
             if state == "awaiting_execution"
             else "execution_liveness_expired"
         )
-        try:
-            terminal = broker.store.transition(
-                operation["operation_id"],
-                int(operation["revision"]),
-                terminal_state,
-                warrant_revoked=1,
-            )
-        except KernelRefused as exc:
-            if exc.reason in {
-                "operation_revision_conflict",
-                "parent_publication_in_progress",
-            }:
+        if desk_broker.is_desk(operation["name"]):
+            # PHILO-7-02 T7: the state, the revoked warrant and the receipt atomically.
+            closed = desk_broker.reap(broker.store, operation, terminal_state, reason)
+            if not closed:
                 continue
-            raise
-        broker._terminal(terminal, terminal_state, reason)
+        else:
+            try:
+                terminal = broker.store.transition(
+                    operation["operation_id"],
+                    int(operation["revision"]),
+                    terminal_state,
+                    warrant_revoked=1,
+                )
+            except KernelRefused as exc:
+                if exc.reason in {
+                    "operation_revision_conflict",
+                    "parent_publication_in_progress",
+                }:
+                    continue
+                raise
+            broker._terminal(terminal, terminal_state, reason)
         reaped.append(
             {
                 "operation_id": str(operation["operation_id"]),
@@ -61,4 +68,16 @@ def reap_expired(broker: Any) -> dict[str, Any]:
     return {"reaped": reaped, "count": len(reaped)}
 
 
-__all__ = ["reap_expired"]
+def reap_and_recover_projections(broker: Any) -> dict[str, Any]:
+    """The required liveness-before-projection-recovery ordering (carved from ``broker.py``)."""
+    parent_recovered = getattr(getattr(broker, "parent_run_controller", None), "reconcile_abandoned", lambda: 0)()
+    reaped = broker.reap_expired()
+    stager = getattr(broker, "projection_stager", None)
+    if stager is None:
+        return {"parents": parent_recovered, "reaped": reaped, "projections": None}
+    # recover() runs a second, harmless reap immediately before its scan so
+    # callers cannot accidentally reverse the durable ordering.
+    return {"parents": parent_recovered, "reaped": reaped, "projections": stager.recover()}
+
+
+__all__ = ["reap_and_recover_projections", "reap_expired"]

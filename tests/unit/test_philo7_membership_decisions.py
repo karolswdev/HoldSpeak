@@ -244,3 +244,25 @@ def test_a_new_residual_identity_turns_the_fence_red(tmp_path: Path) -> None:
     stale["entries"] = [e for e in committed["entries"] if e["entry_point"] != "workbench.run"]
     problems = census.check(REPO, stale)
     assert any("NEW residual identity" in p and "workbench.run" in p for p in problems), problems
+
+
+def test_the_job_words_point_at_the_admitted_operations() -> None:
+    """"put a decision on my review list" and "file a note into a zone" reach ADMITTED operations.
+
+    The words are story 01's catalogue fence (``test_philo7_discovery.JOBS``,
+    read from the real ``tools/list``); here: the tool each names is the
+    admitted operation, and the receipt tool says how to read its receipt.
+    """
+    from holdspeak import operations
+    from holdspeak.mcp.tools import TOOLS
+    from test_philo7_discovery import JOBS
+
+    rows = _descriptors()
+    tool, _path = JOBS["file a note into a zone"]
+    assert tool == "zone.file" and rows["zone.file"].admission.rule == "admitted"
+    tool, path = JOBS["put a decision on my review list"]
+    assert (tool, dict(path)["kind"]) == ("desk.create", "decisions")
+    assert rows[operations.DESK_OPERATIONS[("decision", "create")]].admission.rule == "admitted"
+    receipt_tool = {t["name"]: t for t in TOOLS}["kernel.receipt"]
+    assert "receipt of a filing or decision write" in receipt_tool["description"]
+    assert "operation_id" in receipt_tool["inputSchema"]["required"]

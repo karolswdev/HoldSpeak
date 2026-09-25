@@ -32,10 +32,9 @@ and what turns it red:
 * **The Phase 4 invariants through MCP** -- decision rows lead by persisted
   ``created_at``; brief-scoped breakage ids across two MCP-made briefs with the
   old triage unchanged; the MCP shelf writes are the hub's shelf.
-* **The decision admission (CHARACTERIZATION ONLY)** -- a decision written
-  through HTTP and through MCP leaves the same zero: no kernel operation, no
-  receipt. Inherited Article XI debt, unruled (``current-phase-status.md``
-  "Discovered missing admissions"); parity, not exemption.
+* **The decision admission** (PHILO-7-02 replaced the characterization) --
+  a decision written through HTTP and through MCP is ONE kernel operation with
+  ONE terminal receipt each (the owner's D3). Red on main: zero and zero.
 """
 from __future__ import annotations
 
@@ -605,7 +604,7 @@ def test_phase4_mcp_shelf_writes_are_the_hubs_shelf(hub: Hub) -> None:
     assert hub.client.post("/api/brief/items/nope/shelf", json={"state": "deferred"}).status_code == 404
 
 
-# ── the decision admission: the same documented absence ──────────────────
+# ── the decision admission (PHILO-7-02: the characterization, replaced) ──
 
 
 def _kernel_counts(db: Any) -> tuple[int, int, int]:
@@ -616,18 +615,23 @@ def _kernel_counts(db: Any) -> tuple[int, int, int]:
         )
 
 
-def test_decision_writes_leave_the_same_documented_absence_on_both_transports(hub: Hub) -> None:
-    """CHARACTERIZATION ONLY -- not an exemption, not a certification.
+def _kernel_rows(db: Any) -> list[tuple[str, str, str, str]]:
+    with db._connection() as conn:
+        return [tuple(row) for row in conn.execute(
+            "SELECT o.name, o.state, r.outcome, o.principal_kind FROM kernel_operations o "
+            "LEFT JOIN kernel_receipts r ON r.operation_id=o.operation_id ORDER BY o.created_at"
+        ).fetchall()]
 
-    It pins what IS: ``decision.create``/``decision.update`` leave no kernel
-    operation and no receipt through EITHER transport, the same zero on both.
-    That is INHERITED DEBT under Article XI (``current-phase-status.md``
-    "Discovered missing admissions"): whether a desk decision write "acts under
-    Article V" (filing) is UNRULED, and the debt is assigned to the owner's
-    ruling (``pm/roadmap/holdspeak/BACKLOG.md``, PHILO-5-02 follow-ups). Equal
-    absence proves parity between the transports, not that the absence is
-    lawful. When the debt is paid, this test goes red on BOTH transports at
-    once and is replaced by an admission fence.
+
+def test_decision_writes_are_admitted_once_with_one_receipt_on_both_transports(hub: Hub) -> None:
+    """THE ADMISSION FENCE (PHILO-7-02; it replaces PHILO-5-02's characterization).
+
+    The owner's D3 made a decision write consequential under Article XI. Each
+    ``decision.create`` / ``decision.update`` -- over HTTP and over MCP alike --
+    is ONE kernel operation that ends in ONE terminal receipt, approved inline
+    as the owner's gesture (XI.4). Red on main: the same calls made zero
+    operations and zero receipts (the characterization's documented absence;
+    its docstring history is kept in the story's notes).
     """
     start = _kernel_counts(hub.db)
     made = hub.client.post("/api/decisions", json={"title": "Over HTTP"})
@@ -639,8 +643,14 @@ def test_decision_writes_leave_the_same_documented_absence_on_both_transports(hu
     is_error, _ = hub.mcp("desk.update", {"kind": "decisions", "id": mcp_made["id"], "data": {"status": "accepted"}})
     assert is_error is False
     after_mcp = _kernel_counts(hub.db)
-    assert after_http == start, "HTTP decision writes began admitting; pay the Article XI debt record and MCP together"
-    assert after_mcp == after_http, "MCP decision writes began admitting; pay the Article XI debt record and HTTP together"
+    assert (after_http[0] - start[0], after_http[1] - start[1]) == (2, 2), "HTTP: one operation and one receipt per decision write"
+    assert (after_mcp[0] - after_http[0], after_mcp[1] - after_http[1]) == (2, 2), "MCP: one operation and one receipt per decision write"
+    assert _kernel_rows(hub.db) == [
+        ("decision.create", "succeeded", "succeeded", "owner"), ("decision.update", "succeeded", "succeeded", "owner"),
+    ] * 2
+    # The result carries its operation and receipt (readback).
+    assert made.json()["receipt"]["operation_id"] == made.json()["operation_id"]
+    assert mcp_made["receipt"]["state"] == "succeeded"
 
 
 # ── compatibility of the new tools' surface ──────────────────────────────

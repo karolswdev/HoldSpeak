@@ -66,6 +66,10 @@ class ExecutorPlane:
                 except KernelRefused as exc:
                     reason = exc.reason
         if reason:
+            from . import desk_broker
+
+            if desk_broker.is_desk(operation["name"]):  # PHILO-7-02 T5: atomic
+                return desk_broker.claim_refusal(self.store, operation, reason)
             operation = self.store.transition(
                 operation["operation_id"], operation["revision"], "refused"
             )

@@ -19,6 +19,16 @@ from holdspeak.web.routes.sync import build_sync_router
 def _client(db: Database, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     app = FastAPI()
+
+    # PHILO-7-02: filing and knowledge membership are ADMITTED writes (Article
+    # XI); they run under the transport's principal, which the hub's auth
+    # middleware always sets. This partial app sets the owner's, as the hub does.
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
     ctx = WebContext(get_state=lambda: {}, project_service=ProjectService(db))
     app.include_router(build_kbs_router(ctx))
     app.include_router(build_directories_router(ctx))

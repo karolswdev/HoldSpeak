@@ -1,0 +1,71 @@
+# PHILO-7-02 behavioural reds on a git archive copy of main 9800a603 (HOME isolated), the branch's fence files overlaid:
+#   tests/unit/test_philo7_article_xi.py, tests/unit/test_philo7_grant_restart.py, and test_philo5_the_loop.py's admission fence.
+# python -m pytest -q --tb=line -rf <those>; the first failing line of each fence, in order.
+# 'AssertionError: []' is _one(): the call made ZERO kernel operations and ZERO receipts on main (the red the story names).
+# Two fences are green on main by design (their red is a deliberate mutation, red-mutations.txt):
+#   test_the_exempt_rows_make_no_operation, test_the_protocol_boundary_leaves_no_receipt.
+
+tests/unit/test_philo7_article_xi.py::test_owner_decision_writes_over_http
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_owner_decision_writes_over_mcp_and_every_alias_admits_once
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_owner_filing_and_membership_over_http_and_mcp
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_conditional_rows_admit_with_their_argument_and_a_kb_rename_plus_members_is_one
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_a_zone_delete_that_unfiles_is_admitted
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_a_member_ids_write_that_adds_and_removes_is_admitted
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_a_kb_create_over_an_existing_id_that_clears_memberships_is_admitted
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_a_zone_move_by_parent_and_by_create_over_an_id_is_admitted
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_a_thought_tombstone_that_unfiles_is_admitted_on_both_transports
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_an_agent_without_a_grant_is_refused_then_granted_then_revoked
+    E   AssertionError: {'created_at': '2026-09-25T19:58:23Z', 'deleted': False, 'directory_id': 'dir_1e41f5db39e5', 'last_modified': '2026-09-25T19:58:23Z', ...}
+tests/unit/test_philo7_article_xi.py::test_an_agent_with_an_expired_grant_is_refused_expired
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_a_grant_to_another_agent_and_an_operation_outside_the_set_are_refused
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_an_agent_decides_under_its_grant_including_delete
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_an_agent_cannot_grant_or_revoke_and_the_edge_refuses_the_unauthenticated
+    E   AssertionError: {"success":false,"error":"principal_right_required","principal":"agent","principal_identity":"remote-desk-agent","missing_right":"owner"}
+tests/unit/test_philo7_article_xi.py::test_the_owner_grant_and_revoke_are_one_operation_each
+    E   assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_malformed_grant_requests_leave_an_invalid_arguments_receipt[[1, 2]-remote-desk-agent]
+    E   AssertionError: {"detail":"Not Found"}
+tests/unit/test_philo7_article_xi.py::test_malformed_grant_requests_leave_an_invalid_arguments_receipt[{"expires_at": "soon"}-remote-desk-agent]
+    E   AssertionError: {"detail":"Not Found"}
+tests/unit/test_philo7_article_xi.py::test_malformed_grant_requests_leave_an_invalid_arguments_receipt[{}-%20]
+    E   AssertionError: {"detail":"Not Found"}
+tests/unit/test_philo7_article_xi.py::test_class_2_domain_refusals_after_approval_on_both_transports
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_class_3_contract_refusals_keep_their_error_and_leave_a_receipt
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_class_4_adapter_refusals_before_invoke
+    E   AssertionError: []
+tests/unit/test_philo7_article_xi.py::test_the_receipt_reads_back_the_same_over_http_and_mcp
+    E   KeyError: 'operation_id'
+tests/unit/test_philo7_article_xi.py::test_an_agent_reads_its_own_receipts_and_not_anothers
+    E   assert False is True
+tests/unit/test_philo7_article_xi.py::test_the_receipt_tool_is_declared_in_the_desk_palette_and_refused_outside_it
+    E   AssertionError: assert ('kernel.receipt' in frozenset({'ask.cancel', 'ask.keep', 'ask.resolve_grounding', 'ask.run', 'cadence.apply_closeout', 'cadence.audit', ...}))
+tests/unit/test_philo7_article_xi.py::test_the_remote_settings_carry_the_grants_effective_state
+    E   KeyError: 'delegation'
+tests/unit/test_philo7_article_xi.py::test_f12_a_reissue_keeps_the_grant_and_the_old_token_dies
+    E   KeyError: 'grant_id'
+tests/unit/test_philo7_article_xi.py::test_f14_self_revoke_and_ttl_cleanup_leave_the_grant_live
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_f21a_the_owner_credential_revoke_ends_the_grant_first
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_article_xi.py::test_f22_f23_a_grant_with_no_credential_is_listed_time_aware_and_revocable
+    E   AssertionError: assert 404 == 200
+tests/unit/test_philo7_grant_restart.py::test_f13_the_grant_survives_a_real_restart_and_f11_recovers_a_waiting_write
+    E   AssertionError: {'detail': 'Not Found'}
+tests/unit/test_philo5_the_loop.py::test_decision_writes_are_admitted_once_with_one_receipt_on_both_transports
+    E   AssertionError: HTTP: one operation and one receipt per decision write
+
+31 failed, 2 passed in 21.62s

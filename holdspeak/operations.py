@@ -1428,22 +1428,122 @@ class OperationRegistry:
                 f"it passed {sorted(given_held)}"
             )
         payload = {} if args is None else args
-        if not isinstance(payload, Mapping):
-            raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: expected an object")
-        claimed = sorted(AUTHORITY_FIELDS & set(payload))
-        if claimed:
-            raise OperationRefused(
-                "authority_in_arguments", name,
-                f"Invalid arguments for {name}: {', '.join(claimed)} cannot be an argument; "
-                "the principal comes from the transport",
-            )
         try:
-            Draft202012Validator(dict(bound.descriptor.args_schema)).validate(dict(payload))
-        except JsonSchemaValidationError as exc:
-            location = ".".join(str(part) for part in exc.absolute_path)
-            detail = f"{location}: {exc.message}" if location else exc.message
-            raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
+            if not isinstance(payload, Mapping):
+                raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: expected an object")
+            claimed = sorted(AUTHORITY_FIELDS & set(payload))
+            if claimed:
+                raise OperationRefused(
+                    "authority_in_arguments", name,
+                    f"Invalid arguments for {name}: {', '.join(claimed)} cannot be an argument; "
+                    "the principal comes from the transport",
+                )
+            try:
+                Draft202012Validator(dict(bound.descriptor.args_schema)).validate(dict(payload))
+            except JsonSchemaValidationError as exc:
+                location = ".".join(str(part) for part in exc.absolute_path)
+                detail = f"{location}: {exc.message}" if location else exc.message
+                raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
+        except OperationRefused as exc:
+            # R2 class 3: a contract refusal of an identifiable consequential
+            # attempt keeps its named error AND leaves a refusal receipt.
+            self._refusal_receipt(exc, principal, name, payload)
+            raise
+        if self._admits(bound, payload):
+            # PHILO-7-02: Article XI -- the complete kernel path around the call.
+            from holdspeak.services import desk_kernel
+
+            if not isinstance(getattr(principal, "kind", None), PrincipalKind) or principal.kind is PrincipalKind.NONE:
+                # No transport hands an admitted write a missing principal (the
+                # hub's edge refuses the unauthenticated first); a caller that
+                # does is refused by name, never written without a receipt.
+                raise OperationRefused(
+                    "principal_required", name,
+                    f"{name} is admitted under Article XI and needs the transport's authenticated principal",
+                )
+
+            result, kernel = desk_kernel.run(
+                _database_of(bound.target), principal, name, payload,
+                lambda minted: bound.call(principal, **minted, **given_held),
+            )
+            _LAST_KERNEL.set(kernel)
+            return result
         return bound.call(principal, **dict(payload), **given_held)
+
+    @staticmethod
+    def _admits(bound: BoundOperation, payload: Mapping[str, Any]) -> bool:
+        """The descriptor's admission over the validated arguments (stored state where it says so)."""
+        admission = bound.descriptor.admission
+        if admission is None:
+            return False
+        admits = admission.admits(payload)
+        if admits is None:
+            # A stored-state condition: a Thought's note (note.delete).
+            owns = getattr(bound.target, "thought_owns_note", None)
+            return bool(owns(payload.get("note_id"))) if callable(owns) else False
+        return admits
+
+    def consequential(self, name: str, raw: Any) -> bool:
+        """R2: an identifiable operation the admission table ADMITS, from a malformed raw payload.
+
+        ``admitted``: always. ``admitted_if`` with an argument condition: when
+        the raw payload is an object that carries an admission argument and the
+        condition holds over it. A non-object payload for a conditional
+        operation, a stored-state condition and every exempt operation: no
+        (the protocol-refusal boundary; no effect is invented to journal).
+        """
+        bound = self.operations.get(name)
+        admission = None if bound is None else bound.descriptor.admission
+        if admission is None or admission.rule == "exempt":
+            return False
+        if admission.rule == "admitted":
+            return True
+        if admission.holds is None or not isinstance(raw, Mapping):
+            return False
+        if not set(admission.arguments) & set(raw):
+            return False
+        try:
+            return bool(admission.holds(raw))
+        except Exception:
+            return False
+
+    def refuse(self, principal: Any, name: str, code: str, raw: Any) -> Optional[dict[str, Any]]:
+        """Class 3 and 4: a refusal receipt for a consequential attempt refused before the service.
+
+        ``None`` (and nothing written) when the attempt is not identifiable as
+        consequential. The caller keeps raising its own named error.
+        """
+        if not self.consequential(name, raw):
+            return None
+        from holdspeak.services import desk_kernel
+
+        return desk_kernel.refuse(_database_of(self.operations[name].target), principal, name, code, raw)
+
+    def _refusal_receipt(self, exc: OperationRefused, principal: Any, name: str, raw: Any) -> None:
+        kernel = self.refuse(principal, name, exc.code, raw)
+        if kernel is not None:
+            exc.kernel = kernel  # type: ignore[attr-defined]
+
+    def update_args(
+        self, principal: Any, data: Mapping[str, Any], item_id: str, *,
+        operation: str = "decision.update", id_field: str = "decision_id",
+    ) -> dict[str, Any]:
+        """:func:`update_args` with the class-4 refusal receipt (a duplicate id in the data)."""
+        try:
+            return update_args(data, item_id, operation=operation, id_field=id_field)
+        except OperationRefused as exc:
+            self._refusal_receipt(exc, principal, operation, data)
+            raise
+
+
+def _database_of(target: Any) -> Any:
+    """The database the bound service writes through (the kernel journal lives beside it)."""
+    database = getattr(target, "_db", None)
+    if database is None:
+        from holdspeak.db import get_database
+
+        database = get_database()
+    return database
 
 
 def update_args(

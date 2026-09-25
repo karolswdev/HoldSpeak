@@ -400,6 +400,11 @@ def handle_message_for_principal(
         if not isinstance(name, str):
             return _response(request_id, _tool_result({"error": "Tool name is required"}, is_error=True))
         if not isinstance(arguments, dict):
+            # PHILO-7-02 class 4: a named tool of an ADMITTED operation leaves a
+            # refusal receipt; the answer is unchanged.
+            from holdspeak.mcp.tools import refuse_before_invoke
+
+            refuse_before_invoke(name, arguments, principal, "invalid_arguments")
             return _response(request_id, _tool_result({"error": "Tool arguments must be an object"}, is_error=True))
         try:
             if palette is not None:

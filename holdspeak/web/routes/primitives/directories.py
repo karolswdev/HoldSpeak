@@ -53,6 +53,9 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     async def api_create_directory(request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "zone.create", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             directory, kernel = _ops().invoke_receipted(_principal(request), "zone.create", {
@@ -88,6 +91,9 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
     async def api_update_directory(directory_id: str, request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "zone.update", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             args: dict[str, Any] = {"directory_id": directory_id, "name": body.get("name")}

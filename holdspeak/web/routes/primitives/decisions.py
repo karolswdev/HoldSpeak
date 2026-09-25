@@ -55,6 +55,9 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     async def api_create_decision(request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "decision.create", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             decision, kernel = _ops().invoke_receipted(_principal(request), "decision.create", {
@@ -91,10 +94,15 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     async def api_update_decision(decision_id: str, request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "decision.update", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
-            decision, kernel = _ops().invoke_receipted(
-                _principal(request), "decision.update", operations.update_args(body, decision_id))
+            # PHILO-7-02 class 4: a duplicate decision_id in the body leaves a refusal receipt.
+            registry = _ops()
+            decision, kernel = registry.invoke_receipted(
+                _principal(request), "decision.update", registry.update_args(_principal(request), body, decision_id))
             return JSONResponse({"decision": decision, **_kernel_fields(kernel)})
         except NotFound as exc:
             return JSONResponse({"error": f"Unknown decision: {decision_id}", **_refusal_kernel(exc)}, status_code=404)
@@ -122,6 +130,9 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     async def api_update_decision_status(decision_id: str, request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "decision.status", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             decision, kernel = _ops().invoke_receipted(_principal(request), "decision.status", {

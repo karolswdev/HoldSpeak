@@ -69,6 +69,12 @@ ADMISSION_TABLE = {
     "kb.list": ("exempt", ()),
 }
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from _kernel_fields import plain  # noqa: E402  (PHILO-7-02)
+
+
 
 def _load_script(name: str) -> Any:
     spec = importlib.util.spec_from_file_location(name, REPO / "scripts" / f"{name}.py")
@@ -310,8 +316,8 @@ def test_http_mcp_verbs_and_the_resource_all_go_through_invoke(hub, monkeypatch,
     is_error, verb_made = _mcp(client, "desk.verb", {"verb_id": "desk.create", "arguments": {"kind": kind, "data": {field: "Third"}}})
     assert is_error is False, verb_made
     assert _mcp(client, "desk.verb", {"verb_id": "desk.update", "arguments": {"kind": kind, "id": verb_made["id"], "data": {field: "Fourth"}}})[0] is False
-    assert _mcp(client, "desk.verb", {"verb_id": "desk.delete", "arguments": {"kind": kind, "id": verb_made["id"]}})[1] == {"deleted": True, "id": verb_made["id"]}
-    assert _mcp(client, "desk.delete", {"kind": kind, "id": mcp_id})[1] == {"deleted": True, "id": mcp_id}
+    assert plain(_mcp(client, "desk.verb", {"verb_id": "desk.delete", "arguments": {"kind": kind, "id": verb_made["id"]}})[1]) == {"deleted": True, "id": verb_made["id"]}
+    assert plain(_mcp(client, "desk.delete", {"kind": kind, "id": mcp_id})[1]) == {"deleted": True, "id": mcp_id}
     assert seen == [f"{prefix}.{verb}" for verb in ("create", "read", "update", "list", "read", "create", "update", "delete", "delete")]
 
 
@@ -386,7 +392,13 @@ def test_durable_state_survives_a_new_hub_over_the_same_database(tmp_path: Path,
 
 @pytest.mark.parametrize("kind", [PrincipalKind.AGENT, PrincipalKind.NODE])
 def test_a_non_owner_principal_writes_as_it_did_on_main(tmp_path: Path, kind) -> None:
-    """No owner-only refusal is added (the settled position; not a policy change)."""
+    """No owner-only refusal is added (the settled position; not a policy change).
+
+    PHILO-7-02: the EXEMPT writes below still run for any principal, as on
+    main. The ADMITTED ones do not: an AGENT without a LIVE grant is refused at
+    admission with a receipt (R1, the one named change); a NODE is refused
+    ``declared_capability_required`` (no transport lets a node reach them).
+    """
     from holdspeak.db import Database
     from holdspeak.services.primitive_service import PrimitiveService
 
@@ -399,8 +411,14 @@ def test_a_non_owner_principal_writes_as_it_did_on_main(tmp_path: Path, kind) ->
     kb = registry.invoke(principal, "kb.create", {"name": "k"})
     registry.invoke(principal, "kb.update", {"kb_id": kb["id"], "name": "k2"})
     assert registry.invoke(principal, "note.delete", {"note_id": note["id"]}) is True
-    assert registry.invoke(principal, "zone.delete", {"directory_id": zone["id"]}) is True
     assert registry.invoke(principal, "kb.delete", {"kb_id": kb["id"]}) is True
+    from holdspeak.services.desk_kernel import DeskKernelRefused
+
+    with pytest.raises(DeskKernelRefused) as refused:
+        registry.invoke(principal, "zone.delete", {"directory_id": zone["id"]})
+    expected = "desk_delegation_required" if kind is PrincipalKind.AGENT else "declared_capability_required"
+    assert refused.value.code == expected and refused.value.kernel["receipt"]["outcome"] == expected
+    assert registry.invoke(OWNER, "zone.read", {"directory_id": zone["id"]})["directory"]["id"] == zone["id"]
 
 
 @pytest.mark.parametrize("kind", ["notes", "directories", "kbs"])

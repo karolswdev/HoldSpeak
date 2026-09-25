@@ -118,6 +118,10 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(wake_session.name, wake_session.version, wake_session, "agent.submit", "propose"),
         OperationSpec(tool_turn.name, tool_turn.version, tool_turn, "agent.submit", "propose"),
     )
+    # PHILO-7-02: the desk writes and the owner's desk delegation grant.
+    from . import desk_codec
+
+    specs = specs + desk_codec.specs(database, clock=clock)
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Phase 143's capability/retry law is pure composition truth.  Building it
     # here makes malformed, duplicate, confusable, or schema-drifted definitions

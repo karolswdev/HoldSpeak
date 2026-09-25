@@ -117,6 +117,7 @@ TOOLS: list[dict[str, Any]] = [
         "name": "desk.delete",
         "description": (
             "Delete one desk primitive by kind and id. Deleting a zone puts what is filed in it back on the desk. "
+            "A Thought's note needs its revisions in data. "
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
@@ -124,6 +125,12 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
                 "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
+                # PHILO-7-02: a Thought's note delete (an admitted tombstone)
+                # needs its two expected revisions; the envelope carries them.
+                "data": {"type": "object", "description": (
+                    "Optional. A Thought's note only: expected_aggregate_revision and "
+                    "expected_lifecycle_revision from the note's last read. Any other field is refused."
+                )},
             },
             "required": ["kind", "id"],
             "additionalProperties": False,
@@ -663,18 +670,88 @@ def _primitive_create(ops: Callable[[], operations.OperationRegistry], service: 
 
 def _primitive_update(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
     if (operation := _desk_operation(kind, "update")) is not None:
-        return _receipted(*_invoke(ops, principal, operation, operations.update_args(
-            data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind])))
+        registry = ops()
+        return _receipted(*_invoke(ops, principal, operation, registry.update_args(
+            principal, data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind])))
     return getattr(service, f"update_{kind}")(principal, item_id, **data)
 
 
-def _primitive_delete(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
+def _primitive_delete(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any] | None = None) -> Any:
     kernel = None
+    data = dict(data or {})
     if (operation := _desk_operation(kind, "delete")) is not None:
-        deleted, kernel = _invoke(ops, principal, operation, {operations.DESK_ID_ARGUMENT[kind]: item_id})
+        # The contract refuses any field its descriptor does not name (no silent drop).
+        registry = ops()
+        deleted, kernel = _invoke(ops, principal, operation, registry.update_args(
+            principal, data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind]))
     else:
+        if data:
+            raise ToolError(f"desk.delete kind={kind}s takes no data")
         deleted = getattr(service, f"delete_{kind}")(principal, item_id)
     return _receipted({"deleted": deleted, "id": item_id}, kernel)
+
+
+# ── PHILO-7-02: refusal receipts before ``invoke`` (R2 class 4) ─────────
+#
+# An authenticated call that names an ADMITTED operation (or a conditionally
+# admitted one whose payload carries its admission argument) and is refused
+# before the registry -- the schema refusal, non-object arguments, the palette
+# refusal -- keeps its named error and leaves a kernel refusal receipt. A call
+# that names no identifiable consequential operation leaves none.
+
+#: MCP tools that name one operation directly, and how their arguments map.
+_TOOL_OPERATIONS: dict[str, str] = {
+    "zone.file": "zone.file", "zone.unfile": "zone.unfile",
+    "kb.add_member": "kb.member.add", "kb.remove_member": "kb.member.remove",
+    "decision.supersede": "decision.supersede",
+}
+_TOOL_VERBS = {"desk.create": "create", "desk.update": "update", "desk.delete": "delete"}
+_PALETTE_REFUSED = "mcp_palette_refused"
+
+
+def _tool_operation(name: str, args: Any) -> tuple[str | None, Any]:
+    """The operation an MCP call names, and its raw operation payload, when identifiable."""
+    if name in _TOOL_OPERATIONS:
+        if not isinstance(args, dict):
+            return _TOOL_OPERATIONS[name], None
+        raw = {("resource_ref" if key == "ref" else key): value for key, value in args.items()}
+        return _TOOL_OPERATIONS[name], raw
+    if name == "desk.verb":
+        if not isinstance(args, dict) or args.get("verb_id") not in _TOOL_VERBS:
+            return None, None
+        name, args = str(args["verb_id"]), args.get("arguments")
+    verb = _TOOL_VERBS.get(name)
+    if verb is None or not isinstance(args, dict):
+        return None, None
+    kind = _KIND_ALIASES.get(str(args.get("kind") or ""))
+    operation = operations.DESK_OPERATIONS.get((kind, verb)) if kind else None
+    if operation is None:
+        return None, None
+    id_field = operations.DESK_ID_ARGUMENT[kind]
+    data = args.get("data") if args.get("data") is not None or verb != "delete" else {}
+    if not isinstance(data, dict):
+        return operation, None
+    raw = dict(data)
+    if verb != "create" and args.get("id") is not None:
+        raw.setdefault(id_field, args.get("id"))
+    return operation, raw
+
+
+def _registry() -> operations.OperationRegistry:
+    db = db_or(get_database)
+    return operations.for_runtime(lambda: runtime_service(
+        "primitive_service", lambda: PrimitiveService(db, observer=observer_or(get_observer))))
+
+
+def refuse_before_invoke(name: str, args: Any, principal: Principal, code: str) -> dict[str, Any] | None:
+    """Class 4: the refusal receipt for a consequential MCP attempt refused before ``invoke``."""
+    operation, raw = _tool_operation(name, args)
+    if operation is None:
+        return None
+    try:
+        return _registry().refuse(principal, operation, code, raw)
+    except Exception:  # pragma: no cover - a receipt never replaces the named refusal
+        return None
 
 
 def _card_dict(card: Any) -> dict[str, Any]:
@@ -805,6 +882,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     """Call one day-one MCP tool and return JSON-serializable data."""
     args = arguments or {}
     if not isinstance(args, dict):
+        refuse_before_invoke(name, arguments, principal, "invalid_arguments")
         raise ToolError("arguments must be an object")
     if _tool_schema(name) is None:
         raise ToolError(f"Unknown tool: {name}")
@@ -826,7 +904,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         if any(tool["name"] == name for tool in family.TOOLS):
             return family.dispatch(name, args, principal)
 
-    _validate_tool_arguments(name, args)
+    try:
+        _validate_tool_arguments(name, args)
+    except ToolError:
+        refuse_before_invoke(name, args, principal, "invalid_arguments")
+        raise
     db = db_or(get_database)
     obs = observer_or(get_observer)
     # HS-200-45 R1: the FIVE services the hub composes with wiring a bare
@@ -876,7 +958,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "desk.update":
         return _primitive_update(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""), _data(args.get("data")))
     if name == "desk.delete":
-        return _primitive_delete(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
+        return _primitive_delete(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""), _data(args.get("data")))
     if name == "desk.verb":
         return _dispatch_verb(args, principal, primitives, workbenches, ops)
     if name == "workbench.run":
@@ -1216,7 +1298,7 @@ def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: Primi
     server_verbs: dict[str, Callable[[dict[str, Any]], Any]] = {
         "desk.create": lambda value: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
         "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
-        "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or "")),
+        "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
         "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
     }
@@ -1246,6 +1328,9 @@ def dispatch_for_palette(
 ) -> Any:
     """Dispatch scoped by *palette* -- typed refusal for tools outside it."""
     if name not in palette:
+        # PHILO-7-02: the palette refusal of a tool that names an ADMITTED
+        # operation leaves a refusal receipt (a read or exempt tool: none).
+        refuse_before_invoke(name, arguments, principal, _PALETTE_REFUSED)
         raise ToolError(
             f"Tool {name!r} is not in the configured palette"
         )

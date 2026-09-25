@@ -41,7 +41,19 @@ Settings routes:
 - GET  /api/settings/remote        -> current remote config + credential list
 - PUT  /api/settings/remote        -> update enabled/bind_host
 - POST /api/settings/remote/credentials -> issue a new credential
-- DELETE /api/settings/remote/credentials/{id} -> revoke
+- DELETE /api/settings/remote/credentials/{id} -> revoke (the credential's
+  LIVE desk grant first, durably, with its own receipt; PHILO-7-02)
+- PUT    /api/settings/remote/delegations/{identity} -> delegation.grant
+- DELETE /api/settings/remote/delegations/{identity} -> delegation.revoke
+
+PHILO-7-02 (R1): the owner's desk delegation grant rides the credential ledger.
+``GET /api/settings/remote`` carries, per credential, ``delegation``: the
+grant's EFFECTIVE state ``{state, grant_id, expires_at}`` (``state`` LIVE,
+EXPIRED or REVOKED; ``null`` = never granted), computed with the kernel's own
+time-aware rule, never the stored state alone; and ``delegations``: the same
+projection, with ``identity``, for every identity that has a grant row (LIVE or
+historical) and NO credential row. Both are read whatever the remote switch
+says: the switch governs transport, not authority.
 """
 from __future__ import annotations
 
@@ -216,7 +228,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 pass
 
         credentials = []
-        for c in cred_store.list_credentials():
+        listed = cred_store.list_credentials()
+        from ...services import desk_delegation
+
+        grants = desk_delegation.views([c.principal.identity for c in listed])
+        for c in listed:
             # Convert monotonic timestamps to epoch seconds for the face.
             expires_epoch = now_epoch + (c.expires_at - now_mono)
             last_used_epoch = (
@@ -233,6 +249,8 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 "expires_at": expires_epoch,
                 "last_used_at": last_used_epoch,
                 "active": c.expires_at > now_mono,
+                # PHILO-7-02: the grant's effective state (null: never granted).
+                "delegation": grants["by_identity"].get(c.principal.identity),
             })
 
         return JSONResponse({
@@ -240,6 +258,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             "bind_host": store.get("bind_host"),
             "port": store.get("port"),
             "credentials": credentials,
+            "delegations": grants["orphans"],
             "active_count": cred_store.count_active(),
             "total_count": len(credentials),
         })
@@ -319,12 +338,76 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "owner_required"}, status_code=403)
 
         cred_store = _get_credential_store(request)
-        revoked = cred_store.revoke_by_id(credential_id)
-        if not revoked:
+        # PHILO-7-02 (invariant 5, durable first): resolve the identity WITHOUT
+        # removing anything; revoke its LIVE desk grant with its own receipt;
+        # only then remove the credential. A kernel refusal leaves it in place.
+        identity = cred_store.identity_for_id(credential_id)
+        if identity is None:
             return JSONResponse(
                 {"error": "credential_not_found"},
                 status_code=404,
             )
-        return JSONResponse({"success": True, "revoked": credential_id})
+        from ...services import desk_delegation
+        from ...services.errors import ServiceError
+
+        try:
+            grant = desk_delegation.revoke_for_credential(principal, identity)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
+                                status_code=int(exc.context.get("status") or 409))
+        revoked = cred_store.revoke_by_id(credential_id)
+        if not revoked:
+            return JSONResponse(
+                {"error": "credential_not_found", "grant_revoked": grant is not None, **(grant or {})},
+                status_code=404,
+            )
+        return JSONResponse({"success": True, "revoked": credential_id,
+                             "grant_revoked": grant is not None, **(grant or {})})
+
+    # ── PUT/DELETE /api/settings/remote/delegations/{identity} ─────
+    # PHILO-7-02 (R1): the owner's desk delegation grant. The edge right is
+    # AGENT_SUBMIT (principals.required_right) so an agent's attempt reaches
+    # the kernel and is refused there WITH a receipt (owner_principal_required).
+    # The route never checks the owner itself: the kernel does.
+
+    async def _delegation_body(request: Request) -> Any:
+        raw = await request.body()
+        if not raw.strip():
+            return {}
+        try:
+            import json as _json
+
+            return _json.loads(raw)
+        except ValueError:
+            return None  # an unreadable body: a non-object attempt
+
+    def _delegation_response(result: dict[str, Any], status: int = 200) -> JSONResponse:
+        return JSONResponse({"success": True, **result}, status_code=status)
+
+    @router.put("/api/settings/remote/delegations/{identity}")
+    async def grant_delegation(request: Request, identity: str) -> JSONResponse:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        from ...services import desk_delegation
+        from ...services.errors import ServiceError
+
+        body = await _delegation_body(request)
+        try:
+            return _delegation_response(desk_delegation.grant(principal, identity, body))
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
+                                status_code=int(exc.context.get("status") or 409))
+
+    @router.delete("/api/settings/remote/delegations/{identity}")
+    async def revoke_delegation(request: Request, identity: str) -> JSONResponse:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        from ...services import desk_delegation
+        from ...services.errors import ServiceError
+
+        body = await _delegation_body(request)
+        try:
+            return _delegation_response(desk_delegation.revoke(principal, identity, "owner_revoked", body=body))
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
+                                status_code=int(exc.context.get("status") or 409))
 
     return router

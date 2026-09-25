@@ -146,9 +146,16 @@ class TestOneInstanceInTheHub:
         _server, _root, client = hub
         assert client.get("/api/decisions/nope").status_code == 404
         missing = client.put("/api/decisions/nope", json={"title": "x"})
-        assert missing.status_code == 404 and missing.json() == {"error": "Unknown decision: nope"}
+        # PHILO-7-02: an admitted write refused by the service carries its
+        # refusal receipt beside the unchanged error (Article XI; R2 class 2).
+        body = missing.json()
+        receipt = body.pop("receipt")
+        assert missing.status_code == 404 and {k: v for k, v in body.items() if k != "operation_id"} == {"error": "Unknown decision: nope"}
+        assert (receipt["state"], receipt["outcome"], receipt["operation_id"]) == ("refused", "not_found", body["operation_id"])
         bad = client.post("/api/decisions", json={"title": "t", "status": "nonsense"})
-        assert bad.status_code == 400 and bad.json() == {"error": "invalid decision status: nonsense"}
+        bad_body = bad.json()
+        assert bad.status_code == 400 and {k: v for k, v in bad_body.items() if k not in {"operation_id", "receipt"}} == {"error": "invalid decision status: nonsense"}
+        assert bad_body["receipt"]["outcome"] == "invalid_value"  # PHILO-7-02: the refusal's receipt
         # The desk's rename sends `name` for a decision; it was accepted and
         # ignored before this contract and still is (not a new 400).
         made = client.post("/api/decisions", json={"title": "Keep"}).json()["decision"]
@@ -349,7 +356,11 @@ def test_other_kinds_still_take_the_generic_path(tmp_path: Path, monkeypatch) ->
     note = dispatch("desk.create", {"kind": "notes", "data": {"title": "n"}}, OWNER)
     assert dispatch("desk.get", {"kind": "notes", "id": note["id"]}, OWNER)["title"] == "n"
     decision = dispatch("desk.create", {"kind": "decisions", "data": {"title": "d"}}, OWNER)
-    assert dispatch("desk.delete", {"kind": "decisions", "id": decision["id"]}, OWNER) == {"deleted": True, "id": decision["id"]}
+    # PHILO-7-02: decision.delete is a declared, ADMITTED operation now; its
+    # MCP envelope is unchanged plus operation_id and the receipt.
+    deleted = dispatch("desk.delete", {"kind": "decisions", "id": decision["id"]}, OWNER)
+    assert {k: deleted[k] for k in ("deleted", "id")} == {"deleted": True, "id": decision["id"]}
+    assert deleted["receipt"]["state"] == "succeeded" and deleted["operation_id"]
 
 
 # ── the export and the residual set ─────────────────────────────────────

@@ -53,6 +53,9 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
     async def api_create_kb(request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "kb.create", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             kb, kernel = _ops().invoke_receipted(_principal(request), "kb.create", {
@@ -83,6 +86,9 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
     async def api_update_kb(kb_id: str, request: Request) -> Any:
         body = await _json_body(request)
         if body is None:
+            # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
+            # refusal receipt (a conditional one's does not: nothing identifies it).
+            _ops().refuse(_principal(request), "kb.update", "invalid_arguments", None)
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
             kb, kernel = _ops().invoke_receipted(_principal(request), "kb.update", {

@@ -85,7 +85,13 @@ def test_thought_product_reads_deny_node_principal(tmp_path, monkeypatch):
     assert client.post(f"/api/thoughts/{thought['id']}/complete", json={"request_id": "node", "expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
     assert client.post(f"/api/thoughts/{thought['id']}/resume", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
     assert client.put(f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_working_revision": 1, "body_markdown": "no"}).status_code == 422
-    assert client.request("DELETE", f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1}).status_code == 422
+    # PHILO-7-02: a Thought's note delete is ADMITTED (its tombstone unfiles
+    # the note), so a node is refused by the KERNEL at admission, with a
+    # receipt (declared_capability_required, 403), before the Thought service's
+    # own owner check can answer 422. Still refused; the note is untouched.
+    refused = client.request("DELETE", f"/api/notes/{thought['working_note']['id']}", json={"expected_aggregate_revision": 1, "expected_lifecycle_revision": 1})
+    assert refused.status_code == 403 and refused.json()["error"] == "declared_capability_required"
+    assert refused.json()["receipt"]["outcome"] == "declared_capability_required"
 
 
 def test_thought_list_is_paged_private_and_reconcile_requires_cursor(tmp_path, monkeypatch):

@@ -241,6 +241,19 @@ class AgentCredentialStore:
                 return self.revoke(cred.principal.identity)
         return False
 
+    def identity_for_id(self, credential_id: str) -> Optional[str]:
+        """The principal identity of a credential id, removing nothing (PHILO-7-02).
+
+        A short locked read that returns BEFORE the kernel is entered (the
+        lifecycle beat's callback contract: the store lock is never held
+        across a kernel transaction).
+        """
+        clean = str(credential_id or "").strip()
+        with self._lock:
+            token_hash = self._by_id.get(clean)
+            cred = self._by_hash.get(token_hash) if token_hash is not None else None
+            return cred.principal.identity if cred is not None else None
+
     def list_credentials(self) -> list[AgentCredential]:
         """Return all credentials (including expired) for the settings face.
 
@@ -310,6 +323,11 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     if path.startswith("/api/mesh/relay/"):
         return PrincipalRight.NODE_LINK
     if path == "/api/kernel/submit" and verb == "POST":
+        return PrincipalRight.AGENT_SUBMIT
+    # PHILO-7-02: the desk delegation grant routes reach the kernel for an
+    # agent too, so an agent's attempt is refused BY THE KERNEL with a receipt
+    # (owner_principal_required), never by the edge with none.
+    if path.startswith("/api/settings/remote/delegations/") and verb in {"PUT", "DELETE"}:
         return PrincipalRight.AGENT_SUBMIT
     if path == "/api/kernel/read" or path == "/api/kernel/events":
         return PrincipalRight.AGENT_READ

@@ -827,6 +827,20 @@ def _id_only(name: str, args: dict[str, Any], id_field: str) -> None:
         )
 
 
+def _delete_envelope(kind: str, id_field: str, args: dict[str, Any]) -> dict[str, Any]:
+    """PHILO-7-02: ``desk.delete`` carries every other argument in ``data``.
+
+    A Thought's note needs its two revisions; the contract refuses any other
+    field by name (never a silent drop), so the rig sends exactly what the
+    case states.
+    """
+    envelope: dict[str, Any] = {"kind": kind, "id": args.get(id_field)}
+    extra = {key: value for key, value in args.items() if key != id_field}
+    if extra:
+        envelope["data"] = extra
+    return envelope
+
+
 def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
     """Translate canonical operation arguments to the existing MCP envelope."""
     if name == "decision.create":
@@ -844,8 +858,7 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name == "decision.list":
         return {"kind": "decisions"}
     if name == "decision.delete":
-        _id_only(name, args, "decision_id")
-        return {"kind": "decisions", "id": args.get("decision_id")}
+        return _delete_envelope("decisions", "decision_id", args)
     if name in {"kb.member.add", "kb.member.remove"}:
         # The MCP tools name the reference ``ref``; nothing else is dropped.
         return {("ref" if key == "resource_ref" else key): value for key, value in args.items()}
@@ -857,7 +870,9 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
         if verb == "update":
             return {"kind": kind, "id": args.get(id_field),
                     "data": {key: value for key, value in args.items() if key != id_field}}
-        if verb in {"read", "delete"}:
+        if verb == "delete":
+            return _delete_envelope(kind, id_field, args)
+        if verb == "read":
             _id_only(name, args, id_field)
             return {"kind": kind, "id": args.get(id_field)}
         if verb == "list":

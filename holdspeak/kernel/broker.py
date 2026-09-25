@@ -10,7 +10,9 @@ from ..principals import PrincipalKind, PrincipalRight
 from .admission import parse_request, refusal_values
 from .causation import causality, live_owner_parent
 from .executor import ExecutorPlane
+from . import desk_broker
 from .journal import JournalStore
+from .liveness import reap_and_recover_projections as _reap_and_recover
 from .model import KernelRefused, OperationRequest, OperationSpec
 
 
@@ -76,8 +78,8 @@ class Broker(ExecutorPlane):
             admission, layers = self._admit_authority(request, spec, principal, operation_id)
             parent_id, correlation_id = self._causality(request, principal, operation_id)
             self.last_authority_layers = tuple(layers)
-        except KernelRefused as exc:
-            return self._refuse_attempt(raw, principal, operation_id, exc.reason)
+        except KernelRefused as exc:  # PHILO-7-02: with a historical grant's provenance
+            return self._refuse_attempt(raw, principal, operation_id, exc.reason, provenance=exc.provenance)
         except Exception:
             return self._refuse_attempt(
                 raw, principal, operation_id, "authority_resolution_failed"
@@ -95,7 +97,8 @@ class Broker(ExecutorPlane):
             "placement": admission.placement,
             "envelope_sha256": admission.payload_hash,
             "policy_version": POLICY_VERSION,
-            "authority_basis": getattr(principal, "authority_basis", "") or "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+            "authority_basis": admission.authority_basis or getattr(principal, "authority_basis", "") or "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+            "delegator_kind": admission.delegator_kind, "delegator_identity": admission.delegator_identity,
             "state": "admitting",
             "native_id": admission.native_id,
             "parent_operation_id": parent_id,
@@ -130,6 +133,7 @@ class Broker(ExecutorPlane):
             return self._handle(operation)
         except Exception as exc:
             reason = getattr(exc, "reason", "native_admission_failed")
+            if desk_broker.is_desk(request.name): return desk_broker.native_failure(self, operation, str(reason))
             operation = self.store.transition(
                 operation["operation_id"], operation["revision"], "refused"
             )
@@ -194,6 +198,7 @@ class Broker(ExecutorPlane):
                 parent = conn.execute("SELECT o.principal_kind,p.state,p.input_json FROM kernel_operations o JOIN kernel_parent_runs p ON p.operation_id=o.operation_id WHERE o.operation_id=?", (operation["parent_operation_id"],)).fetchone()
             scheduler_child = bool(parent and parent["principal_kind"] == "scheduler" and parent["state"] == "OPEN" and "delegation_id" in str(parent["input_json"]))
         service_owns = principal.kind is PrincipalKind.SERVICE and operation["principal_identity"] == principal.identity and (operation["name"], operation["version"]) in principal.allowed_operations
+        delegated = delegated or desk_broker.approval(self, operation, principal, expected_revision)
         if ((principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.DECIDE))
             and not delegated and not scheduler_child and not service_owns
             and not (principal.kind is PrincipalKind.SCHEDULER and getattr(self, "_delegated_schedule_admission", False))):
@@ -217,6 +222,7 @@ class Broker(ExecutorPlane):
             raise KernelRefused(
                 "operation_already_decided", operation_id=operation_id
             ) from exc
+        if decision == "reject" and desk_broker.is_desk(operation["name"]): return desk_broker.reject(self, operation_id, expected_revision)
         if decision == "reject":
             operation = self.store.transition(
                 operation_id, expected_revision, "refused", decision="reject"
@@ -273,15 +279,8 @@ class Broker(ExecutorPlane):
         return reap_expired(self)
 
     def reap_and_recover_projections(self) -> dict[str, Any]:
-        """Run the required liveness-before-projection-recovery ordering."""
-        parent_recovered = getattr(getattr(self, "parent_run_controller", None), "reconcile_abandoned", lambda: 0)()
-        reaped = self.reap_expired()
-        stager = getattr(self, "projection_stager", None)
-        if stager is None:
-            return {"parents": parent_recovered, "reaped": reaped, "projections": None}
-        # recover() runs a second, harmless reap immediately before its scan so
-        # callers cannot accidentally reverse the durable ordering.
-        return {"parents": parent_recovered, "reaped": reaped, "projections": stager.recover()}
+        """Run the required liveness-before-projection-recovery ordering (``liveness.py``)."""
+        return _reap_and_recover(self)
 
     def events(self, after_cursor: int, filters: Mapping[str, Any], principal: Any) -> dict[str, Any]:
         if principal.kind is PrincipalKind.NONE:
@@ -338,6 +337,7 @@ class Broker(ExecutorPlane):
         values.update({k: str(v) for k, v in (provenance or {}).items() if k in allowed})
         if unique:
             values["idempotency_key"] = operation_id
+        if desk_broker.is_desk(values["name"]): return desk_broker.refuse_attempt(self, values, reason)
         operation = self.store.create_operation(values)
         self.store.append("operation.refused", operation["operation_id"], head=reason)
         receipt = self._terminal(operation, "refused", reason)

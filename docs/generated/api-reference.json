@@ -8068,7 +8068,10 @@
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8141,7 +8144,10 @@
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8194,6 +8200,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -8234,7 +8241,10 @@
         "tests/unit/test_philo5_one_decision.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8268,7 +8278,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_decision",
-          "line": 109,
+          "line": 117,
           "parameters": [
             {
               "name": "decision_id",
@@ -8308,6 +8318,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8341,6 +8353,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8373,7 +8387,7 @@
             "GET"
           ],
           "symbol": "api_get_desk_decision",
-          "line": 81,
+          "line": 84,
           "parameters": [
             {
               "name": "decision_id",
@@ -8410,6 +8424,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8442,7 +8458,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision",
-          "line": 91,
+          "line": 94,
           "parameters": [
             {
               "name": "decision_id",
@@ -8465,12 +8481,13 @@
             "_json_body",
             "_kernel_fields",
             "_ops",
-            "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
             "error_500",
-            "operations.update_args",
+            "registry.invoke_receipted",
+            "registry.update_args",
             "router.put",
             "str"
           ],
@@ -8486,6 +8503,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8519,6 +8538,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8552,6 +8573,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8585,6 +8608,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8618,6 +8643,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8651,6 +8678,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8683,7 +8712,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision_status",
-          "line": 122,
+          "line": 130,
           "parameters": [
             {
               "name": "decision_id",
@@ -8707,6 +8736,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -8729,6 +8759,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8762,6 +8794,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8794,7 +8828,7 @@
             "POST"
           ],
           "symbol": "api_supersede_decision",
-          "line": 140,
+          "line": 151,
           "parameters": [
             {
               "name": "decision_id",
@@ -8834,6 +8868,8 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14663,8 +14699,11 @@
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14719,6 +14758,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -14741,8 +14781,11 @@
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
@@ -14776,7 +14819,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_directory",
-          "line": 114,
+          "line": 120,
           "parameters": [
             {
               "name": "directory_id",
@@ -14812,7 +14855,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14845,7 +14890,7 @@
             "GET"
           ],
           "symbol": "api_get_directory",
-          "line": 79,
+          "line": 82,
           "parameters": [
             {
               "name": "directory_id",
@@ -14878,7 +14923,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14911,7 +14958,7 @@
             "PUT"
           ],
           "symbol": "api_update_directory",
-          "line": 88,
+          "line": 91,
           "parameters": [
             {
               "name": "directory_id",
@@ -14937,6 +14984,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -14956,7 +15004,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14987,7 +15037,7 @@
             "GET"
           ],
           "symbol": "api_list_directory_members",
-          "line": 126,
+          "line": 132,
           "parameters": [
             {
               "name": "directory_id",
@@ -15020,7 +15070,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15053,7 +15105,7 @@
             "DELETE"
           ],
           "symbol": "api_unfile_member",
-          "line": 149,
+          "line": 155,
           "parameters": [
             {
               "name": "directory_id",
@@ -15092,7 +15144,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15125,7 +15179,7 @@
             "PUT"
           ],
           "symbol": "api_file_member",
-          "line": 136,
+          "line": 142,
           "parameters": [
             {
               "name": "directory_id",
@@ -15166,7 +15220,9 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/integration/test_one_place_relationships.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15413,7 +15469,7 @@
             "GET"
           ],
           "symbol": "api_gate_audit",
-          "line": 144,
+          "line": 157,
           "parameters": [
             {
               "name": "request",
@@ -15474,7 +15530,7 @@
             "GET"
           ],
           "symbol": "api_gate_config",
-          "line": 153,
+          "line": 166,
           "parameters": [],
           "return_annotation": "Any",
           "declared_response_model": null,
@@ -15522,7 +15578,7 @@
             "GET"
           ],
           "symbol": "api_gate_list",
-          "line": 88,
+          "line": 101,
           "parameters": [
             {
               "name": "request",
@@ -15584,7 +15640,7 @@
             "POST"
           ],
           "symbol": "api_gate_propose",
-          "line": 66,
+          "line": 79,
           "parameters": [
             {
               "name": "request",
@@ -15645,7 +15701,7 @@
             "GET"
           ],
           "symbol": "api_gate_read",
-          "line": 79,
+          "line": 92,
           "parameters": [
             {
               "name": "proposal_id",
@@ -15707,7 +15763,7 @@
             "POST"
           ],
           "symbol": "api_gate_decide",
-          "line": 97,
+          "line": 110,
           "parameters": [
             {
               "name": "proposal_id",
@@ -15772,7 +15828,7 @@
             "POST"
           ],
           "symbol": "api_gate_receipt",
-          "line": 110,
+          "line": 123,
           "parameters": [
             {
               "name": "proposal_id",
@@ -15838,7 +15894,7 @@
             "POST"
           ],
           "symbol": "api_gate_usage",
-          "line": 122,
+          "line": 135,
           "parameters": [
             {
               "name": "request",
@@ -18299,6 +18355,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -18348,7 +18405,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_kb",
-          "line": 102,
+          "line": 108,
           "parameters": [
             {
               "name": "kb_id",
@@ -18409,7 +18466,7 @@
             "GET"
           ],
           "symbol": "api_get_kb",
-          "line": 74,
+          "line": 77,
           "parameters": [
             {
               "name": "kb_id",
@@ -18470,7 +18527,7 @@
             "PUT"
           ],
           "symbol": "api_update_kb",
-          "line": 83,
+          "line": 86,
           "parameters": [
             {
               "name": "kb_id",
@@ -18494,6 +18551,7 @@
             "_kernel_fields",
             "_ops",
             "_ops().invoke_receipted",
+            "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
@@ -18538,7 +18596,7 @@
             "GET"
           ],
           "symbol": "api_list_kb_members",
-          "line": 112,
+          "line": 118,
           "parameters": [
             {
               "name": "kb_id",
@@ -18599,7 +18657,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_kb_member",
-          "line": 135,
+          "line": 141,
           "parameters": [
             {
               "name": "kb_id",
@@ -18668,7 +18726,7 @@
             "PUT"
           ],
           "symbol": "api_add_kb_member",
-          "line": 122,
+          "line": 128,
           "parameters": [
             {
               "name": "kb_id",
@@ -19107,7 +19165,8 @@
       "test_candidates": [
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_kernel_real_hub.py",
-        "tests/integration/test_process_input_real_hub.py"
+        "tests/integration/test_process_input_real_hub.py",
+        "tests/unit/test_philo7_article_xi.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19195,7 +19254,7 @@
             "POST"
           ],
           "symbol": "mcp_http_endpoint",
-          "line": 85,
+          "line": 97,
           "parameters": [
             {
               "name": "request",
@@ -23933,8 +23992,11 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
@@ -24019,8 +24081,11 @@
         "tests/uat/test_induction_integration_local.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_notes_tag_query.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
@@ -24103,6 +24168,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
@@ -24174,6 +24240,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
@@ -24255,6 +24322,7 @@
         "tests/e2e/test_hs14105a_default_context_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/integration/test_primitive_framework_sync.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
@@ -25575,7 +25643,8 @@
         "tests/integration/test_decision_records.py",
         "tests/integration/test_gate_threat_model.py",
         "tests/integration/test_kernel_real_hub.py",
-        "tests/integration/test_principal_separation.py"
+        "tests/integration/test_principal_separation.py",
+        "tests/unit/test_philo7_article_xi.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -25622,6 +25691,9 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
+            "desk_delegation.revoke_for_credential",
+            "exc.context.get",
+            "int",
             "request.app.state.agent_credentials.revoke",
             "router.delete"
           ],
@@ -25630,7 +25702,9 @@
           "docstring": null
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo7_article_xi.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -25661,7 +25735,7 @@
             "DELETE"
           ],
           "symbol": "api_revoke_self",
-          "line": 61,
+          "line": 74,
           "parameters": [
             {
               "name": "request",
@@ -25683,7 +25757,8 @@
         }
       ],
       "test_candidates": [
-        "tests/integration/test_principal_separation.py"
+        "tests/integration/test_principal_separation.py",
+        "tests/unit/test_philo7_article_xi.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33771,7 +33846,7 @@
             "GET"
           ],
           "symbol": "api_session_receipt",
-          "line": 135,
+          "line": 148,
           "parameters": [
             {
               "name": "session_key",
@@ -33896,6 +33971,8 @@
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34007,6 +34084,8 @@
         "tests/unit/test_intel_profile_resolution.py",
         "tests/unit/test_phase200_watch_arming.py",
         "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34314,7 +34393,7 @@
             "GET"
           ],
           "symbol": "get_remote_settings",
-          "line": 199,
+          "line": 211,
           "parameters": [
             {
               "name": "request",
@@ -34335,7 +34414,9 @@
             "cred_store.count_active",
             "cred_store.list_credentials",
             "credentials.append",
+            "desk_delegation.views",
             "getattr",
+            "grants['by_identity'].get",
             "len",
             "resolve_palette",
             "router.get",
@@ -34353,7 +34434,9 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
-        "tests/unit/test_philo5_the_loop_r2.py"
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34385,7 +34468,7 @@
             "PUT"
           ],
           "symbol": "update_remote_settings",
-          "line": 249,
+          "line": 268,
           "parameters": [
             {
               "name": "request",
@@ -34420,7 +34503,9 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
-        "tests/unit/test_philo5_the_loop_r2.py"
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34452,7 +34537,7 @@
             "POST"
           ],
           "symbol": "issue_credential",
-          "line": 271,
+          "line": 290,
           "parameters": [
             {
               "name": "request",
@@ -34495,7 +34580,9 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
-        "tests/unit/test_philo5_the_loop_r2.py"
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34527,7 +34614,7 @@
             "DELETE"
           ],
           "symbol": "revoke_credential",
-          "line": 316,
+          "line": 335,
           "parameters": [
             {
               "name": "request",
@@ -34548,8 +34635,12 @@
           "calls": [
             "JSONResponse",
             "_get_credential_store",
+            "cred_store.identity_for_id",
             "cred_store.revoke_by_id",
+            "desk_delegation.revoke_for_credential",
+            "exc.context.get",
             "getattr",
+            "int",
             "router.delete"
           ],
           "body_access_keys": [],
@@ -34558,7 +34649,132 @@
         }
       ],
       "test_candidates": [
-        "tests/unit/test_hs174_reach_wire.py"
+        "tests/unit/test_hs174_reach_wire.py",
+        "tests/unit/test_philo7_article_xi.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/settings/remote/delegations/{identity}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [],
+      "source": "holdspeak/web/routes/mcp_http.py",
+      "handler_evidence": [
+        {
+          "path": "/api/settings/remote/delegations/{identity}",
+          "methods": [
+            "DELETE"
+          ],
+          "symbol": "revoke_delegation",
+          "line": 401,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            },
+            {
+              "name": "identity",
+              "annotation": "str"
+            }
+          ],
+          "return_annotation": "JSONResponse",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "JSONResponse",
+            "_delegation_body",
+            "_delegation_response",
+            "desk_delegation.revoke",
+            "exc.context.get",
+            "getattr",
+            "int",
+            "router.delete"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/settings/remote/delegations/{identity}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [],
+      "source": "holdspeak/web/routes/mcp_http.py",
+      "handler_evidence": [
+        {
+          "path": "/api/settings/remote/delegations/{identity}",
+          "methods": [
+            "PUT"
+          ],
+          "symbol": "grant_delegation",
+          "line": 388,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            },
+            {
+              "name": "identity",
+              "annotation": "str"
+            }
+          ],
+          "return_annotation": "JSONResponse",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "JSONResponse",
+            "_delegation_body",
+            "_delegation_response",
+            "desk_delegation.grant",
+            "exc.context.get",
+            "getattr",
+            "int",
+            "router.put"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36370,6 +36586,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
@@ -36455,6 +36672,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
@@ -36786,6 +37004,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36869,6 +37088,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36943,6 +37163,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37032,6 +37253,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37103,6 +37325,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37184,6 +37407,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37268,6 +37492,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37352,6 +37577,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37433,6 +37659,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37508,6 +37735,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37596,6 +37824,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37689,6 +37918,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37760,6 +37990,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37844,6 +38075,7 @@
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"

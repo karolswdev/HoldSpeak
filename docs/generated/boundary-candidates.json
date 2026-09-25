@@ -5613,7 +5613,7 @@
     },
     {
       "path": "holdspeak/services/thread_tools.py",
-      "line": 376,
+      "line": 378,
       "kinds": [
         "model_transport"
       ],
@@ -5623,7 +5623,7 @@
     },
     {
       "path": "holdspeak/services/thread_tools.py",
-      "line": 388,
+      "line": 390,
       "kinds": [
         "model_transport"
       ],
