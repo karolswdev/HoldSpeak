@@ -30,6 +30,7 @@ transport keeps its existing response mapping. Contract refusals raise
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, Mapping, Optional
@@ -46,6 +47,11 @@ AUTHORITY_FIELDS: frozenset[str] = frozenset(
     {"principal", "principal_kind", "principal_identity", "actor", "owner",
      "identity", "authority", "as_principal", "on_behalf_of"}
 )
+
+
+#: PHILO-7-02: the kernel outcome of the last ``invoke`` in this context
+#: (``{operation_id, receipt}`` for an admitted call, else ``None``).
+_LAST_KERNEL: ContextVar[Optional[dict[str, Any]]] = ContextVar("operations_last_kernel", default=None)
 
 
 class OperationRefused(ValueError):
@@ -235,6 +241,7 @@ DECISION_CREATE = OperationDescriptor(
     exposure=("http:POST /api/decisions", "mcp:desk.create[kind=decisions]", "mcp:desk.verb[verb_id=desk.create,kind=decisions]"),
     service="primitive_service",
     method="create_decision",
+    admission=Admission("admitted", "A decision made (D3)."),
 )
 
 DECISION_UPDATE = OperationDescriptor(
@@ -262,6 +269,7 @@ DECISION_UPDATE = OperationDescriptor(
     exposure=("http:PUT /api/decisions/{decision_id}", "mcp:desk.update[kind=decisions]", "mcp:desk.verb[verb_id=desk.update,kind=decisions]"),
     service="primitive_service",
     method="update_decision",
+    admission=Admission("admitted", "A decision changed (D3)."),
 )
 
 DECISION_READ = OperationDescriptor(
@@ -282,6 +290,7 @@ DECISION_READ = OperationDescriptor(
     exposure=("http:GET /api/decisions/{decision_id}", "mcp:desk.get[kind=decisions]", "mcp-resource:holdspeak://primitives/decisions/{id}"),
     service="primitive_service",
     method="get_decision",
+    admission=Admission("exempt", "A read: computation without effect (Article XI.5)."),
 )
 
 DECISION_LIST = OperationDescriptor(
@@ -303,6 +312,7 @@ DECISION_LIST = OperationDescriptor(
     exposure=("http:GET /api/decisions", "mcp:desk.list[kind=decisions]"),
     service="primitive_service",
     method="list_decisions",
+    admission=Admission("exempt", "A read: computation without effect (Article XI.5)."),
 )
 
 # ── PHILO-5-02: the rest of the loop ──────────────────────────────────────
@@ -1024,15 +1034,273 @@ KB_LIST = OperationDescriptor(
     admission=_EXEMPT_READ,
 )
 
+# ── PHILO-7-02: membership and the remaining decision operations ─────────
+#
+# The same rules as the rows above: argument NAMES closed, values as permissive
+# as both transports already were; each row names its real PrimitiveService
+# method and its Article XI admission (phase status, "The admission table";
+# the owner's D3 and R4). Story 02 ENFORCES every admission: an admitted call
+# runs the complete kernel path (``holdspeak/services/desk_kernel.py``).
+
+_MEMBERSHIP_RECORD = "the membership record (primitive_id as kind:id, directory_id, created_at, last_modified, deleted)"
+_KB_MEMBER_RECORD = "the knowledge membership record (knowledge_id, resource_ref, created_at, last_modified, deleted)"
+_DECISION_ID = {"type": "string", "description": "The decision id, from desk.list kind=decisions."}
+
+ZONE_FILE = OperationDescriptor(
+    name="zone.file",
+    version=1,
+    description="File one desk object into a zone. An object is in one zone only: filing it again moves it.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "directory_id": {"type": "string", "description": "The zone id, from zone.list."},
+            "primitive_id": {"type": "string", "description": "The object, as kind:id (for a note, note:<id>); a bare id is read as that id's kind."},
+        },
+        "required": ["directory_id", "primitive_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_MEMBERSHIP_RECORD,
+    refusals=_CONTRACT_REFUSALS + (
+        "NotFound: unknown directory",
+        "ConflictError thought_tombstoned: the note belongs to a tombstoned Thought",
+    ),
+    completion="synchronous; zone.members lists it; one desk_changed frame (kind directory, op update) on the hub bus",
+    exposure=("http:PUT /api/directories/{directory_id}/members/{primitive_id}", "mcp:zone.file"),
+    service="primitive_service",
+    method="file_member",
+    admission=Admission("admitted", "A primitive filed; a re-file moves it (D3)."),
+)
+
+ZONE_UNFILE = OperationDescriptor(
+    name="zone.unfile",
+    version=1,
+    description="Take one desk object out of the zone it is filed in.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "directory_id": {"type": "string", "description": "The zone id, from zone.list."},
+            "primitive_id": {"type": "string", "description": "The filed object, as kind:id."},
+        },
+        "required": ["directory_id", "primitive_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result="true",
+    refusals=_CONTRACT_REFUSALS + (
+        "NotFound: the object is not filed in that zone",
+        "ConflictError thought_tombstoned: the note belongs to a tombstoned Thought",
+    ),
+    completion="synchronous; zone.members no longer lists it; one desk_changed frame (kind directory, op update) on the hub bus",
+    exposure=("http:DELETE /api/directories/{directory_id}/members/{primitive_id}", "mcp:zone.unfile"),
+    service="primitive_service",
+    method="unfile_member",
+    admission=Admission("admitted", "The filing relationship removed (R4)."),
+)
+
+ZONE_MEMBERS = OperationDescriptor(
+    name="zone.members",
+    version=1,
+    description="List what is filed in one zone.",
+    args_schema={
+        "type": "object",
+        "properties": {"directory_id": {"type": "string", "description": "The zone id, from zone.list."}},
+        "required": ["directory_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="a list of " + _MEMBERSHIP_RECORD.replace("the membership record", "membership records"),
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown directory",),
+    completion="synchronous",
+    exposure=("http:GET /api/directories/{directory_id}/members", "mcp:zone.list_members", "mcp-resource:holdspeak://zones/{id}/members"),
+    service="primitive_service",
+    method="list_directory_members",
+    admission=_EXEMPT_READ,
+)
+
+KB_MEMBER_ADD = OperationDescriptor(
+    name="kb.member.add",
+    version=1,
+    description="Add one reference (kind:id) to a knowledge base.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "kb_id": {"type": "string", "description": "The knowledge base id, from kb.list."},
+            "resource_ref": {"type": "string", "description": "A kind:id reference, for example note:<id>."},
+        },
+        "required": ["kb_id", "resource_ref"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result=_KB_MEMBER_RECORD,
+    refusals=_CONTRACT_REFUSALS + ("ValueError: resource_ref must be qualified as kind:id | unknown resource kind | Unknown Knowledge",),
+    completion="synchronous; kb.members lists it; one desk_changed frame (kind kb, op update) on the hub bus",
+    exposure=("http:PUT /api/kbs/{kb_id}/members/{resource_ref}", "mcp:kb.add_member"),
+    service="primitive_service",
+    method="add_kb_member",
+    admission=Admission("admitted", "A durable reference filed into a knowledge base (R4)."),
+)
+
+KB_MEMBER_REMOVE = OperationDescriptor(
+    name="kb.member.remove",
+    version=1,
+    description="Remove one reference from a knowledge base.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "kb_id": {"type": "string", "description": "The knowledge base id, from kb.list."},
+            "resource_ref": {"type": "string", "description": "The reference to remove, as kind:id."},
+        },
+        "required": ["kb_id", "resource_ref"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="write",
+    result="true when a live reference was removed, false when there was none",
+    refusals=_CONTRACT_REFUSALS + ("ValueError: resource_ref must be qualified as kind:id | unknown resource kind",),
+    completion="synchronous; kb.members no longer lists it; one desk_changed frame (kind kb, op update) when one was removed",
+    exposure=("http:DELETE /api/kbs/{kb_id}/members/{resource_ref}", "mcp:kb.remove_member"),
+    service="primitive_service",
+    method="remove_kb_member",
+    admission=Admission("admitted", "A durable reference removed from a knowledge base (R4)."),
+)
+
+KB_MEMBERS = OperationDescriptor(
+    name="kb.members",
+    version=1,
+    description="List the references in one knowledge base.",
+    args_schema={
+        "type": "object",
+        "properties": {"kb_id": {"type": "string", "description": "The knowledge base id, from kb.list."}},
+        "required": ["kb_id"],
+        "additionalProperties": False,
+    },
+    principal=_DESK_PRINCIPAL,
+    effect="read",
+    result="a list of knowledge membership records",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown kb",),
+    completion="synchronous",
+    exposure=("http:GET /api/kbs/{kb_id}/members", "mcp:kb.list_members"),
+    service="primitive_service",
+    method="list_kb_members",
+    admission=_EXEMPT_READ,
+)
+
+DECISION_DELETE = OperationDescriptor(
+    name="decision.delete",
+    version=1,
+    description="Withdraw one desk decision (a tombstone).",
+    args_schema={
+        "type": "object",
+        "properties": {"decision_id": _DECISION_ID},
+        "required": ["decision_id"],
+        "additionalProperties": False,
+    },
+    principal=_TRANSPORT_PRINCIPAL,
+    effect="write",
+    result="true",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown decision",),
+    completion="synchronous; decision.read then refuses the id (NotFound); one desk_changed frame (kind decision, op delete) on the hub bus",
+    exposure=("http:DELETE /api/decisions/{decision_id}", "mcp:desk.delete[kind=decisions]", "mcp:desk.verb[verb_id=desk.delete,kind=decisions]"),
+    service="primitive_service",
+    method="delete_decision",
+    admission=Admission("admitted", "A decision withdrawn: a lifecycle change (R4; in the delegation grant by R5)."),
+)
+
+DECISION_STATUS = OperationDescriptor(
+    name="decision.status",
+    version=1,
+    description=(
+        "Set one desk decision's status: proposed (it goes on the review list), accepted, superseded or "
+        "deprecated. Over MCP the same change is desk.update kind=decisions with data status."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "decision_id": _DECISION_ID,
+            "status": {"description": "proposed, accepted, superseded or deprecated."},
+        },
+        "required": ["decision_id"],
+        "additionalProperties": False,
+    },
+    principal=_TRANSPORT_PRINCIPAL,
+    effect="write",
+    result="the updated decision record",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown decision", "ValueError: invalid decision status"),
+    completion="synchronous; decision.read returns the new status; one desk_changed frame (kind decision, op update) on the hub bus",
+    # PHILO-7-02 decides (phase status, "Decisions deferred"): no separately
+    # named MCP tool. MCP reaches the same status mutation as decision.update
+    # (desk.update kind=decisions {status}), which is admitted the same way.
+    exposure=("http:PUT /api/decisions/{decision_id}/status",),
+    service="primitive_service",
+    method="update_decision_status",
+    admission=Admission("admitted", "The same status mutation as the admitted decision.update (R4)."),
+)
+
+DECISION_SUPERSEDE = OperationDescriptor(
+    name="decision.supersede",
+    version=1,
+    description="Replace one desk decision with a new successor: the old one becomes superseded and names the successor.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "decision_id": _DECISION_ID,
+            "successor_id": {"type": "string", "description": "Optional. The successor's id; minted before admission when absent."},
+        },
+        "required": ["decision_id"],
+        "additionalProperties": False,
+    },
+    principal=_TRANSPORT_PRINCIPAL,
+    effect="write",
+    result="the successor decision record",
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown decision",),
+    completion="synchronous; decision.read returns both rows; two desk_changed frames (the old decision updated, the successor created)",
+    exposure=("http:POST /api/decisions/{decision_id}/supersede", "mcp:decision.supersede"),
+    service="primitive_service",
+    method="supersede_decision",
+    admission=Admission("admitted", "A decision replaced: two rows, ONE admission (D3); the successor id is minted before submission."),
+)
+
+# ── PHILO-7-02: the receipt readback (read-only, XI.5) ────────────────────
+
+KERNEL_RECEIPT_READ = OperationDescriptor(
+    name="kernel.receipt.read",
+    version=1,
+    description=(
+        "Read the kernel receipt of one operation: the operation_id a filing or decision write returned. "
+        "An agent reads only its own operations."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {"operation_id": {"type": "string", "description": "The operation_id a write returned."}},
+        "required": ["operation_id"],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport; the kernel's read scope applies (an agent reads only its own operations)",
+    effect="read",
+    result="{view: receipt, consistency: committed, objects: [{ref, operation, receipt, native_receipts}]} (the same answer as GET /api/kernel/read?refs=operation:<id>&view=receipt)",
+    refusals=_CONTRACT_REFUSALS + ("KernelRefused principal_read_scope_required: another principal's operation", "KernelRefused principal_authentication_required"),
+    completion="synchronous; no kernel operation is made",
+    exposure=("mcp:kernel.receipt",),
+    service="kernel_read_service",
+    method="read_receipt",
+    admission=_EXEMPT_READ,
+)
+
 #: The Phase 7 slice table: (desk kind, verb) -> operation. The MCP ``desk.*``
 #: tools, the ``desk.verb`` aliases and the primitive resource read it; every
 #: row names a descriptor above. Workflows and chains are not in it (their
-#: owning slice), and ``decision.delete`` is story 02's.
+#: owning slice).
 DESK_OPERATIONS: Mapping[tuple[str, str], str] = MappingProxyType({
     ("decision", "list"): "decision.list",
     ("decision", "get"): "decision.read",
     ("decision", "create"): "decision.create",
     ("decision", "update"): "decision.update",
+    ("decision", "delete"): "decision.delete",
     ("note", "list"): "note.list",
     ("note", "get"): "note.read",
     ("note", "create"): "note.create",
@@ -1064,6 +1332,9 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     NOTE_CREATE, NOTE_READ, NOTE_UPDATE, NOTE_DELETE, NOTE_LIST,
     ZONE_CREATE, ZONE_READ, ZONE_UPDATE, ZONE_DELETE, ZONE_LIST,
     KB_CREATE, KB_READ, KB_UPDATE, KB_DELETE, KB_LIST,
+    ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
+    DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
+    KERNEL_RECEIPT_READ,
 )
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
@@ -1111,6 +1382,28 @@ class OperationRegistry:
         if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
             raise OperationOwnerRequired(name)
 
+    def invoke_receipted(
+        self,
+        principal: Any,
+        name: str,
+        args: Optional[Mapping[str, Any]] = None,
+        *,
+        held: Optional[Mapping[str, Any]] = None,
+    ) -> tuple[Any, Optional[dict[str, Any]]]:
+        """:meth:`invoke`, plus ``{operation_id, receipt}`` when the call was ADMITTED.
+
+        PHILO-7-02: an admitted call runs the complete kernel path around the
+        service call (``holdspeak/services/desk_kernel.py``); the second value
+        is its terminal receipt, ``None`` for an exempt call. It calls
+        :meth:`invoke` itself, so every transport still passes through the one
+        ``invoke`` (the recording fences read it).
+        """
+        # ``held`` only when given: a recording fence may wrap ``invoke`` with
+        # the three-argument signature every transport uses.
+        result = (self.invoke(principal, name, args) if held is None
+                  else self.invoke(principal, name, args, held=held))
+        return result, _LAST_KERNEL.get()
+
     def invoke(
         self,
         principal: Any,
@@ -1125,6 +1418,7 @@ class OperationRegistry:
         ``held`` (PHILO-5-02, gap E) -- exactly those, or the call is a
         transport bug and fails before the service runs.
         """
+        _LAST_KERNEL.set(None)
         bound = self._bound(name)
         self.authorize(principal, name)
         given_held = dict(held or {})
@@ -1134,22 +1428,130 @@ class OperationRegistry:
                 f"it passed {sorted(given_held)}"
             )
         payload = {} if args is None else args
-        if not isinstance(payload, Mapping):
-            raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: expected an object")
-        claimed = sorted(AUTHORITY_FIELDS & set(payload))
-        if claimed:
-            raise OperationRefused(
-                "authority_in_arguments", name,
-                f"Invalid arguments for {name}: {', '.join(claimed)} cannot be an argument; "
-                "the principal comes from the transport",
-            )
         try:
-            Draft202012Validator(dict(bound.descriptor.args_schema)).validate(dict(payload))
-        except JsonSchemaValidationError as exc:
-            location = ".".join(str(part) for part in exc.absolute_path)
-            detail = f"{location}: {exc.message}" if location else exc.message
-            raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
+            if not isinstance(payload, Mapping):
+                raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: expected an object")
+            claimed = sorted(AUTHORITY_FIELDS & set(payload))
+            if claimed:
+                raise OperationRefused(
+                    "authority_in_arguments", name,
+                    f"Invalid arguments for {name}: {', '.join(claimed)} cannot be an argument; "
+                    "the principal comes from the transport",
+                )
+            try:
+                Draft202012Validator(dict(bound.descriptor.args_schema)).validate(dict(payload))
+            except JsonSchemaValidationError as exc:
+                location = ".".join(str(part) for part in exc.absolute_path)
+                detail = f"{location}: {exc.message}" if location else exc.message
+                raise OperationRefused("invalid_arguments", name, f"Invalid arguments for {name}: {detail}") from exc
+        except OperationRefused as exc:
+            # R2 class 3: a contract refusal of an identifiable consequential
+            # attempt keeps its named error AND leaves a refusal receipt.
+            self._refusal_receipt(exc, principal, name, payload)
+            raise
+        if self._admits(bound, payload):
+            # PHILO-7-02: Article XI -- the complete kernel path around the call.
+            from holdspeak.services import desk_kernel
+
+            if not isinstance(getattr(principal, "kind", None), PrincipalKind) or principal.kind is PrincipalKind.NONE:
+                # No transport hands an admitted write a missing principal (the
+                # hub's edge refuses the unauthenticated first); a caller that
+                # does is refused by name, never written without a receipt.
+                raise OperationRefused(
+                    "principal_required", name,
+                    f"{name} is admitted under Article XI and needs the transport's authenticated principal",
+                )
+
+            result, kernel = desk_kernel.run(
+                _database_of(bound.target), principal, name, payload,
+                lambda minted: bound.call(principal, **minted, **given_held),
+            )
+            _LAST_KERNEL.set(kernel)
+            return result
         return bound.call(principal, **dict(payload), **given_held)
+
+    @staticmethod
+    def _admits(bound: BoundOperation, payload: Mapping[str, Any]) -> bool:
+        """The descriptor's admission over the validated arguments (stored state where it says so)."""
+        admission = bound.descriptor.admission
+        if admission is None:
+            return False
+        admits = admission.admits(payload)
+        if admits is None:
+            # A stored-state condition: a Thought's note (note.delete).
+            owns = getattr(bound.target, "thought_owns_note", None)
+            return bool(owns(payload.get("note_id"))) if callable(owns) else False
+        return admits
+
+    def consequential(self, name: str, raw: Any) -> bool:
+        """R2: an identifiable operation the admission table ADMITS, from a malformed raw payload.
+
+        ``admitted``: always. ``admitted_if`` with an argument condition: when
+        the raw payload is an object that carries an admission argument and the
+        condition holds over it. A non-object payload for a conditional
+        operation, a stored-state condition and every exempt operation: no
+        (the protocol-refusal boundary; no effect is invented to journal).
+        """
+        bound = self.operations.get(name)
+        admission = None if bound is None else bound.descriptor.admission
+        if admission is None or admission.rule == "exempt":
+            return False
+        if admission.rule == "admitted":
+            return True
+        if not isinstance(raw, Mapping):
+            return False
+        if admission.holds is None:
+            # A stored-state condition (a Thought's note): when the id the
+            # attempt names makes it admitted, its refusal owes a receipt too.
+            owns = getattr(bound.target, "thought_owns_note", None)
+            try:
+                return bool(owns(raw.get("note_id"))) if callable(owns) else False
+            except Exception:
+                return False
+        if not set(admission.arguments) & set(raw):
+            return False
+        try:
+            return bool(admission.holds(raw))
+        except Exception:
+            return False
+
+    def refuse(self, principal: Any, name: str, code: str, raw: Any) -> Optional[dict[str, Any]]:
+        """Class 3 and 4: a refusal receipt for a consequential attempt refused before the service.
+
+        ``None`` (and nothing written) when the attempt is not identifiable as
+        consequential. The caller keeps raising its own named error.
+        """
+        if not self.consequential(name, raw):
+            return None
+        from holdspeak.services import desk_kernel
+
+        return desk_kernel.refuse(_database_of(self.operations[name].target), principal, name, code, raw)
+
+    def _refusal_receipt(self, exc: OperationRefused, principal: Any, name: str, raw: Any) -> None:
+        kernel = self.refuse(principal, name, exc.code, raw)
+        if kernel is not None:
+            exc.kernel = kernel  # type: ignore[attr-defined]
+
+    def update_args(
+        self, principal: Any, data: Mapping[str, Any], item_id: str, *,
+        operation: str = "decision.update", id_field: str = "decision_id",
+    ) -> dict[str, Any]:
+        """:func:`update_args` with the class-4 refusal receipt (a duplicate id in the data)."""
+        try:
+            return update_args(data, item_id, operation=operation, id_field=id_field)
+        except OperationRefused as exc:
+            self._refusal_receipt(exc, principal, operation, data)
+            raise
+
+
+def _database_of(target: Any) -> Any:
+    """The database the bound service writes through (the kernel journal lives beside it)."""
+    database = getattr(target, "_db", None)
+    if database is None:
+        from holdspeak.db import get_database
+
+        database = get_database()
+    return database
 
 
 def update_args(

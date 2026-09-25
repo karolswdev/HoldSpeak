@@ -1266,6 +1266,16 @@ class MeetingWebServer:
                 recover_inference_on_startup()
             except Exception as e:
                 log.error(f"inference startup recovery failed: {e}")
+            # PHILO-7-02 (T6): a desk write left admitting/awaiting_decision by a
+            # dead process ends indeterminate with its receipt (never resumed).
+            try:
+                from .kernel.desk_broker import recover_on_startup as recover_desk_on_startup
+
+                recovered_desk = recover_desk_on_startup(_kernel_service())
+                if recovered_desk:
+                    log.info(f"desk: {recovered_desk} interrupted desk write(s) ended indeterminate")
+            except Exception as e:
+                log.error(f"desk startup recovery failed: {e}")
             self._loop = asyncio.get_running_loop()
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())

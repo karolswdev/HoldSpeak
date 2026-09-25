@@ -10137,7 +10137,7 @@
         {
           "path": "holdspeak/runtime/composition.py",
           "symbol": "brief_clock",
-          "line": 503,
+          "line": 506,
           "claim": "the hub's one brief service (HTTP and MCP, PHILO-5-02) takes the clock the composition wires (None = the wall clock)"
         },
         {
@@ -12294,7 +12294,7 @@
         {
           "path": "holdspeak/runtime/composition.py",
           "symbol": "brief_clock",
-          "line": 503,
+          "line": 506,
           "claim": "the hub's brief service's producer clock is injectable; the rig's own hub moves it for HTTP and MCP alike (clock.python_wall, producer-clock)"
         }
       ],
@@ -12397,7 +12397,7 @@
     {
       "id": "clock.python_wall",
       "source": "datetime.datetime.now() inside the hub process; for the brief producer it is MondayBriefService's one clock (holdspeak/services/monday_brief_service.py:142, read by generate at :197)",
-      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the hub's one brief service (holdspeak/runtime/composition.py:503; PHILO-5-02: the brief routes and MCP both reach it through holdspeak/operations.py). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub, for HTTP and for MCP calls that reach that hub; the machine clock and other producers (heartbeat, cadence, SQL datetime('now')) are not moved.",
+      "mechanism": "producer-clock (PHILO-3-03): the brief producer takes ONE injectable clock, MondayBriefService(clock=), default the wall clock, wired from the app factory MeetingWebServer(brief_clock=) -> WebContext.brief_clock -> the hub's one brief service (holdspeak/runtime/composition.py:506; PHILO-5-02: the brief routes and MCP both reach it through holdspeak/operations.py). The rig's OWN hub passes the wall clock plus an offset from a file in the run's HOME; the clock step (adapter producer-clock, advance_days) writes the offset. It moves ONLY the brief producer's day in the rig's hub, for HTTP and for MCP calls that reach that hub; the machine clock and other producers (heartbeat, cadence, SQL datetime('now')) are not moved.",
       "status": "available",
       "used_by": [
         "case.j10.arrival_generate_again.next_day"

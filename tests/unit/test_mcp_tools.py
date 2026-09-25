@@ -153,9 +153,8 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     assert retired is not None
     assert retired["result"]["isError"] is True
     assert "retired" in retired["result"]["content"][0]["text"]
-    assert call("zone.file", {"directory_id": "dir", "primitive_id": "note:1"})["directory_id"] == "dir"
-    assert call("zone.unfile", {"directory_id": "dir", "primitive_id": "note:1"}) == {"deleted": True, "id": "note:1"}
-    assert call("zone.list_members", {"directory_id": "dir"}) == [{"directory_id": "dir"}]
-    assert call("kb.add_member", {"kb_id": "kb", "ref": "note:1"})["resource_ref"] == "note:1"
-    assert call("kb.remove_member", {"kb_id": "kb", "ref": "note:1"}) == {"deleted": True, "id": "note:1"}
-    assert call("kb.list_members", {"kb_id": "kb"}) == [{"kb_id": "kb"}]
+    # PHILO-7-02: the membership tools are declared operations now (zone.file,
+    # zone.unfile, zone.members, kb.member.add/remove, kb.members), bound to a
+    # REAL PrimitiveService and admitted through the real kernel; this dict
+    # double cannot stand in for them. Their dispatch, envelopes and receipts
+    # are fenced on the real hub: tests/unit/test_philo7_membership_decisions.py.

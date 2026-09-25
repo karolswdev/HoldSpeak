@@ -24099,6 +24099,84 @@
         ]
       }
     },
+    "/api/settings/remote/delegations/{identity}": {
+      "delete": {
+        "operationId": "revoke_delegation_api_settings_remote_delegations__identity__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Delegation",
+        "tags": [
+          "mcp-http"
+        ]
+      },
+      "put": {
+        "operationId": "grant_delegation_api_settings_remote_delegations__identity__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Grant Delegation",
+        "tags": [
+          "mcp-http"
+        ]
+      }
+    },
     "/api/settings/secrets/{secret_id}": {
       "delete": {
         "operationId": "api_delete_secret_api_settings_secrets__secret_id__delete",

@@ -1,0 +1,118 @@
+# PHILO-7-02 deliberate mutations on the branch: each applied, its fence run, the file restored (no git verb).
+
+m1 approval selects the LIVE row by identity (F2)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f2_a_regrant_before_approval_never_approves_the_older_operation
+  E   Failed: DID NOT RAISE <class 'holdspeak.kernel.model.KernelRefused'>
+  1 failed in 0.47s
+m2 drop expires_at from the hash (F3)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f3_the_expiry_is_inside_the_hash_and_the_basis_keeps_its_prefix
+  E   AssertionError: assert 'sha256:e729bb59acf34ba42021d1c7f5c79cb7a35dbbab687e747812f7bb8765aad15c' != 'sha256:e729bb59acf34ba42021d1c7f5c79cb7a35dbbab687e747812f7bb8765aad15c'
+  1 failed in 0.49s
+m3 split(':') without the limit (F3)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f3_the_expiry_is_inside_the_hash_and_the_basis_keeps_its_prefix
+  E   AssertionError: assert None == ('deskdeleg_adee65b220b04566afd928f967b5618e', 'sha256:e6b672a888269444128376087cc247f95949e502fb1528c11411069e2131e1b1')
+  1 failed in 0.46s
+m4 remove the approval re-check (F4)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f4_revoke_between_admission_and_approval
+  E   Failed: DID NOT RAISE <class 'holdspeak.kernel.model.KernelRefused'>
+  1 failed in 0.45s
+m5 check state != LIVE before expiry (F5b)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f5_expiry_between_admission_and_approval_and_f5b_the_code_stays_expired
+  E   AssertionError: assert ('refused' == 'refused'
+  1 failed in 0.47s
+m6 admission returns _required whenever no LIVE row (F5c)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f5c_admission_codes_match_the_history
+  E   AssertionError: assert 'desk_delegation_required' == 'desk_delegation_revoked'
+  1 failed in 0.61s
+m7 remove the desk validate_claim (F6/F7)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f6_f7_f8_a_change_between_approval_and_the_claim_refuses_the_claim
+  E   AssertionError: assert ([{'claim_witn...laimed', ...}] == []
+  1 failed in 0.45s
+m8 raise at approval before the receipt (F10)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f10_a_refusal_at_approval_ends_refused_with_the_receipt_on_the_error
+  E   AssertionError: assert ('awaiting_decision' == 'refused'
+  1 failed in 0.46s
+m9 terminalise every agent refusal at decide (F10b)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f10b_a_tool_call_self_decide_still_waits_with_no_receipt
+  E   AssertionError: assert 'desk_delegation_required' == 'owner_princi...red_to_decide'
+  1 failed in 0.69s
+m10 drop the caller-identity bind (F10c)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f10c_another_agent_can_neither_end_nor_approve_it
+  E   Failed: DID NOT RAISE <class 'holdspeak.kernel.model.KernelRefused'>
+  1 failed in 0.46s
+m11 terminalise without the state check (F10d)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f10d_a_repeated_decide_after_the_end_keeps_the_one_receipt
+  E   AssertionError: assert ('operation_already_terminal' == 'owner_princi...red_to_decide'
+  1 failed in 0.46s
+m12 strict=False at approval (F10e)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f10e_a_winner_between_the_state_read_and_the_seam
+  E   AssertionError: assert (['op_a502d8aa79814aebbfd773aafe4a1bf2'] and 'desk_delegation_revoked' == 'operation_already_terminal'
+  1 failed in 0.46s
+m13 drop the re-grant UPDATE (F17)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f17_one_live_grant_per_identity
+  E   sqlite3.IntegrityError: UNIQUE constraint failed: kernel_desk_delegations.agent_identity
+  1 failed in 0.46s
+m14 two-step T1 (create_operation, then add_receipt) (F20)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f20_t1_an_admission_refusal_is_all_or_nothing
+  E   assert 1 == 0
+  1 failed in 0.45s
+m15 two-step T5 (transition, then the receipt) (F20)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f20_every_desk_end_is_atomic
+  E   AssertionError: T5 claim: an ended operation with no receipt
+  1 failed, 2 passed in 0.74s
+m16 T4 without decision='reject' (F24)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f24_one_connection_per_atomic_write
+  E   AssertionError: assert ('refused', None) == ('refused', 'reject')
+  1 failed in 0.48s
+m17 the T9 effect calls a store method (F24)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f24_one_connection_per_atomic_write
+  E   AssertionError: a second connection opened inside an atomic write
+  1 failed in 0.48s
+m18 the grant write committed outside the receipt transaction (F21b)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f21b_a_fault_inside_the_t9_effect_rolls_the_grant_back
+  E   AssertionError: assert ('REVOKED', 1...wner_revoked') == ('LIVE', 1000.0, '')
+  1 failed in 0.46s
+m19 the chip reads the stored state column only (F15)
+  fence: tests/unit/test_philo7_grant_lifecycle.py::test_f15_the_projection_is_allowed_iff_the_kernel_admits
+  E   AssertionError: assert ('LIVE' == 'EXPIRED'
+  1 failed in 0.45s
+m20 spec capability 'owner' for the delegation operations (F16)
+  fence: tests/unit/test_philo7_article_xi.py::test_an_agent_cannot_grant_or_revoke_and_the_edge_refuses_the_unauthenticated
+  E   AssertionError: {"error":"declared_capability_required","detail":"The kernel refused delegation.grant: declared_capability_required","status":403,"operation_id":"op_a5195167f66a4b24a47322f4b4f7c92e","receipt":{"receipt_id":"rcpt_ce33d7629db94ee1bffc2abfc6409900","operation_id
+  1 failed in 1.21s
+m21 the grant hook moved into AgentCredentialStore.revoke (F14)
+  fence: tests/unit/test_philo7_article_xi.py::test_f14_self_revoke_and_ttl_cleanup_leave_the_grant_live
+  E   AssertionError: assert ['REVOKED'] == ['LIVE']
+  1 failed in 1.22s
+m22 remove the credential before the grant (F21a)
+  fence: tests/unit/test_philo7_article_xi.py::test_f21a_the_owner_credential_revoke_ends_the_grant_first
+  E   AssertionError: []
+  1 failed in 1.22s
+m23 an exempt row admitted: kb.delete (the exempt fence)
+  fence: tests/unit/test_philo7_article_xi.py::test_the_exempt_rows_make_no_operation
+  E   AssertionError: assert 500 == 200
+  1 failed in 1.27s
+m24 every refusal is consequential (the protocol boundary)
+  fence: tests/unit/test_philo7_article_xi.py::test_the_protocol_boundary_leaves_no_receipt
+  E   AssertionError: an exempt or protocol-refused call made a kernel operation
+  1 failed in 1.23s
+m25 no class-4 receipt for non-object MCP arguments
+  fence: tests/unit/test_philo7_article_xi.py::test_class_4_adapter_refusals_before_invoke
+  E   AssertionError: []
+  1 failed in 1.23s
+m26 the orphan ledger row reads the stored state (F23 expired case)
+  fence: tests/unit/test_philo7_article_xi.py::test_f22_f23_a_grant_with_no_credential_is_listed_time_aware_and_revocable
+  E   AssertionError: assert ['LIVE'] == ['EXPIRED']
+  1 failed in 1.93s
+m27 the startup recovery skipped (F11, real restart)
+  fence: tests/unit/test_philo7_grant_restart.py
+  E   AssertionError: assert [] == [('indetermin...ng_decision')]
+  1 failed in 3.12s
+mf1 the face: the receipt well rendered inside the removable ledger
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_revoke_credential_ends_the_grant_first_and_the_receipt_survives_the_row
+  E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded.
+  1 failed in 16.64s
+mf2 the face: the grant chip follows the credential's active flag
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlass::test_allow_stop_and_a_refused_stop_on_the_rendered_row
+  E   assert 1 == 0
+  1 failed in 8.44s

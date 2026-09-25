@@ -1,0 +1,11 @@
+# PHILO-7-02: scripts/residual_census.py --check --root <git archive copy of main 9800a603> with the branch's set
+NEW residual identity (not in the set): ('mcp', 'decision.supersede', '')
+NEW residual identity (not in the set): ('mcp', 'desk.delete', 'kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'desk.verb', 'verb_id=desk.delete,kind=decisions')
+NEW residual identity (not in the set): ('mcp', 'kb.add_member', '')
+NEW residual identity (not in the set): ('mcp', 'kb.list_members', '')
+NEW residual identity (not in the set): ('mcp', 'kb.remove_member', '')
+NEW residual identity (not in the set): ('mcp', 'zone.file', '')
+NEW residual identity (not in the set): ('mcp', 'zone.list_members', '')
+NEW residual identity (not in the set): ('mcp', 'zone.unfile', '')
+RESIDUAL FENCE RED: 9 problem(s) against /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/main-copy

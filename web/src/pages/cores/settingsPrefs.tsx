@@ -607,11 +607,15 @@ export type PrefReceipt = {
 export function PrefStatusBar({
   onBack,
   receipt,
+  grantReceipt,
   hubWrittenAt,
 }: {
   /** Absent on the drawer face — the egress badge sits there instead. */
   onBack?: () => void;
   receipt: PrefReceipt;
+  /** PHILO-7-02: the last grant act's receipt Button, in the footer's CENTRE
+   *  slot (away from the resize grip). */
+  grantReceipt?: ReactNode;
   /** HS-170-04: writtenAt from the hub wire (epoch seconds), shown on
    *  the drawer face as WRITTEN HH:MM; module-level receipt overrides. */
   hubWrittenAt?: string | null;
@@ -644,7 +648,7 @@ export function PrefStatusBar({
     );
   else center = null; /* HS-139-07: no dangling "USING" when idle */
   return (
-    <SurfaceFooter verbs={<>
+    <SurfaceFooter receipt={grantReceipt ?? undefined} verbs={<>
       {onBack ? (
         <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
           « PREFS

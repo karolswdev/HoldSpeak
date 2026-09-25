@@ -255,6 +255,60 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/notes.py::build_notes_router._svc",
       "discriminator": "PrimitiveService"
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "decision.supersede",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=decisions"
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=decisions"
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "kb.add_member",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "kb.list_members",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "kb.remove_member",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "zone.file",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "zone.list_members",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-02",
+      "transport": "mcp",
+      "entry_point": "zone.unfile",
+      "discriminator": ""
     }
   ],
   "public_tools_added": [
@@ -272,6 +326,11 @@
       "story": "PHILO-5-02",
       "tool": "monday_brief.shelf_read",
       "operation": "brief.shelf.read"
+    },
+    {
+      "story": "PHILO-7-02",
+      "tool": "kernel.receipt",
+      "operation": "kernel.receipt.read"
     }
   ],
   "moved": [
@@ -285,11 +344,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 293,
-    "residual_mcp": 232,
+    "residual_identities": 284,
+    "residual_mcp": 223,
     "residual_http": 61,
     "http_constructions": 63,
-    "public_tools": 228
+    "public_tools": 229
   },
   "entries": [
     {
@@ -444,12 +503,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "decision.supersede",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "decision_record.create_from_desk",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
@@ -488,12 +541,6 @@
       "transport": "mcp",
       "entry_point": "desk.create",
       "discriminator": "kind=chains",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.delete",
-      "discriminator": "kind=decisions",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
     {
@@ -578,12 +625,6 @@
       "transport": "mcp",
       "entry_point": "desk.verb",
       "discriminator": "verb_id=desk.update,kind=chains",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.delete,kind=decisions",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
     },
     {
@@ -741,24 +782,6 @@
       "entry_point": "interview.suggest",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/interview.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "kb.add_member",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "kb.list_members",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "kb.remove_member",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "mcp",
@@ -1665,24 +1688,6 @@
       "entry_point": "workflow.run",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "zone.file",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "zone.list_members",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "zone.unfile",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "http",

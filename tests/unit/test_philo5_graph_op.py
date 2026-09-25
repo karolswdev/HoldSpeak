@@ -36,8 +36,9 @@ def _resource_result(value):
 
 
 def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target():
-    # PHILO-5's seventeen, then PHILO-7-01's fifteen desk-slice rows.
-    assert len(gw.OP_MCP_PROJECTIONS) == 32
+    # PHILO-5's seventeen, PHILO-7-01's fifteen desk-slice rows, then
+    # PHILO-7-02's nine (decision.status is HTTP only: OP_HTTP_ONLY).
+    assert len(gw.OP_MCP_PROJECTIONS) == 41
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
@@ -47,7 +48,11 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "note.create", "note.read", "note.update", "note.delete", "note.list",
         "zone.create", "zone.read", "zone.update", "zone.delete", "zone.list",
         "kb.create", "kb.read", "kb.update", "kb.delete", "kb.list",
+        "zone.file", "zone.unfile", "zone.members",
+        "kb.member.add", "kb.member.remove", "kb.members",
+        "decision.delete", "decision.supersede", "kernel.receipt.read",
     }
+    assert gw.OP_HTTP_ONLY == {"decision.status"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 
@@ -59,7 +64,9 @@ def test_canonical_map_matches_live_operation_exposure_projection():
     from holdspeak.operations import DESCRIPTORS
 
     descriptors = {descriptor.name: descriptor for descriptor in DESCRIPTORS}
-    assert set(descriptors) == set(gw.OP_MCP_PROJECTIONS)
+    assert set(descriptors) == set(gw.OP_MCP_PROJECTIONS) | gw.OP_HTTP_ONLY
+    for name in gw.OP_HTTP_ONLY:
+        assert not [e for e in descriptors[name].exposure if e.startswith("mcp")], name
     for name, projection in gw.OP_MCP_PROJECTIONS.items():
         prefix = "mcp-resource:" if projection["kind"] == "resource" else "mcp:"
         exposed = [entry[len(prefix):] for entry in descriptors[name].exposure

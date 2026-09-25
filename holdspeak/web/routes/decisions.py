@@ -85,9 +85,39 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         try: return JSONResponse(service().transition(_principal(request),decision_id,"reject",{}))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/supersede")
-    async def supersede_decision(decision_id: str,request: Request,payload: dict[str,Any]=Body(default={})) -> Any:
+    async def supersede_decision(decision_id: str,request: Request,payload: Any=Body(default=None)) -> Any:
+        # PHILO-7-02: this router answers the path in the hub (it is included
+        # before the primitives router). A DESK decision's supersede is the
+        # contract's admitted decision.supersede on the hub's one
+        # PrimitiveService (one operation, one receipt, the desk_changed
+        # frames); before, this branch wrote both rows by hand, outside the
+        # contract and without a frame. A meeting decision keeps the lifecycle.
+        # Round two (Astra finding 2): an id that names NO decision is the
+        # desk operation's too, so its NotFound leaves the refusal receipt MCP
+        # already left; a non-object body on a desk decision is refused with
+        # its receipt (FastAPI answered 422 before, with none).
+        db = _database()
+        if db.desk_decisions.get(decision_id) is not None or db.decisions.get(decision_id) is None:
+            registry = desk_ops()
+            if payload is not None and not isinstance(payload, dict):
+                kernel = registry.refuse(_principal(request), "decision.supersede", "invalid_arguments",
+                                         {"decision_id": decision_id}) or {}
+                return JSONResponse({"detail": [{"type": "dict_type", "loc": ["body"],
+                                                 "msg": "Input should be a valid dictionary"}], **kernel},
+                                    status_code=422)
+            try:
+                decision, kernel = registry.invoke_receipted(
+                    _principal(request), "decision.supersede", {"decision_id": decision_id})
+                return JSONResponse({"decision": decision, **(kernel or {})}, status_code=201)
+            except NotFound as exc:
+                return JSONResponse({"error": "decision_not_found", **(getattr(exc, "kernel", None) or {})}, status_code=404)
+            except ServiceError as exc:
+                return _error(exc)
+        if payload is not None and not isinstance(payload, dict):
+            return JSONResponse({"detail": [{"type": "dict_type", "loc": ["body"],
+                                             "msg": "Input should be a valid dictionary"}]}, status_code=422)
         try:
-            result=service().supersede(_principal(request),decision_id,payload)
+            result=service().supersede(_principal(request),decision_id,payload or {})
             return JSONResponse({k:v for k,v in result.items() if k != "_status"},status_code=result.get("_status",200))
         except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/promote/{artifact_type}")

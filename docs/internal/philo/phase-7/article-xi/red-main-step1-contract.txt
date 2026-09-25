@@ -1,0 +1,52 @@
+# PHILO-7-02 step 1 red on a git archive copy of main 9800a603, the branch's test file overlaid (HOME isolated)
+# python -m pytest -q -rf tests/unit/test_philo7_membership_decisions.py
+# Counted behavioural reds: test_http_routes_go_through_invoke, test_mcp_tools_verbs_and_the_resource_go_through_invoke (the one registry never saw these calls on main).
+# NOT counted (missing symbol / unknown operation on main): KeyError / Unknown operation rows.
+E       KeyError: 'zone.file'
+E       KeyError: 'zone.unfile'
+E       KeyError: 'zone.members'
+E       KeyError: 'kb.member.add'
+E       KeyError: 'kb.member.remove'
+E       KeyError: 'kb.members'
+E       KeyError: 'decision.delete'
+E       KeyError: 'decision.status'
+E       KeyError: 'decision.supersede'
+E           AssertionError: decision.create
+E           assert (None is not None)
+E            +  where None = OperationDescriptor(name='decision.create', version=1, description="Record one desk decision. Every field is optional;...te,kind=decisions]'), service='primitive_service', method='create_decision', held=(), owner_only=False, admission=None).admission
+E       KeyError: ('decision', 'delete')
+E           holdspeak.operations.OperationRefused: Unknown operation: zone.file
+E       AssertionError: assert [] == ['zone.file',....remove', ...]
+E         
+E         Right contains 9 more items, first extra item: 'zone.file'
+E         Use -v to get more diff
+E       AssertionError: assert [] == ['zone.file',...members', ...]
+E         
+E         Right contains 10 more items, first extra item: 'zone.file'
+E         Use -v to get more diff
+E       AssertionError: assert set() == {('mcp', 'dec...er', ''), ...}
+E         
+E         Extra items in the right set:
+E         ('mcp', 'desk.verb', 'verb_id=desk.delete,kind=decisions')
+E         ('mcp', 'desk.delete', 'kind=decisions')
+E         ('mcp', 'decision.supersede', '')
+E         ('mcp', 'kb.list_members', '')
+E         ('mcp', 'zone.unfile', '')...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[zone.file]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[zone.unfile]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[zone.members]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[kb.member.add]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[kb.member.remove]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[kb.members]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[decision.delete]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[decision.status]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_each_row_names_its_real_method_and_its_admission[decision.supersede]
+FAILED tests/unit/test_philo7_membership_decisions.py::test_the_decision_rows_and_the_receipt_read_declare_their_admission
+FAILED tests/unit/test_philo7_membership_decisions.py::test_decision_delete_joins_the_desk_table
+FAILED tests/unit/test_philo7_membership_decisions.py::test_the_nine_are_bound_to_the_hubs_one_instance
+FAILED tests/unit/test_philo7_membership_decisions.py::test_http_routes_go_through_invoke
+FAILED tests/unit/test_philo7_membership_decisions.py::test_mcp_tools_verbs_and_the_resource_go_through_invoke
+FAILED tests/unit/test_philo7_membership_decisions.py::test_the_residual_set_paid_exactly_the_enumerated_identities
+15 failed, 1 passed in 4.12s

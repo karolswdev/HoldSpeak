@@ -74,6 +74,8 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "decision_record.create_from_desk":    ("effect_proposal",   False),
     "decision_record.search":              ("evidence_read",     False),
     "decision.supersede":                  ("effect_proposal",   False),
+    # PHILO-7-02: the receipt readback (read-only; not offered to a chat turn).
+    "kernel.receipt":                      ("evidence_read",     False),
     # --- pipeline events ---
     "pipeline.events":    ("evidence_read",     False),
     # --- follow-through ---

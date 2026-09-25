@@ -11,6 +11,7 @@ import uuid
 from collections.abc import Mapping
 from typing import Any
 
+from . import journal_atomic as _atomic
 from .journal_txn import append_record
 from .journal_txn import json_encode as _json
 from .journal_txn import record_hash as _hash
@@ -19,12 +20,7 @@ from .runner_receipt_evidence import consume_runner_receipt_evidence
 
 # Receipt readers must see the executing scheduler separately from the owner
 # who delegated it; every receipt read path returns this same joined shape.
-_RECEIPT_SQL = (
-    "SELECT r.*, o.principal_kind AS actor_kind, o.principal_identity AS actor_identity,"
-    " o.delegator_kind, o.delegator_identity, o.authority_basis, o.target_ref"
-    " FROM kernel_receipts r JOIN kernel_operations o ON o.operation_id=r.operation_id"
-    " WHERE r.operation_id=?"
-)
+_RECEIPT_SQL = _atomic.RECEIPT_SQL
 
 
 class JournalStore:
@@ -134,25 +130,14 @@ class JournalStore:
                 if str(existing["envelope_sha256"]) != values["envelope_sha256"]:
                     raise KernelRefused("idempotency_payload_mismatch", operation_id=str(existing["operation_id"]))
                 return self._operation(existing)
-            conn.execute(
-                """INSERT INTO kernel_operations(
-                    operation_id,request_id,idempotency_key,name,version,principal_kind,
-                    principal_identity,target_ref,placement,envelope_sha256,policy_version,
-                    authority_basis,state,revision,native_id,parent_operation_id,
-                    correlation_id,delegator_kind,delegator_identity,created_at,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    values["operation_id"], values["request_id"], values["idempotency_key"],
-                    values["name"], values["version"], values["principal_kind"],
-                    values["principal_identity"], values["target_ref"], values["placement"],
-                    values["envelope_sha256"], values["policy_version"],
-                    values["authority_basis"], values["state"], 1, values["native_id"],
-                    values.get("parent_operation_id", ""), values.get("correlation_id", ""),
-                    values.get("delegator_kind", ""), values.get("delegator_identity", ""),
-                    self._clock(), self._clock(),
-                ),
-            )
+            _atomic.insert_operation(conn, values, self._clock())
         return self.operation(str(values["operation_id"]))
+
+    def create_refused_with_receipt(self, values: Mapping[str, Any], outcome: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        """T1 (PHILO-7-02): the refused row and its receipt in ONE transaction (``journal_atomic``)."""
+        operation, receipt = _atomic.create_refused_with_receipt(self, values, outcome)
+        return self._operation(operation), (dict(receipt) if receipt is not None else {})
+
     def operation(self, operation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
@@ -371,32 +356,17 @@ class JournalStore:
 
     def transition_and_receipt(
         self, operation_id: str, expected_revision: int, state: str, outcome: str,
-        result_ref: str = "", *, runner_evidence: Any = None,
+        result_ref: str = "", *, runner_evidence: Any = None, **atomic: Any,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """Durably couple a claimed operation's terminal state and receipt."""
-        receipt_id = "rcpt_" + uuid.uuid4().hex
+        """Durably couple an operation's terminal state and receipt, on ONE connection.
+
+        PHILO-7-02: ``journal_atomic.transition_and_receipt`` holds the order
+        and the four keywords (``strict``, ``decision``, ``warrant_revoked``,
+        ``effect``); the inference attestation stays here, inside its transaction.
+        """
         secret = self._secret()
-        with self._connection() as conn:
-            existing = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
-            if existing is not None:
-                return self._operation(conn.execute(
-                    "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
-                ).fetchone()), dict(existing)
-            result = conn.execute(
-                "UPDATE kernel_operations SET state=?,revision=revision+1,updated_at=? "
-                "WHERE operation_id=? AND revision=?",
-                (state, self._clock(), operation_id, expected_revision),
-            )
-            if result.rowcount != 1:
-                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
-            conn.execute(
-                "INSERT INTO kernel_receipts(receipt_id,operation_id,state,outcome,result_ref,created_at) VALUES(?,?,?,?,?,?)",
-                (receipt_id, operation_id, state, outcome, result_ref, self._clock()),
-            )
-            operation = conn.execute(
-                "SELECT * FROM kernel_operations WHERE operation_id=?", (operation_id,)
-            ).fetchone()
-            receipt = conn.execute(_RECEIPT_SQL, (operation_id,)).fetchone()
+
+        def attest(conn: Any, operation: Any, receipt: Any) -> None:
             runner_signal, send_phase = (
                 ("kernel_refused", "pre_send")
                 if str(operation["name"]) == "inference.invoke"
@@ -418,6 +388,10 @@ class JournalStore:
                 conn, operation, receipt, secret,
                 runner_signal=runner_signal, send_phase=send_phase,
             )
+
+        operation, receipt = _atomic.transition_and_receipt(
+            self, operation_id, expected_revision, state, outcome, result_ref, attest=attest, **atomic,
+        )
         return self._operation(operation), dict(receipt)
 
     def add_receipt(

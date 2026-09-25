@@ -318,6 +318,12 @@ def _p_zone_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "zone.read", {"directory_id": made["id"]})
 
 
+def _p_kernel_receipt_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # PHILO-7-02: the receipt readback declares {view, consistency, objects}.
+    made = hub.client.post("/api/decisions", json={"title": "Shape"}).json()
+    return hub.root.operations.invoke(OWNER, "kernel.receipt.read", {"operation_id": str(made.get("operation_id") or "op_none")})
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -328,6 +334,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "thought.save": _p_thought_save,
     "thought.list": _p_thought_list,
     "zone.read": _p_zone_read,
+    "kernel.receipt.read": _p_kernel_receipt_read,
 }
 
 

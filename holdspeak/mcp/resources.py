@@ -590,7 +590,8 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         value = RecipeService(db_or(get_database)).get_recipe(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):
-        value = PrimitiveService(db_or(get_database)).list_directory_members(principal, match.group(1))
+        # PHILO-7-02: the declared zone.members read, through the contract.
+        value = _ops().invoke(principal, "zone.members", {"directory_id": match.group(1)})
         return _contents(uri, _JSON_MIME, value)
     if match := _MEETING_DETAIL_PATTERN.fullmatch(uri):
         value = _ops().invoke(principal, "meeting.read", {"meeting_id": match.group(1)})

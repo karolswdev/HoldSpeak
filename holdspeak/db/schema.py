@@ -1834,6 +1834,23 @@ CREATE TABLE IF NOT EXISTS kernel_schedule_ticks (
     delegation_id TEXT NOT NULL, created_at REAL NOT NULL,
     PRIMARY KEY(workbench_id, due_minute)
 );
+-- PHILO-7-02: device-local owner delegation of desk filing and decisions to
+-- one agent identity (R1, R5). Never sync. One LIVE row per identity.
+CREATE TABLE IF NOT EXISTS kernel_desk_delegations (
+    id TEXT PRIMARY KEY,
+    agent_identity TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL, delegator_identity TEXT NOT NULL,
+    operations_json TEXT NOT NULL,
+    terms_sha256 TEXT NOT NULL, expires_at REAL,
+    state TEXT NOT NULL CHECK (state IN ('LIVE','REVOKED','EXPIRED')),
+    revoked_at REAL, revocation_reason TEXT NOT NULL DEFAULT '',
+    grant_operation_id TEXT NOT NULL,
+    created_at REAL NOT NULL, updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_desk_delegation_one_live
+ON kernel_desk_delegations(agent_identity) WHERE state='LIVE';
+CREATE INDEX IF NOT EXISTS idx_desk_delegations_agent_state
+ON kernel_desk_delegations(agent_identity, state);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (

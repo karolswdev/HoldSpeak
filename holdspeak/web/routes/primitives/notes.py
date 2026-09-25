@@ -15,10 +15,10 @@ from fastapi.responses import JSONResponse
 
 from .... import operations
 from ....logging_config import get_logger
-from ....services.errors import ConflictError, NotFound, ValidationError
+from ....services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ...context import WebContext
 from ...runtime_support import error_500
-from ._shared import _json_body
+from ._shared import _json_body, _kernel_fields, _refusal_kernel
 
 log = get_logger("web.routes.primitives")
 
@@ -107,16 +107,22 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     async def api_delete_note(note_id: str, request: Request) -> Any:
         try:
             body = await _json_body(request)
-            result = _ops().invoke(_principal(request), "note.delete", {
+            result, kernel = _ops().invoke_receipted(_principal(request), "note.delete", {
                 "note_id": note_id,
                 "expected_aggregate_revision": body.get("expected_aggregate_revision") if body else None,
                 "expected_lifecycle_revision": body.get("expected_lifecycle_revision") if body else None,
             })
-            return JSONResponse({"success": True, "note": result} if isinstance(result, dict) else {"success": True})
+            # PHILO-7-02: a Thought's note delete is ADMITTED (its tombstone
+            # unfiles the note); the response carries its receipt.
+            payload = {"success": True, "note": result} if isinstance(result, dict) else {"success": True}
+            return JSONResponse({**payload, **_kernel_fields(kernel)})
         except (ConflictError, ValidationError) as exc:
             return _service_error(exc)
-        except NotFound:
-            return JSONResponse({"error": f"Unknown note: {note_id}"}, status_code=404)
+        except NotFound as exc:
+            return JSONResponse({"error": f"Unknown note: {note_id}", **_refusal_kernel(exc)}, status_code=404)
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
+                                status_code=int(exc.context.get("status") or 409))
         except Exception as exc:
             return error_500(exc, log, "Failed to delete note")
 

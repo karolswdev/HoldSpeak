@@ -37,6 +37,12 @@ from holdspeak.runtime import composition
 TOKEN = "philo7-01-compat"
 CHANGED_TEXT = "refused (text changes)"
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from _kernel_fields import plain  # noqa: E402  (PHILO-7-02)
+
+
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -234,9 +240,9 @@ def _envelopes(client: Any, kind: str) -> None:
     is_error, changed = _mcp(client, "desk.verb", {"verb_id": "desk.update", "arguments": {"kind": kind, "id": made["id"], "data": rename}})
     assert is_error is False and _pick(changed, rename) == rename
     is_error, deleted = _mcp(client, "desk.verb", {"verb_id": "desk.delete", "arguments": {"kind": kind, "id": made["id"]}})
-    assert (is_error, deleted) == (False, {"deleted": True, "id": made["id"]})
+    assert (is_error, plain(deleted)) == (False, {"deleted": True, "id": made["id"]})
     is_error, deleted = _mcp(client, "desk.delete", {"kind": kind, "id": seed})
-    assert (is_error, deleted) == (False, {"deleted": True, "id": seed})
+    assert (is_error, plain(deleted)) == (False, {"deleted": True, "id": seed})
     is_error, again = _mcp(client, "desk.delete", {"kind": kind, "id": seed})
     assert is_error is True and again["code"] == "not_found"
     assert client.get(f"/api/{kind}/{seed}").status_code == 404

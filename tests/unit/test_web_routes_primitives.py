@@ -18,6 +18,12 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from _kernel_fields import plain  # noqa: E402  (PHILO-7-02)
+
+
 
 @pytest.fixture
 def client(tmp_path, monkeypatch) -> TestClient:
@@ -746,7 +752,7 @@ def test_directory_crud_flow(client: TestClient) -> None:
     assert upd.status_code == 200 and upd.json()["directory"]["name"] == "Inbox 2"
 
     # Delete (tombstone).
-    assert client.delete(f"/api/directories/{did}").json() == {"success": True}
+    assert plain(client.delete(f"/api/directories/{did}").json()) == {"success": True}
     assert client.get(f"/api/directories/{did}").status_code == 404
     assert client.delete(f"/api/directories/{did}").status_code == 404
 
@@ -769,7 +775,7 @@ def test_directory_membership_file_and_unfile(client: TestClient) -> None:
     assert client.put("/api/directories/nope/members/note%3Ax").status_code == 404
 
     # Unfile (tombstone) -> gone from the list.
-    assert client.delete(f"/api/directories/{did}/members/note%3Anote_42").json() == {"success": True}
+    assert plain(client.delete(f"/api/directories/{did}/members/note%3Anote_42").json()) == {"success": True}
     assert client.get(f"/api/directories/{did}/members").json()["members"] == []
     # Unfiling again (already gone) 404s.
     assert client.delete(f"/api/directories/{did}/members/note%3Anote_42").status_code == 404

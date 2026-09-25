@@ -5369,6 +5369,26 @@
       ]
     },
     {
+      "path": "/api/settings/remote/delegations/{identity}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/delegations/{identity}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/settings/secrets/{secret_id}",
       "methods": [
         "DELETE"
