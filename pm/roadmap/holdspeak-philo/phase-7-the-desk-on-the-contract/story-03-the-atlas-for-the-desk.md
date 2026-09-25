@@ -15,14 +15,14 @@ The atlas has note cases (`case.j1.first_words_keep_as_note.kept`, the `case.j11
 ## Scope
 
 - **In:** NEW browser cases at 1440 and 393 for the phase status's named list (zone create, zone file, re-file moves, unfile, kb create, kb member add/remove, decision status to the review list, supersede with successor, decision delete); `.op` siblings for their durable outcomes and for the existing note cases where the outcome is durable; the equivalence run (durable outcome, identity relationships, refusals); the receipts of the D3 writes read in the `op` observation; the rig's headless mode as built in Phase 5.
-- **Out:** any face change — a case records what the Desk shows today, and "not on the face" is a lawful result with an `op`-only pair; replacing any existing case; `api` steps (they stay for HTTP contracts).
+- **Out:** any face change — a case records what the Desk shows today, and "not on the face" is a lawful result with an `op`-only pair. "Not on the face" delimits THIS story's coverage only; it never waives story 04's note, review-row and brief shots; replacing any existing case; `api` steps (they stay for HTTP contracts).
 
 ## Acceptance criteria
 
-- [ ] Every named new case is minted and run at 1440 and 393, or recorded "not on the face" with the reason and the source line that shows it.
+- [ ] Every named new case is minted and run at 1440 and 393, or recorded "not on the face" with the reason and the source line that shows it. No such record waives story 04's shots (the note in its zone, the decision in the review rows, the brief).
 - [ ] Every named pair has its `.op` sibling, minted and run headless against the owning isolated hub.
 - [ ] Equivalence = durable outcome + identity relationships + refusals; never identical envelopes.
-- [ ] For each D3 write, the `op` observation reads its kernel receipt; the browser case does not claim it.
+- [ ] For each admitted write (the admission table), the `op` observation reads its kernel receipt, refusal receipts included; the browser case does not claim it.
 - [ ] Real-engine and replayed runs retained and labelled separately; a replay is never reported as real-engine.
 - [ ] Face walks retained independently; no face case is "proved" by `op`; `readable_text` (visible, in viewport, unobscured), not text containment.
 - [ ] Atlas counts reported over both named files at the branch commit; durations measured, not promised.
@@ -30,7 +30,7 @@ The atlas has note cases (`case.j1.first_words_keep_as_note.kept`, the `case.j11
 
 ## Effort (council-style estimate, not a promise)
 
-Not yet grounded. The new browser cases are the part Phase 5 did not have.
+PROVISIONAL: 3–4 engineering days (includes the new browser cases, the part Phase 5 did not have). Calibrated after story 01's first kind.
 
 ## Test plan
 

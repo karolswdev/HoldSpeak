@@ -14,15 +14,28 @@ The Phase 5 rehearsal proved ordinary prompts with client discovery in this repo
 
 ## Scope
 
-- **In:** Astra drives Codex from a session WITHOUT repository access (a working directory outside the repository; no preamble that points at repository files; the MCP proxy configured as in Phase 5 story 01, HOME = the isolated hub's HOME) through ordinary requests: "file this note into <zone>", "find it", "put this decision on my review list", "make my brief"; the MCP transcript, the Codex event log and the Desk shots at 1440 and 393 retained; readbacks through the contract; the receipts of the filed and decided writes read back; Muad'Dib checks; the owner reviews the shots.
+- **In:** Astra drives Codex from a session WITHOUT repository access, launched as named below, through ordinary requests: "file this note into <zone>", "find it", "put this decision on my review list", "make my brief"; the MCP transcript, the Codex event log and the Desk shots at 1440 and 393 retained; readbacks through the contract; the receipts of the filed and decided writes read back; Muad'Dib checks; the owner reviews the shots.
 - **Out:** "attach it to a meeting" (dropped: no durable relationship in this slice); already-open Desk refresh (D4: a reopened Desk read); a live sitting; any face change.
+
+### The launch setup (D4, concrete)
+
+An outside working directory alone does not withhold the repository (`checks/charter-astra-r1.md` finding 5). The session is launched so that nothing points it at the repository:
+
+1. **Working root:** `codex exec --skip-git-repo-check -C <an empty scratch directory>` created under the run folder's temp root, OUTSIDE any checkout. No `AGENTS.md`, `CLAUDE.md` or `.codex/` exists in it or in any parent directory (the driver checks every parent up to `/` and records the check).
+2. **Codex's own config:** a scratch `CODEX_HOME` (and a scratch `HOME` for the Codex process) that holds ONLY the auth file Codex needs to reach its engine; no `config.toml`, no project trust entries, no rules, no profiles, so `~/.codex` project trust cannot pull the repository in. `--ignore-user-config` and `--ignore-rules` are passed as well. The effective config is dumped and retained (Phase 5 precedent: `effective-codex-config.json`).
+3. **No preamble:** the first prompt is the owner's words alone. Not `scripts/astra ask`: its preamble led the Phase 5 session to the canon documents (`docs/internal/philo/phase-5/his-words/rehearsal.md:49`).
+4. **The MCP server** is the ONLY configured server, pointed at the isolated hub only (`-c mcp_servers.holdspeak.command=<the built holdspeak-mcp>`, `-c mcp_servers.holdspeak.env.HOME=<the isolated hub's HOME>`). The server is product, not context: its own process working directory is not the model's.
+5. **Retained:** the complete initial context (the exact command, environment, prompt, the effective config and the working-root listing) and every event (`events.jsonl`, rollout) per turn.
+
+The setup withholds the repository from Codex's context and instructions; it is not a filesystem sandbox. The zero-read fence over the retained event log is the proof that no read happened.
 
 ## Acceptance criteria
 
 - [ ] The requests are ordinary words; no operation name, argument, id or test clock appears in them.
-- [ ] Discovery from `tools/list` alone: the Codex event log shows ZERO reads of repository files, source or roadmap documents (a fence over the retained event log, red on the Phase 5 rehearsal's log); every tool chosen appears in the session's `tools/list` answer.
+- [ ] The launch setup above is used and its initial context retained: the working root is empty and outside every checkout; no `AGENTS.md`/`CLAUDE.md`/`.codex/` in it or its parents; the scratch `CODEX_HOME` has no config, trust entries or rules; the MCP server is the only server and points at the isolated hub.
+- [ ] Discovery from `tools/list` alone: the Codex event log shows ZERO reads of repository files, source or roadmap documents (a fence over the retained event log). The fence MUST FAIL on the Phase 5 rehearsal's logs (`pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real/codex/*/events.jsonl`: 25 completed shell commands in `decision_thought`, 3 in `import`). Every tool chosen appears in the session's `tools/list` answer.
 - [ ] The note is filed into the named zone and found again; the decision is on his review list; the brief is made; each read back through the contract (`op`), not from Codex's own text.
-- [ ] The receipts of the filed and decided writes (the D3 set) are read back; one per write.
+- [ ] The receipts of the filed and decided writes (the admitted set) are read back; one per logical operation, each terminal. The principal on each receipt is the one the transport derived (the loopback sidecar forwards the hub's owner token, `holdspeak/mcp/server.py:144-190`), unchanged.
 - [ ] Run against an isolated HOME; the effective HOME, lock and DB path retained; never the desk.
 - [ ] The Desk reopened and shot at 1440 and 393: the note in its zone, the decision in the review rows, the brief. Real-engine and replayed runs labelled separately.
 - [ ] Technical rehearsal completes with Muad'Dib's check recorded; the evidence reads "REHEARSED; OWNER REVIEW PENDING", never an observed sitting.
@@ -31,14 +44,15 @@ The Phase 5 rehearsal proved ordinary prompts with client discovery in this repo
 
 ## Effort (council-style estimate, not a promise)
 
-Not yet grounded. Phase 5's rehearsal (326 s run; about 1 engineering day with its repairs) is the precedent.
+PROVISIONAL: 1–2 engineering days (the phase estimate). Phase 5's rehearsal (326 s run; about 1 engineering day with its repairs) is the precedent; the new launch setup adds the rest.
 
 ## Test plan
 
-- **Unit:** the no-repository-read fence over a Codex event log (red on the Phase 5 log); the transcript-to-server pairing audit carried from Phase 5.
+- **Unit:** the no-repository-read fence over a Codex event log (it must fail on the Phase 5 logs named above); the launch-setup check (working root, parents, `CODEX_HOME` contents); the transcript-to-server pairing audit carried from Phase 5.
 - **Integration:** the rehearsal driver against an isolated hub; the transcript, config, DB and lock proof, and shots retained under this phase's assets.
 - **Manual / device:** the owner reviews the shots (rehearsed, owner-reviewed).
 
 ## Notes
 
 - 2026-09-25 — drafted by Muad'Dib from handover XXVIII r2 §Road B, Astra's check of the drafts and the owner's D4; unratified. "Attach to a meeting" dropped from the closing job (Astra MISSED 4).
+- 2026-09-25 — r2: the launch setup made concrete (Astra's charter check, finding 5). Unknown until the first run: whether Codex 0.155's `--ignore-user-config` with a scratch `CODEX_HOME` holding only the auth file reaches its engine; the driver records the answer.

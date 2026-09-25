@@ -15,11 +15,11 @@ Notes, directories (zones) and knowledge bases reach HTTP through their own rout
 ## Scope
 
 - **In:** explicit descriptors, one row per (kind, verb), for notes, directories (zones) and kbs: create, read, update, delete, list — 15 operations in `holdspeak/operations.py`, each naming its real callable, schema, result, refusals, exposure and completion; bound at hub composition to the hub's `PrimitiveService`; HTTP routes, the `desk.*` tools for these kinds, the `desk.verb` aliases and the `holdspeak://primitives/{kind}/{id}` resource over `invoke`; the duplicated paths retired; compat tables per kind (three-state: base main, round one, built); the residual set paid by identities 2-5, 7-24, 26-27 and, where the fallback leaves, 34-36 of the phase's enumerated table; DISCOVERY: tool and argument descriptions naming the jobs; the shelf-enum alignment repair.
-- **Out:** memberships and decisions (story 02); kernel admission (story 02; no D3-set write is in this story); workflows and chains (the `desk.*` tools keep serving them unchanged); any authority change; any face change.
+- **Out:** memberships and decisions (story 02); kernel admission (story 02). Some rows here carry a filing effect the phase status's admission table marks ADMITTED (`zone.delete`; `kb.create` with `member_ids` or `kb_id`; `kb.update` with `member_ids`; `zone.create` with `directory_id`; `zone.update` with `parent_id`; the Thought-owned `note.delete`). This story moves them onto the contract with their execution UNCHANGED (the compat tables show it) and each descriptor names its admission condition; story 02 adds the admission; workflows and chains (the `desk.*` tools keep serving them unchanged); any authority change; any face change.
 
 ## Acceptance criteria
 
-- [ ] The descriptor table is explicit: one row per (kind, verb), no `getattr` over a kind string in any contract path; Thought-owned note behaviour (expected revisions, cursors, tombstone) preserved and declared as the note rows' result and refusals.
+- [ ] The descriptor table is explicit: one row per (kind, verb), no `getattr` over a kind string in any contract path; Thought-owned note behaviour (expected revisions, cursors, tombstone) preserved and declared as the note rows' result and refusals; each row declares its admission condition from the admission table (exempt, or ADMITTED when a named argument is present), for story 02 to enforce.
 - [ ] HTTP, MCP tools, `desk.verb` aliases and the primitive resource reach the same declaration and the same live instance within one hub (object identity in-hub; durable state across restart).
 - [ ] The duplicated paths for notes, directories and kbs are retired; `desk.*` stays for workflows and chains with unchanged names, arguments, defaults, envelopes, refusals and palette membership; palette refusal tested through dispatch and through catalogue filtering.
 - [ ] A three-state compat table per kind (notes, directories, kbs), green on main, green on the branch; every changed behaviour stated in full (Phase 5 story 01 form). Existing authority behaviour preserved: no owner-only refusal where main accepted.
@@ -31,7 +31,7 @@ Notes, directories (zones) and knowledge bases reach HTTP through their own rout
 
 ## Effort (council-style estimate, not a promise)
 
-Not yet grounded. Re-estimated after this story's first kind (notes) lands.
+PROVISIONAL: 3–4 engineering days. Calibrated after this story's first kind (notes) lands; the calibration is recorded in the phase status before story 02 starts.
 
 ## Test plan
 
