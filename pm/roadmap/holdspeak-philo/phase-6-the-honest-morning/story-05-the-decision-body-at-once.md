@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** exit 3 (the decision body present at once after Done)
 - **Owner:** Astra (Luna); Muad'Dib checks

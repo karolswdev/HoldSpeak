@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 (CHARTERED by the two brains; unratified).
+**Last updated:** 2026-09-24 (RATIFIED; in build).
 
 ## Goal
 
@@ -22,7 +22,7 @@ Astra's check of the drafts, RATIFY-WITH-CONDITIONS (`../PHASE-6-7-CHECK-ASTRA.m
 
 ## Status of this charter
 
-CHARTERED 2026-09-24 by the two brains. Astra's check of this charter and the owner's ratification are owed. Nothing is built. After ratification: the two small canvases (story 02 if a label or a meaning changes; story 03 placement) go to the owner before the build of those parts. The canvas-free parts can start at once.
+RATIFIED by the owner 2026-09-24 night (AskUserQuestion: "Ratify, build it"). Both lanes start: Muad'Dib 01 → 02 (owns `ChairHome.tsx`); Astra 04, 05 now and 03 canvas-first (the placement canvas comes to the owner before build).
 
 ## Scope
 
@@ -59,11 +59,11 @@ The six defects come from retained evidence, not from taste. The source is the P
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-6-01 | The honest import badge | backlog | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | - |
-| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | backlog | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
-| PHILO-6-03 | The toast that does not cover | backlog | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
-| PHILO-6-04 | One cause, one row | backlog | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | - |
-| PHILO-6-05 | The decision body at once | backlog | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | - |
+| PHILO-6-01 | The honest import badge | in-progress | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | - |
+| PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
+| PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
+| PHILO-6-04 | One cause, one row | in-progress | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | - |
+| PHILO-6-05 | The decision body at once | in-progress | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | - |
 
 ## Lanes
 
@@ -79,6 +79,8 @@ Lane law for this phase:
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
+
+2026-09-24 night: RATIFIED; lanes started (`../wt-philo-6-a` Muad'Dib 01/02; `../wt-philo-6-b` Astra 03/04/05).
 
 2026-09-24: CHARTERED by the two brains from handover XXVIII r2 and Astra's check of the drafts (RATIFY-WITH-CONDITIONS, paid). The owner ruled D2 (repairs first). Nothing is built. Owed next: Astra's check of this charter; then the owner's ratification; then the canvas-free parts start (01, 02 a/c, 03 zero tokens, 04, 05), and the two canvases go to the owner.
 
@@ -97,6 +99,8 @@ Lane law for this phase:
 | Two lanes do not halve the time | high | the estimate is effort, provisional | - |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 night — the owner RATIFIED the charter ("Ratify, build it"); all five stories in progress in two lanes — Muad'Dib.
 
 - 2026-09-24 night — Astra's check of this charter: RATIFY-WITH-CONDITIONS (`checks/charter-astra.md`), paid: story 01's diagnosis corrected (the producer writes `intel_status`; the adapter finding retracted by Astra; the repair is the badge mapping); story 02 never conflates the counts and decides one clock with an offsets fence; the estimate reconciled (4.5–6.5 d provisional); the README's Phase 5 row corrected; story 05's proof armed before Done. The owner's ratification next — Muad'Dib.
 

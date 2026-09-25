@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 6
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** exit 3 (one broke row per cause); the `missing-decision` op/browser parity pair
 - **Owner:** Astra (Luna); Muad'Dib checks
