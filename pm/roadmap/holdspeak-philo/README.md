@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-25 (Phase 6: the closing chain ran — exit 3 MET with the rehearsal driver's inherited block recorded; exit 4, the owner's review of the shots, open).
+**Last updated:** 2026-09-25 (Phase 6 closed).
 
 ## Vision
 
@@ -25,7 +25,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | 3 | The Meeting Loop — one imported meeting, its summary with the actual host, found after a restart, a decision recorded, the dated brief; the thought's receipt | closed by ruling 2026-09-23; exit 1 proved in Phase 4; sitting waived by owner 2026-09-24 ([final summary](phase-3-the-meeting-loop/final-summary.md)) | [Phase 3](phase-3-the-meeting-loop/current-phase-status.md) |
 | 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | closed 2026-09-24 ([final summary](phase-4-the-morning/final-summary.md)) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
 | 5 | The One Service Layer — the meeting loop on one declared contract; routes, MCP and the rig over one registry; Codex drove the job in ordinary words | CLOSED 2026-09-24 (4/4; rehearsed, owner-reviewed shots, not a sitting) — [final summary](phase-5-the-one-service-layer/final-summary.md) |
-| 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | RATIFIED 2026-09-24; 5/5 merged; exit 3 met 2026-09-25; exit 4 (owner review) open | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
+| 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | CLOSED 2026-09-25 (5/5; rehearsed, owner-reviewed) — [final summary](phase-6-the-honest-morning/final-summary.md) | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
 
 ## Operating cadence
 
