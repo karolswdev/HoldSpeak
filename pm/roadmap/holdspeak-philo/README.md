@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-25 (Phase 7 charter r4: Astra r3 conditions paid or carried; the D4 claim qualified by R3).
+**Last updated:** 2026-09-25 (Phase 7 RATIFIED; lane 01 open).
 
 ## Vision
 
@@ -26,7 +26,7 @@ It does not replace the active HoldSpeak Phase 201 pointer.
 | 4 | The Morning — the next-day brief in one move: Generate always reachable, the new decision in the visible rows, no id collision | closed 2026-09-24 ([final summary](phase-4-the-morning/final-summary.md)) | [Phase 4](phase-4-the-morning/current-phase-status.md) |
 | 5 | The One Service Layer — the meeting loop on one declared contract; routes, MCP and the rig over one registry; Codex drove the job in ordinary words | CLOSED 2026-09-24 (4/4; rehearsed, owner-reviewed shots, not a sitting) — [final summary](phase-5-the-one-service-layer/final-summary.md) |
 | 6 | The Honest Morning — the six morning-path defects the Phase 5 closure found, repaired with existing idioms: the honest import badge, the brief's truth, the toast that does not cover, one cause one row, the decision body at once | CLOSED 2026-09-25 (5/5; rehearsed, owner-reviewed) — [final summary](phase-6-the-honest-morning/final-summary.md) | [Phase 6](phase-6-the-honest-morning/current-phase-status.md) |
-| 7 | The Desk on the Contract — the bounded desk slice (notes, zones, knowledge bases, membership, the remaining decision operations: 33 MCP + 3 HTTP identities) on the one contract; filing and deciding admitted through the kernel (D3); file and find from a cold-context Codex session (D4 as R3 qualifies it: cold context, zero repository reads in the retained log, discovery from the catalogue alone; not a filesystem sandbox) | drafted 2026-09-25 (r4: Astra r3 RATIFY-WITH-CONDITIONS paid or carried), owner ratification owed; Phase 6 closed on main | [Phase 7](phase-7-the-desk-on-the-contract/current-phase-status.md) |
+| 7 | The Desk on the Contract — the bounded desk slice (notes, zones, knowledge bases, membership, the remaining decision operations: 33 MCP + 3 HTTP identities) on the one contract; filing and deciding admitted through the kernel (D3); file and find from a cold-context Codex session (D4 as R3 qualifies it: cold context, zero repository reads in the retained log, discovery from the catalogue alone; not a filesystem sandbox) | RATIFIED 2026-09-25 (\"Ratify, build it\"; R5 decision.delete in the grant); in build — 01 first | [Phase 7](phase-7-the-desk-on-the-contract/current-phase-status.md) |
 
 ## Operating cadence
 
