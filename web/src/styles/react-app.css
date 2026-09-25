@@ -302,7 +302,7 @@
 }
 .desk-listmode > [data-aftercare-floor-slot="top"]:not(:empty) {
   position: relative;
-  z-index: 1;
+  z-index: var(--desk-z-local);
   width: min(960px, calc(100vw - 32px));
   margin: 0 auto;
   padding-block: var(--space-3);
