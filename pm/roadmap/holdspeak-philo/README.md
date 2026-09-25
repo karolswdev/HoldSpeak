@@ -1,6 +1,6 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5: stories 01–03 merged; story 04 technically done after the real Codex rehearsal; [PR #638](https://github.com/karolswdev/HoldSpeak/pull/638) open, unmerged. OWNER REVIEW PENDING. The inherited decision-admission debt remains unruled.)
+**Last updated:** 2026-09-24 (Phase 5 built 4/4; owner review pending).
 **Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — ratified by the owner 2026-09-24.
 **Status:** OWNER REVIEW PENDING. Phases 1–4 delivered and merged. Phase 5 is ratified and in progress. Stories 01–03 are merged; story 04 completed the technical rehearsal through Codex; its PR stays unmerged for counsel and publication. The owner reviews published shots after technical completion. This is not a sitting.
 

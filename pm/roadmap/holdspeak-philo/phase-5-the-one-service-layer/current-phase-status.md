@@ -1,6 +1,6 @@
 # Phase 5 - The One Service Layer
 
-**Last updated:** 2026-09-24 (01–03 merged; 04 technically done on Astra's lane. OWNER REVIEW PENDING.)
+**Last updated:** 2026-09-24 (4/4 merged; owner review of the rehearsal pending).
 
 ## Goal
 
@@ -147,11 +147,11 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 
 ## Exit criteria (evidence required)
 
-- [ ] 1. Every pilot operation is reachable by route, by MCP and by the rig's `op` step, resolving to the same declared contract and the same live instance within one hub (object identity proved in-hub; durable state compared across restart).
-- [ ] 2. The duplicate MCP definitions for the pilot are retired (the decision PATH, not the generic `desk.*` tools); the residual set is explicit, reasoned by `(transport, entry point, discriminator)`, and shrank by the pilot's entries; the fence fails on a new residual identity (red proved on a copy of main).
-- [ ] 3. The complete tool roster (generated + legacy) is regenerated and drift-guarded.
+- [x] 1. Every pilot operation is reachable by route, by MCP and by the rig's `op` step, resolving to the same declared contract and the same live instance within one hub (object identity proved in-hub; durable state compared across restart).
+- [x] 2. The duplicate MCP definitions for the pilot are retired (the decision PATH, not the generic `desk.*` tools); the residual set is explicit, reasoned by `(transport, entry point, discriminator)`, and shrank by the pilot's entries; the fence fails on a new residual identity (red proved on a copy of main).
+- [x] 3. The complete tool roster (generated + legacy) is regenerated and drift-guarded. (Roster 225 → 228; `docs/generated/operations.json` + `MCP_SIDECAR.md` drift-guarded; stories 01–02.)
 - [x] 4. The named atlas pairs agree on durable outcome and refusals between the `api`/`op` path and the browser path; the 1440/393 face walks are retained separately; real-engine and replayed runs are retained separately. [PHILO-5-03 proof and comparison scopes](story-03-lane-report.md#proof).
-- [ ] 5. Rehearsed, owner-reviewed shots: Astra drives the job in ordinary words through Codex against an isolated hub; the MCP transcript and the Desk shots at 1440 and 393 are retained; Muad'Dib checks; the owner reviews the shots. Never recorded as a sitting.
+- [ ] 5. Rehearsed, owner-reviewed shots: Astra drives the job in ordinary words through Codex against an isolated hub; the MCP transcript and the Desk shots at 1440 and 393 are retained; Muad'Dib checks; the owner reviews the shots. Never recorded as a sitting. **REHEARSED (PHILO-5-04, `6162239f`; artifact https://claude.ai/artifact/Q6AqpXtUmtTQgrrR9WhzKM); OWNER REVIEW PENDING — closes on his word that he has looked.**
 
 ## Story status
 
@@ -160,7 +160,7 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | PHILO-5-01 | One decision through one contract (and the Codex path proved) | done | [story-01-one-decision-through-one-contract](./story-01-one-decision-through-one-contract.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-5-02 | The loop shares the contract | done | [story-02-the-loop-shares-the-contract](./story-02-the-loop-shares-the-contract.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-5-03 | The atlas proves the three paths | done | [story-03-the-atlas-proves-the-three-paths](./story-03-the-atlas-proves-the-three-paths.md) | [evidence-story-03](./evidence-story-03.md) |
-| PHILO-5-04 | OWNER REVIEW PENDING — The owner asks in his own words | done — OWNER REVIEW PENDING (2026-09-24) | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | [evidence-story-04](./evidence-story-04.md) |
+| PHILO-5-04 | The owner asks in his own words (rehearsed; owner review pending) | done — OWNER REVIEW PENDING (2026-09-24) | [story-04-the-owner-asks-in-his-own-words](./story-04-the-owner-asks-in-his-own-words.md) | [evidence-story-04](./evidence-story-04.md) |
 
 ## Lanes
 
@@ -172,6 +172,8 @@ Astra r2's seven positions, verbatim; Muad'Dib's answer after each.
 | The rehearsal | 04 | Astra (Luna) | Muad'Dib | ../wt-philo-5-04 | feat/philo-5-04-his-words |
 
 ## Where we are
+
+2026-09-24 night: four of four stories merged; exits 1–4 flipped on retained evidence; `final-summary.md` written; exit 5 open pending the owner's review of the rehearsal shots (the artifact). The phase closes on his word.
 
 The phase is **technically done and open — OWNER REVIEW PENDING**.
 `dw check` reports one expected phase-close receipt lint:
@@ -242,6 +244,8 @@ face limitations are recorded under Decisions deferred for PHILO-5-04.
 | MISSED 5: inflated proof (old atlas counts, a replay presented as real-engine, reviewed shots presented as a sitting) | medium | counts pinned to `4b4f8d94`; real/replayed retained separately; the "rehearsed, owner-reviewed shots" wording | any evidence line calls a replay real or a review a sitting |
 
 ## Decisions made (this phase)
+
+- 2026-09-24 — Muad'Dib's counsel on story 04: RATIFY-WITH-CONDITIONS, C1–C5 paid; merged. Exits 1–4 flipped; the final summary written; exit 5 awaits the owner's review — Muad'Dib.
 
 - 2026-09-24 — PHILO-5-04 receipt amendment, ratified by Muad'Dib:
   the owner's brief requires `Brief ready …` after a fresh/reopened read of
