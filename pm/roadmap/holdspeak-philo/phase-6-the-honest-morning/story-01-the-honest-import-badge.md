@@ -14,7 +14,7 @@
 A failed import shows SAVED on the Arrival. The producer marks it: `MeetingService` sets the transcription status `import_failed` (`holdspeak/services/meeting_service.py:315`). Then the face loses it in two places:
 
 - The wire adapter `fromWireMeeting` (`web/src/desk/api.ts:463`) drops the transcription status, so the Meeting the face holds never carries `import_failed`.
-- `arrivalIntelBadge` (`web/src/desk/chair/ChairHome.tsx:258-266`) knows only the intel job states; at `:265` it hands over to `intelBadge(meeting.intelStatus)`, and `intelBadge` returns SAVED for every state it does not map (`web/src/desk/chair/intelBadge.ts:26`).
+- `arrivalIntelBadge` (`web/src/desk/chair/ChairHome.tsx:258-266`) knows only the intel job states (`:265` returns FAILED for a failed job); at `:266` it hands over to `intelBadge(meeting.intelStatus)`, and `intelBadge` returns SAVED for every state it does not map (`web/src/desk/chair/intelBadge.ts:26`).
 
 A change to the helper alone cannot repair the face (Astra, finding 2): the status never reaches it.
 
