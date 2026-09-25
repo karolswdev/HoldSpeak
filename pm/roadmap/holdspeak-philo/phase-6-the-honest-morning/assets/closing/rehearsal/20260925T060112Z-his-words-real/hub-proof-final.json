@@ -1,0 +1,17 @@
+{
+  "config_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-datg72dc/.config/holdspeak/config.json",
+  "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-datg72dc/.local/share/holdspeak/holdspeak.db",
+  "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-datg72dc",
+  "hub_url": "http://127.0.0.1:50615",
+  "lock": {
+    "alive": true,
+    "host": "127.0.0.1",
+    "label": "holdspeak web",
+    "pid": 72696,
+    "port": 50615,
+    "process_start": "2026-09-25T00:01:12.973936"
+  },
+  "lock_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-datg72dc/.local/share/holdspeak/holdspeak.db.owner.lock",
+  "pid": 72696,
+  "port": 50615
+}

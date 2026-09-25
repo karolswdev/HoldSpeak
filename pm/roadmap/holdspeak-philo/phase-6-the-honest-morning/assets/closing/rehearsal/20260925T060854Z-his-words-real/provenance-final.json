@@ -1,0 +1,38 @@
+{
+  "boundary_substitutions": [],
+  "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+  "clock": {
+    "mechanism": "none \u2014 the real clock; no case may claim an advance",
+    "producer_clock_reads": [],
+    "started_utc": "2026-09-25T06:08:55.205019+00:00",
+    "tz": null
+  },
+  "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-aqh4qeh1/.local/share/holdspeak/holdspeak.db",
+  "dirty": true,
+  "engine_identity": null,
+  "engine_mode": "real",
+  "fixture_hashes": {
+    "/Users/karol/dev/tools/wt-philo-6-close/tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+  },
+  "frontend_build": null,
+  "hub": {
+    "config_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-aqh4qeh1/.config/holdspeak/config.json",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-aqh4qeh1/.local/share/holdspeak/holdspeak.db",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-aqh4qeh1",
+    "hub_url": "http://127.0.0.1:51397",
+    "lock": {
+      "alive": true,
+      "host": "127.0.0.1",
+      "label": "holdspeak web",
+      "pid": 82495,
+      "port": 51397,
+      "process_start": "2026-09-25T00:08:55.569500"
+    },
+    "lock_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo5-04-hub-aqh4qeh1/.local/share/holdspeak/holdspeak.db.owner.lock",
+    "pid": 82495,
+    "port": 51397
+  },
+  "restarts": [],
+  "revision": "f93e76fa20ba439441395b7a8808fe293f96a226",
+  "rig_version": "1.3.0"
+}

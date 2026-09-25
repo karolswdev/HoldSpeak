@@ -388,3 +388,137 @@ graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
 Boundary candidate census checked
 dw check: ok
 ```
+
+### Captured run — 2026-09-25T06:00:13Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; echo HOME=$HOME; uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.philo601.import_failed.badge --brain muaddib --viewport 1440 --engine none --no-build --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.dCEdkKYXOq
+PASS: live
+BRAIN: muaddib
+SOURCE: f93e76fa20ba439441395b7a8808fe293f96a226 dirty=True
+CONTRACT: rig=1.3.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-DMVJUkMB.js'] hub=http://127.0.0.1:50308 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-cs98zp84/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060013Z-case.philo601.import_failed.badge-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060013Z-case.philo601.import_failed.badge-muaddib-1440/after.png']
+NOTE: predicate: 'IMPORT' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 306, 'y': 450, 'w': 40, 'h': 13}
+```
+
+### Captured run — 2026-09-25T05:59:16Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; echo "HOME=$HOME"; uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 1440 --engine real --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.3oaFkHDew1
+PASS: live
+BRAIN: muaddib
+SOURCE: f93e76fa20ba439441395b7a8808fe293f96a226 dirty=False
+CONTRACT: rig=1.3.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-DMVJUkMB.js'] hub=http://127.0.0.1:50162 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-leo930kb/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T055916Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-1440/before.png', 'pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T055916Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-1440/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 359, 'w': 928, 'h': 44}
+```
+
+### Captured run — 2026-09-25T06:00:07Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; echo "HOME=$HOME"; uv run --extra dev python scripts/philo5_breakage_walk.py --case case.closure.chain.s5_next_day_brief_with_breakage.op --viewport 1440 --headless --no-build --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.uVyIXxzVZG
+BREAKAGE_WINDOW TZ=Etc/GMT+10 local=2026-09-24T20:00:07.537684 after_close=True
+PASS: live
+BRAIN: astra
+SOURCE: f93e76fa20ba439441395b7a8808fe293f96a226 dirty=True
+CONTRACT: rig=1.3.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-DMVJUkMB.js'] hub=http://127.0.0.1:50271 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ostl9if6/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: []
+NOTE: predicate: sections.decisions is non-empty
+```
+
+### Captured run — 2026-09-25T06:00:21Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; echo HOME=$HOME; uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.philo601.import_failed.badge --brain muaddib --viewport 393 --engine none --no-build --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.5uOzE5eTCH
+PASS: live
+BRAIN: muaddib
+SOURCE: f93e76fa20ba439441395b7a8808fe293f96a226 dirty=True
+CONTRACT: rig=1.3.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-DMVJUkMB.js'] hub=http://127.0.0.1:50391 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-eiir700x/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j4
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060021Z-case.philo601.import_failed.badge-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060021Z-case.philo601.import_failed.badge-muaddib-393/after.png']
+NOTE: predicate: 'IMPORT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 22, 'y': 364, 'w': 40, 'h': 13}
+```
+
+### Captured run — 2026-09-25T06:00:47Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; echo "HOME=$HOME"; uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase3.json --case case.closure.chain.s5_next_day_brief_has_it --brain muaddib --viewport 393 --engine real --no-build --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.F4aUk3U6VC
+PASS: live
+BRAIN: muaddib
+SOURCE: f93e76fa20ba439441395b7a8808fe293f96a226 dirty=True
+CONTRACT: rig=1.3.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase3.json
+RUNTIME: build=['index-DMVJUkMB.js'] hub=http://127.0.0.1:50549 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-2a6s9iax/.local/share/holdspeak/holdspeak.db engine=real
+JOB: j10
+VERDICT: pass terminal=settled
+EVIDENCE: ['pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060047Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-393/before.png', 'pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/20260925T060047Z-case.closure.chain.s5_next_day_brief_has_it-muaddib-393/after.png']
+NOTE: predicate: 'Review decision: Keep summary retrieval on the local desk' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 356, 'w': 369, 'h': 114}
+```
+
+### Captured run — 2026-09-25T06:01:12Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; uv run --extra dev python scripts/philo5_his_words.py run --engine real --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/rehearsal/`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+PHILO5_HIS_WORDS_BLOCKED RuntimeError: Codex turn decision_thought did not produce through MCP: ['desk.create']
+```
+
+### Captured run — 2026-09-25T06:05:31Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; uv run --extra dev python scripts/philo5_his_words.py run --engine real --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/rehearsal/`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+PHILO5_HIS_WORDS_BLOCKED RuntimeError: Codex turn decision_thought did not produce through MCP: ['desk.create']
+```
+
+### Captured run — 2026-09-25T06:08:54Z
+
+- **Command:** `bash -c set -euo pipefail; export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH; export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright; export HOLDSPEAK_EVIDENCE_WRITE=1; uv run --extra dev python scripts/philo5_his_words.py run --engine real --out pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/rehearsal/`
+- **Cwd:** .
+- **Exit code:** 2
+- **Index-tree:** a148280524445e99e1e4e8e486504f5cffaf9964
+
+```text
+PHILO5_HIS_WORDS_BLOCKED RuntimeError: MCP exchange reconciliation for 'list_mcp_resource_templates' found no unused matching /api/mcp row
+```

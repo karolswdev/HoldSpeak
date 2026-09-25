@@ -1,0 +1,1 @@
+The summary is saved on **Architecture review** (`0f6014f2`) and ready to view. Verified: the meeting record contains the summary and reports **ready**.
