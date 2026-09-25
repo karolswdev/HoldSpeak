@@ -1,0 +1,62 @@
+Command:
+  cd web
+  PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
+  HOME=$(mktemp -d) ./node_modules/.bin/vitest run src/components/AmbientLayer.test.tsx --maxWorkers=2
+
+Setup: `git show origin/main:web/src/components/AmbientLayer.tsx` confirmed the old count paragraph. AmbientLayer.tsx was temporarily returned to that origin/main behavior for this focused RED check. The guard was restored immediately after the run.
+Exit: 1
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+ ❯ src/components/AmbientLayer.test.tsx (9 tests | 3 failed) 164ms
+     × renders only nonzero count tokens (0 open, 0 decided) 7ms
+     × renders only nonzero count tokens (3 open, 0 decided) 5ms
+     × renders only nonzero count tokens (0 open, 2 decided) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ Failed Tests 3
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided)
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  0
+   open · 
+  0
+   decided
+</p>
+
+ ❯ src/components/AmbientLayer.test.tsx:220:63
+    218|       );
+    219|       if (expected.length === 0) {
+    220|         expect(within(aftercare).queryByText(/open|decided/)).toBeNull…
+       |                                                               ^
+    221|         expect(aftercare.querySelector("p")).toBeNull();
+    222|         expect(count).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided)
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided)
+Error: expect(received).toBeInTheDocument()
+
+received value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: null
+ ❯ src/components/AmbientLayer.test.tsx:224:23
+    222|         expect(count).toBeNull();
+    223|       } else {
+    224|         expect(count).toBeInTheDocument();
+       |                       ^
+    225|         expect(within(aftercare).queryByText(/\b0 (open|decided)\b/)).…
+    226|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  21:04:22
+   Duration  796ms (transform 219ms, setup 58ms, import 315ms, tests 164ms, environment 178ms)

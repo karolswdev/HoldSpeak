@@ -1,0 +1,57 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/.tmp/philo6-baseline/web
+
+ ❯ src/components/AmbientLayer.test.tsx (9 tests | 3 failed) 154ms
+     × renders only nonzero count tokens (0 open, 0 decided) 7ms
+     × renders only nonzero count tokens (3 open, 0 decided) 4ms
+     × renders only nonzero count tokens (0 open, 2 decided) 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided)
+AssertionError: expected <p></p> to be null
+
+- Expected:
+null
+
++ Received:
+<p>
+  0
+   open · 
+  0
+   decided
+</p>
+
+ ❯ src/components/AmbientLayer.test.tsx:220:63
+    218|       );
+    219|       if (expected.length === 0) {
+    220|         expect(within(aftercare).queryByText(/open|decided/)).toBeNull…
+       |                                                               ^
+    221|         expect(aftercare.querySelector("p")).toBeNull();
+    222|         expect(count).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided)
+ FAIL  src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided)
+Error: expect(received).toBeInTheDocument()
+
+received value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: null
+ ❯ src/components/AmbientLayer.test.tsx:224:23
+    222|         expect(count).toBeNull();
+    223|       } else {
+    224|         expect(count).toBeInTheDocument();
+       |                       ^
+    225|         expect(within(aftercare).queryByText(/\b0 (open|decided)\b/)).…
+    226|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  21:16:58
+   Duration  913ms (transform 221ms, setup 78ms, import 338ms, tests 154ms, environment 257ms)
+

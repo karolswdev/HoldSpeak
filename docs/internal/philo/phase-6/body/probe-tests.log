@@ -1,0 +1,108 @@
+npm warn Unknown cli config "--maxWorkers". This will stop working in the next major version of npm.
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx (7 tests | 5 failed) 501ms
+     × rolls a failed save back to the prior body before a slow refresh resolves 231ms
+     × keeps the prior body when a refused save's refresh fails 79ms
+     × keeps an optimistic body when a pre-write refresh resolves 58ms
+     × keeps an optimistic body when a refresh starts during a pending write 14ms
+     × does not let an older refusal roll back a newer decision write 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > rolls a failed save back to the prior body before a slow refresh resolves
+AssertionError: expected 'Rejected new decision' to be 'Prior saved decision' // Object.is equality
+
+Expected: "Prior saved decision"
+Received: "Rejected new decision"
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:174:67
+    172|     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE…
+    173|     const body = Array.from(document.querySelectorAll(".desk-decision-…
+    174|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe…
+       |                                                                   ^
+    175|     expect(body?.textContent).toContain("Prior saved decision");
+    176|     expect(body?.textContent).not.toContain("Rejected new decision");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps the prior body when a refused save's refresh fails
+AssertionError: expected undefined to be 'Prior saved decision' // Object.is equality
+
+- Expected:
+"Prior saved decision"
+
++ Received:
+undefined
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:198:68
+    196|     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE…
+    197|     const body = Array.from(document.querySelectorAll(".desk-decision-…
+    198|     expect(useDesk.getState().items.decision[0]?.decisionMarkdown).toB…
+       |                                                                    ^
+    199|       "Prior saved decision",
+    200|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a pre-write refresh resolves
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:281:67
+    279|     // This is the red acceptance assertion: a refresh that began befo…
+    280|     // write must not replace the newer optimistic item when it resolv…
+    281|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    282|       "Keep the local ledger",
+    283|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > keeps an optimistic body when a refresh starts during a pending write
+AssertionError: expected '' to be 'Keep the local ledger' // Object.is equality
+
+- Expected
++ Received
+
+- Keep the local ledger
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:311:67
+    309|       document.querySelectorAll(".desk-decision-card > section"),
+    310|     );
+    311|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    312|       "Keep the local ledger",
+    313|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx > PHILO-6-05 decision body fences > does not let an older refusal roll back a newer decision write
+AssertionError: expected '' to be 'Second decision' // Object.is equality
+
+- Expected
++ Received
+
+- Second decision
+
+ ❯ src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx:347:67
+    345|       document.querySelectorAll(".desk-decision-card > section"),
+    346|     );
+    347|     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
+       |                                                                   ^
+    348|       "Second decision",
+    349|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  20:58:44
+   Duration  1.69s (transform 623ms, setup 56ms, import 894ms, tests 501ms, environment 169ms)
+

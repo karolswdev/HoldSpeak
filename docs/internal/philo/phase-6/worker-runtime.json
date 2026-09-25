@@ -1,0 +1,74 @@
+[
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T20-32-15-01a0d668-0158-7040-92ce-2aea508c63e2.jsonl",
+    "meta": {
+      "id": "01a0d668-0158-7040-92ce-2aea508c63e2",
+      "cwd": "/Users/karol/dev/tools/HoldSpeak",
+      "source": "exec"
+    },
+    "model": "gpt-6-astra",
+    "effort": "xhigh",
+    "agent_path": "/root",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b"
+  },
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T20-35-03-01a0d66a-90aa-7301-b1e7-6a38734770fb.jsonl",
+    "meta": {
+      "id": "01a0d66a-90aa-7301-b1e7-6a38734770fb",
+      "cwd": "/Users/karol/dev/tools/HoldSpeak",
+      "source": {
+        "subagent": {
+          "thread_spawn": {
+            "parent_thread_id": "01a0d668-0158-7040-92ce-2aea508c63e2",
+            "depth": 1,
+            "agent_path": "/root/toast_zero_canvas",
+            "agent_nickname": "Russell",
+            "agent_role": null
+          }
+        }
+      }
+    },
+    "model": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "agent_path": "/root/toast_zero_canvas",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b"
+  },
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T20-33-27-01a0d669-1a99-7800-a3d4-56e9986afe8c.jsonl",
+    "meta": {
+      "id": "01a0d668-0158-7040-92ce-2aea508c63e2",
+      "cwd": "/Users/karol/dev/tools/HoldSpeak",
+      "source": "exec"
+    },
+    "model": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "agent_path": "/root/one_cause_one_row",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b"
+  },
+  {
+    "file": "/Users/karol/.codex/sessions/2026/09/24/rollout-2026-09-24T20-33-46-01a0d669-64a1-73a3-95ae-6128bc44a2b9.jsonl",
+    "meta": {
+      "id": "01a0d669-64a1-73a3-95ae-6128bc44a2b9",
+      "cwd": "/Users/karol/dev/tools/HoldSpeak",
+      "source": {
+        "subagent": {
+          "thread_spawn": {
+            "parent_thread_id": "01a0d668-0158-7040-92ce-2aea508c63e2",
+            "depth": 1,
+            "agent_path": "/root/decision_body_cause",
+            "agent_nickname": "Dewey",
+            "agent_role": null
+          }
+        }
+      }
+    },
+    "model": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "agent_path": "/root/decision_body_cause",
+    "runtime_evidence": "last turn_context in persisted rollout, not worker self-report",
+    "assigned_worktree": "/Users/karol/dev/tools/wt-philo-6-b"
+  }
+]

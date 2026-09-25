@@ -1,0 +1,8 @@
+{
+  "archive_command": "git archive origin/main | tar -x -C .tmp/philo6-baseline",
+  "base": "66205729332ef66a6d16a186c04ae4801311734a",
+  "route_sha256": "b366cbf1ae81501c990f73099385fbb630498c75938d513212f62da7ba25f6a4",
+  "product_files": "Unmodified archive; tests/rig/atlas overlay only. Independent copied node_modules; no symlink.",
+  "import_proof": "PYTHONPATH explicitly selects the archive for hub children. The earlier red-http-1440 trial imported the lane editable package and is excluded.",
+  "provenance_limit": "Archive is nested under lane .tmp: raw git revision/dirty in its observations identify the containing lane. This manifest and route hash identify baseline source; no raw observations were edited."
+}

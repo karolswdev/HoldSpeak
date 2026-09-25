@@ -6430,7 +6430,8 @@
       "expected": {
         "predicate": {
           "kind": "readable_text",
-          "value": "Keep summary retrieval on the local desk"
+          "value": "Keep summary retrieval on the local desk",
+          "first_paint_after": ".desk-decision-editor"
         },
         "observe_at": ".desk-decision-card > section:nth-of-type(2)",
         "reads": [
@@ -6443,7 +6444,7 @@
             "path": "/api/meetings/{meeting_id}"
           }
         ],
-        "words": "PHILO-5-04 carried S4 proof: the actual saved decision text is rendered after Done, within the viewport and owning its hit points. The existing S4 chain and its real producers are unchanged; this waits for the face rather than closing on its DB row.",
+        "words": "PHILO-6-05: the browser observer is armed before Done and records every animation frame through terminal observation. The first read-mode paint and every later frame must contain the saved decision text, visible, in the viewport and unobscured. A later blank is a sticky failure even if the text returns. The actual S4 chain and its real producers remain unchanged.",
         "frame_selector": ".desk-decision-card > section:nth-of-type(2)"
       },
       "completion_bound_s": 60
@@ -6497,7 +6498,8 @@
       },
       "completion_bound_s": 15,
       "viewports": [
-        1440
+        1440,
+        393
       ]
     },
     {

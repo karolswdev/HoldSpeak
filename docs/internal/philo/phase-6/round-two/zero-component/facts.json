@@ -1,0 +1,30 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "card": {
+      "x": 440,
+      "y": 677,
+      "width": 560,
+      "height": 119
+    },
+    "openProposals": false,
+    "dismissed": true,
+    "pageErrors": [],
+    "kind": "actual AmbientLayer + real publishAftercare component fixture, no hub/walk"
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "card": {
+      "x": 16,
+      "y": 601,
+      "width": 361,
+      "height": 147
+    },
+    "openProposals": false,
+    "dismissed": true,
+    "pageErrors": [],
+    "kind": "actual AmbientLayer + real publishAftercare component fixture, no hub/walk"
+  }
+]

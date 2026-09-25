@@ -1,0 +1,35 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-b/web
+
+stderr | src/components/AftercareNote.test.tsx > aftercare without the mascot > seats the finished meeting on the desk with the mascot off
+An update to AftercareNote inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Secure and Normal-with-preference: the hub-armed preview gates before any commit 14ms
+ ✓ src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Type it commits exactly once, by token only, and closes the gate 83ms
+ ✓ src/components/AftercareNote.test.tsx > aftercare without the mascot > seats the finished meeting on the desk with the mascot off 17ms
+ ✓ src/components/AftercareNote.test.tsx > aftercare without the mascot > reaches the meeting's proposals in one click 78ms
+ ✓ src/components/AftercareNote.test.tsx > aftercare without the mascot > omits the opener for 0/0, keeps dismissal, and restores it on a nonzero transition 31ms
+ ✓ src/components/AftercareNote.test.tsx > aftercare without the mascot > dismisses without opening anything 6ms
+ ✓ src/components/AftercareNote.test.tsx > aftercare without the mascot > ignores a frame that names no meeting 1ms
+ ✓ src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Discard burns the preview without ever committing 19ms
+ ✓ src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > a failed commit keeps the words and the gate for an explicit retry 24ms
+ ✓ src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > YOLO and Normal-without-preference: no hub frame means no HoldSpeak prompt 1ms
+ ✓ src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided) 4ms
+ ✓ src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided) 4ms
+ ✓ src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided) 4ms
+ ✓ src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 2 decided) 4ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  21:55:05
+   Duration  905ms (transform 485ms, setup 154ms, import 712ms, tests 293ms, environment 432ms)
+

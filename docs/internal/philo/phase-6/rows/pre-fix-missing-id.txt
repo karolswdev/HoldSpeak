@@ -1,0 +1,27 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_missing_id_has_one_real_observer_failure_row _______________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-823/test_missing_id_has_one_real_o0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110bd9f30>
+
+    def test_missing_id_has_one_real_observer_failure_row(tmp_path, monkeypatch):
+        db = Database(tmp_path / "missing.db")
+        observer = SQLiteObserver(db._connection)
+        client = _app(db, observer, monkeypatch)
+    
+        response = client.get(f"/api/decisions/{MISSING_ID}")
+    
+        assert response.status_code == 404
+        assert response.json() == {"error": "decision_not_found"}
+        rows = _events(db)
+>       assert len(rows) == 1
+E       assert 2 == 1
+E        +  where 2 = len([{'args_summary': '{"decision_id":"philo504-deliberately-absent"}', 'error': "NotFound('Unknown decision: philo504-del...NotFound('Unknown decision: philo504-deliberately-absent')", 'error_code': 'not_found', 'method': 'get_decision', ...}])
+
+tests/unit/test_philo6_04_one_cause_one_row.py:113: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo6_04_one_cause_one_row.py::test_missing_id_has_one_real_observer_failure_row
+1 failed in 1.56s
+archive=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.lir3PhvhxD
+exit=1

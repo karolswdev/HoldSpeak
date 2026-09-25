@@ -1,0 +1,116 @@
+/* Canvas-only positioning. Species and shell styles remain imported from web. */
+body {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.toast-canvas-headline {
+  margin: 0;
+  color: var(--text-muted);
+  font: 650 26px / 1.1 var(--font-display);
+}
+
+.toast-canvas .chair {
+  max-width: 960px;
+}
+
+.toast-canvas-today {
+  top: auto;
+  right: auto;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toast-canvas-flow-slot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-block: var(--space-3);
+}
+
+.toast-canvas-flow-card {
+  position: static;
+  width: min(560px, 100%);
+  transform: none;
+}
+
+/* Off-Arrival boards: the slot belongs to the surface that is currently in
+ * front. Meetings owns the first body row below its real titlebar. Floor owns
+ * the first normal-flow row above the real list-view work area. */
+.toast-canvas-meetings .toast-meetings-window {
+  min-height: 520px;
+}
+
+.toast-canvas-meetings .toast-meetings-body {
+  gap: var(--desk-surface-section-gap);
+}
+
+.toast-meetings-flow-slot {
+  width: 100%;
+  flex: none;
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.toast-meetings-flow-slot .toast-canvas-flow-card {
+  width: 100%;
+}
+
+.toast-meetings-headline {
+  margin: 0;
+}
+
+.toast-canvas-floor {
+  min-height: 100vh;
+}
+
+.toast-floor-flow-slot {
+  position: relative;
+  z-index: 1;
+  width: min(960px, calc(100vw - 32px));
+  margin: var(--desk-work-top) auto 0;
+  padding: var(--space-3) 0;
+}
+
+.toast-floor-flow-slot .toast-canvas-flow-card {
+  width: min(560px, 100%);
+  margin-inline: auto;
+}
+
+.toast-floor-work-area {
+  position: relative;
+  z-index: 0;
+  height: calc(100vh - 230px - 72px);
+  min-height: 0;
+  overflow: auto;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.toast-floor-mode-label {
+  padding: var(--space-2) max(var(--space-3), calc((100vw - 960px) / 2));
+  color: var(--text-muted);
+  font: 650 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .toast-canvas-meetings .toast-meetings-window {
+    min-height: 0;
+  }
+
+  .toast-floor-flow-slot {
+    width: calc(100vw - 24px);
+    margin-top: var(--desk-work-top);
+    padding-block: var(--space-2);
+  }
+
+  .toast-floor-work-area {
+    height: calc(100vh - 250px - 125px);
+  }
+
+  .toast-floor-mode-label {
+    padding-inline: var(--space-2);
+  }
+}
