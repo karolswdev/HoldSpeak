@@ -369,6 +369,7 @@ def _codex_mcp_calls(stage_dir: Path) -> list[dict[str, Any]]:
             "tool": item.get("tool"),
             "arguments": item.get("arguments") or {},
             "result": result,
+            "error": item.get("error"),
             "event_id": event_id,
             "result_sha256": hashlib.sha256(
                 json.dumps(_canonical_mcp_result(result), sort_keys=True, default=str).encode()
@@ -424,6 +425,84 @@ def _canonical_mcp_result(result: Any) -> Any:
     return projected
 
 
+# Codex 0.155 publishes three built-in MCP catalogue tools.  It records each
+# one as an ``mcp_tool_call`` item for the named server, but on the wire each
+# is a plain JSON-RPC resource method, not ``tools/call``.  Each maps to the
+# JSON-RPC method and the result field that Codex echoes back.  These are
+# reads: they never count as a producer for a required tool.
+CODEX_RESOURCE_BUILTINS: dict[str, tuple[str, str]] = {
+    "list_mcp_resource_templates": ("resources/templates/list", "resourceTemplates"),
+    "list_mcp_resources": ("resources/list", "resources"),
+    "read_mcp_resource": ("resources/read", "contents"),
+}
+
+
+def _resource_row_matches(
+    call: dict[str, Any],
+    request: dict[str, Any],
+    response: Any,
+) -> bool:
+    """Pair one Codex built-in catalogue call with its exact JSON-RPC row.
+
+    The request must carry the mapped method and the same arguments (the
+    ``server`` argument names the Codex server and is not sent; ``_meta`` is
+    Codex transport bookkeeping).  A Codex error item needs the hub's JSON-RPC
+    error, code and message, inside the Codex message.  A Codex success needs
+    a hub success whose echoed field is equal once the ``server`` labels that
+    Codex adds are removed.
+    """
+    rpc_method, field = CODEX_RESOURCE_BUILTINS[call["tool"]]
+    if request.get("method") != rpc_method or not isinstance(response, dict):
+        return False
+    arguments = dict(call["arguments"])
+    if arguments.pop("server", None) != "holdspeak":
+        return False
+    params = {
+        key: value for key, value in (request.get("params") or {}).items()
+        if key != "_meta"
+    }
+    if params != arguments:
+        return False
+    result = call["result"]
+    codex_error = call.get("error")
+    if result is None and isinstance(codex_error, dict):
+        error = response.get("error")
+        if not isinstance(error, dict) or "result" in response:
+            return False
+        message = codex_error.get("message")
+        return isinstance(message, str) and (
+            f"{error.get('code')}: {error.get('message')}" in message
+        )
+    hub_result = response.get("result")
+    if "error" in response or not isinstance(hub_result, dict):
+        return False
+    content = (result or {}).get("content") if isinstance(result, dict) else None
+    if not isinstance(content, list) or len(content) != 1 \
+            or not isinstance(content[0], dict) or content[0].get("type") != "text":
+        return False
+    try:
+        echoed = json.loads(content[0].get("text", ""))
+    except ValueError:
+        return False
+    if not isinstance(echoed, dict) or echoed.pop("server", None) != "holdspeak":
+        return False
+    if field == "contents" and echoed.pop("uri", None) != arguments.get("uri"):
+        return False
+    entries = echoed.pop(field, None)
+    if not isinstance(entries, list):
+        return False
+    stripped: list[Any] = []
+    for entry in entries:
+        if isinstance(entry, dict) and "server" in entry:
+            entry = dict(entry)
+            if entry.pop("server") != "holdspeak":
+                return False
+        stripped.append(entry)
+    if stripped != hub_result.get(field):
+        return False
+    return all(hub_result.get(key) == value for key, value in echoed.items())
+
+
 def _reconcile_mcp_calls(
     stage_dir: Path,
     hub: Any,
@@ -458,7 +537,14 @@ def _reconcile_mcp_calls(
                     response = json.loads(response)
                 except ValueError:
                     continue
-            if not isinstance(request, dict) or request.get("method") != "tools/call":
+            if not isinstance(request, dict):
+                continue
+            if call["tool"] in CODEX_RESOURCE_BUILTINS:
+                if _resource_row_matches(call, request, response):
+                    found_index = index
+                    break
+                continue
+            if request.get("method") != "tools/call":
                 continue
             params = request.get("params") or {}
             if params.get("name") != call["tool"]:
@@ -480,6 +566,7 @@ def _reconcile_mcp_calls(
             )
         used.add(found_index)
         matches.append({
+            "kind": CODEX_RESOURCE_BUILTINS.get(call["tool"], ("tools/call",))[0],
             "tool": call["tool"],
             "arguments": call["arguments"],
             "result_sha256": call["result_sha256"],
@@ -542,7 +629,10 @@ def _audit_codex_turn(
         _write_text(stage_dir / "non-mcp-write-failure.txt", "\n".join(bad_commands) + "\n")
         raise RuntimeError(f"Codex used a non-MCP write against hub HOME during {stage}")
     calls = _codex_mcp_calls(stage_dir)
-    seen_tools = {str(call.get("tool")) for call in calls}
+    seen_tools = {
+        str(call.get("tool")) for call in calls
+        if call.get("tool") not in CODEX_RESOURCE_BUILTINS
+    }
     missing = sorted(required_tools - seen_tools)
     if missing:
         raise RuntimeError(f"Codex turn {stage} did not produce through MCP: {missing}")

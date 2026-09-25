@@ -141,6 +141,92 @@ def test_reconcile_accepts_success_and_refused_mcp_calls(tmp_path: Path) -> None
     assert audit["unmatched_turn_exchanges"] == []
 
 
+RESOURCE_FIXTURES = REPO / "tests/fixtures/philo5_resource_catalogue"
+RETAINED_RUN = (
+    REPO / "pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/assets/closing/"
+    "rehearsal/20260925T060854Z-his-words-real"
+)
+
+
+def _mint_resource_turn(tmp_path: Path) -> tuple[Path, _TranscriptHub]:
+    """Copy the retained Codex built-in catalogue calls and hub rows verbatim."""
+    stage = tmp_path / "codex" / "turn"
+    stage.mkdir(parents=True)
+    (stage / "events.jsonl").write_text((RESOURCE_FIXTURES / "codex-events.jsonl").read_text())
+    transcript = tmp_path / "rehearsal-transcript.jsonl"
+    transcript.write_text((RESOURCE_FIXTURES / "hub-transcript.jsonl").read_text())
+    return stage, _TranscriptHub(tmp_path / "hub-home", transcript)
+
+
+def test_reconcile_pairs_codex_resource_catalogue_calls(tmp_path: Path) -> None:
+    stage, hub = _mint_resource_turn(tmp_path)
+    audit = driver._reconcile_mcp_calls(stage, hub, 0)
+    assert audit["codex_calls"] == 4
+    assert [(m["tool"], m["kind"], m["exchange_index"]) for m in audit["matches"]] == [
+        ("list_mcp_resource_templates", "resources/templates/list", 0),
+        ("list_mcp_resources", "resources/list", 1),
+        ("read_mcp_resource", "resources/read", 2),
+        ("read_mcp_resource", "resources/read", 3),
+    ]
+    assert audit["unmatched_turn_exchanges"] == []
+
+
+def test_reconcile_marks_tools_call_matches(tmp_path: Path) -> None:
+    stage, hub = _mint_transcript(tmp_path)
+    audit = driver._reconcile_mcp_calls(stage, hub, 0)
+    assert {m["kind"] for m in audit["matches"]} == {"tools/call"}
+
+
+@pytest.mark.parametrize("row", [0, 1, 2, 3])
+def test_reconcile_refuses_resource_call_without_its_row(tmp_path: Path, row: int) -> None:
+    stage, hub = _mint_resource_turn(tmp_path)
+    rows = hub.transcript_path.read_text().splitlines()
+    del rows[row]
+    hub.transcript_path.write_text("".join(line + "\n" for line in rows))
+    with pytest.raises(RuntimeError, match="no unused matching"):
+        driver._reconcile_mcp_calls(stage, hub, 0)
+
+
+@pytest.mark.parametrize("mutation", ["method", "error", "resources", "uri", "success-for-error"])
+def test_reconcile_rejects_resource_row_mutations(tmp_path: Path, mutation: str) -> None:
+    stage, hub = _mint_resource_turn(tmp_path)
+    rows = [json.loads(line) for line in hub.transcript_path.read_text().splitlines()]
+    if mutation == "method":
+        rows[1]["request_body"]["method"] = "tools/list"
+    elif mutation == "error":
+        rows[0]["response_body"]["error"]["code"] = -32602
+    elif mutation == "resources":
+        rows[1]["response_body"]["result"]["resources"][0]["name"] = "changed"
+    elif mutation == "uri":
+        rows[2]["request_body"]["params"]["uri"] = "holdspeak://desk/verbs"
+    else:
+        rows[0]["response_body"] = {"jsonrpc": "2.0", "id": 2, "result": {"resourceTemplates": []}}
+    hub.transcript_path.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    with pytest.raises(RuntimeError, match="no unused matching"):
+        driver._reconcile_mcp_calls(stage, hub, 0)
+
+
+def test_resource_calls_never_satisfy_a_required_tool(tmp_path: Path) -> None:
+    stage, hub = _mint_resource_turn(tmp_path)
+    (stage / "brief.md").write_text("ROLE: ask\nPlease look at the desk.\n")
+    for required in ({"list_mcp_resources"}, {"read_mcp_resource"}, {"thought.create"}):
+        with pytest.raises(RuntimeError, match="did not produce through MCP"):
+            driver._audit_codex_turn(stage, "turn", hub, required, 0)
+
+
+def test_retained_decision_turn_reconciles_whole(tmp_path: Path) -> None:
+    """The run recorded BLOCKED at 20260925T060854Z reconciles every call."""
+    stage = RETAINED_RUN / "codex" / "decision_thought"
+    window = json.loads((stage / "transcript-window.json").read_text())
+    hub = _TranscriptHub(tmp_path / "hub-home", RETAINED_RUN / "rehearsal-transcript.jsonl")
+    audit = driver._reconcile_mcp_calls(stage, hub, window["exchange_start"])
+    kinds = [m["kind"] for m in audit["matches"]]
+    assert audit["codex_calls"] == len(audit["matches"]) == 11
+    assert kinds.count("tools/call") == 7
+    assert kinds.count("resources/read") == 2
+    assert kinds.count("resources/list") == kinds.count("resources/templates/list") == 1
+
+
 def test_canonical_result_projection_preserves_content_and_errors() -> None:
     codex = {
         "content": [{"type": "text", "text": "kept"}],
