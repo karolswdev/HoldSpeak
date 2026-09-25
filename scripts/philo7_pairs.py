@@ -10,7 +10,12 @@ named observation slots only:
   made; the successor IS the id the supersede returned), never equal ids
   across runs;
 * refusals: neither side's write was refused (the op trigger's refusal is
-  ``None``; the face trigger's own network response is below 400).
+  ``None``; the face trigger's own network response is below 400). Where the
+  face trigger sends nothing, the row says ``refusal_check: not_applicable``
+  with the reason: absence of a response proves no refusal was avoided.
+
+One headless ``.op`` run serves BOTH face widths of its pair, so N pairs at
+two widths rest on N op runs and 2N face runs; the summary says so.
 
 Usage::
 
@@ -146,16 +151,30 @@ def _supersede_op(o: Obs) -> tuple[Any, bool]:
 
 
 def _delete_face(o: Obs) -> tuple[Any, bool]:
-    one = _read(o, f"/api/decisions/{_v(o, 'decision_id')}") or {}
+    """Identity (round two, Muad'Dib F2a): the id the setup minted is the id
+    whose own read answers 404 and which the list no longer holds."""
+    decision_id = _v(o, "decision_id")
+    one = _read(o, f"/api/decisions/{decision_id}") or {}
     rows = (_payload(o, "/api/decisions") or {}).get("decisions")
-    listed = _v(o, "decision_id") in _members(rows, "id")
-    return {"read_refused": one.get("status") == 404, "listed": listed}, True
+    listed = decision_id in _members(rows, "id")
+    refused = one.get("status") == 404
+    return {"read_refused": refused, "listed": listed}, bool(decision_id) and refused and not listed
 
 
 def _delete_op(o: Obs) -> tuple[Any, bool]:
-    listed = _v(o, "decision_id") in _members(_op(o)[0], "id")
+    """Identity: the minted id is absent from the list, its own read refuses
+    naming it, and the READ delete receipt carries the delete's operation id
+    and names that decision as its target."""
+    decision_id = _v(o, "decision_id")
+    listed = decision_id in _members(_op(o)[0], "id")
     _, refusal = _op(o, 0)
-    return {"read_refused": (refusal or {}).get("code") == "not_found", "listed": listed}, True
+    receipt = ((( _op(o, 1)[0] or {}).get("objects") or [{}])[0] or {}).get("receipt") or {}
+    refused = (refusal or {}).get("code") == "not_found"
+    identity = (bool(decision_id) and not listed and refused
+                and str(decision_id) in str((refusal or {}).get("error"))
+                and receipt.get("operation_id") == _v(o, "delete_op") is not None
+                and receipt.get("target_ref") == f"decision:{decision_id}")
+    return {"read_refused": refused, "listed": listed}, identity
 
 
 PAIRS: dict[str, tuple[Projection, Projection]] = {
@@ -171,9 +190,10 @@ PAIRS: dict[str, tuple[Projection, Projection]] = {
 }
 
 
-def _face_refused(o: Obs) -> bool:
-    chosen = ((o.get("trigger_response_capture") or {}).get("chosen")) or {}
-    return int(chosen.get("status") or 0) >= 400
+def _face_trigger_response(o: Obs) -> dict[str, Any] | None:
+    """The network response the face trigger itself caused, or None."""
+    chosen = (o.get("trigger_response_capture") or {}).get("chosen")
+    return chosen if isinstance(chosen, dict) and chosen.get("status") else None
 
 
 def _op_refused(o: Obs) -> bool:
@@ -206,16 +226,39 @@ def build(dirs: list[Path]) -> list[dict[str, Any]]:
                 continue
             face_outcome, face_identity = face_projection(face)
             op_outcome, op_identity = op_projection(op)
+            response = _face_trigger_response(face)
+            if response is None:
+                # Round two (Muad'Dib F2b): a face trigger that sends nothing
+                # (a Search fill; the write ran in setup) cannot show a
+                # refusal, so "neither side refused" would prove nothing.
+                refusal_check = {
+                    "status": "not_applicable",
+                    "reason": ("the face trigger made no network call (a Search fill or a key "
+                               "press; the write ran in setup or the network response was not "
+                               "captured), so the face side's refusal cannot be read"),
+                    "op_refused": _op_refused(op),
+                }
+                refusals_ok = not _op_refused(op)
+            else:
+                face_refused = int(response["status"]) >= 400
+                refusal_check = {
+                    "status": "checked",
+                    "face_trigger_response": f"{response.get('method')} {response.get('path')} {response.get('status')}",
+                    "face_refused": face_refused, "op_refused": _op_refused(op),
+                }
+                refusals_ok = not face_refused and not _op_refused(op)
             row.update(
                 face_verdict=face.get("verdict"), op_verdict=op.get("verdict"),
                 face_outcome=face_outcome, op_outcome=op_outcome,
                 outcome_equal=face_outcome == op_outcome,
                 identity=face_identity and op_identity,
-                refusals_equal=_face_refused(face) == _op_refused(op) is False,
+                refusal_check=refusal_check,
+                # Round two (F2c): ONE headless run serves both face widths.
+                op_run_shared_across_widths=True,
                 engine=[face["provenance"]["engine_mode"], op["provenance"]["engine_mode"]],
             )
             row["verdict"] = "equivalent" if (row["outcome_equal"] and row["identity"]
-                                              and row["refusals_equal"]) else "NOT equivalent"
+                                              and refusals_ok) else "NOT equivalent"
             rows.append(row)
     return rows
 
@@ -230,8 +273,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{row['pair']} @{row['width']}: {row['verdict']} "
               f"face={row.get('face_outcome')} op={row.get('op_outcome')} "
               f"identity={row.get('identity')} verdicts={row.get('face_verdict')}/{row.get('op_verdict')}")
+    ops = {row["op"] for row in rows if row.get("op")}
+    faces = {row["face"] for row in rows if row.get("face")}
+    equivalent = sum(row["verdict"] == "equivalent" for row in rows)
+    na = sum((row.get("refusal_check") or {}).get("status") == "not_applicable" for row in rows)
+    summary = (f"{equivalent}/{len(rows)} pair-widths equivalent, over {len(ops)} headless op runs "
+               f"(each shared by both widths) x {len(faces)} face runs; the refusal leg is "
+               f"not applicable on {na} of them (the face trigger sent nothing)")
+    print(summary)
     if args.out:
-        args.out.write_text(json.dumps(rows, indent=2) + "\n")
+        args.out.write_text(json.dumps({"summary": summary, "pairs": rows}, indent=2) + "\n")
     return 0 if all(row["verdict"] == "equivalent" for row in rows) else 1
 
 

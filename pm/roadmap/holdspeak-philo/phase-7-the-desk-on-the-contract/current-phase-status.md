@@ -375,6 +375,12 @@ Sequential: 01 → 02 → 03 → 04. `holdspeak/operations.py`, `holdspeak/mcp/t
 
 2026-09-25, story 03 built (the Fedaykin lane, after Astra's lane died on its quota; `feat/philo-7-03-atlas`, build commit `e3a32308`): `docs/internal/philo/graph/atlas-phase7.json` — the nine named browser cases at 1440 and 393, their headless `.op` siblings, a `decision.create` and a supersede receipt case, four refusal-receipt cases, the `.op` siblings of the three durable note cases (`create_refused` excluded with its reason). Atlas counts: `atlas.json` 85, `atlas-phase3.json` 36 (both unchanged), `atlas-phase7.json` 27. The rig (1.4.0) gains `op_facts` (a conjunction over actual reads) and repairs two carriage faults (the kb `resource_ref`/`ref` collapse executed a different admitted write; `decision.supersede`'s `successor_id` could not travel). Eight face cases pass at both widths; `case.p7.decision_delete.gone` FAILS at both: the delete receipt is drawn above the top edge (a face finding, recorded, not fixed). Supersede's action is not on the face (`web/src/desk/api.ts:259` has no caller). Real-engine (LAN engine reachable; no case calls a model) and REPLAY (`--engine none`) runs retained separately; 18/18 pair-widths equivalent in each. Reds under `docs/internal/philo/phase-7/atlas/reds/`. Evidence: `evidence-story-03.md`. Owed: Muad'Dib's check on built; the delete-receipt finding for the owner's triage.
 
+2026-09-25, story 03 round two (Muad'Dib's counsel on built, RATIFY-WITH-CONDITIONS, `checks/story-03-built-muaddib.md`; paid in `checks/story-03-round-two-muaddib.md`):
+- **F2, the equivalence run made honest.** The delete pair's identity is a real check: the id is absent on both sides, and the READ delete receipt names it and carries the delete's operation id. `pairs.json` says `refusal_check: not_applicable` on the 6 pair-widths whose face trigger sends nothing. The count is stated plainly: 18/18 pair-widths rest on 9 headless op runs, each shared by both widths, × 18 face runs.
+- **F3, a correction to `evidence-story-03.md:63` (locked).** Its claim that each receipt is checked for its actor was false for the supersede, create and refusal receipt cases. It is true now: every receipt read asserts `actor_kind`/`actor_identity`, and the supersede receipt asserts its successor (`capture_more`). 23 new facts, each red by its own mutation.
+- **F4 recorded.** The delete case's round-one mutation red proves nothing.
+- Scoped set 152 passed. Owed: Astra's check (C1, C2).
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

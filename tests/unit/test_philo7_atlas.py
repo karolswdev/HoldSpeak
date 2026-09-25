@@ -216,6 +216,34 @@ def test_every_admitted_write_the_cases_fire_has_its_receipt_read_somewhere(atla
     assert fired <= receipted, sorted(fired - receipted)
 
 
+def test_every_receipt_read_asserts_its_actor(atlas7) -> None:
+    """Round two (Muad'Dib F3): the evidence says each receipt is checked for
+    its actor. Every kernel receipt a case reads asserts actor_kind AND
+    actor_identity (the owner), from that same read."""
+    problems = []
+    for case in atlas7["cases"]:
+        if case["viewports"]:
+            continue
+        facts = case["expected"]["predicate"].get("facts", [])
+        for placeholder, where in _receipt_reads(case).items():
+            source, _, index = where.partition(":")
+            paths = {fact.get("path"): fact.get("value") for fact in facts
+                     if fact.get("source") == source and (not index or fact.get("index") == int(index))}
+            if paths.get("objects.0.receipt.actor_kind") != "owner" \
+                    or paths.get("objects.0.receipt.actor_identity") != "owner-session":
+                problems.append(f"{case['id']}: the receipt read of {placeholder} does not assert its actor")
+    assert not problems, problems
+
+
+def test_the_supersede_receipt_names_the_successor_the_write_returned(atlas7) -> None:
+    """Round two (Muad'Dib F3): the successor is captured from the supersede's
+    own result and the READ receipt's result_ref must name it."""
+    case = _cases(atlas7)["case.p7.decision_supersede.receipt.op"]
+    assert {"as": "successor_id", "path": "id"} in case["trigger"].get("capture_more", [])
+    facts = case["expected"]["predicate"]["facts"]
+    assert {"source": "observe", "path": "objects.0.receipt.result_ref", "value": "decision:{successor_id}"} in facts
+
+
 def test_refusal_receipts_are_read_for_each_admitted_family(atlas7) -> None:
     refused = {step["name"] for case in atlas7["cases"] if not case["viewports"]
                for step in [case["trigger"]]
@@ -362,3 +390,41 @@ def test_a_width_scoped_step_is_recorded_skipped_at_the_other_width() -> None:
     record = gw._ui_step(page, {"kind": "ui", "action": "focus", "selector": "#x", "at_width": 393})
     assert record["done"] is True
     page.locator.assert_called_with("#x")
+
+
+# ───────────────────── the equivalence run (round two, F2) ──────────────────
+
+from scripts import philo7_pairs as pairs  # noqa: E402
+
+
+def _delete_op_obs(*, listed: bool = False, receipt_op: str = "op_d", target: str = "decision:d1") -> dict:
+    return {
+        "variables": {"decision_id": "d1", "delete_op": "op_d"},
+        "after": {
+            "op": {"response": [{"id": "d1"}] if listed else [], "refusal": None},
+            "op_reads": [
+                {"response": None, "refusal": {"code": "not_found", "error": "Unknown decision: d1"}},
+                {"response": {"objects": [{"receipt": {"operation_id": receipt_op, "target_ref": target}}]},
+                 "refusal": None},
+            ],
+        },
+    }
+
+
+def test_the_delete_identity_is_a_real_check() -> None:
+    """Muad'Dib F2a: the delete pair's identity leg returned True whatever it read."""
+    assert pairs._delete_op(_delete_op_obs())[1] is True
+    assert pairs._delete_op(_delete_op_obs(listed=True))[1] is False
+    assert pairs._delete_op(_delete_op_obs(receipt_op="op_other"))[1] is False
+    assert pairs._delete_op(_delete_op_obs(target="decision:someone-else"))[1] is False
+    face = {"variables": {"decision_id": "d1"}, "after": {"api_reads": [
+        {"path": "/api/decisions/d1", "status": 200, "payload": {"decision": {"id": "d1"}}},
+        {"path": "/api/decisions", "status": 200, "payload": {"decisions": [{"id": "d1"}]}}]}}
+    assert pairs._delete_face(face)[1] is False
+
+
+def test_a_face_trigger_that_sends_nothing_is_not_a_refusal_check() -> None:
+    """Muad'Dib F2b: no network response is 'not applicable', never 'not refused'."""
+    assert pairs._face_trigger_response({"trigger_response_capture": {"chosen": None}}) is None
+    chosen = {"method": "PUT", "path": "/x", "status": 200}
+    assert pairs._face_trigger_response({"trigger_response_capture": {"chosen": chosen}}) == chosen

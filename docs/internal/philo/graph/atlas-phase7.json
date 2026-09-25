@@ -1538,6 +1538,12 @@
             {
               "source": "read",
               "index": 0,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "read",
+              "index": 0,
               "path": "objects.0.receipt.target_ref",
               "value": "note:{note_id}"
             },
@@ -1707,6 +1713,12 @@
             {
               "source": "read",
               "index": 1,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "read",
+              "index": 1,
               "path": "objects.0.receipt.target_ref",
               "value": "note:{note_id}"
             },
@@ -1739,6 +1751,12 @@
               "index": 2,
               "path": "objects.0.receipt.actor_kind",
               "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "read",
@@ -1908,6 +1926,12 @@
             {
               "source": "read",
               "index": 0,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "read",
+              "index": 0,
               "path": "objects.0.receipt.target_ref",
               "value": "note:{note_id}"
             },
@@ -1946,6 +1970,12 @@
               "index": 2,
               "path": "objects.0.receipt.actor_kind",
               "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "read",
@@ -2181,6 +2211,12 @@
             {
               "source": "read",
               "index": 0,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "read",
+              "index": 0,
               "path": "objects.0.receipt.target_ref",
               "value": "kb:{kb_id}"
             },
@@ -2213,6 +2249,12 @@
               "index": 1,
               "path": "objects.0.receipt.actor_kind",
               "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "read",
@@ -2330,6 +2372,12 @@
               "index": 0,
               "path": "objects.0.receipt.actor_kind",
               "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "read",
@@ -2497,7 +2545,13 @@
         },
         "adapter": "mcp-http",
         "capture_as": "supersede_op",
-        "capture_path": "operation_id"
+        "capture_path": "operation_id",
+        "capture_more": [
+          {
+            "as": "successor_id",
+            "path": "id"
+          }
+        ]
       },
       "expected": {
         "predicate": {
@@ -2520,14 +2574,35 @@
             },
             {
               "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "observe",
               "path": "objects.0.receipt.target_ref",
               "value": "decision:{decision_id}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.result_ref",
+              "value": "decision:{successor_id}"
             },
             {
               "source": "read",
               "index": 0,
               "path": "status",
               "value": "superseded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "superseded_by",
+              "value": "{successor_id}"
             }
           ]
         },
@@ -2547,7 +2622,7 @@
             }
           }
         ],
-        "words": "ONE admission for the two-row supersede: its receipt, read back, names decision.supersede and the old decision as target; the old decision reads superseded"
+        "words": "ONE admission for the two-row supersede: its receipt, read back, names decision.supersede, the owner as actor, the old decision as target and the successor (captured from the same write) as result; the old decision reads superseded by that successor"
       },
       "completion_bound_s": 30.0,
       "viewports": []
@@ -2650,6 +2725,12 @@
             {
               "source": "read",
               "index": 1,
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "read",
+              "index": 1,
               "path": "objects.0.receipt.target_ref",
               "value": "decision:{decision_id}"
             },
@@ -2729,6 +2810,16 @@
               "source": "observe",
               "path": "objects.0.receipt.state",
               "value": "succeeded"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "trigger",
@@ -2827,6 +2918,16 @@
             },
             {
               "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "observe",
               "path": "objects.0.receipt.outcome",
               "value": "not_found"
             },
@@ -2917,6 +3018,16 @@
               "source": "observe",
               "path": "objects.0.receipt.state",
               "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "observe",
@@ -3016,6 +3127,16 @@
             },
             {
               "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
+            },
+            {
+              "source": "observe",
               "path": "objects.0.receipt.outcome",
               "value": "invalid_value"
             },
@@ -3098,6 +3219,16 @@
               "source": "observe",
               "path": "objects.0.receipt.state",
               "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.actor_identity",
+              "value": "owner-session"
             },
             {
               "source": "observe",

@@ -535,6 +535,7 @@ def test_named_pair_observations_bind_their_read_arguments() -> None:
         if not any(case['id'] == base or case['id'].startswith(base + '.') for base in bases):
             continue
         bound = {step['capture_as'] for step in _acts(case) if step.get('capture_as')}
+        bound |= {extra['as'] for step in _acts(case) for extra in step.get('capture_more', [])}
         expected = case['expected']
         reads = {key: expected.get(key) for key in ('observe_at', 'predicate', 'reads')}
         names = set(re.findall(r'\{([a-z][a-z0-9_]*)\}', json.dumps(reads)))

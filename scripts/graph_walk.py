@@ -4101,6 +4101,22 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
                 f"decoded response of operation {name!r}")
         variables[capture_as] = value
         record["captured"] = {"name": capture_as, "path": where, "value": value}
+        # PHILO-7-03 round two (Muad'Dib F3): one write can mint two values a
+        # case must name (supersede: its operation_id AND the successor id).
+        # Each extra capture reads the SAME record; a missing value blocks.
+        more = step.get("capture_more") or []
+        if not isinstance(more, list):
+            raise Blocked(f"capture_more on {name!r} must be a list")
+        for extra in more:
+            if not isinstance(extra, dict) or not extra.get("as") or not extra.get("path"):
+                raise Blocked(f"capture_more on {name!r} needs 'as' and 'path'")
+            found, value = _json_path(response, extra["path"])
+            if not found or value is None:
+                raise Blocked(f"capture_more {extra['as']!r}: no value at "
+                              f"{extra['path']!r} in the {capture_from} of {name!r}")
+            variables[extra["as"]] = value
+            record.setdefault("captured_more", []).append(
+                {"name": extra["as"], "path": extra["path"], "value": value})
     return record
 
 
@@ -4822,7 +4838,9 @@ def exercise(
     # A placeholder that neither setup nor the trigger can bind blocks here,
     # before anything is fired.
     trigger = case_trigger(case)
-    minted = {trigger.get("capture_as")} - {None, ""}
+    minted = ({trigger.get("capture_as")}
+              | {extra.get("as") for extra in (trigger.get("capture_more") or [])
+                 if isinstance(extra, dict)}) - {None, ""}
     pre_expected = substitute(case.get("expected") or {}, variables)
     outstanding = set(unresolved({field: pre_expected.get(field)
                                   for field in _EXPECTED_READ_FIELDS}))

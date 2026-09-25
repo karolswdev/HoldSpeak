@@ -271,6 +271,28 @@
                 "refusal"
               ],
               "description": "PHILO-7-03: where capture_as reads; a refused admitted write carries its operation_id and refusal receipt on the refusal record."
+            },
+            "capture_more": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "as",
+                  "path"
+                ],
+                "properties": {
+                  "as": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "PHILO-7-03 round two: further values captured from the same record (a supersede's successor id beside its operation_id)."
             }
           }
         },
