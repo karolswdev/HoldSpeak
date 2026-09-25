@@ -1,8 +1,8 @@
 # HoldSpeak Philo documentation initiative
 
-**Last updated:** 2026-09-24 (Phase 5 built 4/4; owner review pending).
-**Current phase:** [Phase 5 The One Service Layer](phase-5-the-one-service-layer/current-phase-status.md) — ratified by the owner 2026-09-24.
-**Status:** OWNER REVIEW PENDING. Phases 1–4 delivered and merged. Phase 5 is ratified and in progress. Stories 01–03 are merged; story 04 completed the technical rehearsal through Codex; its PR stays unmerged for counsel and publication. The owner reviews published shots after technical completion. This is not a sitting.
+**Last updated:** 2026-09-24 (Phase 5 closed).
+**Current phase:** none active — Phase 5 [closed](phase-5-the-one-service-layer/final-summary.md) 2026-09-24. Next: the PHILO-5 follow-ups in `pm/roadmap/holdspeak/BACKLOG.md` (the owner's morning path) and the owner's Article XI ruling; no Phase 6 chartered.
+**Status:** Phases 1–5 delivered and merged. Phase 5 The One Service Layer closed 2026-09-24: the meeting loop on one declared contract; Codex drove the job in ordinary words; rehearsed, owner-reviewed.
 
 ## Vision
 
