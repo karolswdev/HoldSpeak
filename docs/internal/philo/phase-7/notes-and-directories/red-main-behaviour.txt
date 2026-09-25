@@ -1,0 +1,107 @@
+# PHILO-7-01 red on a git archive copy of main 02a862f2, the branch's five test files overlaid (HOME isolated)
+# uv run pytest -q -n 8 -rf tests/unit/test_philo7_{rename_repair,compat,discovery,shelf_alignment,contract}.py
+# Counted behavioural reds: rename_repair 2, compat (the zone MCP rows) 17, discovery 16, shelf_alignment 1, contract go_through_invoke x3 + thought note 1 + palette[directories] 1.
+# NOT counted (missing symbol / unknown operation on main): the other contract failures.
+FAILED tests/unit/test_philo7_rename_repair.py::test_a_kb_rename_keeps_a_member_added_during_the_rename
+FAILED tests/unit/test_philo7_rename_repair.py::test_a_zone_rename_keeps_a_move_made_during_the_rename
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": "Z", "parent_id": "root1"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": "Z", "parent_id": null}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"directory_id": "seed", "name": "Moved"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": "Zone A"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": ""}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": 5}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"id": "x", "name": "Z"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"name": ""}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.create:{"name": "before"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"name": "Renamed"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"name": "  "}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"name": "root"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"parent_id": null}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_get_delete_and_verbs_reach_the_zone_service
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"directory_id": "o"}]
+FAILED tests/unit/test_philo7_compat.py::test_zone_mcp_inputs_reach_the_zone_service[desk.update:{"name": "Up", "parent_id": "root1"}]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[file a note into a zone]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[find a note]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.update]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.delete]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.verb]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.file]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.unfile]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[zone.list_members]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.add_member]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.remove_member]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[kb.list_members]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[note.create]
+FAILED tests/unit/test_philo7_shelf_alignment.py::test_an_unknown_shelf_state_is_refused_by_the_one_service_on_both_transports
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[zone.create]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[zone.update]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[zone.list]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[kb.create]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[kb.read]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[kb.update]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[kb.delete]
+FAILED tests/unit/test_philo7_contract.py::test_the_slice_is_fifteen_explicit_rows_each_naming_a_real_method
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[kb.list]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[note.list]
+FAILED tests/unit/test_philo7_contract.py::test_an_id_inside_update_data_is_refused_by_name
+FAILED tests/unit/test_philo7_contract.py::test_the_export_carries_the_admission
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[note.read]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[zone.read]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[put a decision on my review list]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[read a note]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[list the notes in a zone]
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[make a zone]
+FAILED tests/unit/test_philo7_contract.py::test_a_non_owner_principal_writes_as_it_did_on_main[agent]
+FAILED tests/unit/test_philo7_discovery.py::test_every_id_argument_names_where_its_value_comes_from[desk.get]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[note.delete]
+FAILED tests/unit/test_philo7_contract.py::test_the_residual_set_paid_exactly_the_enumerated_identities
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[note.update]
+FAILED tests/unit/test_philo7_contract.py::test_workflows_and_chains_keep_the_generic_path
+FAILED tests/unit/test_philo7_contract.py::test_a_non_owner_principal_writes_as_it_did_on_main[node]
+FAILED tests/unit/test_philo7_contract.py::test_each_row_declares_its_admission_as_ruled[zone.delete]
+FAILED tests/unit/test_philo7_contract.py::test_palette_refusal_through_dispatch_writes_nothing[directories]
+FAILED tests/unit/test_philo7_contract.py::test_every_slice_operation_is_bound_to_the_hubs_one_instance
+FAILED tests/unit/test_philo7_contract.py::test_http_mcp_verbs_and_the_resource_all_go_through_invoke[directories]
+FAILED tests/unit/test_philo7_contract.py::test_a_thoughts_note_updates_through_both_transports_with_its_revisions
+FAILED tests/unit/test_philo7_contract.py::test_http_mcp_verbs_and_the_resource_all_go_through_invoke[notes]
+FAILED tests/unit/test_philo7_contract.py::test_http_mcp_verbs_and_the_resource_all_go_through_invoke[kbs]
+FAILED tests/unit/test_philo7_contract.py::test_durable_state_survives_a_new_hub_over_the_same_database
+65 failed, 70 passed in 14.52s
+
+# First assertion line of each red (deduplicated):
+   8 E       AssertionError: the zone call never reached the zone service: {'error': "'PrimitiveService' object has no attribute 'update_directorie'"}
+   8 E       AssertionError: the zone call never reached the zone service: {'error': "'PrimitiveService' object has no attribute 'create_directorie'"}
+   3 E           holdspeak.operations.OperationRefused: Unknown operation: note.create
+   2 E       assert [] == ['desk.create']
+   1 E       AssertionError: the rename tombstoned the member added during it: ['note:a']
+   1 E       AssertionError: the rename reversed the move made during it: parent_id='p1'
+   1 E       AssertionError: the MCP refusal never reached the registry: {'error': "Invalid arguments for monday_brief.shelf: state: 'filed' is not one of ['acknowledged', 'deferred', None]"}
+   1 E       AssertionError: assert set() == {('http', 'ho...=notes'), ...}
+   1 E       AssertionError: assert [] == ['zone.create...'zone.delete']
+   1 E       AssertionError: assert [] == ['note.update', 'note.update']
+   1 E       AssertionError: assert [] == ['note.create...'note.delete']
+   1 E       AssertionError: assert [] == ['note.create....create', ...]
+   1 E       AssertionError: assert [] == ['kb.create',..., 'kb.delete']
+   1 E       AssertionError: 'read a note' is named by [], expected ['desk.get']
+   1 E       AssertionError: 'put a decision on my review list' is named by [], expected ['desk.create']
+   1 E       AssertionError: 'make a zone' is named by [], expected ['desk.create']
+   1 E       AssertionError: 'list the notes in a zone' is named by [], expected ['zone.list_members']
+   1 E       AssertionError: 'find a note' is named by [], expected ['desk.list']
+   1 E       AssertionError: 'file a note into a zone' is named by [], expected ['zone.file']
+   1 E       assert [] == ['zone.list_members']
+   1 E       assert [] == ['zone.file']
+   1 E       assert [] == ['desk.list']
+   1 E       assert [] == ['desk.get']
+   1 E       assert [] == ['brief.shelf.write']
+   1 E           holdspeak.operations.OperationRefused: Unknown operation: note.read
+   1 E           AssertionError: zone.unfile.directory_id does not say where its value comes from: ''
+   1 E           AssertionError: zone.list_members.directory_id does not say where its value comes from: ''
+   1 E           AssertionError: zone.file.directory_id does not say where its value comes from: ''
+   1 E           AssertionError: kb.remove_member.kb_id does not say where its value comes from: ''
+   1 E           AssertionError: kb.list_members.kb_id does not say where its value comes from: ''
+   1 E           AssertionError: kb.add_member.kb_id does not say where its value comes from: ''
+   1 E           AssertionError: desk.verb.verb_id does not say where its value comes from: 'The desk verb identifier.'
+   1 E           AssertionError: desk.update.id does not say where its value comes from: ''
+   1 E           AssertionError: desk.get.id does not say where its value comes from: 'Primitive identifier.'
+   1 E           AssertionError: desk.delete.id does not say where its value comes from: ''

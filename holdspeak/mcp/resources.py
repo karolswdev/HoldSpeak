@@ -23,6 +23,7 @@ from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
+from holdspeak import operations as desk_operations
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.workbench_service import WorkbenchService
@@ -439,6 +440,8 @@ def _ops() -> Any:
     from holdspeak import operations
 
     return operations.for_runtime(
+        # PHILO-7-01: the primitive resource reads through the contract too.
+        lambda: runtime_service("primitive_service", lambda: PrimitiveService(db_or(get_database))),
         meeting_service=lambda: runtime_service(
             "meeting_service", lambda: MeetingService(db_or(get_database))
         ),
@@ -568,7 +571,14 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         kind = _PRIMITIVE_KIND_ALIASES.get(match.group(1))
         if kind is None:
             raise ResourceError(f"Unsupported primitive kind: {match.group(1)}")
-        value = getattr(PrimitiveService(db_or(get_database)), f"get_{kind}")(principal, match.group(2))
+        operation = desk_operations.DESK_OPERATIONS.get((kind, "get"))
+        if operation is not None:
+            # PHILO-7-01: decisions, notes, zones and knowledge bases read
+            # through their declared read operation (the hub's one instance).
+            value = _ops().invoke(principal, operation, {desk_operations.DESK_ID_ARGUMENT[kind]: match.group(2)})
+        else:
+            # Workflows and chains: not on the contract yet (their owning slice).
+            value = getattr(PrimitiveService(db_or(get_database)), f"get_{kind}")(principal, match.group(2))
         return _contents(uri, _JSON_MIME, value)
     if match := _WORKBENCH_RUNS_PATTERN.fullmatch(uri):
         value = WorkbenchService(db_or(get_database)).list_runs(principal, match.group(1))

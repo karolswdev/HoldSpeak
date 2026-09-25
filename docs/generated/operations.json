@@ -58,7 +58,8 @@
         "mcp:desk.verb[verb_id=desk.create,kind=decisions]"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "decision.update",
@@ -123,7 +124,8 @@
         "mcp:desk.verb[verb_id=desk.update,kind=decisions]"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "decision.read",
@@ -153,10 +155,12 @@
       "completion": "synchronous",
       "exposure": [
         "http:GET /api/decisions/{decision_id}",
-        "mcp:desk.get[kind=decisions]"
+        "mcp:desk.get[kind=decisions]",
+        "mcp-resource:holdspeak://primitives/decisions/{id}"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "decision.list",
@@ -186,7 +190,8 @@
         "mcp:desk.list[kind=decisions]"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "meeting.list",
@@ -261,7 +266,8 @@
         "mcp:meeting.list"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "meeting.read",
@@ -303,7 +309,8 @@
         "mcp-resource:holdspeak://meetings/{meeting_id}"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "meeting.import",
@@ -368,7 +375,8 @@
         "config",
         "transcriber_factory"
       ],
-      "owner_only": true
+      "owner_only": true,
+      "admission": null
     },
     {
       "name": "meeting.summary.run",
@@ -405,7 +413,8 @@
         "mcp:meeting.run_intelligence"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "brief.generate",
@@ -431,7 +440,8 @@
         "mcp:monday_brief.get[generate=true]"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "brief.latest",
@@ -457,7 +467,8 @@
         "mcp-resource:holdspeak://briefs/latest"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "brief.shelf.write",
@@ -499,7 +510,8 @@
         "mcp:monday_brief.shelf"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "brief.shelf.read",
@@ -524,7 +536,8 @@
         "mcp:monday_brief.shelf_read"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "thought.create",
@@ -555,7 +568,8 @@
         "mcp:thought.create"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "thought.save",
@@ -595,7 +609,8 @@
         "mcp:thought.update_working"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "thought.read",
@@ -628,7 +643,8 @@
         "mcp-resource:holdspeak://thoughts/{thought_id}"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "thought.workbench.read",
@@ -661,7 +677,8 @@
         "mcp-resource:holdspeak://thoughts/{thought_id}/workbench"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
     },
     {
       "name": "thought.list",
@@ -698,7 +715,635 @@
         "mcp-resource:holdspeak://thoughts/unfinished"
       ],
       "held": [],
-      "owner_only": false
+      "owner_only": false,
+      "admission": null
+    },
+    {
+      "name": "note.create",
+      "version": 1,
+      "description": "Make one desk note. Every field is optional; a new id is made when note_id is absent.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "description": "Optional. A new id is made when absent. The id of a Thought's note is refused."
+          },
+          "title": {
+            "description": "Text; defaults to empty."
+          },
+          "body_markdown": {
+            "description": "Markdown text; defaults to empty."
+          },
+          "tags": {
+            "description": "A list of tags."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the note record (id, title, body_markdown, tags, created_at, updated_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ConflictError thought_expected_revision_required: the note belongs to a Thought and the expected revisions are absent"
+      ],
+      "completion": "synchronous; note.read returns it; one desk_changed frame (kind note, op create) on the hub bus",
+      "exposure": [
+        "http:POST /api/notes",
+        "mcp:desk.create[kind=notes]",
+        "mcp:desk.verb[verb_id=desk.create,kind=notes]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A plain edit: no placement field (D3).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "note.read",
+      "version": 1,
+      "description": "Read one desk note by id.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "the note record (id, title, body_markdown, tags, created_at, updated_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/notes/{note_id}",
+        "mcp:desk.get[kind=notes]",
+        "mcp-resource:holdspeak://primitives/notes/{id}"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "note.update",
+      "version": 1,
+      "description": "Change fields of one desk note. Only the supplied fields change; null leaves a field as it is. A Thought's note is saved through the Thought service and needs both expected revisions.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "title": {
+            "description": "Text."
+          },
+          "body_markdown": {
+            "description": "Markdown text."
+          },
+          "tags": {
+            "description": "A list of tags."
+          },
+          "expected_aggregate_revision": {
+            "description": "A Thought's note only: aggregate_revision from the last read."
+          },
+          "expected_working_revision": {
+            "description": "A Thought's note only: working_revision from the last read."
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the note record (id, title, body_markdown, tags, created_at, updated_at, last_modified, deleted); for a Thought's note, the working note plus its retry cursors (state, aggregate_revision, lifecycle_revision, working_revision, attachment_revision)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note",
+        "ConflictError thought_expected_revision_required: the note belongs to a Thought and the expected revisions are absent",
+        "ConflictError / ValidationError with the Thought service's own codes (revision_conflict ...)"
+      ],
+      "completion": "synchronous; note.read returns the new state; one desk_changed frame (kind note, op update) for a plain note",
+      "exposure": [
+        "http:PUT /api/notes/{note_id}",
+        "mcp:desk.update[kind=notes]",
+        "mcp:desk.verb[verb_id=desk.update,kind=notes]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A plain edit (title, body, tags) or a Thought save (D3).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "note.delete",
+      "version": 1,
+      "description": "Delete one desk note (a tombstone). A Thought's note is tombstoned through the Thought service and needs both expected revisions.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "expected_aggregate_revision": {
+            "description": "A Thought's note only: aggregate_revision from the last read."
+          },
+          "expected_lifecycle_revision": {
+            "description": "A Thought's note only: lifecycle_revision from the last read."
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "true for a plain note; for a Thought's note, the working note plus its retry cursors (state, aggregate_revision, lifecycle_revision, working_revision, attachment_revision) (the tombstoned note)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note",
+        "ConflictError thought_expected_revision_required: the note belongs to a Thought and the expected revisions are absent",
+        "ConflictError / ValidationError with the Thought service's own codes (revision_conflict ...)"
+      ],
+      "completion": "synchronous; note.read then refuses the id (NotFound); one desk_changed frame (kind note, op delete) for a plain note",
+      "exposure": [
+        "http:DELETE /api/notes/{note_id}",
+        "mcp:desk.delete[kind=notes]",
+        "mcp:desk.verb[verb_id=desk.delete,kind=notes]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "The note belongs to a Thought: its tombstone unfiles the note from its zone (db/refinement_thoughts.py:236). A plain note's delete is exempt: its zone membership row stays.",
+        "arguments": []
+      }
+    },
+    {
+      "name": "note.list",
+      "version": 1,
+      "description": "List the desk notes that are not deleted (up to 500). With tag, only the notes that carry it.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional. One tag."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "a list of note records",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/notes",
+        "mcp:desk.list[kind=notes]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "zone.create",
+      "version": 1,
+      "description": "Make one zone (a desk directory), at the desk root or inside another zone.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "directory_id": {
+            "description": "Optional. A new id is made when absent. The id of an existing zone sets that zone's parent_id (it can move it)."
+          },
+          "name": {
+            "description": "1 to 64 characters after trimming; unique among the live zones, ignoring case."
+          },
+          "parent_id": {
+            "description": "Optional. The id of the zone to put this zone in; absent or null: the desk root."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the zone record (id, name, name_normalized, parent_id, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError: zone name is required | zone name must be 64 characters or fewer",
+        "ConflictError zone_name_taken (existing_name): another live zone has this name, ignoring case"
+      ],
+      "completion": "synchronous; zone.read returns it; one desk_changed frame (kind directory, op create) on the hub bus",
+      "exposure": [
+        "http:POST /api/directories",
+        "mcp:desk.create[kind=directories]",
+        "mcp:desk.verb[verb_id=desk.create,kind=directories]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "directory_id is given and not empty: over an existing zone the create sets its parent_id (to parent_id or null), so it can move that zone with its contents. Without directory_id: exempt.",
+        "arguments": [
+          "directory_id"
+        ]
+      }
+    },
+    {
+      "name": "zone.read",
+      "version": 1,
+      "description": "Read one zone and what is filed in it.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "directory_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "directory_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "{directory: the zone record, member_ids: the filed primitive refs, members: the membership records}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown directory"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/directories/{directory_id}",
+        "mcp:desk.get[kind=directories]",
+        "mcp-resource:holdspeak://primitives/directories/{id}"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "zone.update",
+      "version": 1,
+      "description": "Rename a zone or move it. A rename (no parent_id) writes the name only. parent_id moves the zone with its contents: absent leaves it where it is; null moves it to the desk root.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "directory_id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "The new name; null or absent keeps the name."
+          },
+          "parent_id": {
+            "description": "Optional. The id of the new parent zone, or null for the desk root. Absent: the zone does not move."
+          }
+        },
+        "required": [
+          "directory_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the zone record (id, name, name_normalized, parent_id, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown directory",
+        "ValidationError: zone name is required | zone name must be 64 characters or fewer",
+        "ConflictError zone_name_taken (existing_name): another live zone has this name, ignoring case"
+      ],
+      "completion": "synchronous; zone.read returns the new state; one desk_changed frame (kind directory, op update) on the hub bus",
+      "exposure": [
+        "http:PUT /api/directories/{directory_id}",
+        "mcp:desk.update[kind=directories]",
+        "mcp:desk.verb[verb_id=desk.update,kind=directories]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "parent_id is present (null included): the zone moves with its contents. A rename alone (no parent_id) is exempt and writes the name only (PHILO-7-01 rename repair).",
+        "arguments": [
+          "parent_id"
+        ]
+      }
+    },
+    {
+      "name": "zone.delete",
+      "version": 1,
+      "description": "Delete one zone. What is filed in it goes back to the desk root; its child zones move to the root.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "directory_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "directory_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "true",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown directory"
+      ],
+      "completion": "synchronous; zone.read then refuses the id (NotFound); one desk_changed frame (kind directory, op delete) on the hub bus",
+      "exposure": [
+        "http:DELETE /api/directories/{directory_id}",
+        "mcp:desk.delete[kind=directories]",
+        "mcp:desk.verb[verb_id=desk.delete,kind=directories]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Every member unfiled and every child zone moved to the root, in the same transaction (db/primitives.py:1182-1204).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "zone.list",
+      "version": 1,
+      "description": "List the zones that are not deleted, by name. Each row carries member_ids: what is filed in it.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "a list of zone records, each with member_ids",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/directories",
+        "mcp:desk.list[kind=directories]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "kb.create",
+      "version": 1,
+      "description": "Make one knowledge base: a named set of references to desk objects.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "kb_id": {
+            "description": "Optional. A new id is made when absent. The id of an existing knowledge base REPLACES its members with member_ids."
+          },
+          "name": {
+            "description": "Required text (not empty)."
+          },
+          "member_ids": {
+            "description": "Optional. A list of kind:id references, for example note:<id> (a mapping is also accepted: its keys are the references)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the knowledge base record (id, name, member_ids, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError: kb name is required"
+      ],
+      "completion": "synchronous; kb.read returns it; one desk_changed frame (kind kb, op create) on the hub bus",
+      "exposure": [
+        "http:POST /api/kbs",
+        "mcp:desk.create[kind=kbs]",
+        "mcp:desk.verb[verb_id=desk.create,kind=kbs]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "member_ids is given and not empty, in any accepted form (a list; a mapping, whose keys the repository files as references; any other non-empty value), or kb_id is given and not empty: knowledge memberships can be written (over an existing kb_id the membership set is REPLACED). Otherwise exempt.",
+        "arguments": [
+          "member_ids",
+          "kb_id"
+        ]
+      }
+    },
+    {
+      "name": "kb.read",
+      "version": 1,
+      "description": "Read one knowledge base by id.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "kb_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kb_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "the knowledge base record (id, name, member_ids, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown kb"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/kbs/{kb_id}",
+        "mcp:desk.get[kind=kbs]",
+        "mcp-resource:holdspeak://primitives/kbs/{id}"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "kb.update",
+      "version": 1,
+      "description": "Rename a knowledge base or set its members. A rename (no member_ids) writes the name only. member_ids makes the member set exactly that list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "kb_id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "The new name; null or absent keeps the name."
+          },
+          "member_ids": {
+            "description": "Optional. The complete new list of kind:id references. Absent or null: the members do not change."
+          }
+        },
+        "required": [
+          "kb_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "the knowledge base record (id, name, member_ids, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown kb"
+      ],
+      "completion": "synchronous; kb.read returns the new state; one desk_changed frame (kind kb, op update) on the hub bus",
+      "exposure": [
+        "http:PUT /api/kbs/{kb_id}",
+        "mcp:desk.update[kind=kbs]",
+        "mcp:desk.verb[verb_id=desk.update,kind=kbs]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the repository files as references; an empty value removes every member): knowledge memberships are added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
+        "arguments": [
+          "member_ids"
+        ]
+      }
+    },
+    {
+      "name": "kb.delete",
+      "version": 1,
+      "description": "Delete one knowledge base (a tombstone). Its membership rows are not changed.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "kb_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kb_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "write",
+      "result": "true",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown kb"
+      ],
+      "completion": "synchronous; kb.read then refuses the id (NotFound); one desk_changed frame (kind kb, op delete) on the hub bus",
+      "exposure": [
+        "http:DELETE /api/kbs/{kb_id}",
+        "mcp:desk.delete[kind=kbs]",
+        "mcp:desk.verb[verb_id=desk.delete,kind=kbs]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The knowledge base row is tombstoned; its membership rows are not touched (R4).",
+        "arguments": []
+      }
+    },
+    {
+      "name": "kb.list",
+      "version": 1,
+      "description": "List the knowledge bases that are not deleted, by name.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the desk primitive service performs no principal check of its own (a Thought's note: the Thought service's own owner check applies)",
+      "effect": "read",
+      "result": "a list of knowledge base records",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/kbs",
+        "mcp:desk.list[kind=kbs]"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": []
+      }
     }
   ]
 }

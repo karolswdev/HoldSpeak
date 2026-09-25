@@ -431,6 +431,30 @@ class KBRepository(BaseRepository):
                         )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
 
+    def rename(self, kb_id: str, name: Optional[str]) -> bool:
+        """Write the name of one live knowledge base, and nothing else (PHILO-7-01).
+
+        The rename repair: the membership list and the knowledge memberships
+        stay as the database holds them at write time. ``name=None`` keeps
+        the name and only moves ``last_modified``. False when no live row has
+        this id.
+        """
+        clean_id = str(kb_id or "").strip()
+        if not clean_id:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            if name is None:
+                cur = conn.execute(
+                    "UPDATE kbs SET last_modified = ? WHERE id = ? AND deleted = 0", (now, clean_id)
+                )
+            else:
+                cur = conn.execute(
+                    "UPDATE kbs SET name = ?, last_modified = ? WHERE id = ? AND deleted = 0",
+                    (str(name or ""), now, clean_id),
+                )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
     def get(self, kb_id: str, *, include_deleted: bool = False) -> Optional[KBRecord]:
         clean_id = str(kb_id or "").strip()
         if not clean_id:
@@ -1138,6 +1162,46 @@ class DirectoryRepository(BaseRepository):
                 ).fetchone()
                 raise ZoneNameTaken(row["name"] if row else clean_name)
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def rename(self, directory_id: str, name: Optional[str]) -> bool:
+        """Write the name of one live zone, and nothing else (PHILO-7-01).
+
+        The rename repair: ``parent_id`` stays as the database holds it at
+        write time. ``name=None`` keeps the name and only moves
+        ``last_modified``. The name rules and the unique-name refusal are the
+        upsert's (:class:`ZoneNameTaken`). False when no live row has this id.
+        """
+        clean_id = str(directory_id or "").strip()
+        if not clean_id:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            if name is None:
+                cur = conn.execute(
+                    "UPDATE directories SET last_modified = ? WHERE id = ? AND deleted = 0",
+                    (now, clean_id),
+                )
+                return bool(cur.rowcount and cur.rowcount > 0)
+            clean_name = str(name or "").strip()
+            norm = normalize_zone_name(clean_name)
+            if not norm:
+                raise ValueError("zone name is required")
+            if len(norm) > 64:
+                raise ValueError("zone name must be 64 characters or fewer")
+            try:
+                cur = conn.execute(
+                    "UPDATE directories SET name = ?, name_normalized = ?, last_modified = ? "
+                    "WHERE id = ? AND deleted = 0",
+                    (clean_name, norm, now, clean_id),
+                )
+            except sqlite3.IntegrityError:
+                row = conn.execute(
+                    "SELECT name FROM directories "
+                    "WHERE name_normalized = ? AND deleted = 0 AND id != ?",
+                    (norm, clean_id),
+                ).fetchone()
+                raise ZoneNameTaken(row["name"] if row else clean_name)
+            return bool(cur.rowcount and cur.rowcount > 0)
 
     def find_by_normalized_name(self, name: str) -> Optional[DirectoryRecord]:
         """Look up a live directory by its normalized name."""

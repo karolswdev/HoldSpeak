@@ -93,6 +93,168 @@
       "transport": "mcp",
       "entry_point": "thought.update_working",
       "discriminator": ""
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.create",
+      "discriminator": "kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.delete",
+      "discriminator": "kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.get",
+      "discriminator": "kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.list",
+      "discriminator": "kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.update",
+      "discriminator": "kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.create,kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.update,kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=notes"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=kbs"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "mcp",
+      "entry_point": "desk.verb",
+      "discriminator": "verb_id=desk.delete,kind=directories"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/directories.py::build_directories_router._svc",
+      "discriminator": "PrimitiveService"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/kbs.py::build_kbs_router._svc",
+      "discriminator": "PrimitiveService"
+    },
+    {
+      "story": "PHILO-7-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/primitives/notes.py::build_notes_router._svc",
+      "discriminator": "PrimitiveService"
     }
   ],
   "public_tools_added": [
@@ -123,10 +285,10 @@
     }
   ],
   "measurements": {
-    "residual_identities": 320,
-    "residual_mcp": 256,
-    "residual_http": 64,
-    "http_constructions": 66,
+    "residual_identities": 293,
+    "residual_mcp": 232,
+    "residual_http": 61,
+    "http_constructions": 63,
     "public_tools": 228
   },
   "entries": [
@@ -319,24 +481,6 @@
     {
       "transport": "mcp",
       "entry_point": "desk.create",
-      "discriminator": "kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.create",
-      "discriminator": "kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.create",
-      "discriminator": "kind=directories",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.create",
       "discriminator": "kind=workflows",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
@@ -344,12 +488,6 @@
       "transport": "mcp",
       "entry_point": "desk.create",
       "discriminator": "kind=chains",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.delete",
-      "discriminator": "kind=notes",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
     {
@@ -361,18 +499,6 @@
     {
       "transport": "mcp",
       "entry_point": "desk.delete",
-      "discriminator": "kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.delete",
-      "discriminator": "kind=directories",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.delete",
       "discriminator": "kind=workflows",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
@@ -385,24 +511,6 @@
     {
       "transport": "mcp",
       "entry_point": "desk.get",
-      "discriminator": "kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.get",
-      "discriminator": "kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.get",
-      "discriminator": "kind=directories",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.get",
       "discriminator": "kind=workflows",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
@@ -410,24 +518,6 @@
       "transport": "mcp",
       "entry_point": "desk.get",
       "discriminator": "kind=chains",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.list",
-      "discriminator": "kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.list",
-      "discriminator": "kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.list",
-      "discriminator": "kind=directories",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
     {
@@ -457,24 +547,6 @@
     {
       "transport": "mcp",
       "entry_point": "desk.update",
-      "discriminator": "kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.update",
-      "discriminator": "kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.update",
-      "discriminator": "kind=directories",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.update",
       "discriminator": "kind=workflows",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
     },
@@ -487,24 +559,6 @@
     {
       "transport": "mcp",
       "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.create,kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.create,kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.create,kind=directories",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
       "discriminator": "verb_id=desk.create,kind=workflows",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
     },
@@ -512,24 +566,6 @@
       "transport": "mcp",
       "entry_point": "desk.verb",
       "discriminator": "verb_id=desk.create,kind=chains",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.update,kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.update,kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.update,kind=directories",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
     },
     {
@@ -547,25 +583,7 @@
     {
       "transport": "mcp",
       "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.delete,kind=notes",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
       "discriminator": "verb_id=desk.delete,kind=decisions",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.delete,kind=kbs",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.verb",
-      "discriminator": "verb_id=desk.delete,kind=directories",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch (_dispatch_verb)"
     },
     {
@@ -1890,26 +1908,8 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/directories.py::build_directories_router._svc",
-      "discriminator": "PrimitiveService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/kbs.py::build_kbs_router._svc",
-      "discriminator": "PrimitiveService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/model_profiles.py::build_model_profiles_router._service",
       "discriminator": "ModelProfileService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/notes.py::build_notes_router._svc",
-      "discriminator": "PrimitiveService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
     {

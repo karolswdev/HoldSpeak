@@ -33,6 +33,9 @@ from holdspeak.services.workbench_service import WorkbenchService
 PRIMITIVE_KINDS = ("notes", "decisions", "kbs", "directories", "workflows", "chains")
 _KIND_ALIASES = {kind: kind[:-1] if kind.endswith("s") else kind for kind in PRIMITIVE_KINDS}
 _KIND_ALIASES["kbs"] = "kb"
+# PHILO-7-01: the one-letter strip made "directorie", so every desk.* zone call
+# except desk.list asked PrimitiveService for ``create_directorie`` and failed.
+_KIND_ALIASES["directories"] = "directory"
 
 
 class ToolError(ValueError):
@@ -42,7 +45,7 @@ class ToolError(ValueError):
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.list",
-        "description": "List HoldSpeak desk primitives of one kind. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
+        "description": "List HoldSpeak desk primitives of one kind. Find a note: kind=notes; each row has its id (read it with desk.get). List the zones: kind=directories; each row has member_ids, the objects filed in it. List the knowledge bases: kind=kbs. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {"kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)}},
@@ -52,12 +55,12 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.get",
-        "description": "Get one HoldSpeak desk primitive by kind and id. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
+        "description": "Get one HoldSpeak desk primitive by kind and id. Read a note: kind=notes and id from desk.list kind=notes. Read a zone and what is filed in it: kind=directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains. The remaining 12 kinds (meeting, artifact, project, repository, recipe, coder, game, roadmap, story, workbench, layout, people) are managed through dedicated tools or are read-only.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "id": {"type": "string", "description": "Primitive identifier."},
+                "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
             },
             "required": ["kind", "id"],
             "additionalProperties": False,
@@ -65,12 +68,25 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.create",
-        "description": "Create a desk primitive. Pass fields appropriate to its kind in data. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+        "description": (
+            "Create a desk primitive. Pass fields appropriate to its kind in data. "
+            "Write a note: kind=notes, data title, body_markdown and tags. "
+            "Make a zone: kind=directories, data name (and parent_id to put it in another zone). "
+            "Make a knowledge base: kind=kbs, data name. "
+            "Put a decision on my review list: kind=decisions, data title and status=proposed. "
+            "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "data": {"type": "object", "description": "Primitive fields, including optional id."},
+                "data": {"type": "object", "description": (
+                    "Primitive fields. Each kind names its own optional id field (a new id is made when it is "
+                    "absent); a field named id is refused. notes: note_id, title, body_markdown, tags. "
+                    "directories: directory_id, name, parent_id (a zone id from desk.list kind=directories). "
+                    "kbs: kb_id, name, member_ids (kind:id references, for example note:<id>). "
+                    "decisions: title, status (proposed puts it on the review list), and the other decision fields."
+                )},
             },
             "required": ["kind"],
             "additionalProperties": False,
@@ -78,13 +94,19 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.update",
-        "description": "Update a desk primitive. Only supplied fields in data change. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+        "description": (
+            "Update a desk primitive. Only supplied fields in data change. "
+            "Rename a zone: kind=directories, data name (the name only). "
+            "Move a zone: kind=directories, data parent_id (null moves it to the desk root). "
+            "Edit a note: kind=notes, data title, body_markdown or tags. "
+            "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "id": {"type": "string"},
-                "data": {"type": "object"},
+                "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
+                "data": {"type": "object", "description": "The fields to change, as for desk.create of the same kind."},
             },
             "required": ["kind", "id", "data"],
             "additionalProperties": False,
@@ -92,12 +114,15 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "desk.delete",
-        "description": "Delete one desk primitive by kind and id. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+        "description": (
+            "Delete one desk primitive by kind and id. Deleting a zone puts what is filed in it back on the desk. "
+            "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
-                "id": {"type": "string"},
+                "id": {"type": "string", "description": "The object's id, from desk.list with the same kind."},
             },
             "required": ["kind", "id"],
             "additionalProperties": False,
@@ -109,7 +134,10 @@ TOOLS: list[dict[str, Any]] = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "verb_id": {"type": "string", "description": "The desk verb identifier."},
+                "verb_id": {"type": "string", "description": (
+                    "The desk verb to run. Server verbs, one of: desk.create, desk.update, desk.delete "
+                    "(arguments as for the tool with the same name), workbench.add_item, workbench.run."
+                )},
                 "arguments": {"type": "object", "description": "Arguments for the server-side verb."},
             },
             "required": ["verb_id"],
@@ -230,12 +258,12 @@ TOOLS.extend([
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
     _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
-    _workbench_tool("zone.file", "File a primitive in a Zone.", {"directory_id": {"type": "string"}, "primitive_id": {"type": "string"}}, ["directory_id", "primitive_id"]),
-    _workbench_tool("zone.unfile", "Remove a primitive from a Zone.", {"directory_id": {"type": "string"}, "primitive_id": {"type": "string"}}, ["directory_id", "primitive_id"]),
-    _workbench_tool("zone.list_members", "List Zone members.", {"directory_id": {"type": "string"}}, ["directory_id"]),
-    _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base.", {"kb_id": {"type": "string"}, "ref": {"type": "string"}}, ["kb_id", "ref"]),
-    _workbench_tool("kb.remove_member", "Remove a resource reference from a knowledge base.", {"kb_id": {"type": "string"}, "ref": {"type": "string"}}, ["kb_id", "ref"]),
-    _workbench_tool("kb.list_members", "List knowledge-base members.", {"kb_id": {"type": "string"}}, ["kb_id"]),
+    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone: directory_id from desk.list kind=directories and primitive_id note:<id>. A primitive is in one zone only: filing it again moves it.", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "The object to file, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.unfile", "Remove a primitive from a Zone. Take a note out of a zone: the zone id and note:<id>.", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "The filed object, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone: each member names its primitive_id (note:<id>).", {"directory_id": {"type": "string", "description": "The zone id, from desk.list kind=directories."}}, ["directory_id"]),
+    _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base. Add a note to a knowledge base: kb_id and ref note:<id>.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "A kind:id reference: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
+    _workbench_tool("kb.remove_member", "Remove a resource reference from a knowledge base.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "The reference to remove, as kind:id: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
+    _workbench_tool("kb.list_members", "List knowledge-base members.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}}, ["kb_id"]),
 ])
 
 
@@ -456,7 +484,10 @@ TOOLS.extend([
         "Set one brief item's triage state: acknowledged or deferred. Null returns the item to untouched.",
         {
             "item_id": {"type": "string", "description": "A brief item id from monday_brief.get."},
-            "state": {"enum": ["acknowledged", "deferred", None], "description": "acknowledged, deferred, or null to clear."},
+            # PHILO-7-01 shelf-enum alignment: the brief service is the one refuser of
+            # an unknown state on both transports ("Unknown shelf state: x"), so
+            # this schema keeps the type and names the states in words.
+            "state": {"type": ["string", "null"], "description": "acknowledged, deferred, or null to clear. Another value is refused by the brief service."},
         },
         ["item_id", "state"],
     ),
@@ -581,38 +612,49 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
         InferenceAssignmentService._require_owner(principal)
 
 
-# PHILO-5-01: kind="decisions" is the application-operation contract
-# (holdspeak.operations), bound to the hub's live PrimitiveService. The generic
-# getattr path below serves the other authorable kinds only; delete stays
-# generic for every kind (decision.delete is not on the contract yet).
+# PHILO-5-01 / PHILO-7-01: for decisions, notes, zones (directories) and
+# knowledge bases, each (kind, verb) is ONE declared operation
+# (``operations.DESK_OPERATIONS``), bound to the hub's live PrimitiveService and
+# reached through the registry's ``invoke``. The generic getattr path below
+# serves only the kinds with no row: workflows and chains (their owning slice),
+# and ``desk.delete kind=decisions`` (PHILO-7-02).
+
+
+def _desk_operation(kind: str, verb: str) -> str | None:
+    return operations.DESK_OPERATIONS.get((kind, verb))
 
 
 def _primitive_list(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str) -> Any:
-    if kind == "decision":
-        return ops().invoke(principal, "decision.list", {})
-    return getattr(service, f"list_{kind}s" if kind != "kb" else "list_kbs")(principal)
+    if (operation := _desk_operation(kind, "list")) is not None:
+        return ops().invoke(principal, operation, {})
+    return getattr(service, f"list_{kind}s")(principal)
 
 
 def _primitive_get(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
-    if kind == "decision":
-        return ops().invoke(principal, "decision.read", {"decision_id": item_id})
+    if (operation := _desk_operation(kind, "get")) is not None:
+        return ops().invoke(principal, operation, {operations.DESK_ID_ARGUMENT[kind]: item_id})
     return getattr(service, f"get_{kind}")(principal, item_id)
 
 
 def _primitive_create(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, data: dict[str, Any]) -> Any:
-    if kind == "decision":
-        return ops().invoke(principal, "decision.create", data)
+    if (operation := _desk_operation(kind, "create")) is not None:
+        return ops().invoke(principal, operation, data)
     return getattr(service, f"create_{kind}")(principal, **data)
 
 
 def _primitive_update(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str, data: dict[str, Any]) -> Any:
-    if kind == "decision":
-        return ops().invoke(principal, "decision.update", operations.update_args(data, item_id))
+    if (operation := _desk_operation(kind, "update")) is not None:
+        return ops().invoke(principal, operation, operations.update_args(
+            data, item_id, operation=operation, id_field=operations.DESK_ID_ARGUMENT[kind]))
     return getattr(service, f"update_{kind}")(principal, item_id, **data)
 
 
-def _primitive_delete(service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
-    return {"deleted": getattr(service, f"delete_{kind}")(principal, item_id), "id": item_id}
+def _primitive_delete(ops: Callable[[], operations.OperationRegistry], service: PrimitiveService, principal: Principal, kind: str, item_id: str) -> Any:
+    if (operation := _desk_operation(kind, "delete")) is not None:
+        deleted = ops().invoke(principal, operation, {operations.DESK_ID_ARGUMENT[kind]: item_id})
+    else:
+        deleted = getattr(service, f"delete_{kind}")(principal, item_id)
+    return {"deleted": deleted, "id": item_id}
 
 
 def _card_dict(card: Any) -> dict[str, Any]:
@@ -811,7 +853,7 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "desk.update":
         return _primitive_update(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""), _data(args.get("data")))
     if name == "desk.delete":
-        return _primitive_delete(primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
+        return _primitive_delete(ops, primitives, principal, _kind(args.get("kind")), str(args.get("id") or ""))
     if name == "desk.verb":
         return _dispatch_verb(args, principal, primitives, workbenches, ops)
     if name == "workbench.run":
@@ -1144,7 +1186,7 @@ def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: Primi
     server_verbs: dict[str, Callable[[dict[str, Any]], Any]] = {
         "desk.create": lambda value: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
         "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
-        "desk.delete": lambda value: _primitive_delete(primitives, principal, _kind(value.get("kind")), str(value.get("id") or "")),
+        "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or "")),
         "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
         "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
     }
