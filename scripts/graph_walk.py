@@ -204,7 +204,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.3.0"
+RIG_VERSION = "1.4.0"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -860,8 +860,25 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name == "decision.delete":
         return _delete_envelope("decisions", "decision_id", args)
     if name in {"kb.member.add", "kb.member.remove"}:
-        # The MCP tools name the reference ``ref``; nothing else is dropped.
+        # The MCP tools name the reference ``ref``; the canonical argument is
+        # ``resource_ref``. PHILO-7-03 (Astra's probe, red-kb-alias-probe.txt):
+        # mapping both keys to ``ref`` let the later one win silently, so a
+        # case that stated two references executed a DIFFERENT admitted write.
+        # ``ref`` is not a canonical argument: the step is blocked by name.
+        if "ref" in args:
+            raise Blocked(
+                f"operation {name!r}: 'ref' is the MCP tool's name, not a canonical "
+                "argument (use resource_ref); the rig refuses the step instead of "
+                "collapsing two references into one"
+            )
         return {("ref" if key == "resource_ref" else key): value for key, value in args.items()}
+    if name == "decision.supersede":
+        # PHILO-7-03: the MCP tool carries ``decision_id`` only (closed schema,
+        # holdspeak/mcp/tools.py ``decision.supersede``); the canonical
+        # operation also takes ``successor_id``. Sending it answers an MCP
+        # schema refusal the operation would never give: blocked by name.
+        _id_only(name, args, "decision_id")
+        return dict(args)
     prefix, _, verb = name.partition(".")
     if prefix in _DESK_OP_KINDS:
         kind, id_field = _DESK_OP_KINDS[prefix]
@@ -1383,6 +1400,9 @@ def check_predicate(
             return False, f"refusal error {error!r} does not contain {missing!r}"
         return True, f"operation refused by name {got_code!r}: {error}"
 
+    if kind == "op_facts":
+        return _op_facts(predicate, after)
+
     if kind == "protocol_status":
         # The TRIGGER's own response. A refusal is a promised result: the rig
         # reads the status the route really answered, never re-fires the call.
@@ -1758,6 +1778,109 @@ def check_predicate(
             return False, f"replay identity moved: {identity_before!r} -> {identity_after!r}"
         return True, f"unchanged result with the same replay identity {identity_after!r}"
     return False, f"unknown predicate kind {kind!r}"
+
+
+#: PHILO-7-03: the sources an ``op_facts`` fact may read. ``observe`` is the
+#: case's durable ``observe_at`` read, ``read`` one of its supplementary op
+#: ``reads`` (by index among the op reads), ``trigger`` the trigger's own
+#: recorded operation (never re-fired).
+OP_FACT_SOURCES = frozenset({"observe", "read", "trigger"})
+OP_FACT_TESTS = ("value", "absent", "nonempty", "contains", "lacks", "length")
+
+
+def _op_fact_record(fact: dict[str, Any], after: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
+    source = fact.get("source")
+    if source == "observe":
+        return after.get("op"), "observe_at"
+    if source == "trigger":
+        return after.get("operation_trigger"), "the trigger"
+    if source == "read":
+        index = fact.get("index")
+        reads = after.get("op_reads") or []
+        if not isinstance(index, int) or not 0 <= index < len(reads):
+            return None, f"op read #{index}"
+        return reads[index], f"op read #{index} ({reads[index].get('name')})"
+    return None, f"unknown source {source!r}"
+
+
+def _op_row_matches(row: Any, match: dict[str, Any]) -> bool:
+    if not isinstance(row, dict):
+        return False
+    for path, want in match.items():
+        found, value = _json_path(row, path)
+        if not found or value != want:
+            return False
+    return True
+
+
+def _op_fact(fact: dict[str, Any], after: dict[str, Any]) -> tuple[bool, str]:
+    """One fact over one retained operation record. Missing evidence fails."""
+    record, label = _op_fact_record(fact, after)
+    path = fact.get("path", "")
+    where = f"{label} {path or '<root>'}"
+    if not isinstance(record, dict):
+        return False, f"{where}: no such record"
+    if record.get("skipped"):
+        return False, f"{where}: not read ({record['skipped']})"
+    refusal = record.get("refusal")
+    want_refused = fact.get("refused")
+    if want_refused:
+        if not refusal:
+            return False, f"{where}: wanted a named refusal, the operation succeeded"
+        if isinstance(want_refused, dict) and want_refused.get("code") is not None \
+                and refusal.get("code") != want_refused["code"]:
+            return False, f"{where}: refusal code {refusal.get('code')!r}, wanted {want_refused['code']!r}"
+        payload = refusal
+    else:
+        if refusal:
+            return False, (f"{where}: refused by name {refusal.get('code')}: "
+                           f"{str(refusal.get('error'))[:200]}")
+        payload = record.get("response")
+    found, value = _json_path(payload, path)
+    if fact.get("absent"):
+        return (not found or value is None), (
+            f"{where} is absent" if (not found or value is None) else f"{where} is present ({value!r})")
+    if not found:
+        return False, f"{where} does not resolve"
+    if "value" in fact and value != fact["value"]:
+        return False, f"{where} = {value!r}, wanted {fact['value']!r}"
+    if fact.get("nonempty") and value in (None, "", [], {}):
+        return False, f"{where} is empty"
+    if "length" in fact and (not isinstance(value, list) or len(value) != fact["length"]):
+        return False, f"{where} has {len(value) if isinstance(value, list) else 'no list'}, wanted {fact['length']}"
+    if "contains" in fact:
+        if not isinstance(value, list) or not any(_op_row_matches(row, fact["contains"]) for row in value):
+            return False, f"{where} holds no row matching {fact['contains']!r}"
+    if "lacks" in fact:
+        if not isinstance(value, list):
+            return False, f"{where} is not a list"
+        if any(_op_row_matches(row, fact["lacks"]) for row in value):
+            return False, f"{where} still holds a row matching {fact['lacks']!r}"
+    return True, f"{where} holds"
+
+
+def _op_facts(predicate: dict[str, Any], after: dict[str, Any]) -> tuple[bool, str]:
+    """PHILO-7-03: a conjunction of facts over actual operation reads.
+
+    Every fact must hold; an empty list, a fact with no test, a missing or
+    unread source is a FAIL, never a pass. A receipt is proved only by a
+    fact over a ``kernel.receipt.read`` the rig actually sent, never by the
+    receipt a write carried inline.
+    """
+    facts = predicate.get("facts")
+    if not isinstance(facts, list) or not facts:
+        return False, "BLOCKED: op_facts needs a non-empty facts list"
+    readings: list[str] = []
+    for number, fact in enumerate(facts):
+        if not isinstance(fact, dict) or fact.get("source") not in OP_FACT_SOURCES:
+            return False, f"BLOCKED: fact #{number} names no source in {sorted(OP_FACT_SOURCES)}"
+        if not any(test in fact for test in OP_FACT_TESTS):
+            return False, f"BLOCKED: fact #{number} names no test in {list(OP_FACT_TESTS)}"
+        ok, why = _op_fact(fact, after)
+        if not ok:
+            return False, f"fact #{number} failed: {why}"
+        readings.append(why)
+    return True, f"all {len(facts)} facts hold: " + "; ".join(readings)
 
 
 def _row_identity(row: dict[str, Any], field: str) -> str:
@@ -3635,6 +3758,9 @@ def unresolved(value: Any) -> list[str]:
 #: before it fires, so a typo cannot silently become a no-op that "passed".
 UI_ACTIONS = frozenset({
     "goto", "reload", "click", "click_role", "fill", "press", "wait_for",
+    # PHILO-7-03: keyboard travel to a control (the owner's Tab), e.g. the
+    # Floor's world chip, which only surfaces when focused (desk.css:171).
+    "focus",
 })
 
 
@@ -3648,6 +3774,16 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         raise Blocked("headless mode refuses UI/face steps: no Page is opened")
     optional = bool(step.get("optional"))
     record = {"kind": "ui", "action": action, "adapter": step.get("adapter", "ui-pointer")}
+    # PHILO-7-03: a step the face needs at ONE width only (at 393 the Floor
+    # opens as a list, so the owner switches to the spatial view first). The
+    # step is recorded as skipped at every other width, never silently.
+    at_width = step.get("at_width")
+    if at_width is not None:
+        width = (page.viewport_size or {}).get("width")
+        if width != at_width:
+            record.update(done=False, skipped=f"at_width {at_width}; this run is {width}")
+            return record
+        record["at_width"] = at_width
     timeout = float(step.get("timeout_s", 10)) * 1000
     try:
         if action == "goto":
@@ -3676,6 +3812,9 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         elif action == "press":
             page.keyboard.press(step["key"])
             record["key"] = step["key"]
+        elif action == "focus":
+            page.locator(step["selector"]).first.focus(timeout=timeout)
+            record["selector"] = step["selector"]
         elif action == "wait_for":
             page.locator(step["selector"]).first.wait_for(
                 state=step.get("state", "visible"), timeout=timeout)
@@ -3888,7 +4027,15 @@ def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
     capture_as = step.get("capture_as")
     if capture_as:
         where = step.get("capture_path", "id")
-        response = result.get("response")
+        # PHILO-7-03: a refused admitted write carries its operation_id and
+        # refusal receipt on the refusal record, never on a response. A step
+        # names where it captures from; a response capture never falls back
+        # to the refusal (a refused write is not a success).
+        capture_from = step.get("capture_from", "response")
+        if capture_from not in {"response", "refusal"}:
+            raise Blocked(f"capture_as {capture_as!r}: capture_from must be "
+                          "'response' or 'refusal'")
+        response = result.get(capture_from)
         capture_match = step.get("capture_match")
         if capture_match is not None:
             if not isinstance(capture_match, dict) or not capture_match:
@@ -4031,12 +4178,26 @@ def run_step(step: dict[str, Any], page: Any, hub: Hub | None,
         if name:
             where = step.get("capture_path", "id")
             found, value = _json_path(payload, where)
+            match = step.get("capture_match")
+            if match is not None:
+                # PHILO-7-03: the desk seeds its own zones and knowledge, so a
+                # face-made row is captured by what the owner typed, never by
+                # its position. Exactly one row must match.
+                if not isinstance(match, dict) or not match or not isinstance(value, list):
+                    raise Blocked(f"capture_as {name!r}: capture_match needs a "
+                                  f"non-empty object and a list at {where!r}")
+                rows = [row for row in value if _op_row_matches(row, match)]
+                if len(rows) != 1:
+                    raise Blocked(f"capture_as {name!r}: capture_match {match!r} at "
+                                  f"{where!r} matched {len(rows)} rows; exactly one is required")
+                found, value = _json_path(rows[0], step.get("capture_field", "id"))
             if not found or value is None:
                 raise Blocked(
                     f"capture_as {name!r}: no value at {where!r} in the response "
                     f"of {step['method']} {step['path']}")
             variables[name] = str(value)
-            record["captured"] = {"name": name, "path": where, "value": str(value)}
+            record["captured"] = {"name": name, "path": where, "value": str(value),
+                                  **({"match": match} if match is not None else {})}
         return record
     if kind == "fixture":
         if hub is None:
@@ -4811,6 +4972,10 @@ def exercise(
             recorder.record["trigger_response_capture"] = ui_capture.record()
         if answer is not None:
             snap["trigger_response"] = answer
+        if trigger_record.get("kind") == "op":
+            # PHILO-7-03: ``op_facts`` may read the trigger's own record
+            # (its response or its refusal), never a second dispatch.
+            snap["operation_trigger"] = trigger_record
         if refusal_observation:
             # ``op_refusal`` reads the already-recorded named refusal.  It is
             # deliberately separate from an optional durable read observation

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-7-02
 - **Unblocks:** PHILO-7-04
 - **Owner:** Astra (Luna); Muad'Dib checks on built

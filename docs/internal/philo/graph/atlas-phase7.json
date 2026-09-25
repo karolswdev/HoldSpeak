@@ -1,0 +1,3581 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase7-desk",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "f669509001e73487a61871a071f3317410f58a35",
+  "cases": [
+    {
+      "id": "case.p7.zone_create.visible",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_create"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx:201-216): the zone rename field and the delete receipt live in WorldStage only (DeskApp.tsx:199-203)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as a list (store/types.ts:65-72 defaultViewFor); the zone rename field and the delete verb's listener live in the spatial WorldStage only (WorldStage.tsx:137-152)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Zone"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-zone']",
+          "why": "the face create verb desk.new-zone (verbRegistry.ts:203) -> POST /api/directories {name: 'New zone'} -> the rename overlay (dataSlice.ts:370)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "input.desk-zone-rename"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input.desk-zone-rename",
+          "value": "Atlas zone"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Enter",
+          "why": "Enter commits the name: PUT /api/directories/{id} (WorldStage.tsx rename overlay)"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/directories",
+          "body": null,
+          "adapter": "http-route",
+          "capture_match": {
+            "name": "Atlas zone"
+          },
+          "capture_as": "zone_id",
+          "capture_path": "directories",
+          "why": "the id the face create minted, found by the typed name (the desk seeds its own zones)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-keyboard",
+        "selector": "[aria-controls=desk-palette-listbox]",
+        "value": "Atlas zone",
+        "why": "find the zone by name on a fresh Desk read"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas zone"
+        },
+        "observe_at": "[id='desk-palette-option-zone:{zone_id}']",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/directories"
+          }
+        ],
+        "words": "setup: Search > New Zone makes a zone and opens its rename field; the owner types 'Atlas zone' and Enter. After a reload, Search finds the zone's own row (zone:<id>) and it reads 'Atlas zone', visible, in the viewport and not covered. The zone on the Floor itself is a WebGL drawing; its DOM mirror (.desk-world-a11y) is clipped to 1px (desk.css:161-167), so the Search row is the readable face."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.zone_file.note_in_zone",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_file"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Atlas zone"
+          },
+          "adapter": "http-route",
+          "capture_as": "zone_id",
+          "capture_path": "directory.id",
+          "expect_status": 201,
+          "why": "the zone the note is filed into (not the write under test)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Atlas filed note",
+            "body_markdown": "Filed through the face"
+          },
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "the note to file"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the menubar Search (DeskToolShelf.tsx), present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas filed note"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-note:{note_id}']",
+          "why": "the object's own palette row (DeskToolShelf.tsx:656: desk-palette-option-<kind>:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas filed note']"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas filed note'] details.gadget-fold:has(.desk-pullout-filed) > summary",
+          "why": "open the pullout's Filed fold (DeskFilingStrip.tsx:127, FoldGadget)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "+ Atlas zone",
+        "why": "the Filing strip's zone chip (DeskFilingStrip.tsx:134-152) -> fileIntoDir -> PUT /api/directories/{zone_id}/members/note:{note_id}"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Filed · Atlas zone"
+        },
+        "observe_at": "[role=region][aria-label='Atlas filed note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_id}/members"
+          },
+          {
+            "method": "GET",
+            "path": "/api/notes/{note_id}"
+          }
+        ],
+        "words": "the owner opens the note (Search), opens Filed and taps '+ Atlas zone'; the fold's summary reads 'Filed · Atlas zone', readable. The zone's members (GET /api/directories/{zone_id}/members) hold note:<id>."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.zone_file.refile_moves",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_file"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Atlas zone A"
+          },
+          "adapter": "http-route",
+          "capture_as": "zone_a",
+          "capture_path": "directory.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Atlas zone B"
+          },
+          "adapter": "http-route",
+          "capture_as": "zone_b",
+          "capture_path": "directory.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Atlas moved note",
+            "body_markdown": "Moves between zones"
+          },
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the menubar Search (DeskToolShelf.tsx), present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas moved note"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-note:{note_id}']",
+          "why": "the object's own palette row (DeskToolShelf.tsx:656: desk-palette-option-<kind>:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas moved note']"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) > summary",
+          "why": "open the pullout's Filed fold (DeskFilingStrip.tsx:127, FoldGadget)"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "+ Atlas zone A",
+          "why": "the first filing, through the face"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Filed · Atlas zone A"
+          },
+          "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+          "timeout_s": 10,
+          "why": "the note's prior home is zone A (recorded before the re-file)"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "+ Atlas zone B",
+        "why": "file it again into zone B: one zone per primitive, so it moves (operations.py ZONE_FILE)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Filed · Atlas zone B"
+        },
+        "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_b}/members"
+          },
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_a}/members"
+          }
+        ],
+        "words": "after 'Filed · Atlas zone A', tapping '+ Atlas zone B' moves the note: the summary reads 'Filed · Atlas zone B', readable; zone B's members hold the note and zone A's no longer do (the two reads)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.zone_unfile.note_leaves",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_unfile"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "name": "Atlas zone"
+          },
+          "adapter": "http-route",
+          "capture_as": "zone_id",
+          "capture_path": "directory.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Atlas unfiled note",
+            "body_markdown": "Leaves the zone"
+          },
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/directories/{zone_id}/members/note:{note_id}",
+          "body": null,
+          "adapter": "http-route",
+          "expect_status": 200,
+          "why": "filed before the page loads (its presence is the prior state)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "members.0.primitive_id",
+            "value": "note:{note_id}"
+          },
+          "observe_at": "protocol: GET /api/directories/{zone_id}/members",
+          "timeout_s": 10,
+          "why": "the note is in the zone before the unfile"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the menubar Search (DeskToolShelf.tsx), present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas unfiled note"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-note:{note_id}']",
+          "why": "the object's own palette row (DeskToolShelf.tsx:656: desk-palette-option-<kind>:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas unfiled note']"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas unfiled note'] details.gadget-fold:has(.desk-pullout-filed) > summary",
+          "why": "open the pullout's Filed fold (DeskFilingStrip.tsx:127, FoldGadget)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "Filed · Atlas zone"
+          },
+          "observe_at": "[role=region][aria-label='Atlas unfiled note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+          "timeout_s": 10,
+          "why": "the face shows the note in the zone before the unfile"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Atlas zone",
+        "why": "the pressed zone chip (aria-pressed=true; its check mark is aria-hidden) -> removeFromDir -> DELETE /api/directories/{zone_id}/members/note:{note_id}"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "+ Atlas zone"
+        },
+        "observe_at": "[role=region][aria-label='Atlas unfiled note'] .desk-pullout-filed",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/directories/{zone_id}/members"
+          },
+          {
+            "method": "GET",
+            "path": "/api/notes/{note_id}"
+          }
+        ],
+        "words": "the note was in the zone (checked on the hub and on the face); tapping the pressed chip takes it out: the chip reads '+ Atlas zone' again (a member reads '✓ Atlas zone', so the '+' form is the absence, readable); the zone's members no longer hold it and the note itself stays."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.kb_create.visible",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.kb_create"
+      ],
+      "state_id": "state.desk_presentation.p7_knowledge_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "New Knowledge"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.new-knowledge']",
+          "why": "the face create verb desk.new-knowledge (verbRegistry.ts:159) -> POST /api/kbs {name: 'New Knowledge'} (dataSlice.ts:320)"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/kbs",
+          "body": null,
+          "adapter": "http-route",
+          "capture_match": {
+            "name": "New Knowledge"
+          },
+          "capture_as": "kb_id",
+          "capture_path": "kbs",
+          "why": "the id the face create minted, found by its name (the desk seeds 'Everyday context')"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-keyboard",
+        "selector": "[aria-controls=desk-palette-listbox]",
+        "value": "New Knowledge",
+        "why": "find it by name on a fresh Desk read"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "New Knowledge"
+        },
+        "observe_at": "[id='desk-palette-option-kb:{kb_id}']",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/kbs/{kb_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/kbs"
+          }
+        ],
+        "words": "setup: Search > New Knowledge makes a knowledge base (named 'New Knowledge'); after a reload Search finds its own row (kb:<id>), readable. The object row, not the verb row of the same words, is the observed scope."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.kb_member.add_and_remove",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.kb_member"
+      ],
+      "state_id": "state.desk_presentation.p7_knowledge_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/kbs",
+          "body": {
+            "name": "Atlas knowledge"
+          },
+          "adapter": "http-route",
+          "capture_as": "kb_id",
+          "capture_path": "kb.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "body": {
+            "title": "Atlas referenced note",
+            "body_markdown": "Referenced then removed"
+          },
+          "adapter": "http-route",
+          "capture_as": "note_id",
+          "capture_path": "note.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the menubar Search (DeskToolShelf.tsx), present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas referenced note"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-note:{note_id}']",
+          "why": "the object's own palette row (DeskToolShelf.tsx:656: desk-palette-option-<kind>:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas referenced note']"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas referenced note'] details.gadget-fold:has(.desk-pullout-filed) > summary",
+          "why": "open the pullout's Filed fold (DeskFilingStrip.tsx:127, FoldGadget)"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "+ Atlas knowledge",
+          "why": "add the reference through the Filing strip's Knowledge chip (DeskFilingStrip.tsx:157-180) -> PUT /api/kbs/{kb_id}/members/note:{note_id}"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "members.0.resource_ref",
+            "value": "note:{note_id}"
+          },
+          "observe_at": "protocol: GET /api/kbs/{kb_id}/members",
+          "timeout_s": 10,
+          "why": "the reference was added (prior presence)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "1 Knowledge"
+          },
+          "observe_at": "[role=region][aria-label='Atlas referenced note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+          "timeout_s": 10,
+          "why": "the face counts it before the remove"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Atlas knowledge",
+        "why": "the pressed Knowledge chip -> DELETE /api/kbs/{kb_id}/members/note:{note_id}"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "+ Atlas knowledge"
+        },
+        "observe_at": "[role=region][aria-label='Atlas referenced note'] .desk-pullout-filed",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/kbs/{kb_id}/members"
+          }
+        ],
+        "words": "the owner adds the note to 'Atlas knowledge' from the Filing strip (hub and face show it: '1 Knowledge'), then taps the pressed chip: it reads '+ Atlas knowledge' again, readable, and the knowledge base has no member."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.decision_status.review_list",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_status"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas review decision",
+            "status": "deprecated"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201,
+          "why": "a decision off the review list; one status step from proposed on the face's cycle (DecisionPullout.tsx:69-78)"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the menubar Search (DeskToolShelf.tsx), present at 1440 and 393"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas review decision"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-decision:{decision_id}']",
+          "why": "the object's own palette row (DeskToolShelf.tsx:656: desk-palette-option-<kind>:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[role=region][aria-label='Atlas review decision'] .desk-decision-card"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "deprecated ↻",
+          "why": "the status control: deprecated -> proposed, PUT /api/decisions/{id}/status (the admitted decision.status)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.status",
+            "value": "proposed"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "timeout_s": 10,
+          "why": "the face's status write reached the hub"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=arrival-brief-generate]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=arrival-brief-generate]",
+        "why": "make the brief: POST /api/brief/generate; the review list is the brief's proposed desk decisions (monday_brief_service.py:1085-1099)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Review decision: Atlas review decision"
+        },
+        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/brief/latest"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          }
+        ],
+        "words": "the owner sets the decision's status on its pullout (deprecated -> proposed); after a reload the first brief of the day lists 'Review decision: Atlas review decision' in its visible rows."
+      },
+      "completion_bound_s": 90,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.decision_supersede.successor_visible",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_supersede"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "arrival-headline"
+          },
+          "observe_at": "[data-testid=arrival-headline]",
+          "why": "the desk is really past the first-value gate"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas old decision",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions/{decision_id}/supersede",
+          "body": null,
+          "adapter": "http-route",
+          "capture_as": "successor_id",
+          "capture_path": "decision.id",
+          "expect_status": 201,
+          "why": "NOT ON THE FACE: no verb or control supersedes (web/src/desk/api.ts:259 supersedeDecision has no caller; verbRegistry.ts has no supersede verb). The write goes through its HTTP route; the case proves what the Desk SHOWS of it."
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Superseding Atlas old decision"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[id='desk-palette-option-decision:{successor_id}']",
+        "why": "open the successor by its own row"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Supersedes Atlas old decision"
+        },
+        "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions/{successor_id}"
+          }
+        ],
+        "words": "both are readable on the Desk: the successor opens by its own row and its card names the old decision ('Supersedes Atlas old decision', DecisionPullout.tsx:125-129); the old decision reads superseded, superseded_by the successor (the reads). The supersede ACTION is not on the face."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.decision_delete.gone",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Atlas withdrawn decision",
+            "status": "accepted"
+          },
+          "adapter": "http-route",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id",
+          "expect_status": 201
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "decision.id",
+            "value": "{decision_id}"
+          },
+          "observe_at": "protocol: GET /api/decisions/{decision_id}",
+          "timeout_s": 10,
+          "why": "the decision exists before the delete"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx:201-216): the zone rename field and the delete receipt live in WorldStage only (DeskApp.tsx:199-203)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 393,
+          "why": "at 393 the Floor opens as a list (store/types.ts:65-72 defaultViewFor); the zone rename field and the delete verb's listener live in the spatial WorldStage only (WorldStage.tsx:137-152)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "state": "attached"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": "[data-obj-id='decision:{decision_id}']",
+          "why": "keyboard travel to the Floor object's chip (HS-96-05: a focused world button surfaces as a chip, desk.css:171)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Shift+Enter",
+          "why": "select it: the chip's click with Shift toggles selection (WorldStage.tsx:381-384); a plain click opens the pullout and clears it"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Delete",
+        "why": "object.delete (verbRegistry.ts:547, key Delete) -> the 8 s undo receipt -> DELETE /api/decisions/{id} (dataSlice.ts:518-548)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Removal committed"
+        },
+        "observe_at": ".undo-receipt",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/decisions/{decision_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/decisions"
+          }
+        ],
+        "words": "the owner selects the decision on the Floor and presses Delete; after the 8 s undo window the receipt reads 'Removal committed', readable, and the hub no longer has it (GET /api/decisions/{id} refuses; the list lacks it)."
+      },
+      "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p7.zone_create.visible.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_create"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.create",
+        "args": {
+          "name": "Atlas zone"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "zone_id",
+        "capture_path": "id",
+        "why": "the create the face's New Zone would make; no directory_id, so exempt"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "directory.id",
+              "value": "{zone_id}"
+            },
+            {
+              "source": "observe",
+              "path": "directory.name",
+              "value": "Atlas zone"
+            },
+            {
+              "source": "observe",
+              "path": "directory.parent_id",
+              "value": null
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{zone_id}",
+                "name": "Atlas zone"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.read",
+          "args": {
+            "directory_id": "{zone_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "zone.list",
+            "args": {}
+          }
+        ],
+        "words": "a zone made is durable under its own id and listed; zone.create without directory_id is exempt (admission table), so its result carries no operation_id and no receipt is claimed"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.zone_file.note_in_zone.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_file"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "zone.create",
+          "args": {
+            "name": "Atlas zone"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "zone_id",
+          "capture_path": "id",
+          "why": "a zone made through the registry (exempt: no directory_id)"
+        },
+        {
+          "kind": "op",
+          "name": "note.create",
+          "args": {
+            "title": "Atlas filed note",
+            "body_markdown": "Filed through the registry"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "note_id",
+          "capture_path": "id",
+          "why": "a plain note (exempt)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.file",
+        "args": {
+          "directory_id": "{zone_id}",
+          "primitive_id": "note:{note_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "file_op",
+        "capture_path": "operation_id",
+        "why": "file the note (ADMITTED, D3)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "",
+              "length": 1
+            },
+            {
+              "source": "observe",
+              "path": "",
+              "contains": {
+                "primitive_id": "note:{note_id}",
+                "directory_id": "{zone_id}",
+                "deleted": false
+              }
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{file_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "zone.file"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.target_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.result_ref",
+              "value": "directory:{zone_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "id",
+              "value": "{note_id}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.members",
+          "args": {
+            "directory_id": "{zone_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{file_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "note.read",
+            "args": {
+              "note_id": "{note_id}"
+            }
+          }
+        ],
+        "words": "the note is the zone's one member under its own id; the kernel receipt READ BACK for the filing names zone.file, the note as target and the zone as result"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.zone_file.refile_moves.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_file"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "zone.create",
+          "args": {
+            "name": "Atlas zone A"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "zone_a",
+          "capture_path": "id",
+          "why": "a zone made through the registry (exempt: no directory_id)"
+        },
+        {
+          "kind": "op",
+          "name": "zone.create",
+          "args": {
+            "name": "Atlas zone B"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "zone_b",
+          "capture_path": "id",
+          "why": "a zone made through the registry (exempt: no directory_id)"
+        },
+        {
+          "kind": "op",
+          "name": "note.create",
+          "args": {
+            "title": "Atlas moved note",
+            "body_markdown": "Moves between zones"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "note_id",
+          "capture_path": "id",
+          "why": "a plain note (exempt)"
+        },
+        {
+          "kind": "op",
+          "name": "zone.file",
+          "args": {
+            "directory_id": "{zone_a}",
+            "primitive_id": "note:{note_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "first_op",
+          "capture_path": "operation_id",
+          "why": "the first filing (ADMITTED)"
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "the filing and its receipt are durable across a real hub restart (same HOME, same port, no page)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.file",
+        "args": {
+          "directory_id": "{zone_b}",
+          "primitive_id": "note:{note_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "refile_op",
+        "capture_path": "operation_id",
+        "why": "file it again into another zone: one zone per primitive, so it moves"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "",
+              "contains": {
+                "primitive_id": "note:{note_id}",
+                "directory_id": "{zone_b}"
+              }
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "lacks": {
+                "primitive_id": "note:{note_id}"
+              }
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{refile_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "zone.file"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.target_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.result_ref",
+              "value": "directory:{zone_b}"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{first_op}"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.operation.name",
+              "value": "zone.file"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.target_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.result_ref",
+              "value": "directory:{zone_a}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.members",
+          "args": {
+            "directory_id": "{zone_b}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "zone.members",
+            "args": {
+              "directory_id": "{zone_a}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{refile_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{first_op}"
+            }
+          }
+        ],
+        "words": "after a restart and a re-file the note is in zone B and no longer in zone A; each of the two filings has its own receipt, read back (the first after the restart)"
+      },
+      "completion_bound_s": 60.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.zone_unfile.note_leaves.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_unfile"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "zone.create",
+          "args": {
+            "name": "Atlas zone"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "zone_id",
+          "capture_path": "id",
+          "why": "a zone made through the registry (exempt: no directory_id)"
+        },
+        {
+          "kind": "op",
+          "name": "note.create",
+          "args": {
+            "title": "Atlas unfiled note",
+            "body_markdown": "Leaves the zone"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "note_id",
+          "capture_path": "id",
+          "why": "a plain note (exempt)"
+        },
+        {
+          "kind": "op",
+          "name": "zone.file",
+          "args": {
+            "directory_id": "{zone_id}",
+            "primitive_id": "note:{note_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "file_op",
+          "capture_path": "operation_id",
+          "why": "filed first (its presence is the prior state)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "op_field",
+            "path": "0.primitive_id",
+            "value": "note:{note_id}"
+          },
+          "observe_at": {
+            "kind": "op",
+            "name": "zone.members",
+            "args": {
+              "directory_id": "{zone_id}"
+            }
+          },
+          "why": "record the note's prior presence in the zone before the unfile"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.unfile",
+        "args": {
+          "directory_id": "{zone_id}",
+          "primitive_id": "note:{note_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "unfile_op",
+        "capture_path": "operation_id",
+        "why": "take it out (ADMITTED, R4)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "",
+              "lacks": {
+                "primitive_id": "note:{note_id}"
+              }
+            },
+            {
+              "source": "observe",
+              "path": "",
+              "length": 0
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{unfile_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "zone.unfile"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.target_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.result_ref",
+              "value": "directory:{zone_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "deleted",
+              "value": false
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{file_op}"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.operation.name",
+              "value": "zone.file"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.target_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 2,
+              "path": "objects.0.receipt.result_ref",
+              "value": "directory:{zone_id}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.members",
+          "args": {
+            "directory_id": "{zone_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{unfile_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "note.read",
+            "args": {
+              "note_id": "{note_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{file_op}"
+            }
+          }
+        ],
+        "words": "the unfiled note leaves the zone (it was a member before the trigger) and the note itself stays; the unfile's receipt is read back"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.kb_create.visible.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.kb_create"
+      ],
+      "state_id": "state.desk_presentation.p7_knowledge_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "kb.create",
+        "args": {
+          "name": "New Knowledge"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "kb_id",
+        "capture_path": "id",
+        "why": "the name the face create uses (dataSlice.ts:320); no member_ids and no kb_id: exempt (R4)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "id",
+              "value": "{kb_id}"
+            },
+            {
+              "source": "observe",
+              "path": "name",
+              "value": "New Knowledge"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{kb_id}",
+                "name": "New Knowledge"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kb.read",
+          "args": {
+            "kb_id": "{kb_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kb.list",
+            "args": {}
+          }
+        ],
+        "words": "a knowledge base made is durable under its own id and listed; the create is exempt, so no receipt is claimed"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.kb_member.add_and_remove.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.kb_member"
+      ],
+      "state_id": "state.desk_presentation.p7_knowledge_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "kb.create",
+          "args": {
+            "name": "Atlas knowledge"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "kb_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "op",
+          "name": "note.create",
+          "args": {
+            "title": "Atlas referenced note",
+            "body_markdown": "Referenced then removed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "note_id",
+          "capture_path": "id",
+          "why": "a plain note (exempt)"
+        },
+        {
+          "kind": "op",
+          "name": "kb.member.add",
+          "args": {
+            "kb_id": "{kb_id}",
+            "resource_ref": "note:{note_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "add_op",
+          "capture_path": "operation_id",
+          "why": "add the reference (ADMITTED, R4)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "op_field",
+            "path": "0.resource_ref",
+            "value": "note:{note_id}"
+          },
+          "observe_at": {
+            "kind": "op",
+            "name": "kb.members",
+            "args": {
+              "kb_id": "{kb_id}"
+            }
+          },
+          "why": "the added reference is a member before the remove"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "kb.member.remove",
+        "args": {
+          "kb_id": "{kb_id}",
+          "resource_ref": "note:{note_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "remove_op",
+        "capture_path": "operation_id",
+        "why": "remove it (ADMITTED, R4)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "",
+              "lacks": {
+                "resource_ref": "note:{note_id}"
+              }
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{add_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "kb.member.add"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.target_ref",
+              "value": "kb:{kb_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.result_ref",
+              "value": "note:{note_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{remove_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "kb.member.remove"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.target_ref",
+              "value": "kb:{kb_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.result_ref",
+              "value": "note:{note_id}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kb.members",
+          "args": {
+            "kb_id": "{kb_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{add_op}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{remove_op}"
+            }
+          }
+        ],
+        "words": "the reference was a member after the add and is gone after the remove; both writes' receipts are read back and name the knowledge base and the note"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_status.review_list.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_status"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Atlas review decision",
+            "status": "accepted"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id",
+          "why": "an accepted decision is not on the review list"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.update",
+        "args": {
+          "decision_id": "{decision_id}",
+          "status": "proposed"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "status_op",
+        "capture_path": "operation_id",
+        "why": "over MCP the status change is decision.update {status} (decision.status is HTTP only, operations.py DECISION_STATUS exposure)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "status",
+              "value": "proposed"
+            },
+            {
+              "source": "observe",
+              "path": "id",
+              "value": "{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{status_op}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.operation.name",
+              "value": "decision.update"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.target_ref",
+              "value": "decision:{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "objects.0.receipt.result_ref",
+              "value": "decision:{decision_id}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "{decision_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{status_op}"
+            }
+          }
+        ],
+        "words": "the decision's durable status is proposed (the review-list status, operations.py DECISION_STATUS); the status write's receipt is read back. The review ROW is the brief's, proved on the face; the op pair claims the durable status only"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_supersede.successor_visible.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_supersede"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Atlas old decision",
+            "status": "accepted"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.supersede",
+        "args": {
+          "decision_id": "{decision_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "successor_id",
+        "capture_path": "id",
+        "why": "the successor id is minted before admission; the MCP tool carries decision_id only"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "status",
+              "value": "superseded"
+            },
+            {
+              "source": "observe",
+              "path": "superseded_by",
+              "value": "{successor_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "id",
+              "value": "{successor_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "deleted",
+              "value": false
+            },
+            {
+              "source": "trigger",
+              "path": "receipt.target_ref",
+              "value": "decision:{decision_id}"
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "nonempty": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.read",
+          "args": {
+            "decision_id": "{decision_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{successor_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "decision.list",
+            "args": {}
+          }
+        ],
+        "words": "both rows are readable: the old decision is superseded and names the successor, which reads back under its own id. The receipt read is its own pair (the trigger captures only the successor id): case.p7.decision_supersede.receipt.op"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_supersede.receipt.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_supersede"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Atlas old decision",
+            "status": "accepted"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.supersede",
+        "args": {
+          "decision_id": "{decision_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "supersede_op",
+        "capture_path": "operation_id"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{supersede_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.operation.name",
+              "value": "decision.supersede"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.target_ref",
+              "value": "decision:{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "status",
+              "value": "superseded"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{supersede_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          }
+        ],
+        "words": "ONE admission for the two-row supersede: its receipt, read back, names decision.supersede and the old decision as target; the old decision reads superseded"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_delete.gone.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Atlas withdrawn decision",
+            "status": "proposed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "op_field",
+            "path": "id",
+            "value": "{decision_id}"
+          },
+          "observe_at": {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          },
+          "why": "the decision is readable before the delete"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.delete",
+        "args": {
+          "decision_id": "{decision_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "delete_op",
+        "capture_path": "operation_id",
+        "why": "withdraw it (ADMITTED, R4; in the grant by R5)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "",
+              "lacks": {
+                "id": "{decision_id}"
+              }
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "refused": {
+                "code": "not_found"
+              },
+              "path": "error",
+              "value": "Unknown decision: {decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.operation_id",
+              "value": "{delete_op}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.operation.name",
+              "value": "decision.delete"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.actor_kind",
+              "value": "owner"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.target_ref",
+              "value": "decision:{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 1,
+              "path": "objects.0.receipt.result_ref",
+              "value": "decision:{decision_id}"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "decision.list",
+          "args": {}
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          },
+          {
+            "kind": "op",
+            "name": "kernel.receipt.read",
+            "args": {
+              "operation_id": "{delete_op}"
+            }
+          }
+        ],
+        "words": "the deleted decision leaves the list and its read refuses NotFound (it was readable before); the delete's receipt is read back"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_create.receipt.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_status"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.create",
+        "args": {
+          "title": "Atlas made decision",
+          "status": "proposed"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "create_op",
+        "capture_path": "operation_id",
+        "why": "the create every decision case sets up (ADMITTED, D3): its receipt read once, here"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{create_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.operation.name",
+              "value": "decision.create"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "succeeded"
+            },
+            {
+              "source": "trigger",
+              "path": "id",
+              "nonempty": true
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "title": "Atlas made decision",
+                "status": "proposed"
+              }
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{create_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.list",
+            "args": {}
+          }
+        ],
+        "words": "a decision made is listed and its create receipt, read back, names decision.create"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.zone_file.refused_unknown_zone.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.zone_file"
+      ],
+      "state_id": "state.desk_presentation.p7_zone_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "note.create",
+          "args": {
+            "title": "Atlas unfiled note",
+            "body_markdown": "Never filed"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "note_id",
+          "capture_path": "id",
+          "why": "a plain note (exempt)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.file",
+        "args": {
+          "directory_id": "p7-absent-zone",
+          "primitive_id": "note:{note_id}"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "refused_op",
+        "capture_path": "operation_id",
+        "capture_from": "refusal",
+        "why": "a domain refusal after approval (R2 class 2): it still leaves a receipt"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "refused": {
+                "code": "not_found"
+              },
+              "path": "error",
+              "value": "Unknown directory: p7-absent-zone"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{refused_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.outcome",
+              "value": "not_found"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.operation.name",
+              "value": "zone.file"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "length": 0
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{refused_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "zone.list",
+            "args": {}
+          }
+        ],
+        "words": "a filing into an unknown zone is refused by name, its REFUSAL receipt is read back (state refused, outcome not_found), and no zone exists: zero effect"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.kb_member.refused_bad_ref.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.kb_member"
+      ],
+      "state_id": "state.desk_presentation.p7_knowledge_membership",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "kb.create",
+          "args": {
+            "name": "Atlas knowledge"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "kb_id",
+          "capture_path": "id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "kb.member.add",
+        "args": {
+          "kb_id": "{kb_id}",
+          "resource_ref": "p7-unqualified"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "refused_op",
+        "capture_path": "operation_id",
+        "capture_from": "refusal",
+        "why": "an unqualified reference is refused inside the admitted operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "refused": true,
+              "path": "error",
+              "value": "resource_ref must be qualified as kind:id"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{refused_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.target_ref",
+              "value": "kb:{kb_id}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.operation.name",
+              "value": "kb.member.add"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "length": 0
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{refused_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "kb.members",
+            "args": {
+              "kb_id": "{kb_id}"
+            }
+          }
+        ],
+        "words": "the refused add leaves a refusal receipt, read back, and the knowledge base has no member"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_status.refused_invalid.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_status"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Atlas steady decision",
+            "status": "accepted"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "decision_id",
+          "capture_path": "id"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.update",
+        "args": {
+          "decision_id": "{decision_id}",
+          "status": "p7-bogus"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "refused_op",
+        "capture_path": "operation_id",
+        "capture_from": "refusal",
+        "why": "an invalid status is refused inside the admitted operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "refused": true,
+              "path": "error",
+              "value": "invalid decision status: p7-bogus"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{refused_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.outcome",
+              "value": "invalid_value"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.target_ref",
+              "value": "decision:{decision_id}"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "status",
+              "value": "accepted"
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{refused_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.read",
+            "args": {
+              "decision_id": "{decision_id}"
+            }
+          }
+        ],
+        "words": "the refused status change leaves a refusal receipt, read back, and the decision keeps its status"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.p7.decision_delete.refused_unknown.op",
+      "job": "p7",
+      "edge_ids": [
+        "edge.face.decision_delete"
+      ],
+      "state_id": "state.desk_presentation.p7_decision_lifecycle",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "decision.delete",
+        "args": {
+          "decision_id": "p7-absent-decision"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "refused_op",
+        "capture_path": "operation_id",
+        "capture_from": "refusal",
+        "why": "deleting an unknown decision is refused inside the admitted operation"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "refused": {
+                "code": "not_found"
+              },
+              "path": "error",
+              "value": "Unknown decision: p7-absent-decision"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.operation_id",
+              "value": "{refused_op}"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.state",
+              "value": "refused"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.receipt.outcome",
+              "value": "not_found"
+            },
+            {
+              "source": "observe",
+              "path": "objects.0.operation.name",
+              "value": "decision.delete"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "length": 0
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "{refused_op}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "decision.list",
+            "args": {}
+          }
+        ],
+        "words": "the refused delete leaves a refusal receipt, read back; the desk has no decision"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j1.first_words_keep_as_note.kept.op",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.first_words_keep_note"
+      ],
+      "state_id": "state.first_value.kept",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "note.create",
+        "args": {
+          "title": "First dictation",
+          "body_markdown": "one sentence",
+          "tags": [
+            "dictation"
+          ]
+        },
+        "adapter": "mcp-http",
+        "capture_as": "note_id",
+        "capture_path": "id",
+        "why": "the note Keep as Note writes (FirstWords.tsx:296-303), through the registry"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "id",
+              "value": "{note_id}"
+            },
+            {
+              "source": "observe",
+              "path": "body_markdown",
+              "value": "one sentence"
+            },
+            {
+              "source": "observe",
+              "path": "title",
+              "value": "First dictation"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{note_id}",
+                "body_markdown": "one sentence"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "note.read",
+          "args": {
+            "note_id": "{note_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "note.list",
+            "args": {}
+          }
+        ],
+        "words": "the kept note is durable under the id its create returned, with the words; a plain note create is exempt, so no receipt is claimed. The face mints the id itself (firstValueKeepNoteId); the op pair compares the words and the id-to-row relationship, not the id"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j11.write_a_thought.window_open.op",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.arrival_develop_thought"
+      ],
+      "state_id": "state.desk_presentation.window_open_thought",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "id": "hs-seed-inbox",
+            "name": "Inbox"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "seed the real Inbox directory the Thought producer requires (as case.j11.thought_keep.receipt_time.op does)"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "thought.create",
+        "args": {
+          "request_id": "philo7-window",
+          "raw_text": "Graph walk J11 window",
+          "initial_note": {
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 window",
+            "tags": []
+          }
+        },
+        "adapter": "mcp-http",
+        "capture_as": "thought_id",
+        "capture_path": "thought.id",
+        "why": "the Thought the face's 'Write a thought' makes (POST /api/thoughts)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "thought.id",
+              "value": "{thought_id}"
+            },
+            {
+              "source": "observe",
+              "path": "thought.working_note.id",
+              "nonempty": true
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          }
+        },
+        "reads": [],
+        "words": "the durable claim of 'Write a thought' is a Thought with its working note, readable under its id; the window itself is face-only (never claimed here)"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    },
+    {
+      "id": "case.j11.thought_keep.kept.op",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.thought_keep"
+      ],
+      "state_id": "state.desk_presentation.window_open_thought",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. Every id is captured from this run's own producer."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "body": {
+            "id": "hs-seed-inbox",
+            "name": "Inbox"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "seed the real Inbox directory the Thought producer requires (as case.j11.thought_keep.receipt_time.op does)"
+        },
+        {
+          "kind": "op",
+          "name": "thought.create",
+          "args": {
+            "request_id": "philo7-kept",
+            "raw_text": "Draft before kept",
+            "initial_note": {
+              "title": "Thought",
+              "body_markdown": "Draft before kept",
+              "tags": []
+            }
+          },
+          "adapter": "mcp-http",
+          "capture_as": "thought_id",
+          "capture_path": "thought.id",
+          "why": "the Thought the face's 'Write a thought' makes (POST /api/thoughts)"
+        },
+        {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "aggregate_revision",
+          "capture_path": "thought.aggregate_revision"
+        },
+        {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "working_revision",
+          "capture_path": "thought.working_revision"
+        },
+        {
+          "kind": "op",
+          "name": "thought.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "working_note_id",
+          "capture_path": "thought.working_note.id"
+        },
+        {
+          "kind": "op",
+          "name": "thought.workbench.read",
+          "args": {
+            "thought_id": "{thought_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "workspace_cursor",
+          "capture_path": "workspace_cursor"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "thought.save",
+        "args": {
+          "thought_id": "{thought_id}",
+          "body_markdown": "Graph walk J11 kept words",
+          "expected_aggregate_revision": "{aggregate_revision}",
+          "expected_working_revision": "{working_revision}",
+          "workspace_cursor": "{workspace_cursor}"
+        },
+        "adapter": "mcp-http",
+        "why": "the autosave the face's editor sends (PATCH /api/thoughts/{id}/working), through the registry"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "id",
+              "value": "{working_note_id}"
+            },
+            {
+              "source": "observe",
+              "path": "body_markdown",
+              "value": "Graph walk J11 kept words"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{working_note_id}",
+                "body_markdown": "Graph walk J11 kept words"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "note.read",
+          "args": {
+            "note_id": "{working_note_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "note.list",
+            "args": {}
+          }
+        ],
+        "words": "the saved words are the working note's row in the store (the browser case reads GET /api/notes for the same fact); a Thought save is exempt (D3), so no receipt is claimed"
+      },
+      "completion_bound_s": 30.0,
+      "viewports": []
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p7_zone_membership",
+      "family": "desk_presentation",
+      "values": {
+        "zone": "made",
+        "member": "note:<id> in at most one zone"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/operations.py",
+          "symbol": "name=\"zone.file\"",
+          "line": 1050,
+          "claim": "filing is one declared, ADMITTED operation; filing again moves the object"
+        },
+        {
+          "path": "web/src/desk/components/DeskFilingStrip.tsx",
+          "symbol": "aria-pressed={inZone}",
+          "line": 142,
+          "claim": "the pullout's Filing strip draws one chip per zone, pressed where the object is filed"
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"desk.new-zone\"",
+          "line": 204,
+          "claim": "the face makes a zone with the New Zone verb"
+        }
+      ],
+      "reachable_by": [
+        "case.p7.zone_create.visible",
+        "case.p7.zone_file.note_in_zone",
+        "case.p7.zone_file.refile_moves",
+        "case.p7.zone_unfile.note_leaves"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p7_knowledge_membership",
+      "family": "desk_presentation",
+      "values": {
+        "knowledge": "made",
+        "member": "kind:id references, many-to-many"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/operations.py",
+          "symbol": "name=\"kb.member.add\"",
+          "line": 1125,
+          "claim": "adding a reference is one declared, ADMITTED operation"
+        },
+        {
+          "path": "web/src/desk/components/DeskFilingStrip.tsx",
+          "symbol": "toggleRelationship(\"knowledge\"",
+          "line": 171,
+          "claim": "the Filing strip's Knowledge chip adds and removes the reference"
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"desk.new-knowledge\"",
+          "line": 160,
+          "claim": "the face makes a knowledge base with the New Knowledge verb"
+        }
+      ],
+      "reachable_by": [
+        "case.p7.kb_create.visible",
+        "case.p7.kb_member.add_and_remove"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p7_decision_lifecycle",
+      "family": "desk_presentation",
+      "values": {
+        "status": "proposed | accepted | superseded | deprecated",
+        "review_list": "proposed desk decisions"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/operations.py",
+          "symbol": "name=\"decision.status\"",
+          "line": 1215,
+          "claim": "the status change is ADMITTED; HTTP only (over MCP it is decision.update)"
+        },
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "const cycleDecisionStatus",
+          "line": 69,
+          "claim": "the pullout's status control cycles proposed -> accepted -> superseded -> deprecated"
+        },
+        {
+          "path": "holdspeak/services/monday_brief_service.py",
+          "symbol": "Review decision: {title}",
+          "line": 1095,
+          "claim": "the brief lists each proposed desk decision as 'Review decision: <title>'"
+        },
+        {
+          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "symbol": "Supersedes {",
+          "line": 127,
+          "claim": "a successor's card names the decision it supersedes"
+        },
+        {
+          "path": "web/src/desk/api.ts",
+          "symbol": "export async function supersedeDecision",
+          "line": 259,
+          "claim": "the supersede client call exists but no face calls it: the supersede ACTION is not on the face"
+        },
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"object.delete\"",
+          "line": 547,
+          "claim": "the face deletes a selected object with the Delete verb"
+        }
+      ],
+      "reachable_by": [
+        "case.p7.decision_status.review_list",
+        "case.p7.decision_supersede.successor_visible",
+        "case.p7.decision_delete.gone"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: no Phase 7 case moves a clock; the review-list case reads the first brief of the real day",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [
+    {
+      "id": "excluded.p7.create_refused_op",
+      "combination": "case.j11.write_a_thought.create_refused with an .op sibling",
+      "applicability": "not_applicable",
+      "reason": "its refusal is a Playwright route interception at the browser boundary (the case's boundary step), not a producer refusal; it has no durable outcome to pair. The note cases with durable outcomes have their .op siblings."
+    }
+  ],
+  "council_readings": []
+}
