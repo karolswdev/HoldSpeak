@@ -404,22 +404,24 @@ def handle_message_for_principal(
             # refusal receipt; the answer is unchanged.
             from holdspeak.mcp.tools import refuse_before_invoke
 
-            refuse_before_invoke(name, arguments, principal, "invalid_arguments")
-            return _response(request_id, _tool_result({"error": "Tool arguments must be an object"}, is_error=True))
+            kernel = refuse_before_invoke(name, arguments, principal, "invalid_arguments") or {}
+            return _response(request_id, _tool_result({"error": "Tool arguments must be an object", **kernel}, is_error=True))
         try:
             if palette is not None:
                 value = dispatch_for_palette(name, arguments, principal, palette)
             else:
                 value = dispatch(name, arguments, principal)
         except ToolError as exc:
-            # HS-174: palette refusal carries MCP-005.
+            # HS-174: palette refusal carries MCP-005. PHILO-7-02: a refusal of
+            # an ADMITTED operation carries its operation_id and receipt.
             msg = str(exc)
+            kernel = getattr(exc, "kernel", None) or {}
             if "not in the configured palette" in msg:
                 return _error(
                     request_id, _MCP_005_CODE, msg,
-                    data={"code": "MCP-005", "tool": name},
+                    data={"code": "MCP-005", "tool": name, **kernel},
                 )
-            return _response(request_id, _tool_result({"error": msg}, is_error=True))
+            return _response(request_id, _tool_result({"error": msg, **kernel}, is_error=True))
         except ServiceError as exc:
             return _response(
                 request_id,
@@ -429,7 +431,7 @@ def handle_message_for_principal(
                 ),
             )
         except (ValueError, KeyError, TypeError) as exc:
-            return _response(request_id, _tool_result({"error": str(exc)}, is_error=True))
+            return _response(request_id, _tool_result({"error": str(exc), **(getattr(exc, "kernel", None) or {})}, is_error=True))
         except Exception as exc:
             return _response(request_id, _tool_result({"error": str(exc) or type(exc).__name__}, is_error=True))
         return _response(request_id, _tool_result(value))

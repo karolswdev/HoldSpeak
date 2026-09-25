@@ -25,6 +25,17 @@ from ._shared import _json_body, _kernel_fields, _refusal_kernel
 log = get_logger("web.routes.primitives")
 
 
+def _as_list(body: dict[str, Any], name: str) -> list[Any]:
+    """The route's list coercion, unchanged for every value it accepted; a
+    value it could not iterate (it crashed with a 500) is refused by name."""
+    try:
+        return list(body.get(name) or [])
+    except TypeError as exc:
+        raise operations.OperationRefused(
+            "invalid_arguments", "decision.create",
+            f"Invalid arguments for decision.create: {name} must be a list") from exc
+
+
 def _service_refusal(exc: ServiceError) -> JSONResponse:
     """A named refusal the routes did not map before (PHILO-7-02: a kernel refusal).
 
@@ -57,21 +68,30 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "decision.create", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "decision.create", "invalid_arguments", None) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
+        registry = _ops()
         try:
-            decision, kernel = _ops().invoke_receipted(_principal(request), "decision.create", {
+            args = {
                 "decision_id": str(body.get("id") or "") or None,
                 "title": str(body.get("title") or "New decision"),
                 "status": str(body.get("status") or "proposed"),
-                "deciders": list(body.get("deciders") or []),
+                "deciders": _as_list(body, "deciders"),
                 "decided_at": body.get("decided_at"),
                 "context_markdown": str(body.get("context_markdown") or ""),
                 "decision_markdown": str(body.get("decision_markdown") or ""),
-                "alternatives": list(body.get("alternatives") or []),
+                "alternatives": _as_list(body, "alternatives"),
                 "consequences_markdown": str(body.get("consequences_markdown") or ""),
-                "tags": list(body.get("tags") or []),
-            })
+                "tags": _as_list(body, "tags"),
+            }
+        except operations.OperationRefused as exc:
+            # Round two (Astra finding 2): the adapter's own coercion refusal
+            # of an admitted create keeps a named 400 (it was a 500) and
+            # leaves its refusal receipt.
+            kernel = registry.refuse(_principal(request), "decision.create", exc.code, body) or {}
+            return JSONResponse({"error": str(exc), **kernel}, status_code=400)
+        try:
+            decision, kernel = registry.invoke_receipted(_principal(request), "decision.create", args)
             return JSONResponse({"decision": decision, **_kernel_fields(kernel)}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc), **_refusal_kernel(exc)}, status_code=400)
@@ -96,8 +116,8 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "decision.update", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "decision.update", "invalid_arguments", {"decision_id": decision_id}) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             # PHILO-7-02 class 4: a duplicate decision_id in the body leaves a refusal receipt.
             registry = _ops()
@@ -132,8 +152,8 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "decision.status", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "decision.status", "invalid_arguments", {"decision_id": decision_id}) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             decision, kernel = _ops().invoke_receipted(_principal(request), "decision.status", {
                 "decision_id": decision_id, "status": body.get("status", "")})

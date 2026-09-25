@@ -374,6 +374,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--desk-surface-section-gap);
+  /* PHILO-7-02 round two (Astra finding 4): a control scrolled into view
+     minimally (focus, scrollIntoView nearest) stops clear of the footer
+     edge, its 44 px touch target included (UX-CANON C: the target reaches
+     8 px past a 28 px face at 393). */
+  scroll-padding-block: 24px;
   /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
      @container queries against this container, never viewport media. */
   container-type: inline-size;

@@ -343,7 +343,11 @@ def test_palette_refusal_through_the_http_jsonrpc_handler_is_mcp_005() -> None:
         "params": {"name": "desk.update", "arguments": {"kind": "decisions", "id": "d", "data": {}}},
     }, OWNER, palette=frozenset({"desk.list"}))
     assert response["error"]["code"] == -32005
-    assert response["error"]["data"] == {"code": "MCP-005", "tool": "desk.update"}
+    data = response["error"]["data"]
+    assert {k: data[k] for k in ("code", "tool")} == {"code": "MCP-005", "tool": "desk.update"}
+    # PHILO-7-02 round two: the palette refusal of an ADMITTED operation
+    # (decision.update) carries its refusal receipt (readback).
+    assert data["receipt"]["outcome"] == "mcp_palette_refused" and data["operation_id"] == data["receipt"]["operation_id"]
 
 
 def test_other_kinds_still_take_the_generic_path(tmp_path: Path, monkeypatch) -> None:

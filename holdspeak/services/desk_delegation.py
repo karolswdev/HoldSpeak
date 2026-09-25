@@ -30,6 +30,14 @@ def _now(database: Any) -> float:
     return float(desk_kernel._broker(database)._clock())
 
 
+def _refuse_body(name: str, principal: Any, agent_identity: str, database: Any) -> None:
+    """``invalid_arguments`` with its refusal receipt, targeted at the PATH's agent."""
+    kernel = desk_kernel.refuse(database, principal, name, "invalid_arguments", {"agent_identity": agent_identity})
+    raise desk_kernel.DeskKernelRefused("invalid_arguments", name,
+                                        operation_id=(kernel or {}).get("operation_id") or "",
+                                        receipt=(kernel or {}).get("receipt"))
+
+
 def grant(principal: Any, agent_identity: str, body: Any, *, database: Any = None) -> dict[str, Any]:
     """``delegation.grant``: one LIVE grant for *agent_identity* (a re-grant replaces the old one).
 
@@ -38,16 +46,15 @@ def grant(principal: Any, agent_identity: str, body: Any, *, database: Any = Non
     """
     database = database or _database()
     if not isinstance(body, Mapping):
-        kernel = desk_kernel.refuse(database, principal, "delegation.grant", "invalid_arguments",
-                                    {"agent_identity": agent_identity})
-        raise desk_kernel.DeskKernelRefused("invalid_arguments", "delegation.grant",
-                                            operation_id=(kernel or {}).get("operation_id") or "",
-                                            receipt=(kernel or {}).get("receipt"))
+        _refuse_body("delegation.grant", principal, agent_identity, database)
+    if set(body) - {"expires_at"}:
+        # The path names the agent; the declared body is {expires_at?} only.
+        # Any other field (agent_identity, grant_id ...) is refused, never used.
+        _refuse_body("delegation.grant", principal, agent_identity, database)
     payload: dict[str, Any] = {
         "agent_identity": agent_identity, "grant_id": "deskdeleg_" + uuid.uuid4().hex,
-        **{key: value for key, value in body.items() if key != "grant_id"},
+        "expires_at": body.get("expires_at"),
     }
-    payload.setdefault("expires_at", None)
 
     def effect_for(operation_id: str, minted: dict[str, Any]) -> Any:
         effect = desk.grant_effect(
@@ -66,12 +73,9 @@ def revoke(principal: Any, agent_identity: str, reason: str = "owner_revoked", *
            database: Any = None, body: Any = None) -> dict[str, Any]:
     """``delegation.revoke``: the LIVE grant REVOKED; none LIVE -> ``desk_delegation_required`` with a receipt."""
     database = database or _database()
-    if body is not None and not isinstance(body, Mapping):
-        kernel = desk_kernel.refuse(database, principal, "delegation.revoke", "invalid_arguments",
-                                    {"agent_identity": agent_identity})
-        raise desk_kernel.DeskKernelRefused("invalid_arguments", "delegation.revoke",
-                                            operation_id=(kernel or {}).get("operation_id") or "",
-                                            receipt=(kernel or {}).get("receipt"))
+    if body is not None and (not isinstance(body, Mapping) or body):
+        # DELETE declares no body: a non-object or any field is refused.
+        _refuse_body("delegation.revoke", principal, agent_identity, database)
     payload = {"agent_identity": agent_identity, "reason": reason}
 
     def effect_for(operation_id: str, minted: dict[str, Any]) -> Any:

@@ -1,0 +1,29 @@
+# PHILO-7-02 round two: tests/unit/test_philo7_round_two.py on ROUND ONE (86ec4ee5 code, the fences added), HOME isolated.
+# pytest -q --tb=line -rf; the first failing line of each fence, in order. One fence per path (Astra MISSED 3).
+
+tests/unit/test_philo7_round_two.py::test_a_grant_body_cannot_name_another_agent
+    E   AssertionError: {"success":true,"operation_id":"op_61f6ef313358420a9d5f846498d1bc3d","receipt":{"receipt_id":"rcpt_f3a4ebf95b48423e9a7c4246b593ea39","operation_id":"op_61f6ef313358420a9d5f846498d1bc3d","state":"succeeded","outcome":"succeeded","result_ref":"desk-delegation:deskdeleg_922d62c1f83e
+tests/unit/test_philo7_round_two.py::test_http_supersede_of_a_missing_decision_leaves_a_receipt
+    E   AssertionError: no receipt in the response: {'error': 'decision_not_found'}
+tests/unit/test_philo7_round_two.py::test_http_supersede_with_a_non_object_body_leaves_a_receipt
+    E   AssertionError: no receipt in the response: {'detail': [{'type': 'dict_type', 'loc': ['body'], 'msg': 'Input should be a valid dictionary', 'input': [1]}]}
+tests/unit/test_philo7_round_two.py::test_http_decision_create_with_non_list_tags_leaves_a_receipt
+    E   AssertionError: {"error":"'int' object is not iterable"}
+tests/unit/test_philo7_round_two.py::test_mcp_delete_of_a_thoughts_note_with_a_bad_field_leaves_a_receipt[extra0-invalid_arguments]
+    E   AssertionError: no receipt in the response: {'error': "Invalid arguments for note.delete: Additional properties are not allowed ('bogus' was unexpected)"}
+tests/unit/test_philo7_round_two.py::test_mcp_delete_of_a_thoughts_note_with_a_bad_field_leaves_a_receipt[extra1-authority_in_arguments]
+    E   AssertionError: no receipt in the response: {'error': 'Invalid arguments for note.delete: owner cannot be an argument; the principal comes from the transport'}
+tests/unit/test_philo7_round_two.py::test_http_non_object_decision_create_returns_its_receipt
+    E   AssertionError: no receipt in the response: {'error': 'expected a JSON object'}
+tests/unit/test_philo7_round_two.py::test_mcp_schema_refusal_returns_its_receipt
+    E   AssertionError: no receipt in the response: {'error': "Invalid arguments for zone.file: 'directory_id' is a required property"}
+tests/unit/test_philo7_round_two.py::test_mcp_non_object_arguments_return_their_receipt
+    E   AssertionError: no receipt in the response: {'error': 'Tool arguments must be an object'}
+tests/unit/test_philo7_round_two.py::test_mcp_contract_refusal_returns_its_receipt
+    E   AssertionError: no receipt in the response: {'error': 'Invalid arguments for decision.create: owner cannot be an argument; the principal comes from the transport'}
+tests/unit/test_philo7_round_two.py::test_the_palette_refusal_of_an_admitted_tool_returns_its_receipt
+    E   KeyError: 'receipt'
+tests/unit/test_philo7_round_two.py::test_the_http_filing_of_a_tombstoned_thoughts_note_returns_its_receipt
+    E   AssertionError: no receipt in the response: {'error': 'tombstoned thought cannot be filed'}
+
+12 failed in 7.64s

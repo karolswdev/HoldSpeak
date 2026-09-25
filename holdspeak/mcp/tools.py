@@ -882,8 +882,9 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     """Call one day-one MCP tool and return JSON-serializable data."""
     args = arguments or {}
     if not isinstance(args, dict):
-        refuse_before_invoke(name, arguments, principal, "invalid_arguments")
-        raise ToolError("arguments must be an object")
+        error = ToolError("arguments must be an object")
+        error.kernel = refuse_before_invoke(name, arguments, principal, "invalid_arguments")  # type: ignore[attr-defined]
+        raise error
     if _tool_schema(name) is None:
         raise ToolError(f"Unknown tool: {name}")
     retired_family_fields = {
@@ -906,8 +907,9 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
 
     try:
         _validate_tool_arguments(name, args)
-    except ToolError:
-        refuse_before_invoke(name, args, principal, "invalid_arguments")
+    except ToolError as error:
+        # The refusal receipt rides the error to the response (readback).
+        error.kernel = refuse_before_invoke(name, args, principal, "invalid_arguments")  # type: ignore[attr-defined]
         raise
     db = db_or(get_database)
     obs = observer_or(get_observer)
@@ -1330,8 +1332,7 @@ def dispatch_for_palette(
     if name not in palette:
         # PHILO-7-02: the palette refusal of a tool that names an ADMITTED
         # operation leaves a refusal receipt (a read or exempt tool: none).
-        refuse_before_invoke(name, arguments, principal, _PALETTE_REFUSED)
-        raise ToolError(
-            f"Tool {name!r} is not in the configured palette"
-        )
+        error = ToolError(f"Tool {name!r} is not in the configured palette")
+        error.kernel = refuse_before_invoke(name, arguments, principal, _PALETTE_REFUSED)  # type: ignore[attr-defined]
+        raise error
     return dispatch(name, arguments, principal)

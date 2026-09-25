@@ -5,8 +5,9 @@ by the auth middleware, so only a new process is a real restart (the lifecycle
 beat, "Probes": restart was not probeable in-process). The fence boots the real
 ``MeetingWebServer`` under uvicorn in a child process over an isolated HOME and
 database, grants G1 to an agent identity through the real route, kills the
-process (SIGKILL: no clean shutdown), leaves a desk write waiting in the same
-database, boots a NEW process on it, issues a new credential for the same
+process (SIGKILL: no clean shutdown) while a REAL agent request is in flight
+and waiting in ``awaiting_decision`` (its approval held by the fence's child
+script), boots a NEW process on the same database, issues a new credential for the same
 identity through the real route, and files a note under G1 over ``/api/mcp``.
 
 Red on main: the grant route is a 404 and the agent's filing makes no
@@ -16,13 +17,14 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 import signal
 import subprocess
 import sys
 import textwrap
 import urllib.error
 import urllib.request
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -33,9 +35,20 @@ TOKEN = "philo7-02-restart-token"
 AGENT_ID = "restart-agent"
 
 _CHILD = textwrap.dedent('''
-    import sys, time
+    import sys, threading, time
     from unittest.mock import MagicMock
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    if len(sys.argv) > 2 and sys.argv[2] == "hold":
+        # The fence's hold: a desk write's approval never returns, so the REAL
+        # request waits in awaiting_decision until the process is killed.
+        from holdspeak.kernel.broker import Broker
+        real_decide = Broker.decide
+        def held(self, operation_id, *args, **kwargs):
+            if (self.store.operation(operation_id) or {}).get("name") == "zone.file":
+                threading.Event().wait()
+            return real_decide(self, operation_id, *args, **kwargs)
+        Broker.decide = held
 
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={})),
@@ -48,11 +61,11 @@ _CHILD = textwrap.dedent('''
 
 
 class HubProcess:
-    def __init__(self, home: Path) -> None:
+    def __init__(self, home: Path, *, hold: bool = False) -> None:
         env = dict(os.environ, HOME=str(home))
         env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
         self.proc = subprocess.Popen(
-            [sys.executable, "-c", _CHILD, TOKEN], cwd=str(REPO_ROOT), env=env,
+            [sys.executable, "-c", _CHILD, TOKEN, *(["hold"] if hold else [])], cwd=str(REPO_ROOT), env=env,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         )
         lines: list[str] = []
@@ -91,6 +104,13 @@ class HubProcess:
         self.proc.wait(timeout=30)
 
 
+def _swallow(call: Any) -> None:
+    try:
+        call()
+    except Exception:
+        pass  # the connection dies with the killed process
+
+
 def _db(home: Path) -> Path:
     return home / ".local" / "share" / "holdspeak" / "holdspeak.db"
 
@@ -105,38 +125,35 @@ def _rows(home: Path, sql: str, *args: Any) -> list[tuple[Any, ...]]:
         conn.close()
 
 
-def _leave_a_desk_write_waiting(home: Path) -> str:
-    """Admit one agent desk write under G1 and stop before approval, as a killed hub would."""
-    from holdspeak.db import Database
-    from holdspeak.kernel.desk import desk_path
-    from holdspeak.kernel.runtime import _configure
-    from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.services import desk_kernel
-
-    database = Database(_db(home))
-    broker = _configure(database)
-    with desk_path():
-        handle = broker.submit(desk_kernel._raw("zone.file", str(uuid.uuid4()), "note:waiting", {
-            "directory_id": "z", "primitive_id": "note:waiting"}), Principal(PrincipalKind.AGENT, AGENT_ID))
-    assert handle["state"] == "awaiting_decision", handle
-    return str(handle["operation_id"])
+def _waiting(home: Path) -> list[tuple[Any, ...]]:
+    return _rows(home, "SELECT operation_id, name, principal_identity FROM kernel_operations WHERE state='awaiting_decision'")
 
 
 @pytest.mark.timeout(300)
 def test_f13_the_grant_survives_a_real_restart_and_f11_recovers_a_waiting_write(tmp_path: Path) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    first = HubProcess(home)
+    first = HubProcess(home, hold=True)
     try:
         status, granted = first.call("PUT", f"/api/settings/remote/delegations/{AGENT_ID}", {})
         assert status == 200, granted
         g1 = granted["grant_id"]
         token = first.credential()
-        assert first.tool(token, "desk.list", {"kind": "notes"})[0] is False
+        _status, zone = first.call("POST", "/api/directories", {"name": "Before the kill"})
+        _status, note = first.call("POST", "/api/notes", {"title": "in flight"})
+        # A REAL agent request, in flight when the hub dies: its approval is
+        # held, so it waits in awaiting_decision (Astra MISSED 4).
+        in_flight = threading.Thread(target=lambda: _swallow(lambda: first.tool(token, "zone.file", {
+            "directory_id": zone["directory"]["id"], "primitive_id": f"note:{note['note']['id']}"})), daemon=True)
+        in_flight.start()
+        deadline = time.time() + 30
+        while not _waiting(home) and time.time() < deadline:
+            time.sleep(0.1)
+        waiting_rows = _waiting(home)
+        assert [(r[1], r[2]) for r in waiting_rows] == [("zone.file", AGENT_ID)], waiting_rows
+        waiting = str(waiting_rows[0][0])
     finally:
         first.kill()
-
-    waiting = _leave_a_desk_write_waiting(home)
 
     second = HubProcess(home)
     try:

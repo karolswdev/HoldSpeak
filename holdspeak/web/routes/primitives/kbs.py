@@ -55,8 +55,8 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "kb.create", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "kb.create", "invalid_arguments", None) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             kb, kernel = _ops().invoke_receipted(_principal(request), "kb.create", {
                 "kb_id": str(body.get("id") or "") or None,
@@ -88,8 +88,8 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "kb.update", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "kb.update", "invalid_arguments", None) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             kb, kernel = _ops().invoke_receipted(_principal(request), "kb.update", {
                 "kb_id": kb_id,

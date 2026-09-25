@@ -55,8 +55,8 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "zone.create", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "zone.create", "invalid_arguments", None) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             directory, kernel = _ops().invoke_receipted(_principal(request), "zone.create", {
                 "directory_id": str(body.get("id") or "") or None,
@@ -93,8 +93,8 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         if body is None:
             # PHILO-7-02 class 4: an admitted operation's non-object body leaves a
             # refusal receipt (a conditional one's does not: nothing identifies it).
-            _ops().refuse(_principal(request), "zone.update", "invalid_arguments", None)
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            kernel = _ops().refuse(_principal(request), "zone.update", "invalid_arguments", None) or {}
+            return JSONResponse({"error": "expected a JSON object", **kernel}, status_code=400)
         try:
             args: dict[str, Any] = {"directory_id": directory_id, "name": body.get("name")}
             if "parent_id" in body:
@@ -148,6 +148,12 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": f"Unknown directory: {directory_id}", **_refusal_kernel(exc)}, status_code=404)
         except ValueError as exc:
             return JSONResponse({"error": str(exc), **_refusal_kernel(exc)}, status_code=400)
+        except ServiceError as exc:
+            # Inherited: a named refusal here (thought_tombstoned) still answers
+            # 500 as on main (BACKLOG, "PHILO-7-02 round two"); its refusal
+            # receipt rides the body now.
+            log.error(f"Failed to file directory member: {exc}")
+            return JSONResponse({"error": str(exc), **_refusal_kernel(exc)}, status_code=500)
         except Exception as exc:
             return error_500(exc, log, "Failed to file directory member")
 

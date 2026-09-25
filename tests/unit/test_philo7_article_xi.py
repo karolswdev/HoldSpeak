@@ -156,89 +156,67 @@ def _thought_note(hub: Hub, request_id: str) -> dict[str, Any]:
 # ── ADMISSION: one operation, one receipt, per admitted logical operation ──
 
 
-def test_owner_decision_writes_over_http(hub: Hub) -> None:
+# One fence per path (Astra's check on built, MISSED 3: a multi-path fence
+# that fails on its first call proves red for one path only). Each path: its
+# own setup, ONE call, then exactly one operation + one receipt of that name.
+
+
+ADMISSION_PATHS: dict[str, tuple[str, Any]] = {
+    # HTTP, decisions
+    "http decision.create": ("decision.create", lambda hub, ids: hub.client.post("/api/decisions", json={"title": "D"})),
+    "http decision.update": ("decision.update", lambda hub, ids: hub.client.put(f"/api/decisions/{ids['decision']}", json={"title": "D2"})),
+    "http decision.status": ("decision.status", lambda hub, ids: hub.client.put(f"/api/decisions/{ids['decision']}/status", json={"status": "accepted"})),
+    "http decision.supersede": ("decision.supersede", lambda hub, ids: hub.client.post(f"/api/decisions/{ids['decision']}/supersede")),
+    "http decision.delete": ("decision.delete", lambda hub, ids: hub.client.delete(f"/api/decisions/{ids['decision']}")),
+    # MCP, decisions (every alias once)
+    "mcp desk.create decisions": ("decision.create", lambda hub, ids: hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "D"}})),
+    "mcp desk.update decisions": ("decision.update", lambda hub, ids: hub.mcp("desk.update", {"kind": "decisions", "id": ids["decision"], "data": {"status": "proposed"}})),
+    "mcp desk.verb desk.update decisions": ("decision.update", lambda hub, ids: hub.mcp("desk.verb", {"verb_id": "desk.update", "arguments": {"kind": "decisions", "id": ids["decision"], "data": {"title": "T"}}})),
+    "mcp desk.verb desk.create decisions": ("decision.create", lambda hub, ids: hub.mcp("desk.verb", {"verb_id": "desk.create", "arguments": {"kind": "decisions", "data": {"title": "Verb"}}})),
+    "mcp decision.supersede": ("decision.supersede", lambda hub, ids: hub.mcp("decision.supersede", {"decision_id": ids["decision"]})),
+    "mcp desk.delete decisions": ("decision.delete", lambda hub, ids: hub.mcp("desk.delete", {"kind": "decisions", "id": ids["decision"]})),
+    "mcp desk.verb desk.delete decisions": ("decision.delete", lambda hub, ids: hub.mcp("desk.verb", {"verb_id": "desk.delete", "arguments": {"kind": "decisions", "id": ids["decision"]}})),
+    # filing and membership, both transports
+    "http zone.file": ("zone.file", lambda hub, ids: hub.client.put(f"/api/directories/{ids['zone']}/members/note:{ids['note']}")),
+    "http zone.unfile": ("zone.unfile", lambda hub, ids: hub.client.delete(f"/api/directories/{ids['zone']}/members/note:{ids['filed']}")),
+    "http kb.member.add": ("kb.member.add", lambda hub, ids: hub.client.put(f"/api/kbs/{ids['kb']}/members/note:{ids['note']}")),
+    "http kb.member.remove": ("kb.member.remove", lambda hub, ids: hub.client.delete(f"/api/kbs/{ids['kb']}/members/note:{ids['member']}")),
+    "mcp zone.file": ("zone.file", lambda hub, ids: hub.mcp("zone.file", {"directory_id": ids["zone"], "primitive_id": f"note:{ids['note']}"})),
+    "mcp zone.unfile": ("zone.unfile", lambda hub, ids: hub.mcp("zone.unfile", {"directory_id": ids["zone"], "primitive_id": f"note:{ids['filed']}"})),
+    "mcp kb.add_member": ("kb.member.add", lambda hub, ids: hub.mcp("kb.add_member", {"kb_id": ids["kb"], "ref": f"note:{ids['note']}"})),
+    "mcp kb.remove_member": ("kb.member.remove", lambda hub, ids: hub.mcp("kb.remove_member", {"kb_id": ids["kb"], "ref": f"note:{ids['member']}"})),
+    # the conditional rows, with their admission argument (a KB rename + members is ONE)
+    "http kb.create with member_ids": ("kb.create", lambda hub, ids: hub.client.post("/api/kbs", json={"name": "K2", "member_ids": [f"note:{ids['note']}"]})),
+    "mcp desk.create kbs with member_ids": ("kb.create", lambda hub, ids: hub.mcp("desk.create", {"kind": "kbs", "data": {"name": "K3", "member_ids": [f"note:{ids['note']}"]}})),
+    "http kb.update rename plus members": ("kb.update", lambda hub, ids: hub.client.put(f"/api/kbs/{ids['kb']}", json={"name": "Renamed", "member_ids": [f"note:{ids['note']}"]})),
+    "mcp desk.update directories parent_id": ("zone.update", lambda hub, ids: hub.mcp("desk.update", {"kind": "directories", "id": ids["zone2"], "data": {"parent_id": ids["zone"]}})),
+    "http zone.update parent_id null": ("zone.update", lambda hub, ids: hub.client.put(f"/api/directories/{ids['zone2']}", json={"parent_id": None})),
+    "mcp desk.create directories over an id": ("zone.create", lambda hub, ids: hub.mcp("desk.create", {"kind": "directories", "data": {"directory_id": ids["zone2"], "name": "Zone two", "parent_id": ids["zone"]}})),
+}
+
+
+@pytest.mark.parametrize("path", sorted(ADMISSION_PATHS))
+def test_each_admitted_path_makes_one_operation_and_one_receipt(hub: Hub, path: str) -> None:
+    ids = _seed(hub)
+    ids["decision"] = _decision(hub)
+    ids["filed"] = ids["note2"]
+    hub.client.put(f"/api/directories/{ids['zone']}/members/note:{ids['filed']}")
+    ids["member"] = ids["note2"]
+    hub.client.put(f"/api/kbs/{ids['kb']}/members/note:{ids['member']}")
+    name, call = ADMISSION_PATHS[path]
     count = Count(hub)
-    made = hub.client.post("/api/decisions", json={"title": "D"})
-    assert made.status_code == 201
-    created = _one(count, "decision.create")
-    assert (created["principal_kind"], created["principal_identity"]) == ("owner", "owner-session")
-    decision_id = made.json()["decision"]["id"]
-    for label, call, name in (
-        ("update", lambda: hub.client.put(f"/api/decisions/{decision_id}", json={"title": "D2"}), "decision.update"),
-        ("status", lambda: hub.client.put(f"/api/decisions/{decision_id}/status", json={"status": "accepted"}), "decision.status"),
-        ("supersede", lambda: hub.client.post(f"/api/decisions/{decision_id}/supersede"), "decision.supersede"),
-        ("delete", lambda: hub.client.delete(f"/api/decisions/{decision_id}"), "decision.delete"),
-    ):
-        count = Count(hub)
-        assert call().status_code in {200, 201}, label
-        _one(count, name)
-    # Supersede wrote two rows under ONE operation.
-    rows = hub.client.get("/api/decisions").json()["decisions"]
-    assert any(r["title"].startswith("Superseding") for r in rows)
+    result = call(hub, ids)
+    if isinstance(result, tuple):
+        assert result[0] is False, result
+    else:
+        assert result.status_code in {200, 201}, result.text
+    made = _one(count, name)
+    assert (made["principal_kind"], made["principal_identity"]) == ("owner", "owner-session")
     assert _waiting(hub) == 0
-
-
-def test_owner_decision_writes_over_mcp_and_every_alias_admits_once(hub: Hub) -> None:
-    count = Count(hub)
-    is_error, made = hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "D"}})
-    assert is_error is False
-    _one(count, "decision.create")
-    for tool, arguments, name in (
-        ("desk.update", {"kind": "decisions", "id": made["id"], "data": {"status": "proposed"}}, "decision.update"),
-        ("desk.verb", {"verb_id": "desk.update", "arguments": {"kind": "decisions", "id": made["id"], "data": {"title": "T"}}}, "decision.update"),
-        ("decision.supersede", {"decision_id": made["id"]}, "decision.supersede"),
-        ("desk.verb", {"verb_id": "desk.create", "arguments": {"kind": "decisions", "data": {"title": "Verb"}}}, "decision.create"),
-    ):
-        count = Count(hub)
-        is_error, value = hub.mcp(tool, arguments)
-        assert is_error is False, value
-        _one(count, name)  # no double admission through an alias
-    count = Count(hub)
-    assert hub.mcp("desk.delete", {"kind": "decisions", "id": made["id"]})[0] is False
-    _one(count, "decision.delete")
-
-
-def test_owner_filing_and_membership_over_http_and_mcp(hub: Hub) -> None:
-    ids = _seed(hub)
-    ref, ref2 = f"note:{ids['note']}", f"note:{ids['note2']}"
-    steps = [
-        (lambda: hub.client.put(f"/api/directories/{ids['zone']}/members/{ref}"), "zone.file"),
-        (lambda: hub.client.delete(f"/api/directories/{ids['zone']}/members/{ref}"), "zone.unfile"),
-        (lambda: hub.client.put(f"/api/kbs/{ids['kb']}/members/{ref}"), "kb.member.add"),
-        (lambda: hub.client.delete(f"/api/kbs/{ids['kb']}/members/{ref}"), "kb.member.remove"),
-    ]
-    for call, name in steps:
-        count = Count(hub)
-        assert call().status_code == 200, name
-        _one(count, name)
-    for tool, arguments, name in (
-        ("zone.file", {"directory_id": ids["zone"], "primitive_id": ref2}, "zone.file"),
-        ("zone.unfile", {"directory_id": ids["zone"], "primitive_id": ref2}, "zone.unfile"),
-        ("kb.add_member", {"kb_id": ids["kb"], "ref": ref2}, "kb.member.add"),
-        ("kb.remove_member", {"kb_id": ids["kb"], "ref": ref2}, "kb.member.remove"),
-    ):
-        count = Count(hub)
-        is_error, value = hub.mcp(tool, arguments)
-        assert is_error is False, value
-        _one(count, name)
-
-
-def test_conditional_rows_admit_with_their_argument_and_a_kb_rename_plus_members_is_one(hub: Hub) -> None:
-    ids = _seed(hub)
-    ref = f"note:{ids['note']}"
-    admitted = [
-        (lambda: hub.client.post("/api/kbs", json={"name": "K2", "member_ids": [ref]}), "kb.create"),
-        (lambda: hub.mcp("desk.create", {"kind": "kbs", "data": {"name": "K3", "member_ids": [ref]}}), "kb.create"),
-        (lambda: hub.client.put(f"/api/kbs/{ids['kb']}", json={"name": "Renamed", "member_ids": [ref]}), "kb.update"),
-        (lambda: hub.mcp("desk.update", {"kind": "directories", "id": ids["zone2"], "data": {"parent_id": ids["zone"]}}), "zone.update"),
-        (lambda: hub.client.put(f"/api/directories/{ids['zone2']}", json={"parent_id": None}), "zone.update"),
-        (lambda: hub.mcp("desk.create", {"kind": "directories", "data": {"directory_id": ids["zone2"], "name": "Zone two", "parent_id": ids["zone"]}}), "zone.create"),
-    ]
-    for call, name in admitted:
-        count = Count(hub)
-        call()
-        _one(count, name)
-    assert hub.db.kbs.get(ids["kb"]).name == "Renamed" and _kb_members(hub, ids["kb"]) == [ref]
+    if path == "http kb.update rename plus members":
+        assert hub.db.kbs.get(ids["kb"]).name == "Renamed" and _kb_members(hub, ids["kb"]) == [f"note:{ids['note']}"]
+    if path.endswith("supersede"):
+        assert any(d["title"].startswith("Superseding") for d in hub.client.get("/api/decisions").json()["decisions"])
 
 
 def test_the_exempt_rows_make_no_operation(hub: Hub) -> None:
@@ -462,105 +440,112 @@ def test_malformed_grant_requests_leave_an_invalid_arguments_receipt(hub: Hub, b
 # ── refusal receipts (R2), one fence per class ───────────────────────────
 
 
-def test_class_2_domain_refusals_after_approval_on_both_transports(hub: Hub) -> None:
-    ids = _seed(hub)
-    # NotFound: filing into an unknown zone.
-    count = Count(hub)
-    assert hub.client.put(f"/api/directories/nope/members/note:{ids['note']}").status_code == 404
-    _one(count, "zone.file", "not_found")
-    count = Count(hub)
-    is_error, value = hub.mcp("zone.file", {"directory_id": "nope", "primitive_id": f"note:{ids['note']}"})
-    assert is_error is True and value["code"] == "not_found"
-    _one(count, "zone.file", "not_found")
-    # zone_name_taken: an admitted create over an id with a taken name.
-    count = Count(hub)
-    assert hub.client.post("/api/directories", json={"id": ids["zone2"], "name": "Zone"}).status_code == 409
-    _one(count, "zone.create", "zone_name_taken")
-    count = Count(hub)
-    is_error, value = hub.mcp("desk.create", {"kind": "directories", "data": {"directory_id": ids["zone2"], "name": "zone"}})
-    assert is_error is True and value["error"] == "zone_name_taken"
-    _one(count, "zone.create", "zone_name_taken")
-    # The Thought filing guard: a tombstoned Thought's note.
+def _tombstoned_thought_note(hub: Hub) -> str:
     thought = _thought_note(hub, "guard")
     note_id = thought["working_note"]["id"]
     tomb = hub.client.request("DELETE", f"/api/notes/{note_id}", json={
         "expected_aggregate_revision": thought["aggregate_revision"], "expected_lifecycle_revision": thought["lifecycle_revision"]})
     assert tomb.status_code == 200, tomb.text
-    for transport in ("http", "mcp"):
-        count = Count(hub)
-        if transport == "http":
-            hub.client.put(f"/api/directories/{ids['zone']}/members/note:{note_id}")
-        else:
-            is_error, value = hub.mcp("zone.file", {"directory_id": ids["zone"], "primitive_id": f"note:{note_id}"})
-            assert is_error is True and value["code"] == "thought_tombstoned"
-        _one(count, "zone.file", "thought_tombstoned")
-        assert _filed(hub, ids["zone"]) == []
+    return note_id
 
 
-def test_class_3_contract_refusals_keep_their_error_and_leave_a_receipt(hub: Hub) -> None:
-    decision_id = _decision(hub)
-    count = Count(hub)
-    is_error, value = hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "x", "owner": "forged"}})
-    assert is_error is True and "owner cannot be an argument" in value["error"]
-    _one(count, "decision.create", "authority_in_arguments")
-    count = Count(hub)
-    is_error, value = hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "x", "bogus": 1}})
-    assert is_error is True and value["error"].startswith("Invalid arguments for decision.create")
-    _one(count, "decision.create", "invalid_arguments")
-    count = Count(hub)
-    resp = hub.client.put(f"/api/decisions/{decision_id}", json={"principal": "owner"})
-    assert resp.status_code == 400 and "cannot be an argument" in resp.json()["error"]
-    _one(count, "decision.update", "authority_in_arguments")
-    assert hub.client.get(f"/api/decisions/{decision_id}").json()["decision"]["title"] == "D"
+def _mcp_error(result: tuple[bool, Any]) -> Any:
+    is_error, value = result
+    assert is_error is True, value
+    return value
 
 
-def test_class_4_adapter_refusals_before_invoke(hub: Hub) -> None:
+#: Class 2, one path each: (operation, outcome, the call; asserts its own response).
+CLASS_2: dict[str, tuple[str, str, Any]] = {
+    "http NotFound": ("zone.file", "not_found", lambda hub, ids: hub.client.put(f"/api/directories/nope/members/note:{ids['note']}").status_code == 404),
+    "mcp NotFound": ("zone.file", "not_found", lambda hub, ids: _mcp_error(hub.mcp("zone.file", {"directory_id": "nope", "primitive_id": f"note:{ids['note']}"}))["code"] == "not_found"),
+    "http zone_name_taken": ("zone.create", "zone_name_taken", lambda hub, ids: hub.client.post("/api/directories", json={"id": ids["zone2"], "name": "Zone"}).status_code == 409),
+    "mcp zone_name_taken": ("zone.create", "zone_name_taken", lambda hub, ids: _mcp_error(hub.mcp("desk.create", {"kind": "directories", "data": {"directory_id": ids["zone2"], "name": "zone"}}))["error"] == "zone_name_taken"),
+    "http thought_tombstoned": ("zone.file", "thought_tombstoned", lambda hub, ids: hub.client.put(f"/api/directories/{ids['zone']}/members/note:{ids['tomb']}").status_code == 500),
+    "mcp thought_tombstoned": ("zone.file", "thought_tombstoned", lambda hub, ids: _mcp_error(hub.mcp("zone.file", {"directory_id": ids["zone"], "primitive_id": f"note:{ids['tomb']}"}))["code"] == "thought_tombstoned"),
+}
+
+
+@pytest.mark.parametrize("path", sorted(CLASS_2))
+def test_class_2_each_domain_refusal_after_approval(hub: Hub, path: str) -> None:
     ids = _seed(hub)
-    decision_id = _decision(hub)
-    # A duplicate decision_id in the update data, HTTP and MCP.
+    if "tombstoned" in path:
+        ids["tomb"] = _tombstoned_thought_note(hub)
+    name, outcome, call = CLASS_2[path]
     count = Count(hub)
-    assert hub.client.put(f"/api/decisions/{decision_id}", json={"decision_id": "other", "title": "x"}).status_code == 400
-    _one(count, "decision.update", "invalid_arguments")
+    assert call(hub, ids) is True
+    _one(count, name, outcome)
+    assert _filed(hub, ids["zone"]) == [] and _waiting(hub) == 0
+
+
+CLASS_3: dict[str, tuple[str, str, Any]] = {
+    "mcp authority_in_arguments": ("decision.create", "authority_in_arguments", lambda hub, ids: "owner cannot be an argument" in _mcp_error(hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "x", "owner": "forged"}}))["error"]),
+    "mcp invalid_arguments": ("decision.create", "invalid_arguments", lambda hub, ids: _mcp_error(hub.mcp("desk.create", {"kind": "decisions", "data": {"title": "x", "bogus": 1}}))["error"].startswith("Invalid arguments for decision.create")),
+    "http authority_in_arguments": ("decision.update", "authority_in_arguments", lambda hub, ids: "cannot be an argument" in hub.client.put(f"/api/decisions/{ids['decision']}", json={"principal": "owner"}).json()["error"]),
+}
+
+
+@pytest.mark.parametrize("path", sorted(CLASS_3))
+def test_class_3_each_contract_refusal_keeps_its_error_and_leaves_a_receipt(hub: Hub, path: str) -> None:
+    ids = {"decision": _decision(hub)}
+    name, outcome, call = CLASS_3[path]
     count = Count(hub)
-    is_error, _ = hub.mcp("desk.update", {"kind": "decisions", "id": decision_id, "data": {"decision_id": "other"}})
-    assert is_error is True
-    _one(count, "decision.update", "invalid_arguments")
-    # The MCP schema refusal: zone.file without directory_id.
+    assert call(hub, ids) is True
+    _one(count, name, outcome)
+    assert hub.client.get(f"/api/decisions/{ids['decision']}").json()["decision"]["title"] == "D"
+
+
+CLASS_4: dict[str, tuple[str, str, Any]] = {
+    "http duplicate decision_id": ("decision.update", "invalid_arguments", lambda hub, ids: hub.client.put(f"/api/decisions/{ids['decision']}", json={"decision_id": "other", "title": "x"}).status_code == 400),
+    "mcp duplicate decision_id": ("decision.update", "invalid_arguments", lambda hub, ids: bool(_mcp_error(hub.mcp("desk.update", {"kind": "decisions", "id": ids["decision"], "data": {"decision_id": "other"}})))),
+    "mcp schema refusal": ("zone.file", "invalid_arguments", lambda hub, ids: "directory_id" in _mcp_error(hub.mcp("zone.file", {"primitive_id": f"note:{ids['note']}"}))["error"]),
+    "mcp non-object arguments": ("zone.file", "invalid_arguments", lambda hub, ids: "must be an object" in _rpc(hub.client, "zone.file", [ids["zone"], ids["note"]])["result"]["content"][0]["text"]),
+    "http non-object decision body": ("decision.create", "invalid_arguments", lambda hub, ids: hub.client.post("/api/decisions", content=b"[]", headers={"Content-Type": "application/json"}).status_code == 400),
+    "mcp palette refusal": ("zone.file", "mcp_palette_refused", lambda hub, ids: _rpc(ids["project"], "zone.file", {"directory_id": ids["zone"], "primitive_id": f"note:{ids['note']}"})["error"]["data"]["code"] == "MCP-005"),
+}
+
+
+@pytest.mark.parametrize("path", sorted(CLASS_4))
+def test_class_4_each_adapter_refusal_before_invoke(hub: Hub, path: str) -> None:
+    ids = _seed(hub)
+    ids["decision"] = _decision(hub)
+    if path == "mcp palette refusal":
+        ids["project"] = _agent(hub, palette="PROJECT", identity="project-agent")
+    name, outcome, call = CLASS_4[path]
     count = Count(hub)
-    is_error, value = hub.mcp("zone.file", {"primitive_id": f"note:{ids['note']}"})
-    assert is_error is True and "directory_id" in value["error"]
-    _one(count, "zone.file", "invalid_arguments")
-    # Non-object MCP arguments.
-    count = Count(hub)
-    body = _rpc(hub.client, "zone.file", [ids["zone"], ids["note"]])
-    assert body["result"]["isError"] is True and "must be an object" in body["result"]["content"][0]["text"]
-    _one(count, "zone.file", "invalid_arguments")
-    # A non-object HTTP body on decision creation.
-    count = Count(hub)
-    assert hub.client.post("/api/decisions", content=b"[]", headers={"Content-Type": "application/json"}).status_code == 400
-    _one(count, "decision.create", "invalid_arguments")
-    # The palette refusal of a tool that names an ADMITTED operation.
-    project = _agent(hub, palette="PROJECT", identity="project-agent")
-    count = Count(hub)
-    refused = _rpc(project, "zone.file", {"directory_id": ids["zone"], "primitive_id": f"note:{ids['note']}"})
-    assert refused["error"]["data"] == {"code": "MCP-005", "tool": "zone.file"}
-    _one(count, "zone.file", "mcp_palette_refused")
+    assert call(hub, ids) is True
+    _one(count, name, outcome)
     assert _filed(hub, ids["zone"]) == []
+    assert hub.client.get(f"/api/decisions/{ids['decision']}").json()["decision"]["title"] == "D"
 
 
-def test_the_protocol_boundary_leaves_no_receipt(hub: Hub) -> None:
+BOUNDARY: dict[str, Any] = {
+    "unknown tool": lambda hub, ids: _rpc(hub.client, "zone.fil", {})["result"]["isError"] is True,
+    "unknown operation": lambda hub, ids: _raises(lambda: hub.root.operations.invoke(None, "no.such.operation", {})),
+    "failed read": lambda hub, ids: hub.mcp("desk.get", {"kind": "notes", "id": "missing"})[0] is True,
+    "palette refusal of a read": lambda hub, ids: "error" in _rpc(ids["project"], "desk.list", {"kind": "notes"}),
+    "palette refusal of an exempt write": lambda hub, ids: "error" in _rpc(ids["project"], "desk.create", {"kind": "notes", "data": {"title": "x"}}),
+    "non-object payload, conditional operation": lambda hub, ids: hub.mcp("desk.create", {"kind": "kbs", "data": [1]})[0] is True,
+    "malformed exempt operation": lambda hub, ids: hub.mcp("desk.create", {"kind": "notes", "data": {"owner": "x"}})[0] is True,
+    "http non-object body, conditional operation": lambda hub, ids: hub.client.post("/api/kbs", content=b"[]", headers={"Content-Type": "application/json"}).status_code == 400,
+}
+
+
+def _raises(call: Any) -> bool:
+    try:
+        call()
+    except Exception:
+        return True
+    return False
+
+
+@pytest.mark.parametrize("path", sorted(BOUNDARY))
+def test_the_protocol_boundary_leaves_no_receipt(hub: Hub, path: str) -> None:
     ids = _seed(hub)
-    project = _agent(hub, palette="PROJECT", identity="project-agent")
+    if "palette" in path:
+        ids["project"] = _agent(hub, palette="PROJECT", identity="project-agent")
     count = Count(hub)
-    assert _rpc(hub.client, "zone.fil", {})["result"]["isError"] is True                        # an unknown tool
-    with pytest.raises(Exception):
-        hub.root.operations.invoke(None, "no.such.operation", {})                               # unknown_operation
-    assert hub.mcp("desk.get", {"kind": "notes", "id": "missing"})[0] is True                    # a failed read
-    assert "error" in _rpc(project, "desk.list", {"kind": "notes"})                              # palette refusal of a read
-    assert "error" in _rpc(project, "desk.create", {"kind": "notes", "data": {"title": "x"}})    # ... of an exempt write
-    assert hub.mcp("desk.create", {"kind": "kbs", "data": [1]})[0] is True                       # non-object payload, conditional op
-    assert hub.mcp("desk.create", {"kind": "notes", "data": {"owner": "x"}})[0] is True          # malformed exempt op
-    assert hub.client.post("/api/kbs", content=b"[]", headers={"Content-Type": "application/json"}).status_code == 400
+    assert BOUNDARY[path](hub, ids) is True
     _none(count)
 
 

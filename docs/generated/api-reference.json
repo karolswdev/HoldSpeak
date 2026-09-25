@@ -8072,6 +8072,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8105,7 +8106,7 @@
             "GET"
           ],
           "symbol": "api_list_desk_decisions",
-          "line": 48,
+          "line": 59,
           "parameters": [
             {
               "name": "request",
@@ -8148,6 +8149,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8181,7 +8183,7 @@
             "POST"
           ],
           "symbol": "api_create_decision",
-          "line": 55,
+          "line": 66,
           "parameters": [
             {
               "name": "request",
@@ -8196,30 +8198,28 @@
           ],
           "calls": [
             "JSONResponse",
+            "_as_list",
             "_json_body",
             "_kernel_fields",
             "_ops",
-            "_ops().invoke_receipted",
             "_ops().refuse",
             "_principal",
             "_refusal_kernel",
             "_service_refusal",
             "body.get",
             "error_500",
-            "list",
+            "registry.invoke_receipted",
+            "registry.refuse",
             "router.post",
             "str"
           ],
           "body_access_keys": [
-            "alternatives",
             "consequences_markdown",
             "context_markdown",
             "decided_at",
-            "deciders",
             "decision_markdown",
             "id",
             "status",
-            "tags",
             "title"
           ],
           "raw_request": true,
@@ -8245,6 +8245,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
@@ -8278,7 +8279,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_decision",
-          "line": 117,
+          "line": 137,
           "parameters": [
             {
               "name": "decision_id",
@@ -8320,6 +8321,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8355,6 +8357,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8387,7 +8390,7 @@
             "GET"
           ],
           "symbol": "api_get_desk_decision",
-          "line": 84,
+          "line": 104,
           "parameters": [
             {
               "name": "decision_id",
@@ -8426,6 +8429,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8458,7 +8462,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision",
-          "line": 94,
+          "line": 114,
           "parameters": [
             {
               "name": "decision_id",
@@ -8505,6 +8509,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8540,6 +8545,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8575,6 +8581,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8610,6 +8617,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8645,6 +8653,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8680,6 +8689,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8712,7 +8722,7 @@
             "PUT"
           ],
           "symbol": "api_update_decision_status",
-          "line": 130,
+          "line": 150,
           "parameters": [
             {
               "name": "decision_id",
@@ -8761,6 +8771,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8796,6 +8807,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8828,7 +8840,7 @@
             "POST"
           ],
           "symbol": "api_supersede_decision",
-          "line": 151,
+          "line": 171,
           "parameters": [
             {
               "name": "decision_id",
@@ -8870,6 +8882,7 @@
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14705,6 +14718,7 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14787,6 +14801,7 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14858,6 +14873,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -14926,6 +14942,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15007,6 +15024,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15073,6 +15091,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15105,7 +15124,7 @@
             "DELETE"
           ],
           "symbol": "api_unfile_member",
-          "line": 155,
+          "line": 161,
           "parameters": [
             {
               "name": "directory_id",
@@ -15147,6 +15166,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -15199,7 +15219,8 @@
           "declared_responses": {},
           "literal_error_statuses": [
             400,
-            404
+            404,
+            500
           ],
           "calls": [
             "JSONResponse",
@@ -15209,6 +15230,7 @@
             "_principal",
             "_refusal_kernel",
             "error_500",
+            "log.error",
             "router.put",
             "str"
           ],
@@ -15223,6 +15245,7 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_membership_decisions.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -19167,7 +19190,8 @@
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_kernel_real_hub.py",
         "tests/integration/test_process_input_real_hub.py",
-        "tests/unit/test_philo7_article_xi.py"
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -23999,6 +24023,7 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24088,6 +24113,7 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24173,6 +24199,7 @@
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24245,6 +24272,7 @@
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -24327,6 +24355,7 @@
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_web_routes_primitives.py",
         "tests/unit/test_web_routes_thoughts.py"
       ],
@@ -33976,6 +34005,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34090,6 +34120,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34441,7 +34472,8 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
-        "tests/unit/test_philo7_grant_restart.py"
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34511,7 +34543,8 @@
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
-        "tests/unit/test_philo7_grant_restart.py"
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34678,7 +34711,9 @@
         "DELETE"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": [],
+      "consumers": [
+        "web"
+      ],
       "source": "holdspeak/web/routes/mcp_http.py",
       "handler_evidence": [
         {
@@ -34720,7 +34755,8 @@
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
-        "tests/unit/test_philo7_grant_restart.py"
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34741,7 +34777,9 @@
         "PUT"
       ],
       "module": "web.routes.mcp_http",
-      "consumers": [],
+      "consumers": [
+        "web"
+      ],
       "source": "holdspeak/web/routes/mcp_http.py",
       "handler_evidence": [
         {
@@ -34783,7 +34821,8 @@
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
-        "tests/unit/test_philo7_grant_restart.py"
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo7_round_two.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36599,6 +36638,7 @@
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -36685,6 +36725,7 @@
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_rig_faithful.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37014,6 +37055,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37098,6 +37140,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37173,6 +37216,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37263,6 +37307,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37335,6 +37380,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37417,6 +37463,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37502,6 +37549,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37587,6 +37635,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37669,6 +37718,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37745,6 +37795,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37834,6 +37885,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -37928,6 +37980,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -38000,6 +38053,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"
@@ -38085,6 +38139,7 @@
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_refinement_context_service.py",
         "tests/unit/test_refinement_default_context.py",
         "tests/unit/test_web_routes_thoughts.py"

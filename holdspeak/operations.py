@@ -1498,8 +1498,16 @@ class OperationRegistry:
             return False
         if admission.rule == "admitted":
             return True
-        if admission.holds is None or not isinstance(raw, Mapping):
+        if not isinstance(raw, Mapping):
             return False
+        if admission.holds is None:
+            # A stored-state condition (a Thought's note): when the id the
+            # attempt names makes it admitted, its refusal owes a receipt too.
+            owns = getattr(bound.target, "thought_owns_note", None)
+            try:
+                return bool(owns(raw.get("note_id"))) if callable(owns) else False
+            except Exception:
+                return False
         if not set(admission.arguments) & set(raw):
             return False
         try:

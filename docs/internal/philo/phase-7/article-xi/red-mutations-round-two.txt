@@ -1,0 +1,15 @@
+# PHILO-7-02 round two: deliberate mutations for the round-two fences (applied, run, restored by copy; no git verb).
+mf3 the face: the expired grant's chip from a stored-state projection (F23 rendered)
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_an_expired_grant_reads_stopped_on_both_rows
+  E   AssertionError: 'FILING STOPPED' not in '✓\nFILING ALLOWED'
+  1 failed in 5.30s
+mf4 the face: remote OFF drops every credential row
+  fence: tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_remote_off_keeps_a_credential_with_a_live_grant
+  E   playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded.
+  1 failed in 16.51s
+m27 the startup recovery skipped (F11, real restart)
+  fence: tests/unit/test_philo7_grant_restart.py
+  E   AssertionError: assert [] == [('indetermin...ng_decision')]
+  1 failed in 2.91s
+
+# the per-path protocol-boundary mutations (m24, m24b): docs/internal/philo/phase-7/article-xi/red-main-per-path.txt

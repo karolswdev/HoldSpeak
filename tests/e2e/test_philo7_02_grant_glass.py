@@ -163,7 +163,9 @@ def _kernel_receipt(page: Any, operation_id: str) -> dict[str, Any]:
     return read["objects"][0]
 
 
-class TestGrantGlass:
+class _GlassRig:
+    """The real hub, a fresh credential store, and the page helpers (no tests)."""
+
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
@@ -191,6 +193,9 @@ class TestGrantGlass:
     def _shot(self, page: Any, name: str, width: int) -> None:
         SHOTS.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(SHOTS / f"{name}-{width}.png"), full_page=False)
+
+
+class TestGrantGlass(_GlassRig):
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
@@ -340,5 +345,91 @@ class TestGrantGlass:
             assert _grant_rows(self.db_path)[-1] == ("REVOKED", "owner_revoked")
             _no_small_text_and_no_desk_writes(page)
             self._shot(page, "7-orphan-stopped", width)
+            assert errors == [], errors
+            browser.close()
+
+
+class TestGrantGlassRoundTwo(_GlassRig):
+    """Round two (Astra's check on built, finding 4 and the F23 rendered cases)."""
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_minimally_scrolled_verb_clears_the_footer(self, width: int) -> None:
+        """The REAL scroll-edge position: the body scrolled to its top, then
+        ``Issue credential`` scrolled into view MINIMALLY (``block: nearest``,
+        as a browser brings a focused control in). Its target corners must not
+        lie under the footer."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/settings/remote", {"enabled": True}, token=TOKEN)
+            _api(page, "POST", "/api/settings/remote/credentials", {"identity": IDENTITY, "palette": "DESK"}, token=TOKEN)
+            self._open(page)
+            issue = _remote(page).locator('[data-testid="issue-credential-btn"]')
+            page.evaluate("() => { const b = document.querySelector('.desk-surface-body'); if (b) b.scrollTop = 0; }")
+            issue.evaluate("(el) => el.scrollIntoView({block: 'nearest', inline: 'nearest'})")
+            _pointer_owned(page, issue.first, f"Issue credential, minimally scrolled, at {width}", scrolled=True)
+            self._shot(page, "scroll-edge", width)
+            assert errors == [], errors
+            browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_an_expired_grant_reads_stopped_on_both_rows(self, width: int) -> None:
+        """F23 rendered: stored LIVE past expires_at reads FILING STOPPED, on a
+        credential row and on a row with no credential; the orphan has no verb."""
+        import time as _time
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/settings/remote", {"enabled": True}, token=TOKEN)
+            _api(page, "POST", "/api/settings/remote/credentials", {"identity": IDENTITY, "palette": "DESK"}, token=TOKEN)
+            orphan = _api(page, "POST", "/api/settings/remote/credentials", {"identity": "orphan-agent", "palette": "DESK"}, token=TOKEN)
+            soon = _time.time() + 1.0
+            for identity in (IDENTITY, "orphan-agent"):
+                _api(page, "PUT", f"/api/settings/remote/delegations/{identity}", {"expires_at": soon}, token=TOKEN)
+            _api_allow_error(page, "DELETE", "/api/principals/self", token=orphan["token"])
+            _time.sleep(1.4)
+            assert [s for s, _ in _grant_rows(self.db_path)] == ["LIVE"], "the stored row is still LIVE"
+            self._open(page)
+            chip = _row(page).locator('[data-testid="grant-chip"]')
+            _readable(chip, W["stopped"])
+            assert chip.get_attribute("data-state") == "idle"
+            _readable(_row(page).locator('[data-testid="grant-verb"]'), W["allow"])
+            orphan_row = _remote(page).locator('[data-testid^="delegation-row-"]')
+            _readable(orphan_row.locator('[data-testid="grant-chip"]'), W["stopped"])
+            assert orphan_row.locator('[data-testid="grant-verb"]').count() == 0
+            _every_verb_owned(page, width)
+            self._shot(page, "4-expired", width)
+            assert errors == [], errors
+            browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_remote_off_keeps_a_credential_with_a_live_grant(self, width: int) -> None:
+        """Board 5d: OFF keeps the credential row whose grant is LIVE (with its
+        Stop verb) and hides the credential row without one."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/settings/remote", {"enabled": True}, token=TOKEN)
+            _api(page, "POST", "/api/settings/remote/credentials", {"identity": IDENTITY, "palette": "DESK"}, token=TOKEN)
+            _api(page, "POST", "/api/settings/remote/credentials", {"identity": "sweep-runner", "palette": "PROJECT"}, token=TOKEN)
+            _api(page, "PUT", f"/api/settings/remote/delegations/{IDENTITY}", {}, token=TOKEN)
+            _api(page, "PUT", "/api/settings/remote", {"enabled": False}, token=TOKEN)
+            self._open(page)
+            _readable(_row(page).locator('[data-testid="grant-chip"]'), W["live"])
+            _readable(_row(page).locator('[data-testid="grant-verb"]'), W["stop"])
+            _readable(_row(page).locator('[data-testid="credential-revoke"]'), W["revokeCredential"])
+            assert _remote(page).locator(".surface-ledger-primary", has_text="sweep-runner").count() == 0
+            assert _remote(page).locator('[data-testid="issue-credential-btn"]').count() == 0
+            _every_verb_owned(page, width)
+            self._shot(page, "5d-off-credential", width)
             assert errors == [], errors
             browser.close()

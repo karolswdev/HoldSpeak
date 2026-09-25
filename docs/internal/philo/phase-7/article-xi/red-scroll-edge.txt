@@ -1,0 +1,7 @@
+# PHILO-7-02 round two, finding 4: the minimal-scroll fence on the ROUND-ONE face (86ec4ee5 CSS), HOME isolated.
+# tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo (-k minimally): both widths red; the expiry and OFF cases were green (their reds: mf3, mf4 in red-mutations.txt).
+E   AssertionError: Issue credential, minimally scrolled, at 1440: elementFromPoint does not reach it at {'x': 40, 'y': 634.078125, 'owned': False} (rect {'x': 39, 'y': 607.078125, 'w': 141.203125, 'h': 28})
+E   AssertionError: Issue credential, minimally scrolled, at 393: elementFromPoint does not reach it at {'x': 16, 'y': 680.578125, 'owned': False} (rect {'x': 15, 'y': 645.578125, 'w': 141.203125, 'h': 28})
+FAILED tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_a_minimally_scrolled_verb_clears_the_footer[1440]
+FAILED tests/e2e/test_philo7_02_grant_glass.py::TestGrantGlassRoundTwo::test_a_minimally_scrolled_verb_clears_the_footer[393]
+2 failed, 6 passed, 4 deselected in 30.85s
