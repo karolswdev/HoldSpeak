@@ -6533,7 +6533,7 @@
     },
     {
       "path": "web/src/components/AmbientLayer.tsx",
-      "line": 51,
+      "line": 53,
       "kinds": [
         "http_client"
       ],
@@ -6543,7 +6543,7 @@
     },
     {
       "path": "web/src/components/AmbientLayer.tsx",
-      "line": 267,
+      "line": 369,
       "kinds": [
         "http_client"
       ],
@@ -6773,7 +6773,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1573,
+      "line": 1577,
       "kinds": [
         "http_client"
       ],
@@ -6783,7 +6783,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1855,
+      "line": 1859,
       "kinds": [
         "http_client"
       ],
@@ -6793,7 +6793,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1909,
+      "line": 1913,
       "kinds": [
         "http_client"
       ],
@@ -6803,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1968,
+      "line": 1972,
       "kinds": [
         "http_client"
       ],

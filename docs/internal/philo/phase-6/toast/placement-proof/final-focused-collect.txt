@@ -1,0 +1,30 @@
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 1440
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 393
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual active SurfaceWindowHost slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual Floor list host when no window is open
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > keeps the fixed fallback only when the spatial Floor has no slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an obscured phone slot once and does not scroll a desktop slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an off-Arrival phone slot once even when it is already visible
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an active window phone slot once
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > does not move the owner while a field has focus
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > renders one ledger row per world object with kind band, fact, STATE
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > opens the SAME pull-out record a floater click opens
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > Space ropes the SAME ref into the Ask context ([x] token, no checkbox)
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > the ContextMenu key opens the object WorkMenu on the row
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > right-click opens the same object menu
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > dives into a zone from the ZONES band and surfaces back
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > keeps the honest count status
+src/desk/components/DeskListView.test.tsx > HS-111-07 the ledger face: same records > keeps repository roadmaps out of the ordinary root list
+src/desk/components/DeskListView.test.tsx > HS-93-08 pagination at 1,000 items > pages by 100 with an honest count and no focus loss
+src/desk/components/DeskListView.test.tsx > HS-93-08 pagination at 1,000 items > settles focus on the count when the last page lands
+src/desk/components/DeskListView.test.tsx > HS-93-08 pagination at 1,000 items > deck search reaches items no page has rendered yet
+src/desk/components/DeskListView.test.tsx > HS-93-08 chrome toggle > List is a pressed-state toggle persisted to storage and URL
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Secure and Normal-with-preference: the hub-armed preview gates before any commit
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Type it commits exactly once, by token only, and closes the gate
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Discard burns the preview without ever committing
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > a failed commit keeps the words and the gate for an explicit retry
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > YOLO and Normal-without-preference: no hub frame means no HoldSpeak prompt
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 2 decided)

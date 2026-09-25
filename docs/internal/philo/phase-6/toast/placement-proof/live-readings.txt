@@ -1,0 +1,210 @@
+20260925T045018Z-case.philo603.toast.arrival-astra-393 complete=True verdict=fail
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: a covering element owns hit points: [{'x': 14, 'y': 644, 'owned': False, 'owner': 'div#desk-next > div.chair > footer.arrival-capture-bar'}, {'x': 14, 'y': 732, 'owned': False, 'owner': 'div#desk-next > div.desk-dock'}, {'x': 14, 'y': 820, 'owned': False, 'owner': 'div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch'}]
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-wvw5cdy0/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 642.296875, 'w': 369, 'h': 180} 0/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.chair > div', 'target_matches': True, 'atMs': 222}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 218, 'scroll_top_delta': 218}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 412.296875, 'w': 361, 'h': 90} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 573, 'w': 369, 'h': 138} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 12, 'y': 23.296875, 'w': 369, 'h': 114} 6/9
+ producer: 7eb5974a intel: ready job: succeeded summary: 269
+20260925T045707Z-case.philo603.toast.arrival-astra-393 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 381, 'w': 369, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q_337_gz/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 381.296875, 'w': 369, 'h': 180} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.chair > div', 'target_matches': True, 'atMs': 219}], 'count': 1, 'target_count': 1, 'events': 3, 'scroll_top_before': 0, 'scroll_top_after': 501, 'scroll_top_delta': 501}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 151.296875, 'w': 361, 'h': 90} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 573, 'w': 369, 'h': 138} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 12, 'y': -259.703125, 'w': 369, 'h': 114} 0/9
+ producer: 43bb27cc intel: ready job: succeeded summary: 269
+20260925T045813Z-case.philo603.toast.arrival-astra-1440 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 577, 'w': 560, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-dpj3u7ey/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 440, 'y': 576.890625, 'w': 560, 'h': 152} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] True {'x': 300, 'y': 436.890625, 'w': 880, 'h': 36} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 256, 'y': 764.890625, 'w': 928, 'h': 74} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 256, 'y': 200.890625, 'w': 928, 'h': 44} 9/9
+ producer: db21c203 intel: ready job: succeeded summary: 269
+20260925T045918Z-case.philo603.toast.meetings_window-astra-393 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 151, 'w': 363, 'h': 180}
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 151, 'w': 363, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zpaxhdz5/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 15, 'y': 151, 'w': 363, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-window-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#surface-meetings > div.desk-surface-body > div', 'target_matches': True, 'atMs': 146}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 525, 'w': 369, 'h': 138} 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: [data-testid=meetings-headline] True {'x': 15, 'y': 355, 'w': 233.28125, 'h': 34} 9/9
+ producer: b4686aab intel: ready job: succeeded summary: 269
+20260925T050016Z-case.philo603.toast.meetings_window-astra-1440 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 133, 'w': 610, 'h': 152}
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 133, 'w': 610, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sv9atfkc/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 39, 'y': 133, 'w': 610, 'h': 152} 9/9 slot: {'selector': '[data-aftercare-window-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 256, 'y': 758, 'w': 928, 'h': 74} 9/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: [data-testid=meetings-headline] True {'x': 39, 'y': 309, 'w': 233.28125, 'h': 34} 9/9
+ producer: 00aa5213 intel: ready job: succeeded summary: 269
+20260925T050111Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=blocked
+20260925T050229Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=blocked
+20260925T050406Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=fail
+ initial: a covering element owns hit points: [{'x': 14, 'y': 72, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome.is-ghost'}, {'x': 14, 'y': 160, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome'}, {'x': 14, 'y': 248, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome'}]
+ terminal: a covering element owns hit points: [{'x': 14, 'y': 72, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome.is-ghost'}, {'x': 14, 'y': 160, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome'}, {'x': 14, 'y': 248, 'owned': False, 'owner': 'div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome'}]
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-p0b6pg93/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 70, 'w': 369, 'h': 180} 0/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.desk-listmode > div', 'target_matches': True, 'atMs': 240}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 18, 'y': 258, 'w': 357, 'h': 32} 0/9
+ producer: c8077b53 intel: ready job: succeeded summary: 269
+20260925T050600Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 70, 'w': 369, 'h': 180}
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 70, 'w': 369, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-itm6tqof/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 70, 'w': 369, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.desk-listmode > div', 'target_matches': True, 'atMs': 238}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 18, 'y': 258, 'w': 357, 'h': 32} 9/9
+ producer: 3c30815e intel: ready job: succeeded summary: 269
+20260925T050654Z-case.philo603.toast.floor_list-astra-1440 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 74, 'w': 560, 'h': 152}
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 74, 'w': 560, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lzawcug1/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 440, 'y': 74, 'w': 560, 'h': 152} 9/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 178, 'y': 238, 'w': 1084, 'h': 32} 9/9
+ producer: 16ec0d31 intel: ready job: succeeded summary: 269
+20260925T050750Z-case.philo603.toast.floor_spatial_fallback-astra-393 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 16, 'y': 568, 'w': 361, 'h': 180}
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 16, 'y': 568, 'w': 361, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h2d7kx3i/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: fixed {'x': 16, 'y': 568, 'w': 361, 'h': 180} 9/9 slot: {'selector': None, 'present': False, 'contains_card': False}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ producer: 9177e5a3 intel: ready job: succeeded summary: 269
+20260925T051357Z-case.philo603.toast.arrival-astra-393 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 381, 'w': 369, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z57p0pmj/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 381.296875, 'w': 369, 'h': 180} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.chair > div', 'target_matches': True, 'atMs': 214}], 'count': 1, 'target_count': 1, 'events': 3, 'scroll_top_before': 0, 'scroll_top_after': 479, 'scroll_top_delta': 479}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 151.296875, 'w': 361, 'h': 90} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 573, 'w': 369, 'h': 138} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 12, 'y': -237.703125, 'w': 369, 'h': 114} 0/9
+ producer: e05b8514 intel: ready job: succeeded summary: 269
+20260925T051652Z-case.philo603.toast.arrival-astra-1440 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 577, 'w': 560, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-wxdbuz10/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 440, 'y': 576.890625, 'w': 560, 'h': 152} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] True {'x': 300, 'y': 436.890625, 'w': 880, 'h': 36} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 256, 'y': 764.890625, 'w': 928, 'h': 74} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 256, 'y': 200.890625, 'w': 928, 'h': 44} 9/9
+ producer: c260f8fd intel: ready job: succeeded summary: 269
+20260925T051937Z-case.philo603.toast.meetings_window-astra-393 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 151, 'w': 363, 'h': 180}
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 151, 'w': 363, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-7t7ddgn9/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 15, 'y': 151, 'w': 363, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-window-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#surface-meetings > div.desk-surface-body > div', 'target_matches': True, 'atMs': 160}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 525, 'w': 369, 'h': 138} 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: [data-testid=meetings-headline] True {'x': 15, 'y': 355, 'w': 233.28125, 'h': 34} 9/9
+ producer: 54b561f6 intel: ready job: succeeded summary: 269
+20260925T052045Z-case.philo603.toast.meetings_window-astra-1440 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 133, 'w': 610, 'h': 152}
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 133, 'w': 610, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-she3q2dz/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 39, 'y': 133, 'w': 610, 'h': 152} 9/9 slot: {'selector': '[data-aftercare-window-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 256, 'y': 758, 'w': 928, 'h': 74} 9/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: [data-testid=meetings-headline] True {'x': 39, 'y': 309, 'w': 233.28125, 'h': 34} 9/9
+ producer: ddccdd8e intel: ready job: succeeded summary: 269
+20260925T052207Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 70, 'w': 369, 'h': 180}
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 70, 'w': 369, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h0mowlap/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 70, 'w': 369, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.desk-listmode > div', 'target_matches': True, 'atMs': 240}], 'count': 1, 'target_count': 1, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 18, 'y': 258, 'w': 357, 'h': 32} 9/9
+ producer: 58a720a9 intel: ready job: succeeded summary: 269
+20260925T052727Z-case.philo603.toast.floor_list-astra-1440 complete=True verdict=pass
+ initial: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 74, 'w': 560, 'h': 152}
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 74, 'w': 560, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-mzhkecb3/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 440, 'y': 74, 'w': 560, 'h': 152} 9/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 178, 'y': 238, 'w': 1084, 'h': 32} 9/9
+ producer: 6b66e90a intel: ready job: succeeded summary: 269
+20260925T052820Z-case.philo603.toast.arrival-astra-393 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 381, 'w': 369, 'h': 180}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-sak6wj28/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 12, 'y': 381.296875, 'w': 369, 'h': 180} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [{'method': 'scrollIntoView', 'target': 'div#desk-next > div.chair > div', 'target_matches': True, 'atMs': 210}], 'count': 1, 'target_count': 1, 'events': 3, 'scroll_top_before': 0, 'scroll_top_after': 501, 'scroll_top_delta': 501}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 151.296875, 'w': 361, 'h': 90} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 573, 'w': 369, 'h': 138} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 12, 'y': -259.703125, 'w': 369, 'h': 114} 0/9
+ producer: 0cc74979 intel: ready job: succeeded summary: 269
+20260925T052913Z-case.philo603.toast.arrival-astra-1440 complete=True verdict=pass
+ initial: placement clearance failed: [data-testid=meeting-summary-text]: required geometry is absent
+ terminal: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 440, 'y': 577, 'w': 560, 'h': 152}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hmpuwzlr/.local/share/holdspeak/holdspeak.db revision: d1e355f2bfc4acbaa7ec3ea1a7a38f1c742ae1c4 dirty: True
+ card: static {'x': 440, 'y': 576.890625, 'w': 560, 'h': 152} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': True, 'contains_card': True}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] True {'x': 300, 'y': 436.890625, 'w': 880, 'h': 36} 9/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 256, 'y': 764.890625, 'w': 928, 'h': 74} 9/9
+ clear: [data-testid=arrival-brief-row] True {'x': 256, 'y': 200.890625, 'w': 928, 'h': 44} 9/9
+ producer: 7d79b346 intel: ready job: succeeded summary: 269
+20260925T043908Z-case.philo603.toast.arrival-astra-393 complete=False verdict=not_run
+20260925T044503Z-case.philo603.toast.arrival-astra-393 complete=True verdict=fail
+ initial: the card is not rendered inside its declared slot '[data-testid=arrival-aftercare-slot]': {'selector': '[data-testid=arrival-aftercare-slot]', 'present': False, 'contains_card': False}
+ terminal: the card is not rendered inside its declared slot '[data-testid=arrival-aftercare-slot]': {'selector': '[data-testid=arrival-aftercare-slot]', 'present': False, 'contains_card': False}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kzg_9g2k/.local/share/holdspeak/holdspeak.db revision:  dirty: False
+ card: fixed {'x': 16, 'y': 568, 'w': 361, 'h': 180} 9/9 slot: {'selector': '[data-testid=arrival-aftercare-slot]', 'present': False, 'contains_card': False}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 612.296875, 'w': 361, 'h': 90} 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 573, 'w': 369, 'h': 138} 6/9
+ clear: [data-testid=arrival-brief-row] True {'x': 12, 'y': 223.296875, 'w': 369, 'h': 114} 9/9
+ producer: d5ce8542 intel: ready job: succeeded summary: 269
+20260925T045541Z-case.philo603.toast.meetings_window-astra-393 complete=True verdict=fail
+ initial: the card is not rendered inside its declared slot '[data-aftercare-window-slot="top"]': {'selector': '[data-aftercare-window-slot="top"]', 'present': False, 'contains_card': False}
+ terminal: the card is not rendered inside its declared slot '[data-aftercare-window-slot="top"]': {'selector': '[data-aftercare-window-slot="top"]', 'present': False, 'contains_card': False}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-aji4bi4r/.local/share/holdspeak/holdspeak.db revision:  dirty: False
+ card: fixed {'x': 16, 'y': 568, 'w': 361, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-window-slot="top"]', 'present': False, 'contains_card': False}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] True {'x': 16, 'y': 511.296875, 'w': 361, 'h': 90} 0/9
+ clear: [data-testid=arrival-capture-bar] True {'x': 12, 'y': 525, 'w': 369, 'h': 138} 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ producer: fd83ba05 intel: ready job: succeeded summary: 269
+20260925T050903Z-case.philo603.toast.floor_list-astra-393 complete=True verdict=fail
+ initial: the card is not rendered inside its declared slot '[data-aftercare-floor-slot="top"]': {'selector': '[data-aftercare-floor-slot="top"]', 'present': False, 'contains_card': False}
+ terminal: the card is not rendered inside its declared slot '[data-aftercare-floor-slot="top"]': {'selector': '[data-aftercare-floor-slot="top"]', 'present': False, 'contains_card': False}
+ db: /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hk7eo1oz/.local/share/holdspeak/holdspeak.db revision:  dirty: False
+ card: fixed {'x': 16, 'y': 568, 'w': 361, 'h': 180} 9/9 slot: {'selector': '[data-aftercare-floor-slot="top"]', 'present': False, 'contains_card': False}
+ scroll: {'calls': [], 'count': 0, 'target_count': 0, 'events': 0, 'scroll_top_before': 0, 'scroll_top_after': 0, 'scroll_top_delta': 0}
+ clear: [data-testid=meeting-summary-text] False None 0/9
+ clear: [data-testid=arrival-capture-bar] False None 0/9
+ clear: [data-testid=arrival-brief-row] False None 0/9
+ clear: .desk-list-census True {'x': 18, 'y': 62, 'w': 357, 'h': 32} 9/9
+ producer: c3d8c388 intel: ready job: succeeded summary: 269

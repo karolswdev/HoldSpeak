@@ -1,0 +1,223 @@
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Secure and Normal-with-preference: the hub-armed preview gates before any commit
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Type it commits exactly once, by token only, and closes the gate
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > Discard burns the preview without ever committing
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > a failed commit keeps the words and the gate for an explicit retry
+src/components/AmbientLayer.test.tsx > posture-aware dictation preview gate > YOLO and Normal-without-preference: no hub frame means no HoldSpeak prompt
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 0 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (0 open, 2 decided)
+src/components/AmbientLayer.test.tsx > meeting aftercare counts > renders only nonzero count tokens (3 open, 2 decided)
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster when the window takes focus again
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the product's settings-updated signal
+src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the hub's desk_changed frame
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 1440
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > publishes into the actual ChairHome slot and Dismiss clears it at 393
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual active SurfaceWindowHost slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > renders into the actual Floor list host when no window is open
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > keeps the fixed fallback only when the spatial Floor has no slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an obscured phone slot once and does not scroll a desktop slot
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an off-Arrival phone slot once even when it is already visible
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > scrolls an active window phone slot once
+src/components/aftercarePlacement.test.tsx > PHILO-6-03 aftercare rendered placement > does not move the owner while a field has focus
+src/desk/chair/ChairHome.test.tsx > Chair write recovery > keeps a failed generation actionable and clears the receipt after retry
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says No brief yet only when the read answered null
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says READING… while the read is open
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > names a failed read with its status and Retry reads again
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > says NO ANSWER when the fetch got no response
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the period and the generated date under a populated brief
+src/desk/chair/__tests__/briefLoadAndDate.philo303.test.tsx > the BRIEF section: absent, loading, did not load, dated > puts the date under an empty brief's headline too
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate in the head while a day-one row is untriaged
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > disables Generate while the read is open
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says GENERATING… in the status slot and disables Generate while it runs
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > names a failed generation with no Retry and Generate enabled
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > says NO ANSWER when the generation got no response
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps Retry on a failed read, with Generate in the head
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > keeps the badge, the caption and the receipt through every transition
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > never touches the old rows' triage when it generates
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > draws Generate on the quiet branch (every row triaged), not Generate again
+src/desk/chair/__tests__/generateAlwaysReachable.philo401.test.tsx > PHILO-4-01: Generate is always reachable on the Arrival > puts a failed generation in the place of No brief yet
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > shows the newest decision first with an honest cap and fold
+src/desk/chair/__tests__/decisionRows.philo402.test.tsx > PHILO-4-02: decision rows lead the Arrival cap > keeps the result ordered after Generate replaces an existing brief
+src/desk/DeskApp.test.tsx > DeskApp arrival state > makes first value the only Chair composition and suppresses Desk chrome
+src/desk/DeskApp.test.tsx > DeskApp arrival state > keeps the initial unresolved setup state neutral until the server answers
+src/desk/DeskApp.test.tsx > DeskApp arrival state > keeps a failed initial refresh quiet and gives the owner a retry
+src/desk/DeskApp.test.tsx > DeskApp arrival state > keeps a resolved but missing setup snapshot quiet and retryable
+src/desk/DeskApp.test.tsx > DeskApp arrival state > keeps the normal Chair and chrome when the server no longer requires arrival
+src/desk/DeskApp.test.tsx > DeskApp arrival state > mounts the existing Ask panel when the normal Chair opens it
+src/desk/DeskApp.test.tsx > DeskApp arrival state > keeps work and the empty Desk's recorder mounted while settling, then resets on exit
+src/desk/DeskApp.test.tsx > DeskApp arrival state > does not carry quiet chrome into first-value arrival
+src/desk/DeskApp.test.tsx > DeskApp arrival state > reveals one normal Chair and staged note once after the server flip while preserving a queued deep link
+src/desk/DeskApp.test.tsx > DeskApp arrival state > mounts staged pullouts on the normal Chair, never during arrival
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > sends the disclosed selection hash, and shows the host first
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > withholds Run and says the reason when no route resolves
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > shows a 409 as ONE short refusal fact, the reason on its title
+src/desk/chair/arrivalSummaryRun.test.tsx > HS-201-04 the Chair's summary run > opens the meeting with the `meeting:<id>` grammar History parses
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > headline: the true total; the Project clause only over several Projects
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > shows five rows with reason, source and one action; the caption carries the cap; the rest is reachable
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws the dedup disclosure naming every source of a merged row
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws exactly ONE filled primary on the whole face, and the selected filter is not it
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > states the ranking key on the face as a filter strip and filters by class
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > withholds the Project button over one Project and says `3 need you`
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > keeps coverage ABOVE the answer: each unreadable source with its reason, token, observation and verb
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > stamps a remembered row STILL TRUE with its observation, and never speaks the all-clear over a partial result
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > speaks the all-clear with the coverage chip only when complete
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > a Room commitment is one row with one lawful verb; the Door's card for it is not drawn twice
+src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > Mark done is the verb only when owner and date are known, and it posts the explicit act
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders imported duration and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the ready summary and transcript from the producer detail
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a failed lineage as RETRYING after its scheduled time and names the producer cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > renders the terminal producer failure and keeps the named cause
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps a persisted summary visible with a later producer failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > reads only the top three visible meeting details per desk refresh
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > drops a stale response when the visible meeting identity changes
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps the open summary and user-open transcript through an unresolved desk refresh
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > names a response whose identity does not match the requested meeting
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > clicks Run once, then follows desk_changed to a ready summary and durable receipt
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > keeps the durable receipt and producer cause through retry to terminal failure
+src/desk/chair/arrivalSummaryCompletion.test.tsx > PHILO-3-02 Arrival summary completion > refreshes running to ready to retry to failed from desk_changed and keeps durable receipts
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > names the destination the hub actually uses
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's badge (HS-202-02) > carries the local scope, not a bare chip
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > says nothing before the verb is pressed
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > names what was built and when
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > never counts zero (UX-CANON A.8)
+src/desk/chair/__tests__/briefBadgeReceipt202.test.tsx > the brief's receipt (HS-202-02) > states one item in the singular
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 headline > never says the all-clear while something is pending
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row with ONE Button when no engine makes summaries
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > is gone once the summary capability is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > stays while only a global head exists (the queue cannot use it)
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws no setup row while the roster read is still in flight
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > names the unknown as its own row when the roster could not be read
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws a row when no engine transcribes speech
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row when neither engine is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > clears the speech row when the speech capability is assigned
+src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 a microphone action never opens Models > draws no blocker row for a microphone primary_action
+src/desk/pullouts/IntelligencePullout.test.tsx > HS-128-01 Intelligence pullout > registers the Intelligence primitive in the pullout registry
+src/desk/pullouts/IntelligencePullout.test.tsx > HS-128-01 Intelligence pullout > opens on Brief and changes the active view
+src/desk/pullouts/IntelligencePullout.test.tsx > HS-128-01 Intelligence pullout > restores the last selected view after reopening
+src/desk/pullouts/IntelligencePullout.test.tsx > HS-128-01 Intelligence pullout > keeps Brief and Receipts inside a card-width pullout
+src/desk/__tests__/shell.test.tsx > the dock > shows a chip per open window; the four applications ride always
+src/desk/__tests__/shell.test.tsx > the dock > tap focuses; a parked window's chip restores it
+src/desk/__tests__/shell.test.tsx > the dock > the dock close affordance drives the window's own close
+src/desk/__tests__/shell.test.tsx > the dock > Ctrl+` cycles focus in MRU order, restoring as it lands
+src/desk/__tests__/shell.test.tsx > the dock > reset layout forgets rects and lifecycle and persists the wipe
+src/desk/__tests__/shell.test.tsx > snapForPointer (edge tiling) > left/right flanks take halves below the chrome band
+src/desk/__tests__/shell.test.tsx > snapForPointer (edge tiling) > corners take quarters
+src/desk/__tests__/shell.test.tsx > snapForPointer (edge tiling) > the open middle is a free park (no snap)
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > a free stage keeps the seed
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > a second window at the same home moves off the first title bar
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > an off-viewport seed lands whole inside the working band
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > an oversize window shrinks to the band
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > a window may shade another's body but never its title bar
+src/desk/__tests__/shell.test.tsx > placeWindow (HS-97-02, the open-placement engine) > a saturated stage cascades off the home seat, still in band
+src/desk/__tests__/shell.test.tsx > resizeEdge (HS-97-05, edge resize math) > right and bottom edges grow with the pointer
+src/desk/__tests__/shell.test.tsx > resizeEdge (HS-97-05, edge resize math) > the left edge moves x and shrinks w together
+src/desk/__tests__/shell.test.tsx > resizeEdge (HS-97-05, edge resize math) > the left edge keeps the right edge fixed at the minimum
+src/desk/__tests__/shell.test.tsx > resizeEdge (HS-97-05, edge resize math) > the bottom-left corner drives both axes
+src/desk/__tests__/shell.test.tsx > exposeLayout (HS-97-06, the pick grid) > four windows tile 2x2 inside the working band, no overlap
+src/desk/__tests__/shell.test.tsx > exposeLayout (HS-97-06, the pick grid) > a last-row straggler centers
+src/desk/__tests__/shell.test.tsx > clampIntoBand (HS-97-02, clamp-on-open) > a rect persisted on a larger viewport lands whole
+src/desk/__tests__/shell.test.tsx > clampIntoBand (HS-97-02, clamp-on-open) > an in-band rect is untouched
+src/desk/__tests__/shell.test.tsx > the surface dispatcher > routes a registered surface and reports unregistered ones
+src/desk/__tests__/shell.test.tsx > the surface dispatcher > flushes a Meetings deep-link queued before the normal registry exists
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps one refinement request id across an ambiguous retry and clears it after admission
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > answers one reviewed question immediately without starting another model turn
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps Stop primary while live and exposes direct Finish Thought through More
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > makes Finish Thought the sole primary when no model is ready
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > names a terminal model failure without hiding the owner's next actions
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > executes Finish Thought immediately and leaves the same completed Note read-only with a receipt
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > renders and copies the authoritative accepted working Note rather than the stale pullout snapshot
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > resumes a completed Note through lifecycle CAS before opening its editor
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > clears a prior completion key on Resume so the next Finish Thought uses a new request
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > clears a stale completion key and does not loop it after its named conflict
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > does not call completion when the editor flush reports a retained save failure
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps the request id and names a generic adoption failure without claiming a change
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > uses changed-elsewhere language only for the named adoption CAS response
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > does not claim unchanged when adoption recovery cannot read ownership
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > scrolls a successful Original reveal into the nearest visible pullout position
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > does not scroll when Original fails to load
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps AI context empty by default and attaches pinned Everyday in one authoritative selection
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > shows both authoritative groups and only offers Use when this Thought has context
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > closes the context sheet with Escape and returns focus to AI context
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > replaces the complete future set and keeps persistent Default markers scoped
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > clears the whole future set without changing this Thought
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > renders a named whole-set-skipped receipt on the first not-applied render
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps the picker open on attach failure and exposes overlap as Included, not selectable
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps the catalog behind Browse and searches through the server
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > makes Update context the only primary for idle stale context
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps Answer primary for a stale question and replaces stale synthesis Accept with Update context
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps Original raw text wrapped locally without normalizing its bytes
+src/desk/pullouts/NotePullout.test.tsx > NotePullout adoption recovery > keeps one full-width completion primary at the 393px surface breakpoint
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 the board never announces a false all clear > the audit probe: drilling to overdue then tabbing back shows every lane
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 the board never announces a false all clear > names the active drill filter and dismisses it in one click
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 the board never announces a false all clear > the filtered empty state offers the way back to every lane
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 the board never announces a false all clear > an empty board still says so, without the retired ALL CLEAR string
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 brief triage is durable > Acknowledge writes to the shelf and refreshes the attention channel
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 brief triage is durable > a shelf read back from the hub survives the pullout closing
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 brief triage is durable > a refused write reports through the write-receipt channel
+src/desk/pullouts/IntelligenceTruth.test.tsx > HS-132-08 the attention badge reflects triage > counts only untouched brief items
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > opens with the segmented Intelligence header
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > renders the Brief period and its lookback items as flat rows
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > renders Follow-Through lanes and their cards
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > renders Receipts with a search input that queries the ledger
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > preserves the selected view when the pullout closes and reopens
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > HS-129-03 keeps a large Brief in the scrollable body under the card cap
+src/desk/pullouts/IntelligenceWalk.test.tsx > HS-128-10 Desk Intelligence walk > HS-129-03 hides BACK until a cross-link drill and returns to Brief
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the head speaks one total > adds what asks outside the attention list
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > counts the setup row, and the calendar offer beside it never moves it
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear beside a calendar offer
+src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear with the calendar connected too
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > says Nothing needs you only when the empty result is complete
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > never speaks the all-clear over an empty PARTIAL result
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > shows the coverage row beside healthy items and marks a remembered row
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > treats a read that never landed as a coverage gap, not as quiet
+src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > keeps the arrival honest at the narrow viewport rule (no prose row)
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the real six-row headline and date, then names all six handled
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not count THIS WEEK toward the Arrival handled line
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > withholds the line while one Arrival row is still untriaged
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > does not claim handling when a hidden raw-id Arrival row has no shelf
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps No changes bare without a zero handled count
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line in place while Generate is open
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line after generation failure
+src/desk/chair/__tests__/triagedHeadline.philo404.test.tsx > the triaged Arrival headline > keeps the line beside the same-day success receipt
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > renders the latest producer receipt without pressing Generate
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > leaves the receipt slot absent when latest answers null
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > names a latest read failure instead of claiming no brief exists
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > retains the first receipt when StrictMode's later mount read fails
+src/desk/chair/__tests__/briefFreshRead.philo504.test.tsx > fresh brief read (PHILO-5-04 C2-C3) > clears the first receipt when StrictMode's later mount read answers null
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > shows the latest receipt before Generate and replaces it with the new receipt
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > names the destination on the row before the press
+src/desk/chair/__tests__/briefReceiptRendered202.test.tsx > Generate receipt transition (PHILO-5-04 / HS-202-02) > keeps the receipt when the generated response has no countable rows
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with an ABSENT drainer reads NOT DRAINING
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > a queued row with a RUNNING drainer reads QUEUED
+src/desk/chair/__tests__/drainerBadge.test.tsx > the Chair row reads the drainer, not just the queue > no frame is UNKNOWN, never reported as absent
+src/desk/pullouts/__tests__/sequenceVerb202.test.tsx > the Sequence pullout names its own object (F08) > offers Edit Sequence, never Edit chain
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > serializes B behind successful A and sends B with A's advanced cursors
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > fences synchronously and drains accepted A then B before Finish Thought can use cursors
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > keeps a generic save failure in the editor with Retry and refuses completion flush
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > installs conflict authority while retaining B and never replays it blindly
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > discards a delayed A response after a newer parent authority epoch
+src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx > ThoughtNoteEditor > discards an older conflict current after a newer parent authority epoch
+src/desk/pullouts/editors/useThoughtNoteWriter.test.tsx > useThoughtNoteWriter workspace cursor > installs A's returned cursor synchronously before queued B drains
+src/desk/pullouts/editors/useThoughtNoteWriter.test.tsx > useThoughtNoteWriter workspace cursor > uses the hydrated same-authority cursor conflict and retries the retained draft once
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > renders person section with display name and signals
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > renders four signals for a person row
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > shows person verbs (Add to 1:1 agenda, Open person) when person selected
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > 'Add to 1:1 agenda' calls the existing people agenda endpoint
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > 'Open person' calls openSurfaceOr with people focus
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > receipt items still show Acknowledge/Defer/Speak verbs
+src/desk/pullouts/views/BriefView.test.tsx > BriefView person sections > renders L2 unavailable line when sidecar is closed
+src/desk/pullouts/views/BriefView.test.tsx > BriefView THIS WEEK counters and generated clock > keeps a 'hour 00' generated clock separate from zero counters
+src/desk/pullouts/views/BriefView.test.tsx > BriefView THIS WEEK counters and generated clock > keeps a 'minute 00' generated clock separate from zero counters
+src/desk/pullouts/views/DecisionsView.test.tsx > HS-128-04 Receipts view > searches on keystroke and supports a governing-only WHY filter
+src/desk/pullouts/views/DecisionsView.test.tsx > HS-128-04 Receipts view > opens full receipt evidence in place and returns to the preserved ledger
+src/desk/pullouts/views/FollowThroughView.test.tsx > FollowThroughView > shows person chip with display name for mapped owner
+src/desk/pullouts/views/FollowThroughView.test.tsx > FollowThroughView > shows staleness label on mapped owner chip
+src/desk/pullouts/views/FollowThroughView.test.tsx > FollowThroughView > shows bare initials for unmapped owner
+src/desk/pullouts/views/FollowThroughView.test.tsx > FollowThroughView > renders both mapped and unmapped cards correctly side by side
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > parseLocal > reads a bare YYYY-MM-DD as a local calendar day, not UTC midnight
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > parseLocal > reads an instant with an offset
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > parseLocal > is null for nothing
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > generatedLabelLocal / periodLabelLocal > prints GENERATED in the viewer's local clock
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > generatedLabelLocal / periodLabelLocal > spans the local Monday of the week through the generated day
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > generatedLabelLocal / periodLabelLocal > is null with no generated_at
+src/desk/pullouts/views/__tests__/BriefViewLocalTime.test.ts > sinceFridayLabel > names the local lookback start day

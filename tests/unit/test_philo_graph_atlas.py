@@ -1679,3 +1679,198 @@ def test_thought_op_save_starts_from_different_working_text() -> None:
     assert before != case["trigger"]["args"]["body_markdown"]
     assert case["expected"]["predicate"]["path"] == "thought.working_note.body_markdown"
     assert case["expected"]["predicate"]["value"] == case["trigger"]["args"]["body_markdown"]
+
+
+PHILO603_CASES = {
+    "case.philo603.toast.arrival": "[data-testid=arrival-aftercare-slot]",
+    "case.philo603.toast.meetings_window": "[data-aftercare-window-slot=\"top\"]",
+    "case.philo603.toast.floor_list": "[data-aftercare-floor-slot=\"top\"]",
+}
+
+
+def test_philo603_cases_use_the_real_summary_producer_and_surface_slots(atlas: dict) -> None:
+    rig = _rig()
+    cases = {case["id"]: case for case in atlas["cases"] if case["id"] in PHILO603_CASES}
+    assert set(cases) == set(PHILO603_CASES)
+    for case_id, slot in PHILO603_CASES.items():
+        case = cases[case_id]
+        assert case["state_id"] == "state.meetings.intel.ready"
+        # The real intelligence drainer starts with every rig hub. A summary
+        # admission does not authorize unrelated heartbeat scheduler work.
+        assert not rig.case_needs_scheduler(case)
+        boundary = next(step for step in case["setup"] if step["kind"] == "boundary")
+        assert boundary["substitute"] == "engine_reply"
+        assert boundary["reply"] == "tests/fixtures/philo5_summary_reply.json"
+        imported = next(step for step in case["setup"] if step["kind"] == "fixture")
+        assert imported["path"] == "tests/fixtures/philo3_architect_meeting.wav"
+        assert imported["capture_as"] == "meeting_id"
+        assert imported["route"] == {"method": "POST", "path": "/api/meetings/import"}
+        setup_run_clicks = [
+            step for step in case["setup"]
+            if step.get("selector") == "[data-testid=arrival-run-intel]"
+            and step.get("action") == "click"
+        ]
+        assert not setup_run_clicks, "the producer admission must happen after the probe is armed"
+        if case_id == "case.philo603.toast.arrival":
+            assert case["trigger"]["kind"] == "ui"
+            assert case["trigger"]["action"] == "click"
+            assert case["trigger"]["selector"] == "[data-testid=arrival-run-intel]"
+            assert case["trigger"]["trigger_route"] == {
+                "method": "POST",
+                "path": "/api/meetings/{meeting_id}/intelligence/run",
+            }
+            assert any(
+                step.get("kind") == "api"
+                and step.get("method") == "POST"
+                and step.get("path") == "/api/decisions"
+                for step in case["setup"]
+            )
+            assert any(
+                step.get("kind") == "api"
+                and step.get("method") == "POST"
+                and step.get("path") == "/api/brief/generate"
+                for step in case["setup"]
+            )
+        else:
+            assert case["trigger"]["kind"] == "api"
+            assert case["trigger"]["method"] == "POST"
+            assert case["trigger"]["path"] == "/api/meetings/{meeting_id}/intelligence/run"
+            assert case["trigger"]["body"] == {
+                "expected_selection_hash": "{selection_hash}"
+            }
+            route_read = next(
+                step for step in case["setup"]
+                if step.get("kind") == "api"
+                and step.get("method") == "GET"
+                and step.get("path") == "/api/meetings/{meeting_id}"
+                and step.get("capture_as") == "selection_hash"
+            )
+            assert route_read["capture_path"] == "planned_route.selection_hash"
+        if case_id == "case.philo603.toast.floor_list":
+            steps = case["setup"]
+            toggle_index = next(i for i, step in enumerate(steps) if step.get("name") == "List view")
+            assert steps[toggle_index - 1]["name"] == "HoldSpeak"
+            assert steps[toggle_index - 1]["role"] == "button"
+        expected = case["expected"]
+        predicate = expected["predicate"]
+        assert expected["observe_at"] == ".ambient-aftercare"
+        assert predicate["kind"] == "readable_text"
+        assert predicate["value"] == "MEETING READY"
+        assert predicate["slot_selector"] == slot
+        assert predicate["auto_scroll_calls_by_viewport"] == {"393": 1, "1440": 0}
+        assert predicate["no_field_focus"] is True
+        if case_id == "case.philo603.toast.arrival":
+            assert expected["dismiss_selector"] == ".ambient-aftercare button:has-text('Dismiss')"
+            assert expected["dismiss_slot_selector"] == slot
+        else:
+            assert "dismiss_selector" not in expected
+            assert "dismiss_slot_selector" not in expected
+
+
+def _readable_placement_after(*, position: str = "static", overlap: bool = False) -> dict:
+    card_rect = {"x": 20, "y": 20, "w": 220, "h": 80}
+    clear_rect = {"x": 30, "y": 40, "w": 200, "h": 40} if overlap else {
+        "x": 20, "y": 140, "w": 200, "h": 40
+    }
+    return {
+        "target_present": True,
+        "visible": True,
+        "text": "Meeting ready Architecture boundary review",
+        "rect": card_rect,
+        "hit_test": {
+            "viewport": {"width": 393, "height": 900},
+            "in_viewport": True,
+            "all_owned": True,
+            "rect": card_rect,
+        },
+        "placement": {
+            "card": {
+                "present": True,
+                "computed_position": position,
+                "hit_test": {"rect": card_rect},
+            },
+            "slot": {"present": True, "contains_card": True},
+            "clear": [{
+                "selector": "[data-testid=arrival-capture-bar]",
+                "present": True,
+                "hit_test": {
+                    "rect": clear_rect,
+                    "visible": True,
+                    "all_owned": True,
+                },
+            }],
+            "scroll": {"target_count": 1, "events": 1, "scroll_top_delta": 30},
+            "focused_field": False,
+        },
+    }
+
+
+def test_philo603_placement_fence_rejects_fixed_card_and_overlap() -> None:
+    rig = _rig()
+    predicate = {
+        "kind": "readable_text",
+        "value": "Meeting ready",
+        "slot_selector": "[data-testid=arrival-aftercare-slot]",
+        "clear_of": [{
+            "selector": "[data-testid=arrival-capture-bar]",
+            "required": True,
+            "require_hit_test": True,
+        }],
+        "auto_scroll_calls_by_viewport": {"393": 1, "1440": 0},
+    }
+    ok, why = rig.check_predicate(predicate, {}, _readable_placement_after(position="fixed"))
+    assert not ok and "fixed" in why
+    ok, why = rig.check_predicate(predicate, {}, _readable_placement_after(overlap=True))
+    assert not ok and "intersects" in why
+
+
+def test_philo603_placement_fence_accepts_flow_card_with_nine_point_clearance() -> None:
+    rig = _rig()
+    predicate = {
+        "kind": "readable_text",
+        "value": "Meeting ready",
+        "slot_selector": "[data-testid=arrival-aftercare-slot]",
+        "clear_of": [{
+            "selector": "[data-testid=arrival-capture-bar]",
+            "required": True,
+            "require_hit_test": True,
+        }],
+        "auto_scroll_calls_by_viewport": {"393": 1, "1440": 0},
+        "no_field_focus": True,
+    }
+    ok, why = rig.check_predicate(predicate, {}, _readable_placement_after())
+    assert ok, why
+
+
+def test_philo603_placement_fence_checks_every_matching_clear_target() -> None:
+    rig = _rig()
+    predicate = {
+        "kind": "readable_text",
+        "value": "Meeting ready",
+        "slot_selector": "[data-testid=arrival-aftercare-slot]",
+        "clear_of": [
+            {
+                "selector": "[data-testid=arrival-brief-row]",
+                "required": False,
+                "require_hit_test": False,
+            }
+        ],
+    }
+    after = _readable_placement_after()
+    after["placement"]["clear"] = [
+        {
+            "selector": "[data-testid=arrival-brief-row]",
+            "present": True,
+            "hit_test": {"rect": {"x": 20, "y": 140, "w": 200, "h": 40}},
+        },
+        {
+            "selector": "[data-testid=arrival-brief-row]",
+            "present": True,
+            "hit_test": {"rect": {"x": 20, "y": 240, "w": 200, "h": 40}},
+        },
+    ]
+    ok, why = rig.check_predicate(predicate, {}, after)
+    assert ok, why
+    after["placement"]["clear"][1]["hit_test"]["rect"]["y"] = 40
+    ok, why = rig.check_predicate(predicate, {}, after)
+    assert not ok and "intersects" in why

@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 252 / 252 |
-| Test paths | 191 / 191 |
-| Documentation paths | 221 / 221 |
-| Assertions inspected | 191 |
-| Tests executed | 163 |
+| Source paths | 259 / 259 |
+| Test paths | 199 / 199 |
+| Documentation paths | 222 / 222 |
+| Assertions inspected | 199 |
+| Tests executed | 171 |
 | Records with an executed assertion | 73 |
 | Semantic records unresolved | 74 |
 
@@ -52,7 +52,7 @@ Validation errors at generation: **0**.
 | `meeting.capture` | capabilities | 3/3 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `meeting.import` | capabilities | 2/2 | 3/3 | 3 | 3 | 1 | partially_evidenced |
 | `meeting.intelligence` | capabilities | 5/5 | 8/8 | 8 | 8 | 0 | partially_evidenced |
-| `meeting.aftercare` | capabilities | 2/2 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `meeting.aftercare` | capabilities | 9/9 | 11/11 | 11 | 11 | 0 | partially_evidenced |
 | `model.registry` | capabilities | 2/2 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `model.assignment` | capabilities | 5/5 | 2/2 | 2 | 2 | 1 | partially_evidenced |
 | `model.route_plan` | capabilities | 3/3 | 2/2 | 2 | 2 | 2 | partially_evidenced |

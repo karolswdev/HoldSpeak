@@ -1,6 +1,6 @@
 # Phase 6 - The Honest Morning
 
-**Last updated:** 2026-09-24 (RATIFIED; in build).
+**Last updated:** 2026-09-24 night — PHILO-6-03 placement verified; lane A and integration remain in build.
 
 ## Goal
 
@@ -61,7 +61,7 @@ The six defects come from retained evidence, not from taste. The source is the P
 |---|---|---|---|---|
 | PHILO-6-01 | The honest import badge | in-progress | [story-01-the-honest-import-badge](./story-01-the-honest-import-badge.md) | - |
 | PHILO-6-02 | The brief's truth (one time, honest counts, human words) | in-progress | [story-02-the-briefs-truth](./story-02-the-briefs-truth.md) | - |
-| PHILO-6-03 | The toast that does not cover | in-progress | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | - |
+| PHILO-6-03 | The toast that does not cover | done | [story-03-the-toast-that-does-not-cover](./story-03-the-toast-that-does-not-cover.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-6-04 | One cause, one row | done | [story-04-one-cause-one-row](./story-04-one-cause-one-row.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-6-05 | The decision body at once | done | [story-05-the-decision-body-at-once](./story-05-the-decision-body-at-once.md) | [evidence-story-05](./evidence-story-05.md) |
 
@@ -70,17 +70,18 @@ The six defects come from retained evidence, not from taste. The source is the P
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 |---|---|---|---|---|---|
 | The Arrival (owns `ChairHome.tsx`) | 01, 02 | Muad'Dib (Opus 5.5) | Astra | ../wt-philo-6-a | feat/philo-6-a-badge-brief |
-| The toast, the row, the body | 03, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-b | feat/philo-6-b-toast-rows-body |
+| The toast, the row, the body (merged) | 03 zero/canvas, 04, 05 | Astra (Luna) | Muad'Dib | ../wt-philo-6-b | feat/philo-6-b-toast-rows-body |
+| Ratified toast placement | 03 build | Astra (Luna) | Muad'Dib | ../wt-philo-6-03 | feat/philo-6-03-placement |
 
 Lane law for this phase:
 
-- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx` exclusively. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The future build needs this slot, an AmbientLayer portal and auto-scroll, plus an off-Arrival slot in the current surface shell. The patch alone places nothing.
+- Muad'Dib's lane owns `web/src/desk/chair/ChairHome.tsx`; the build brief grants Astra only the exact four-line slot patch in its own gated commit (`d1e355f2`), with lane A reconciliation. The story 03 patch adds an empty `data-aftercare-slot` at `ChairHome.tsx:1442` before `<CaptureBar />`; it does not change the capture-clearance measurement. Astra hands the patch to lane 01/02; the two lanes never co-edit the file. The built lane adds the AmbientLayer portal, auto-scroll and off-Arrival slots separately from this exact patch.
 - Shared atlas and generated files (`docs/internal/philo/graph/atlas*.json`, `docs/generated/*`) have one shipping owner per commit. The second lane rebases and regenerates.
 - Two lanes do not halve the time (Astra, finding 3).
 
 ## Where we are
 
-2026-09-24 night: lane B merged (04 done, 05 done; 03's zero omission + the ratified canvas); Astra builds 03's placement; lane A in round three (the brief's outcome-blind wording and the import cause line).
+2026-09-24 night: PHILO-6-03 placement verified in `feat/philo-6-03-placement`: six actual Chromium surface walks pass, one phone scroll and zero desktop scrolls; live Dismiss passes at both widths. [Lane report](../../../../docs/internal/philo/phase-6/toast/placement-proof/lane-report.md) carries per-box proof and limits. Focused tests pass (30 Vitest, 104 Python); broader scoped 235 assertions pass with one inherited fixture error, reproduced on untouched main and ledgered. Lane B is merged (04/05 done). Lane A remains in round three on the brief/import seams and reconciles the exact ChairHome slot commit. PR publication follows the gate; no merge before calling Muad’Dib counsel. Phase-wide rehearsal and owner review remain open.
 
 2026-09-24 night — lane B round two records the actual Muad’Dib counsel at `checks/lane-b-built-muaddib.md` and relabels the earlier Astra-invoked claude -p checks. Records and canvas corrections follow that counsel; 03 stays in-progress, with placement unbuilt and unratified. Off-Arrival proposal: a top-of-surface flow slot inside Meetings and the Floor. Phone ask 2 explicitly moves the reading position. The 0/0 proposal verb is withheld with a red-before-fix fence. Three follow-ups now also live in BACKLOG “PHILO-6 follow-ups”. One gated update to PR #647; no merge.
 
@@ -110,6 +111,8 @@ Lane law for this phase:
 
 ## Decisions made (this phase)
 
+- 2026-09-24 night — PHILO-6-03 build brief grants Astra only the provided four-line ChairHome slot patch, in its own gated commit (`d1e355f2`); lane A reconciles. The brief names three actual atlas surface cases at both widths and scoped validation. The phase-wide rehearsal remains an integration exit; spatial WebGL Floor stays a shot-backed fixed-placement limitation. This records the owner’s build scope, not a new design.
+
 - 2026-09-24 night — the owner RATIFIED the story 03 placement canvas (in flow above the capture bar; top-of-surface off the Arrival; phone auto-scroll accepted). Lane B (04, 05, the zero omission, the canvas) MERGED `4d55d4d5` after Muad'Dib's counsel (conditions paid in r2). Astra builds the placement now — Muad'Dib.
 
 - 2026-09-24 night — PHILO-6-05 Astra-invoked claude -p built check RATIFY-WITH-CONDITIONS, paid before done: post-rollback assertion, README/status updates and complete generated-file staging. Evidence and limits: `checks/story-05-built-astra-invoked-claude.md`; phase-local follow-ups in `docs/internal/philo/phase-6/ledger.md`.
@@ -129,6 +132,6 @@ Lane law for this phase:
 
 - S4 follow-ups (slow whole-desk refresh, delete/rename races, setup-read rejection): recorded with evidence and disposition in `docs/internal/philo/phase-6/ledger.md`; no widening of this lane's repair.
 
-- The toast placement (story 03 canvas) — the owner's ratification.
+- Story 03 placement canvas ratification is resolved (2026-09-24 night); actual Muad'Dib counsel on the built PR remains before merge.
 - Any change of a count label or a count meaning (story 02 canvas, only if needed) — the owner's ratification.
 - The Info-window rename field (`name` vs `title`) — out; BACKLOG "PHILO-5-01 follow-ups".

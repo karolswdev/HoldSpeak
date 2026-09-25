@@ -275,6 +275,7 @@ export function DeskListView() {
 
   return (
     <div className="desk-listmode">
+      <div data-aftercare-floor-slot="top" />
       <section aria-labelledby="desk-list-title" className="desk-list-face">
         <h2 id="desk-list-title" className="sr-only">
           {divedTitle ? `${divedTitle} zone` : "Desk items"}

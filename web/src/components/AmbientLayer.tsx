@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections } from "../desk/projections";
@@ -12,6 +13,7 @@ import { humanizeWireValue } from "../lib/productLanguage";
 import { Button } from "./signal/Signal";
 import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
+import { useChairState } from "../desk/chairState";
 import {
   handleWorkbenchRunStart,
   handleWorkbenchRunComplete,
@@ -158,20 +160,55 @@ function QueueHud() {
 function AftercareNote() {
   const { subscribe } = useRuntimeBus();
   const signal = useAftercare();
+  const surface = useChairState((state) => state.surface);
+  const aftercareSlot = useAftercareSlot(surface, Boolean(signal));
+  const scrolledSlot = useRef<{ signalKey: string; slot: HTMLElement } | null>(null);
   useEffect(
     () => subscribe("aftercare_ready", (frame) => void publishAftercare(frame.data)),
     [subscribe],
   );
+  useEffect(() => {
+    if (!signal) {
+      scrolledSlot.current = null;
+      return;
+    }
+    if (!aftercareSlot || window.innerWidth <= 0 || window.innerWidth > 720)
+      return;
+    const signalKey = `${signal.meetingId}:${signal.title}`;
+    if (
+      scrolledSlot.current?.signalKey === signalKey &&
+      scrolledSlot.current.slot === aftercareSlot
+    )
+      return;
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      active.matches("input, textarea, select, [contenteditable=\"true\"]")
+    )
+      return;
+    if (aftercareSlot.dataset.aftercareSlot === "before-capture") {
+      const captureBar = document.querySelector<HTMLElement>(
+        '[data-testid="arrival-capture-bar"]',
+      );
+      if (!captureBar) return;
+      const slotRect = aftercareSlot.getBoundingClientRect();
+      const captureRect = captureBar.getBoundingClientRect();
+      if (slotRect.bottom <= captureRect.top) return;
+    }
+    scrolledSlot.current = { signalKey, slot: aftercareSlot };
+    aftercareSlot.scrollIntoView?.({ block: "nearest", behavior: "auto" });
+  }, [aftercareSlot, signal]);
   if (!signal) return null;
   const countLine = [
     signal.openTotal > 0 ? `${signal.openTotal} open` : null,
     signal.decidedTotal > 0 ? `${signal.decidedTotal} decided` : null,
   ].filter((part): part is string => part !== null).join(" · ");
-  return (
+  const card = (
     <aside
-      className="ambient-preview ambient-aftercare"
+      className={`ambient-preview ambient-aftercare ${
+        aftercareSlot ? "ambient-aftercare-flow" : "ambient-aftercare-fixed"
+      }`}
       aria-label="Meeting aftercare"
-      style={{ bottom: "104px" }}
     >
       <span className="signal-eyebrow">Meeting ready</span>
       <strong>{signal.title}</strong>
@@ -195,6 +232,71 @@ function AftercareNote() {
       </div>
     </aside>
   );
+  return aftercareSlot ? createPortal(card, aftercareSlot) : card;
+}
+
+function findAftercareSlot(surface: "chair" | "floor"): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  const activeWindow = document.querySelector<HTMLElement>(
+    '.desk-surface-window.is-front [data-aftercare-window-slot="top"]',
+  );
+  if (activeWindow) return activeWindow;
+  const anyWindow = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '.desk-surface-window [data-aftercare-window-slot="top"]',
+    ),
+  ).find((candidate) => {
+    const shell = candidate.closest<HTMLElement>(".desk-surface-window");
+    return shell?.style.display !== "none";
+  });
+  if (anyWindow) return anyWindow;
+  if (surface === "chair")
+    return document.querySelector<HTMLElement>('[data-aftercare-slot="before-capture"]');
+  return (
+    document.querySelector<HTMLElement>('[data-aftercare-floor-slot="top"]')
+  );
+}
+
+function useAftercareSlot(
+  surface: "chair" | "floor",
+  active: boolean,
+): HTMLElement | null {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!active) {
+      setSlot(null);
+      return;
+    }
+    let disposed = false;
+    const update = () => {
+      if (disposed) return;
+      const next = findAftercareSlot(surface);
+      setSlot((current) => (current === next ? current : next));
+    };
+    update();
+    if (typeof MutationObserver === "undefined") return () => {
+      disposed = true;
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        "class",
+        "data-aftercare-slot",
+        "data-aftercare-window-slot",
+        "data-aftercare-floor-slot",
+      ],
+    });
+    return () => {
+      disposed = true;
+      observer.disconnect();
+    };
+  }, [active, surface]);
+
+  return slot;
 }
 
 function Qlippy() {

@@ -1,6 +1,6 @@
 # PHILO-6-03 · Toast that does not cover
 
-Last updated: 2026-09-24 night.
+Last updated: 2026-09-24 night — ratified placement built and verified; PR only, calling Muad’Dib counsel before merge.
 
 The actual Muad'Dib counsel-on-built check is in the
 phase roadmap [`checks/lane-b-built-muaddib.md`](../../../../../pm/roadmap/holdspeak-philo/phase-6-the-honest-morning/checks/lane-b-built-muaddib.md);
@@ -12,10 +12,12 @@ record. The earlier parent reproduction is retained in `parent-shots/` and
 boards/probes in `../round-two/canvas/`; `../round-two/dw-validation.md` records
 the successful capture.
 
-**CANVAS ONLY · PROPOSED · OWNER RATIFICATION PENDING · HOLD FOR SHIP**
+**RATIFIED 2026-09-24 — BUILD EVIDENCE IN `placement-proof/`**
+
+The owner accepted the Arrival slot, off-Arrival surface slots, and phone auto-scroll before build (`38cf713a`, merged as `d8f608c8`). The exact ChairHome patch is committed as `d1e355f2`; lane A reconciles it. The sections below retain the canvas-stage measurements and proposal history. They do not describe the current build status. The [placement lane report](placement-proof/lane-report.md) records six actual surface walks, Dismiss at both widths, raw red/green proof and the remaining limits.
 
 This artifact records a placement proposal for the existing aftercare card.
-It does not apply product placement or edit `ChairHome.tsx`. The zero-token
+At the canvas stage it did not apply product placement or edit `ChairHome.tsx`. The zero-token
 render fix is a separate, focused implementation in
 `web/src/components/AmbientLayer.tsx`.
 
@@ -50,10 +52,9 @@ At 393, the production CaptureBar is sticky at the chair bottom. A flow card
 can pass under that bar at an intermediate scroll position; the phone
 no-overlap figures below hold at the measured scroll or at the end-of-scroll
 clearance. Auto-scroll to the measured slot is therefore the load-bearing
-phone mechanism, pending owner ratification. The `capture` board is distinct:
+phone mechanism, accepted by the owner before build. The `capture` board is distinct:
 it shows the existing pressed-mic visual as an explicit canvas fixture, with
-no microphone or backend call. The product transition and its ChairHome seam
-remain unimplemented pending owner ratification.
+no microphone or backend call. The product transition and its ChairHome seam were unimplemented at that canvas stage; the current build proof is in `placement-proof/lane-report.md`.
 
 On a sparse 1440 desk with the summary closed, normal flow leaves space below
 the card while the CaptureBar stays at the bottom. That is the actual canvas
@@ -158,7 +159,7 @@ The retained phase-5 defect was inspected at
 The canvas run used Node 22, the repository `.venv`, the cached Playwright
 browser and an isolated HOME. No graph walk or product backend was started.
 
-The ChairHome seam is a proposal only in
+The original ChairHome seam proposal is preserved in
 [`chairhome.patch`](chairhome.patch), with rationale in
 [`chairhome-rationale.md`](chairhome-rationale.md). It is an actual unified
 diff against the current ChairHome source; `git apply --check` passed. It adds
@@ -166,9 +167,9 @@ an empty `data-aftercare-slot` at `ChairHome.tsx:1442`, immediately before the
 existing CaptureBar. It does not change the capture-clearance measurement at
 `:685`. The patch alone places nothing: the future build needs the slot, an
 AmbientLayer portal, auto-scroll, and the off-Arrival current-surface slot and
-focus routing after ratification. No ChairHome change is applied here.
+focus routing after ratification. The exact patch is now applied in the separate gated commit `d1e355f2`; no other ChairHome change is made by this lane.
 
-Owner asks:
+Owner asks (both ratified before build):
 
 1. Ratify the Arrival slot before the existing CaptureBar, plus top-of-current-
    surface flow slots off Arrival: inside an active Meetings window body below

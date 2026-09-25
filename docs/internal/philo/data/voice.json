@@ -1023,7 +1023,8 @@
       "limitations": [
         "Schema success does not prove semantic correctness.",
         "PHILO-3-02 queue fences execute the real admission and drain with a substituted provider. Real LAN completion, Arrival and restart proof are recorded separately in the lane evidence; the owner has not observed the result.",
-        "The retained synthetic meeting loses or corrupts planted facts: SQLite and Maya Chen are misheard; the named failure-fence action is omitted or replaced. At 393, an existing aftercare card can overlap the last summary line; scrolling is recorded separately."
+        "The retained synthetic meeting loses or corrupts planted facts: SQLite and Maya Chen are misheard; the named failure-fence action is omitted or replaced. At 393, an existing aftercare card can overlap the last summary line; scrolling is recorded separately.",
+        "PHILO-6-03 records a later no-overlap pass on the Arrival at 1440/393 in Chromium. The dated Phase 5 overlap evidence above remains historical; no Safari device result is claimed."
       ],
       "failure_states": [
         "blocked",
@@ -1042,17 +1043,19 @@
     {
       "id": "meeting.aftercare",
       "name": "Meeting aftercare",
-      "purpose": "Compare current and previous meeting artifacts and return read-only decisions, actions, closures, and provenance.",
+      "purpose": "Compare current and previous meeting artifacts and return read-only decisions, actions, closures, and provenance. Show a card when a meeting summary is ready.",
       "domain": "meeting",
       "status": "experimental",
-      "status_reason": "The read-only rollup, provenance guards, project comparison, and quiet empty behavior are implemented; external follow-up remains a separate actuator.",
+      "status_reason": "The read-only rollup, provenance guards, project comparison, quiet empty behavior, and the in-flow aftercare presentation are implemented; the Phase 6 placement still needs its live 1440/393 atlas validation, and external follow-up remains a separate actuator.",
       "exposure": "user",
       "surfaces": [
         "meeting aftercare",
         "follow-up draft data"
       ],
       "entry_points": [
-        "holdspeak/meeting_aftercare.py::compute_meeting_aftercare"
+        "holdspeak/meeting_aftercare.py::compute_meeting_aftercare",
+        "web/src/desk/intelligenceAttention.ts::publishAftercare",
+        "web/src/components/AmbientLayer.tsx::AftercareNote"
       ],
       "platforms": {
         "macos": "supported_with_setup",
@@ -1102,6 +1105,48 @@
           "symbol": "resolve_provenance_segment",
           "line": 44,
           "claim": "Decision provenance is resolved to an observed transcript segment."
+        },
+        {
+          "path": "web/src/desk/intelligenceAttention.ts",
+          "symbol": "publishAftercare",
+          "line": 86,
+          "claim": "A valid aftercare_ready frame becomes the shared live signal consumed by the desk presentation."
+        },
+        {
+          "path": "web/src/components/AmbientLayer.tsx",
+          "symbol": "AftercareNote",
+          "line": 160,
+          "claim": "The aftercare card renders in a discovered Arrival, foreground window, or Floor-list slot and scrolls a phone slot once without moving a focused field."
+        },
+        {
+          "path": "web/src/desk/chair/ChairHome.tsx",
+          "symbol": "data-testid=\"arrival-aftercare-slot\"",
+          "line": 1444,
+          "claim": "Arrival provides the aftercare slot immediately before the capture bar."
+        },
+        {
+          "path": "web/src/desk/components/SurfaceWindows.tsx",
+          "symbol": "data-aftercare-window-slot",
+          "line": 187,
+          "claim": "Hosted surface windows provide a top-of-surface aftercare slot."
+        },
+        {
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "data-aftercare-floor-slot",
+          "line": 278,
+          "claim": "The Floor list view provides a top slot above its list face."
+        },
+        {
+          "path": "web/src/styles/react-app.css",
+          "symbol": ".ambient-aftercare-flow",
+          "line": 273,
+          "claim": "Slotted cards use flow placement; empty slots stay out of layout."
+        },
+        {
+          "path": "web/src/desk/chair/chair.css",
+          "symbol": ".chair > :has(+ [data-aftercare-slot=\"before-capture\"]:empty)",
+          "line": 646,
+          "claim": "The empty Arrival slot preserves the existing capture clearance on narrow screens."
         }
       ],
       "tests": [
@@ -1137,14 +1182,104 @@
             "run": "full-python-suite",
             "cases": 1
           }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "publishes into the actual ChairHome slot and Dismiss clears it at %i",
+          "assertion": "The real Arrival host renders the aftercare card at both target widths, with the flow class and no fixed bottom placement; Dismiss removes it.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 2
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "renders into the actual active SurfaceWindowHost slot",
+          "assertion": "An active hosted Meetings window receives the card in its top slot while the Arrival slot is not selected.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "renders into the actual Floor list host when no window is open",
+          "assertion": "The Floor list host receives the card in its top slot and does not use the fixed bottom placement.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "keeps the fixed fallback only when the spatial Floor has no slot",
+          "assertion": "The spatial Floor retains one card outside all flow slots. Its computed fixed position is checked separately in the live atlas observation.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "scrolls an obscured phone slot once and does not scroll a desktop slot",
+          "assertion": "An obscured Arrival phone slot scrolls once for one signal, repeats only after dismissal, and does not scroll at desktop width.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "scrolls an off-Arrival phone slot once even when it is already visible",
+          "assertion": "A Floor-list phone slot scrolls once when the card is mounted.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "scrolls an active window phone slot once",
+          "assertion": "A foreground window phone slot scrolls once when the card is mounted.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
+        },
+        {
+          "path": "web/src/components/aftercarePlacement.test.tsx",
+          "node": "does not move the owner while a field has focus",
+          "assertion": "The phone auto-scroll is deferred while an input owns focus.",
+          "execution": {
+            "status": "passed",
+            "record": "docs/internal/philo/phase-6/toast/placement-proof/final-focused-run.txt",
+            "run": "PHILO-6-03 focused Vitest, 2026-09-25T05:12:43Z DW capture",
+            "cases": 1
+          }
         }
       ],
       "docs": [
-        "docs/MEETING_AFTERCARE.md"
+        "docs/MEETING_AFTERCARE.md",
+        "docs/internal/philo/phase-6/toast/placement-proof/lane-report.md"
       ],
       "limitations": [
         "Queued or failed intelligence makes aftercare incomplete.",
-        "No owner-facing aftercare result was observed."
+        "No owner sitting is recorded. Automated Chromium walks are recorded separately.",
+        "PHILO-6-03 records the actual Arrival, Meetings-window and Floor-list placement at 1440/393 in Chromium. Native scroll anchoring holds the phone Arrival card through the late summary render; Safari devices and engines without scroll anchoring are not verified. The spatial WebGL Floor keeps its fixed fallback."
       ],
       "failure_states": [
         "missing_artifact",

@@ -1,0 +1,1448 @@
+{
+  "id": "obs-20260925T043908Z-case.philo603.toast.arrival-astra-393",
+  "run_id": "20260925T043908Z-case.philo603.toast.arrival-astra-393",
+  "case_id": "case.philo603.toast.arrival",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.timer.intel_drainer"
+  ],
+  "state_id": "state.meetings.intel.ready",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "78d2c4d824e0287cfdbdcd09937984b14b05ceb828e77650b139e3cb56f691dd",
+      "assets": [
+        "index-C2JQr2p9.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61665",
+      "port": 61665,
+      "pid": 21804,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yh4qhiy9",
+      "scheduler_thread": true
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-yh4qhiy9/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo5_summary_reply.json": "b2f0c395f391385749b8f3f6670833962cfe4d0a567ed5701b44f1a7f88a9638",
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T04:39:08.505449+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": true
+    },
+    "engine_mode": "replayed",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+        "substitute": "engine_reply",
+        "installed_sha256": "b2f0c395f391385749b8f3f6670833962cfe4d0a567ed5701b44f1a7f88a9638"
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.3.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "1804dd70020fdafc5d84e30fc4b0a46fd8f334a07e7d2325e2eed7fc8427660e",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "a RECORDED provider reply at the real provider seam",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer",
+        "the heartbeat conductor loop"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)"
+      ]
+    },
+    "engine_replay_sha256": "b2f0c395f391385749b8f3f6670833962cfe4d0a567ed5701b44f1a7f88a9638"
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "the provider reply is replayed at the product provider seam; import, queue, persistence and aftercare remain real",
+      "substitute": "engine_reply",
+      "adapter": "labelled-substitution",
+      "installed_sha256": "b2f0c395f391385749b8f3f6670833962cfe4d0a567ed5701b44f1a7f88a9638",
+      "seam": "holdspeak.intel.providers._configured_engine + holdspeak.intel.engine.MeetingIntel"
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "95a002d2",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "95a002d2"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/95a002d2",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 49,
+        "elapsed_s": 31.061,
+        "payload": {
+          "id": "95a002d2",
+          "started_at": "2026-09-24T22:39:30.645258",
+          "ended_at": "2026-09-24T22:40:05.320508",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "sync_modified_at": "2026-09-24T22:40:01.237481",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:8a148bf7f454ea7d6d93063864b84956666d08a0f3e748eb333063842f2e89fd",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_dac6a30eedea",
+          "title": "Philo 6-03 toast placement decision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T04:40:01Z",
+          "updated_at": "2026-09-25T04:40:01Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "8895bc125a8c98834410e1dedce1a6246dfeb10c4e15d1afd7f072a326bf5a94"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "id": "brief-f528723f429d4d70bdd63c132e1b8b87",
+        "period_start": "2026-09-23T17:00:00",
+        "period_end": "2026-09-24T22:40:01.711400",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-725f0d3af2754987915b4796f6126c18",
+              "section": "decisions",
+              "text": "Review decision: Philo 6-03 toast placement decision",
+              "detail": null,
+              "source_ref": "decision:decision_dac6a30eedea",
+              "priority": 200,
+              "created_at": "2026-09-25T04:40:01Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-24T22:40:01.711400",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 2,
+          "since": "1790311166.6191459"
+        },
+        "period_label": "SEP 21 \u2013 24",
+        "generated_label": "GENERATED SEP 24 22:40",
+        "person_sections_state": "unavailable"
+      },
+      "response_sha256": "1c11719df4cad1cb7e6452e634d4a7749a6de9e9dd655257da7c13176efae76c"
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-row]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-run-intel]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A real imported architect meeting reaches the summary producer through the recorded provider boundary.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-run-intel]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-run-intel"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-run-intel', wanted 'arrival-run-intel'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "95a002d2"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    }
+  ],
+  "variables": {
+    "meeting_id": "95a002d2"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-run-intel]",
+    "done": true
+  },
+  "diff": {},
+  "before": {
+    "observe_at": ".ambient-aftercare",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n10:40 PM\nNothin",
+    "url": "http://127.0.0.1:61665/",
+    "windows": [],
+    "pending_marker_present": null,
+    "placement": null,
+    "document_text_sha256": "f061eaedaebf28466b802102734471a88b82b01ce2659affff2c6ab569bf030c",
+    "document_text_len": 478,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/95a002d2",
+        "status": 200,
+        "payload": {
+          "id": "95a002d2",
+          "started_at": "2026-09-24T22:39:30.645258",
+          "ended_at": "2026-09-24T22:40:05.320508",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "sync_modified_at": "2026-09-24T22:40:01.237481",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:8a148bf7f454ea7d6d93063864b84956666d08a0f3e748eb333063842f2e89fd",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "3ca1cdd46b7e3e5b1d471a01b28e7420d0852faabfd7987fb5b61e1d2bf9b3f6"
+      }
+    ],
+    "at_utc": "2026-09-25T04:40:03.830472+00:00"
+  },
+  "after": null,
+  "initial_feedback": {
+    "observe_at": ".ambient-aftercare",
+    "target_present": true,
+    "text": "MEETING READY\nArchitecture boundary review\n\n2 open\n\nOpen proposals\nDismiss",
+    "attrs": {
+      "class": "ambient-preview ambient-aftercare",
+      "aria-label": "Meeting aftercare",
+      "style": "bottom: 104px;"
+    },
+    "rect": {
+      "x": 16,
+      "y": 568,
+      "w": 361,
+      "h": 180
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 16,
+        "y": 568,
+        "w": 361,
+        "h": 180
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 18,
+          "y": 570,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 18,
+          "y": 658,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 18,
+          "y": 746,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 197,
+          "y": 570,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 197,
+          "y": 658,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare > p"
+        },
+        {
+          "x": 197,
+          "y": 746,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 375,
+          "y": 570,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 375,
+          "y": 658,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        },
+        {
+          "x": 375,
+          "y": 746,
+          "owned": true,
+          "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 18,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n10:40 PM\nNothin",
+    "url": "http://127.0.0.1:61665/",
+    "windows": [],
+    "pending_marker_present": null,
+    "placement": {
+      "card": {
+        "selector": ".ambient-aftercare",
+        "present": true,
+        "hit_test": {
+          "rect": {
+            "x": 16,
+            "y": 568,
+            "w": 361,
+            "h": 180
+          },
+          "visible": true,
+          "in_viewport": true,
+          "samples": [
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare > p"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            },
+            {
+              "owned": true,
+              "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+            }
+          ],
+          "all_owned": true
+        },
+        "computed_position": "fixed"
+      },
+      "slot": {
+        "selector": "[data-testid=arrival-aftercare-slot]",
+        "present": false,
+        "contains_card": false
+      },
+      "clear": [
+        {
+          "selector": "[data-testid=meeting-summary-text]",
+          "present": false,
+          "hit_test": null
+        },
+        {
+          "selector": "[data-testid=arrival-capture-bar]",
+          "present": true,
+          "hit_test": {
+            "rect": {
+              "x": 12,
+              "y": 573,
+              "w": 369,
+              "h": 138
+            },
+            "visible": true,
+            "in_viewport": true,
+            "samples": [
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              },
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              },
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              },
+              {
+                "owned": false,
+                "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+              },
+              {
+                "owned": false,
+                "owner": "div#root > aside.ambient-preview.ambient-aftercare"
+              },
+              {
+                "owned": false,
+                "owner": "div#root > aside.ambient-preview.ambient-aftercare > div.button-row > button.btn.btn--ghost"
+              },
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              },
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              },
+              {
+                "owned": true,
+                "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+              }
+            ],
+            "all_owned": false
+          }
+        },
+        {
+          "selector": "[data-testid=arrival-brief-row]",
+          "present": true,
+          "hit_test": {
+            "rect": {
+              "x": 12,
+              "y": 223.296875,
+              "w": 369,
+              "h": 114
+            },
+            "visible": true,
+            "in_viewport": true,
+            "samples": [
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              },
+              {
+                "owned": true,
+                "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+              }
+            ],
+            "all_owned": true
+          }
+        }
+      ],
+      "scroll": {
+        "calls": [],
+        "count": 0,
+        "target_count": 0,
+        "events": 0,
+        "scroll_top_before": 0,
+        "scroll_top_after": 0,
+        "scroll_top_delta": 0
+      },
+      "focused_field": false
+    },
+    "document_text_sha256": "f8456a395448a4291ed31300f0b562816813060679e51ce1a6a063b7a5e6e4b8",
+    "document_text_len": 525,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings/95a002d2",
+        "status": 200,
+        "payload": {
+          "id": "95a002d2",
+          "started_at": "2026-09-24T22:39:30.645258",
+          "ended_at": "2026-09-24T22:40:05.320508",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby Baby",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": {
+            "timestamp": 34.67525,
+            "topics": [
+              "SQ local meeting ledger",
+              "Migration Plan",
+              "Summary retrieval after hub restart",
+              "Isolated rig tests"
+            ],
+            "action_items": [
+              {
+                "id": "action_5951c7a8b006a35d551bad38",
+                "task": "Write the Migration Plan",
+                "owner": "Mayyachan",
+                "due": "Friday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-24T22:40:04",
+                "completed_at": null,
+                "delegated_at": null
+              },
+              {
+                "id": "action_cfc2930ba6c6c659733d6f6b",
+                "task": "Test restart retrieval",
+                "owner": "Leo Martinez",
+                "due": "Tuesday",
+                "status": "pending",
+                "review_state": "pending",
+                "reviewed_at": null,
+                "source_timestamp": null,
+                "created_at": "2026-09-24T22:40:04",
+                "completed_at": null,
+                "delegated_at": null
+              }
+            ],
+            "summary": "The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday."
+          },
+          "intel_status": {
+            "state": "ready",
+            "detail": "Meeting intelligence ready.",
+            "requested_at": "2026-09-24T22:40:03.912034",
+            "completed_at": "2026-09-24T22:40:04.132210"
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "sync_modified_at": "2026-09-24T22:40:04.132210",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:8a148bf7f454ea7d6d93063864b84956666d08a0f3e748eb333063842f2e89fd",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": {
+            "attempts": [
+              {
+                "host": "192.168.1.43",
+                "leg_ordinal": 1,
+                "operation_id": "op_cdd077ac021944e88eb7513cf2c24838",
+                "outcome": "succeeded"
+              }
+            ],
+            "job_id": "ij_190becae5b7f5e8ab59420e0966bc1d70cee3c53b2a0b02508df7f48b86db7cf",
+            "meeting_id": "95a002d2",
+            "outcome": "succeeded",
+            "receipt_id": "rr_f3773c4dc40d05bb3c9bd6092f1643bc",
+            "selection_hash": "sha256:8a148bf7f454ea7d6d93063864b84956666d08a0f3e748eb333063842f2e89fd"
+          },
+          "last_refusal": null,
+          "intel_job": {
+            "status": "succeeded",
+            "attempts": 1,
+            "requested_at": "2026-09-24T22:40:03.915253",
+            "updated_at": "2026-09-24T22:40:04.132210",
+            "last_error": null,
+            "retry_scheduled": false,
+            "next_retry_at": null
+          },
+          "intel_model_host": "192.168.1.43",
+          "intel_duration_s": 0
+        },
+        "body_sha256": "d77444ea7d793e253d61a8c00b6c385aa4ad680f7eedc1bae0d9a8387c00955b"
+      }
+    ],
+    "at_utc": "2026-09-25T04:40:04.823871+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/95a002d2/intelligence/run",
+      "status": 200,
+      "body_sha256": "3b3116714d5e4c595957216362cf8a520e897c6050ca74251764ba39868c0830",
+      "body": {
+        "jobId": "ij_0189df0624a5f327e87777ab523eb7d73f0a1264276ebb604226aacf4178801d",
+        "state": "queued",
+        "host": "192.168.1.43",
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+              "host": "192.168.1.43",
+              "ordinal": 1,
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:8a148bf7f454ea7d6d93063864b84956666d08a0f3e748eb333063842f2e89fd",
+          "status": "ready"
+        },
+        "run_receipt": null
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/meetings/95a002d2/intelligence/run"
+    },
+    "predicate_satisfied": false,
+    "reading": "'Meeting ready' NOT in observe_at text",
+    "elapsed_s": 0.935
+  },
+  "terminal_outcome": null,
+  "verdict": "not_run",
+  "notes": [],
+  "complete": false,
+  "placement_probe_armed": {
+    "card": {
+      "selector": ".ambient-aftercare",
+      "present": false,
+      "hit_test": null,
+      "computed_position": null
+    },
+    "slot": {
+      "selector": "[data-testid=arrival-aftercare-slot]",
+      "present": false,
+      "contains_card": false
+    },
+    "clear": [
+      {
+        "selector": "[data-testid=meeting-summary-text]",
+        "present": false,
+        "hit_test": null
+      },
+      {
+        "selector": "[data-testid=arrival-capture-bar]",
+        "present": true,
+        "hit_test": {
+          "rect": {
+            "x": 12,
+            "y": 573,
+            "w": 369,
+            "h": 138
+          },
+          "visible": true,
+          "in_viewport": true,
+          "samples": [
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            },
+            {
+              "owned": true,
+              "owner": "div#desk-next > div.chair > footer.arrival-capture-bar"
+            }
+          ],
+          "all_owned": true
+        }
+      },
+      {
+        "selector": "[data-testid=arrival-brief-row]",
+        "present": true,
+        "hit_test": {
+          "rect": {
+            "x": 12,
+            "y": 241.296875,
+            "w": 369,
+            "h": 114
+          },
+          "visible": true,
+          "in_viewport": true,
+          "samples": [
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            },
+            {
+              "owned": true,
+              "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+            }
+          ],
+          "all_owned": true
+        }
+      }
+    ],
+    "scroll": {
+      "calls": [],
+      "count": 0,
+      "target_count": 0,
+      "events": 0,
+      "scroll_top_before": 0,
+      "scroll_top_after": 0,
+      "scroll_top_delta": 0
+    },
+    "focused_field": false
+  },
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/meetings/95a002d2/intelligence/run",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/meetings/95a002d2/intelligence/run",
+      "status": 200,
+      "body_sha256": "3b3116714d5e4c595957216362cf8a520e897c6050ca74251764ba39868c0830",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/meetings/95a002d2/intelligence/run"
+    },
+    "why": "chosen by the declared trigger_route POST /api/meetings/95a002d2/intelligence/run",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/meetings/95a002d2/intelligence/run",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/95a002d2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "console_errors": []
+}
