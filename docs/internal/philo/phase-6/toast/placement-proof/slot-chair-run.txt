@@ -1,0 +1,32 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-6-03/web
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: currentBucket is not iterable
+ ❯ mergeRefreshItems src/desk/store/dataSlice.ts:191:26
+    189|       const protectedItems = new Map<string, IdentifiedItem>();
+    190|       const kindName = String(kind);
+    191|       for (const item of currentBucket) {
+       |                          ^
+    192|         const id = item.id;
+    193|         const key = writeKey(kindName, id);
+ ❯ runRefresh src/desk/store/dataSlice.ts:246:25
+
+This error originated in "src/desk/chair/arrivalSummaryRun.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "shows a 409 as ONE short refusal fact, the reason on its title". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  16 passed (16)
+      Tests  93 passed (93)
+     Errors  1 error
+   Start at  22:24:21
+   Duration  5.99s (transform 678ms, setup 683ms, import 2.80s, tests 4.33s, environment 2.83s)
+

@@ -1440,6 +1440,10 @@ function Arrival() {
       ) : null}
 
       {/* ── Capture Bar ── */}
+      <div
+        data-testid="arrival-aftercare-slot"
+        data-aftercare-slot="before-capture"
+      />
       <CaptureBar />
     </>
   );
