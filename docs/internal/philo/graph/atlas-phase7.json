@@ -981,7 +981,7 @@
           "capture_as": "decision_id",
           "capture_path": "decision.id",
           "expect_status": 201,
-          "why": "a decision off the review list; one status step from proposed on the face's cycle (DecisionPullout.tsx:69-78)"
+          "why": "a decision off the review list; one status step from proposed on the face's cycle (DecisionPullout.tsx:70-79)"
         },
         {
           "kind": "ui",
@@ -1206,7 +1206,7 @@
             "path": "/api/decisions/{successor_id}"
           }
         ],
-        "words": "both are readable on the Desk: the successor opens by its own row and its card names the old decision ('Supersedes Atlas old decision', DecisionPullout.tsx:125-129); the old decision reads superseded, superseded_by the successor (the reads). The supersede ACTION is not on the face."
+        "words": "both are readable on the Desk: the successor opens by its own row and its card names the old decision ('Supersedes Atlas old decision', DecisionPullout.tsx:136-140); the old decision reads superseded, superseded_by the successor (the reads). The supersede ACTION is not on the face."
       },
       "completion_bound_s": 45,
       "viewports": [
@@ -3656,7 +3656,7 @@
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "const cycleDecisionStatus",
-          "line": 69,
+          "line": 70,
           "claim": "the pullout's status control cycles proposed -> accepted -> superseded -> deprecated"
         },
         {
@@ -3668,7 +3668,7 @@
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "Supersedes {",
-          "line": 127,
+          "line": 138,
           "claim": "a successor's card names the decision it supersedes"
         },
         {

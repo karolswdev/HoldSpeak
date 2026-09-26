@@ -1281,6 +1281,12 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The brief reports the people sections as "unavailable" on a fresh hub (a word for a state that is only "none yet"). | face / words | same | the Arrival lane |
 | The closing "find it" turn used the note id from the session's own first turn: it proves "find it again", not "find it cold". A future rehearsal asks a fresh session to find a note it did not file. | proof gap | same; `docs/internal/philo/phase-7/file-and-find/rehearsal.md` | the next MCP slice's closing use |
 
+## PHILO-8-04 follow-ups — 2026-09-26 (the Astra-role check on PR #669, MISSED; `pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/checks/story-04-built-astra-role-r1.md`)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The Intelligence Follow-through lanes show the same doubled hairline that PHILO-8-04 removed from the decision window: the lane section and its head each compute `border-top: 1px solid` (e.g. Waiting, Unassigned, Overdue). Computed styles only; not verified by eye. | face | `checks/story-04-built-astra-role-r1.md` MISSED | the next surface pass |
+
 ## Projects on the contract — 2026-09-26 (the owner's word closing Phase 7 made the Floor Phase 8; the Astra-role check on PR #668, C7)
 
 | Item | Kind | Source | Home |
