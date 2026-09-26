@@ -23,6 +23,7 @@ ALLOWLIST = {
     "tests/unit/test_primitive_contract.py": "reads the mobile contract schemas as input",
     "tests/unit/test_coder_gate.py": "reads the gate-proposal schema as input; writes only to tmp_path",
     "tests/unit/test_phase143_routing_authority_census.py": "reads the routing census as input; writes only to tmp_path",
+    "tests/unit/test_philo5_his_words.py": "reads the retained Phase 6 rehearsal run (the Codex events and hub transcript) as input; writes only to tmp_path",
 }
 
 WRITE_RE = re.compile(
