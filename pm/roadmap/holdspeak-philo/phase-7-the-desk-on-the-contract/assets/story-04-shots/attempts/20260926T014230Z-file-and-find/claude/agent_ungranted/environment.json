@@ -1,0 +1,11 @@
+{
+  "cwd": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-z9hvi9fs/cold-agent_ungranted/work",
+  "env": {
+    "HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-z9hvi9fs/cold-agent_ungranted/home",
+    "LANG": "en_US.UTF-8",
+    "PATH": "/Users/karol/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "TMPDIR": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/",
+    "USER": "karol"
+  },
+  "stdin": "owner-prompt.txt"
+}

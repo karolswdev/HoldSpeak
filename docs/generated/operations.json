@@ -13,7 +13,7 @@
             "description": "Optional; a new id is made when absent."
           },
           "title": {
-            "description": "Text; defaults to 'New decision'."
+            "description": "The decision in a few words (text); defaults to 'New decision'."
           },
           "status": {
             "description": "proposed, accepted, superseded or deprecated."
@@ -25,16 +25,16 @@
             "description": "A date, as text."
           },
           "context_markdown": {
-            "description": "Markdown text."
+            "description": "The reason for the decision: why, and the facts behind it (Markdown text)."
           },
           "decision_markdown": {
-            "description": "Markdown text."
+            "description": "What you will do (Markdown text)."
           },
           "alternatives": {
             "description": "Objects with name and reason."
           },
           "consequences_markdown": {
-            "description": "Markdown text."
+            "description": "What follows from the decision (Markdown text)."
           },
           "tags": {
             "description": "A list of tags."
@@ -76,7 +76,7 @@
             "type": "string"
           },
           "title": {
-            "description": "Text; defaults to 'New decision'."
+            "description": "The decision in a few words (text); defaults to 'New decision'."
           },
           "status": {
             "description": "proposed, accepted, superseded or deprecated."
@@ -88,16 +88,16 @@
             "description": "A date, as text."
           },
           "context_markdown": {
-            "description": "Markdown text."
+            "description": "The reason for the decision: why, and the facts behind it (Markdown text)."
           },
           "decision_markdown": {
-            "description": "Markdown text."
+            "description": "What you will do (Markdown text)."
           },
           "alternatives": {
             "description": "Objects with name and reason."
           },
           "consequences_markdown": {
-            "description": "Markdown text."
+            "description": "What follows from the decision (Markdown text)."
           },
           "tags": {
             "description": "A list of tags."

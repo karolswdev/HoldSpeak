@@ -1,0 +1,13 @@
+{
+  "blocked": [
+    "OWNER: owner_file: codex_usage_limit: You\u2019ve hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 26th, 2026 8:50 PM.",
+    "AGENT: ungranted: codex_usage_limit: You\u2019ve hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 26th, 2026 8:50 PM.",
+    "AGENT: granted: codex_usage_limit: You\u2019ve hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 26th, 2026 8:50 PM."
+  ],
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "elapsed_s": 13.858,
+  "finished_at": "2026-09-25T21:56:37.878665+00:00",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "outcome": "blocked",
+  "started_at": "2026-09-25T21:56:24.020428+00:00"
+}

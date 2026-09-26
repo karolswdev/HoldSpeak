@@ -75,6 +75,9 @@ TOOLS: list[dict[str, Any]] = [
             "Make a zone: kind=directories, data name (and parent_id to put it in another zone). "
             "Make a knowledge base: kind=kbs, data name. "
             "Put a decision on my review list: kind=decisions, data title and status=proposed. "
+            "Write the reason for a decision (kind=decisions) in data context_markdown: why, and the facts behind it. "
+            "Write what you will do in data decision_markdown and what follows from it in consequences_markdown. "
+            "Keep the title short; do not put the reason in the title. "
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
@@ -86,7 +89,9 @@ TOOLS: list[dict[str, Any]] = [
                     "absent); a field named id is refused. notes: note_id, title, body_markdown, tags. "
                     "directories: directory_id, name, parent_id (a zone id from desk.list kind=directories). "
                     "kbs: kb_id, name, member_ids (kind:id references, for example note:<id>). "
-                    "decisions: title, status (proposed puts it on the review list), and the other decision fields."
+                    "decisions: title (the decision in a few words), status (proposed puts it on the review list), "
+                    "context_markdown (its reason: why, and the facts behind it), decision_markdown (what you will do), "
+                    "consequences_markdown (what follows from it), deciders, alternatives, tags."
                 )},
             },
             "required": ["kind"],
@@ -100,6 +105,8 @@ TOOLS: list[dict[str, Any]] = [
             "Rename a zone: kind=directories, data name (the name only). "
             "Move a zone: kind=directories, data parent_id (null moves it to the desk root). "
             "Edit a note: kind=notes, data title, body_markdown or tags. "
+            "Add to a decision: kind=decisions, data context_markdown (its reason), decision_markdown "
+            "(what you will do) or consequences_markdown (what follows from it). "
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {

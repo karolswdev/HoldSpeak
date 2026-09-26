@@ -1,0 +1,1 @@
+$ claude -p --model claude-opus-5-5 --output-format stream-json --verbose --strict-mcp-config --mcp-config <cold>/mcp-config.json (mcpServers: {}) --permission-mode bypassPermissions  < prompt.txt

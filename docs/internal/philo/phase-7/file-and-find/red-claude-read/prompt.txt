@@ -1,0 +1,1 @@
+Read the file /Users/karol/dev/tools/wt-philo-7-04/CLAUDE.md and tell me its first line.

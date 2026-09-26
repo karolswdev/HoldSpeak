@@ -1,0 +1,36 @@
+{
+  "pages": [
+    {
+      "body_sha256": "509bc41732ef9dffd1d5a9f1dd49e79361a7a82a6cf8492af100eecb654ae2fe",
+      "body_text_excerpt": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nFri, Sep 25\n07:56 PM\n1 need you\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF \u00b7 1 THING WAITING\nTHIS DEVICE\nGenerate\nReview decision: Move nightly build to shared runners\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 19:55\nBrief ready \u00b7 1 item \u00b7 SEP 25 19:55\nTALK\nWrite a thought\nRecord meeting\nSchedule\nPlatform Migration\nPLATFORM MIGRATION\n2 members\nBuild cache sizing\nNote\nRunner capacity numbers\nNote\nFiled \u00b7 Desk root\nDictate about this\n\u25c8\nIntelligence\n\u2022\nSpeak\nMeetings\nAgents\nSettings\nFloor\n\u25ce\nDesk memory\n\u25a4\nDelivery\n\u29c9\nPanes\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nPlatform Migration",
+      "expected_text_present": true,
+      "receipt_present": null,
+      "receipt_shot": null,
+      "receipt_text": null,
+      "ref": "zone:dir_4dde0b428a2c",
+      "reopened": true,
+      "row_shot": null,
+      "row_texts": null,
+      "shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/agent-zone/1440.png",
+      "validation_error": null,
+      "viewport": 1440
+    },
+    {
+      "body_sha256": "1c863044dcaa2243be780f07c92873104cc0ce6a16cb75d9ae04bdb1eea476a8",
+      "body_text_excerpt": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n07:56 PM\n1 need you\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF \u00b7 1 THING WAITING\nTHIS DEVICE\nGenerate\nReview decision: Move nightly build to shared runners\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 19:55\nBrief ready \u00b7 1 item \u00b7 SEP 25 19:55\nTALK\nWrite a thought\nRecord meeting\nSchedule\nPlatform Migration\nPLATFORM MIGRATION\n2 members\nBuild cache sizing\nNote\nRunner capacity numbers\nNote\nFiled \u00b7 Desk root\nDictate about this\n\u25c8\n\u2022\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces\n\u25a4\nPlatform Migration",
+      "expected_text_present": true,
+      "receipt_present": null,
+      "receipt_shot": null,
+      "receipt_text": null,
+      "ref": "zone:dir_4dde0b428a2c",
+      "reopened": true,
+      "row_shot": null,
+      "row_texts": null,
+      "shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/agent-zone/393.png",
+      "validation_error": null,
+      "viewport": 393
+    }
+  ],
+  "ref": "zone:dir_4dde0b428a2c",
+  "stage": "agent-zone"
+}

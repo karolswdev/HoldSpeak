@@ -1,0 +1,19 @@
+# The account-leak fence (account_leak_findings) over every retained file under story-04-shots/ and red-claude-read/,
+# BEFORE the redaction (HEAD d0ed0874). Values are never printed: file and kind counts only.
+# Measured with the fence's first form (text files only). The fence now reads every file as bytes; a byte-level
+# scan of every file type (the DB snapshots and the shots included) found the same nine files and no other.
+
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/agent_granted/initial-context.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/agent_granted/session-transcript.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/agent_ungranted/initial-context.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/agent_ungranted/session-transcript.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/owner_brief/session-transcript.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/owner_decide/session-transcript.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/owner_file/initial-context.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/owner_file/session-transcript.jsonl", "email": 4}
+story-04-shots/{"file": "final/20260926T014230Z-file-and-find/claude/owner_find/session-transcript.jsonl", "email": 4}
+
+RED: 9 file(s)
+
+AFTER redact_run (final: 18 files, 2 account ids, 13 synced skill names; red-claude-read: 1 file(s); the Codex attempt: [0] file(s)):
+GREEN: 0 file(s)

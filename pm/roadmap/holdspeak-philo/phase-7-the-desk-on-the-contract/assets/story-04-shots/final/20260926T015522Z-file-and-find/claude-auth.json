@@ -1,0 +1,16 @@
+{
+  "access_token_expires_at": "2026-09-26T07:21:09.831000+00:00",
+  "dropped": [
+    "refreshToken",
+    "refreshTokenExpiresAt"
+  ],
+  "kept": [
+    "accessToken",
+    "expiresAt",
+    "rateLimitTier",
+    "scopes",
+    "subscriptionType"
+  ],
+  "minutes_left_at_read": 325.8,
+  "source": "macOS login keychain, generic password service 'Claude Code-credentials'"
+}

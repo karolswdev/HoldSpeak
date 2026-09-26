@@ -1,0 +1,65 @@
+# The zero-read fence (scripts/philo7_file_and_find.py zero_read_findings) over the Phase 5 rehearsal's retained Codex logs
+# run: pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/final/20260925T001407Z-his-words-real
+
+decision_thought: 25 finding(s) -> RED
+  command_execution: /bin/zsh -lc "rg -n 'desk.decision|desk_decision|review_at|review_on|review_date|decision.create|thought.get|thought_get|workspace_cursor' docs/MCP_SIDECAR.md s
+  command_execution: /bin/zsh -lc "rg -n 'review_date|review_on|desk.create|thought.create|workspace_cursor|decisions' docs/MCP_SIDECAR.md"
+  command_execution: /bin/zsh -lc "rg --files -g '*desk*' -g '*decision*' -g '*thought*' -g '*mcp*' -g '"'!uv.lock'"' -g '"'!package-lock.json'"'"
+  command_execution: /bin/zsh -lc "rg -n 'review|meeting|CREATE|allowed|Decision' holdspeak/services/decision_lifecycle_service.py holdspeak/primitives.py holdspeak/mcp/families/tho
+  command_execution: /bin/zsh -lc "sed -n '60,84p' docs/MCP_SIDECAR.md
+sed -n '347,406p' docs/MCP_SIDECAR.md
+sed -n '1,220p' holdspeak/web/routes/primitives/decisions.py"
+  command_execution: /bin/zsh -lc "rg -n 'review_date|review_at|review_on|review_due|source_meeting_id|decision.create' holdspeak/operations.py holdspeak/services/primitive_service.
+  command_execution: /bin/zsh -lc "sed -n '1,180p' holdspeak/mcp/families/thought.py
+rg -n 'thought|Workbench' holdspeak/mcp/resources.py docs/MCP_SIDECAR.md"
+  command_execution: /bin/zsh -lc "sed -n '140,240p' holdspeak/operations.py
+rg -n 'def create_decision|def update_decision|review|due|meeting' holdspeak/services/primitive_service.
+  command_execution: /bin/zsh -lc "rg -n 'review|tomorrow|tags|meeting' pm/roadmap/holdspeak-philo/phase-4-the-morning/story-02-decision-in-the-visible-rows.md
+rg -n 'review_date|re
+  command_execution: /bin/zsh -lc "cat pm/roadmap/holdspeak-philo/phase-4-the-morning/story-02-decision-in-the-visible-rows.md
+rg -n 'decided_at|review|due' holdspeak/desk* holdspea
+  command_execution: /bin/zsh -lc "rg -n 'review_date|review_at|review_on|review:|review-by|review_by' holdspeak web/src -g '*.py' -g '*.ts' -g '*.tsx'"
+  command_execution: /bin/zsh -lc "rg -n 'decision.record|decision_record|record.create|record.update' holdspeak/mcp holdspeak/desk_verbs* docs/MCP_SIDECAR.md"
+  command_execution: /bin/zsh -lc "cat holdspeak/web/routes/decision_records.py
+sed -n '1,240p' holdspeak/services/decision_record_service.py"
+  command_execution: /bin/zsh -lc "rg -n 'decision_record|decision.record|update_record|review_date' holdspeak/mcp holdspeak/services/desk_service.py holdspeak/web/routes -g '*.py'"
+  command_execution: /bin/zsh -lc "rg -n 'review_date|due_for_review|update_record' holdspeak -g '*.py' -g '"'!schema.py'"' -g '"'!sync_service.py'"'
+rg -n 'review' web/src/desk/pul
+  command_execution: /bin/zsh -lc "rg -n 'verb_id|ALLOWLIST|allowlist|desk.verb' holdspeak/mcp/tools.py
+sed -n '1,140p' holdspeak/principals.py
+sed -n '1,140p' .mcp.json"
+  command_execution: /bin/zsh -lc "sed -n '1,64p' docs/MCP_SIDECAR.md
+sed -n '408,436p' holdspeak/services/decision_record_service.py
+rg -n 'decision|review' holdspeak/services/mond
+  command_execution: /bin/zsh -lc "rg -n 'context_markdown|contextMarkdown|Markdown' web/src/desk/pullouts -g '*Decision*'
+sed -n '1,110p' web/src/pages/cores/HistoryCore.tsx
+sed -n
+  command_execution: /bin/zsh -lc "sed -n '780,838p' holdspeak/services/monday_brief_service.py
+sed -n '1135,1158p' holdspeak/mcp/tools.py
+rg -n 'meeting.*href|href.*meeting|meeting
+  command_execution: /bin/zsh -lc "rg -n 'export.*Material|function Material|wiki|href|ref:' web/src/desk/surface/Material* web/src/lib/markdown* web/src/desk/deep* web/src/desk/rou
+  command_execution: /bin/zsh -lc "rg -n 'export.*Material|function Material|primitive:|holdspeak://' web/src/components web/src/desk/surface -g '*.tsx' -g '*.ts' -g '"'!*.test.*'"'
+  command_execution: /bin/zsh -lc "rg --files web/src | rg 'Material|Markdown|[Dd]eep[Ll]ink|[Rr]outing'
+rg -n 'meeting:|holdspeak:|ref=|scope=' web/src/desk/shell.ts web/src/App.ts
+  command_execution: /bin/zsh -lc "sed -n '1,165p' web/src/desk/surface/Material.tsx
+rg -n 'URLSearchParams|searchParams|scope|deep|open=' web/src/desk/shell.ts web/src/App.tsx web/
+  command_execution: /bin/zsh -lc "sed -n '1040,1110p' holdspeak/db/memory.py
+sed -n '660,710p' holdspeak/services/proposal_bridge_service.py
+sed -n '1,70p' web/src/App.tsx
+sed -n '
+  command_execution: /bin/zsh -lc "python3 - <<'PY'
+import os, pathlib, tomllib
+p=pathlib.Path.home()/'.codex/config.toml'
+if p.exists():
+    d=tomllib.loads(p.read_text()).get('mcp
+
+import: 3 finding(s) -> RED
+  command_execution: /bin/zsh -lc 'cat docs/internal/TWO-BRAINS.md'
+  command_execution: /bin/zsh -lc 'cat docs/internal/CONSTITUTION.md docs/internal/UX-CANON.md docs/internal/ORCHESTRATION.md'
+  command_execution: /bin/zsh -lc 'cat AGENTS.md CLAUDE.md'
+
+summary: 0 finding(s) -> green
+
+tomorrow_brief: 0 finding(s) -> green
+
+TOTAL 28 (decision_thought 25 + import 3); the fence FAILS on the Phase 5 logs.

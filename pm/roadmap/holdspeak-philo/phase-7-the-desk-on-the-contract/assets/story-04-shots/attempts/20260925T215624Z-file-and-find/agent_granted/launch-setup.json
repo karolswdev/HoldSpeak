@@ -1,0 +1,113 @@
+{
+  "codex_home": {
+    "files": [
+      "auth.json"
+    ],
+    "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/home/.codex"
+  },
+  "codex_process_home": {
+    "files": [
+      ".codex/auth.json"
+    ],
+    "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/home"
+  },
+  "findings": [],
+  "git_rev_parse": {
+    "exit_code": 128,
+    "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+    "stdout": ""
+  },
+  "parents_checked": [
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/work",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/var/folders",
+      "present": []
+    },
+    {
+      "path": "/var",
+      "present": []
+    },
+    {
+      "path": "/",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/work",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders",
+      "present": []
+    },
+    {
+      "path": "/private/var",
+      "present": []
+    },
+    {
+      "path": "/private",
+      "present": []
+    }
+  ],
+  "servers": [
+    {
+      "auth_status": "bearer_token",
+      "disabled_reason": null,
+      "enabled": true,
+      "name": "holdspeak",
+      "startup_timeout_sec": 60.0,
+      "tool_timeout_sec": 900.0,
+      "transport": {
+        "bearer_token_env_var": "HOLDSPEAK_DESK_BEARER",
+        "env_http_headers": null,
+        "http_headers": null,
+        "http_headers_helper": null,
+        "type": "streamable_http",
+        "url": "http://127.0.0.1:52754/api/mcp"
+      }
+    }
+  ],
+  "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/work"
+}

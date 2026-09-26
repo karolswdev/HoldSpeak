@@ -1,0 +1,1 @@
+I filed your note "Build cache sizing" in the Platform Migration zone. The note says the shared cache needs 2 TB to hold two weeks of build outputs. The zone now holds two notes: this one and "Runner capacity numbers."
