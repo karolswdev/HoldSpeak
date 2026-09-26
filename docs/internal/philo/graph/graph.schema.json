@@ -561,7 +561,8 @@
                     "readable_text",
                     "hit_target",
                     "op_field",
-                    "op_refusal"
+                    "op_refusal",
+                    "op_facts"
                   ]
                 }
               }

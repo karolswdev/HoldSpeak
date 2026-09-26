@@ -1,0 +1,812 @@
+{
+  "id": "obs-20260925T222336Z-case.p7.decision_supersede.successor_visible-muaddib-393",
+  "run_id": "20260925T222336Z-case.p7.decision_supersede.successor_visible-muaddib-393",
+  "case_id": "case.p7.decision_supersede.successor_visible",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.decision_supersede"
+  ],
+  "state_id": "state.desk_presentation.p7_decision_lifecycle",
+  "provenance": {
+    "revision": "e3a32308d4f87fd2d379d165e3c78dc19340d13f",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1f8c6b01ec3e1174c5c213696f32d1b901f426142f3c1716cdcb3f371c1d79b4",
+      "assets": [
+        "index-BfW51Gdg.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:56774",
+      "port": 56774,
+      "pid": 29382,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iq34n916",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iq34n916/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-25T22:23:37.164223+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.4.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "886f2da45d2143dc87347f4ac4daf77533c1d89fb8ef67b5fc06a46e7a7a8288",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_657347e46cca",
+          "title": "Atlas old decision",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T22:23:39Z",
+          "updated_at": "2026-09-25T22:23:39Z",
+          "deleted": false
+        },
+        "operation_id": "op_4f5cdeb7c9d641909109f612a5102b43",
+        "receipt": {
+          "receipt_id": "rcpt_cbd98175eb0549dd8e26197b1e5c385e",
+          "operation_id": "op_4f5cdeb7c9d641909109f612a5102b43",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_657347e46cca",
+          "created_at": 1790375019.1639948,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_657347e46cca"
+        }
+      },
+      "response_sha256": "1f9319388893bbbdf0b3e9fb5d7abbc28b7d09314857cddc7776a68cbee8c684",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_657347e46cca"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions/decision_657347e46cca/supersede",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_2f3a6adb8241",
+          "title": "Superseding Atlas old decision",
+          "status": "proposed",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-25T22:23:39Z",
+          "updated_at": "2026-09-25T22:23:39Z",
+          "deleted": false
+        },
+        "operation_id": "op_03643b1068de4988a8cfe2da12cc4075",
+        "receipt": {
+          "receipt_id": "rcpt_c87c7dd332d64298877620056cd735b9",
+          "operation_id": "op_03643b1068de4988a8cfe2da12cc4075",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_2f3a6adb8241",
+          "created_at": 1790375019.167252,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_657347e46cca"
+        }
+      },
+      "response_sha256": "d5c9bd9893673383a9eaa78ac88c60de3f8e098c994ccef18254774e00365109",
+      "captured": {
+        "name": "successor_id",
+        "path": "decision.id",
+        "value": "decision_2f3a6adb8241"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_657347e46cca",
+    "successor_id": "decision_2f3a6adb8241"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-decision:decision_2f3a6adb8241']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "proposed \u21bb\nDECISION CONTEXT\nDECISION\nCONSEQUENCES\nSupersedes Atlas old decision"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-decision-card"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 323,
+        "w": 363,
+        "h": 238
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "div#pullout:decision_2f3a6adb8241"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Superseding Atlas old decision"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Superseding Atlas old decision",
+          "rect": {
+            "x": 0,
+            "y": 270,
+            "w": 393,
+            "h": 407
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "a72d8ca5a247f0700b5f9a107ab20f54a8b339c1fb8b11e98efc764efa29e676",
+      "after": "55198b1d8befc424726b806aca107ac8c66bb0321865c0e6a1f6506f1c9103dc"
+    },
+    "document_text_len": {
+      "before": 326,
+      "after": 439
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "Superseding Atlas old decision"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "Superseding Atlas old decision"
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:56774/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "a72d8ca5a247f0700b5f9a107ab20f54a8b339c1fb8b11e98efc764efa29e676",
+    "document_text_len": 326,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_657347e46cca",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_657347e46cca",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_2f3a6adb8241",
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "9024759d8e055e7d75e7a62b0339c676d0d44d1a7afb4c238c66f08def5d4ed6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_2f3a6adb8241",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_2f3a6adb8241",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "29838c5251b53e3f24c3697d9d08b098280d2bc02c37a244c47d6dc42e851fa1"
+      }
+    ],
+    "at_utc": "2026-09-25T22:23:43.710475+00:00"
+  },
+  "after": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\nDECISION\nCONSEQUENCES\nSupersedes Atlas old decision",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 323,
+      "w": 363,
+      "h": 238
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 323,
+        "w": 363,
+        "h": 238
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        },
+        {
+          "x": 197,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        },
+        {
+          "x": 376,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_2f3a6adb8241",
+    "focus_label": "Superseding Atlas old decision",
+    "url": "http://127.0.0.1:56774/",
+    "windows": [
+      {
+        "title": "Superseding Atlas old decision",
+        "rect": {
+          "x": 0,
+          "y": 270,
+          "w": 393,
+          "h": 407
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "55198b1d8befc424726b806aca107ac8c66bb0321865c0e6a1f6506f1c9103dc",
+    "document_text_len": 439,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_657347e46cca",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_657347e46cca",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_2f3a6adb8241",
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "9024759d8e055e7d75e7a62b0339c676d0d44d1a7afb4c238c66f08def5d4ed6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_2f3a6adb8241",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_2f3a6adb8241",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "29838c5251b53e3f24c3697d9d08b098280d2bc02c37a244c47d6dc42e851fa1"
+      }
+    ],
+    "at_utc": "2026-09-25T22:23:44.846473+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[role=region][aria-label='Superseding Atlas old decision'] .desk-decision-card",
+    "target_present": true,
+    "text": "proposed \u21bb\nDECISION CONTEXT\nDECISION\nCONSEQUENCES\nSupersedes Atlas old decision",
+    "attrs": {
+      "class": "desk-decision-card"
+    },
+    "rect": {
+      "x": 15,
+      "y": 323,
+      "w": 363,
+      "h": 238
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 323,
+        "w": 363,
+        "h": 238
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 17,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 17,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        },
+        {
+          "x": 197,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 197,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 197,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        },
+        {
+          "x": 376,
+          "y": 325,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > div.desk-pullout-facts"
+        },
+        {
+          "x": 376,
+          "y": 442,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card > section > h3"
+        },
+        {
+          "x": 376,
+          "y": 559,
+          "owned": true,
+          "owner": "div#pullout:decision_2f3a6adb8241 > div.desk-pullout-body.desk-surface-body > section.desk-decision-card"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#pullout:decision_2f3a6adb8241",
+    "focus_label": "Superseding Atlas old decision",
+    "url": "http://127.0.0.1:56774/",
+    "windows": [
+      {
+        "title": "Superseding Atlas old decision",
+        "rect": {
+          "x": 0,
+          "y": 270,
+          "w": 393,
+          "h": 407
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "55198b1d8befc424726b806aca107ac8c66bb0321865c0e6a1f6506f1c9103dc",
+    "document_text_len": 439,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_657347e46cca",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_657347e46cca",
+            "title": "Atlas old decision",
+            "status": "superseded",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": "decision_2f3a6adb8241",
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "9024759d8e055e7d75e7a62b0339c676d0d44d1a7afb4c238c66f08def5d4ed6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_2f3a6adb8241",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_2f3a6adb8241",
+            "title": "Superseding Atlas old decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-25T22:23:39Z",
+            "updated_at": "2026-09-25T22:23:39Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "29838c5251b53e3f24c3697d9d08b098280d2bc02c37a244c47d6dc42e851fa1"
+      }
+    ],
+    "at_utc": "2026-09-25T22:23:44.713419+00:00",
+    "predicate_satisfied": true,
+    "reading": "'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 323, 'w': 363, 'h': 238}",
+    "elapsed_s": 0.948
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 323, 'w': 363, 'h': 238}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.081,
+    "first_satisfied_at_s": 0.948,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 323, 'w': 363, 'h': 238}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:56774) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:56774) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note3.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/relationships/decision%3Adecision_2f3a6adb8241",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222336Z-case.p7.decision_supersede.successor_visible-muaddib-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222336Z-case.p7.decision_supersede.successor_visible-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iq34n916/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iq34n916/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:56774"
+  ],
+  "duration_s": 7.965
+}

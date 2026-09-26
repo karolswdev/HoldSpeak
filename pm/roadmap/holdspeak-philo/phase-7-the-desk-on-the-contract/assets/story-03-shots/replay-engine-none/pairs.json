@@ -1,0 +1,519 @@
+{
+  "summary": "18/18 pair-widths equivalent, over 9 headless op runs (each shared by both widths) x 18 face runs; the refusal leg is not applicable on 6 of them (the face trigger sent nothing)",
+  "pairs": [
+    {
+      "pair": "case.p7.zone_create.visible",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222059Z-case.p7.zone_create.visible-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224440Z-case.p7.zone_create.visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "name": "Atlas zone"
+      },
+      "op_outcome": {
+        "name": "Atlas zone"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_create.visible",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222117Z-case.p7.zone_create.visible-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224440Z-case.p7.zone_create.visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "name": "Atlas zone"
+      },
+      "op_outcome": {
+        "name": "Atlas zone"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_file.note_in_zone",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222135Z-case.p7.zone_file.note_in_zone-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224442Z-case.p7.zone_file.note_in_zone.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 1
+      },
+      "op_outcome": {
+        "members": 1
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "PUT /api/directories/dir_954f332edb4d/members/note%3Anote_2801033d37ac 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_file.note_in_zone",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222144Z-case.p7.zone_file.note_in_zone-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224442Z-case.p7.zone_file.note_in_zone.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 1
+      },
+      "op_outcome": {
+        "members": 1
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "PUT /api/directories/dir_96c7bc546389/members/note%3Anote_ca156df5067e 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_file.refile_moves",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222153Z-case.p7.zone_file.refile_moves-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224445Z-case.p7.zone_file.refile_moves.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "in_b": 1,
+        "in_a": 0
+      },
+      "op_outcome": {
+        "in_b": 1,
+        "in_a": 0
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "PUT /api/directories/dir_43cf3ee310cb/members/note%3Anote_afe1a2608ccf 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_file.refile_moves",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222203Z-case.p7.zone_file.refile_moves-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224445Z-case.p7.zone_file.refile_moves.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "in_b": 1,
+        "in_a": 0
+      },
+      "op_outcome": {
+        "in_b": 1,
+        "in_a": 0
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "PUT /api/directories/dir_379f391732b6/members/note%3Anote_abb2cee73886 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_unfile.note_leaves",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222214Z-case.p7.zone_unfile.note_leaves-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224450Z-case.p7.zone_unfile.note_leaves.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 0,
+        "note_kept": true
+      },
+      "op_outcome": {
+        "members": 0,
+        "note_kept": true
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/directories/dir_9b16dc1143d9/members/note%3Anote_960b238098a4 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.zone_unfile.note_leaves",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222223Z-case.p7.zone_unfile.note_leaves-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224450Z-case.p7.zone_unfile.note_leaves.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 0,
+        "note_kept": true
+      },
+      "op_outcome": {
+        "members": 0,
+        "note_kept": true
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/directories/dir_d5cdfdcd8eaa/members/note%3Anote_4c7876d972d3 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.kb_create.visible",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222231Z-case.p7.kb_create.visible-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224452Z-case.p7.kb_create.visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "name": "New Knowledge"
+      },
+      "op_outcome": {
+        "name": "New Knowledge"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.kb_create.visible",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222241Z-case.p7.kb_create.visible-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224452Z-case.p7.kb_create.visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "name": "New Knowledge"
+      },
+      "op_outcome": {
+        "name": "New Knowledge"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.kb_member.add_and_remove",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222250Z-case.p7.kb_member.add_and_remove-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224455Z-case.p7.kb_member.add_and_remove.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 0
+      },
+      "op_outcome": {
+        "members": 0
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/kbs/kb_bafd5acede76/members/note%3Anote_c887c225db5a 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.kb_member.add_and_remove",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222259Z-case.p7.kb_member.add_and_remove-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224455Z-case.p7.kb_member.add_and_remove.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "members": 0
+      },
+      "op_outcome": {
+        "members": 0
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/kbs/kb_291edf338ac9/members/note%3Anote_7ece24acec12 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_status.review_list",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222309Z-case.p7.decision_status.review_list-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224458Z-case.p7.decision_status.review_list.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "status": "proposed"
+      },
+      "op_outcome": {
+        "status": "proposed"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "POST /api/brief/generate 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_status.review_list",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222318Z-case.p7.decision_status.review_list-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224458Z-case.p7.decision_status.review_list.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "status": "proposed"
+      },
+      "op_outcome": {
+        "status": "proposed"
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "POST /api/brief/generate 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_supersede.successor_visible",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222328Z-case.p7.decision_supersede.successor_visible-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224501Z-case.p7.decision_supersede.successor_visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "old_status": "superseded",
+        "successor_readable": true
+      },
+      "op_outcome": {
+        "old_status": "superseded",
+        "successor_readable": true
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_supersede.successor_visible",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222336Z-case.p7.decision_supersede.successor_visible-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224501Z-case.p7.decision_supersede.successor_visible.op-muaddib-1440/observation.json",
+      "face_verdict": "pass",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "old_status": "superseded",
+        "successor_readable": true
+      },
+      "op_outcome": {
+        "old_status": "superseded",
+        "successor_readable": true
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "not_applicable",
+        "reason": "the face trigger made no network call (a Search fill or a key press; the write ran in setup or the network response was not captured), so the face side's refusal cannot be read",
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_delete.gone",
+      "width": 1440,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222345Z-case.p7.decision_delete.gone-muaddib-1440/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224506Z-case.p7.decision_delete.gone.op-muaddib-1440/observation.json",
+      "face_verdict": "fail",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "read_refused": true,
+        "listed": false
+      },
+      "op_outcome": {
+        "read_refused": true,
+        "listed": false
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/decisions/decision_c78ff22d6370 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    },
+    {
+      "pair": "case.p7.decision_delete.gone",
+      "width": 393,
+      "face": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T222448Z-case.p7.decision_delete.gone-muaddib-393/observation.json",
+      "op": "pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-03-shots/replay-engine-none/20260925T224506Z-case.p7.decision_delete.gone.op-muaddib-1440/observation.json",
+      "face_verdict": "fail",
+      "op_verdict": "pass",
+      "face_outcome": {
+        "read_refused": true,
+        "listed": false
+      },
+      "op_outcome": {
+        "read_refused": true,
+        "listed": false
+      },
+      "outcome_equal": true,
+      "identity": true,
+      "refusal_check": {
+        "status": "checked",
+        "face_trigger_response": "DELETE /api/decisions/decision_8ed98aa148c3 200",
+        "face_refused": false,
+        "op_refused": false
+      },
+      "op_run_shared_across_widths": true,
+      "engine": [
+        "none",
+        "none"
+      ],
+      "verdict": "equivalent"
+    }
+  ]
+}

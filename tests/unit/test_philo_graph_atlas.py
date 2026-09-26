@@ -479,18 +479,27 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         for case in json.loads(path.read_text())['cases']
         if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
     ]
-    assert len(siblings) == 21  # 19 real op siblings plus two replay variants
+    # 19 Phase 5 op siblings plus two replay variants; PHILO-7-03 adds 18
+    # (atlas-phase7.json: nine desk pairs, two receipt cases, four refusal
+    # receipts, three note siblings).
+    assert len(siblings) == 39
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
         'decision.create', 'decision.update', 'meeting.import',
         'meeting.summary.run', 'brief.generate', 'brief.shelf.write',
         'thought.create', 'thought.save',
+        # PHILO-7-03: the desk slice's writes.
+        'note.create', 'zone.create', 'zone.file', 'zone.unfile',
+        'kb.create', 'kb.member.add', 'kb.member.remove',
+        'decision.supersede', 'decision.delete',
     }
     readable = {
         'decision.read', 'decision.list', 'meeting.list', 'meeting.read',
         'brief.latest', 'brief.shelf.read', 'thought.read',
         'thought.workbench.read', 'thought.list',
+        'note.read', 'note.list', 'zone.read', 'zone.list', 'zone.members',
+        'kb.read', 'kb.list', 'kb.members', 'kernel.receipt.read',
     }
     problems: list[str] = []
     for case in siblings:
@@ -502,7 +511,7 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         if observation.get('name') not in readable:
             problems.append(f"{case['id']}: observation re-fires {observation.get('name')!r}")
         predicate_kind = (expected.get('predicate') or {}).get('kind')
-        if predicate_kind not in {'op_field', 'op_refusal'}:
+        if predicate_kind not in {'op_field', 'op_refusal', 'op_facts'}:
             problems.append(f"{case['id']}: predicate is not an op predicate")
         for read in expected.get('reads', []):
             if read.get('kind') != 'op' or read.get('name') not in readable:
@@ -526,6 +535,7 @@ def test_named_pair_observations_bind_their_read_arguments() -> None:
         if not any(case['id'] == base or case['id'].startswith(base + '.') for base in bases):
             continue
         bound = {step['capture_as'] for step in _acts(case) if step.get('capture_as')}
+        bound |= {extra['as'] for step in _acts(case) for extra in step.get('capture_more', [])}
         expected = case['expected']
         reads = {key: expected.get(key) for key in ('observe_at', 'predicate', 'reads')}
         names = set(re.findall(r'\{([a-z][a-z0-9_]*)\}', json.dumps(reads)))

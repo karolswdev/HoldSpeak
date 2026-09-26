@@ -1,0 +1,54 @@
+case.p7.zone_create.visible @1440 VERDICT: fail terminal=settled 24.1s
+    NOTE: predicate: 'Atlas Z zone' NOT in observe_at text
+case.p7.zone_file.note_in_zone @1440 VERDICT: fail terminal=settled 14.9s
+    NOTE: predicate: 'Filed · Atlas Z zone' NOT in observe_at text
+case.p7.zone_file.refile_moves @1440 VERDICT: fail terminal=settled 15.8s
+    NOTE: predicate: 'Filed · Atlas Z zone B' NOT in observe_at text
+case.p7.zone_unfile.note_leaves @1440 VERDICT: fail terminal=settled 14.9s
+    NOTE: predicate: '+ Atlas Z zone' NOT in observe_at text
+case.p7.kb_create.visible @1440 VERDICT: fail terminal=settled 15.8s
+    NOTE: predicate: 'New Knowledge Z' NOT in observe_at text
+case.p7.kb_member.add_and_remove @1440 VERDICT: fail terminal=settled 15.2s
+    NOTE: predicate: '+ Atlas Z knowledge' NOT in observe_at text
+case.p7.decision_status.review_list @1440 VERDICT: fail terminal=settled 16.1s
+    NOTE: predicate: 'Review decision: Atlas Z review decision' NOT in observe_at text
+case.p7.decision_supersede.successor_visible @1440 VERDICT: fail terminal=settled 14.4s
+    NOTE: predicate: 'Supersedes Atlas Z old decision' NOT in observe_at text
+case.p7.decision_delete.gone @1440 VERDICT: fail terminal=settled 29.3s
+    NOTE: predicate: 'Removal committed Z' NOT in observe_at text
+case.p7.zone_create.visible.op @1440 VERDICT: fail terminal=settled 9.0s
+    NOTE: predicate: fact #0 failed: observe_at directory.id = 'dir_67e85dacfb2f', wanted 'p7-wrong-id'
+case.p7.zone_file.note_in_zone.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #2 failed: op read #0 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_e51b8e4f65fb481596570331c351dded', wanted 'op_wrong_operation'
+case.p7.zone_file.refile_moves.op @1440 VERDICT: fail terminal=settled 10.6s
+    NOTE: predicate: fact #2 failed: op read #1 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_7552103bcdc8428abc454e901b640ad1', wanted 'op_wrong_operation'
+case.p7.zone_unfile.note_leaves.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #2 failed: op read #0 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_9d68f36e0c34477983cf13bd6ca1c190', wanted 'op_wrong_operation'
+case.p7.kb_create.visible.op @1440 VERDICT: fail terminal=settled 9.0s
+    NOTE: predicate: fact #0 failed: observe_at id = 'kb_03da60aae472', wanted 'p7-wrong-id'
+case.p7.kb_member.add_and_remove.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #1 failed: op read #0 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_f404f1084bac4e18bb8630f92b772fb1', wanted 'op_wrong_operation'
+case.p7.decision_status.review_list.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #2 failed: op read #0 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_c6bd443ae4514ae8aabe87886944b27a', wanted 'op_wrong_operation'
+case.p7.decision_supersede.successor_visible.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #1 failed: observe_at superseded_by = 'decision_84368f858c8b', wanted 'p7-wrong-id'
+case.p7.decision_supersede.receipt.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #0 failed: observe_at objects.0.receipt.operation_id = 'op_00180708c50f4143ac2ce07290d1b8cd', wanted 'op_wrong_operation'
+case.p7.decision_delete.gone.op @1440 VERDICT: fail terminal=settled 9.0s
+    NOTE: predicate: fact #2 failed: op read #1 (kernel.receipt.read) objects.0.receipt.operation_id = 'op_63160fae255d41459101e37e1ad3aef2', wanted 'op_wrong_operation'
+case.p7.decision_create.receipt.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #0 failed: observe_at objects.0.receipt.operation_id = 'op_186b32e46cd34ff1b8afb567b6bbaabf', wanted 'op_wrong_operation'
+case.p7.zone_file.refused_unknown_zone.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #1 failed: observe_at objects.0.receipt.operation_id = 'op_fb27cda747b949448f24c143ae4235fc', wanted 'op_wrong_operation'
+case.p7.kb_member.refused_bad_ref.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #1 failed: observe_at objects.0.receipt.operation_id = 'op_eae1eb37144047e28f1212bfaa2f7b39', wanted 'op_wrong_operation'
+case.p7.decision_status.refused_invalid.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #1 failed: observe_at objects.0.receipt.operation_id = 'op_4b617000ef1e432ca804f17abffd4345', wanted 'op_wrong_operation'
+case.p7.decision_delete.refused_unknown.op @1440 VERDICT: fail terminal=settled 9.0s
+    NOTE: predicate: fact #1 failed: observe_at objects.0.receipt.operation_id = 'op_45e8ea310db0436fa303b84d028a1160', wanted 'op_wrong_operation'
+case.j1.first_words_keep_as_note.kept.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #0 failed: observe_at id = 'note_b6f2cddfdb43', wanted 'p7-wrong-id'
+case.j11.write_a_thought.window_open.op @1440 VERDICT: fail terminal=settled 9.0s
+    NOTE: predicate: fact #0 failed: observe_at thought.id = 'thought_0ff92b768d3e', wanted 'p7-wrong-id'
+case.j11.thought_keep.kept.op @1440 VERDICT: fail terminal=settled 9.1s
+    NOTE: predicate: fact #0 failed: observe_at id = 'note_thought_260143a6b7c42400', wanted 'p7-wrong-id'

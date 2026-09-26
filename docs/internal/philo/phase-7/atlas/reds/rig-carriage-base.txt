@@ -1,0 +1,215 @@
+# PHILO-7-03 carriage fences against a git-archive copy of the base rig
+# base: f669509001e73487a61871a071f3317410f58a35 (scripts/graph_walk.py rig 1.3.0); test file and atlas-phase7.json copied in from the branch
+# command: HOME=$(mktemp -d) .venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo7_atlas.py -k 'collapse or carried or successor or refusal_receipt_is_captured or capture_matches or width_scoped'
+
+F.FFFF                                                                   [100%]
+=================================== FAILURES ===================================
+__________ test_two_references_never_collapse_into_one_admitted_write __________
+
+hub = <tests.unit.test_philo7_atlas._RealHub object at 0x111857380>
+
+    def test_two_references_never_collapse_into_one_admitted_write(hub) -> None:
+        """Astra's probe (red-kb-alias-probe.txt): resource_ref and ref both became
+        ``ref`` and the later one was ADDED -- a write the case never stated."""
+        kb, note = _kb_with_note(hub)
+        args = {"kb_id": kb, "resource_ref": f"note:{note}", "ref": "note:other"}
+        try:
+            record = gw._op_call(hub, "kb.member.add", args)
+        except gw.Blocked as exc:
+            assert "'ref'" in str(exc), exc
+        else:
+>           assert record["refusal"] is not None, f"the rig executed a collapsed write: {record['request']}"
+E           AssertionError: the rig executed a collapsed write: {'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call', 'params': {'name': 'kb.add_member', 'arguments': {'kb_id': 'kb_bf26838fc6f4', 'ref': 'note:other'}}}
+E           assert None is not None
+
+tests/unit/test_philo7_atlas.py:301: AssertionError
+__________ test_a_successor_id_is_never_answered_by_a_schema_refusal ___________
+
+hub = <tests.unit.test_philo7_atlas._RealHub object at 0x1134bd6d0>
+
+    def test_a_successor_id_is_never_answered_by_a_schema_refusal(hub) -> None:
+        """decision.supersede takes successor_id; its MCP tool does not. The rig
+        blocks the step by name instead of reporting a refusal the operation would
+        never give (and the decision stays as it was)."""
+        decision = gw._op_call(hub, "decision.create", {"title": "Keep", "status": "accepted"})["response"]["id"]
+        try:
+            record = gw._op_call(hub, "decision.supersede", {"decision_id": decision, "successor_id": "chosen"})
+        except gw.Blocked as exc:
+            assert "successor_id" in str(exc), exc
+        else:
+>           pytest.fail(f"the rig sent a request the tool cannot carry: {record['request']} -> {record['refusal']}")
+E           Failed: the rig sent a request the tool cannot carry: {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/call', 'params': {'name': 'decision.supersede', 'arguments': {'decision_id': 'decision_a3b8dfa8582a', 'successor_id': 'chosen'}}} -> {'error': "Invalid arguments for decision.supersede: Additional properties are not allowed ('successor_id' was unexpected)", 'operation_id': 'op_ed9382b923ba43429b56b93cffa9bbf8', 'receipt': {'actor_identity': 'owner-session', 'actor_kind': 'owner', 'authority_basis': 'refused_at_admission', 'created_at': 1790374006.768065, 'delegator_identity': '', 'delegator_kind': '', 'operation_id': 'op_ed9382b923ba43429b56b93cffa9bbf8', 'outcome': 'invalid_arguments', 'receipt_id': 'rcpt_0b554008d5844c8a9bd394163862aec8', 'result_ref': '', 'state': 'refused', 'target_ref': 'decision:decision_a3b8dfa8582a'}, 'code': 'mcp_refused'}
+
+tests/unit/test_philo7_atlas.py:322: Failed
+_____ test_a_refusal_receipt_is_captured_from_the_refusal_only_when_asked ______
+
+hub = <tests.unit.test_philo7_atlas._RealHub object at 0x11568c510>
+
+    def test_a_refusal_receipt_is_captured_from_the_refusal_only_when_asked(hub) -> None:
+        note = gw._op_call(hub, "note.create", {"title": "Loose"})["response"]["id"]
+        step = {"kind": "op", "name": "zone.file", "capture_as": "refused_op", "capture_path": "operation_id",
+                "args": {"directory_id": "absent-zone", "primitive_id": f"note:{note}"}}
+        provenance: dict[str, Any] = {"fixture_hashes": {}}
+        with pytest.raises(gw.Blocked):
+            gw._op_step(step, hub, provenance, variables={})  # a refused write is not a success
+        variables: dict[str, Any] = {}
+>       record = gw._op_step({**step, "capture_from": "refusal"}, hub, provenance, variables=variables)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_philo7_atlas.py:334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+step = {'args': {'directory_id': 'absent-zone', 'primitive_id': 'note:note_9981613c4627'}, 'capture_as': 'refused_op', 'capture_from': 'refusal', 'capture_path': 'operation_id', ...}
+hub = <tests.unit.test_philo7_atlas._RealHub object at 0x11568c510>
+provenance = {'fixture_hashes': {}}
+
+    def _op_step(step: dict[str, Any], hub: Any, provenance: dict[str, Any],
+                 *, variables: dict[str, Any]) -> dict[str, Any]:
+        """Run a canonical op through the owning hub's MCP HTTP transport."""
+        name = step.get("name")
+        raw_args = step.get("args")
+        args = {} if raw_args is None else raw_args
+        if not isinstance(name, str) or not name:
+            raise Blocked("op step needs a canonical operation name")
+        if not isinstance(args, dict):
+            raise Blocked(f"op {name!r} args must be an object")
+        # An import operation carries the same declared fixture path as the
+        # existing fixture step. Hash only repository or rig-home files; never
+        # open an arbitrary owner path merely to populate provenance.
+        if name == "meeting.import" and isinstance(args.get("path"), str):
+            candidate = Path(args["path"])
+            if not candidate.is_absolute():
+                candidate = REPO / candidate
+            candidate = candidate.resolve()
+            allowed_roots = [REPO.resolve()]
+            hub_home = getattr(hub, "home", None)
+            if hub_home:
+                allowed_roots.append(Path(hub_home).resolve())
+            if candidate.exists() and any(_under(candidate, root) for root in allowed_roots):
+                provenance["fixture_hashes"][args["path"]] = _sha256(candidate)
+            # Atlas fixtures stay repository-relative. The existing hub-owned MCP
+            # intake requires an absolute path, so resolve it at this rig seam.
+            args = {**args, "path": str(candidate)}
+        result = _op_call(hub, name, args)
+        record = {"kind": "op", "adapter": step.get("adapter", "mcp-http"), **result}
+        if name == "meeting.import" and isinstance(raw_args, dict):
+            declared_path = raw_args.get("path")
+            if isinstance(declared_path, str):
+                fixture_hash = provenance.get("fixture_hashes", {}).get(declared_path)
+                if fixture_hash:
+                    # Cite the hash already computed above. Do not reopen or
+                    # re-hash a caller path after the real producer ran.
+                    record["fixture"] = {
+                        "path": declared_path,
+                        "sha256": fixture_hash,
+                    }
+        if result.get("refusal"):
+            record["named_refusal"] = result["refusal"]
+        capture_as = step.get("capture_as")
+        if capture_as:
+            where = step.get("capture_path", "id")
+            response = result.get("response")
+            capture_match = step.get("capture_match")
+            if capture_match is not None:
+                if not isinstance(capture_match, dict) or not capture_match:
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: capture_match must be a non-empty object"
+                    )
+                if not isinstance(where, str) or not where:
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: capture_match needs a capture_path"
+                    )
+                found, rows = _json_path(response, where)
+                if not found or not isinstance(rows, list):
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: capture_path {where!r} does not "
+                        "address a list"
+                    )
+                matches = []
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    matches_row = True
+                    for match_path, expected in capture_match.items():
+                        if not isinstance(match_path, str):
+                            raise Blocked(
+                                f"capture_as {capture_as!r}: capture_match keys "
+                                "must be simple or dotted paths"
+                            )
+                        has_value, actual = _json_path(row, match_path)
+                        if not has_value or actual != expected:
+                            matches_row = False
+                            break
+                    if matches_row:
+                        matches.append(row)
+                if len(matches) != 1:
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: capture_match at {where!r} "
+                        f"matched {len(matches)} rows; exactly one is required"
+                    )
+                capture_field = step.get("capture_field", "id")
+                if not isinstance(capture_field, str) or not capture_field:
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: capture_field must be a path"
+                    )
+                found, value = _json_path(matches[0], capture_field)
+                if not found or value is None:
+                    raise Blocked(
+                        f"capture_as {capture_as!r}: matched row has no value at "
+                        f"capture_field {capture_field!r}"
+                    )
+                variables[capture_as] = value
+                record["captured"] = {
+                    "name": capture_as,
+                    "path": where,
+                    "match": capture_match,
+                    "field": capture_field,
+                    "value": value,
+                }
+                return record
+            found, value = _json_path(response, where)
+            if not found or value is None:
+>               raise Blocked(
+                    f"capture_as {capture_as!r}: no value at {where!r} in the "
+                    f"decoded response of operation {name!r}")
+E               scripts.graph_walk.Blocked: capture_as 'refused_op': no value at 'operation_id' in the decoded response of operation 'zone.file'
+
+scripts/graph_walk.py:3952: Blocked
+____________ test_an_api_capture_matches_by_value_never_by_position ____________
+
+hub = <tests.unit.test_philo7_atlas._RealHub object at 0x112d9ac40>
+
+    def test_an_api_capture_matches_by_value_never_by_position(hub) -> None:
+        hub.api("POST", "/api/directories", {"name": "Seeded first"})
+        hub.api("POST", "/api/directories", {"name": "Atlas zone"})
+        variables: dict[str, Any] = {}
+        step = {"kind": "api", "method": "GET", "path": "/api/directories", "body": None,
+                "capture_as": "zone_id", "capture_path": "directories", "capture_match": {"name": "Atlas zone"}}
+        record = gw.run_step(step, None, hub, {"fixture_hashes": {}}, variables=variables)
+        zones = hub.api("GET", "/api/directories")[1]["directories"]
+>       assert variables["zone_id"] == next(z["id"] for z in zones if z["name"] == "Atlas zone")
+E       assert "[{'id': 'dir...er_ids': []}]" == 'dir_d0d57bcac8a0'
+E         
+E         - dir_d0d57bcac8a0
+E         + [{'id': 'dir_d0d57bcac8a0', 'name': 'Atlas zone', 'name_normalized': 'atlas zone', 'parent_id': None, 'created_at': '2026-09-25T22:06:48Z', 'last_modified': '2026-09-25T22:06:48Z', 'deleted': False, 'member_ids': []}, {'id': 'dir_e0e80a2304b2', 'name': 'Seeded first', 'name_normalized': 'seeded first', 'parent_id': None, 'created_at': '2026-09-25T22:06:48Z', 'last_modified': '2026-09-25T22:06:48Z', 'deleted': False, 'member_ids': []}]
+
+tests/unit/test_philo7_atlas.py:348: AssertionError
+_______ test_a_width_scoped_step_is_recorded_skipped_at_the_other_width ________
+
+    def test_a_width_scoped_step_is_recorded_skipped_at_the_other_width() -> None:
+        page = MagicMock()
+        page.viewport_size = {"width": 1440}
+        record = gw._ui_step(page, {"kind": "ui", "action": "click", "selector": "#x", "at_width": 393})
+>       assert record.get("skipped") and record.get("done") is False
+E       AssertionError: assert (None)
+E        +  where None = <built-in method get of dict object at 0x1125ef480>('skipped')
+E        +    where <built-in method get of dict object at 0x1125ef480> = {'action': 'click', 'adapter': 'ui-pointer', 'done': True, 'kind': 'ui', ...}.get
+
+tests/unit/test_philo7_atlas.py:359: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo7_atlas.py::test_two_references_never_collapse_into_one_admitted_write
+FAILED tests/unit/test_philo7_atlas.py::test_a_successor_id_is_never_answered_by_a_schema_refusal
+FAILED tests/unit/test_philo7_atlas.py::test_a_refusal_receipt_is_captured_from_the_refusal_only_when_asked
+FAILED tests/unit/test_philo7_atlas.py::test_an_api_capture_matches_by_value_never_by_position
+FAILED tests/unit/test_philo7_atlas.py::test_a_width_scoped_step_is_recorded_skipped_at_the_other_width
+5 failed, 1 passed, 16 deselected in 3.79s
