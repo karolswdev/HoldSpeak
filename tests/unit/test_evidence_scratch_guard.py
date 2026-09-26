@@ -24,6 +24,7 @@ ALLOWLIST = {
     "tests/unit/test_coder_gate.py": "reads the gate-proposal schema as input; writes only to tmp_path",
     "tests/unit/test_phase143_routing_authority_census.py": "reads the routing census as input; writes only to tmp_path",
     "tests/unit/test_philo5_his_words.py": "reads the retained Phase 6 rehearsal run (the Codex events and hub transcript) as input; writes only to tmp_path",
+    "tests/unit/test_philo7_file_and_find.py": "reads the retained Phase 5 and Phase 7 rehearsal runs (events, launch setups) as input; every write goes to tmp_path",
     "tests/unit/test_philo7_atlas.py": "reads the Phase 7 phase status (its named atlas cases) as input; writes only to tmp_path",
 }
 
