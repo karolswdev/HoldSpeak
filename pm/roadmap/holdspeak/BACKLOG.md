@@ -1280,3 +1280,9 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The decision window shows an empty CONSEQUENCES heading when no consequences were written (a heading with nothing under it; UX-CANON: no empty labels). | face | `checks/story-04-built-astra-role-r1.md` MISSED | the Floor lane |
 | The brief reports the people sections as "unavailable" on a fresh hub (a word for a state that is only "none yet"). | face / words | same | the Arrival lane |
 | The closing "find it" turn used the note id from the session's own first turn: it proves "find it again", not "find it cold". A future rehearsal asks a fresh session to find a note it did not file. | proof gap | same; `docs/internal/philo/phase-7/file-and-find/rehearsal.md` | the next MCP slice's closing use |
+
+## Projects on the contract — 2026-09-26 (the owner's word closing Phase 7 made the Floor Phase 8; the Astra-role check on PR #668, C7)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| Projects on the contract (the next MCP slice; the Phase 7 charter's Road B second job): the Room, the connectors, the steward on the one declared contract, as Phase 7 did for the desk slice. Census at main `189a6b52`: project 42 MCP identities, projects 4 HTTP identities (of 320 residual: 256 MCP, 64 HTTP); `desk.needs_you` belongs to projects (parked in Phase 7). The Phase 7 charter named it "Phase 8, the owner's second job"; the owner's word of 2026-09-26 ("Close, and make the Floor Phase 8") puts the Floor first. | the owner's second job (Tenet 7) | `docs/internal/project-rooms/HANDOVER-MUADDIB-XXVIII.md:33,35`; `pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/current-phase-status.md:52-53`; `pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/current-phase-status.md` Out | UNASSIGNED; the next PHILO phase after Phase 8, chartered on the owner's word |
