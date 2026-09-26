@@ -25,6 +25,7 @@ import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
+import { ZoneRenameRow } from "./ZoneRenameRow";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
@@ -75,6 +76,8 @@ export function DeskListView() {
   const pullouts = useDesk((s) => s.pullouts);
   const editingId = useDesk((s) => s.editingId);
   const askOpen = useDesk((s) => s.askOpen);
+  // PHILO-8-01 — the zone being named draws its field in its own row.
+  const renamingZoneId = useDesk((s) => s.renamingZoneId);
   const subjectCounts = useProjections((s) => s.subject_counts);
   const { openPullout, toggleSelected, diveInto, surface } = useDesk.getState();
 
@@ -210,6 +213,10 @@ export function DeskListView() {
       sortable: true,
       render: (row) => {
         if (row.type === "zone") {
+          // PHILO-8-01 (the owner's ratified canvas, 2026-09-26): the zone
+          // being named holds the one name field in its Name cell.
+          if (row.id === renamingZoneId)
+            return <ZoneRenameRow key={row.id} zoneId={row.id} title={row.title} placement="inrow" />;
           return (
             /* HS-202-04 (UX-CANON A.8) — an empty zone announced
                "<name> zone, 0 items" to a screen reader and printed
@@ -303,7 +310,17 @@ export function DeskListView() {
             else openPullout(qualifiedRef(row.object.kind, row.object.id));
           }}
           onRowKeyDown={(event, row) => {
-            if (row.type !== "object") return;
+            // PHILO-8-01 — F2 on a focused zone row opens its name field
+            // (zone rows are not selectable, so the registry's F2 never
+            // reaches them; "Keep F2 on zone rows", the owner, 2026-09-26).
+            if (row.type === "zone") {
+              if (event.key === "F2") {
+                event.preventDefault();
+                event.stopPropagation();
+                useDesk.getState().setRenamingZone(row.id);
+              }
+              return;
+            }
             if (event.key === " ") {
               event.preventDefault();
               toggleSelected(qualifiedRef(row.object.kind, row.object.id));

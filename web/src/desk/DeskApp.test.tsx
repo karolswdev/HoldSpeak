@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
   openPullout: vi.fn(),
   pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
   renamingZoneId: null as string | null,
+  zoneRenameError: null as null | { zoneId: string; name: string; code: string; label: string; detail: string },
   setRenamingZone: vi.fn(),
   clearZoneRenameError: vi.fn(),
 }));
@@ -60,7 +61,8 @@ vi.mock("./store", () => {
     refresh: state.refresh,
     openPullout: state.openPullout,
     renamingZoneId: state.renamingZoneId,
-    zoneRenameError: null,
+    zoneRenameError: state.zoneRenameError,
+    renameZone: vi.fn(),
     setRenamingZone: state.setRenamingZone,
     clearZoneRenameError: state.clearZoneRenameError,
   });
@@ -300,5 +302,23 @@ describe("DeskApp arrival state", () => {
     view.rerender(<DeskApp />);
     expect(state.setRenamingZone).toHaveBeenCalledWith(null);
     state.renamingZoneId = null;
+  });
+
+  it("PHILO-8-01 half B: a refusal still on the chip moves to the write receipt when the face changes", async () => {
+    const { currentWriteFailure, clearWriteFailure } = await import("./hooks/useWriteReceipt");
+    clearWriteFailure();
+    state.arrivalRequired = false;
+    state.surface = "floor";
+    const view = render(<DeskApp />);
+    state.renamingZoneId = "dir_a";
+    state.zoneRenameError = { zoneId: "dir_a", name: "Inbox", code: "zone_name_taken", label: "NAME TAKEN", detail: "" };
+    state.surface = "chair";
+    view.rerender(<DeskApp />);
+    expect(state.clearZoneRenameError).toHaveBeenCalled();
+    expect(currentWriteFailure()).toMatchObject({ verb: "RENAME ZONE", reason: "NAME TAKEN" });
+    expect(currentWriteFailure()?.retry).toBeTypeOf("function");
+    state.renamingZoneId = null;
+    state.zoneRenameError = null;
+    clearWriteFailure();
   });
 });

@@ -8,6 +8,7 @@ import {
   clearWriteFailure,
   currentWriteFailure,
   reportWriteFailure,
+  writeFailureReason,
 } from "../hooks/useWriteReceipt";
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 import {
@@ -20,7 +21,7 @@ import { buildLinearGraph } from "../graph";
 import { loadSetup } from "../setup";
 import { registerRepository as registerRepositoryApi } from "../repository";
 import { faceChangeCount, nextFreeZoneName } from "../zoneName";
-import type { DeskState, SliceCreator } from "./types";
+import type { DeskState, SliceCreator, ZoneRenameError } from "./types";
 import { GHOST_LAYOUT_KEYS } from "./types";
 
 /** PHILO-8-01 — default zone names posted whose refresh has not landed. */
@@ -600,42 +601,12 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         ),
       },
     });
-    try {
-      const trimmed = name.trim();
-      const res = await apiRequest(
-        `/api/directories/${encodeURIComponent(id)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
-        },
-      );
-      if (res.status === 409) {
-        // Name taken -- revert optimistic update and show error.
-        const body = await res.json();
-        const existingName = body.existing_name || trimmed;
-        set({
-          zoneRenameError: `A zone named "${existingName}" already exists`,
-          items: {
-            ...get().items,
-            directory: get().items.directory.map((d) =>
-              d.id === id ? { ...d, name: oldName, title: oldName } : d,
-            ),
-          },
-        });
-      } else if (res.status === 422) {
-        // Validation error -- revert.
-        set({
-          items: {
-            ...get().items,
-            directory: get().items.directory.map((d) =>
-              d.id === id ? { ...d, name: oldName, title: oldName } : d,
-            ),
-          },
-        });
-      }
-    } catch {
-      // Network error -- revert silently.
+    const trimmed = name.trim();
+    // PHILO-8-01 (the owner's ratified canvas, 2026-09-26) — a refused rename
+    // is never silent. While the zone's field is open the refusal is its chip;
+    // when the field has closed (he left the face) it is the desk's write
+    // receipt, `RENAME ZONE`, with Retry.
+    const refuse = (error: Omit<ZoneRenameError, "zoneId" | "name">) => {
       set({
         items: {
           ...get().items,
@@ -644,6 +615,39 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           ),
         },
       });
+      if (get().renamingZoneId === id) {
+        set({ zoneRenameError: { ...error, zoneId: id, name: trimmed } });
+      } else {
+        reportWriteFailure("RENAME ZONE", error.label, () => void get().renameZone(id, trimmed));
+      }
+    };
+    try {
+      const res = await apiRequest(
+        `/api/directories/${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmed }),
+        },
+      );
+      if (res.ok) return;
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        const existingName = body?.existing_name || trimmed;
+        refuse({
+          code: "zone_name_taken",
+          label: "NAME TAKEN",
+          detail: `A zone named "${existingName}" already exists`,
+        });
+      } else {
+        refuse({
+          code: res.status === 422 ? "invalid_arguments" : `http_${res.status}`,
+          label: "NOT SAVED",
+          detail: String(body?.error || writeFailureReason(res)),
+        });
+      }
+    } catch (cause) {
+      refuse({ code: "not_saved", label: "NOT SAVED", detail: writeFailureReason(cause) });
     }
   },
   clearZoneRenameError() {
