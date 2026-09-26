@@ -1,0 +1,11 @@
+# Round two (F3): the actor/successor fences against the atlas at ca744702 (git show HEAD:docs/internal/philo/graph/atlas-phase7.json), branch test file
+# command: HOME=$(mktemp -d) uv run pytest -q -p no:cacheprovider tests/unit/test_philo7_atlas.py -k 'actor or successor_the_write'
+
+E       AssertionError: ['case.p7.zone_file.note_in_zone.op: the receipt read of {file_op} does not assert its actor', 'case.p7.zone_file.refi... assert its actor', 'case.p7.kb_member.add_and_remove.op: the receipt read of {add_op} does not assert its actor', ...]
+E       assert not ['case.p7.zone_file.note_in_zone.op: the receipt read of {file_op} does not assert its actor', 'case.p7.zone_file.refi... assert its actor', 'case.p7.kb_member.add_and_remove.op: the receipt read of {add_op} does not assert its actor', ...]
+E       AssertionError: assert {'as': 'successor_id', 'path': 'id'} in []
+E        +  where [] = <built-in method get of dict object at 0x10a0a4140>('capture_more', [])
+E        +    where <built-in method get of dict object at 0x10a0a4140> = {'adapter': 'mcp-http', 'args': {'decision_id': '{decision_id}'}, 'capture_as': 'supersede_op', 'capture_path': 'operation_id', ...}.get
+FAILED tests/unit/test_philo7_atlas.py::test_every_receipt_read_asserts_its_actor
+FAILED tests/unit/test_philo7_atlas.py::test_the_supersede_receipt_names_the_successor_the_write_returned
+2 failed, 22 deselected in 0.32s

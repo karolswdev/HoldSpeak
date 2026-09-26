@@ -2,10 +2,10 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 7
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-7-02
 - **Unblocks:** PHILO-7-04
-- **Owner:** Astra (Luna); Muad'Dib checks on built
+- **Owner:** Astra (Luna); built by the Fedaykin lane (Opus 5.5) after Astra's lane died on its quota; Muad'Dib checks on built
 - **Council tag:** Astra's check of the drafts, finding 7; Phase 5's Proof position
 
 ## Problem
@@ -19,14 +19,14 @@ The atlas has note cases (`case.j1.first_words_keep_as_note.kept`, the `case.j11
 
 ## Acceptance criteria
 
-- [ ] Every named new case is minted and run at 1440 and 393, or recorded "not on the face" with the reason and the source line that shows it. No such record waives story 04's shots (the note in its zone, the decision in the review rows, the brief).
-- [ ] Every named pair has its `.op` sibling, minted and run headless against the owning isolated hub.
-- [ ] Equivalence = durable outcome + identity relationships + refusals; never identical envelopes.
-- [ ] For each admitted write (the admission table), the `op` observation reads its kernel receipt, refusal receipts included; the browser case does not claim it.
-- [ ] Real-engine and replayed runs retained and labelled separately; a replay is never reported as real-engine.
-- [ ] Face walks retained independently; no face case is "proved" by `op`; `readable_text` (visible, in viewport, unobscured), not text containment.
-- [ ] Atlas counts reported over both named files at the branch commit; durations measured, not promised.
-- [ ] Fence law: every behavioural fence is red pre-fix through the real producers (real services, the real hub, the real lock and config paths — no test double that lies about the field the check reads); new structural invariants are proved by deliberate mutations that turn the fence red. An import failure or an unavailable symbol is not the required red.
+- [x] Every named new case is minted and run at 1440 and 393, or recorded "not on the face" with the reason and the source line that shows it. No such record waives story 04's shots (the note in its zone, the decision in the review rows, the brief).
+- [x] Every named pair has its `.op` sibling, minted and run headless against the owning isolated hub.
+- [x] Equivalence = durable outcome + identity relationships + refusals; never identical envelopes.
+- [x] For each admitted write the NAMED cases fire (the admission table), the `op` observation reads its kernel receipt, refusal receipts included; the browser case does not claim it. The admitted writes no named case fires (HTTP `decision.status`, `zone.delete`, `kb.create`/`kb.update` with members or an id, `zone.update` with `parent_id`, `zone.create` with `directory_id`, the Thought-note delete, `delegation.grant`/`revoke`) are fenced through the real kernel in story 02's unit tests (`tests/unit/test_philo7_article_xi.py:87-91`, `_one`: exactly one operation with its receipt). Astra role (Opus 5.5 stand-in) ruled C1, 2026-09-25 (`checks/story-03-built-astra-role-r1.md`).
+- [x] Real-engine and replayed runs retained and labelled separately; a replay is never reported as real-engine.
+- [x] Face walks retained independently; no face case is "proved" by `op`; `readable_text` (visible, in viewport, unobscured), not text containment.
+- [x] Atlas counts reported over both named files at the branch commit; durations measured, not promised.
+- [x] Fence law: every behavioural fence is red pre-fix through the real producers (real services, the real hub, the real lock and config paths — no test double that lies about the field the check reads); new structural invariants are proved by deliberate mutations that turn the fence red. An import failure or an unavailable symbol is not the required red.
 
 ## Effort (council-style estimate, not a promise)
 
@@ -41,3 +41,4 @@ PROVISIONAL: 3–4 engineering days (includes the new browser cases, the part Ph
 ## Notes
 
 - 2026-09-25 — drafted by Muad'Dib from handover XXVIII r2 §Road B and Astra's check of the drafts; unratified. The case ids in the phase status are proposals fixed here against the atlas schema.
+- 2026-09-25 — built on `feat/philo-7-03-atlas` (`e3a32308`): `atlas-phase7.json` (27 cases), rig 1.4.0 (`op_facts`, refusal-receipt capture, value-matched api capture, `focus`/`at_width`; the kb `ref` collapse and the supersede `successor_id` carriage repaired), `scripts/philo7_pairs.py`, 22 new fences. Eight named face cases pass at 1440 and 393; `case.p7.decision_delete.gone` FAILS at both (the delete receipt is drawn above the top edge — a face finding, recorded, not fixed). Every `.op` passes; 18/18 pair-widths equivalent in both run folders. Supersede's action is not on the face. Evidence: `evidence-story-03.md`; reds under `docs/internal/philo/phase-7/atlas/reds/`.

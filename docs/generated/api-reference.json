@@ -8072,6 +8072,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
@@ -8150,6 +8151,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
@@ -8247,6 +8249,7 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
@@ -8324,6 +8327,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8361,6 +8365,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8434,6 +8439,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8515,6 +8521,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8552,6 +8559,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8589,6 +8597,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8626,6 +8635,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8663,6 +8673,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8700,6 +8711,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8783,6 +8795,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8820,6 +8833,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -8896,6 +8910,7 @@
         "tests/unit/test_philo5_the_loop.py",
         "tests/unit/test_philo6_04_one_cause_one_row.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -14728,6 +14743,7 @@
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_grant_restart.py",
@@ -14811,6 +14827,7 @@
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
         "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_compat.py",
         "tests/unit/test_philo7_contract.py",
         "tests/unit/test_philo7_grant_restart.py",

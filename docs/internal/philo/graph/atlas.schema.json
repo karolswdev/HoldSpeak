@@ -85,7 +85,8 @@
               "a1",
               "a2",
               "a3",
-              "a4"
+              "a4",
+              "p7"
             ]
           },
           "words": {
@@ -263,6 +264,35 @@
             "wait_for": {
               "type": "object",
               "additionalProperties": true
+            },
+            "capture_from": {
+              "enum": [
+                "response",
+                "refusal"
+              ],
+              "description": "PHILO-7-03: where capture_as reads; a refused admitted write carries its operation_id and refusal receipt on the refusal record."
+            },
+            "capture_more": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "as",
+                  "path"
+                ],
+                "properties": {
+                  "as": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "description": "PHILO-7-03 round two: further values captured from the same record (a supersede's successor id beside its operation_id)."
             }
           }
         },
@@ -326,6 +356,11 @@
               "type": "string",
               "minLength": 1,
               "description": "The dotted or JSON-pointer path into this step's response that holds the captured value. The rig defaults to `id`, so a route answering another name must say so."
+            },
+            "capture_match": {
+              "type": "object",
+              "minProperties": 1,
+              "description": "PHILO-7-03: capture the one row at capture_path whose fields equal these values (the desk seeds rows of its own)."
             }
           }
         },
@@ -351,7 +386,8 @@
                 "click_role",
                 "fill",
                 "press",
-                "wait_for"
+                "wait_for",
+                "focus"
               ],
               "description": "One of the actions scripts/graph_walk.py::_ui_step implements."
             },
@@ -416,6 +452,13 @@
                 }
               },
               "description": "Pins which network response the rig records as the clicked trigger's own response."
+            },
+            "at_width": {
+              "enum": [
+                1440,
+                393
+              ],
+              "description": "PHILO-7-03: the step runs at this viewport width only; the rig records it skipped at the other."
             }
           },
           "allOf": [
@@ -426,7 +469,8 @@
                     "enum": [
                       "click",
                       "fill",
-                      "wait_for"
+                      "wait_for",
+                      "focus"
                     ]
                   }
                 },
@@ -1072,7 +1116,8 @@
                     "unchanged",
                     "window_titled",
                     "op_field",
-                    "op_refusal"
+                    "op_refusal",
+                    "op_facts"
                   ]
                 }
               }
@@ -1254,7 +1299,8 @@
                 "a1",
                 "a2",
                 "a3",
-                "a4"
+                "a4",
+                "p7"
               ]
             },
             "edge_ids": {
