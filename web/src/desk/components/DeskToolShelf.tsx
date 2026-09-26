@@ -27,7 +27,8 @@ import { usePalette } from "../chromeState";
 import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
-import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
+import { useChairState } from "../chairState";
+import { VERBS, offeredHere, verbLabel, type VerbContext } from "../verbRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
@@ -217,6 +218,8 @@ export function DeskToolShelf() {
   const refresh = useDesk((state) => state.refresh);
   const openToolInspector = useDesk((state) => state.openToolInspector);
   const diveInto = useDesk((state) => state.diveInto);
+  // PHILO-8-01 — the face decides which zone verbs the deck offers.
+  const surface = useChairState((state) => state.surface);
   const integrations = setup?.trust?.destinations ?? [];
   const launchers = useLaunchers();
 
@@ -372,7 +375,7 @@ export function DeskToolShelf() {
         run: () => openPullout(qualifiedRef("coder", action.id)),
       });
     for (const v of VERBS) {
-      if (v.palette === false || v.scope === "go") continue;
+      if (v.palette === false || v.scope === "go" || !offeredHere(v)) continue;
       const label = verbLabel(v, ctx);
       const ghost = v.ghost(ctx);
       // A cold deck begins with the Desk's creation verbs; other verbs
@@ -547,6 +550,7 @@ export function DeskToolShelf() {
     projects,
     recents,
     selectedIds,
+    surface,
     targets,
   ]);
 

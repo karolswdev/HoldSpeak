@@ -1,0 +1,18 @@
+/* PHILO-8-01 canvas only: the in-row field sits in the Name cell. Every
+ * species style is the product's (inline-editor.css, speak-to-fill.css).
+ * C5 (Astra-role check r1): the field row adds NOTHING to the column's
+ * intrinsic width (width 0, min-width 100% of the cell), so opening the
+ * field or showing a refusal never shifts the table's columns; the chip takes
+ * its own line under the field. */
+.desk-next .desk-zone-rename-row.is-inrow {
+  width: 0;
+  min-width: 100%;
+  flex-wrap: wrap;
+}
+.desk-next .desk-zone-rename-row.is-inrow .desk-zone-rename {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.desk-next .desk-zone-rename-row.is-inrow .desk-zone-rename-refusal {
+  flex-basis: 100%;
+}

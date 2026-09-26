@@ -19,8 +19,12 @@ import {
 import { buildLinearGraph } from "../graph";
 import { loadSetup } from "../setup";
 import { registerRepository as registerRepositoryApi } from "../repository";
+import { faceChangeCount, nextFreeZoneName } from "../zoneName";
 import type { DeskState, SliceCreator } from "./types";
 import { GHOST_LAYOUT_KEYS } from "./types";
+
+/** PHILO-8-01 — default zone names posted whose refresh has not landed. */
+const zoneNamesInFlight = new Set<string>();
 
 // ---- localStorage helpers (positions, zone widths) ----------------------
 
@@ -332,11 +336,35 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         },
       ],
     } satisfies Record<string, [string, string, Record<string, unknown>]>;
-    const [url, wireKey, body] = posts[kind];
+    const [url, wireKey, defaults] = posts[kind];
+    // PHILO-8-01 — a zone with no name from the caller takes the first free
+    // default name ("New zone", "New zone 2", …) by the hub's rule; a name
+    // the caller passed is never replaced. A name already posted but not yet
+    // in the store (its refresh is still running) counts as taken, so two
+    // quick presses never post the same name.
+    const picked =
+      kind === "zone" && overrides.name === undefined
+        ? nextFreeZoneName([
+            ...(get().items.directory ?? []),
+            ...[...zoneNamesInFlight].map((name) => ({ name })),
+          ])
+        : null;
+    if (picked) zoneNamesInFlight.add(picked);
+    const release = () => {
+      if (picked) zoneNamesInFlight.delete(picked);
+    };
+    const body: Record<string, unknown> = picked ? { ...defaults, name: picked } : defaults;
+    const faceAtPress = faceChangeCount();
     let createdId: string | null = null;
     // HS-132-06 — a refused create is named, not swallowed; RETRY re-issues
-    // the exact same create.
-    const retry = () => void get().createPrimitive(kind, overrides);
+    // the same create. PHILO-8-01 — RETRY refreshes the store first, so a
+    // zone made elsewhere (MCP, another tab) is seen and the free name is
+    // picked again; a second refusal is still named.
+    const retry = () =>
+      void get()
+        .refresh()
+        .catch(() => undefined)
+        .then(() => get().createPrimitive(kind, overrides));
     try {
       const res = await apiRequest(url, {
         method: "POST",
@@ -344,6 +372,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         body: JSON.stringify({ ...body, ...overrides }),
       });
       if (!res.ok) {
+        release();
         await reportCreateFailure(kind, res, retry, get);
         return;
       }
@@ -351,6 +380,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       createdId = data?.[wireKey]?.id || null;
       clearWriteFailure();
     } catch (cause) {
+      release();
       await reportCreateFailure(kind, cause, retry, get);
       return;
     }
@@ -362,12 +392,19 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       set({ positions });
       savePositions(positions);
     }
-    await get().refresh();
+    try {
+      await get().refresh();
+    } finally {
+      release();
+    }
     if (createdId) {
       get().markNew(createdId);
       // "workbench" never reaches here — it returns early to the
       // pre-persistence chooser (HS-130-09).
-      if (kind === "zone") get().setRenamingZone(createdId);
+      if (kind === "zone") {
+        // PHILO-8-01 — only on the face where New Zone was pressed.
+        if (faceChangeCount() === faceAtPress) get().setRenamingZone(createdId);
+      }
       // PHILO-3-01 — a decision has no inline editor; its face is the
       // DecisionPullout, which opens in Edit for a new decision.
       else if (kind === "decision") get().openPullout(createdId);

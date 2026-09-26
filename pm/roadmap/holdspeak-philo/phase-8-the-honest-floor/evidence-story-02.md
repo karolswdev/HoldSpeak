@@ -272,3 +272,215 @@ NOTE: predicate: 'Removal committed' is readable in viewport {'width': 393, 'hei
 ......................................................                   [100%]
 198 passed in 9.58s
 ```
+
+### Captured run — 2026-09-26T17:35:00Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.0kOYpxLg9G PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py -p no:cacheprovider -n 2 -rA`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3f79bd67852da210694c290ac59b084d7d381537
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+...........................                                              [100%]
+==================================== PASSES ====================================
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[393] ____
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestOneDelete.test_the_list_row_menu_delete_removes_the_object[1440] _____
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+1440: the row menu's Delete row {'top': 847, 'bottom': 875, 'vh': 900}
+_ TestOneDelete.test_the_list_palette_delete_removes_the_selected_object[1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestOneDelete.test_the_list_row_menu_delete_removes_the_object[393] ______
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+393: the row menu's Delete row {'top': 839, 'bottom': 867, 'vh': 852}
+_ TestOneDelete.test_the_list_palette_delete_removes_the_selected_object[393] __
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[1440] ___
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_left_selected 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+__________ TestOneDelete.test_undo_on_the_list_keeps_the_object[1440] __________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ TestOneDelete.test_undo_on_the_list_keeps_the_object[393] ___________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_taken_out 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_______ TestOneDelete.test_the_receipt_is_readable_on_a_long_list_at_393 _______
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_taken_out 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_left_selected 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_left_selected 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_left_selected 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_taken_out 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_taken_out 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_________ TestOneDelete.test_undo_keeps_only_the_pending_object[1440] __________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor 1440: 404; DELETE 1
+__________ TestOneDelete.test_undo_keeps_only_the_pending_object[393] __________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[floor-393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor 393: 404; DELETE 1
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[list-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list 1440: 404; DELETE 1
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[list-393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list 393: 404; DELETE 1
+_ TestOneDelete.test_the_delete_key_on_the_chair_with_a_floor_selection[1440] __
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+chair 1440: 404; DELETE 1
+__ TestOneDelete.test_the_delete_key_on_the_chair_with_a_floor_selection[393] __
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+chair 393: 404; DELETE 1
+_ TestDeleteReceiptGlass.test_the_delete_receipt_is_readable_in_the_viewport[1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+1440: pending {'x': 533.859375, 'y': 748, 'w': 372.28125, 'h': 27} committed {'x': 650.8984375, 'y': 748, 'w': 138.203125, 'h': 27} shown 6605 ms
+_ TestDeleteReceiptGlass.test_the_delete_receipt_is_readable_in_the_viewport[393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+393: pending {'x': 12, 'y': 676, 'w': 369, 'h': 27} committed {'x': 127.3984375, 'y': 676, 'w': 138.203125, 'h': 27} shown 6131 ms
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_row_menu_delete_removes_the_object[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_row_menu_delete_removes_the_object[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_receipt_is_readable_on_a_long_list_at_393
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[floor-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_delete_key_on_the_chair_with_a_floor_selection[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_delete_key_on_the_chair_with_a_floor_selection[393]
+PASSED tests/e2e/test_philo7_delete_receipt_glass.py::TestDeleteReceiptGlass::test_the_delete_receipt_is_readable_in_the_viewport[1440]
+PASSED tests/e2e/test_philo7_delete_receipt_glass.py::TestDeleteReceiptGlass::test_the_delete_receipt_is_readable_in_the_viewport[393]
+27 passed in 363.82s (0:06:03)
+```
+
+### Captured run — 2026-09-26T17:41:20Z
+
+- **Command:** `uv run python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0f0af5fff4d2409fe06dc04b9e916819c7a348d8
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2906 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```
