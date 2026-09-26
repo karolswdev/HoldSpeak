@@ -269,8 +269,9 @@ def test_an_absence_needs_a_scope_that_exists(negatives):
 
 def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
     """(4) A typo must not become a silent no-op that 'passed'."""
+    # PHILO-7-03 added `focus` (keyboard travel to a Floor world chip).
     assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
-                          "press", "wait_for"}
+                          "press", "wait_for", "focus"}
     for action in ("tap", "doubleclick", None):
         with pytest.raises(Blocked) as raised:
             # page=None: reaching the page at all would raise AttributeError,

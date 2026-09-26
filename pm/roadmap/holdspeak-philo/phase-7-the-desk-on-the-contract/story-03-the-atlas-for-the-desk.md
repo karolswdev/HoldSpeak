@@ -22,7 +22,7 @@ The atlas has note cases (`case.j1.first_words_keep_as_note.kept`, the `case.j11
 - [x] Every named new case is minted and run at 1440 and 393, or recorded "not on the face" with the reason and the source line that shows it. No such record waives story 04's shots (the note in its zone, the decision in the review rows, the brief).
 - [x] Every named pair has its `.op` sibling, minted and run headless against the owning isolated hub.
 - [x] Equivalence = durable outcome + identity relationships + refusals; never identical envelopes.
-- [x] For each admitted write (the admission table), the `op` observation reads its kernel receipt, refusal receipts included; the browser case does not claim it.
+- [x] For each admitted write the NAMED cases fire (the admission table), the `op` observation reads its kernel receipt, refusal receipts included; the browser case does not claim it. The admitted writes no named case fires (HTTP `decision.status`, `zone.delete`, `kb.create`/`kb.update` with members or an id, `zone.update` with `parent_id`, `zone.create` with `directory_id`, the Thought-note delete, `delegation.grant`/`revoke`) are fenced through the real kernel in story 02's unit tests (`tests/unit/test_philo7_article_xi.py:87-91`, `_one`: exactly one operation with its receipt). Astra role (Opus 5.5 stand-in) ruled C1, 2026-09-25 (`checks/story-03-built-astra-role-r1.md`).
 - [x] Real-engine and replayed runs retained and labelled separately; a replay is never reported as real-engine.
 - [x] Face walks retained independently; no face case is "proved" by `op`; `readable_text` (visible, in viewport, unobscured), not text containment.
 - [x] Atlas counts reported over both named files at the branch commit; durations measured, not promised.

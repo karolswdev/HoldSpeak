@@ -381,6 +381,8 @@ Sequential: 01 → 02 → 03 → 04. `holdspeak/operations.py`, `holdspeak/mcp/t
 - **F4 recorded.** The delete case's round-one mutation red proves nothing.
 - Scoped set 152 passed. Owed: Astra's check (C1, C2).
 
+2026-09-25, story 03 round three (the Astra-role check, Opus 5.5 stand-in: `checks/story-03-built-astra-role-r1.md`, RATIFY-WITH-CONDITIONS). It ruled C1 (the box is reworded to the admitted writes the named cases fire; the rest are fenced in story 02's unit tests) and C2 (`atlas-phase7.json` accepted). Three branch-new reds were paid after merging main: K1, the rig's UI vocabulary fence now includes `focus`; K2, the evidence guard allow-lists `test_philo7_atlas.py` as a reader; K3, the api reference is regenerated and every generator `--check` exits 0. Scoped run: 216 passed. Recorded in `checks/story-03-round-two-muaddib.md` §"Round three".
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

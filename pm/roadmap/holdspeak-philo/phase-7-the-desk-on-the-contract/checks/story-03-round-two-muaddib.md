@@ -55,3 +55,13 @@ The 27 round-one mutation reds mutate the EXPECTATION, not the product. They pro
 
 - Astra's four untracked files under `docs/internal/philo/phase-7/atlas/` (`design.md`, `orientation.md`, `baseline-collect.txt`, `baseline-run.txt`) are untouched.
 - C1, C2 and the F5 divergences remain Astra's rulings.
+
+## Round three: the Astra-role check (Opus 5.5 stand-in), K1–K4 paid
+
+- **Source:** `checks/story-03-built-astra-role-r1.md` (RATIFY-WITH-CONDITIONS). It rules **C1** (the narrower reading is lawful: reword the box, add no op cases) and **C2** (accept `atlas-phase7.json`).
+- **Merge:** `origin/main` was merged into the branch first (merge commit `bb072063`, which brings #666's guard allow-list).
+- **K1:** `tests/unit/test_graph_walk_calibration.py:272-274` expects the eight-action UI vocabulary, including `focus`. Red before the fix, on the merged tree: `Extra items in the left set: 'focus'`.
+- **K2:** `tests/unit/test_evidence_scratch_guard.py:27` allow-lists `tests/unit/test_philo7_atlas.py` as a READER, beside `test_philo5_his_words.py`. Red before the fix, on the merged tree: `assert not ['tests/unit/test_philo7_atlas.py:30']`.
+- **K3:** `docs/generated/api-reference.json` is regenerated (+15 lines: round two's fences named more routes). It showed `API reference drift` before. Every `scripts/philo_*.py --check` now exits 0 (api, boundary census, config, doctor, graph, openapi, repository census).
+- **K4 (C1):** the story's acceptance box now reads "for each admitted write the NAMED cases fire". It names the unexercised admitted writes and their story 02 fence (`tests/unit/test_philo7_article_xi.py:87-91`, `_one`), and cites the ruling. The gate accepted the edit to the done story file.
+- **Scoped run:** the five named files plus the guard plus the calibration fence give **216 passed**.
