@@ -15,6 +15,9 @@ const state = vi.hoisted(() => ({
   refresh: vi.fn(),
   openPullout: vi.fn(),
   pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
+  renamingZoneId: null as string | null,
+  setRenamingZone: vi.fn(),
+  clearZoneRenameError: vi.fn(),
 }));
 
 const { marker } = vi.hoisted(() => ({
@@ -52,7 +55,15 @@ vi.mock("./store", () => {
     desk.pullouts = state.pullouts;
     return selector(desk);
   };
-  useDesk.getState = () => ({ ...desk, refresh: state.refresh, openPullout: state.openPullout });
+  useDesk.getState = () => ({
+    ...desk,
+    refresh: state.refresh,
+    openPullout: state.openPullout,
+    renamingZoneId: state.renamingZoneId,
+    zoneRenameError: null,
+    setRenamingZone: state.setRenamingZone,
+    clearZoneRenameError: state.clearZoneRenameError,
+  });
   return { useDesk, defaultViewFor: () => "spatial" };
 });
 
@@ -275,5 +286,19 @@ describe("DeskApp arrival state", () => {
     state.surface = "chair";
     arrival.rerender(<DeskApp />);
     expect(screen.getByTestId("chair-pullout")).toHaveTextContent("First dictation");
+  });
+
+  it("PHILO-8-01: a change of face ends a pending zone rename (no stale field on the next face)", () => {
+    state.arrivalRequired = false;
+    state.surface = "floor";
+    const view = render(<DeskApp />);
+    state.renamingZoneId = "dir_a";
+    state.setRenamingZone.mockClear();
+    view.rerender(<DeskApp />);
+    expect(state.setRenamingZone).not.toHaveBeenCalled();
+    state.surface = "chair";
+    view.rerender(<DeskApp />);
+    expect(state.setRenamingZone).toHaveBeenCalledWith(null);
+    state.renamingZoneId = null;
   });
 });

@@ -14742,6 +14742,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/e2e/test_philo8_01_zone_name_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
@@ -14826,6 +14827,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
+        "tests/e2e/test_philo8_01_zone_name_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",

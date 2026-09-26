@@ -39,6 +39,7 @@ import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
+import { noteFaceChange } from "./zoneName";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -130,6 +131,15 @@ export default function DeskApp() {
   // HS-140-01: first value owns HOME. A stale Floor preference must not
   // detour a fresh owner away from the one capture path.
   const showFloor = surface === "floor" && !arrivalRequired;
+  // PHILO-8-01 — a rename lives on the face where it began. A change of
+  // face (Chair / Floor, or list / spatial) ends it, so no stale field
+  // comes up later on another face (FINDING Finding 1).
+  useEffect(() => {
+    noteFaceChange();
+    const s = useDesk.getState();
+    if (s.renamingZoneId) s.setRenamingZone(null);
+    if (s.zoneRenameError) s.clearZoneRenameError();
+  }, [showFloor, viewMode]);
   const chairOpenCards = pullouts
     .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));

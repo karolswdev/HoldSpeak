@@ -13,8 +13,10 @@ import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
 import { useSettleState } from "../settleState";
+import { useChairState } from "../chairState";
 import {
   menuVerbs,
+  offeredHere,
   verbLabel,
   type MenuId,
   type VerbContext,
@@ -49,6 +51,8 @@ export function DeskMenuBar() {
   const barRef = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const selectedIds = useDesk((s) => s.selectedIds);
+  // PHILO-8-01 — re-render on a face change: the Chair withholds zone verbs.
+  useChairState((s) => s.surface);
   const ctx: VerbContext = {
     selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
@@ -74,6 +78,7 @@ export function DeskMenuBar() {
   const menuEntries = (id: MenuId, out: WorkMenuEntry[]): void => {
     let lastGroup: string | undefined;
     for (const v of menuVerbs(id)) {
+      if (!offeredHere(v)) continue;
       if (out.length && v.group !== lastGroup)
         out.push({ type: "sep", id: `sep-${v.id}` });
       lastGroup = v.group;
