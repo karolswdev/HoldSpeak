@@ -18,8 +18,8 @@
  * - where no seat is mounted (the Chair) the delete is WITHHELD: the verb is
  *   greyed with its reason (`verbRegistry.ts`) and nothing is deleted.
  */
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { useDesk } from "./store";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { qualifiedRef } from "./api";
 import { OBJECT_DELETE_REQUEST } from "./verbRegistry";
@@ -47,9 +47,15 @@ export function DeskDeleteHost() {
   const { remove, flush, receipt } = useUndoReceipt();
 
   // A face change commits a pending delete. The first run is the mount.
+  // Round three: the face is the one the owner SEES, resolved the way
+  // DeskApp resolves it (a resize that turns the list into the spatial
+  // Floor is a face change), never the raw preference.
   const surface = useChairState((s) => s.surface);
   const viewMode = useDesk((s) => s.viewMode);
-  const face = `${surface}:${viewMode}`;
+  const total = useDesk((s) => Object.values(s.items).reduce((n, l) => n + l.length, 0));
+  const compact = useCompactWidth();
+  const face =
+    surface === "floor" ? `floor:${defaultViewFor(viewMode, total, compact)}` : surface;
   const faceRef = useRef(face);
   useEffect(() => {
     if (faceRef.current === face) return;
@@ -78,10 +84,12 @@ export function DeskDeleteHost() {
           (id) => id !== ref && id !== qualified && id !== object.id,
         ),
       );
+      // Keyed by the object: a repeated Delete never opens a second Undo.
       remove(
         object.title,
-        () => void useDesk.getState().deletePrimitive(object.id, object.kind),
+        () => useDesk.getState().deletePrimitive(object.id, object.kind),
         () => undefined,
+        qualified,
       );
     };
     window.addEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
@@ -89,6 +97,19 @@ export function DeskDeleteHost() {
   }, [remove]);
 
   return null;
+}
+
+/** DeskApp's phone fact for the Floor's default view (`window.innerWidth
+ * <= 720`), kept live across a resize. */
+function useCompactWidth(): boolean {
+  const read = () => (typeof window !== "undefined" ? window.innerWidth <= 720 : false);
+  const [compact, setCompact] = useState(read);
+  useEffect(() => {
+    const onResize = () => setCompact(read());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return compact;
 }
 
 /** The receipt, where a face seats it. */

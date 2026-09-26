@@ -1,0 +1,594 @@
+bringing up nodes...
+bringing up nodes...
+
+FFFFFFFFFF.F
+=================================== FAILURES ===================================
+__ TestOneDelete.test_a_repeated_delete_never_offers_a_false_undo[floor-1440] __
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8ef90>
+face = 'floor', width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                for _ in range(2):
+                    if face == "list":
+                        _row_menu_delete(page, "Repeat me")
+                    else:
+                        if not _askbar_count(page):
+                            _select(page, face, decision_id, "Repeat me")
+                        page.keyboard.press("Delete")
+                    _readable_receipt(page, "Removed Repeat me", 5_000)
+                page.locator(".undo-receipt-btn").click()
+                _readable_receipt(page, "Restored Repeat me", 5_000)
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                print(f"repeat {face} {width}: {status}; DELETE {len(self.deletes)}")
+>               assert (status, self.deletes) == (200, []), (status, self.deletes)
+E               AssertionError: (404, ['http://127.0.0.1:61271/api/decisions/decision_5b007f8d1c24'])
+E               assert (404, ['http:...b007f8d1c24']) == (200, [])
+E                 
+E                 At index 0 diff: 404 != 200
+E                 Use -v to get more diff
+
+tests/e2e/test_philo8_one_delete_glass.py:436: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__ TestOneDelete.test_a_repeated_delete_never_offers_a_false_undo[list-1440] ___
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10ae5f0b0>
+face = 'list', width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                for _ in range(2):
+                    if face == "list":
+>                       _row_menu_delete(page, "Repeat me")
+
+tests/e2e/test_philo8_one_delete_glass.py:425: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:122: in _row_menu_delete
+    item.click()
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x1123afa10>
+cb = <function Channel.send.<locals>.<lambda> at 0x113622cf0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for locator(".desk-world-menu [role=menuitem]").filter(has_text="Delete").last
+E               - locator resolved to <button type="button" role="menuitem" aria-disabled="true" class="btn--chrome is-ghost">…</button>
+E             - attempting click action
+E               2 × waiting for element to be visible, enabled and stable
+E                 - element is not enabled
+E               - retrying click action
+E               - waiting 20ms
+E               2 × waiting for element to be visible, enabled and stable
+E                 - element is not enabled
+E               - retrying click action
+E                 - waiting 100ms
+E               13 × waiting for element to be visible, enabled and stable
+E                  - element is not enabled
+E                - retrying click action
+E                  - waiting 500ms
+E               - waiting for element to be visible, enabled and stable
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__ TestOneDelete.test_a_repeated_delete_never_offers_a_false_undo[floor-393] ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8eff0>
+face = 'floor', width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                for _ in range(2):
+                    if face == "list":
+                        _row_menu_delete(page, "Repeat me")
+                    else:
+                        if not _askbar_count(page):
+                            _select(page, face, decision_id, "Repeat me")
+                        page.keyboard.press("Delete")
+                    _readable_receipt(page, "Removed Repeat me", 5_000)
+                page.locator(".undo-receipt-btn").click()
+                _readable_receipt(page, "Restored Repeat me", 5_000)
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                print(f"repeat {face} {width}: {status}; DELETE {len(self.deletes)}")
+>               assert (status, self.deletes) == (200, []), (status, self.deletes)
+E               AssertionError: (404, ['http://127.0.0.1:61342/api/decisions/decision_2dd54fd49284'])
+E               assert (404, ['http:...dd54fd49284']) == (200, [])
+E                 
+E                 At index 0 diff: 404 != 200
+E                 Use -v to get more diff
+
+tests/e2e/test_philo8_one_delete_glass.py:436: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestOneDelete.test_a_repeated_delete_never_offers_a_false_undo[list-393] ___
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10ae5f110>
+face = 'list', width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                for _ in range(2):
+                    if face == "list":
+                        _row_menu_delete(page, "Repeat me")
+                    else:
+                        if not _askbar_count(page):
+                            _select(page, face, decision_id, "Repeat me")
+                        page.keyboard.press("Delete")
+                    _readable_receipt(page, "Removed Repeat me", 5_000)
+                page.locator(".undo-receipt-btn").click()
+                _readable_receipt(page, "Restored Repeat me", 5_000)
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                print(f"repeat {face} {width}: {status}; DELETE {len(self.deletes)}")
+>               assert (status, self.deletes) == (200, []), (status, self.deletes)
+E               AssertionError: (404, ['http://127.0.0.1:61357/api/decisions/decision_9ac8ef77341c'])
+E               assert (404, ['http:...ac8ef77341c']) == (200, [])
+E                 
+E                 At index 0 diff: 404 != 200
+E                 Use -v to get more diff
+
+tests/e2e/test_philo8_one_delete_glass.py:436: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestOneDelete.test_a_repeated_workbench_remove_never_offers_a_false_undo ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8f050>
+
+    @pytest.mark.e2e
+    def test_a_repeated_workbench_remove_never_offers_a_false_undo(self) -> None:
+        """P1-a, the Workbench window (the same hook)."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, _ids, errors = self._open(pw, 1440, [])
+            try:
+                wb = _api(page, "POST", "/api/workbenches", {"name": "WB Probe"}, token=TOKEN)["workbench"]["id"]
+                item = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Repeat WB item"}, token=TOKEN)["item"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", 1440)
+                _name_button(page, "WB Probe").click()
+                window = page.locator(".desk-workbench-window")
+                window.wait_for(timeout=10_000)
+                window.get_by_text("Repeat WB item", exact=True).click()
+                for _ in range(2):
+                    window.get_by_role("button", name="Remove", exact=True).click()
+                    page.wait_for_function(
+                        "() => (document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || '').includes('Removed')",
+                        timeout=5_000,
+                    )
+                window.locator(".undo-receipt-btn").click()
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                receipt = page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || ''")
+                items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                kept = any(i["id"] == item for i in items)
+                print(f"workbench repeat: kept {kept}; receipt {receipt!r}; DELETE {len(self.deletes)}")
+>               assert kept and not self.deletes, (kept, receipt, self.deletes)
+E               AssertionError: (False, '', ['http://127.0.0.1:61396/api/workbenches/workbench_73edbe0aa389/items/wbi_91d33a06537f'])
+E               assert (False)
+
+tests/e2e/test_philo8_one_delete_glass.py:470: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8f110>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_failed_refresh_keeps_the_pending_delete_and_its_undo(self, width: int) -> None:
+        """P1-b: the setup read fails (503) while "Undo" shows; the delete must
+        not commit early, and after Retry the Undo is still there and works."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refresh pending"])
+            try:
+                _to_face(page, "list", width)
+                _row_menu_delete(page, "Refresh pending")
+                _readable_receipt(page, "Removed Refresh pending", 5_000)
+                fail = lambda route: route.fulfill(status=503, content_type="application/json", body="{}")
+                page.route("**/api/setup/status", fail)
+                _palette(page, "Refresh from hub", "desk.refresh")
+                page.locator("[role=alert]").wait_for(timeout=5_000)
+                page.wait_for_timeout(1_000)
+                during = (_status(page, decision_id), list(self.deletes))
+                print(f"refresh {width}: during the failure {during}")
+>               assert during == (200, []), during
+E               AssertionError: (404, ['http://127.0.0.1:61613/api/decisions/decision_17d55ac9108a'])
+E               assert (404, ['http:...7d55ac9108a']) == (200, [])
+E                 
+E                 At index 0 diff: 404 != 200
+E                 Use -v to get more diff
+
+tests/e2e/test_philo8_one_delete_glass.py:495: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10ae5f290>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_failed_refresh_keeps_the_pending_delete_and_its_undo(self, width: int) -> None:
+        """P1-b: the setup read fails (503) while "Undo" shows; the delete must
+        not commit early, and after Retry the Undo is still there and works."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refresh pending"])
+            try:
+                _to_face(page, "list", width)
+                _row_menu_delete(page, "Refresh pending")
+                _readable_receipt(page, "Removed Refresh pending", 5_000)
+                fail = lambda route: route.fulfill(status=503, content_type="application/json", body="{}")
+                page.route("**/api/setup/status", fail)
+>               _palette(page, "Refresh from hub", "desk.refresh")
+
+tests/e2e/test_philo8_one_delete_glass.py:490: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:69: in _palette
+    field.fill(query)
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15989: in fill
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:215: in fill
+    return await self._frame.fill(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:607: in fill
+    await self._fill(**locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:619: in _fill
+    await self._channel.send("fill", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x116401590>
+cb = <function Channel.send.<locals>.<lambda> at 0x114dbd7a0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.fill: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for locator("[aria-controls=desk-palette-listbox]")
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ TestOneDelete.test_the_foot_never_covers_the_last_rows[393] __________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8f290>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_foot_never_covers_the_last_rows(self, width: int) -> None:
+        """P2: with the receipt and the selection bar in the foot, the end of a
+        long list scrolls clear of the foot; the last rows own their centres."""
+        from playwright.sync_api import sync_playwright
+    
+        titles = [f"Last row {n:02d}" for n in range(1, 21)]
+        with sync_playwright() as pw:
+            browser, page, ids, errors = self._open(pw, width, titles)
+            try:
+                _to_face(page, "list", width)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                _select(page, "list", ids[-2], titles[-2])
+                _row_menu_delete(page, titles[-1])
+                _readable_receipt(page, "Removed", 5_000)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                page.wait_for_timeout(300)
+                probe = page.evaluate("""() => {
+                  const foot = document.querySelector('.desk-listmode > .desk-world-foot').getBoundingClientRect();
+                  const rows = [...document.querySelectorAll('.desk-list-name-cell')]
+                    .filter((e) => e.innerText.includes('Last row')).slice(-3).map((e) => {
+                      const r = e.getBoundingClientRect();
+                      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                      return {text: e.innerText.replace(/\\n/g, ' '), top: r.top, bottom: r.bottom,
+                              own: !!hit && (hit === e || e.contains(hit))};
+                    });
+                  return {footTop: foot.top, footBottom: foot.bottom, rows};
+                }""")
+                page.screenshot(path=str(SHOTS / f"list-foot-clear-{width}.png"))
+                print(f"foot {width}: {probe}")
+>               assert all(r["own"] and r["bottom"] <= probe["footTop"] for r in probe["rows"]), probe
+E               AssertionError: {'footBottom': 695, 'footTop': 590, 'rows': [{'bottom': 581, 'own': True, 'text': '[ ] Last row 18', 'top': 557}, {'bo...': False, 'text': '[x] Last row 19', 'top': 622}, {'bottom': 711, 'own': True, 'text': '[ ] Last row 20', 'top': 687}]}
+E               assert False
+E                +  where False = all(<generator object TestOneDelete.test_the_foot_never_covers_the_last_rows.<locals>.<genexpr> at 0x11abf97e0>)
+
+tests/e2e/test_philo8_one_delete_glass.py:538: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ TestOneDelete.test_the_foot_never_covers_the_last_rows[1440] _________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10ae5f3b0>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_foot_never_covers_the_last_rows(self, width: int) -> None:
+        """P2: with the receipt and the selection bar in the foot, the end of a
+        long list scrolls clear of the foot; the last rows own their centres."""
+        from playwright.sync_api import sync_playwright
+    
+        titles = [f"Last row {n:02d}" for n in range(1, 21)]
+        with sync_playwright() as pw:
+            browser, page, ids, errors = self._open(pw, width, titles)
+            try:
+                _to_face(page, "list", width)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                _select(page, "list", ids[-2], titles[-2])
+                _row_menu_delete(page, titles[-1])
+                _readable_receipt(page, "Removed", 5_000)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                page.wait_for_timeout(300)
+                probe = page.evaluate("""() => {
+                  const foot = document.querySelector('.desk-listmode > .desk-world-foot').getBoundingClientRect();
+                  const rows = [...document.querySelectorAll('.desk-list-name-cell')]
+                    .filter((e) => e.innerText.includes('Last row')).slice(-3).map((e) => {
+                      const r = e.getBoundingClientRect();
+                      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                      return {text: e.innerText.replace(/\\n/g, ' '), top: r.top, bottom: r.bottom,
+                              own: !!hit && (hit === e || e.contains(hit))};
+                    });
+                  return {footTop: foot.top, footBottom: foot.bottom, rows};
+                }""")
+                page.screenshot(path=str(SHOTS / f"list-foot-clear-{width}.png"))
+                print(f"foot {width}: {probe}")
+>               assert all(r["own"] and r["bottom"] <= probe["footTop"] for r in probe["rows"]), probe
+E               AssertionError: {'footBottom': 815, 'footTop': 738, 'rows': [{'bottom': 689, 'own': True, 'text': '[ ] Last row 18', 'top': 665}, {'bo...n': True, 'text': '[x] Last row 19', 'top': 706}, {'bottom': 771, 'own': True, 'text': '[ ] Last row 20', 'top': 747}]}
+E               assert False
+E                +  where False = all(<generator object TestOneDelete.test_the_foot_never_covers_the_last_rows.<locals>.<genexpr> at 0x117b21540>)
+
+tests/e2e/test_philo8_one_delete_glass.py:538: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ TestOneDelete.test_a_refused_delete_says_so_with_retry[1440] _________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8f350>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_refused_delete_says_so_with_retry(self, width: int) -> None:
+        """MISSED 1: the hub refuses the DELETE (403). The face must not say
+        "Removal committed"; it names the failure with Retry; the object stays."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refuse me"])
+            try:
+                _to_face(page, "list", width)
+    
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json",
+                                      body='{"detail":"Delete refused by the glass"}')
+                    else:
+                        route.continue_()
+    
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refuse me")
+                _readable_receipt(page, "Removed Refuse me", 5_000)
+>               page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 3_000)
+
+tests/e2e/test_philo8_one_delete_glass.py:565: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x11c0cd010>
+cb = <function Channel.send.<locals>.<lambda> at 0x11c3cc3b0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 15000ms exceeded.
+E           Call log:
+E             - waiting for locator(".write-receipt").first to be visible
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ TestOneDelete.test_a_refused_delete_says_so_with_retry[393] __________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10cb8f410>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_refused_delete_says_so_with_retry(self, width: int) -> None:
+        """MISSED 1: the hub refuses the DELETE (403). The face must not say
+        "Removal committed"; it names the failure with Retry; the object stays."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refuse me"])
+            try:
+                _to_face(page, "list", width)
+    
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json",
+                                      body='{"detail":"Delete refused by the glass"}')
+                    else:
+                        route.continue_()
+    
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refuse me")
+                _readable_receipt(page, "Removed Refuse me", 5_000)
+>               page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 3_000)
+
+tests/e2e/test_philo8_one_delete_glass.py:565: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:18080: in wait_for
+    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:710: in wait_for
+    await self._frame.wait_for_selector(
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:369: in wait_for_selector
+    await self._channel.send(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x11d9a7570>
+cb = <function Channel.send.<locals>.<lambda> at 0x11dc5e1f0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 15000ms exceeded.
+E           Call log:
+E             - waiting for locator(".write-receipt").first to be visible
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+==================================== PASSES ====================================
+__________ TestOneDelete.test_a_resize_that_changes_the_face_commits ___________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_resize_that_changes_the_face_commits
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[floor-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[list-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[floor-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[list-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_workbench_remove_never_offers_a_false_undo
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_foot_never_covers_the_last_rows[393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_foot_never_covers_the_last_rows[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_refused_delete_says_so_with_retry[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_refused_delete_says_so_with_retry[393]
+11 failed, 1 passed in 232.79s (0:03:52)

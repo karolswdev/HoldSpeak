@@ -5,15 +5,25 @@ interface UndoState {
   phase: "pending" | "restored" | "committed";
   label: string;
   remaining: number;
-  fire: () => void;
+  fire: Fire;
   revert: () => void;
 }
+
+/** A removal's commit. It may answer a promise: `false` means the commit
+ * failed (the caller names the failure), and the receipt stops saying
+ * "Removal committed". */
+type Fire = () => void | Promise<unknown>;
 
 /** PHILO-8-02 — a removal is never dropped. The receipt keeps ONE slot: a
  * second `remove()` COMMITS the pending one at once (its Undo goes away),
  * and an unmount COMMITS a pending one, so leaving the face inside the
  * window cannot keep an object the face said was removed. Only `undo()`
- * keeps it. */
+ * keeps it.
+ *
+ * Round three (Codex Astra, PR #672): a removal may carry its target's key.
+ * A second request for the target already pending keeps that one entry (its
+ * Undo still restores it); a request for a target already committed opens
+ * nothing. So Undo only ever offers to restore what is still restorable. */
 export function useUndoReceipt(window = 8) {
   const [state, setState] = useState<UndoState | null>(null);
   const deadlineRef = useRef<number>(0);
@@ -21,7 +31,25 @@ export function useUndoReceipt(window = 8) {
   const postRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The fire of the removal still inside its window; null once it fired or
   // was undone.
-  const pendingRef = useRef<(() => void) | null>(null);
+  const pendingRef = useRef<Fire | null>(null);
+  const pendingKeyRef = useRef<string | null>(null);
+  const committedKeysRef = useRef<Set<string>>(new Set());
+  const entryRef = useRef(0);
+
+  /** Run a commit; a failed commit frees its key and clears its receipt. */
+  const run = useCallback((fire: Fire, key: string | null, entry: number) => {
+    if (key) committedKeysRef.current.add(key);
+    const out = fire();
+    if (out && typeof (out as Promise<unknown>).then === "function") {
+      void (out as Promise<unknown>).then((ok) => {
+        if (ok !== false) return;
+        if (key) committedKeysRef.current.delete(key);
+        if (entryRef.current !== entry) return;
+        clearTimeout(postRef.current);
+        setState(null);
+      });
+    }
+  }, []);
 
   const cleanup = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -32,30 +60,41 @@ export function useUndoReceipt(window = 8) {
   const flush = useCallback(() => {
     const fire = pendingRef.current;
     if (!fire) return;
+    const key = pendingKeyRef.current;
     pendingRef.current = null;
+    pendingKeyRef.current = null;
     cleanup();
     setState((previous) =>
       previous ? { ...previous, phase: "committed", remaining: 0 } : null,
     );
-    fire();
     postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
-  }, [cleanup]);
+    run(fire, key, entryRef.current);
+  }, [cleanup, run]);
 
   useEffect(
     () => () => {
       const fire = pendingRef.current;
+      const key = pendingKeyRef.current;
       pendingRef.current = null;
+      pendingKeyRef.current = null;
       cleanup();
-      fire?.();
+      if (fire) run(fire, key, entryRef.current);
     },
-    [cleanup],
+    [cleanup, run],
   );
 
   const remove = useCallback(
-    (label: string, fire: () => void, revert: () => void) => {
+    (label: string, fire: Fire, revert: () => void, key?: string) => {
+      const target = key ?? null;
+      // The same target again: keep its one entry, or open nothing if it
+      // is already committed. Never a second Undo for one object.
+      if (target && (pendingKeyRef.current === target || committedKeysRef.current.has(target)))
+        return;
       flush();
       cleanup();
+      entryRef.current += 1;
       pendingRef.current = fire;
+      pendingKeyRef.current = target;
       deadlineRef.current = Date.now() + window * 1000;
       setState({ phase: "pending", label, remaining: window, fire, revert });
 
@@ -77,8 +116,9 @@ export function useUndoReceipt(window = 8) {
   );
 
   const undo = useCallback(() => {
-    if (!state || state.phase !== "pending") return;
+    if (!state || state.phase !== "pending" || !pendingRef.current) return;
     pendingRef.current = null;
+    pendingKeyRef.current = null;
     cleanup();
     state.revert();
     setState({ ...state, phase: "restored", remaining: 0 });

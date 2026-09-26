@@ -105,6 +105,39 @@ describe("DeskDeleteHost", () => {
     expect(del.ghost(ctx)).toBe("Open the Floor or the list");
   });
 
+  it("a repeated request for one object keeps one Undo that restores it (P1-a)", () => {
+    render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
+    request("decision:a");
+    useDesk.setState({ selectedIds: ["decision:a"] });
+    request("decision:a");
+    expect(deletePrimitive).not.toHaveBeenCalled();
+    act(() => screen.getByRole("button", { name: "Undo" }).click());
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(deletePrimitive).not.toHaveBeenCalled();
+  });
+
+  it("a resize that turns the list into the spatial Floor commits", () => {
+    const wide = window.innerWidth;
+    const many = Array.from({ length: 20 }, (_, n) => ({ kind: "decision", id: `d${n}`, title: `D${n}` }));
+    useDesk.setState({
+      items: { ...EMPTY_ITEMS, decision: [{ kind: "decision", id: "a", title: "Probe A" }, ...many] as never[] },
+      viewMode: "unset" as never,
+    });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
+    try {
+      render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
+      request("decision:a");
+      expect(deletePrimitive).not.toHaveBeenCalled();
+      act(() => {
+        Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
+        window.dispatchEvent(new Event("resize"));
+      });
+      expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: wide });
+    }
+  });
+
   it("undo keeps the object", () => {
     render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
     request("decision:a");

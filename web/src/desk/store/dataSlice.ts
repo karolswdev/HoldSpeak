@@ -3,7 +3,7 @@
  * createPrimitive, updatePrimitive, deletePrimitive, renameZone,
  * fileIntoDir, removeFromDir, fileIntoKnowledge, seedDesk, resetDesk,
  * registerRepository, answerCoder, speakToCoder, runCapability. */
-import { apiRequest, newDeliveryId } from "../../lib/api";
+import { apiFetch, apiRequest, newDeliveryId } from "../../lib/api";
 import {
   clearWriteFailure,
   currentWriteFailure,
@@ -564,14 +564,21 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       workflow: "workflows",
     } satisfies Partial<Record<PrimitiveKind, string>>;
     const path = (paths as Partial<Record<string, string>>)[kind];
-    if (!path) return;
+    if (!path) return false;
     try {
-      await apiRequest(`/api/${path}/${encodeURIComponent(id)}`, {
+      // apiFetch, not apiRequest: a refusal (4xx/5xx) throws with its named
+      // reason; apiRequest answered the Response and the refusal went unseen.
+      await apiFetch(`/api/${path}/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-    } catch {
-      /* refresh reports reachability and preserves the object on failure */
+    } catch (cause) {
+      // PHILO-8-02 round three — a refused delete is named on the desk's
+      // receipt line with Retry; the object stays and so does its card.
+      reportWriteFailure("DELETE", cause, () => void get().deletePrimitive(id, kind));
+      void get().refresh();
+      return false;
     }
+    clearWriteFailure();
     get().clearPosition(id);
     set({
       editingId: get().editingId === id ? null : get().editingId,
@@ -584,6 +591,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       ),
     });
     await get().refresh();
+    return true;
   },
 
   async renameZone(id, name) {

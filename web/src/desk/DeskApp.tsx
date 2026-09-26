@@ -78,7 +78,20 @@ function menuGlyphsVariant(): string {
   return "launcher";
 }
 
+/** PHILO-8-02 round three — the one delete listener and its receipt sit
+ * ABOVE every DeskApp render branch (the setup-pending and setup-failure
+ * branch returns early), so a failed refresh never unmounts it and never
+ * commits a pending delete or takes its Undo away. */
 export default function DeskApp() {
+  return (
+    <>
+      <DeskDeleteHost />
+      <DeskFaces />
+    </>
+  );
+}
+
+function DeskFaces() {
   const compact = useCompactViewport();
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
@@ -240,9 +253,6 @@ export default function DeskApp() {
         <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
-      {/* PHILO-8-02 — the one delete listener and its receipt, mounted once so
-          a face change never drops a pending delete. */}
-      <DeskDeleteHost />
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}

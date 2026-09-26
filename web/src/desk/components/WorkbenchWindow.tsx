@@ -1206,6 +1206,9 @@ export function WorkbenchWindow({
           load();
         }),
       () => load(),
+      // PHILO-8-02 round three: keyed, so a second Remove of this item never
+      // opens a second Undo for an item already gone.
+      item.id,
     );
   };
 

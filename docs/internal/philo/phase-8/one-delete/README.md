@@ -39,7 +39,7 @@ The two-delete probe checks that it is still inside A's window before B's Delete
 ## The lane's decisions (recorded, not owner questions)
 
 1. **One slot.** A second delete commits the first at once and takes its Undo away (the Astra-role ruling, RULING (5)).
-2. **A face change commits.** A pending delete commits when the face changes: Chair ↔ Floor (`chairState.surface`) or list ↔ spatial (`viewMode`). Round two reads the face from that state, not from a seat unmounting: a seat can unmount for another reason (a failed refresh redraws the desk), and that must not take the owner's Undo.
+2. **A face change commits.** A pending delete commits when the face the owner SEES changes: Chair ↔ Floor (`chairState.surface`) or list ↔ spatial as DeskApp resolves it (`defaultViewFor(viewMode, count, width <= 720)`; round three — a resize that turns the list into the spatial Floor counts). Round two reads the face from that state, not from a seat unmounting: a seat can unmount for another reason (a failed refresh redraws the desk), and that must not take the owner's Undo.
 3. **The Chair (round two, Muad'Dib's ruling).** The keymap is global, so a selection left from the Floor reaches the Chair. Round one committed that delete at once with no receipt (a verb that acts with no word). Round two WITHHOLDS it: where no face shows the receipt, `object.delete` is greyed with the reason "Open the Floor or the list" (`web/src/desk/verbRegistry.ts`, read from `web/src/desk/deleteSeat.ts`), the Delete key does nothing, and the listener refuses a request that reaches it anyway. Red on the round-one branch: `red-round-one-chair.txt` (`chair 1440: 404; DELETE 1; receipt ''`).
 4. **The Workbench window** (the same hook) changes on purpose: a second Remove commits the first at once, and closing the window commits a pending Remove. Before, both dropped the removal without a word; the footer said "Removed" and the item stayed. Undo is unchanged. Fenced in `web/src/desk/components/__tests__/workbenchUndoFlush.test.tsx`.
 
@@ -66,3 +66,27 @@ At 393 the row menu's Delete row is cut at the bottom edge: `{'top': 839, 'botto
 - The Chair withholds Delete (decision 3). Fence: `test_the_chair_withholds_delete_with_its_reason` at 1440 and 393: 200, zero DELETE requests, the palette's Delete row `aria-disabled="true"` with "Open the Floor or the list" in the viewport; shots `chair-delete-withheld-{1440,393}.png`.
 - The face change is read from face state (decision 2). Vitest: `a face change commits the pending delete (cause 3)`, `list to spatial is a face change too`, `a seat that unmounts without a face change keeps the Undo`.
 - The M3b record above is from round one (it restored cause 3 by mounting the host only on the Floor faces); round two keeps the hoisted host.
+
+## Round three (Codex Astra's check on PR #672 @ b65107f5: BOUNCE; `pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/checks/story-02-built-astra-r1.md`)
+
+One receipt slot was ruled lawful. The defects and their repairs:
+
+| Item | Cause | Repair |
+|---|---|---|
+| P1-a a repeated Delete offers a false Undo ("Restored", GET 404) on the list, the Floor and the Workbench | `useUndoReceipt.remove()` committed the first request, then opened a new Undo window for the same target | `remove(label, fire, revert, key)`: a repeat of the pending key keeps that one entry (its Undo still restores it); a committed key opens nothing (`web/src/desk/hooks/useUndoReceipt.ts`). The host keys by the qualified ref (`deleteReceipt.tsx`); the Workbench by the item id (`WorkbenchWindow.tsx`, `handleRemove`) |
+| P1-b a failed setup refresh commits the pending delete early and takes its Undo | `DeskApp` returned its setup-failure branch before the host's mount, so the hook's unmount commit fired | `DeskApp` renders `<DeskDeleteHost />` above every branch (`DeskApp.tsx`, the default export wraps `DeskFaces`) |
+| P2 the list's fixed foot covers the last remaining row at 393 | the foot is `position: fixed`; the list reserved only 120 px | the list measures the foot's reach (`useFootReserve`, `DeskListView.tsx`) into `--desk-list-foot-reserve`; `list-view.css` pads the list's end by it |
+| MISSED 1 a refused DELETE (403) reads "Removal committed", GET 200 | `deletePrimitive` called `apiRequest`, which answers the Response and never throws, inside a catch that swallowed | `apiFetch` (throws on 4xx/5xx with the named reason); the catch names `DELETE` on the desk receipt line with Retry and answers `false`; the hook clears the undo receipt on `false` and frees the key (`store/dataSlice.ts`, `useUndoReceipt.ts`). Paid, not ledgered |
+| MISSED 2 the face watched the raw preference | `deleteReceipt.tsx` read `surface` + raw `viewMode` | the resolved face (decision 2 above) |
+| MISSED 3 the phase record said the Chair commits at once | stale since round two | corrected (`current-phase-status.md`) |
+
+Reds on b65107f5 (the final fence file, serial, load 21.7 → 29.1): `red-round-three-b65107f5.log`.
+- P1-a: `AssertionError: (404, [...])` on list 1440, list 393, Floor 1440, Floor 393; Workbench `AssertionError: (False, '', [...])` (the item gone).
+- P1-b: red at 393 in two runs — `AssertionError: 404` here, and `refresh 393: during the failure (404, [...])` in `red-round-two-branch-resize-refresh393.log`; Astra's probe at 393 saw the DELETE 3.9 s after Refresh. At 1440 no run of mine shows the red: under load the palette path took past 7 s, so the fence could not tell an early commit from the window's own end (it passed on b65107f5). Recorded as not reproduced at 1440, not as green.
+- P2: 393 `'own': False` for row 19 under the foot; 1440 row 20 below the foot's top.
+- MISSED 1: `.write-receipt` never appears (15 s timeout) at both widths.
+- MISSED 2: the earlier run `'Removal committed' in 'Removed Resize me\nUndo\n02s'` (`red-round-two-branch-resize-refresh393.log`); in the final serial run on b65107f5 the window itself had ended under load, so it passed there. Astra's probe (`resize-face.json`: 200, "01s") is the red.
+
+Green on the fix: `green-round-three-serial.log` (11 of 12 at load 26.7 → 8.8; list 1440 repeat failed on a click that waited out the 8 s window under load, and passed alone at load 7.9).
+
+The two-probe fences read in one page call where the 8 s window is tight (the Undo click, the pending check) and fail with "the window ended before Undo" rather than pass on a late click.

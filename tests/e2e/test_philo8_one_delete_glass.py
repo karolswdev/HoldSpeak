@@ -115,6 +115,9 @@ def _row_menu_delete(page: Any, title: str) -> dict[str, Any]:
     _name_button(page, title).click(button="right")
     item = page.locator(".desk-world-menu [role=menuitem]", has_text="Delete").last
     item.wait_for(timeout=5_000)
+    # A greyed Delete names its reason; fail on it, never wait out a click.
+    if item.get_attribute("aria-disabled") == "true":
+        raise AssertionError("Delete greyed: " + repr(page.locator(".desk-world-menu").last.inner_text()))
     box = item.evaluate(
         "(el) => { const r = el.getBoundingClientRect();"
         " return {top: r.top, bottom: r.bottom, vh: window.innerHeight}; }"
@@ -127,6 +130,26 @@ _OPTION_PROBE_JS = """(el) => {
   const r = el.getBoundingClientRect();
   return {text: el.innerText, inViewport: r.top >= 0 && r.left >= 0 &&
     r.bottom <= window.innerHeight && r.right <= window.innerWidth && r.width > 0};
+}"""
+
+
+_ROW_MENU_DELETE_JS = """async (title) => {
+  const row = [...document.querySelectorAll('.desk-list-name-cell')].find((e) => e.innerText.includes(title));
+  if (!row) return 'no row';
+  const r = row.getBoundingClientRect();
+  row.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true,
+    clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, button: 2}));
+  for (let i = 0; i < 60; i++) {
+    await new Promise((done) => requestAnimationFrame(done));
+    const items = [...document.querySelectorAll('.desk-world-menu [role=menuitem]')].filter((e) => e.innerText.includes('Delete'));
+    const item = items[items.length - 1];
+    if (item) {
+      if (item.getAttribute('aria-disabled') === 'true') return 'greyed: ' + item.innerText;
+      item.click();
+      return 'pressed';
+    }
+  }
+  return 'no menu';
 }"""
 
 
@@ -403,6 +426,236 @@ class TestOneDelete:
                 page.wait_for_timeout(1_000)
                 assert _status(page, decision_id) == 200
                 assert not self.deletes, self.deletes
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    # -- round three (Codex Astra's check on PR #672, checks/story-02-built-astra-r1.md)
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                if face == "list":
+                    # Scroll once: a later right-click must not spend the window scrolling.
+                    _name_button(page, "Repeat me").scroll_into_view_if_needed()
+                for turn in range(2):
+                    if turn:
+                        # A probe only inside the first window: still pending.
+                        now = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                        assert "Removed Repeat me" in now, f"the second Delete came after the window: {now!r}"
+                    if face == "list" and turn:
+                        # The second press in one page call: real DOM events on the
+                        # row (contextmenu, then the menu's Delete), no round trips.
+                        pressed = page.evaluate(_ROW_MENU_DELETE_JS, "Repeat me")
+                        assert pressed == "pressed", pressed
+                    elif face == "list":
+                        _row_menu_delete(page, "Repeat me")
+                    else:
+                        if not _askbar_count(page):
+                            _select(page, face, decision_id, "Repeat me")
+                        page.keyboard.press("Delete")
+                    page.wait_for_function(
+                        "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Removed Repeat me')",
+                        timeout=5_000,
+                    )
+                # Undo in one page call (the window is 8 s; each Playwright round
+                # trip under load costs about a second).
+                clicked = page.evaluate(
+                    "() => { const b = document.querySelector('.undo-receipt-btn'); if (b) b.click(); return !!b; }"
+                )
+                assert clicked, "the window ended before Undo"
+                _readable_receipt(page, "Restored Repeat me", 5_000)
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                print(f"repeat {face} {width}: {status}; DELETE {len(self.deletes)}")
+                assert (status, self.deletes) == (200, []), (status, self.deletes)
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    def test_a_repeated_workbench_remove_never_offers_a_false_undo(self) -> None:
+        """P1-a, the Workbench window (the same hook)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, _ids, errors = self._open(pw, 1440, [])
+            try:
+                wb = _api(page, "POST", "/api/workbenches", {"name": "WB Probe"}, token=TOKEN)["workbench"]["id"]
+                item = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Repeat WB item"}, token=TOKEN)["item"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", 1440)
+                _name_button(page, "WB Probe").click()
+                window = page.locator(".desk-workbench-window")
+                window.wait_for(timeout=10_000)
+                window.get_by_text("Repeat WB item", exact=True).click()
+                for _ in range(2):
+                    window.get_by_role("button", name="Remove", exact=True).click()
+                    page.wait_for_function(
+                        "() => (document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || '').includes('Removed')",
+                        timeout=5_000,
+                    )
+                window.locator(".undo-receipt-btn").click()
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                receipt = page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || ''")
+                items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                kept = any(i["id"] == item for i in items)
+                print(f"workbench repeat: kept {kept}; receipt {receipt!r}; DELETE {len(self.deletes)}")
+                assert kept and not self.deletes, (kept, receipt, self.deletes)
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_failed_refresh_keeps_the_pending_delete_and_its_undo(self, width: int) -> None:
+        """P1-b: the setup read fails (503) while "Undo" shows. The desk shows
+        its failure screen; the pending delete must NOT commit early (no DELETE
+        before the 8 s window ends), and after Retry the receipt is back."""
+        import time
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refresh pending"])
+            try:
+                _to_face(page, "list", width)
+                stamps: list[float] = []
+                page.on("request", lambda req: stamps.append(time.monotonic()) if req.method == "DELETE" else None)
+                _name_button(page, "Refresh pending").scroll_into_view_if_needed()
+                t0 = time.monotonic()
+                _row_menu_delete(page, "Refresh pending")
+                fail = lambda route: route.fulfill(status=503, content_type="application/json", body="{}")
+                page.route("**/api/setup/status", fail)
+                _palette(page, "Refresh from hub", "desk.refresh")
+                page.locator("[role=alert]").wait_for(timeout=10_000)
+                shown = time.monotonic() - t0
+                status_during = _status(page, decision_id) if shown < 7.0 else None
+                page.unroute("**/api/setup/status", fail)
+                page.locator("[role=alert]").get_by_role("button", name="Retry").click()
+                page.locator(".desk-listmode").wait_for(timeout=10_000)
+                recovered = time.monotonic() - t0
+                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                early = [round(t - t0, 2) for t in stamps if t - t0 < 7.5]
+                print(f"refresh {width}: failure shown at {shown:.1f}s; status during {status_during};"
+                      f" DELETE at {[round(t - t0, 2) for t in stamps]}; receipt after Retry {receipt!r}")
+                assert status_during in (None, 200), status_during
+                assert not early, f"the delete committed early, at {early} s"
+                # Back inside the window (or its 6 s linger) the receipt is back.
+                if recovered < 12.0:
+                    assert "Remov" in receipt, (recovered, receipt)
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_foot_never_covers_the_last_rows(self, width: int) -> None:
+        """P2: with the receipt and the selection bar in the foot, the end of a
+        long list scrolls clear of the foot; the last rows own their centres."""
+        from playwright.sync_api import sync_playwright
+
+        titles = [f"Last row {n:02d}" for n in range(1, 21)]
+        with sync_playwright() as pw:
+            browser, page, ids, errors = self._open(pw, width, titles)
+            try:
+                _to_face(page, "list", width)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                _select(page, "list", ids[-2], titles[-2])
+                _row_menu_delete(page, titles[-1])
+                _readable_receipt(page, "Removed", 5_000)
+                page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
+                page.wait_for_timeout(300)
+                probe = page.evaluate("""() => {
+                  const foot = document.querySelector('.desk-listmode > .desk-world-foot').getBoundingClientRect();
+                  const rows = [...document.querySelectorAll('.desk-list-name-cell')]
+                    .filter((e) => e.innerText.includes('Last row')).slice(-3).map((e) => {
+                      const r = e.getBoundingClientRect();
+                      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                      return {text: e.innerText.replace(/\\n/g, ' '), top: r.top, bottom: r.bottom,
+                              own: !!hit && (hit === e || e.contains(hit))};
+                    });
+                  return {footTop: foot.top, footBottom: foot.bottom, rows};
+                }""")
+                page.screenshot(path=str(SHOTS / f"list-foot-clear-{width}.png"))
+                print(f"foot {width}: {probe}")
+                assert all(r["own"] and r["bottom"] <= probe["footTop"] for r in probe["rows"]), probe
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_refused_delete_says_so_with_retry(self, width: int) -> None:
+        """MISSED 1: the hub refuses the DELETE (403). The face must not say
+        "Removal committed"; it names the failure with Retry; the object stays."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refuse me"])
+            try:
+                _to_face(page, "list", width)
+
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json",
+                                      body='{"detail":"Delete refused by the glass"}')
+                    else:
+                        route.continue_()
+
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refuse me")
+                _readable_receipt(page, "Removed Refuse me", 5_000)
+                page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 3_000)
+                page.wait_for_timeout(500)
+                failure = page.locator(".write-receipt").first.inner_text()
+                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                status = _status(page, decision_id)
+                page.screenshot(path=str(SHOTS / f"list-delete-refused-{width}.png"))
+                print(f"refused {width}: {status}; failure {failure!r}; receipt {receipt!r}")
+                assert status == 200
+                assert "Removal committed" not in receipt, receipt
+                assert "DELETE" in failure and "Retry" in failure, failure
+                assert page.locator(".write-receipt").first.is_visible()
+                page.unroute(f"**/api/decisions/{decision_id}", refuse)
+                page.locator(".write-receipt-retry").first.click()
+                page.wait_for_timeout(2_000)
+                assert _status(page, decision_id) == 404
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    def test_a_resize_that_changes_the_face_commits(self) -> None:
+        """MISSED 2: the face is the one the owner SEES. 393 opens the list;
+        widening to 1440 resolves the spatial Floor: the pending delete commits."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, 393, ["Resize me"])
+            try:
+                _to_face(page, "list", 393)
+                _row_menu_delete(page, "Resize me")
+                _readable_receipt(page, "Removed Resize me", 5_000)
+                page.set_viewport_size({"width": 1440, "height": 900})
+                page.locator(".desk-world-a11y").wait_for(state="attached", timeout=10_000)
+                page.wait_for_timeout(500)
+                # Read at once: the commit is the face change's, not the window's end.
+                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                page.wait_for_timeout(1_000)
+                status = _status(page, decision_id)
+                print(f"resize: {status}; receipt {receipt!r}")
+                assert "Removal committed" in receipt, (status, receipt)
+                assert status == 404, (status, receipt)
                 self._clean(errors)
             finally:
                 browser.close()

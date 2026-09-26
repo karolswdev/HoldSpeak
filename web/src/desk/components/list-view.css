@@ -310,3 +310,7 @@
 .desk-next .desk-listmode > .desk-world-foot {
   position: fixed;
 }
+/* Round three: the end of the list scrolls clear of that fixed foot. */
+.desk-next .desk-listmode {
+  padding-bottom: max(120px, var(--desk-list-foot-reserve, 0px));
+}

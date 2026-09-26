@@ -1081,3 +1081,132 @@ Suite totals: 2915 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+### Captured run — 2026-09-26T22:24:39Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.rP2mNeo9Ax PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest -q tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -q -rf`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 321c0c648432e1e505a852c2a2d295afd3c84a83
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+..................................F..................................    [100%]
+=================================== FAILURES ===================================
+__ TestOneDelete.test_a_repeated_delete_never_offers_a_false_undo[list-1440] ___
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10a99b830>
+face = 'list', width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_repeated_delete_never_offers_a_false_undo(self, face: str, width: int) -> None:
+        """P1-a: Delete the same object twice, then Undo. Never "Restored" with 404."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Repeat me"])
+            try:
+                _to_face(page, face, width)
+                if face == "list":
+                    # Scroll once: a later right-click must not spend the window scrolling.
+                    _name_button(page, "Repeat me").scroll_into_view_if_needed()
+                for turn in range(2):
+                    if turn:
+                        # A probe only inside the first window: still pending.
+                        now = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                        assert "Removed Repeat me" in now, f"the second Delete came after the window: {now!r}"
+                    if face == "list":
+                        _row_menu_delete(page, "Repeat me")
+                    else:
+                        if not _askbar_count(page):
+                            _select(page, face, decision_id, "Repeat me")
+                        page.keyboard.press("Delete")
+>                   page.wait_for_function(
+                        "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Removed Repeat me')",
+                        timeout=5_000,
+                    )
+
+tests/e2e/test_philo8_one_delete_glass.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:11595: in wait_for_function
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_page.py:1110: in wait_for_function
+    return await self._main_frame.wait_for_function(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:878: in wait_for_function
+    await self._channel.send("waitForFunction", self._timeout, params)
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x11e343050>
+cb = <function Channel.send.<locals>.<lambda> at 0x129161900>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[list-1440]
+```
+
+### Captured run — 2026-09-26T22:41:35Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ra4uq9eqiq PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest -q tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -q -rf`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 1926420188f3c0c31ef42132b642b50abb943d4b
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+.....................................................................    [100%]
+```
+
+### Captured run — 2026-09-26T22:56:49Z
+
+- **Command:** `uv run python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e0f76e15fb9353d7236dcba387bff9512b678cb7
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2920 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

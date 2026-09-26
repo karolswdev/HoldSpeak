@@ -163,4 +163,48 @@ describe("useUndoReceipt", () => {
     expect(fire).toHaveBeenCalledTimes(1);
     expect(result.current.phase).toBe("committed");
   });
+
+  // Round three (Codex Astra, PR #672): target identity.
+  it("the same key again keeps the one pending entry, and Undo restores it", () => {
+    vi.useFakeTimers();
+    const fire = vi.fn();
+    const revert = vi.fn();
+    const { result } = renderHook(() => useUndoReceipt(8));
+    act(() => result.current.remove("A", fire, revert, "decision:a"));
+    act(() => vi.advanceTimersByTime(1000));
+    act(() => result.current.remove("A", fire, revert, "decision:a"));
+    expect(fire).not.toHaveBeenCalled();
+    act(() => result.current.undo());
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(fire).not.toHaveBeenCalled();
+    expect(revert).toHaveBeenCalledTimes(1);
+  });
+
+  it("a key already committed opens no new Undo", () => {
+    vi.useFakeTimers();
+    const fire = vi.fn();
+    const { result } = renderHook(() => useUndoReceipt(1));
+    act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
+    act(() => vi.advanceTimersByTime(1500));
+    expect(result.current.phase).toBe("committed");
+    act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
+    expect(result.current.phase).toBe("committed");
+    expect(fire).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failed commit clears the receipt and frees the key", async () => {
+    vi.useFakeTimers();
+    const refused = vi.fn(async () => false);
+    const { result } = renderHook(() => useUndoReceipt(8));
+    act(() => result.current.remove("A", refused, vi.fn(), "decision:a"));
+    await act(async () => {
+      result.current.flush();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.receipt).toBeNull();
+    act(() => result.current.remove("A", refused, vi.fn(), "decision:a"));
+    expect(result.current.phase).toBe("pending");
+  });
 });
+

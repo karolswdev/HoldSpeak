@@ -35692,6 +35692,7 @@
         "tests/critical/test_journey_identity.py",
         "tests/e2e/test_hs201_one_thing_glass.py",
         "tests/e2e/test_hs201_summary_trust_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_phase200_runtime_identity.py",
         "tests/integration/test_setup_first_value_journey.py",
@@ -40896,6 +40897,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -40961,6 +40963,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41026,6 +41029,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41088,6 +41092,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41153,6 +41158,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41180,6 +41186,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41207,6 +41214,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41234,6 +41242,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41261,6 +41270,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41288,6 +41298,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41358,6 +41369,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41427,6 +41439,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41497,6 +41510,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41567,6 +41581,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41628,6 +41643,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41689,6 +41705,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41757,6 +41774,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41784,6 +41802,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41811,6 +41830,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41838,6 +41858,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41906,6 +41927,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -41967,6 +41989,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -42031,6 +42054,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -42103,6 +42127,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -43207,6 +43232,7 @@
       "test_candidates": [
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs143_assignments_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/e2e/test_route_preflight.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_desk_no_exit_guard.py",
