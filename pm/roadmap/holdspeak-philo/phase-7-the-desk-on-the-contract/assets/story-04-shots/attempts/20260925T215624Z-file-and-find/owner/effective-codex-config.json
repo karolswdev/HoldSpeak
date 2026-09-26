@@ -1,0 +1,126 @@
+{
+  "features": {
+    "command": [
+      "codex",
+      "features",
+      "list",
+      "-c",
+      "mcp_servers.holdspeak.command=\"/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp\"",
+      "-c",
+      "mcp_servers.holdspeak.args=[]",
+      "-c",
+      "mcp_servers.holdspeak.env.HOME=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.cwd=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.required=true",
+      "-c",
+      "mcp_servers.holdspeak.startup_timeout_sec=60",
+      "-c",
+      "mcp_servers.holdspeak.tool_timeout_sec=900",
+      "--disable",
+      "apps",
+      "--disable",
+      "plugins"
+    ],
+    "exit_code": 0,
+    "output": "api_key_model_discovery                  under development  false\napply_patch_freeform                     removed            false\napply_patch_preserve_line_endings        under development  false\napply_patch_streaming_events             under development  false\napps                                     stable             false\napps_mcp_path_override                   removed            false\nartifact                                 under development  false\nauth_elicitation                         stable             true\nbackground_paginated_rollout_migration   under development  false\nbedrock_setup_wizard                     under development  false\nbrowser_use                              stable             true\nbrowser_use_external                     stable             true\nbrowser_use_full_cdp_access              stable             true\nchronicle                                under development  false\ncode_mode                                under development  false\ncode_mode_buffered_exec                  removed            false\ncode_mode_host                           stable             true\ncode_mode_interrupt                      under development  false\ncode_mode_only                           under development  false\ncode_mode_prewarm                        under development  false\ncodex_apps_mcp_2026_07_28                under development  false\ncodex_git_commit                         removed            false\ncollaboration_modes                      removed            true\ncompaction_image_budget                  stable             true\ncomputer_use                             stable             true\nconcurrent_reasoning_summaries           under development  false\ncontent_item_kinds                       stable             true\ncontext_management                       under development  false\ncurrent_time_reminder                    under development  false\ncwd_relative_turn_diffs                  under development  false\ndefault_mode_request_user_input          under development  false\ndeferred_executor                        under development  false\ndeferred_tool_world_state                under development  false\nelevated_windows_sandbox                 removed            false\nenable_fanout                            removed            false\nenable_mcp_apps                          under development  false\nenable_request_compression               stable             true\nexec_permission_approvals                under development  false\nexecuted_tool_call_metadata              under development  false\nexecutor_capability_discovery            under development  false\nexperimental_windows_sandbox             removed            false\nexternal_agent_memory_import             under development  false\nexternal_migration                       removed            false\nfast_mode                                stable             true\ngoals                                    stable             true\nguardian_approval                        stable             true\nguardian_enhanced_node_repl_transcripts  under development  false\nguardian_ext                             under development  false\nguardian_node_repl_transcript_images     under development  false\nguardian_reuse_parent_compaction         under development  false\nguardianv2                               under development  false\nguardianv2.thread_context                under development  false\nhooks                                    stable             true\nimage_detail_original                    removed            false\nimage_generation                         stable             true\nimage_resize_notice                      under development  false\nin_app_browser                           stable             true\nin_app_chat                              stable             true\nin_app_dictation                         stable             true\nin_app_local_automation                  stable             true\nin_app_updates                           stable             true\nitem_ids                                 removed            true\njs_repl                                  removed            false\njs_repl_tools_only                       removed            false\nlocal_thread_store_compression           under development  false\nlocal_thread_store_shared_compression    removed            false\nmcp_2026_07_28                           under development  false\nmcp_oauth_refresh_coordination           under development  false\nmemories                                 stable             false\nmentions_v2                              stable             true\nmulti_agent                              stable             true\nmulti_agent_mode                         removed            false\nmulti_agent_v2                           stable             false\nnetwork_proxy                            experimental       false\nnon_prefixed_mcp_tool_names              under development  false\nomit_app_server_notification_media       under development  false\npersonality                              stable             true\nplugin_hooks                             removed            false\nplugin_sharing                           stable             true\nplugins                                  stable             false\npowershell_shell_version                 under development  false\nprevent_idle_sleep                       experimental       false\npsp                                      under development  false\nrealtime_conversation                    experimental       false\nreasoning_effort_override                under development  false\nrecommended_plugins                      stable             false\nremote_compaction_v2                     removed            false\nremote_control                           removed            false\nremote_models                            removed            false\nremote_plugin                            stable             true\nrequest_permissions_tool                 under development  false\nrequest_rule                             removed            false\nresize_all_images                        removed            true\nrespect_system_proxy                     under development  false\nresponses_websockets                     removed            false\nresponses_websockets_v2                  removed            false\nretain_client_developer_messages         under development  false\nrollout_budget                           under development  false\nruntime_metrics                          under development  false\nsearch_tool                              removed            false\nsecret_auth_storage                      stable             false\nsend_async_message                       removed            false\nshell_snapshot                           stable             true\nshell_snapshot_v2                        under development  false\nshell_tool                               stable             true\nshell_zsh_fork                           under development  false\nskill_env_var_dependency_prompt          removed            false\nskill_mcp_dependency_install             stable             true\nskill_search                             stable             true\nskip_host_skill_discovery                under development  false\nsleep_tool                               stable             true\nsqlite                                   removed            true\nstandalone_web_search                    under development  false\nsteer                                    removed            true\nstep_model_switching                     under development  false\nterminal_resize_reflow                   removed            true\nterminal_visualization_instructions      under development  false\ntoken_budget                             under development  false\ntool_call_mcp_elicitation                stable             true\ntool_search                              removed            false\ntool_search_always_defer_mcp_tools       removed            true\ntool_suggest                             stable             true\ntranscript_v2                            under development  false\ntui_app_server                           removed            true\nunavailable_dummy_tools                  removed            false\nunbounded_connection_retries             stable             true\nundo                                     removed            false\nunified_exec                             stable             true\nunified_exec_tty                         stable             true\nunified_exec_zsh_fork                    removed            true\nunified_image_budget                     under development  false\nuse_agent_identity                       under development  false\nuse_legacy_landlock                      deprecated         false\nuse_linux_sandbox_bwrap                  removed            false\nview_image                               stable             true\nweb_search_cached                        deprecated         false\nweb_search_request                       deprecated         false\nwindows_sandbox_service                  under development  false\nworkspace_dependencies                   stable             true\nworkspace_owner_usage_nudge              removed            false\nworktrees                                experimental       false\nwrite_stdin_approval                     under development  false\n",
+    "stderr": ""
+  },
+  "mcp_get": {
+    "command": [
+      "codex",
+      "mcp",
+      "get",
+      "holdspeak",
+      "--json",
+      "-c",
+      "mcp_servers.holdspeak.command=\"/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp\"",
+      "-c",
+      "mcp_servers.holdspeak.args=[]",
+      "-c",
+      "mcp_servers.holdspeak.env.HOME=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.cwd=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.required=true",
+      "-c",
+      "mcp_servers.holdspeak.startup_timeout_sec=60",
+      "-c",
+      "mcp_servers.holdspeak.tool_timeout_sec=900",
+      "--disable",
+      "apps",
+      "--disable",
+      "plugins"
+    ],
+    "exit_code": 0,
+    "output": {
+      "disabled_reason": null,
+      "disabled_tools": null,
+      "enabled": true,
+      "enabled_tools": null,
+      "name": "holdspeak",
+      "startup_timeout_sec": 60.0,
+      "tool_timeout_sec": 900.0,
+      "transport": {
+        "args": [],
+        "command": "/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp",
+        "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home",
+        "env": {
+          "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home"
+        },
+        "env_vars": [],
+        "type": "stdio"
+      }
+    },
+    "stderr": ""
+  },
+  "mcp_list": {
+    "command": [
+      "codex",
+      "mcp",
+      "list",
+      "--json",
+      "-c",
+      "mcp_servers.holdspeak.command=\"/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp\"",
+      "-c",
+      "mcp_servers.holdspeak.args=[]",
+      "-c",
+      "mcp_servers.holdspeak.env.HOME=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.cwd=\"/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home\"",
+      "-c",
+      "mcp_servers.holdspeak.required=true",
+      "-c",
+      "mcp_servers.holdspeak.startup_timeout_sec=60",
+      "-c",
+      "mcp_servers.holdspeak.tool_timeout_sec=900",
+      "--disable",
+      "apps",
+      "--disable",
+      "plugins"
+    ],
+    "exit_code": 0,
+    "output": [
+      {
+        "auth_status": "unsupported",
+        "disabled_reason": null,
+        "enabled": true,
+        "name": "holdspeak",
+        "startup_timeout_sec": 60.0,
+        "tool_timeout_sec": 900.0,
+        "transport": {
+          "args": [],
+          "command": "/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp",
+          "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home",
+          "env": {
+            "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home"
+          },
+          "env_vars": [],
+          "type": "stdio"
+        }
+      }
+    ],
+    "stderr": ""
+  }
+}

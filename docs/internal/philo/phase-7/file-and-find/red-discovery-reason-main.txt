@@ -1,0 +1,9 @@
+# The discovery fence's new job 'the reason for a decision' -> desk.create kind=decisions, data context_markdown,
+# run on a git archive copy of origin/main (4044072a) with only this test file copied in. RED:
+E       AssertionError: 'the reason for a decision' is named by [], expected ['desk.create']
+E       assert [] == ['desk.create']
+E         
+E         Right contains one more item: 'desk.create'
+E         Use -v to get more diff
+FAILED tests/unit/test_philo7_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[the reason for a decision]
+1 failed, 18 deselected in 1.44s

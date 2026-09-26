@@ -1,0 +1,5 @@
+# C1: a holdspeak resource read of holdspeak://desk/constitution (its body is docs/internal/CONSTITUTION.md,
+# holdspeak/mcp/resources.py:475) appended to the retained owner_find event log.
+fence at 123675c7 (before C1): 0 finding(s) -> RED (the read passes as catalogue)
+fence after C1: 1 finding(s): [{"item_id": "toolu_red", "type": "tool_use", "server": null, "detail": "ReadMcpResourceTool {\"server\": \"holdspeak\", \"uri\": \"holdspeak://desk/constitution\"}"}]
+the six retained sessions after C1: owner_file=0, owner_find=0, owner_decide=0, owner_brief=0, agent_ungranted=0, agent_granted=0

@@ -1,0 +1,42 @@
+{
+  "boundary_substitutions": [],
+  "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+  "clock": {
+    "mechanism": "none \u2014 the real clock; no case may claim an advance",
+    "started_utc": "2026-09-26T01:55:22.845558+00:00",
+    "tz": null
+  },
+  "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home/.local/share/holdspeak/holdspeak.db",
+  "dirty": true,
+  "engine_identity": null,
+  "engine_mode": "none",
+  "engine_mode_reason": "the four jobs call no model: filing, finding and recording a decision are desk writes and reads, and the brief producer is deterministic (holdspeak/services/monday_brief_service.py generate)",
+  "engine_preflight": {
+    "exit_code": 0,
+    "models": [
+      "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf"
+    ]
+  },
+  "fixture_hashes": {},
+  "frontend_build": null,
+  "hub": {
+    "config_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home/.config/holdspeak/config.json",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home/.local/share/holdspeak/holdspeak.db",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home",
+    "hub_url": "http://127.0.0.1:65535",
+    "lock": {
+      "alive": true,
+      "host": "127.0.0.1",
+      "label": "holdspeak web",
+      "pid": 35577,
+      "port": 65535,
+      "process_start": "2026-09-25T19:55:23.309330"
+    },
+    "lock_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home/.local/share/holdspeak/holdspeak.db.owner.lock",
+    "pid": 35577,
+    "port": 65535
+  },
+  "restarts": [],
+  "revision": "96f529c082e135f58199cb0a8013b5ed2ba287f9",
+  "rig_version": "1.3.0"
+}

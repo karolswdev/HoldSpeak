@@ -1,0 +1,1 @@
+$ claude -p --model claude-opus-5-5 --output-format stream-json --verbose --strict-mcp-config --mcp-config /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-agent_ungranted/mcp-config.json --permission-mode bypassPermissions  < owner-prompt.txt

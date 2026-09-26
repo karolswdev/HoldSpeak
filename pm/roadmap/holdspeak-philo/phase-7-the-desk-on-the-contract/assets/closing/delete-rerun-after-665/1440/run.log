@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: muaddib
+SOURCE: 6ac73757660f1e6b7c8845fd79eff97a49bb1c1f dirty=True
+CONTRACT: rig=1.4.0 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase7.json
+RUNTIME: build=['index-CP50dthT.js'] hub=http://127.0.0.1:54137 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-h3m244v9/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p7
+VERDICT: pass terminal=settled
+EVIDENCE: ['/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/delete-rerun/1440/20260926T064546Z-case.p7.decision_delete.gone-muaddib-1440/before.png', '/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/delete-rerun/1440/20260926T064546Z-case.p7.decision_delete.gone-muaddib-1440/after.png']
+NOTE: predicate: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651, 'y': 748, 'w': 138, 'h': 27}

@@ -38,6 +38,9 @@ JOBS: dict[str, tuple[str, tuple[tuple[str, str | None], ...]]] = {
     "make a zone": ("desk.create", (("kind", "directories"), ("data", "name"))),
     "put a decision on my review list": ("desk.create", (("kind", "decisions"), ("data", "status=proposed"))),
     "list the notes in a zone": ("zone.list_members", (("directory_id", None),)),
+    # PHILO-7-04 (the owner's review: "the decision is thin"): the reason
+    # goes in the decision's context, not in its title.
+    "the reason for a decision": ("desk.create", (("kind", "decisions"), ("data", "context_markdown"))),
 }
 
 #: The slice's tools whose id arguments must say where the value comes from.

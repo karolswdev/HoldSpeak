@@ -1,0 +1,122 @@
+{
+  "claude_version": "2.1.281 (Claude Code)",
+  "env_keys": [
+    "HOME",
+    "LANG",
+    "PATH",
+    "TMPDIR",
+    "USER"
+  ],
+  "findings": [],
+  "flags": [
+    "-p",
+    "--model",
+    "claude-opus-5-5",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/mcp-config.json",
+    "--permission-mode",
+    "bypassPermissions"
+  ],
+  "git_rev_parse": {
+    "exit_code": 128,
+    "stdout": ""
+  },
+  "home": {
+    "files": [
+      ".claude/.credentials.json"
+    ],
+    "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/home"
+  },
+  "mcp_config": {
+    "mcpServers": {
+      "holdspeak": {
+        "args": [],
+        "command": "/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp",
+        "env": {
+          "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/hub-home"
+        },
+        "type": "stdio"
+      }
+    }
+  },
+  "mcp_config_path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/mcp-config.json",
+  "parents_checked": [
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/work",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/var/folders",
+      "present": []
+    },
+    {
+      "path": "/var",
+      "present": []
+    },
+    {
+      "path": "/",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/work",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders",
+      "present": []
+    },
+    {
+      "path": "/private/var",
+      "present": []
+    },
+    {
+      "path": "/private",
+      "present": []
+    }
+  ],
+  "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-px2qichs/cold-owner/work"
+}

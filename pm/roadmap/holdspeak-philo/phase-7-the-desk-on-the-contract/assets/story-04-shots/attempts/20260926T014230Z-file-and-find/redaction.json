@@ -1,0 +1,26 @@
+{
+  "applied": "after capture, over the retained files (the commit after d0ed0874); the driver now applies it at the end of every run",
+  "files_changed": [
+    "claude/agent_granted/events.jsonl",
+    "claude/agent_granted/initial-context.jsonl",
+    "claude/agent_granted/session-transcript.jsonl",
+    "claude/agent_ungranted/events.jsonl",
+    "claude/agent_ungranted/initial-context.jsonl",
+    "claude/agent_ungranted/session-transcript.jsonl",
+    "claude/owner_brief/events.jsonl",
+    "claude/owner_brief/home-at-launch.json",
+    "claude/owner_brief/session-transcript.jsonl",
+    "claude/owner_decide/events.jsonl",
+    "claude/owner_decide/home-at-launch.json",
+    "claude/owner_decide/session-transcript.jsonl",
+    "claude/owner_file/events.jsonl",
+    "claude/owner_file/initial-context.jsonl",
+    "claude/owner_file/session-transcript.jsonl",
+    "claude/owner_find/events.jsonl",
+    "claude/owner_find/home-at-launch.json",
+    "claude/owner_find/session-transcript.jsonl"
+  ],
+  "ids": 2,
+  "rule": "e-mail addresses -> <owner-account-email> (other addresses <email-address>); account/organisation ids -> <account-id>; the account's synced skill names -> a count",
+  "skills": 13
+}

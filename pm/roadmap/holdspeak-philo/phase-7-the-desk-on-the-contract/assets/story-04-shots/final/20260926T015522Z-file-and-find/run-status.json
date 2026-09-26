@@ -1,0 +1,9 @@
+{
+  "blocked": [],
+  "claim": "a cold-context Claude session (an empty scratch dir, a scratch HOME with only the auth file, no user or project instructions, `--strict-mcp-config` with the one holdspeak server, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "elapsed_s": 94.835,
+  "finished_at": "2026-09-26T01:56:57.453087+00:00",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "outcome": "completed",
+  "started_at": "2026-09-26T01:55:22.617872+00:00"
+}
