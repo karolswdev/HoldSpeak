@@ -199,6 +199,43 @@
   background: var(--desk-glass);
   border: 1px solid var(--border);
 }
+/* PHILO-7-03 follow-up — the world's foot: the delete receipt and the
+   selection bar (AskBar) in one flow column at the AskBar's seat, so the
+   receipt sits directly above the selection it acted on and neither covers
+   the other. The receipt used to carry the `.desk-next` root class, whose
+   `min-height: 100vh` made its fixed box one viewport tall and drew the
+   receipt 12px above the top edge. */
+.desk-next .desk-world-foot {
+  position: absolute;
+  z-index: var(--desk-z-chrome);
+  left: 50%;
+  /* The AskBar's seat, lifted by the dock's measured height past the band
+     already reserved — the Chair's own idiom (dock.css, HS-202-02): the
+     phone dock wraps taller than 52px. */
+  bottom: calc(
+    84px +
+      max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
+  );
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100vw - 24px);
+  pointer-events: none;
+}
+.desk-next .desk-world-foot > * {
+  pointer-events: auto;
+}
+.desk-next .desk-world-foot .desk-askbar {
+  position: static;
+  transform: none;
+}
+/* Over the world the receipt needs a ground: the footer's faint wash
+   reads on a window, not on the scene. The AskBar's own ground. */
+.desk-next .desk-world-foot .undo-receipt {
+  background: var(--surface-2);
+}
 .desk-next .desk-zone-rename-row.is-overlay {
   position: absolute;
   z-index: var(--desk-z-world-overlay);

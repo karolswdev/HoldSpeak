@@ -8058,6 +8058,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8136,6 +8137,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8233,6 +8235,7 @@
         "tests/e2e/test_hs160_delta_glass.py",
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8316,6 +8319,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8353,6 +8357,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8426,6 +8431,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8507,6 +8513,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8544,6 +8551,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8581,6 +8589,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8618,6 +8627,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8655,6 +8665,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8692,6 +8703,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8775,6 +8787,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8812,6 +8825,7 @@
       "source": "holdspeak/web/routes/decisions.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8888,6 +8902,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
