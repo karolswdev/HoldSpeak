@@ -14,6 +14,16 @@
 - **Shots:** `assets/story-04-shots/` — `title-only-{1440,393}.png` (no heading), `title-only-edit-{1440,393}.png` (the three fields), `context-only-{1440,393}.png` (only "Decision context"), `context-and-decision-{1440,393}.png` (the Phase 7 story 04 case: both headings, no "Consequences").
 - **Known, not mine:** `tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence` fails on this branch on `tests/unit/test_philo7_file_and_find.py:26`, a file this story does not touch (main's state); not in the guard run below.
 
+## Round two — the Astra-role check on built (`checks/story-04-built-astra-role-r1.md`, RATIFY-WITH-CONDITIONS)
+
+- **C1 paid:** the held-prop negative control (`philo605DecisionBodyDiagnosis.test.tsx`) now proves the read view is showing after Done (`.desk-decision-editor` is null) and that the card does not carry "Keep the local ledger", then that the Decision section is absent. The mutant (drop `setEditingDecision(false)` from `commitDecisionEdit`, so Done never leaves the editor) now FAILS the control: `AssertionError: expected <div class="desk-decision-editor">…(3)</div> to be null` (capture 16:27:31Z). The last line of that capture, `mv: rename … No such file or directory`, is the capture script's restore step running from the wrong directory; the file was restored by hand right after (no diff against HEAD for `DecisionPullout.tsx`).
+- **F3 paid:** the `[undefined, decisionSection()]` placeholders are gone; the tests call `decisionSection()` directly.
+- **F4 paid:** the `surface.css` comment quotes the real selector, `.desk-next .desk-pullout-body section:not(:first-child)` (`window-chrome.css:202`).
+- **F2:** the headings' size is unchanged (10 px on both builds; `.desk-next .desk-pullout-body h3` wins). Nothing in this tree says otherwise.
+- **MISSED:** BACKLOG table "PHILO-8-04 follow-ups" (the Follow-through lanes' doubled hairline; computed only; home: the next surface pass).
+- **Merged `origin/main`** (#670, the evidence scratch guard); the guard is green on the branch now (97 passed with the CSS/atlas guards, 16:28:31Z).
+- **Re-run:** vitest 3 files, 15/15, no Errors line (16:27:48Z); glass 2 passed at 1440 and 393 (16:27:52Z); every `docs/generated` `--check` ok.
+
 ## Proof
 
 ### Captured run — 2026-09-26T16:00:28Z
@@ -231,4 +241,75 @@ bringing up nodes...
 ........................................................................ [ 68%]
 .................................                                        [100%]
 105 passed in 2.90s
+```
+
+### Captured run — 2026-09-26T16:27:31Z
+
+- **Command:** `sh /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/fd5ad72b-2ed6-4ad6-b127-8b5e72ca6caa/scratchpad/mutant.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d730e4b281400c205373910d661d236439f3338
+
+```text
+     × negative control: a held pullout prop stays stale after the store write 198ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <div class="desk-decision-editor">…(3)</div> to be null
+      Tests  1 failed | 6 skipped (7)
+mv: rename web/src/desk/pullouts/DecisionPullout.tsx.orig to web/src/desk/pullouts/DecisionPullout.tsx: No such file or directory
+```
+
+### Captured run — 2026-09-26T16:27:48Z
+
+- **Command:** `sh -c cd web && npx vitest run src/desk/__tests__/philo301DecisionFace.test.tsx src/desk/__tests__/philo605DecisionBodyDiagnosis.test.tsx src/desk/__tests__/philo301DecisionNoLoss.test.tsx`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d730e4b281400c205373910d661d236439f3338
+
+```text
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-8-04/web
+
+
+ Test Files  3 passed (3)
+      Tests  15 passed (15)
+   Start at  10:27:49
+   Duration  2.50s (transform 2.00s, setup 275ms, import 2.86s, tests 850ms, environment 832ms)
+```
+
+### Captured run — 2026-09-26T16:27:52Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.IBpTGtG2hA PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -p no:cacheprovider tests/e2e/test_philo8_04_empty_decision_heads_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d730e4b281400c205373910d661d236439f3338
+
+```text
+..                                                                       [100%]
+2 passed in 37.16s
+```
+
+### Captured run — 2026-09-26T16:28:31Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.fT3tDJCWJx uv run pytest -q -p no:cacheprovider -n 8 tests/unit/test_evidence_scratch_guard.py tests/unit/test_design_system_guard.py tests/unit/test_interior_canon_guard.py tests/unit/test_philo_graph_atlas.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d730e4b281400c205373910d661d236439f3338
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 74%]
+.........................                                                [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+97 passed, 2 warnings in 3.14s
 ```

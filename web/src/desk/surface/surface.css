@@ -57,7 +57,7 @@
   padding-top: 0;
 }
 /* PHILO-8-04: in the decision window the section itself already draws the
-   hairline (window-chrome.css, `.desk-pullout-body section:not(:first-child)`);
+   hairline (window-chrome.css:202, `.desk-next .desk-pullout-body section:not(:first-child)`);
    the head does not draw a second one. */
 .desk-decision-card > .surface-section > .surface-section-head {
   border-top: 0;
