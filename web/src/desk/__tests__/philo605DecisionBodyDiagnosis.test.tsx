@@ -150,6 +150,14 @@ beforeEach(() => {
   });
 });
 
+/** PHILO-8-04 — the read view's "Decision" section, found by its heading
+ * (an empty field draws no heading, so a position is not stable). */
+function decisionSection(): Element | undefined {
+  return Array.from(document.querySelectorAll(".desk-decision-card > section")).find(
+    (section) => section.querySelector("h3")?.textContent === "Decision",
+  );
+}
+
 describe("PHILO-6-05 decision body fences", () => {
   it("rolls a failed save back to the prior body before a slow refresh resolves", async () => {
     const prior = { ...decision, decisionMarkdown: "Prior saved decision" };
@@ -165,7 +173,7 @@ describe("PHILO-6-05 decision body fences", () => {
       });
     });
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
-    const body = Array.from(document.querySelectorAll(".desk-decision-card > section"))[1];
+    const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
       "SAVE FAILED",
     );
@@ -192,7 +200,7 @@ describe("PHILO-6-05 decision body fences", () => {
       });
     });
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
-    const body = Array.from(document.querySelectorAll(".desk-decision-card > section"))[1];
+    const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
       "SAVE FAILED",
     );
@@ -227,15 +235,17 @@ describe("PHILO-6-05 decision body fences", () => {
     });
 
     const stored = useDesk.getState().items.decision[0];
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
-    const decisionSection = sections[1];
     // The real store producer has the value before the request resolves.
     expect(stored.decisionMarkdown).toBe("Keep the local ledger");
     // The held prop intentionally carries the old record. This synthetic
     // control stays green and must not be cited as the production cause.
-    expect(decisionSection?.textContent).toBe("Decision");
+    // PHILO-8-04: the read view is showing (Done left the editor) and it
+    // draws the OLD record: its decision is empty, so its heading hides.
+    expect(document.querySelector(".desk-decision-editor")).toBeNull();
+    expect(document.querySelector(".desk-decision-card")?.textContent).not.toContain(
+      "Keep the local ledger",
+    );
+    expect(decisionSection()).toBeUndefined();
   });
 
   it("does not reproduce when the production host derives the object from items", async () => {
@@ -249,12 +259,9 @@ describe("PHILO-6-05 decision body fences", () => {
       fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
     // This is the production-host control: if it fails, inspect refresh or
     // host/window caching rather than assuming a stale prop.
-    expect(sections[1]?.textContent).toContain("Keep the local ledger");
+    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
   });
 
   it("keeps an optimistic body when a pre-write refresh resolves", async () => {
@@ -272,25 +279,19 @@ describe("PHILO-6-05 decision body fences", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
-    const liveSections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
-    expect(liveSections[1]?.textContent).toContain("Keep the local ledger");
+    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Keep the local ledger");
 
     await act(async () => {
       requests.resolveDecisionRead?.();
       await refresh;
     });
-    const staleSections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
     // This is the red acceptance assertion: a refresh that began before the
     // write must not replace the newer optimistic item when it resolves.
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Keep the local ledger",
     );
-    expect(staleSections[1]?.textContent).toContain("Keep the local ledger");
+    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
   });
 
   it("keeps an optimistic body when a refresh starts during a pending write", async () => {
@@ -315,13 +316,10 @@ describe("PHILO-6-05 decision body fences", () => {
       await Promise.all([save, refresh]);
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Keep the local ledger",
     );
-    expect(sections[1]?.textContent).toContain("Keep the local ledger");
+    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
   });
 
   it("does not let an older refusal roll back or receipt a newer decision write", async () => {
@@ -361,13 +359,10 @@ describe("PHILO-6-05 decision body fences", () => {
       await firstSave;
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Second decision",
     );
-    expect(sections[1]?.textContent).toContain("Second decision");
+    expect(decisionSection()?.textContent).toContain("Second decision");
     expect(document.querySelector(".write-receipt-label")).toBeNull();
   });
 });

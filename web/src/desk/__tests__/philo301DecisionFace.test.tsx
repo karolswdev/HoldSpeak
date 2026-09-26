@@ -102,3 +102,42 @@ describe("PHILO-3-01 the decision face", () => {
     expect(update.mock.calls[0][2]).not.toHaveProperty("title");
   });
 });
+
+describe("PHILO-8-04 the decision window shows no empty heading", () => {
+  const decision = (fields: Record<string, string>) =>
+    ({
+      id: "d8", kind: "decision", title: "Glass decision",
+      ref: { id: "d8", kind: "decision", title: "Glass decision", status: "proposed", ...fields },
+    }) as unknown as WorldObject;
+  const heads = () =>
+    Array.from(document.querySelectorAll(".desk-decision-card h3")).map((h) => h.textContent);
+
+  it("a title-only decision shows no heading; Edit offers all three fields", () => {
+    render(<DecisionPullout object={decision({})} onClose={() => {}} />);
+    expect(heads()).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    for (const name of ["Context", "Decision", "Consequences"]) {
+      expect(screen.getByRole("textbox", { name })).toBeTruthy();
+    }
+  });
+
+  it("only the fields with text show their heading", () => {
+    render(
+      <DecisionPullout
+        object={decision({ contextMarkdown: "Runners are full.", consequencesMarkdown: "  " })}
+        onClose={() => {}}
+      />,
+    );
+    expect(heads()).toEqual(["Decision context"]);
+  });
+
+  it("all three fields with text show all three headings", () => {
+    render(
+      <DecisionPullout
+        object={decision({ contextMarkdown: "C", decisionMarkdown: "D", consequencesMarkdown: "Q" })}
+        onClose={() => {}}
+      />,
+    );
+    expect(heads()).toEqual(["Decision context", "Decision", "Consequences"]);
+  });
+});
