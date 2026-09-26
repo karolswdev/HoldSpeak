@@ -27,7 +27,8 @@ The two-delete probe checks that it is still inside A's window before B's Delete
 ## The repair
 
 - `web/src/desk/hooks/useUndoReceipt.ts`: a pending removal is never dropped. A second `remove()` commits the pending one first (`flush()`); an unmount commits a pending one; `undo()` clears it. The receipt keeps one slot. `flush` is returned.
-- `web/src/desk/deleteReceipt.tsx` (new): `DeskDeleteHost` holds the ONE `OBJECT_DELETE_REQUEST` listener and the ONE hook. It takes the queued object out of `selectedIds` (cause 1). `DeskDeleteSeat` is the receipt where a face seats it. When the last seat unmounts (a face change), a pending delete commits. A delete asked for where no seat is mounted (the Chair) commits at once.
+- `web/src/desk/deleteReceipt.tsx` (new): `DeskDeleteHost` holds the ONE `OBJECT_DELETE_REQUEST` listener and the ONE hook. It takes the queued object out of `selectedIds` (cause 1). A face change (surface or view mode) commits a pending delete (cause 3). `DeskDeleteSeat` is the receipt where a face seats it. Round two: a request where no seat is mounted is refused.
+- `web/src/desk/deleteSeat.ts` (new, round two): the seat count; `object.delete` is greyed "Open the Floor or the list" when it is zero.
 - `web/src/desk/DeskApp.tsx`: mounts `DeskDeleteHost` once. It survives every face change.
 - `web/src/desk/gl/WorldStage.tsx`: the listener and the hook are gone; the foot seats `DeskDeleteSeat` above the AskBar.
 - `web/src/desk/components/DeskListView.tsx`: the AskBar is wrapped in the Floor's foot (`.desk-world-foot`) with `DeskDeleteSeat` above it (#665 seat).
@@ -38,8 +39,8 @@ The two-delete probe checks that it is still inside A's window before B's Delete
 ## The lane's decisions (recorded, not owner questions)
 
 1. **One slot.** A second delete commits the first at once and takes its Undo away (the Astra-role ruling, RULING (5)).
-2. **A face change commits.** When no face seats the receipt, no Undo is in reach, so a pending delete commits right away. Floor → list is a face change too (the seat leaves and comes back in one commit), so a pending delete commits there as well, and the list shows "Removal committed".
-3. **The Chair.** The keymap is global, so a selection left from the Floor reaches the Chair. On main, the Delete key there sent nothing (200). Now the one listener takes it. The Chair has no receipt seat, so the delete commits at once and nothing on the Chair shows it. That is honest to the key, but the face is silent. A seat on the Chair is a face change (canvas first), so it goes to the BACKLOG ("PHILO-8-02 follow-ups").
+2. **A face change commits.** A pending delete commits when the face changes: Chair ↔ Floor (`chairState.surface`) or list ↔ spatial (`viewMode`). Round two reads the face from that state, not from a seat unmounting: a seat can unmount for another reason (a failed refresh redraws the desk), and that must not take the owner's Undo.
+3. **The Chair (round two, Muad'Dib's ruling).** The keymap is global, so a selection left from the Floor reaches the Chair. Round one committed that delete at once with no receipt (a verb that acts with no word). Round two WITHHOLDS it: where no face shows the receipt, `object.delete` is greyed with the reason "Open the Floor or the list" (`web/src/desk/verbRegistry.ts`, read from `web/src/desk/deleteSeat.ts`), the Delete key does nothing, and the listener refuses a request that reaches it anyway. Red on the round-one branch: `red-round-one-chair.txt` (`chair 1440: 404; DELETE 1; receipt ''`).
 4. **The Workbench window** (the same hook) changes on purpose: a second Remove commits the first at once, and closing the window commits a pending Remove. Before, both dropped the removal without a word; the footer said "Removed" and the item stayed. Undo is unchanged. Fenced in `web/src/desk/components/__tests__/workbenchUndoFlush.test.tsx`.
 
 ## The list's delete paths (recorded)
@@ -59,3 +60,9 @@ At 393 the row menu's Delete row is cut at the bottom edge: `{'top': 839, 'botto
 - M3 (the seat flush and the hook's unmount flush removed, the host still hoisted): glass PASSES. That was the wrong mutation: with the listener hoisted, the timer keeps running after a face change, so the hoist alone repairs cause 3. It is recorded, not hidden.
 - M3b (cause 3 restored: the host mounts only on the Floor faces, `{showFloor && <DeskDeleteHost />}`, and nothing commits on the way out): glass `floor 1440: 200; DELETE 0`, both leave-face cases at 1440 fail; vitest 4 fail.
 - M4 (the list foot's `position: fixed` removed): the long-list fence fails, `'Removed': not in the viewport: {… 'y': 1565 …}`.
+
+## Round two (Muad'Dib's ruling on the Chair)
+
+- The Chair withholds Delete (decision 3). Fence: `test_the_chair_withholds_delete_with_its_reason` at 1440 and 393: 200, zero DELETE requests, the palette's Delete row `aria-disabled="true"` with "Open the Floor or the list" in the viewport; shots `chair-delete-withheld-{1440,393}.png`.
+- The face change is read from face state (decision 2). Vitest: `a face change commits the pending delete (cause 3)`, `list to spatial is a face change too`, `a seat that unmounts without a face change keeps the Undo`.
+- The M3b record above is from round one (it restored cause 3 by mounting the host only on the Floor faces); round two keeps the hoisted host.

@@ -11,19 +11,23 @@
  * - the queued object leaves the selection, so the next select-and-Delete
  *   targets only the next object;
  * - a second delete commits the first at once (the receipt keeps one slot);
- * - when the last seat unmounts (a face change), a pending delete commits;
- *   a delete asked for where no seat is mounted commits at once.
+ * - a face change (Chair/Floor, list/spatial) commits a pending delete (it
+ *   was queued on a face that showed its receipt). The face is read from the
+ *   face state itself, never from a seat unmounting: a seat that unmounts
+ *   for another reason (a failed refresh redraws the desk) keeps the Undo;
+ * - where no seat is mounted (the Chair) the delete is WITHHELD: the verb is
+ *   greyed with its reason (`verbRegistry.ts`) and nothing is deleted.
  */
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { useDesk } from "./store";
+import { useChairState } from "./chairState";
 import { qualifiedRef } from "./api";
 import { OBJECT_DELETE_REQUEST } from "./verbRegistry";
 import { objectByRef } from "./world";
 import { useUndoReceipt } from "./hooks/useUndoReceipt";
+import { deleteSeatShown, seatMounted, seatUnmounted } from "./deleteSeat";
 
 let current: ReactNode = null;
-let seats = 0;
-let flushPending: () => void = () => undefined;
 const listeners = new Set<() => void>();
 
 function publish(node: ReactNode) {
@@ -42,9 +46,16 @@ function subscribe(listener: () => void) {
 export function DeskDeleteHost() {
   const { remove, flush, receipt } = useUndoReceipt();
 
+  // A face change commits a pending delete. The first run is the mount.
+  const surface = useChairState((s) => s.surface);
+  const viewMode = useDesk((s) => s.viewMode);
+  const face = `${surface}:${viewMode}`;
+  const faceRef = useRef(face);
   useEffect(() => {
-    flushPending = flush;
-  }, [flush]);
+    if (faceRef.current === face) return;
+    faceRef.current = face;
+    flush();
+  }, [face, flush]);
 
   useEffect(() => {
     publish(receipt);
@@ -56,6 +67,8 @@ export function DeskDeleteHost() {
     const onDeleteRequest = (event: Event) => {
       const ref = (event as CustomEvent<{ ref?: string | null }>).detail?.ref;
       if (!ref) return;
+      // Round two: no face shows the receipt, so no delete (UX-CANON A.11).
+      if (!deleteSeatShown()) return;
       const desk = useDesk.getState();
       const object = objectByRef(desk.items, ref);
       if (!object) return;
@@ -70,13 +83,10 @@ export function DeskDeleteHost() {
         () => void useDesk.getState().deletePrimitive(object.id, object.kind),
         () => undefined,
       );
-      // No face seats the receipt (the Chair with a selection left from the
-      // Floor): no Undo is in reach, so the delete commits at once.
-      if (seats === 0) flush();
     };
     window.addEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
     return () => window.removeEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
-  }, [remove, flush]);
+  }, [remove]);
 
   return null;
 }
@@ -85,11 +95,9 @@ export function DeskDeleteHost() {
 export function DeskDeleteSeat() {
   const node = useSyncExternalStore(subscribe, () => current);
   useEffect(() => {
-    seats += 1;
+    seatMounted();
     return () => {
-      seats -= 1;
-      // A face change: no seat shows the receipt, so no Undo is in reach.
-      if (seats === 0) flushPending();
+      seatUnmounted();
     };
   }, []);
   return <>{node}</>;

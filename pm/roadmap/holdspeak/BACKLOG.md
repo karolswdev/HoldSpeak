@@ -1305,4 +1305,4 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | Item | Kind | Source | Home |
 |---|---|---|---|
 | At 393 the list's row menu is cut at the bottom edge: the Delete row measured `{'top': 839, 'bottom': 867, 'vh': 852}`, 15 px below the viewport (FINDING S2). At 1440 it fits (`bottom 875`, `vh 900`). The menu opens `anchor="below"` at the pointer (`web/src/desk/components/DeskListView.tsx`, the row `WorkMenu`). | face | `one-delete/list-paths-probe.txt` | the Floor lane |
-| The Chair has no delete receipt seat. The keymap is global, so a selection left from the Floor reaches the Chair; the Delete key there now deletes (the one listener) and commits at once, with nothing on the Chair to say so. A seat on the Chair is a face change (canvas first). | face | `one-delete/README.md` decision 3 | the Floor lane |
+| The Chair has no delete receipt seat. RESOLVED: the Chair withholds Delete (PHILO-8-02 round two): the verb is greyed "Open the Floor or the list" and the Delete key does nothing there; a Chair receipt seat would need a canvas — not planned. | face | `one-delete/README.md` decision 3 | closed |

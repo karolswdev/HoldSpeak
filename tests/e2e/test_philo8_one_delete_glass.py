@@ -123,6 +123,13 @@ def _row_menu_delete(page: Any, title: str) -> dict[str, Any]:
     return box
 
 
+_OPTION_PROBE_JS = """(el) => {
+  const r = el.getBoundingClientRect();
+  return {text: el.innerText, inViewport: r.top >= 0 && r.left >= 0 &&
+    r.bottom <= window.innerHeight && r.right <= window.innerWidth && r.width > 0};
+}"""
+
+
 class TestOneDelete:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -352,16 +359,18 @@ class TestOneDelete:
             finally:
                 browser.close()
 
-    # -- the Chair with a selection left from the Floor (story 02 Out, exercised)
+    # -- the Chair with a selection left from the Floor (round two: withheld)
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_the_delete_key_on_the_chair_with_a_floor_selection(self, width: int) -> None:
+    def test_the_chair_withholds_delete_with_its_reason(self, width: int) -> None:
         """The keymap is global: a selection left from the Floor reaches the Chair.
 
-        Main: the request reaches no listener (200, zero requests). The repair:
-        the one listener takes it; no face seats a receipt on the Chair, so no
-        Undo is in reach and the delete commits at once (404).
+        The Chair shows no delete receipt, so it withholds the verb (Muad'Dib's
+        ruling, PHILO-8-02 round two; UX-CANON A.11). The Delete key does
+        nothing there, and the palette shows Delete greyed with its reason.
+        Main: the request reached no listener (200). Round one: the one
+        listener committed it at once with no receipt (404).
         """
         from playwright.sync_api import sync_playwright
 
@@ -375,8 +384,25 @@ class TestOneDelete:
                 page.keyboard.press("Delete")
                 page.wait_for_timeout(3_000)
                 status = _status(page, decision_id)
-                print(f"chair {width}: {status}; DELETE {len(self.deletes)}")
-                assert status == 404, (status, self.deletes)
+                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                print(f"chair {width}: {status}; DELETE {len(self.deletes)}; receipt {receipt!r}")
+                assert (status, self.deletes) == (200, []), (status, self.deletes)
+                # The verb, greyed with its reason, as the palette renders it.
+                field = page.locator("[aria-controls=desk-palette-listbox]")
+                if not field.is_visible():
+                    page.locator("[aria-controls=desk-tool-shelf]").click()
+                field.fill("Delete")
+                option = page.locator("[id='desk-palette-option-object.delete']")
+                option.wait_for(timeout=5_000)
+                assert option.get_attribute("aria-disabled") == "true"
+                probe = option.evaluate(_OPTION_PROBE_JS)
+                assert "Open the Floor or the list" in probe["text"], probe
+                assert probe["inViewport"], probe
+                page.screenshot(path=str(SHOTS / f"chair-delete-withheld-{width}.png"))
+                option.click(force=True)
+                page.wait_for_timeout(1_000)
+                assert _status(page, decision_id) == 200
+                assert not self.deletes, self.deletes
                 self._clean(errors)
             finally:
                 browser.close()

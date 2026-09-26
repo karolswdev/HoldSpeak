@@ -5,7 +5,8 @@ import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
-import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
+import { useChairState } from "../chairState";
+import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
 import { DeskDeleteHost, DeskDeleteSeat } from "../deleteReceipt";
 
 const deletePrimitive = vi.fn(async () => undefined);
@@ -19,6 +20,7 @@ function request(ref: string) {
 beforeEach(() => {
   vi.useFakeTimers();
   deletePrimitive.mockClear();
+  useChairState.setState({ surface: "floor" });
   useDesk.setState({
     items: {
       ...EMPTY_ITEMS,
@@ -28,6 +30,7 @@ beforeEach(() => {
       ] as never[],
     },
     selectedIds: ["decision:a"],
+    viewMode: "list",
     deletePrimitive: deletePrimitive as never,
   });
 });
@@ -58,25 +61,48 @@ describe("DeskDeleteHost", () => {
     expect(deletePrimitive).toHaveBeenCalledWith("b", "decision");
   });
 
-  it("the last seat leaving commits the pending delete (cause 3)", () => {
-    const view = render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
+  it("a face change commits the pending delete (cause 3)", () => {
+    render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
     request("decision:a");
-    view.rerender(<DeskDeleteHost />);
+    act(() => useChairState.setState({ surface: "chair" }));
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
   });
 
-  it("a face swap commits too: the old seat leaves as the new one comes", () => {
-    const view = render(<><DeskDeleteHost /><DeskDeleteSeat key="floor" /></>);
+  it("list to spatial is a face change too", () => {
+    render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
     request("decision:a");
-    view.rerender(<><DeskDeleteHost /><DeskDeleteSeat key="list" /></>);
+    act(() => useDesk.setState({ viewMode: "spatial" }));
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
     expect(screen.getByText("Removal committed")).toBeTruthy();
   });
 
-  it("with no seat mounted (the Chair) the delete commits at once", () => {
+  it("a seat that unmounts without a face change keeps the Undo", () => {
+    const view = render(<><DeskDeleteHost /><DeskDeleteSeat key="one" /></>);
+    request("decision:a");
+    view.rerender(<DeskDeleteHost />);
+    view.rerender(<><DeskDeleteHost /><DeskDeleteSeat key="two" /></>);
+    expect(deletePrimitive).not.toHaveBeenCalled();
+    expect(screen.getByText("Removed Probe A")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(8500));
+    expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
+  });
+
+  it("with no seat mounted (the Chair) the delete is withheld", () => {
     render(<DeskDeleteHost />);
     request("decision:a");
-    expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(deletePrimitive).not.toHaveBeenCalled();
+    expect(useDesk.getState().selectedIds).toEqual(["decision:a"]);
+  });
+
+  it("the verb is greyed with its reason where no seat is mounted", () => {
+    const del = verbById("object.delete")!;
+    const ctx = { selectedRef: "decision:a" };
+    expect(del.ghost(ctx)).toBe("Open the Floor or the list");
+    const seat = render(<DeskDeleteSeat />);
+    expect(del.ghost(ctx)).toBeNull();
+    seat.unmount();
+    expect(del.ghost(ctx)).toBe("Open the Floor or the list");
   });
 
   it("undo keeps the object", () => {

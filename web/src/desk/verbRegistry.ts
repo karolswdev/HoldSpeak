@@ -20,6 +20,7 @@ import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import { useSettleState } from "./settleState";
 import { useChairState } from "./chairState";
+import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
   focusOrRestoreApp,
@@ -575,11 +576,14 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return primitiveCan(o.kind, "delete") ? null : "Cannot delete";
+      if (!primitiveCan(o.kind, "delete")) return "Cannot delete";
+      // PHILO-8-02 round two — a delete is offered only where its receipt
+      // can be read; the Chair shows none (UX-CANON A.11).
+      return deleteSeatShown() ? null : "Open the Floor or the list";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !primitiveCan(o.kind, "delete") || typeof window === "undefined") return;
+      if (!o || !primitiveCan(o.kind, "delete") || !deleteSeatShown() || typeof window === "undefined") return;
       window.dispatchEvent(
         new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
       );
