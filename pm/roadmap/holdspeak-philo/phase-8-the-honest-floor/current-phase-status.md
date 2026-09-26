@@ -1,6 +1,6 @@
 # Phase 8 - The Honest Floor
 
-**Last updated:** 2026-09-26 (RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
+**Last updated:** 2026-09-26 (PHILO-8-01 half A built: the free zone name, the Chair without New Zone, no stale rename field across a face change; the list's in-row name field canvas `assets/story-01-canvas/` for the owner. Earlier: RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
 
 ## Goal
 
@@ -65,7 +65,7 @@ Every behavioural fence is red on main before the repair, through the real hub o
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-8-01 | The zone name and the rename where he is (canvas first) | backlog | [story-01-the-zone-name-and-the-rename-where-he-is](./story-01-the-zone-name-and-the-rename-where-he-is.md) | - |
+| PHILO-8-01 | The zone name and the rename where he is (canvas first) | in-progress | [story-01-the-zone-name-and-the-rename-where-he-is](./story-01-the-zone-name-and-the-rename-where-he-is.md) | - (half A proof: [assets/story-01-half-a-proof.md](./assets/story-01-half-a-proof.md)) |
 | PHILO-8-02 | One delete everywhere | backlog | [story-02-one-delete-everywhere](./story-02-one-delete-everywhere.md) | - |
 | PHILO-8-03 | The atlas cases and the closing proof | backlog | [story-03-the-atlas-cases-and-the-closing-proof](./story-03-the-atlas-cases-and-the-closing-proof.md) | - |
 | PHILO-8-04 | The two small face notes (OPTIONAL) | backlog | [story-04-the-two-small-face-notes](./story-04-the-two-small-face-notes.md) | - |
@@ -89,6 +89,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 2026-09-26, round two: the Astra-role check (Opus 5.5 stand-in, `checks/charter-astra-role-r1.md`): RATIFY-WITH-CONDITIONS. It re-read every cited line on main (all true), reproduced the lost deletes and named three causes, found a third (a face change inside the window), and ruled the free-name repair and the delete repair shape. C1–C9 are paid in this revision ("Decisions made").
 
 **Estimate (PROVISIONAL, placed before build):** effort **2.5–4 engineering days** (01 0.75–1.25 · 02 0.75–1.25 · 03 0.75–1 · the rename canvas and the check rounds 0.25–0.5), plus about 0.25 d if story 04 (a) is kept. Calibrated from Phase 7's record (`checks/charter-astra-role-r1.md` F11): Phase 7's story 01 took about 25 agent-minutes (`../phase-7-the-desk-on-the-contract/current-phase-status.md` "Calibration"), and the whole 11–15-day phase closed in about two elapsed days, most of it check rounds and the owner's word; these repairs are small (a free-name helper, a hook flush, a selection drop, a hoisted listener, a foot wrapper, one rename composition). **Elapsed-time forecast: about 1–2 days elapsed, gated by the owner's canvas word and the checks.**
+
+2026-09-26, PHILO-8-01 half A BUILT on `feat/philo-8-01-zone-name` (Fedaykin, Opus 5.5): the store picks the free default name by the hub's rule (`web/src/desk/zoneName.ts`, `store/dataSlice.ts` createPrimitive), a name posted but not yet refreshed counts as taken, Retry refreshes first; the Chair's palette and menu bar withhold New Zone (`needsZones`, `offeredHere` in `verbRegistry.ts`); F2 on a zone is ghosted on the Chair; a face change ends a pending rename and a create that lands after a face change starts none (`DeskApp.tsx`); the rename behaviour is one hook (`hooks/useZoneRenameField.ts`), composed by the Floor overlay. Fences: 12 glass cases through the real hub at 1440 and 393 (10 red on main, 2 guard legs), 25 unit cases (8 red on main). The list's in-row field: the canvas `assets/story-01-canvas/` (8 live boards, both widths, three questions), review page `docs/internal/philo/phase-8/rename-canvas/index.html`; its build waits on the owner's word.
 
 ## Active risks
 

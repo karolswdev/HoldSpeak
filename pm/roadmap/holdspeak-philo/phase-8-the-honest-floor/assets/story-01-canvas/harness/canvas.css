@@ -1,0 +1,8 @@
+/* PHILO-8-01 canvas only: the in-row field sits in the Name cell. Every
+ * species style is the product's (inline-editor.css, speak-to-fill.css). */
+.desk-next .desk-zone-rename-row.is-inrow {
+  min-width: 0;
+}
+.desk-next .desk-zone-rename-row.is-inrow .desk-zone-rename {
+  min-width: 12ch;
+}

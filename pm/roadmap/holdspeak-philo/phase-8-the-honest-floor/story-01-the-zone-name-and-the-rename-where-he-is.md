@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of the charter and his answer to Q1; the face build depends on the canvas ratification (Q2)
 - **Unblocks:** PHILO-8-03
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra role (Opus 5.5 stand-in; Codex Astra on return) checks
@@ -48,3 +48,4 @@ PROVISIONAL: 0.75–1.25 engineering days of effort, plus the canvas and the own
 
 - 2026-09-26 — drafted by the Fedaykin docs lane for Muad'Dib from the owner's word closing Phase 7; unratified.
 - 2026-09-26 — round two: the Astra-role check (`checks/charter-astra-role-r1.md`) paid: C3 the free name matches the hub's rule in full, never replaces a passed name, and Retry refreshes after a 409 (the store-side fix ruled the smallest lawful one); C4 the rename covers the F2 Rename key.
+- 2026-09-26 — half A BUILT (Fedaykin, Opus 5.5; branch `feat/philo-8-01-zone-name`): the free name (`web/src/desk/zoneName.ts`; `createPrimitive` in `web/src/desk/store/dataSlice.ts` — a caller's name is never replaced, a name in flight counts as taken, Retry refreshes before it picks); the Chair withholds New Zone (`Verb.needsZones`, `offeredHere()` in `web/src/desk/verbRegistry.ts`, honoured by `DeskToolShelf.tsx` and `DeskMenuBar.tsx`); F2 on a zone ghosts `Open the Floor` on the Chair; a face change clears `renamingZoneId` and a create landing after a face change opens no rename (`web/src/desk/DeskApp.tsx`); ONE rename behaviour `web/src/desk/hooks/useZoneRenameField.ts` (the Floor overlay composes it). Fences: `tests/e2e/test_philo8_01_zone_name_glass.py` (12, real hub, 1440 + 393; 10 red on main), `store/__tests__/zoneFreeName.test.ts`, `__tests__/philo801ZoneVerbs.test.ts`, `DeskApp.test.tsx` (8 red on main); the runs in `assets/story-01-half-a-proof.md`. Found on the way: the post-create refresh takes about 4.7 s on the isolated rig at 1440, so a second New Zone inside it read a stale store and still 409'd — paid by the in-flight name set. The list's in-row field: canvas `assets/story-01-canvas/README.md` (8 live boards at 1440 and 393, three questions); NOT built until the owner ratifies it.

@@ -14,6 +14,7 @@ import { ZoneWindow } from "../components/ZoneWindow";
 import { InfoWindow } from "../components/InfoWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
+import { useZoneRenameField } from "../hooks/useZoneRenameField";
 import { deskVoiceGrammar } from "../voice/grammars/desk";
 import type { VoiceProposal } from "../voice/grammar";
 import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
@@ -410,26 +411,7 @@ function ZoneRenameOverlay({
   y: number;
   width: number;
 }) {
-  const [name, setName] = useState(title);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { renameZone, setRenamingZone, clearZoneRenameError } = useDesk.getState();
-  const zoneRenameError = useDesk((s) => s.zoneRenameError);
-  const commit = async () => {
-    clearZoneRenameError();
-    const clean = name.trim();
-    if (clean && clean !== title) {
-      await renameZone(zoneId, clean);
-      if (useDesk.getState().zoneRenameError) {
-        inputRef.current?.focus();
-        return;
-      }
-    }
-    setRenamingZone(null);
-  };
-  const cancel = () => {
-    setRenamingZone(null);
-    clearZoneRenameError();
-  };
+  const field = useZoneRenameField(zoneId, title);
   return (
     <span
       className="desk-zone-rename-row is-overlay"
@@ -439,34 +421,16 @@ function ZoneRenameOverlay({
         width,
       }}
       onPointerDown={(e) => e.stopPropagation()}
-      onBlur={(e) => {
-        // HS-111-10: commit only when focus LEAVES the row — pressing
-        // the speak-to-fill mic must not commit-and-unmount mid-press.
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null))
-          void commit();
-      }}
+      {...field.rowProps}
     >
-      <input
-        ref={inputRef}
-        className="desk-zone-rename"
-        value={name}
-        autoFocus
-        onChange={(e) => {
-          setName(e.target.value);
-          if (zoneRenameError) clearZoneRenameError();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") void commit();
-          if (e.key === "Escape") cancel();
-        }}
-      />
+      <input className="desk-zone-rename" {...field.inputProps} />
       <MicButton
         draftScope={`zone-rename:${zoneId}`}
-        onText={(t) => setName(t)}
+        onText={(t) => field.setName(t)}
       />
-      {zoneRenameError && (
+      {field.error && (
         <span className="desk-zone-rename-error" role="alert">
-          {zoneRenameError}
+          {field.error}
         </span>
       )}
     </span>

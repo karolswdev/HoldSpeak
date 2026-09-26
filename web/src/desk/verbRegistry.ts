@@ -19,6 +19,7 @@ import { applicationForAction } from "./applications";
 import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import { useSettleState } from "./settleState";
+import { useChairState } from "./chairState";
 import {
   closeFrontWindow,
   focusOrRestoreApp,
@@ -64,9 +65,24 @@ export interface Verb {
   palette?: boolean;
   /** Extra ⌘K match terms. */
   keywords?: string[];
+  /** PHILO-8-01 — the verb makes or edits a zone, so only a face that shows
+   * zones (the Floor: spatial or list) offers it; the Chair withholds it
+   * (the owner's Q2 (c), UX-CANON §A.11). */
+  needsZones?: boolean;
   /** null = runnable; a string = ghosted WITH that reason. */
   ghost(ctx: VerbContext): string | null;
   run(ctx: VerbContext): void;
+}
+
+/** PHILO-8-01 — true when the face the owner is on shows zones. */
+export function zonesShown(): boolean {
+  return useChairState.getState().surface === "floor";
+}
+
+/** PHILO-8-01 — false when this face withholds the verb (a zone verb on
+ * the Chair). The palette and the menu bar ask this before they list it. */
+export function offeredHere(v: Verb): boolean {
+  return !v.needsZones || zonesShown();
 }
 
 export function verbLabel(v: Verb, ctx: VerbContext): string {
@@ -208,6 +224,7 @@ export const VERBS: Verb[] = [
     group: "new",
     glyph: KIND_GLYPH.zone,
     keywords: ["create", "place"],
+    needsZones: true,
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("zone"),
   },
@@ -492,6 +509,9 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
+      // PHILO-8-01 — a zone renames where zones are shown; the Chair
+      // shows none, so it does not start a rename nothing can draw.
+      if (o.kind === "directory" && !zonesShown()) return "Open the Floor";
       return primitiveCan(o.kind, "rename")
         ? null
         : "Not renameable";
@@ -499,8 +519,9 @@ export const VERBS: Verb[] = [
     run: (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      if (o.kind === "directory") useDesk.getState().setRenamingZone(o.id);
-      else if (primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
+      if (o.kind === "directory") {
+        if (zonesShown()) useDesk.getState().setRenamingZone(o.id);
+      } else if (primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {

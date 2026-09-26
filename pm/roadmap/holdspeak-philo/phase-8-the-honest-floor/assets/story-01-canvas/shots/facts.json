@@ -1,0 +1,4980 @@
+{
+  "0-today-list-after-new-zone-1440": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "0-today-list-after-new-zone-393": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "1-new-zone-field-open-1440": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 461.390625,
+      "x": 237,
+      "y": 319
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": "New zone 2",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "1-new-zone-field-open-393": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 125.75,
+      "x": 77,
+      "y": 415
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": "New zone 2",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "2-typing-1440": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 461.390625,
+      "x": 237,
+      "y": 319
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": "Platform team",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "2-typing-393": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 125.75,
+      "x": 77,
+      "y": 415
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": "Platform team",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "3-enter-committed-1440": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "hub_names": [
+      "Decisions",
+      "Inbox",
+      "Meetings",
+      "New zone",
+      "Personal",
+      "Platform team",
+      "Reference",
+      "Work"
+    ],
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_6d776233be52",
+        "status": 200
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "3-enter-committed-393": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "hub_names": [
+      "Decisions",
+      "Inbox",
+      "Meetings",
+      "New zone",
+      "Personal",
+      "Platform team",
+      "Reference",
+      "Work"
+    ],
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 8 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_7a3b72fe8ecb",
+        "status": 200
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "4-escape-kept-default-1440": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_6d776233be52",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "4-escape-kept-default-393": {
+    "active": "BODY.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_7a3b72fe8ecb",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "5-refused-name-taken-1440": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 448,
+      "x": 237,
+      "y": 32
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_6d776233be52",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_9a0582e95bab",
+        "status": 409
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": "\u2717 NAME TAKEN",
+        "field": "Inbox",
+        "refused": "zone_name_taken",
+        "text": "\u2717 NAME TAKEN ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "5-refused-name-taken-393": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 97.59375,
+      "x": 77,
+      "y": 56
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_7a3b72fe8ecb",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_bfc459bb9d0c",
+        "status": 409
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": "\u2717 NAME TAKEN",
+        "field": "Inbox",
+        "refused": "zone_name_taken",
+        "text": "\u2717 NAME TAKEN ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Platform team ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "6-f2-rename-existing-1440": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 461.390625,
+      "x": 237,
+      "y": 114
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_6d776233be52",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_9a0582e95bab",
+        "status": 409
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 3 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": "Platform team",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "6-f2-rename-existing-393": {
+    "active": "INPUT.desk-zone-rename",
+    "field_focused": true,
+    "field_font_px": 13,
+    "field_rect": {
+      "h": 36,
+      "w": 125.75,
+      "x": 77,
+      "y": 186
+    },
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": 4,
+    "small_text": [
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "17 ITEMS \u00b7 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "fs": 10,
+        "text": "17"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "fs": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-direction",
+        "fs": 10,
+        "text": "\u2191"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "fs": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "WORK"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "MEETINGS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "REFERENCE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "INBOX"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENTS"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "AGENT"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      },
+      {
+        "cls": "",
+        "fs": 10,
+        "text": "KNOWLEDGE"
+      }
+    ],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_7a3b72fe8ecb",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_bfc459bb9d0c",
+        "status": 409
+      }
+    ],
+    "zone_rows": [
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Decisions ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Inbox ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Meetings ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 2 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "New zone 3 ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Personal ZONE 2 ITEMS"
+      },
+      {
+        "chip": null,
+        "field": "Platform team",
+        "refused": null,
+        "text": "ZONE EMPTY"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Reference ZONE 1 ITEM"
+      },
+      {
+        "chip": null,
+        "field": null,
+        "refused": null,
+        "text": "Work ZONE 1 ITEM"
+      }
+    ]
+  },
+  "7-chair-no-new-zone-1440": {
+    "active": "INPUT.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": null,
+    "small_text": [],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/directories/dir_0c5b93c1d5f0",
+        "status": 200
+      }
+    ],
+    "zone_rows": []
+  },
+  "7-chair-no-new-zone-393": {
+    "active": "INPUT.",
+    "field_focused": false,
+    "field_font_px": null,
+    "field_rect": null,
+    "h_overflow": false,
+    "palette_new_zone": false,
+    "raw_buttons": null,
+    "small_text": [],
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/directories/dir_64d0f5f09f23",
+        "status": 200
+      }
+    ],
+    "zone_rows": []
+  }
+}
