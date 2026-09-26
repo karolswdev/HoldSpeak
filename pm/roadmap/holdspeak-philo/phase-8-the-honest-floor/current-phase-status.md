@@ -96,6 +96,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, the owner RATIFIED the story 01 canvas ("Ratify as drawn"; "Chip on the list and the Floor"; "Keep F2 on zone rows"). PHILO-8-01 half B BUILT and DONE on `feat/philo-8-01-half-b`: one row component (`web/src/desk/components/ZoneRenameRow.tsx`) on the list and the Floor; the refusal chip on both faces; `renameZone` never silent (chip while the field is open, else the write receipt `RENAME ZONE` + Retry); F2 on a focused zone row. 14 new glass cases (all red on main 808a9c30) + 12 half-A cases green together; 6 new unit cases red on main; web baseline 2898 passed, zero branch-new. Exits 1 and 2 are met for the list and the Floor (the Chair withholds New Zone under Q2 (c)).
 
+2026-09-26, PHILO-8-01 half B round two (the Astra-role check on PR #673, RATIFY-WITH-CONDITIONS): the evidence corrected (C1), the Floor failed-save glass added (C2, 4 more cases), three BACKLOG rows and the board-to-shot map (C3); the Floor field now opens with the name selected, as the list does (ruled lawful).
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

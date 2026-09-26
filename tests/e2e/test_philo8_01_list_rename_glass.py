@@ -218,12 +218,15 @@ class TestListRenameGlass:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("failure", ["422", "network"])
+    @pytest.mark.parametrize("face", ["list", "spatial"])
     @pytest.mark.parametrize("width", WIDTHS)
-    def test_a_failed_save_shows_in_the_chip_slot(self, width: int, failure: str) -> None:
+    def test_a_failed_save_shows_in_the_chip_slot(self, width: int, face: str, failure: str) -> None:
+        # The ratified canvas, answer 2: a failed save in the same slot on BOTH
+        # faces (the spatial leg: the Astra-role check on PR #673, C2).
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
-            browser, page, puts = self._open(pw, width, "list")
+            browser, page, puts = self._open(pw, width, face)
             try:
                 _new_zone(page)
                 _field(page)
@@ -237,11 +240,13 @@ class TestListRenameGlass:
                 page.locator("[data-testid=zone-name-refused]").wait_for(timeout=T)
                 f = page.evaluate(_FIELD_JS)
                 assert f["chip"] == "✗ NOT SAVED", f
-                assert f["focused"], f
+                assert f["focused"] and f["inListRow"] == (face == "list"), f
+                assert f["small"] == [] and not f["sentence"], f
                 if failure == "422":
                     assert puts[-1][1] == 422, puts
                 assert "New zone" in _names(page)
-                page.screenshot(path=str(SHOTS / f"list-not-saved-{failure}-{width}.png"))
+                prefix = "list" if face == "list" else "floor"
+                page.screenshot(path=str(SHOTS / f"{prefix}-not-saved-{failure}-{width}.png"))
             finally:
                 browser.close()
 

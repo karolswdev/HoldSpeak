@@ -31,7 +31,7 @@ The branch was cut from main 808a9c30 and the new glass file run BEFORE any prod
 
 Unit fences on main source (`dataSlice.ts`, `DeskApp.tsx`, `store/types.ts`, `store/index.ts` written from `git show HEAD:`; restored after): `zoneRenameRefusal.test.ts` + `DeskApp.test.tsx` → `6 failed | 12 passed (18)` — every refusal case (409, 422, network, 500, the late refusal, the face change with a standing refusal); the 200 case passes on main by construction.
 
-The first capture below (exit 1) ran both zone glass files at `-n 6` and hit two load timeouts (a POST response wait, and the half-A list-to-spatial leg waiting for the row's name BUTTON, which half B replaces with the field — the leg now waits for either); the leg was fixed and the files rerun at `-n 4`: 26 passed.
+The first capture below (exit 1) ran both zone glass files at `-n 6` and had two failures of different kinds (corrected on the Astra-role check r1 on PR #673, C1): (1) a LOAD timeout on a POST response wait (`test_two_new_zone_presses_make_two_zones[1440-spatial]`; green serially); (2) a DETERMINISTIC failure of the half-A list-to-spatial leg, which waited for the row's name BUTTON that half B replaces with the field, so it could not pass on half B at any load. The leg now waits for the button or the field; the files were rerun at `-n 4`: 26 passed.
 
 ## Proof
 
@@ -220,4 +220,19 @@ HEALED (5):
 Suite totals: 2898 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-26T19:54:17Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.5vmMsr1JD6 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest -q -n 4 -p no:cacheprovider tests/e2e/test_philo8_01_list_rename_glass.py tests/e2e/test_philo8_01_zone_name_glass.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0ecd076d1d633738bd5926c901a72047afe47622
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+..............................                                           [100%]
+30 passed in 309.45s (0:05:09)
 ```
