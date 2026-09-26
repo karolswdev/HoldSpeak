@@ -1,0 +1,64 @@
+{
+  "auth_file_changed": false,
+  "chosen_tools": [],
+  "initial_context_findings": [],
+  "leg": "agent",
+  "mcp_other_methods": [],
+  "mcp_statuses": [
+    {
+      "method": "initialize",
+      "status": 200
+    },
+    {
+      "method": "notifications/initialized",
+      "status": 204
+    },
+    {
+      "method": "tools/list",
+      "status": 200
+    }
+  ],
+  "non_mcp_http_writes": [],
+  "reconciliation": {
+    "codex_calls": 0,
+    "matches": [],
+    "turn_exchange_start": 17,
+    "turn_exchanges": 3,
+    "unmatched_turn_exchanges": [
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "initialize",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "notifications/initialized",
+        "status": 204
+      },
+      {
+        "method": "POST",
+        "path": "/api/mcp",
+        "rpc_method": "tools/list",
+        "status": 200
+      }
+    ]
+  },
+  "reconciliation_error": null,
+  "resumed": false,
+  "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_granted/home/.codex/sessions/2026/09/25/rollout-2026-09-25T15-56-35-01a0da91-fb4e-72c1-bd10-0191d8e45a80.jsonl",
+  "session_id": "01a0da91-fb4e-72c1-bd10-0191d8e45a80",
+  "stage": "agent_granted",
+  "timing": {
+    "elapsed_s": 3.035,
+    "exit_code": 1,
+    "finished_at": "2026-09-25T21:56:37.838048+00:00",
+    "outcome": "process_failed",
+    "started_at": "2026-09-25T21:56:34.803362+00:00"
+  },
+  "tools_listed": 229,
+  "unlisted_tools": [],
+  "usage_limit": "You\u2019ve hit your usage limit. Visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Sep 26th, 2026 8:50 PM.",
+  "zero_read_findings": []
+}

@@ -1,0 +1,5 @@
+$ curl --fail --show-error --silent --max-time 20 http://192.168.1.43:8080/v1/models
+exit=0
+stdout:
+{"models":[{"name":"Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf","model":"Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf","modified_at":"","size":"","digest":"","type":"model","description":"","tags":[""],"capabilities":["completion"],"parameters":"","details":{"parent_model":"","format":"gguf","family":"","families":[""],"parameter_size":"","quantization_level":""}}],"object":"list","data":[{"id":"Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf","aliases":[],"tags":[],"object":"model","created":1790387722,"owned_by":"llamacpp","meta":{"vocab_type":2,"n_vocab":248320,"n_ctx_train":262144,"n_embd":2048,"n_params":34660610688,"size":26581518848}}]}
+stderr:

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "holdspeak": {
+      "headers": {
+        "Authorization": "Bearer <redacted sha256:630e03fb05a9>"
+      },
+      "type": "http",
+      "url": "http://127.0.0.1:65535/api/mcp"
+    }
+  }
+}

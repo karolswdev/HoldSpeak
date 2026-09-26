@@ -1272,3 +1272,11 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 |---|---|---|---|
 | Two Floor deletes inside one undo window silently keep the second: delete decision A, wait 1.5 s, delete decision B, wait 12 s → A 404, B 200 (B is still on the server while the owner saw it removed). On main too. Likely cause: `remove()` calls `cleanup()`, which drops the earlier pending action (`web/src/desk/hooks/useUndoReceipt.ts:27-29`), and the Floor's undo step does nothing (`web/src/desk/gl/WorldStage.tsx:144-148`); unverified which one is lost and why. A second delete must commit or queue the first, never drop it; a fence with two deletes in one window. | a delete that does not happen while the face says it did (Tenet 3) | `checks/delete-receipt-astra-role-r1.md` finding 7 | ASSIGNED: Muad'Dib, the Floor lane (with the rename-field and list-view Delete defects, `docs/internal/philo/phase-7/floor-diag/FINDING.md`) |
 | The Workbench window's footer shows `writeReceipt \|\| undoReceipt \|\| copyReceipt \|\| status` (`WorkbenchWindow.tsx:1893-1897`); with the 6 s linger a delete hides the "N ITEMS · last run" line and any Copy receipt for 6 s. | minor | finding 3 | the next Workbench sitting |
+
+## PHILO-7-04 follow-ups — 2026-09-26 (the Astra-role check on PR #661, MISSED)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The decision window shows an empty CONSEQUENCES heading when no consequences were written (a heading with nothing under it; UX-CANON: no empty labels). | face | `checks/story-04-built-astra-role-r1.md` MISSED | the Floor lane |
+| The brief reports the people sections as "unavailable" on a fresh hub (a word for a state that is only "none yet"). | face / words | same | the Arrival lane |
+| The closing "find it" turn used the note id from the session's own first turn: it proves "find it again", not "find it cold". A future rehearsal asks a fresh session to find a note it did not file. | proof gap | same; `docs/internal/philo/phase-7/file-and-find/rehearsal.md` | the next MCP slice's closing use |

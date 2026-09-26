@@ -1,0 +1,9 @@
+{
+  "client_duration_ms": 15387,
+  "elapsed_s": 16.248,
+  "exit_code": 0,
+  "finished_at": "2026-09-26T01:56:34.309626+00:00",
+  "num_turns": 6,
+  "outcome": "process_completed",
+  "started_at": "2026-09-26T01:56:18.061522+00:00"
+}

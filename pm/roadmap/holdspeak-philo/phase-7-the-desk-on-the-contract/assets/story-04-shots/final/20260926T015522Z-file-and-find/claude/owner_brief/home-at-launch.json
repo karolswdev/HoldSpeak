@@ -1,0 +1,15 @@
+{
+  "home": [
+    ".claude.json",
+    ".claude/.credentials.json",
+    ".claude/.last-cleanup",
+    ".claude/backups/.claude.json.backup.1790387725231",
+    ".claude/cache/model-catalog/<account-id>-e6801d150052-cc.json",
+    ".claude/projects/-private-var-folders-q7-5dzz5g2116b3lq8rhg7hwjrr0000gn-T-philo7-04-px2qichs-cold-owner-work/2243cb06-e8e0-4bae-a50f-1bb13d726116.jsonl",
+    "Library/Caches/claude-cli-nodejs/-private-var-folders-q7-5dzz5g2116b3lq8rhg7hwjrr0000gn-T-philo7-04-px2qichs-cold-owner-work/mcp-logs-holdspeak/2026-09-26T01-55-25-648Z.jsonl",
+    "Library/Caches/claude-cli-nodejs/-private-var-folders-q7-5dzz5g2116b3lq8rhg7hwjrr0000gn-T-philo7-04-px2qichs-cold-owner-work/mcp-logs-holdspeak/2026-09-26T01-55-34-560Z.jsonl",
+    "Library/Caches/claude-cli-nodejs/-private-var-folders-q7-5dzz5g2116b3lq8rhg7hwjrr0000gn-T-philo7-04-px2qichs-cold-owner-work/mcp-logs-holdspeak/2026-09-26T01-55-39-503Z.jsonl",
+    "<218 account skill and plugin files, names redacted>"
+  ],
+  "work": []
+}

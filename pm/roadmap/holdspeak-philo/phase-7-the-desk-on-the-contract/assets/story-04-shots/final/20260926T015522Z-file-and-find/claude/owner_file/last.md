@@ -1,0 +1,1 @@
+I filed your note **Runner capacity numbers** in the **Platform Migration** zone, and HoldSpeak confirmed it went through. The note is now in that zone. It says the build farm needs 40 more runner hours each week after the move.

@@ -1,0 +1,19 @@
+{
+  "how": "POST /api/directories and POST /api/notes as the owner",
+  "ids": {
+    "agent_note": "note_3bf5691b6cef",
+    "owner_note": "note_7af884803aaa",
+    "zone": "dir_4dde0b428a2c"
+  },
+  "notes": [
+    {
+      "body_markdown": "The build farm needs 40 more runner hours each week after the move.",
+      "title": "Runner capacity numbers"
+    },
+    {
+      "body_markdown": "The shared cache needs 2 TB to hold two weeks of build outputs.",
+      "title": "Build cache sizing"
+    }
+  ],
+  "zone": "Platform Migration"
+}

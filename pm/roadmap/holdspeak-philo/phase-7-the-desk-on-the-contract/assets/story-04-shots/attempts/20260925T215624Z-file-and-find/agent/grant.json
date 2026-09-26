@@ -1,0 +1,37 @@
+{
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1790373394.715908,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_ed5a29974d294e0988b999759375545e",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_c5e90ce8fb184c7f9ff02468aa1eca68",
+    "result_ref": "desk-delegation:deskdeleg_14d33d1793224b76946948bf5aab52e0",
+    "state": "succeeded",
+    "target_ref": "agent:codex-desk-agent"
+  },
+  "response": {
+    "grant_id": "deskdeleg_14d33d1793224b76946948bf5aab52e0",
+    "operation_id": "op_ed5a29974d294e0988b999759375545e",
+    "receipt": {
+      "actor_identity": "owner-session",
+      "actor_kind": "owner",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "created_at": 1790373394.715908,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_ed5a29974d294e0988b999759375545e",
+      "outcome": "succeeded",
+      "receipt_id": "rcpt_c5e90ce8fb184c7f9ff02468aa1eca68",
+      "result_ref": "desk-delegation:deskdeleg_14d33d1793224b76946948bf5aab52e0",
+      "state": "succeeded",
+      "target_ref": "agent:codex-desk-agent"
+    },
+    "success": true
+  },
+  "route": "PUT /api/settings/remote/delegations/codex-desk-agent",
+  "status": 200
+}

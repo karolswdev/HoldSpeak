@@ -1,0 +1,21 @@
+{
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "engine_mode": "none",
+  "hub_home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "legs": [
+    "owner",
+    "agent"
+  ],
+  "model": "gpt-6-astra",
+  "observed_sitting": false,
+  "prompts": {
+    "agent_file": "File my note Build cache sizing into my Platform Migration zone.",
+    "owner_brief": "Make my brief and tell me what is on it.",
+    "owner_decide": "Put this decision on my review list: Move the nightly build to the shared runners.",
+    "owner_file": "File my note Runner capacity numbers into my Platform Migration zone.",
+    "owner_find": "Now find that note for me and tell me where it is."
+  },
+  "reasoning_effort": "medium",
+  "temp_root": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4"
+}

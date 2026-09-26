@@ -1,0 +1,13 @@
+{
+  "cwd": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_ungranted/work",
+  "env": {
+    "CODEX_HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_ungranted/home/.codex",
+    "HOLDSPEAK_DESK_BEARER": "<redacted sha256:c7810ed30c66>",
+    "HOME": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-agent_ungranted/home",
+    "LANG": "en_US.UTF-8",
+    "PATH": "/Users/karol/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "TMPDIR": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/",
+    "USER": "karol"
+  },
+  "stdin": "owner-prompt.txt"
+}

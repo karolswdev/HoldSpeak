@@ -1,0 +1,39 @@
+{
+  "members": [],
+  "read": {
+    "adapter": "mcp-http-read",
+    "args": {
+      "directory_id": "dir_215cd7d78d58"
+    },
+    "domain_response": [],
+    "elapsed_s": 0.009,
+    "envelope": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "content": [
+          {
+            "text": "[]",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "kind": "op",
+    "name": "zone.members",
+    "refusal": null,
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "tools/call",
+      "params": {
+        "arguments": {
+          "directory_id": "dir_215cd7d78d58"
+        },
+        "name": "zone.list_members"
+      }
+    },
+    "response": []
+  }
+}

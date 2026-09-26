@@ -1,0 +1,1 @@
+Your note **Runner capacity numbers** (`note_7af884803aaa`) is in the **Platform Migration** zone (`dir_4dde0b428a2c`). I just listed the zone's contents and it's there. It's the only note in that zone right now. It says: "The build farm needs 40 more runner hours each week after the move."

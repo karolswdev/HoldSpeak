@@ -1,0 +1,5 @@
+# The zero-read fence (claude_zero_read_findings) over a REAL claude -p session in the same cold setup
+# (scratch HOME with the credentials file alone, empty work dir, --strict-mcp-config, bypassPermissions),
+# told to read a repository file. claude exit=0
+{"item_id": "toolu_01Ccd5zNha7CWQVq3dbWSVBS", "type": "tool_use", "server": null, "detail": "Bash {\"command\": \"head -n 1 /Users/karol/dev/tools/wt-philo-7-04/CLAUDE.md\", \"description\": \"Show first line of CLAUDE.md\"}"}
+RED: 1 finding(s)

@@ -213,14 +213,14 @@ _TRANSPORT_PRINCIPAL = (
 # Exception (ratified, Astra r2 2026-09-24): authority fields inside update data are REFUSED — on main eight of them were accepted-and-ignored and `principal` already failed (positional collision); arguments cannot supply authority.
 # already refused (an unknown field on create, once a Python ``TypeError``).
 _DECISION_FIELDS: dict[str, Any] = {
-    "title": {"description": "Text; defaults to 'New decision'."},
+    "title": {"description": "The decision in a few words (text); defaults to 'New decision'."},
     "status": {"description": "proposed, accepted, superseded or deprecated."},
     "deciders": {"description": "A list of names."},
     "decided_at": {"description": "A date, as text."},
-    "context_markdown": {"description": "Markdown text."},
-    "decision_markdown": {"description": "Markdown text."},
+    "context_markdown": {"description": "The reason for the decision: why, and the facts behind it (Markdown text)."},
+    "decision_markdown": {"description": "What you will do (Markdown text)."},
     "alternatives": {"description": "Objects with name and reason."},
-    "consequences_markdown": {"description": "Markdown text."},
+    "consequences_markdown": {"description": "What follows from the decision (Markdown text)."},
     "tags": {"description": "A list of tags."},
 }
 

@@ -1,0 +1,40 @@
+{
+  "pages": [
+    {
+      "body_sha256": "9aaa43ed16a7b4d484668992915a2fbe95bfd4c899df1072fe2237b6fbe5f5b1",
+      "body_text_excerpt": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nFri, Sep 25\n07:56 PM\n1 need you\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF \u00b7 1 THING WAITING\nTHIS DEVICE\nGenerate\nReview decision: Move nightly build to shared runners\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 19:55\nBrief ready \u00b7 1 item \u00b7 SEP 25 19:55\nTALK\nWrite a thought\nRecord meeting\nSchedule\n\u25c8\nIntelligence\n\u2022\nSpeak\nMeetings\nAgents\nSettings\nFloor\n\u25ce\nDesk memory\n\u25a4\nDelivery\n\u29c9\nPanes\n\u25cc\nHide the menus\n\u25a7\nPlaces",
+      "expected_text_present": true,
+      "receipt_present": true,
+      "receipt_shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/1440-receipt.png",
+      "receipt_text": "Brief ready \u00b7 1 item \u00b7 SEP 25 19:55",
+      "ref": "intelligence:desk",
+      "reopened": true,
+      "row_shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/1440-row.png",
+      "row_texts": [
+        "Review decision: Move nightly build to shared runners\nAck\nDefer"
+      ],
+      "shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/1440.png",
+      "validation_error": null,
+      "viewport": 1440
+    },
+    {
+      "body_sha256": "cfcdc907f047edc6828143b6b231fe8fb2c525e91c2efa71d11589e35b9f2612",
+      "body_text_excerpt": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n07:56 PM\n1 need you\nNO CALENDAR Connect calendar\nSETUP\nNo engine for summaries\nChoose an engine\nBRIEF \u00b7 1 THING WAITING\nTHIS DEVICE\nGenerate\nReview decision: Move nightly build to shared runners\nAck\nDefer\nSEP 21 \u2013 25 \u00b7 GENERATED SEP 25 19:55\nBrief ready \u00b7 1 item \u00b7 SEP 25 19:55\nTALK\nWrite a thought\nRecord meeting\nSchedule\n\u25c8\n\u2022\n\u25ce\n\u25a4\n\u29c9\n\u25cc\nHide the menus\n\u25a7\nPlaces",
+      "expected_text_present": true,
+      "receipt_present": true,
+      "receipt_shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/393-receipt.png",
+      "receipt_text": "Brief ready \u00b7 1 item \u00b7 SEP 25 19:55",
+      "ref": "intelligence:desk",
+      "reopened": true,
+      "row_shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/393-row.png",
+      "row_texts": [
+        "Review decision: Move nightly build to shared runners\nAck\nDefer"
+      ],
+      "shot": "/Users/karol/dev/tools/wt-philo-7-04/pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/assets/story-04-shots/final/20260926T015522Z-file-and-find/shots/brief/393.png",
+      "validation_error": null,
+      "viewport": 393
+    }
+  ],
+  "ref": "intelligence:desk",
+  "stage": "brief"
+}

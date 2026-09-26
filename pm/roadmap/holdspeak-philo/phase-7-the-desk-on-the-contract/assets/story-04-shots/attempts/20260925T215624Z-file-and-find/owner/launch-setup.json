@@ -1,0 +1,115 @@
+{
+  "codex_home": {
+    "files": [
+      "auth.json"
+    ],
+    "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner/home/.codex"
+  },
+  "codex_process_home": {
+    "files": [
+      ".codex/auth.json"
+    ],
+    "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner/home"
+  },
+  "findings": [],
+  "git_rev_parse": {
+    "exit_code": 128,
+    "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+    "stdout": ""
+  },
+  "parents_checked": [
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner/work",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/var/folders",
+      "present": []
+    },
+    {
+      "path": "/var",
+      "present": []
+    },
+    {
+      "path": "/",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner/work",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders/q7",
+      "present": []
+    },
+    {
+      "path": "/private/var/folders",
+      "present": []
+    },
+    {
+      "path": "/private/var",
+      "present": []
+    },
+    {
+      "path": "/private",
+      "present": []
+    }
+  ],
+  "servers": [
+    {
+      "auth_status": "unsupported",
+      "disabled_reason": null,
+      "enabled": true,
+      "name": "holdspeak",
+      "startup_timeout_sec": 60.0,
+      "tool_timeout_sec": 900.0,
+      "transport": {
+        "args": [],
+        "command": "/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp",
+        "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home",
+        "env": {
+          "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home"
+        },
+        "env_vars": [],
+        "type": "stdio"
+      }
+    }
+  ],
+  "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/cold-owner/work"
+}

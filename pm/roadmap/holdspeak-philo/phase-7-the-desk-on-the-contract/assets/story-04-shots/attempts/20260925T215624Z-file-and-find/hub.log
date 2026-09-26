@@ -1,0 +1,5 @@
+DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home/.local/share/holdspeak/holdspeak.db
+CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home/.config/holdspeak/config.json
+TRANSCRIPT_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-j6okr2v4/hub-home/rehearsal-transcript.jsonl
+WIRING {"has": ["MeetingWebServer routes", "bounded HTTP rehearsal recording", "the database owner lock (port published)", "the intelligence queue drainer"], "lacks": ["AudioRecorder (the microphone is forbidden to this rig)", "HotkeyListener (no native keystrokes)", "voice_session / device registry", "transcriber warm-up", "the deferred plugin-queue thread", "the Cadence Engine tick", "the brief producer clock seam (not requested; the wall clock)", "the heartbeat conductor loop (not requested by the case)"]}
+HUB_READY http://127.0.0.1:52754

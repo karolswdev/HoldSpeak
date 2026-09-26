@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "holdspeak": {
+      "args": [],
+      "command": "/Users/karol/dev/tools/wt-philo-7-04/.venv/bin/holdspeak-mcp",
+      "env": {
+        "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo7-04-z9hvi9fs/hub-home"
+      },
+      "type": "stdio"
+    }
+  }
+}
