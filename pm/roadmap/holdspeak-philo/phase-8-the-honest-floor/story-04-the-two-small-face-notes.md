@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** backlog (part (a) KEPT by the owner 2026-09-26; part (b) DROPPED — the Arrival lane)
 - **Depends on:** the owner keeps one or both notes (Q3); removed if he drops both
 - **Unblocks:** PHILO-8-03 (its shots include the kept notes)
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra role (Opus 5.5 stand-in; Codex Astra on return) checks

@@ -1,6 +1,6 @@
 # Phase 8 - The Honest Floor
 
-**Last updated:** 2026-09-26 (round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
+**Last updated:** 2026-09-26 (RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
 
 ## Goal
 
@@ -102,7 +102,14 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 | The stale rename state keeps jumping faces | medium | exit 2 fences the FINDING's stale-field rows | a rename field that appears on a face the owner did not press New Zone on |
 | Same-family checks (Opus 5.5 builds and checks) | high while Codex Astra is out | label every check "Astra role (Opus 5.5 stand-in)"; Codex Astra may check on return | a check written as "Astra" without the label |
 
-## Decisions for the owner
+## The owner's ratification (2026-09-26, AskUserQuestion)
+
+- **Charter: "Ratify, build it".**
+- **Q1: (a)** — the new zone is called "New zone 2" (then 3, …) and the rename opens.
+- **Q2: (c)** — the Chair does not offer New Zone (it is a Floor-only verb, `verbRegistry.ts:203-212`); on the list, the name field opens in the new zone's row. The list's in-row field is a face change: its CANVAS is ratified by the owner before that face is built. Withholding the verb on the Chair is ratified by this answer and needs no canvas.
+- **Q3: keep (a)** — the empty decision headings (Decision context, Decision, Consequences) hide when empty (story 04 keeps its part (a)); **drop (b)** — the brief's "unavailable" people sections stay with the Arrival lane (`pm/roadmap/holdspeak/BACKLOG.md:1281`).
+
+## Decisions for the owner (answered above)
 
 - **Q1 — "When I press New Zone and a zone called 'New zone' is already there, what should happen?"** We will do (a) unless you object.
   - (a) The new zone is called "New zone 2" (then 3, …), and the rename opens so I can name it. *(The Finder convention; the smallest repair; no new step.)*
