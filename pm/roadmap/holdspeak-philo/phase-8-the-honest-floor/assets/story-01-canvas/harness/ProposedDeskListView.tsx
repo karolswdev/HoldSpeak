@@ -65,8 +65,10 @@ function ZoneNameField({ zoneId, title }: { zoneId: string; title: string }) {
         onFocus={(e) => e.currentTarget.select()}
       />
       <MicButton draftScope={`zone-rename:${zoneId}`} onText={(t) => field.setName(t)} />
+      {/* C5 (Astra-role check r1): the chip takes its own line in the cell,
+          so a refusal never widens the Name column and shifts the table. */}
       {field.error ? (
-        <span data-code="zone_name_taken" title={field.error}>
+        <span className="desk-zone-rename-refusal" data-code="zone_name_taken" title={field.error}>
           <StateChip state="failure" label="NAME TAKEN" data-testid="zone-name-refused" />
         </span>
       ) : null}

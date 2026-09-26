@@ -34,6 +34,7 @@ WEB = REPO / "web"
 SHOTS = CANVAS / "shots"
 TOKEN = "philo8-canvas"
 WIDTHS = [(1440, 900), (393, 852)]
+LONG_NAME = "Quarterly architecture review and platform roadmap"
 
 
 def free_port() -> int:
@@ -85,6 +86,9 @@ FACTS = """() => {
     field_focused: !!input && document.activeElement === input,
     field_rect: ir ? {x: ir.left, y: ir.top, w: ir.width, h: ir.height} : null,
     field_font_px: input ? parseFloat(getComputedStyle(input).fontSize) : null,
+    field_selection: input ? {start: input.selectionStart, end: input.selectionEnd, length: input.value.length} : null,
+    kind_header_x: (() => { const th = [...document.querySelectorAll('.desk-listmode th')].find(t => /^KIND/.test((t.innerText || '').trim())); return th ? Math.round(th.getBoundingClientRect().left) : null; })(),
+    row_heights: [...document.querySelectorAll('.desk-sortable-table-row')].slice(0, 12).map(r => Math.round(r.getBoundingClientRect().height)),
     zone_rows: zoneRows,
     small_text: small,
     raw_buttons: list ? [...list.querySelectorAll('button')].filter(b => !String(b.className).includes('btn')).length : null,
@@ -184,8 +188,12 @@ def main() -> None:
                 for d in api(page, "GET", "/api/directories")["body"]["directories"]:
                     if d["name"] == "New zone 2":
                         api(page, "DELETE", f"/api/directories/{d['id']}")
-                # Board 7 — the Chair offers no New Zone (half A, built).
-                page.locator("[data-testid=chair-floor-toggle]").click()
+                # Board 7 — the Chair offers no New Zone (half A, built). Reload first so
+                # the store holds the hub's zones after the API delete above (C3).
+                page.reload(wait_until="load")
+                page.locator(".chair:not(.chair-first-value)").wait_for(timeout=30_000)
+                if page.locator(".desk-listmode").count():
+                    page.locator("[data-testid=chair-floor-toggle]").click()
                 page.locator(".chair").wait_for()
                 palette(page, "New Zone")
                 page.wait_for_timeout(400)
@@ -228,16 +236,45 @@ def main() -> None:
                 # F2 on an existing zone row (focus its name, press F2).
                 page.get_by_role("button", name="Platform team zone").first.focus()
                 page.keyboard.press("F2")
-                page.locator("input.desk-zone-rename").wait_for(timeout=5_000)
+                page.locator("input.desk-zone-rename").wait_for(timeout=15_000)
                 page.wait_for_timeout(300)
                 shoot(page, "6-f2-rename-existing")
+                page.keyboard.press("Escape")
+                page.locator("input.desk-zone-rename").wait_for(state="detached", timeout=15_000)
+
+                # Board 8 (MISSED) — a long name, committed: how the row shows it.
+                new_zone(page)
+                page.keyboard.type(LONG_NAME)
+                shoot(page, "8a-long-name-typing")
+                page.keyboard.press("Enter")
+                page.locator("input.desk-zone-rename").wait_for(state="detached", timeout=15_000)
+                page.wait_for_timeout(500)
+                shoot(page, "8b-long-name-committed")
+
+                # Board 9 (MISSED) — a name of spaces only, then Enter.
+                new_zone(page)
+                puts_before = sum(1 for w in writes if w["method"] == "PUT")
+                page.keyboard.type("   ")
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(800)
+                shoot(page, "9-spaces-only")
+                facts[f"9-spaces-only-{width}"]["puts_added"] = sum(1 for w in writes if w["method"] == "PUT") - puts_before
+
+                # Board 10 (MISSED) — two fast New Zone presses on the list.
+                palette(page, "New Zone")
+                page.locator("[id='desk-palette-option-desk.new-zone']").click()
+                palette(page, "New Zone")
+                page.locator("[id='desk-palette-option-desk.new-zone']").click()
+                page.locator("input.desk-zone-rename").wait_for(timeout=30_000)
+                page.wait_for_timeout(6000)
+                shoot(page, "10-two-fast-presses")
                 page.keyboard.press("Escape")
                 ctx.close()
 
                 # Clean the desk for the next width.
                 ctx, page = open_page(hub_url)
                 for d in api(page, "GET", "/api/directories")["body"]["directories"]:
-                    if d["name"].startswith("New zone") and d["name"] != "New zone" or d["name"] == "Platform team":
+                    if d["name"].startswith("New zone") and d["name"] != "New zone" or d["name"] in ("Platform team", LONG_NAME):
                         api(page, "DELETE", f"/api/directories/{d['id']}")
                 ctx.close()
             browser.close()

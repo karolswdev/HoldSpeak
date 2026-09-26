@@ -36,6 +36,20 @@ FAILED tests/e2e/test_philo8_01_zone_name_glass.py::TestZoneNameGlass::test_two_
 
 Unit fences on main source: `zoneFreeName.test.ts`, `philo801ZoneVerbs.test.ts`, `DeskApp.test.tsx` → `8 failed | 17 passed (25)`; the 8 failures are every PHILO-8-01 behaviour case (next free name, two quick presses, the face change during the create, Retry refreshes first, the Chair withholds New Zone, only New Zone withheld, F2 on a zone on the Chair, the face change clears the rename). The `nextFreeZoneName` pure cases and "never replaces a passed name" pass on main by construction (main never replaced a name).
 
+## C1 (the Astra-role check r1): the list-to-spatial fence waits for the create to land
+
+The fence waited a fixed 600 ms, so on main under load it could pass. It now waits for the new zone's row (`New zone zone`, present only after the post-create refresh, which is the same turn that starts the rename on main) and for `.desk-world`, then checks the field is absent. Red on TRUE main under load: a `git archive` of origin/main 26f7b005 with this fence file laid in, real `npm ci --ignore-scripts && npm run build`, run in parallel with two other glass files (`-n 8`: this file + `test_philo7_delete_receipt_glass.py` + `test_philo8_04_empty_decision_heads_glass.py`, 16 cases):
+
+```text
+E               AssertionError: stale rename field: list-to-spatial
+E               AssertionError: stale rename field: list-to-spatial
+FAILED tests/e2e/test_philo8_01_zone_name_glass.py::TestZoneNameGlass::test_no_stale_rename_field_after_a_face_change[393-list-to-spatial]
+FAILED tests/e2e/test_philo8_01_zone_name_glass.py::TestZoneNameGlass::test_no_stale_rename_field_after_a_face_change[1440-list-to-spatial]
+11 failed, 5 passed in 94.40s (0:01:34)
+```
+
+The same loaded run on the branch: `1 failed, 15 passed in 85.93s`; the one failure is `test_philo7_delete_receipt_glass.py::...[1440]` (`'Removal committed': not in the viewport`), which fails the same way on main under this load (story 02's area, not this story's). The zone file alone on the branch: `12 passed in 77.02s`. The fence's waits were raised to 15 s (one 5 s `.chair` wait timed out on the branch under load).
+
 ## Proof
 
 ### Captured run — 2026-09-26T16:27:39Z

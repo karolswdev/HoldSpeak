@@ -49,7 +49,7 @@ def _close_palette(page: Any) -> None:
     page.keyboard.press("Escape")
     page.wait_for_function(
         "() => document.querySelector('[aria-controls=desk-tool-shelf]')?.getAttribute('aria-expanded') !== 'true'",
-        timeout=5_000,
+        timeout=15_000,
     )
 
 
@@ -62,9 +62,9 @@ def _ensure_view(page: Any, want: str) -> None:
         _palette(page, "view")
         page.locator("[id='desk-palette-option-desk.toggle-view']").click()
     if want == "list":
-        page.locator(".desk-listmode").wait_for(timeout=10_000)
+        page.locator(".desk-listmode").wait_for(timeout=15_000)
     else:
-        page.locator(".desk-listmode").wait_for(state="detached", timeout=10_000)
+        page.locator(".desk-listmode").wait_for(state="detached", timeout=15_000)
 
 
 def _new_zone(page: Any) -> int:
@@ -72,7 +72,7 @@ def _new_zone(page: Any) -> int:
     _palette(page, "New Zone")
     with page.expect_response(
         lambda r: r.url.split("?")[0].endswith("/api/directories") and r.request.method == "POST",
-        timeout=10_000,
+        timeout=15_000,
     ) as info:
         page.locator("[id='desk-palette-option-desk.new-zone']").click()
     return info.value.status
@@ -167,7 +167,7 @@ class TestZoneNameGlass:
             try:
                 # The Chair's palette.
                 _palette(page, "")
-                page.locator("[id='desk-palette-option-desk.new-note']").wait_for(timeout=5_000)
+                page.locator("[id='desk-palette-option-desk.new-note']").wait_for(timeout=15_000)
                 assert page.locator("[id='desk-palette-option-desk.new-zone']").count() == 0
                 page.locator("[aria-controls=desk-palette-listbox]").fill("New Zone")
                 page.wait_for_timeout(300)
@@ -177,14 +177,14 @@ class TestZoneNameGlass:
                 # The Chair's menu bar (1440: the Desk menu; 393: the one phone door).
                 menu = "desk" if width > 720 else "go"
                 page.locator(f".desk-verbbar-item[data-menu-id={menu}] button").first.click()
-                page.get_by_role("menuitem", name=re.compile("New Note")).first.wait_for(timeout=5_000)
+                page.get_by_role("menuitem", name=re.compile("New Note")).first.wait_for(timeout=15_000)
                 assert page.get_by_role("menuitem", name=re.compile("New Zone")).count() == 0
                 page.screenshot(path=str(SHOTS / f"chair-menu-{width}.png"))
                 page.keyboard.press("Escape")
                 # The Floor still offers it.
                 page.locator("[data-testid=chair-floor-toggle]").click()
                 _palette(page, "New Zone")
-                page.locator("[id='desk-palette-option-desk.new-zone']").wait_for(timeout=5_000)
+                page.locator("[id='desk-palette-option-desk.new-zone']").wait_for(timeout=15_000)
                 page.keyboard.press("Escape")
                 assert statuses == [], statuses
             finally:
@@ -204,17 +204,27 @@ class TestZoneNameGlass:
                     # FINDING Finding 1: the list, then Spatial view.
                     _ensure_view(page, "list")
                     assert _new_zone(page) == 201
+                    # C1 (Astra-role check r1): wait for the create to LAND before the
+                    # face change. The new zone's row appears only after the post-create
+                    # refresh, and createPrimitive starts the rename in the same turn
+                    # (dataSlice.ts createPrimitive), so on main the stale state is set
+                    # by now and the Floor draws it at mount. A fixed sleep let a slow
+                    # refresh hide the defect (green on main under load).
+                    page.get_by_role("button", name="New zone zone", exact=True).wait_for(timeout=30_000)
                     _ensure_view(page, "spatial")
+                    page.locator(".desk-world").wait_for(timeout=15_000)
                 else:
                     _ensure_view(page, "spatial")
                     assert _new_zone(page) == 201
                     # The field waits for the post-create refresh (~4.7 s on this rig at 1440).
                     page.locator("input.desk-zone-rename").wait_for(timeout=20_000)
                     page.locator("[data-testid=chair-floor-toggle]").click()
-                    page.locator(".chair").wait_for(timeout=5_000)
+                    page.locator(".chair").wait_for(timeout=15_000)
                     page.locator("[data-testid=chair-floor-toggle]").click()
-                    page.locator(".chair").wait_for(state="detached", timeout=5_000)
-                page.wait_for_timeout(600)
+                    page.locator(".chair").wait_for(state="detached", timeout=15_000)
+                # The Floor is mounted and the create has landed: a stale field would
+                # already be drawn. Give it a render beat, then it must be absent.
+                page.wait_for_timeout(1_000)
                 assert page.locator("input.desk-zone-rename").count() == 0, f"stale rename field: {leg}"
                 page.screenshot(path=str(SHOTS / f"no-stale-{leg}-{width}.png"))
                 assert statuses.count(409) == 0, statuses

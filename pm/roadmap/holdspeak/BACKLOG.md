@@ -1287,6 +1287,13 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 |---|---|---|---|
 | The Intelligence Follow-through lanes show the same doubled hairline that PHILO-8-04 removed from the decision window: the lane section and its head each compute `border-top: 1px solid` (e.g. Waiting, Unassigned, Overdue). Computed styles only; not verified by eye. | face | `checks/story-04-built-astra-role-r1.md` MISSED | the next surface pass |
 
+## PHILO-8-01 follow-ups — 2026-09-26 (the Astra-role check on PR #671, C4 and MISSED; `pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/checks/story-01-built-astra-role-r1.md`)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| The list face (`web/src/desk/components/DeskListView.tsx`), inherited, one repair: (1) the census line (`17 ITEMS · 8 ZONES`, `17 SHOWNS OF 17`), the column heads, the band heads and the Kind/Zone cells are 10 px, under the 12 px floor (the canvas scan counts 52–64 such nodes, `pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-01-canvas/shots/facts.json` `small_text`); (2) the bad plural `SHOWNS` from `countToken(visible.length, "SHOWN")` (`DeskListView.tsx:289`); (3) at 393 the Zone column is cut at the right edge (`1 ITEM` shows as `1 ITE`), and one long name (board 8b) pushes the Kind column off the screen: the table sizes its columns by content; (4) the 4 sort-header `<button>`s are raw (`web/src/desk/components/DeskSortableTable.tsx:96`, a UX-CANON §A.1 bounce). | face | `checks/story-01-built-astra-role-r1.md` F10, F11, MISSED; canvas README Limits | the list face repair, after PHILO-8-01 |
+| About 4.7 s from New Zone to the rename field on the isolated rig at 1440: the field waits for the whole post-create refresh (`createPrimitive` awaits `refresh()` before `setRenamingZone`, `web/src/desk/store/dataSlice.ts`). Cause of the duration UNKNOWN (not profiled). A fix could open the field on the created id at once. | speed (Tenet 3) | `checks/story-01-built-astra-role-r1.md` MISSED; PHILO-8-01 half A notes | UNASSIGNED; measure first |
+
 ## Projects on the contract — 2026-09-26 (the owner's word closing Phase 7 made the Floor Phase 8; the Astra-role check on PR #668, C7)
 
 | Item | Kind | Source | Home |
