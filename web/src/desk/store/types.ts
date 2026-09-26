@@ -56,6 +56,19 @@ export const GHOST_LAYOUT_KEYS = [
   "hs.desk.open-windows",
 ] as const;
 
+/** PHILO-8-01 — a refused zone rename (the owner ratified the chip, 2026-09-26). */
+export interface ZoneRenameError {
+  zoneId: string;
+  /** The name that was refused (Retry sends it again). */
+  name: string;
+  /** `zone_name_taken`, `invalid_arguments`, `http_<status>` or `not_saved`. */
+  code: string;
+  /** The chip's words: `NAME TAKEN` or `NOT SAVED`. */
+  label: string;
+  /** The hub's reason, for the chip's title. */
+  detail: string;
+}
+
 /** HS-105-01 -- the phone's density altitude: above this count, a compact
  * desk with NO saved choice leads with the list; an explicit user choice
  * (URL or saved key) always wins. */
@@ -165,8 +178,10 @@ export interface DeskState {
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
   renamingZoneId: string | null;
-  /** Inline error shown during zone rename (409 name taken). */
-  zoneRenameError: string | null;
+  /** PHILO-8-01 — the refused rename, drawn as a chip under the zone's name
+   * field while that field is open (409 `NAME TAKEN`; any other refusal
+   * `NOT SAVED`, the hub's reason in `detail`). */
+  zoneRenameError: ZoneRenameError | null;
   /** The lasso'd/selected objects -- the Ask atom's context (HSM-16-04). */
   selectedIds: string[];
   /** The Ask composer is open (in-world, desk visible -- never a modal). */

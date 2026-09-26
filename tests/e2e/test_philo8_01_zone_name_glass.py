@@ -28,7 +28,7 @@ from tests._evidence import evidence_dir
 pytest.importorskip("playwright.sync_api", reason="the zone-name glass needs Playwright")
 
 TOKEN = "philo8-zone-name"
-SHOTS = evidence_dir(".tmp/philo8-01-zone-name-shots")
+SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-01-shots")
 WIDTHS = [1440, 393]
 
 
@@ -210,7 +210,10 @@ class TestZoneNameGlass:
                     # (dataSlice.ts createPrimitive), so on main the stale state is set
                     # by now and the Floor draws it at mount. A fixed sleep let a slow
                     # refresh hide the defect (green on main under load).
-                    page.get_by_role("button", name="New zone zone", exact=True).wait_for(timeout=30_000)
+                    # Main: the row's name button; half B: the row's name field.
+                    page.get_by_role("button", name="New zone zone", exact=True).or_(
+                        page.locator(".desk-listmode input.desk-zone-rename")
+                    ).first.wait_for(timeout=30_000)
                     _ensure_view(page, "spatial")
                     page.locator(".desk-world").wait_for(timeout=15_000)
                 else:

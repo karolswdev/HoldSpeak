@@ -792,3 +792,292 @@ Suite totals: 2908 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+### Captured run — 2026-09-26T20:16:44Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.ZhLIhhkA5V PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -rA`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 68182943d78b5427a4667535e03163a8c895f6dd
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+F........................................................                [100%]
+=================================== FAILURES ===================================
+__________ TestOneDelete.test_undo_on_the_list_keeps_the_object[393] ___________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10c792150>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_undo_on_the_list_keeps_the_object(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Undo list decision"])
+            try:
+                _to_face(page, "list", width)
+                _row_menu_delete(page, "Undo list decision")
+>               _readable_receipt(page, "Removed", 5_000)
+
+tests/e2e/test_philo8_one_delete_glass.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:51: in _readable_receipt
+    return _readable_now(page, want, timeout_ms)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/e2e/test_philo7_delete_receipt_glass.py:70: in _readable_receipt
+    page.wait_for_function(
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:11595: in wait_for_function
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_page.py:1110: in wait_for_function
+    return await self._main_frame.wait_for_function(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:878: in wait_for_function
+    await self._channel.send("waitForFunction", self._timeout, params)
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x113d2c440>
+cb = <function Channel.send.<locals>.<lambda> at 0x114e699b0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+==================================== PASSES ====================================
+_______ TestOneDelete.test_the_receipt_is_readable_on_a_long_list_at_393 _______
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestOneDelete.test_the_list_row_menu_delete_removes_the_object[1440] _____
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+1440: the row menu's Delete row {'top': 847, 'bottom': 875, 'vh': 900}
+_____ TestOneDelete.test_the_list_row_menu_delete_removes_the_object[393] ______
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+393: the row menu's Delete row {'top': 839, 'bottom': 867, 'vh': 852}
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_left_selected 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[1440] ___
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[393] ____
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_left_selected-393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_left_selected 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_the_list_palette_delete_removes_the_selected_object[1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_taken_out 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_the_list_palette_delete_removes_the_selected_object[393] __
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[floor-a_taken_out-393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor a_taken_out 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+__________ TestOneDelete.test_undo_on_the_list_keeps_the_object[1440] __________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_left_selected 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_left_selected-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_left_selected 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_____ TestOneDelete.test_the_chair_withholds_delete_with_its_reason[1440] ______
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+chair 1440: 200; DELETE 0; receipt ''
+______ TestOneDelete.test_the_chair_withholds_delete_with_its_reason[393] ______
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+chair 393: 200; DELETE 0; receipt ''
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_taken_out 1440: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestDeleteReceiptGlass.test_the_delete_receipt_is_readable_in_the_viewport[1440] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+1440: pending {'x': 533.859375, 'y': 748, 'w': 372.28125, 'h': 27} committed {'x': 650.8984375, 'y': 748, 'w': 138.203125, 'h': 27} shown 6715 ms
+_ TestOneDelete.test_two_deletes_in_one_window_both_reach_the_hub[list-a_taken_out-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list a_taken_out 393: selected before B ''; receipt after B 'Removed Probe B\nUndo\n08s'; {'A': 404, 'B': 404}; DELETE 2
+_ TestDeleteReceiptGlass.test_the_delete_receipt_is_readable_in_the_viewport[393] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+393: pending {'x': 12, 'y': 676, 'w': 369, 'h': 27} committed {'x': 127.3984375, 'y': 676, 'w': 138.203125, 'h': 27} shown 6364 ms
+___ TestZoneNameGlass.test_two_new_zone_presses_make_two_zones[1440-spatial] ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_________ TestOneDelete.test_undo_keeps_only_the_pending_object[1440] __________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+____ TestZoneNameGlass.test_two_new_zone_presses_make_two_zones[1440-list] _____
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__________ TestOneDelete.test_undo_keeps_only_the_pending_object[393] __________
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestZoneNameGlass.test_two_new_zone_presses_make_two_zones[393-spatial] ____
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestZoneNameGlass.test_two_new_zone_presses_make_two_zones[393-list] _____
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor 1440: 404; DELETE 1
+__ TestZoneNameGlass.test_a_name_the_owner_chose_is_skipped_not_renamed[1440] __
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__ TestZoneNameGlass.test_a_name_the_owner_chose_is_skipped_not_renamed[393] ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________ TestZoneNameGlass.test_the_chair_does_not_offer_new_zone[1440] ________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+________ TestZoneNameGlass.test_the_chair_does_not_offer_new_zone[393] _________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[floor-393] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+floor 393: 404; DELETE 1
+_ TestZoneNameGlass.test_no_stale_rename_field_after_a_face_change[1440-list-to-spatial] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window_commits_the_delete[list-1440] _
+[gw0] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+list 1440: 404; DELETE 1
+_ TestZoneNameGlass.test_no_stale_rename_field_after_a_face_change[1440-floor-chair-floor] _
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_leaving_the_face_inside_the_window
+[PMO_EVIDENCE_OUTPUT_TRUNCATED]
+```
+
+### Captured run — 2026-09-26T20:41:19Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.pdKQP8U5R9 PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object -p no:cacheprovider`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 32edb902b430eee261d2cb010c4b948f01493dbd
+
+```text
+..                                                                       [100%]
+2 passed in 62.09s (0:01:02)
+```
+
+### Captured run — 2026-09-26T20:42:24Z
+
+- **Command:** `uv run python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 67deacc818fe402c0eafc59ba15988c648555b17
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2915 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

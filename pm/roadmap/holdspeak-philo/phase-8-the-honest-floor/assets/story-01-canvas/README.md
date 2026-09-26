@@ -1,6 +1,6 @@
 # PHILO-8-01 canvas: the zone name field in the list row
 
-**Status: FOR THE OWNER'S RATIFICATION (2026-09-26).** Nothing on this canvas is built in the product. Half A of story 01 is built on this branch (the free name, the Chair without New Zone, the face-change rule); this canvas is the face half the owner ruled on in Q2 (c): "on the list, the name field opens in the new zone's row".
+**Status: RATIFIED by the owner, 2026-09-26 (AskUserQuestion; review page https://claude.ai/artifact/CdReb8UtJBjXe98Cpv7MJz).** His answers, verbatim: (1) **"Ratify as drawn"** — the in-row field exactly as boards 1–6 and 8–10 show (the name selected; typing replaces; Enter or a click elsewhere saves; Escape keeps "New zone 2"; spaces only keeps the name; the field's style as drawn); (2) **"Chip on the list and the Floor"** — `✗ NAME TAKEN` on its own line under the field on both faces, replacing the Floor's 11 px sentence; a failed save (422 / network) in the same slot (`NOT SAVED`); a refusal after the field closed goes to the write receipt `RENAME ZONE` with Retry; (3) **"Keep F2 on zone rows"**. Built in half B (`web/src/desk/components/ZoneRenameRow.tsx`); the product shots are in `../story-01-shots/`.
 
 - Review page (every board embedded, both widths): `docs/internal/philo/phase-8/rename-canvas/index.html`.
 - Boards: `shots/<n>-<board>-<width>.png`; rendered facts: `shots/facts.json`.
@@ -14,6 +14,26 @@
   3. F2 on a focused zone row opens the same field.
 - **Boards 0 and 7** are the product as built on this branch (half A), served by the hub itself, not by the harness.
 - **Writes are real.** Every board's POST/PUT/DELETE on `/api/directories` and its status is in `facts.json` (`writes`, cumulative per width).
+
+## The canvas boards and the product shots (PHILO-8-01 half B; the Astra-role check on PR #673, F2)
+
+Product shots are in `../story-01-shots/` (the real hub, 1440 and 393; `HOLDSPEAK_EVIDENCE_WRITE=1`).
+
+| Board | Product shot | Fenced by |
+|---|---|---|
+| 0 Today | — (the half-B build replaced it) | — |
+| 1 The field opens | `list-field-open-{1440,393}.png` | `test_the_list_field_opens_writes_and_keeps` (focus, selection 0–len) |
+| 2 Typing | none | the same test (typing replaces the selected name) |
+| 3 Enter | `list-enter-written-{1440,393}.png` | the same test (PUT 200, the row renamed) |
+| 4 Escape | none | the same test (no PUT) |
+| 5 Refused | `list-name-taken-{1440,393}.png`; the Floor: `floor-name-taken-{1440,393}.png` | `test_a_taken_name_shows_the_chip_on_the_list` / `_on_the_floor` |
+| 6 F2 | `list-f2-{1440,393}.png` | `test_f2_on_a_focused_zone_row_opens_the_field` |
+| 7 The Chair | `chair-palette-{1440,393}.png`, `chair-menu-{1440,393}.png` | `test_the_chair_does_not_offer_new_zone` |
+| 8 Long name | none | none (native input scroll; the column push is in the BACKLOG) |
+| 9 Spaces only | none | `test_the_list_field_opens_writes_and_keeps` (no PUT) |
+| 10 Two fast presses | `two-zones-list-{1440,393}.png` | `test_two_new_zone_presses_make_two_zones` |
+| (answer 2) Not saved | `list-not-saved-{422,network}-{1440,393}.png`, `floor-not-saved-{422,network}-{1440,393}.png` | `test_a_failed_save_shows_in_the_chip_slot` (list and spatial) |
+| (answer 2) Late refusal | `late-refusal-receipt-{1440,393}.png` | `test_a_refusal_after_the_field_closed_goes_to_the_write_receipt` |
 
 ## Boards
 

@@ -1,28 +1,30 @@
-/** PHILO-8-01 — the ONE zone rename behaviour. The spatial Floor's overlay
- * composes it today; the list's in-row field composes it after the owner
- * ratifies its canvas (UX-CANON §A.2). Enter commits, blur out of the row
- * commits, Escape cancels; a refused name (the hub's named 409) keeps the
- * field open with focus and shows the error. */
+/** PHILO-8-01 — the ONE zone rename behaviour, composed by the one row
+ * component `ZoneRenameRow` (the spatial Floor's overlay and the list's zone
+ * row; the owner ratified the canvas 2026-09-26). The name opens selected, so
+ * typing replaces it; Enter writes, blur out of the row writes, Escape keeps
+ * the name; a name of spaces only writes nothing. A refused name keeps the
+ * field open with focus and its chip (`zoneRenameError` for this zone). */
 import { useRef, useState, type FocusEvent, type KeyboardEvent } from "react";
 import { useDesk } from "../store";
 
 export function useZoneRenameField(zoneId: string, title: string) {
   const [name, setName] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
-  const error = useDesk((s) => s.zoneRenameError);
+  const error = useDesk((s) => (s.zoneRenameError?.zoneId === zoneId ? s.zoneRenameError : null));
 
   const commit = async () => {
-    const { renameZone, setRenamingZone, clearZoneRenameError } = useDesk.getState();
+    const { renameZone, clearZoneRenameError } = useDesk.getState();
     clearZoneRenameError();
     const clean = name.trim();
     if (clean && clean !== title) {
       await renameZone(zoneId, clean);
-      if (useDesk.getState().zoneRenameError) {
+      if (useDesk.getState().zoneRenameError?.zoneId === zoneId) {
         inputRef.current?.focus();
         return;
       }
     }
-    setRenamingZone(null);
+    // Close only this zone's field: another rename may have opened meanwhile.
+    if (useDesk.getState().renamingZoneId === zoneId) useDesk.getState().setRenamingZone(null);
   };
 
   const cancel = () => {
@@ -50,6 +52,7 @@ export function useZoneRenameField(zoneId: string, title: string) {
       ref: inputRef,
       value: name,
       autoFocus: true,
+      onFocus: (e: FocusEvent<HTMLInputElement>) => e.currentTarget.select(),
       onChange: (e: { target: { value: string } }) => {
         setName(e.target.value);
         if (useDesk.getState().zoneRenameError) useDesk.getState().clearZoneRenameError();

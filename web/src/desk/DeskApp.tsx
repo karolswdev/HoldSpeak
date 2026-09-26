@@ -41,6 +41,7 @@ import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
 import { DeskDeleteHost } from "./deleteReceipt";
 import { noteFaceChange } from "./zoneName";
+import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -139,7 +140,13 @@ export default function DeskApp() {
     noteFaceChange();
     const s = useDesk.getState();
     if (s.renamingZoneId) s.setRenamingZone(null);
-    if (s.zoneRenameError) s.clearZoneRenameError();
+    // A refusal still on the chip leaves with the field: it moves to the
+    // desk's write receipt, never silence (the owner's ratified canvas).
+    const refused = s.zoneRenameError;
+    if (refused) {
+      s.clearZoneRenameError();
+      reportWriteFailure("RENAME ZONE", refused.label, () => void useDesk.getState().renameZone(refused.zoneId, refused.name));
+    }
   }, [showFloor, viewMode]);
   const chairOpenCards = pullouts
     .map((pullout) => ({ ...pullout, object: objectByRef(items, pullout.id) }))
