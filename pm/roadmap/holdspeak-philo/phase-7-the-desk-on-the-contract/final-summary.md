@@ -1,6 +1,6 @@
 # Phase 7 — The Desk on the Contract — final summary
 
-**CLOSED 2026-09-26 on the owner's word** <!-- owner word pending -->: rehearsed, owner-reviewed; not a sitting.
+**CLOSED 2026-09-26 on the owner's word** ("Close, and make the Floor Phase 8", AskUserQuestion): rehearsed, owner-reviewed; not a sitting.
 
 **Status: four of four stories merged or merging (01 #657 `9800a603`, 02 #659 `f6695090`, 03 #663 `4044072a`, 04 PR #661 on `feat/philo-7-04-cold-context`); exits 2, 3 and 6 MET; exits 1, 4 and 5 MET WITH QUALIFICATION (the table below).** The desk slice (notes, zones, knowledge bases, zone and knowledge membership, the remaining decision operations) runs on the one declared contract. Every write that files or decides makes one kernel operation and one terminal receipt, through HTTP and MCP. An agent writes only under a grant that the owner makes on the agent's credential row, and each such write has a receipt that names the grant. A cold-context Claude session (R6) did the owner's four jobs from the catalogue alone, with zero repository reads in the retained log, in 94.8 s. The owner reviewed the rerun's shots: "Reviewed — it's right". No sitting is claimed. The owner has not used this on his own desk.
 
