@@ -1,0 +1,27 @@
+floor a_left_selected 1440: selected before B '1 SELECTED'; receipt after B 'Removed Probe A\nUndo\n01s'; {'A': 404, 'B': 200}; DELETE 1
+E               AssertionError: ({'A': 404, 'B': 200}, '1 SELECTED', 'Removed Probe A
+E                 Undo
+E                 01s', ['http://127.0.0.1:54340/api/decisions/decision_498ecdd14669'])
+E               assert {'A': 404, 'B': 200} == {'A': 404, 'B': 404}
+E                 {'B': 200} != {'B': 404}
+E               AssertionError: ({'A': 404, 'B': 200}, '1 SELECTED', 'Removed Probe A
+E                 Undo
+E                 05s', ['http://127.0.0.1:54460/api/decisions/decision_cbcba894a6ee'])
+E               assert {'A': 404, 'B': 200} == {'A': 404, 'B': 404}
+E                 {'B': 200} != {'B': 404}
+E               AssertionError: B came after A's window: 'Removal committed'
+E               assert 'Removed Probe A' in 'Removal committed'
+E               AssertionError: ({'A': 200, 'B': 404}, '', 'Removed Probe B
+E                 Undo
+E                 08s', ['http://127.0.0.1:54568/api/decisions/decision_30983cda07b2'])
+E               assert {'A': 200, 'B': 404} == {'A': 404, 'B': 404}
+E                 {'A': 200} != {'A': 404}
+E               AssertionError: B came after A's window: ''
+E               assert 'Removed Probe A' in ''
+E               AssertionError: B came after A's window: ''
+E               assert 'Removed Probe A' in ''
+E               AssertionError: B came after A's window: ''
+E               assert 'Removed Probe A' in ''
+E               AssertionError: B came after A's window: ''
+E               assert 'Removed Probe A' in ''
+8 failed, 15 deselected in 182.48s (0:03:02)

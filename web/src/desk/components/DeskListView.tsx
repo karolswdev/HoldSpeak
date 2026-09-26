@@ -25,6 +25,7 @@ import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
+import { DeskDeleteSeat } from "../deleteReceipt";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
@@ -337,7 +338,12 @@ export function DeskListView() {
       <PrReceiptsSection />
       {editing && <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />}
       {openCards.map((p) => <Pullout key={p.id} o={p.obj!} origin={p.origin} />)}
-      <AskBar />
+      {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
+          flow directly above the selection bar it acted on. */}
+      <div className="desk-world-foot">
+        <DeskDeleteSeat />
+        <AskBar />
+      </div>
       {askOpen && <AskPanel />}
     </div>
   );

@@ -1,0 +1,9 @@
+S2 393 {'top': 839, 'bottom': 867, 'vh': 852}
+PALETTE 393 ['desk-palette-option-object.delete | ▸ Delete VERB Delete | null', 'desk-palette-option-roadmap:roadmap:holdspeak-mobile | ○ HoldSpeak Mobile Runtime — Roadmap ROADMAP | null', 'desk-palette-option-roadmap:roadmap:holdspeak-philo | ○ HoldSpeak Philo documentation initiative ROADMAP | null']
+RECEIPT 393 Removed Palette probe
+STATUS 393 404
+S2 1440 {'top': 847, 'bottom': 875, 'vh': 900}
+PALETTE 1440 ['desk-palette-option-object.delete | ▸ Delete VERB Delete | null', 'desk-palette-option-roadmap:roadmap:holdspeak-mobile | ○ HoldSpeak Mobile Runtime — Roadmap ROADMAP | null', 'desk-palette-option-roadmap:roadmap:holdspeak-philo | ○ HoldSpeak Philo documentation initiative ROADMAP | null']
+RECEIPT 1440 Removed Palette probe
+STATUS 1440 404
+1 passed in 66.45s (0:01:06)

@@ -1,0 +1,22 @@
+import sys
+m=sys.argv[1]
+dr='src/desk/deleteReceipt.tsx'; uu='src/desk/hooks/useUndoReceipt.ts'
+def sub(p,a,b):
+    s=open(p).read(); assert a in s,(p,a); open(p,'w').write(s.replace(a,b))
+if m=='M1':
+    sub(dr,'      desk.setSelected(\n','      ((_ids: string[]) => undefined)(\n')
+if m=='M2':
+    sub(uu,'      flush();\n      cleanup();\n      pendingRef.current = fire;','      cleanup();\n      pendingRef.current = fire;')
+if m=='M3':
+    sub(dr,'      if (seats === 0) flushPending();','')
+    sub(dr,'      if (seats === 0) flush();','')
+    sub(uu,'      fire?.();\n','')
+if m=='M4':
+    sub('src/desk/components/list-view.css','.desk-next .desk-listmode > .desk-world-foot {\n  position: fixed;\n}','')
+if m=='M3b':
+    # cause 3 restored: the listener lives with the face again (unmounts on a
+    # face change) and nothing commits a pending delete on the way out.
+    sub('src/desk/DeskApp.tsx','      <DeskDeleteHost />\n','      {showFloor && <DeskDeleteHost />}\n')
+    sub(dr,'      if (seats === 0) flushPending();','')
+    sub(dr,'      if (seats === 0) flush();','')
+    sub(uu,'      fire?.();\n','')

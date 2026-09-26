@@ -1,6 +1,6 @@
 # Phase 8 - The Honest Floor
 
-**Last updated:** 2026-09-26 (RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
+**Last updated:** 2026-09-26 (PHILO-8-02 DONE: one delete everywhere — one listener and one receipt that survive a face change; the list's Delete works on every path at 1440 and 393; two deletes in one window both reach the hub; a face change commits a pending delete; every fence red on main, each cause mutated red; `docs/internal/philo/phase-8/one-delete/README.md`. Earlier: RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
 
 ## Goal
 
@@ -66,7 +66,7 @@ Every behavioural fence is red on main before the repair, through the real hub o
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | PHILO-8-01 | The zone name and the rename where he is (canvas first) | backlog | [story-01-the-zone-name-and-the-rename-where-he-is](./story-01-the-zone-name-and-the-rename-where-he-is.md) | - |
-| PHILO-8-02 | One delete everywhere | backlog | [story-02-one-delete-everywhere](./story-02-one-delete-everywhere.md) | - |
+| PHILO-8-02 | One delete everywhere | done | [story-02-one-delete-everywhere](./story-02-one-delete-everywhere.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-8-03 | The atlas cases and the closing proof | backlog | [story-03-the-atlas-cases-and-the-closing-proof](./story-03-the-atlas-cases-and-the-closing-proof.md) | - |
 | PHILO-8-04 | The two small face notes (OPTIONAL) | backlog | [story-04-the-two-small-face-notes](./story-04-the-two-small-face-notes.md) | - |
 
@@ -89,6 +89,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 2026-09-26, round two: the Astra-role check (Opus 5.5 stand-in, `checks/charter-astra-role-r1.md`): RATIFY-WITH-CONDITIONS. It re-read every cited line on main (all true), reproduced the lost deletes and named three causes, found a third (a face change inside the window), and ruled the free-name repair and the delete repair shape. C1–C9 are paid in this revision ("Decisions made").
 
 **Estimate (PROVISIONAL, placed before build):** effort **2.5–4 engineering days** (01 0.75–1.25 · 02 0.75–1.25 · 03 0.75–1 · the rename canvas and the check rounds 0.25–0.5), plus about 0.25 d if story 04 (a) is kept. Calibrated from Phase 7's record (`checks/charter-astra-role-r1.md` F11): Phase 7's story 01 took about 25 agent-minutes (`../phase-7-the-desk-on-the-contract/current-phase-status.md` "Calibration"), and the whole 11–15-day phase closed in about two elapsed days, most of it check rounds and the owner's word; these repairs are small (a free-name helper, a hook flush, a selection drop, a hoisted listener, a foot wrapper, one rename composition). **Elapsed-time forecast: about 1–2 days elapsed, gated by the owner's canvas word and the checks.**
+
+2026-09-26, story 02 built (the Fedaykin lane, `feat/philo-8-02-one-delete`): the one `OBJECT_DELETE_REQUEST` listener and the one undo hook moved to `DeskDeleteHost` (`web/src/desk/deleteReceipt.tsx`), mounted once in `DeskApp`; the spatial Floor and the list seat the receipt (`DeskDeleteSeat`) in the #665 foot, the list's foot held to the viewport; `useUndoReceipt` commits a pending removal on a second `remove()` and on unmount; the queued object leaves the selection. Glass: 25 cases green through the real hub at 1440 and 393 (the list's row menu, Delete key and palette; undo; the long list at 393; two deletes in both orders on both faces; a face change; the Chair with a Floor selection), plus the #665 fence and `case.p7.decision_delete.gone` at both widths. Red on main for every case (`docs/internal/philo/phase-8/one-delete/`); M1, M2, M3b and M4 turn their fences red. Web baseline: 2888 passed, zero branch-new. Lane decisions recorded (one slot; a face change commits; the Chair commits at once with no seat; the Workbench window's Remove now commits instead of dropping). FINDING S2 reproduces at 393 and the Chair's missing seat are BACKLOG rows ("PHILO-8-02 follow-ups"). Owed: the Astra-role check on built.
 
 ## Active risks
 

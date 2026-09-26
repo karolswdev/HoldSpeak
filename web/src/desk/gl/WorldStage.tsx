@@ -16,8 +16,8 @@ import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
 import { deskVoiceGrammar } from "../voice/grammars/desk";
 import type { VoiceProposal } from "../voice/grammar";
-import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
-import { useUndoReceipt } from "../hooks/useUndoReceipt";
+import { verbById } from "../verbRegistry";
+import { DeskDeleteSeat } from "../deleteReceipt";
 import { WorkMenu } from "../components/DeskMenu";
 import { countToken } from "../surface/count";
 import {
@@ -53,7 +53,6 @@ export function WorldStage() {
     s.renamingZoneId ? (s.zoneWidths[s.renamingZoneId] ?? null) : null,
   );
   const subjectCounts = useProjections((s) => s.subject_counts);
-  const { remove: queueDelete, receipt: deleteReceipt } = useUndoReceipt();
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -132,24 +131,9 @@ export function WorldStage() {
     };
   }, []);
 
-  // Registry verbs are hook-free. The mounted desk translates a delete
-  // request into the existing receipt's delayed commit, leaving Undo as the
-  // only path that decides whether the tombstone reaches the hub.
-  useEffect(() => {
-    const onDeleteRequest = (event: Event) => {
-      const ref = (event as CustomEvent<{ ref?: string | null }>).detail?.ref;
-      if (!ref) return;
-      const object = objectByRef(useDesk.getState().items, ref);
-      if (!object) return;
-      queueDelete(
-        object.title,
-        () => void useDesk.getState().deletePrimitive(object.id, object.kind),
-        () => undefined,
-      );
-    };
-    window.addEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
-    return () => window.removeEventListener(OBJECT_DELETE_REQUEST, onDeleteRequest);
-  }, [queueDelete]);
+  // PHILO-8-02 — the delete listener and its receipt live once, in
+  // `DeskDeleteHost` (deleteReceipt.tsx), so a face change never drops a
+  // pending delete; this face only seats the receipt in its foot.
 
   // Escape on the desk (no window focused — focused windows own their
   // own Escape and stop it) closes the FRONT-MOST object card. Capture
@@ -343,7 +327,7 @@ export function WorldStage() {
       {/* The world's foot: the delete receipt sits in flow directly above
           the selection bar it acted on, so neither covers the other. */}
       <div className="desk-world-foot">
-        {deleteReceipt}
+        <DeskDeleteSeat />
         <AskBar />
       </div>
       {askOpen && <AskPanel />}

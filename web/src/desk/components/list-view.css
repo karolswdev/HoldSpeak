@@ -301,3 +301,12 @@
   }
 }
 
+
+/* PHILO-8-02 — the list's foot is the Floor's foot (#665, desk.css): the
+   delete receipt in flow directly above the selection bar. The list grows
+   with the page and the page scrolls, so the foot is held to the viewport,
+   where the Floor's world already holds it; a long list scrolled to either
+   end keeps the receipt in view. */
+.desk-next .desk-listmode > .desk-world-foot {
+  position: fixed;
+}
