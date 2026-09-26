@@ -1,0 +1,551 @@
+{
+  "id": "obs-20260926T221245Z-case.p8.chair.no_new_zone-muaddib-1440",
+  "run_id": "20260926T221245Z-case.p8.chair.no_new_zone-muaddib-1440",
+  "case_id": "case.p8.chair.no_new_zone",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8-mutated.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.zone_create"
+  ],
+  "state_id": "state.desk_presentation.p8_zone_name",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57929",
+      "port": 57929,
+      "pid": 88745,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jp_fjp4w",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jp_fjp4w/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T22:12:45.828326+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8-mutated.json",
+      "sha256": "166936dc72f7e60b3077f8aa3f87a6575585cb217bcfb728311dce68a6edff11",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.27,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-keyboard",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "No matching tools or Desk items."
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-tool-empty"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 1031,
+        "y": 73,
+        "w": 382,
+        "h": 44
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "a2a561440dee21eb89dd806b41fc0f1f5950ec9727330af75665d752bcbbc696",
+      "after": "7b5d2f3139dabc40f1b36e75b4e3d295ceb2f3a898e612225233fa34a2d595d1"
+    },
+    "document_text_len": {
+      "before": 1031,
+      "after": 421
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": ".desk-tool-empty",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57929/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "a2a561440dee21eb89dd806b41fc0f1f5950ec9727330af75665d752bcbbc696",
+    "document_text_len": 1031,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:12:52.828354+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-tool-empty",
+    "target_present": true,
+    "text": "No matching tools or Desk items.",
+    "attrs": {
+      "class": "desk-tool-empty"
+    },
+    "rect": {
+      "x": 1031,
+      "y": 73,
+      "w": 382,
+      "h": 44
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1031,
+        "y": 73,
+        "w": 382,
+        "h": 44
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1033,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1033,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1033,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57929/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7b5d2f3139dabc40f1b36e75b4e3d295ceb2f3a898e612225233fa34a2d595d1",
+    "document_text_len": 421,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:13:08.274824+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-tool-empty",
+    "target_present": true,
+    "text": "No matching tools or Desk items.",
+    "attrs": {
+      "class": "desk-tool-empty"
+    },
+    "rect": {
+      "x": 1031,
+      "y": 73,
+      "w": 382,
+      "h": 44
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1031,
+        "y": 73,
+        "w": 382,
+        "h": 44
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1033,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1033,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1033,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1222,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 75,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 95,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        },
+        {
+          "x": 1411,
+          "y": 115,
+          "owned": true,
+          "owner": "aside#desk-tool-shelf > p.desk-tool-empty"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57929/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "7b5d2f3139dabc40f1b36e75b4e3d295ceb2f3a898e612225233fa34a2d595d1",
+    "document_text_len": 421,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:12:53.876406+00:00",
+    "predicate_satisfied": false,
+    "reading": "'New Zone' NOT in observe_at text",
+    "elapsed_s": 0.913
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "'New Zone' NOT in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 15.311,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 15.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: 'New Zone' NOT in observe_at text",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['attrs', 'document_text_len', 'document_text_sha256', 'rect', 'target_present', 'text', 'values', 'visible'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:57929) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:57929) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/runs-mut-face/20260926T221245Z-case.p8.chair.no_new_zone-muaddib-1440/before.png",
+    "/private/tmp/claude-501/p803/runs-mut-face/20260926T221245Z-case.p8.chair.no_new_zone-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jp_fjp4w/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jp_fjp4w/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57929"
+  ],
+  "duration_s": 24.755
+}

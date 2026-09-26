@@ -86,7 +86,8 @@
               "a2",
               "a3",
               "a4",
-              "p7"
+              "p7",
+              "p8"
             ]
           },
           "words": {
@@ -459,6 +460,29 @@
                 393
               ],
               "description": "PHILO-7-03: the step runs at this viewport width only; the rig records it skipped at the other."
+            },
+            "then": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "ui"
+                  }
+                }
+              },
+              "description": "PHILO-8-03: on a trigger only, the rest of one owner gesture: ui steps fired right after the trigger, before any observation."
+            },
+            "button": {
+              "enum": [
+                "left",
+                "right"
+              ],
+              "description": "PHILO-8-03: click and click_role only; right opens a context menu (the list's row menu)."
             }
           },
           "allOf": [
@@ -1117,7 +1141,9 @@
                     "window_titled",
                     "op_field",
                     "op_refusal",
-                    "op_facts"
+                    "op_facts",
+                    "protocol_reads",
+                    "all_of"
                   ]
                 }
               }
@@ -1300,7 +1326,8 @@
                 "a2",
                 "a3",
                 "a4",
-                "p7"
+                "p7",
+                "p8"
               ]
             },
             "edge_ids": {

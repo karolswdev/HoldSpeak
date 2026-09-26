@@ -1,6 +1,6 @@
 # Phase 8 - The Honest Floor
 
-**Last updated:** 2026-09-26 (PHILO-8-01 DONE: half B built on the owner's canvas ratification — the list's in-row name field, `✗ NAME TAKEN` / `NOT SAVED` on both faces, the late refusal on the write receipt, F2 on zone rows. Earlier: PHILO-8-01 half A built: the free zone name, the Chair without New Zone, no stale rename field across a face change; the list's in-row name field canvas `assets/story-01-canvas/` for the owner. Earlier: RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
+**Last updated:** 2026-09-26 (PHILO-8-03 BUILT, in progress: the atlas cases for the repaired faces, red on main and green on the #672 build; the closing rehearsal shots for the owner; the final summary drafted. Earlier: PHILO-8-01 DONE: half B built on the owner's canvas ratification — the list's in-row name field, `✗ NAME TAKEN` / `NOT SAVED` on both faces, the late refusal on the write receipt, F2 on zone rows. Earlier: PHILO-8-01 half A built: the free zone name, the Chair without New Zone, no stale rename field across a face change; the list's in-row name field canvas `assets/story-01-canvas/` for the owner. Earlier: RATIFIED by the owner — "Ratify, build it"; Q1 (a), Q2 (c) for the Chair + the in-row field for the list, Q3 keep (a) drop (b). Earlier: round two: the Astra-role check, RATIFY-WITH-CONDITIONS (`checks/charter-astra-role-r1.md`), C1–C9 paid; the owner's ratification owed. Earlier: DRAFTED by the Fedaykin docs lane for Muad'Dib, on the owner's word closing Phase 7: "Close, and make the Floor Phase 8".)
 
 ## Goal
 
@@ -67,7 +67,7 @@ Every behavioural fence is red on main before the repair, through the real hub o
 |---|---|---|---|---|
 | PHILO-8-01 | The zone name and the rename where he is (canvas first) | done | [story-01-the-zone-name-and-the-rename-where-he-is](./story-01-the-zone-name-and-the-rename-where-he-is.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-8-02 | One delete everywhere | backlog | [story-02-one-delete-everywhere](./story-02-one-delete-everywhere.md) | - |
-| PHILO-8-03 | The atlas cases and the closing proof | backlog | [story-03-the-atlas-cases-and-the-closing-proof](./story-03-the-atlas-cases-and-the-closing-proof.md) | - |
+| PHILO-8-03 | The atlas cases and the closing proof | in-progress | [story-03-the-atlas-cases-and-the-closing-proof](./story-03-the-atlas-cases-and-the-closing-proof.md) | - |
 | PHILO-8-04 | The two small face notes (OPTIONAL) | done | [story-04-the-two-small-face-notes](./story-04-the-two-small-face-notes.md) | [evidence-story-04](./evidence-story-04.md) |
 
 The stories stay `backlog` until the owner ratifies the charter. Story 04 is removed if the owner drops both notes (Q3).
@@ -97,6 +97,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 2026-09-26, the owner RATIFIED the story 01 canvas ("Ratify as drawn"; "Chip on the list and the Floor"; "Keep F2 on zone rows"). PHILO-8-01 half B BUILT and DONE on `feat/philo-8-01-half-b`: one row component (`web/src/desk/components/ZoneRenameRow.tsx`) on the list and the Floor; the refusal chip on both faces; `renameZone` never silent (chip while the field is open, else the write receipt `RENAME ZONE` + Retry); F2 on a focused zone row. 14 new glass cases (all red on main 808a9c30) + 12 half-A cases green together; 6 new unit cases red on main; web baseline 2898 passed, zero branch-new. Exits 1 and 2 are met for the list and the Floor (the Chair withholds New Zone under Q2 (c)).
 
 2026-09-26, PHILO-8-01 half B round two (the Astra-role check on PR #673, RATIFY-WITH-CONDITIONS): the evidence corrected (C1), the Floor failed-save glass added (C2, 4 more cases), three BACKLOG rows and the board-to-shot map (C3); the Floor field now opens with the name selected, as the list does (ruled lawful).
+
+2026-09-26, PHILO-8-03 BUILT on `feat/philo-8-03-atlas` (Fedaykin, Opus 5.5), IN PROGRESS: `docs/internal/philo/graph/atlas-phase8.json` (14 face cases at 1440 and 393, 5 `.op`), the rig 1.5.0 (right-click, `protocol_reads`, `all_of`, a trigger's `then`). On main `267f692a` 27 of 28 face runs fail and 1 is blocked (the two-delete gesture outlasted the window on main at 1440 under load); on the #672 head `b65107f5` 28 of 28 pass, the 5 `.op` pass, the 27 Phase 7 cases pass; 19 of 19 expectation mutations fail. The closing rehearsal ran at both widths on `b65107f5` (`assets/story-03-shots/rehearsal-b65107f5/`), for the owner's review. `final-summary.md` drafted. The proof: `assets/story-03-proof.md` (it becomes `evidence-story-03.md` in the commit that flips the story done; the gate refuses an evidence file for a story not done). Owed before done: #672 merges, the delete cases and the rehearsal re-run on merged main, the owner reviews the shots.
 
 ## Active risks
 

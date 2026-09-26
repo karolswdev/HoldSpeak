@@ -481,8 +481,9 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     ]
     # 19 Phase 5 op siblings plus two replay variants; PHILO-7-03 adds 18
     # (atlas-phase7.json: nine desk pairs, two receipt cases, four refusal
-    # receipts, three note siblings).
-    assert len(siblings) == 39
+    # receipts, three note siblings). PHILO-8-03 adds 5 (atlas-phase8.json:
+    # two zones, the rename, the taken name, the list delete, two deletes).
+    assert len(siblings) == 44
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
@@ -493,6 +494,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'note.create', 'zone.create', 'zone.file', 'zone.unfile',
         'kb.create', 'kb.member.add', 'kb.member.remove',
         'decision.supersede', 'decision.delete',
+        # PHILO-8-03: the rename the list's name field writes.
+        'zone.update',
     }
     readable = {
         'decision.read', 'decision.list', 'meeting.list', 'meeting.read',

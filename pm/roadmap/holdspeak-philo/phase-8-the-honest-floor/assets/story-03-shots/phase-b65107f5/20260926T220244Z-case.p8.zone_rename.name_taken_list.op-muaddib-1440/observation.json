@@ -1,0 +1,681 @@
+{
+  "id": "obs-20260926T220244Z-case.p8.zone_rename.name_taken_list.op-muaddib-1440",
+  "run_id": "20260926T220244Z-case.p8.zone_rename.name_taken_list.op-muaddib-1440",
+  "case_id": "case.p8.zone_rename.name_taken_list.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.zone_rename"
+  ],
+  "state_id": "state.desk_presentation.p8_zone_name",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55363",
+      "port": 55363,
+      "pid": 79575,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-g2mjvqyi",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-g2mjvqyi/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T22:02:44.963499+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "25f7b4134ef0d479f1b49406c01b4467dcbfbd62eff3f2c32c5b4ef4c5c638fe",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.create",
+      "args": {
+        "name": "Inbox"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "directories",
+            "data": {
+              "name": "Inbox"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T22:02:47Z",
+        "deleted": false,
+        "id": "dir_49fa97fb9088",
+        "last_modified": "2026-09-26T22:02:47Z",
+        "name": "Inbox",
+        "name_normalized": "inbox",
+        "parent_id": null
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T22:02:47Z",
+        "deleted": false,
+        "id": "dir_49fa97fb9088",
+        "last_modified": "2026-09-26T22:02:47Z",
+        "name": "Inbox",
+        "name_normalized": "inbox",
+        "parent_id": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T22:02:47Z\", \"deleted\": false, \"id\": \"dir_49fa97fb9088\", \"last_modified\": \"2026-09-26T22:02:47Z\", \"name\": \"Inbox\", \"name_normalized\": \"inbox\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "taken_id",
+        "path": "id",
+        "value": "dir_49fa97fb9088"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.create",
+      "args": {
+        "name": "New zone"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "directories",
+            "data": {
+              "name": "New zone"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T22:02:47Z",
+        "deleted": false,
+        "id": "dir_79b340620b1f",
+        "last_modified": "2026-09-26T22:02:47Z",
+        "name": "New zone",
+        "name_normalized": "new zone",
+        "parent_id": null
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T22:02:47Z",
+        "deleted": false,
+        "id": "dir_79b340620b1f",
+        "last_modified": "2026-09-26T22:02:47Z",
+        "name": "New zone",
+        "name_normalized": "new zone",
+        "parent_id": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T22:02:47Z\", \"deleted\": false, \"id\": \"dir_79b340620b1f\", \"last_modified\": \"2026-09-26T22:02:47Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001,
+      "captured": {
+        "name": "zone_id",
+        "path": "id",
+        "value": "dir_79b340620b1f"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "taken_id": "dir_49fa97fb9088",
+    "zone_id": "dir_79b340620b1f"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "zone.update",
+    "args": {
+      "directory_id": "dir_79b340620b1f",
+      "name": "Inbox"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.update",
+        "arguments": {
+          "kind": "directories",
+          "id": "dir_79b340620b1f",
+          "data": {
+            "name": "Inbox"
+          }
+        }
+      }
+    },
+    "response": null,
+    "domain_response": null,
+    "refusal": {
+      "code": "conflict",
+      "error": "zone_name_taken",
+      "existing_name": "Inbox"
+    },
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"code\": \"conflict\", \"error\": \"zone_name_taken\", \"existing_name\": \"Inbox\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "elapsed_s": 0.001,
+    "named_refusal": {
+      "code": "conflict",
+      "error": "zone_name_taken",
+      "existing_name": "Inbox"
+    }
+  },
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:55363",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_79b340620b1f"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-26T22:02:47Z\", \"deleted\": false, \"id\": \"dir_79b340620b1f\", \"last_modified\": \"2026-09-26T22:02:47Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "8f20212ff16aa50a9c28805ebd147ec637dbf08bc9af3a9f42f044239aa4055b",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:02:47.021206+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:55363",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_79b340620b1f"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-26T22:02:47Z\", \"deleted\": false, \"id\": \"dir_79b340620b1f\", \"last_modified\": \"2026-09-26T22:02:47Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "8f20212ff16aa50a9c28805ebd147ec637dbf08bc9af3a9f42f044239aa4055b",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:02:47.927429+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "zone.update",
+      "body_sha256": "62afb4dc238767d4e5204477bb8f0d913c2ceb5d1d3305510d704ec6c21f435f",
+      "body": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"conflict\", \"error\": \"zone_name_taken\", \"existing_name\": \"Inbox\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.update",
+      "args": {
+        "directory_id": "dir_79b340620b1f",
+        "name": "Inbox"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_79b340620b1f",
+            "data": {
+              "name": "Inbox"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"conflict\", \"error\": \"zone_name_taken\", \"existing_name\": \"Inbox\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:55363",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_79b340620b1f"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_79b340620b1f"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-26T22:02:47Z",
+          "deleted": false,
+          "id": "dir_79b340620b1f",
+          "last_modified": "2026-09-26T22:02:47Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-26T22:02:47Z\", \"deleted\": false, \"id\": \"dir_79b340620b1f\", \"last_modified\": \"2026-09-26T22:02:47Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "8f20212ff16aa50a9c28805ebd147ec637dbf08bc9af3a9f42f044239aa4055b",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T22:02:47.925820+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "zone.update",
+      "body_sha256": "62afb4dc238767d4e5204477bb8f0d913c2ceb5d1d3305510d704ec6c21f435f",
+      "body": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"conflict\", \"error\": \"zone_name_taken\", \"existing_name\": \"Inbox\"}"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.update",
+      "args": {
+        "directory_id": "dir_79b340620b1f",
+        "name": "Inbox"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_79b340620b1f",
+            "data": {
+              "name": "Inbox"
+            }
+          }
+        }
+      },
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"code\": \"conflict\", \"error\": \"zone_name_taken\", \"existing_name\": \"Inbox\"}"
+            }
+          ],
+          "isError": true
+        }
+      },
+      "elapsed_s": 0.001,
+      "named_refusal": {
+        "code": "conflict",
+        "error": "zone_name_taken",
+        "existing_name": "Inbox"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: the trigger error holds; the trigger existing_name holds; observe_at directory.name holds",
+    "elapsed_s": 0.905
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: the trigger error holds; the trigger existing_name holds; observe_at directory.name holds",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.906,
+    "first_satisfied_at_s": 0.905,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all 3 facts hold: the trigger error holds; the trigger existing_name holds; observe_at directory.name holds"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-g2mjvqyi/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-g2mjvqyi/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55363"
+  ],
+  "duration_s": 3.077
+}
