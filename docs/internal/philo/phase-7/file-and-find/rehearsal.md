@@ -1,7 +1,7 @@
 # PHILO-7-04 — File it and find it, the cold-context rehearsal
 
-**REHEARSED; OWNER REVIEW PENDING (2026-09-25 evening).** No sitting is
-claimed. The owner ruled R6 ("Claude closes it"): the closing client is a
+**REHEARSED; OWNER-REVIEWED.** The owner reviewed the rerun on 2026-09-26:
+"Reviewed — it's right". No sitting is claimed. The owner ruled R6 ("Claude closes it"): the closing client is a
 cold-context Claude session on Opus 5.5, not Codex. The owner reviewed the
 first closing run's shots: "the decision is thin — a decision put on my
 review list should carry its context, not just a title." The repair
@@ -137,7 +137,28 @@ turn window.
 ## The zero-read verdict per session
 
 ZERO findings in all six sessions (`mcp-audit.json` `zero_read_findings: []`).
-The only tool uses were `mcp__holdspeak__*` calls and `ToolSearch`.
+The only tool uses were `mcp__holdspeak__*` calls and `ToolSearch`. A read of
+a holdspeak resource is a catalogue read, EXCEPT a resource whose body is a
+repository document: `holdspeak://desk/constitution` returns
+`docs/internal/CONSTITUTION.md` from the checkout
+(`holdspeak/mcp/resources.py:475`), so the fence counts a read of it as a
+repository read (`REPO_DOC_RESOURCES`; C1 of the Astra-role check;
+`red-constitution-resource.txt`: 0 findings before, 1 after). No session read
+it.
+
+**What discovery means here (the Astra-role ruling on ToolSearch).**
+`ToolSearch` is a catalogue lookup: every call was `select:mcp__holdspeak__…`
+over the names in Claude's `deferred_tools_delta` (its rendering of the
+server's `tools/list`), and its results are tool references only. Claude
+chose its tools mostly by NAME from that deferred list and saw a tool's
+description only after selecting it. So the names did most of the
+discovery. The new description words were decisive only for where the reason
+went (`context_markdown`). That placement is confounded with the changed
+owner's words: there was no run of the new words against the old catalogue.
+
+**"Find it" means "find it again".** The find turn resumed the session and
+called `zone_list_members` with the zone id from the first turn. It did not
+search the Desk. This proves "find it again", not "find it cold".
 
 ## Readbacks through the contract
 
@@ -179,7 +200,7 @@ OWNER leg, shot before the agent leg files:
   decision, `proposed`. DECISION CONTEXT: "Our own runners are full every night. The
   shared runner pool has spare capacity after 8 PM." DECISION: "Move the
   nightly build to the shared runners."
-- `shots/brief/{1440,393}.png` (with `-receipt` and `-row` crops): BRIEF · 1
+- `shots/brief/{1440,393}.png` (the `-receipt` and `-row` files are full-shot copies, byte-identical to the shot): BRIEF · 1
   THING WAITING, "Review decision: Move nightly build to shared runners",
   "Brief ready · 1 item".
 
@@ -229,7 +250,8 @@ bearer-shaped string. It was RED on nine files before the redaction
 - **Zero reads (Claude):** RED on a real `claude -p` in the same cold setup
   told to read `<repo>/CLAUDE.md` (it ran `head -n 1 <repo>/CLAUDE.md` through
   Bash; `red-claude-read/`). Seven injected tool uses (Read, Glob, Grep, Bash,
-  WebFetch, Task, a resource read of another server) each turn it red.
+  WebFetch, Task, a resource read of another server, a holdspeak read of
+  `holdspeak://desk/constitution`) each turn it red.
 - **Zero reads (Codex, kept):** RED on the Phase 5 logs (25 + 3 = 28,
   `red-zero-read-phase5.txt`). The combined fence reads both formats.
 - **Tools from the init list:** if a chosen tool is removed from the init list, the check is red.
@@ -254,7 +276,7 @@ bearer-shaped string. It was RED on nine files before the redaction
 - **The shots:** the owner zone shot is taken before the agent files (the agent note is
   absent). The decision context is readable at both widths. The agent zone
   shot shows both notes.
-- **Wording:** this record and the lane report state the claim verbatim and
+- **Wording:** this record and the evidence state the claim verbatim and
   say nothing forbidden.
 
 ## The Codex attempt (superseded by R6)
@@ -267,7 +289,9 @@ attempt: Codex 0.155.1 sends the bearer from `bearer_token_env_var`, and a
 scratch `CODEX_HOME` with the auth file alone authenticates. R6 retires the
 Codex rerun. The Codex path stays in the driver (`--client codex`).
 
-## What is owed
+## Reviews
 
-- The owner's review of the shots, recorded in the tree.
-- Muad'Dib's check, and Astra's check.
+- The owner, 2026-09-26, on the rerun: "Reviewed — it's right". The first
+  closing run had bounced: "the decision is thin".
+- The Astra-role check on built (`pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/checks/story-04-built-astra-role-r1.md`):
+  RATIFY-WITH-CONDITIONS; C1-C5 paid.

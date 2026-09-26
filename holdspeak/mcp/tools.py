@@ -105,8 +105,8 @@ TOOLS: list[dict[str, Any]] = [
             "Rename a zone: kind=directories, data name (the name only). "
             "Move a zone: kind=directories, data parent_id (null moves it to the desk root). "
             "Edit a note: kind=notes, data title, body_markdown or tags. "
-            "Add to a decision: kind=decisions, data context_markdown (its reason), decision_markdown "
-            "(what you will do) or consequences_markdown (what follows from it). "
+            "Change a decision: kind=decisions, data context_markdown (its reason), decision_markdown "
+            "(what you will do) or consequences_markdown (what follows from it); the new text replaces the old. "
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {

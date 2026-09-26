@@ -35,7 +35,7 @@ THIN = PHASE7 / "assets/story-04-shots/attempts/20260926T014230Z-file-and-find"
 CLAUDE_RED = REPO / "docs/internal/philo/phase-7/file-and-find/red-claude-read"
 SESSIONS = ("owner_file", "owner_find", "owner_decide", "owner_brief", "agent_ungranted", "agent_granted")
 RECORDS = (
-    PHASE7 / "lane-report-story-04.md",
+    PHASE7 / "evidence-story-04.md",
     REPO / "docs/internal/philo/phase-7/file-and-find/rehearsal.md",
 )
 
@@ -403,6 +403,8 @@ def test_every_closing_session_has_zero_findings_and_used_holdspeak() -> None:
     ("WebFetch", {"url": "https://github.com/karolswdev/HoldSpeak"}),
     ("Task", {"prompt": "read the repo"}),
     ("ReadMcpResourceTool", {"server": "other", "uri": "file:///x"}),
+    # C1: a holdspeak resource whose body is a repository document.
+    ("ReadMcpResourceTool", {"server": "holdspeak", "uri": "holdspeak://desk/constitution"}),
 ])
 def test_any_other_claude_tool_turns_the_fence_red(tool: str, tool_input: dict[str, Any]) -> None:
     events = copy.deepcopy(_claude("owner_find"))
@@ -675,3 +677,23 @@ def test_the_owner_shots_come_before_the_agent_files_and_show_the_reason() -> No
     for stage in ("owner-zone", "owner-decision", "brief", "agent-zone"):
         for width in (1440, 393):
             assert (FINAL / "shots" / stage / f"{width}.png").exists()
+
+
+def test_repo_doc_resources_are_every_repo_backed_resource() -> None:
+    """Every resource branch in resources.py that reads the checkout
+    (``_REPO_ROOT``) is in REPO_DOC_RESOURCES, and nothing else is."""
+    import re as _re
+
+    source = (REPO / "holdspeak/mcp/resources.py").read_text()
+    branches = _re.split(r'\n    if uri == "', source)
+    backed = {"" + b.split('"', 1)[0] for b in branches[1:] if "_REPO_ROOT" in b.split("\n    if ", 1)[0]}
+    assert backed == set(driver.REPO_DOC_RESOURCES) == {"holdspeak://desk/constitution"}
+
+
+def test_a_codex_read_of_a_repo_doc_resource_is_a_finding() -> None:
+    events = copy.deepcopy(_events(PHASE5_RUN / "codex" / "summary"))
+    call = next(e for e in events if e.get("type") == "item.completed"
+                and (e.get("item") or {}).get("type") == "mcp_tool_call")
+    call["item"]["tool"] = "read_mcp_resource"
+    call["item"]["arguments"] = {"server": "holdspeak", "uri": "holdspeak://desk/constitution"}
+    assert len(driver.zero_read_findings(events)) == 1

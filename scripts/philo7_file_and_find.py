@@ -99,6 +99,14 @@ PROMPTS: dict[str, str] = {
     "agent_file": f"File my note {AGENT_NOTE['title']} into my {ZONE_NAME} zone.",
 }
 
+#: holdspeak resources whose body is a repository document, not catalogue:
+#: ``holdspeak://desk/constitution`` returns ``docs/internal/CONSTITUTION.md``
+#: read from the checkout (``holdspeak/mcp/resources.py`` ``_REPO_ROOT``). A
+#: read of one is a repository read (Astra-role check on built, C1). The
+#: fence ``test_repo_doc_resources_are_every_repo_backed_resource`` keeps this
+#: set equal to the resources that read ``_REPO_ROOT``.
+REPO_DOC_RESOURCES = frozenset({"holdspeak://desk/constitution"})
+
 # Codex item types that are not an action on anything outside the MCP
 # server: the model's own messages, its reasoning, its plan and client
 # warnings. Every other completed item (a shell command, a file change, a web
@@ -167,7 +175,8 @@ def zero_read_findings(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]
         kind = item.get("type")
         if kind in QUIET_ITEM_TYPES:
             continue
-        if kind == "mcp_tool_call" and item.get("server") == "holdspeak":
+        if kind == "mcp_tool_call" and item.get("server") == "holdspeak" and \
+                (item.get("arguments") or {}).get("uri") not in REPO_DOC_RESOURCES:
             continue
         detail = (
             item.get("command") or item.get("changes") or item.get("query")
@@ -802,7 +811,8 @@ def claude_zero_read_findings(events: Iterable[dict[str, Any]]) -> list[dict[str
         if name == "ToolSearch":
             continue
         if name in {"ListMcpResourcesTool", "ReadMcpResourceTool", "ReadMcpResourceDirTool"} and \
-                use["input"].get("server") in (None, "holdspeak"):
+                use["input"].get("server") in (None, "holdspeak") and \
+                use["input"].get("uri") not in REPO_DOC_RESOURCES:
             continue
         findings.append({"item_id": use["id"], "type": "tool_use", "server": None,
                          "detail": f"{name} {json.dumps(use['input'], default=str)[:300]}"})
@@ -1526,6 +1536,8 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--out", required=True, help="parent directory for the unique run")
     run.add_argument("--codex-timeout", type=float, default=900)
     run.add_argument("--legs", default="owner,agent")
+    fence = sub.add_parser("fence", help="run the fences over a retained Claude run (no new session)")
+    fence.add_argument("run_dir", type=Path)
     run.add_argument("--client", choices=("claude", "codex"), default="claude",
                      help="the cold-context client (R6: claude closes the phase)")
     run.add_argument("--codex-auth", type=Path, default=Path.home() / ".codex" / "auth.json",
@@ -1870,8 +1882,33 @@ def _agent_leg(run_dir: Path, temp_root: Path, hub: Any, gw: Any, ids: dict[str,
     return out
 
 
+def fence_run(run_dir: Path) -> int:
+    """The fences over a retained closing run: zero reads, the init list, the
+    init event, the decision's reason, the AGENT receipts, no account leak."""
+    problems = 0
+    for stage in ("owner_file", "owner_find", "owner_decide", "owner_brief", "agent_ungranted", "agent_granted"):
+        events = read_events(run_dir / "claude" / stage / "events.jsonl")
+        zero, unlisted = any_zero_read_findings(events), claude_unlisted(events)
+        init = claude_init_findings(claude_init(events), "owner")
+        problems += len(zero) + len(unlisted) + len(init)
+        print(f"{stage} zero_read={len(zero)} unlisted={unlisted} init={init}")
+    legs = json.loads((run_dir / "legs.json").read_text())
+    reason = decision_reason_findings(legs["owner"]["decision"])
+    agent = legs["agent"]
+    receipts = agent_receipt_findings(
+        agent["runs"]["ungranted"]["receipts"][0]["receipt"], agent["runs"]["granted"]["receipts"][0]["receipt"],
+        identity=agent["credential"]["identity"], grant_id=agent["grant"]["response"]["grant_id"])
+    leaks = account_leak_findings(run_dir.parent.parent)
+    problems += len(reason) + len(receipts) + len(leaks)
+    print(f"decision_reason={reason} agent_receipts={receipts} account_leaks={len(leaks)}")
+    print("FENCES GREEN" if not problems else f"FENCES RED: {problems}")
+    return 0 if not problems else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.mode == "fence":
+        return fence_run(args.run_dir.resolve())
     try:
         return _run(args)
     except Exception as exc:
