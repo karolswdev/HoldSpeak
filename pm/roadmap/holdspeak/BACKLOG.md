@@ -1257,3 +1257,10 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | Item | Kind | Source | Home |
 |---|---|---|---|
 | Filing a tombstoned Thought's note over HTTP (`PUT /api/directories/{id}/members/note:<id>`) answers **500** with `{"error": "tombstoned thought cannot be filed"}`; MCP answers the named `thought_tombstoned` conflict. Inherited from main (the route caught `NotFound` and `ValueError`, not `ConflictError`). Since PHILO-7-02 the refusal leaves a kernel receipt, and the 500 body carries `operation_id` and `receipt` (`holdspeak/web/routes/primitives/directories.py`, `api_file_member`). Repair: answer 409 `{error: thought_tombstoned, operation_id, receipt}` like the other named conflicts; fence both transports. | inherited route defect (Tenet 3) | Astra finding 3; the 7-02 evidence "Not changed" | UNASSIGNED; small |
+
+## The Floor delete receipt follow-ups — 2026-09-25 evening (Astra role, Opus 5.5 stand-in, on PR #665)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| Two Floor deletes inside one undo window silently keep the second: delete decision A, wait 1.5 s, delete decision B, wait 12 s → A 404, B 200 (B is still on the server while the owner saw it removed). On main too. Likely cause: `remove()` calls `cleanup()`, which drops the earlier pending action (`web/src/desk/hooks/useUndoReceipt.ts:27-29`), and the Floor's undo step does nothing (`web/src/desk/gl/WorldStage.tsx:144-148`); unverified which one is lost and why. A second delete must commit or queue the first, never drop it; a fence with two deletes in one window. | a delete that does not happen while the face says it did (Tenet 3) | `checks/delete-receipt-astra-role-r1.md` finding 7 | ASSIGNED: Muad'Dib, the Floor lane (with the rename-field and list-view Delete defects, `docs/internal/philo/phase-7/floor-diag/FINDING.md`) |
+| The Workbench window's footer shows `writeReceipt \|\| undoReceipt \|\| copyReceipt \|\| status` (`WorkbenchWindow.tsx:1893-1897`); with the 6 s linger a delete hides the "N ITEMS · last run" line and any Copy receipt for 6 s. | minor | finding 3 | the next Workbench sitting |
