@@ -39,6 +39,7 @@ import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
+import { DeskDeleteHost } from "./deleteReceipt";
 import { noteFaceChange } from "./zoneName";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import "./desk.css";
@@ -239,6 +240,9 @@ export default function DeskApp() {
         <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
+      {/* PHILO-8-02 — the one delete listener and its receipt, mounted once so
+          a face change never drops a pending delete. */}
+      <DeskDeleteHost />
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}

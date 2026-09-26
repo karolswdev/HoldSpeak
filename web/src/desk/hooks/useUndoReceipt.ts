@@ -9,22 +9,53 @@ interface UndoState {
   revert: () => void;
 }
 
+/** PHILO-8-02 — a removal is never dropped. The receipt keeps ONE slot: a
+ * second `remove()` COMMITS the pending one at once (its Undo goes away),
+ * and an unmount COMMITS a pending one, so leaving the face inside the
+ * window cannot keep an object the face said was removed. Only `undo()`
+ * keeps it. */
 export function useUndoReceipt(window = 8) {
   const [state, setState] = useState<UndoState | null>(null);
   const deadlineRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const postRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // The fire of the removal still inside its window; null once it fired or
+  // was undone.
+  const pendingRef = useRef<(() => void) | null>(null);
 
   const cleanup = useCallback(() => {
     clearInterval(intervalRef.current);
     clearTimeout(postRef.current);
   }, []);
 
-  useEffect(() => cleanup, [cleanup]);
+  /** Commit the pending removal now, if there is one. */
+  const flush = useCallback(() => {
+    const fire = pendingRef.current;
+    if (!fire) return;
+    pendingRef.current = null;
+    cleanup();
+    setState((previous) =>
+      previous ? { ...previous, phase: "committed", remaining: 0 } : null,
+    );
+    fire();
+    postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
+  }, [cleanup]);
+
+  useEffect(
+    () => () => {
+      const fire = pendingRef.current;
+      pendingRef.current = null;
+      cleanup();
+      fire?.();
+    },
+    [cleanup],
+  );
 
   const remove = useCallback(
     (label: string, fire: () => void, revert: () => void) => {
+      flush();
       cleanup();
+      pendingRef.current = fire;
       deadlineRef.current = Date.now() + window * 1000;
       setState({ phase: "pending", label, remaining: window, fire, revert });
 
@@ -34,14 +65,7 @@ export function useUndoReceipt(window = 8) {
           Math.ceil((deadlineRef.current - Date.now()) / 1000),
         );
         if (left <= 0) {
-          cleanup();
-          setState((previous) =>
-            previous
-              ? { ...previous, phase: "committed", remaining: 0 }
-              : null,
-          );
-          fire();
-          postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
+          flush();
         } else {
           setState((previous) =>
             previous ? { ...previous, remaining: left } : null,
@@ -49,11 +73,12 @@ export function useUndoReceipt(window = 8) {
         }
       }, 250);
     },
-    [window, cleanup],
+    [window, cleanup, flush],
   );
 
   const undo = useCallback(() => {
     if (!state || state.phase !== "pending") return;
+    pendingRef.current = null;
     cleanup();
     state.revert();
     setState({ ...state, phase: "restored", remaining: 0 });
@@ -119,5 +144,5 @@ export function useUndoReceipt(window = 8) {
             : null,
         );
 
-  return { remove, undo, receipt, phase: state?.phase ?? "idle" };
+  return { remove, undo, flush, receipt, phase: state?.phase ?? "idle" };
 }

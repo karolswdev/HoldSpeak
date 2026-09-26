@@ -1,0 +1,21 @@
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+E               AssertionError: (200, [])
+E               assert 200 == 404
+E               AssertionError: (200, [])
+E               assert 200 == 404
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+E               AssertionError: (200, [])
+E               assert 200 == 404
+E               AssertionError: (200, [])
+E               assert 200 == 404
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[floor-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_leaving_the_face_inside_the_window_commits_the_delete[list-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_delete_key_on_the_chair_with_a_floor_selection[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_delete_key_on_the_chair_with_a_floor_selection[393]
+8 failed, 17 deselected in 154.28s (0:02:34)

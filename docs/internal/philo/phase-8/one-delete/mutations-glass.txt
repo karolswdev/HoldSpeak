@@ -1,0 +1,22 @@
+M1 E               AssertionError: ({'A': 404, 'B': 200}, '1 SELECTED', 'Removed Probe A
+M1 E               assert {'A': 404, 'B': 200} == {'A': 404, 'B': 404}
+M1 1 failed, 22 deselected in 55.07s
+M2 E               AssertionError: ({'A': 200, 'B': 404}, '', 'Removed Probe B
+M2 E               assert {'A': 200, 'B': 404} == {'A': 404, 'B': 404}
+M2 1 failed, 22 deselected in 51.74s
+M3 1 passed, 22 deselected in 52.62s  (the wrong mutation: the hoisted host keeps the timer running; see M3b)
+M4 E       AssertionError: 'Removed': not in the viewport: {'x': 20.2578125, 'y': 1565, 'w': 352.484375, 'h': 27}
+M4 E       assert (True and False)
+M4 1 failed, 22 deselected in 38.27s
+M3b vitest ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > the last seat leaving commits the pending delete (cause 3)
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > a face swap commits too: the old seat leaves as the new one comes
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > with no seat mounted (the Chair) the delete commits at once
+M3b vitest  FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > unmount commits a pending removal
+M3b vitest       Tests  4 failed | 15 passed (19)
+M3b E               AssertionError: (200, [])
+M3b E               assert 200 == 404
+M3b 1 failed, 1 passed, 21 deselected in 88.47s (0:01:28)
+M3b (second run, -rA) floor 1440: 200; DELETE 0
+M3b (second run, -rA) FAILED test_leaving_the_face_inside_the_window_commits_the_delete[floor-1440]
+M3b (second run, -rA) FAILED test_leaving_the_face_inside_the_window_commits_the_delete[list-1440]

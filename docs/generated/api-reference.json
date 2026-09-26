@@ -8060,6 +8060,7 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8140,6 +8141,7 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8239,6 +8241,7 @@
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_graph_walk_http_fault.py",
         "tests/unit/test_philo3_01_decision_route.py",
@@ -8323,6 +8326,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8361,6 +8365,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8435,6 +8440,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8517,6 +8523,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8555,6 +8562,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8593,6 +8601,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8631,6 +8640,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8669,6 +8679,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8707,6 +8718,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8791,6 +8803,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8829,6 +8842,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",
@@ -8906,6 +8920,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_delete_receipt_glass.py",
+        "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
         "tests/unit/test_philo3_01_decision_route.py",
         "tests/unit/test_philo5_one_decision.py",

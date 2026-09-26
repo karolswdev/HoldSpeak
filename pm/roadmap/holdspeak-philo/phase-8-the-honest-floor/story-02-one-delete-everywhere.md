@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 8
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of the charter (no canvas: the list reuses the #665 seat)
 - **Unblocks:** PHILO-8-03
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra role (Opus 5.5 stand-in; Codex Astra on return) checks
@@ -35,16 +35,16 @@ The Floor's no-op `revert` (`WorldStage.tsx:147`) is not a cause: only `undo()` 
 
 ## Acceptance criteria
 
-- [ ] The list Delete (every path the list offers) removes the object: "Removed … Undo", then "Removal committed", `readable_text` in the viewport at 1440 and 393; `GET` the object → 404 after the window; Undo inside the window → 200 and the row stays. Red on main (no request, 200).
-- [ ] At 393 with a long list (more than 16 objects) scrolled to the end, the receipt is still readable in the viewport (the list's AskBar is placed on its own; the #665 fence proved only a page that does not scroll).
-- [ ] Two deletes in one window, on the spatial Floor and on the list, with both selection orders of the check's probe (A left selected; A taken out first): A 404 and B 404 after the window. Red on main (A 404 / B 200, and A 200 / B 404).
-- [ ] Leave the face inside the window (Floor → Chair, list → Chair): the object is gone (404). Red on main (200, zero requests).
-- [ ] Undo inside the window keeps the one pending object (200); a delete already committed by a second delete stays gone.
-- [ ] Each of the three causes has a mutation that restores it and turns its fence red.
-- [ ] One listener, one hook mount: `grep -rn OBJECT_DELETE_REQUEST web/src` shows one handler, and it survives a face change.
-- [ ] The Workbench window's delete and Undo behave as recorded (fenced).
-- [ ] `case.p7.decision_delete.gone` (`docs/internal/philo/graph/atlas-phase7.json`) still passes at 1440 and 393.
-- [ ] Shots at 1440 and 393.
+- [x] The list Delete (every path the list offers) removes the object: "Removed … Undo", then "Removal committed", `readable_text` in the viewport at 1440 and 393; `GET` the object → 404 after the window; Undo inside the window → 200 and the row stays. Red on main (no request, 200). DONE: the row menu, the Delete key (Space selects the row) and the palette `Delete`, at 1440 and 393, fenced in `tests/e2e/test_philo8_one_delete_glass.py`; red on main `Page.wait_for_function: Timeout 5000ms exceeded.` (no receipt), `docs/internal/philo/phase-8/one-delete/red-main-glass.log`, `red-main-palette.txt`.
+- [x] At 393 with a long list (more than 16 objects) scrolled to the end, the receipt is still readable in the viewport (the list's AskBar is placed on its own; the #665 fence proved only a page that does not scroll). DONE: 20 rows, scrolled to the end and to the top; the list's foot is `position: fixed` (`web/src/desk/components/list-view.css`); mutation M4 (the rule removed) → `'Removed': not in the viewport: {… 'y': 1565 …}`.
+- [x] Two deletes in one window, on the spatial Floor and on the list, with both selection orders of the check's probe (A left selected; A taken out first): A 404 and B 404 after the window. Red on main (A 404 / B 200, and A 200 / B 404). DONE: 8 cases green; red on main `({'A': 404, 'B': 200}, '1 SELECTED', 'Removed Probe A …'` and `({'A': 200, 'B': 404}, '', 'Removed Probe B …'` on the Floor; on the list `B came after A's window: ''` (no receipt for A), `docs/internal/philo/phase-8/one-delete/red-main-two-deletes-serial.txt`.
+- [x] Leave the face inside the window (Floor → Chair, list → Chair): the object is gone (404). Red on main (200, zero requests). DONE: 4 cases green; red on main `AssertionError: (200, [])` (Floor), the receipt timeout (list), `docs/internal/philo/phase-8/one-delete/red-main-leave-chair-undo-serial.txt`.
+- [x] Undo inside the window keeps the one pending object (200); a delete already committed by a second delete stays gone. DONE: `test_undo_keeps_only_the_pending_object` (A 404, B 200) and `test_undo_on_the_list_keeps_the_object` (200, the row stays, zero DELETE requests), 1440 and 393.
+- [x] Each of the three causes has a mutation that restores it and turns its fence red. DONE: M1, M2, M3b red in glass and vitest (`docs/internal/philo/phase-8/one-delete/mutations-glass.txt`, `mutations-vitest.txt`). M3 (the flushes removed, the host still hoisted) stays green: the hoist alone repairs cause 3; recorded.
+- [x] One listener, one hook mount: `grep -rn OBJECT_DELETE_REQUEST web/src` shows one handler, and it survives a face change. DONE: the one `addEventListener` is `web/src/desk/deleteReceipt.tsx:77`, in `DeskDeleteHost`, mounted once in `DeskApp.tsx`.
+- [x] The Workbench window's delete and Undo behave as recorded (fenced). DONE: changed on purpose — a second Remove commits the first; closing the window commits a pending Remove; Undo unchanged (`web/src/desk/components/__tests__/workbenchUndoFlush.test.tsx`; red on main 2 of 3).
+- [x] `case.p7.decision_delete.gone` (`docs/internal/philo/graph/atlas-phase7.json`) still passes at 1440 and 393. DONE: `VERDICT: pass terminal=settled` at both (evidence).
+- [x] Shots at 1440 and 393. DONE: `assets/story-02-shots/` (the list pending, committed, restored at both widths; the long list at 393, end and top).
 
 ## Effort (not a promise)
 
@@ -60,3 +60,6 @@ PROVISIONAL: 0.75–1.25 engineering days of effort (calibrated from Phase 7's r
 
 - 2026-09-26 — drafted by the Fedaykin docs lane for Muad'Dib from the owner's word closing Phase 7; unratified.
 - 2026-09-26 — round two: the Astra-role check (`checks/charter-astra-role-r1.md`, RATIFY-WITH-CONDITIONS) paid: C1 the three verified causes replace the guesses, and the false sentence "the face said B was removed" is struck; C2 the repair shape (flush, not drop; one listener that survives a face change; the selection drop; one receipt slot; the list's foot seat; the Workbench window checked); C5 the long-list receipt at 393.
+- 2026-09-26 — built on `feat/philo-8-02-one-delete` by the Fedaykin lane (Opus 5.5). The one listener and hook moved to `DeskDeleteHost` (`web/src/desk/deleteReceipt.tsx`), mounted once in `DeskApp`; the faces seat the receipt (`DeskDeleteSeat`) in the #665 foot; the hook commits a pending removal on a second `remove()` and on unmount; the queued object leaves the selection. Lane decisions (one slot; a face change commits; the Chair commits at once with no seat; the Workbench window changed on purpose) and every red are in `docs/internal/philo/phase-8/one-delete/README.md`. FINDING S2 reproduces at 393 (BACKLOG "PHILO-8-02 follow-ups"). Evidence: `evidence-story-02.md`.
+- 2026-09-26 — round two, Muad'Dib's ruling on the Chair (Tenet 3; UX-CANON §A.11): a delete where no face shows its receipt is WITHHELD. `object.delete` is greyed "Open the Floor or the list" where no seat is mounted (`web/src/desk/deleteSeat.ts`, `verbRegistry.ts`); the Delete key does nothing on the Chair; nothing is deleted. Red on the round-one branch: `chair 1440: 404; DELETE 1; receipt ''` (`docs/internal/philo/phase-8/one-delete/red-round-one-chair.txt`); green: 200, zero requests, the greyed row with its reason rendered at 1440 and 393. The face change is now read from the face state (surface, view mode), not from a seat unmounting, so a seat redrawn for another reason keeps the Undo. BACKLOG Chair-seat row closed.
+

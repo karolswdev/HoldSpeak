@@ -1,0 +1,23 @@
+     × a second remove commits the first at once and keeps one slot 3ms
+     × undo after a second remove keeps only the pending one 2ms
+     × unmount commits a pending removal 1ms
+     × flush commits the pending removal now 1ms
+     × a second Remove commits the first at once 1285ms
+     × closing the window commits a pending Remove 1083ms
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx [ src/desk/__tests__/deleteReceipt.test.tsx ]
+Error: Failed to resolve import "../deleteReceipt" from "src/desk/__tests__/deleteReceipt.test.tsx". Does the file exist?
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > a second remove commits the first at once and keeps one slot
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > undo after a second remove keeps only the pending one
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > unmount commits a pending removal
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > flush commits the pending removal now
+TypeError: result.current.flush is not a function
+ FAIL  src/desk/components/__tests__/workbenchUndoFlush.test.tsx > PHILO-8-02 the Workbench window's Remove > a second Remove commits the first at once
+AssertionError: expected [] to deeply equal [ 'i1' ]
+ FAIL  src/desk/components/__tests__/workbenchUndoFlush.test.tsx > PHILO-8-02 the Workbench window's Remove > closing the window commits a pending Remove
+AssertionError: expected [] to deeply equal [ 'i1' ]
+ Test Files  3 failed (3)
+      Tests  6 failed | 9 passed (15)
