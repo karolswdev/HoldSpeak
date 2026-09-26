@@ -1,0 +1,19 @@
+mutation	case.p8.zone_create.second_unnamed	1440	fail	78s	load1=18.56	NOTE: predicate: all_of part input_value: value is 'New zone 2', wanted 'New zone 3'
+mutation	case.p8.zone_create.second_unnamed_floor	1440	fail	82s	load1=20.77	NOTE: predicate: all_of part input_value: value is 'New zone 2', wanted 'New zone 3'
+mutation	case.p8.zone_rename.list	1440	fail	67s	load1=22.03	NOTE: predicate: all_of part protocol_reads: GET /api/directories: 0 row(s) at 'directories' match {'name': 'Platform 2'}; exactly one is required
+mutation	case.p8.zone_rename.name_taken_list	1440	fail	60s	load1=29.14	NOTE: predicate: all_of part readable_text: 'NOT SAVED' NOT in observe_at text
+mutation	case.p8.zone_rename.name_taken_floor	1440	fail	69s	load1=26.27	NOTE: predicate: all_of part readable_text: 'NOT SAVED' NOT in observe_at text
+mutation	case.p8.zone_rename.f2_row	1440	fail	44s	load1=22.85	NOTE: predicate: all_of part input_value: value is 'Inbox', wanted 'Inbox 2'
+mutation	case.p8.chair.no_new_zone	1440	fail	25s	load1=21.76	NOTE: predicate: 'New Zone' NOT in observe_at text
+mutation	case.p8.list_delete.gone	1440	fail	69s	load1=17.57	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_436e59672b72 answered 404, wanted 200
+mutation	case.p8.list_delete.undo	1440	fail	54s	load1=21.89	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_502760a35002 answered 200, wanted 404
+mutation	case.p8.list_delete.long_list_393	1440	fail	68s	load1=30.79	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_9fb3a1dd37e8 answered 404, wanted 200
+mutation	case.p8.delete_twice.both_gone	1440	fail	81s	load1=24.88	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_ecbaf5478f61 answered 404, wanted 200
+mutation	case.p8.delete_then_leave.gone	1440	fail	52s	load1=28.09	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_ff5632e53820 answered 404, wanted 200
+mutation	case.p8.chair.delete_withheld	1440	fail	43s	load1=18.95	NOTE: predicate: all_of part protocol_reads: GET /api/decisions/decision_ec67fb82301d answered 200, wanted 404
+mutation	case.p8.decision_heads.hidden	1440	fail	30s	load1=21.78	NOTE: predicate: all_of part readable_text: 'CONSEQUENCES' NOT in observe_at text
+mutation	case.p8.zone_create.second_unnamed.op	op	fail	35s	load1=25.12	NOTE: predicate: fact #1 failed: observe_at <root> holds no row matching {'id': 'dir_587088e1d315', 'name': 'New zone 3'}
+mutation	case.p8.zone_rename.list.op	op	fail	34s	load1=27.40	NOTE: predicate: fact #1 failed: observe_at directory.name = 'Platform', wanted 'Platform 2'
+mutation	case.p8.zone_rename.name_taken_list.op	op	fail	34s	load1=21.63	NOTE: predicate: fact #1 failed: the trigger existing_name = 'Inbox', wanted 'Inbox 2'
+mutation	case.p8.list_delete.gone.op	op	fail	35s	load1=17.65	NOTE: predicate: fact #4 failed: op read #1 (kernel.receipt.read) objects.0.receipt.state = 'succeeded', wanted 'refused'
+mutation	case.p8.delete_twice.both_gone.op	op	fail	35s	load1=14.75	NOTE: predicate: fact #7 failed: op read #1 (kernel.receipt.read) objects.0.receipt.state = 'succeeded', wanted 'refused'

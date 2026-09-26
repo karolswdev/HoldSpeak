@@ -1,0 +1,1764 @@
+{
+  "id": "obs-20260926T215021Z-case.p8.zone_create.second_unnamed-muaddib-393",
+  "run_id": "20260926T215021Z-case.p8.zone_create.second_unnamed-muaddib-393",
+  "case_id": "case.p8.zone_create.second_unnamed",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.zone_create"
+  ],
+  "state_id": "state.desk_presentation.p8_zone_name",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52628",
+      "port": 52628,
+      "pid": 67117,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vlrumuyy",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vlrumuyy/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:50:21.127631+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "67d46a6643996efa445234a67d55b49fc6e75e6e03a188cc31049f19e8a06941",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.31,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-desk.new-zone']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[id='desk-palette-option-desk.new-zone']",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": ""
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-zone-rename",
+        "aria-label": "Zone name",
+        "value": "New zone 2"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 77,
+        "y": 415,
+        "w": 122,
+        "h": 36
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+      "after": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+    },
+    "focus_label": {
+      "before": "Search tools and Desk items",
+      "after": "Zone name"
+    },
+    "document_text_sha256": {
+      "before": "0fa60329171b6453397b0c5229e5dcd55d8e576c2c2975d9b66084535a1a33f3",
+      "after": "22f2c294bc5dba2b91d6ce8290f4b39797ddebeb319b72c70e02b4cadb278a6e"
+    },
+    "document_text_len": {
+      "before": 963,
+      "after": 905
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "payload": {
+            "directories": [
+              {
+                "id": "hs-seed-decisions",
+                "name": "Decisions",
+                "name_normalized": "decisions",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-inbox",
+                "name": "Inbox",
+                "name_normalized": "inbox",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-start-here"
+                ]
+              },
+              {
+                "id": "hs-seed-meetings",
+                "name": "Meetings",
+                "name_normalized": "meetings",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-meeting-preferences"
+                ]
+              },
+              {
+                "id": "dir_48a4aa7af5af",
+                "name": "New zone",
+                "name_normalized": "new zone",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:28Z",
+                "last_modified": "2026-09-26T21:50:28Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-personal",
+                "name": "Personal",
+                "name_normalized": "personal",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-about-me",
+                  "note:hs-seed-how-i-like-help"
+                ]
+              },
+              {
+                "id": "hs-seed-reference",
+                "name": "Reference",
+                "name_normalized": "reference",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-people-vocabulary"
+                ]
+              },
+              {
+                "id": "hs-seed-work",
+                "name": "Work",
+                "name_normalized": "work",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-current-priorities"
+                ]
+              }
+            ]
+          },
+          "body_sha256": "369965332a851fa27da2ec3c5d3ecfcec3821efff14949ee477307ffccc4e02a"
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "payload": {
+            "directories": [
+              {
+                "id": "hs-seed-decisions",
+                "name": "Decisions",
+                "name_normalized": "decisions",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-inbox",
+                "name": "Inbox",
+                "name_normalized": "inbox",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-start-here"
+                ]
+              },
+              {
+                "id": "hs-seed-meetings",
+                "name": "Meetings",
+                "name_normalized": "meetings",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-meeting-preferences"
+                ]
+              },
+              {
+                "id": "dir_48a4aa7af5af",
+                "name": "New zone",
+                "name_normalized": "new zone",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:28Z",
+                "last_modified": "2026-09-26T21:50:28Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-personal",
+                "name": "Personal",
+                "name_normalized": "personal",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-about-me",
+                  "note:hs-seed-how-i-like-help"
+                ]
+              },
+              {
+                "id": "hs-seed-reference",
+                "name": "Reference",
+                "name_normalized": "reference",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-people-vocabulary"
+                ]
+              },
+              {
+                "id": "hs-seed-work",
+                "name": "Work",
+                "name_normalized": "work",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-current-priorities"
+                ]
+              }
+            ]
+          },
+          "body_sha256": "369965332a851fa27da2ec3c5d3ecfcec3821efff14949ee477307ffccc4e02a"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "payload": {
+            "directories": [
+              {
+                "id": "hs-seed-decisions",
+                "name": "Decisions",
+                "name_normalized": "decisions",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-inbox",
+                "name": "Inbox",
+                "name_normalized": "inbox",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-start-here"
+                ]
+              },
+              {
+                "id": "hs-seed-meetings",
+                "name": "Meetings",
+                "name_normalized": "meetings",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-meeting-preferences"
+                ]
+              },
+              {
+                "id": "dir_48a4aa7af5af",
+                "name": "New zone",
+                "name_normalized": "new zone",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:28Z",
+                "last_modified": "2026-09-26T21:50:28Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "dir_190e201e8ae2",
+                "name": "New zone 2",
+                "name_normalized": "new zone 2",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:37Z",
+                "last_modified": "2026-09-26T21:50:37Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-personal",
+                "name": "Personal",
+                "name_normalized": "personal",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-about-me",
+                  "note:hs-seed-how-i-like-help"
+                ]
+              },
+              {
+                "id": "hs-seed-reference",
+                "name": "Reference",
+                "name_normalized": "reference",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-people-vocabulary"
+                ]
+              },
+              {
+                "id": "hs-seed-work",
+                "name": "Work",
+                "name_normalized": "work",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-current-priorities"
+                ]
+              }
+            ]
+          },
+          "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "payload": {
+            "directories": [
+              {
+                "id": "hs-seed-decisions",
+                "name": "Decisions",
+                "name_normalized": "decisions",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-inbox",
+                "name": "Inbox",
+                "name_normalized": "inbox",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-start-here"
+                ]
+              },
+              {
+                "id": "hs-seed-meetings",
+                "name": "Meetings",
+                "name_normalized": "meetings",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-meeting-preferences"
+                ]
+              },
+              {
+                "id": "dir_48a4aa7af5af",
+                "name": "New zone",
+                "name_normalized": "new zone",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:28Z",
+                "last_modified": "2026-09-26T21:50:28Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "dir_190e201e8ae2",
+                "name": "New zone 2",
+                "name_normalized": "new zone 2",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:37Z",
+                "last_modified": "2026-09-26T21:50:37Z",
+                "deleted": false,
+                "member_ids": []
+              },
+              {
+                "id": "hs-seed-personal",
+                "name": "Personal",
+                "name_normalized": "personal",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-about-me",
+                  "note:hs-seed-how-i-like-help"
+                ]
+              },
+              {
+                "id": "hs-seed-reference",
+                "name": "Reference",
+                "name_normalized": "reference",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-people-vocabulary"
+                ]
+              },
+              {
+                "id": "hs-seed-work",
+                "name": "Work",
+                "name_normalized": "work",
+                "parent_id": null,
+                "created_at": "2026-09-26T21:50:25Z",
+                "last_modified": "2026-09-26T21:50:25Z",
+                "deleted": false,
+                "member_ids": [
+                  "note:hs-seed-current-priorities"
+                ]
+              }
+            ]
+          },
+          "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+        }
+      ]
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": "New Zone"
+        }
+      ],
+      "after": [
+        {
+          "selector": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+          "value": "New zone 2"
+        }
+      ]
+    },
+    "field_value": {
+      "before": {
+        "selector": ".desk-listmode input.desk-zone-rename",
+        "present": false,
+        "value": null
+      },
+      "after": {
+        "selector": ".desk-listmode input.desk-zone-rename",
+        "present": true,
+        "value": "New zone 2"
+      }
+    }
+  },
+  "before": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": "New Zone"
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": false,
+      "value": null
+    },
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:52628/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "0fa60329171b6453397b0c5229e5dcd55d8e576c2c2975d9b66084535a1a33f3",
+    "document_text_len": 963,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "369965332a851fa27da2ec3c5d3ecfcec3821efff14949ee477307ffccc4e02a"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "369965332a851fa27da2ec3c5d3ecfcec3821efff14949ee477307ffccc4e02a"
+      }
+    ],
+    "at_utc": "2026-09-26T21:50:35.341081+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": true,
+    "text": "",
+    "attrs": {
+      "class": "desk-zone-rename",
+      "aria-label": "Zone name",
+      "value": "New zone 2"
+    },
+    "rect": {
+      "x": 77,
+      "y": 415,
+      "w": 122,
+      "h": 36
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 77,
+        "y": 415,
+        "w": 122,
+        "h": 36
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 79,
+          "y": 417,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 433,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 449,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 417,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 433,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 449,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 417,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 433,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 449,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+        "value": "New zone 2"
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": true,
+      "value": "New zone 2"
+    },
+    "focus": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+    "focus_label": "Zone name",
+    "url": "http://127.0.0.1:52628/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "22f2c294bc5dba2b91d6ce8290f4b39797ddebeb319b72c70e02b4cadb278a6e",
+    "document_text_len": 905,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "dir_190e201e8ae2",
+              "name": "New zone 2",
+              "name_normalized": "new zone 2",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:37Z",
+              "last_modified": "2026-09-26T21:50:37Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "dir_190e201e8ae2",
+              "name": "New zone 2",
+              "name_normalized": "new zone 2",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:37Z",
+              "last_modified": "2026-09-26T21:50:37Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+      }
+    ],
+    "at_utc": "2026-09-26T21:50:39.649101+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/directories",
+      "status": 201,
+      "body_sha256": "2dab480104cac57052daddc0c41dad16b0719677665e85461d127aca7d6821d9",
+      "body": {
+        "directory": {
+          "id": "dir_190e201e8ae2",
+          "name": "New zone 2",
+          "name_normalized": "new zone 2",
+          "parent_id": null,
+          "created_at": "2026-09-26T21:50:37Z",
+          "last_modified": "2026-09-26T21:50:37Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/directories"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": false,
+      "value": null
+    },
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n03:50 PM\nDesk items\n17 ITE",
+    "url": "http://127.0.0.1:52628/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "d15ae57b8fc5da8d54746fe95a45f248996977871beb3f9619fe345ae3f50340",
+    "document_text_len": 889,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "dir_190e201e8ae2",
+              "name": "New zone 2",
+              "name_normalized": "new zone 2",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:37Z",
+              "last_modified": "2026-09-26T21:50:37Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "payload": {
+          "directories": [
+            {
+              "id": "hs-seed-decisions",
+              "name": "Decisions",
+              "name_normalized": "decisions",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-inbox",
+              "name": "Inbox",
+              "name_normalized": "inbox",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-start-here"
+              ]
+            },
+            {
+              "id": "hs-seed-meetings",
+              "name": "Meetings",
+              "name_normalized": "meetings",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-meeting-preferences"
+              ]
+            },
+            {
+              "id": "dir_48a4aa7af5af",
+              "name": "New zone",
+              "name_normalized": "new zone",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:28Z",
+              "last_modified": "2026-09-26T21:50:28Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "dir_190e201e8ae2",
+              "name": "New zone 2",
+              "name_normalized": "new zone 2",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:37Z",
+              "last_modified": "2026-09-26T21:50:37Z",
+              "deleted": false,
+              "member_ids": []
+            },
+            {
+              "id": "hs-seed-personal",
+              "name": "Personal",
+              "name_normalized": "personal",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-about-me",
+                "note:hs-seed-how-i-like-help"
+              ]
+            },
+            {
+              "id": "hs-seed-reference",
+              "name": "Reference",
+              "name_normalized": "reference",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-people-vocabulary"
+              ]
+            },
+            {
+              "id": "hs-seed-work",
+              "name": "Work",
+              "name_normalized": "work",
+              "parent_id": null,
+              "created_at": "2026-09-26T21:50:25Z",
+              "last_modified": "2026-09-26T21:50:25Z",
+              "deleted": false,
+              "member_ids": [
+                "note:hs-seed-current-priorities"
+              ]
+            }
+          ]
+        },
+        "body_sha256": "a4fdf914e981fbad11f615aed8ad4796b3d61e26a542a943252b8c54701356cf"
+      }
+    ],
+    "at_utc": "2026-09-26T21:50:38.311293+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/directories",
+      "status": 201,
+      "body_sha256": "2dab480104cac57052daddc0c41dad16b0719677665e85461d127aca7d6821d9",
+      "body": {
+        "directory": {
+          "id": "dir_190e201e8ae2",
+          "name": "New zone 2",
+          "name_normalized": "new zone 2",
+          "parent_id": null,
+          "created_at": "2026-09-26T21:50:37Z",
+          "last_modified": "2026-09-26T21:50:37Z",
+          "deleted": false
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/directories"
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part input_value: no form control at '.desk-listmode input.desk-zone-rename' (its value cannot be read)",
+    "elapsed_s": 2.22
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 2dab480104ca) | protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET /api/directories answered 200 with one row {'name': 'New zone 2'} | input_value: value is 'New zone 2', wanted 'New zone 2' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 415, 'w': 122, 'h': 36}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 3.437,
+    "first_satisfied_at_s": 3.103,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 2dab480104ca) | protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET /api/directories answered 200 with one row {'name': 'New zone 2'} | input_value: value is 'New zone 2', wanted 'New zone 2' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 415, 'w': 122, 'h': 36}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/directories",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/directories",
+      "status": 201,
+      "body_sha256": "2dab480104cac57052daddc0c41dad16b0719677665e85461d127aca7d6821d9",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/directories"
+    },
+    "why": "chosen by the declared trigger_route POST /api/directories",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/directories",
+        "status": 201,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/final-phase/20260926T215021Z-case.p8.zone_create.second_unnamed-muaddib-393/before.png",
+    "/private/tmp/claude-501/p803/final-phase/20260926T215021Z-case.p8.zone_create.second_unnamed-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vlrumuyy/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-vlrumuyy/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52628"
+  ],
+  "duration_s": 19.54
+}
