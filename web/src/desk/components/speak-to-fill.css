@@ -92,8 +92,24 @@
 }
 .desk-next .desk-zone-rename-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+.desk-next .desk-zone-rename-row .desk-zone-rename {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* PHILO-8-01 — a refusal takes its own line under the field. */
+.desk-next .desk-zone-rename-row .desk-zone-rename-refusal {
+  flex-basis: 100%;
+}
+/* PHILO-8-01 — in a list row the field adds nothing to the column's
+ * intrinsic width (width 0, min-width 100% of the cell): opening it or
+ * showing a refusal never shifts the table's columns. */
+.desk-next .desk-zone-rename-row.is-inrow {
+  width: 0;
+  min-width: 100%;
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-mic.is-listening {

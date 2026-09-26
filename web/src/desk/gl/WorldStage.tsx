@@ -14,7 +14,7 @@ import { ZoneWindow } from "../components/ZoneWindow";
 import { InfoWindow } from "../components/InfoWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
-import { useZoneRenameField } from "../hooks/useZoneRenameField";
+import { ZoneRenameRow } from "../components/ZoneRenameRow";
 import { deskVoiceGrammar } from "../voice/grammars/desk";
 import type { VoiceProposal } from "../voice/grammar";
 import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
@@ -396,8 +396,8 @@ export function WorldStage() {
   );
 }
 
-/** The rename row (input + speak-to-fill mic), DOM-anchored over the GL
- * zone through the shared unit-space transform. */
+/** The rename row, DOM-anchored over the GL zone through the shared
+ * unit-space transform. PHILO-8-01: the one `ZoneRenameRow`. */
 function ZoneRenameOverlay({
   zoneId,
   title,
@@ -411,28 +411,16 @@ function ZoneRenameOverlay({
   y: number;
   width: number;
 }) {
-  const field = useZoneRenameField(zoneId, title);
   return (
-    <span
-      className="desk-zone-rename-row is-overlay"
+    <ZoneRenameRow
+      zoneId={zoneId}
+      title={title}
+      placement="overlay"
       style={{
         left: `${(x * 100).toFixed(2)}%`,
         top: `${(y * 100).toFixed(2)}%`,
         width,
       }}
-      onPointerDown={(e) => e.stopPropagation()}
-      {...field.rowProps}
-    >
-      <input className="desk-zone-rename" {...field.inputProps} />
-      <MicButton
-        draftScope={`zone-rename:${zoneId}`}
-        onText={(t) => field.setName(t)}
-      />
-      {field.error && (
-        <span className="desk-zone-rename-error" role="alert">
-          {field.error}
-        </span>
-      )}
-    </span>
+    />
   );
 }

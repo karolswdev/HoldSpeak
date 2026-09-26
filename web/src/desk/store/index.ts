@@ -18,7 +18,7 @@ export const useDesk = create<DeskState>()((...args) => ({
 
 // Re-export all public types so consumers importing from the store path
 // continue to work unchanged.
-export type { UnitPos, PanelRect, DeskView, ZoneViewPref, WindowInstance, DeskState, ScheduledRecording, ScheduledArmingState } from "./types";
+export type { UnitPos, PanelRect, DeskView, ZoneViewPref, WindowInstance, DeskState, ScheduledRecording, ScheduledArmingState, ZoneRenameError } from "./types";
 export { GHOST_LAYOUT_KEYS, COMPACT_LIST_THRESHOLD, defaultViewFor } from "./types";
 export { loadPanelLayout } from "./compositorSlice";
 export {

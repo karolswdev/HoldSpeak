@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 8
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of the charter and his answer to Q1; the face build depends on the canvas ratification (Q2)
 - **Unblocks:** PHILO-8-03
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra role (Opus 5.5 stand-in; Codex Astra on return) checks
@@ -21,18 +21,26 @@ New Zone always posts `{name: "New zone"}` (`web/src/desk/store/dataSlice.ts:322
   - The rename state cleared when the face changes, so it never comes up on another face.
 - **Out:** the hub's uniqueness rule; the zone's position on the Floor; the clipped field width at 1440 ("ew zone", FINDING, not examined) unless the canvas's field is the same element; any other create verb's default name.
 
+## The owner's ratification of the canvas (2026-09-26, AskUserQuestion)
+
+Review page: https://claude.ai/artifact/CdReb8UtJBjXe98Cpv7MJz (`docs/internal/philo/phase-8/rename-canvas/index.html`). His answers, verbatim:
+
+1. **"Ratify as drawn"** — the in-row field exactly as boards 1–6 and 8–10 show: the name selected; typing replaces; Enter or a click elsewhere saves; Escape keeps "New zone 2"; spaces only keeps the name; the field's style as drawn (he did not ask to change the monospace bold).
+2. **"Chip on the list and the Floor"** — `✗ NAME TAKEN` (the library StateChip `failure`) on its own line under the field on BOTH the list and the Floor, replacing the Floor's 11 px sentence; a failed save (422 / network) in the same slot (`NOT SAVED`); a refusal that lands after the field closed goes to the write-receipt line as `RENAME ZONE` with Retry; each fenced.
+3. **"Keep F2 on zone rows"** — a focused zone row + F2 opens the same field.
+
 ## Acceptance criteria
 
-- [ ] The canvas: the rename on the Chair and on the list at 1440 and 393, composed from library species, ratified by the owner before the face build (UX-CANON §A.2). If the owner picks "the Chair does not offer New Zone" (Q2 c), the verb is withheld on the Chair and the fence proves it is absent there.
-- [ ] Two New Zone presses in a row with no rename between make two zones on the Chair, the list and the spatial Floor at both widths; zero `409 zone_name_taken` in the network log; the second name is as Q1 rules. Red on main (the 409).
-- [ ] New Zone on the Chair and the list opens the rename with focus, as ratified; Enter writes the name (`GET /api/directories` shows it); Escape keeps the default name and closes the field.
-- [ ] After a New Zone on one face and a change of face without a rename, no rename field appears on the new face (the FINDING rows "Chair, then go to the Floor" and "Floor list → Spatial view" are red on main).
-- [ ] The rename field is one implementation: `grep` finds one Enter/blur/Escape commit path for zone rename.
-- [ ] The free-name rule matches `normalize_zone_name`: a zone named "  new   ZONE " counts as taken for "New zone".
-- [ ] `createPrimitive("zone", {name: "X"})` posts "X" unchanged.
-- [ ] A 409 from a zone made outside the store (by MCP or another tab, not yet refreshed): Retry refreshes, picks the next free name, and succeeds.
-- [ ] The F2 Rename key on a selected zone opens the same rename on each face that offers it (the list; the Chair if Q2 keeps New Zone there), or is greyed with its reason where the face shows no zone (the Chair: `Open the Floor`; the Astra-role check r1 F7).
-- [ ] Shots at 1440 and 393 beside the canvas artboards.
+- [x] The canvas: the rename on the Chair and on the list at 1440 and 393, composed from library species, ratified by the owner before the face build (UX-CANON §A.2). If the owner picks "the Chair does not offer New Zone" (Q2 c), the verb is withheld on the Chair and the fence proves it is absent there. *(Ratified 2026-09-26, above; the Chair's absence: `test_the_chair_does_not_offer_new_zone`.)*
+- [x] Two New Zone presses in a row with no rename between make two zones on the Chair, the list and the spatial Floor at both widths; zero `409 zone_name_taken` in the network log; the second name is as Q1 rules. Red on main (the 409). *(The Chair withholds New Zone under Q2 (c); the list and the Floor: `test_two_new_zone_presses_make_two_zones`.)*
+- [x] New Zone on the Chair and the list opens the rename with focus, as ratified; Enter writes the name (`GET /api/directories` shows it); Escape keeps the default name and closes the field. *(The list: `test_the_list_field_opens_writes_and_keeps`; the Chair offers no New Zone.)*
+- [x] After a New Zone on one face and a change of face without a rename, no rename field appears on the new face (the FINDING rows "Chair, then go to the Floor" and "Floor list → Spatial view" are red on main).
+- [x] The rename field is one implementation: `grep` finds one Enter/blur/Escape commit path for zone rename. *(`web/src/desk/hooks/useZoneRenameField.ts`, drawn by the one `components/ZoneRenameRow.tsx` on the Floor and the list. Get Info's generic name field (`InfoWindow.tsx:28`) also calls `renameZone`; its refusal now reaches the write receipt.)*
+- [x] The free-name rule matches `normalize_zone_name`: a zone named "  new   ZONE " counts as taken for "New zone".
+- [x] `createPrimitive("zone", {name: "X"})` posts "X" unchanged.
+- [x] A 409 from a zone made outside the store (by MCP or another tab, not yet refreshed): Retry refreshes, picks the next free name, and succeeds.
+- [x] The F2 Rename key on a selected zone opens the same rename on each face that offers it (the list; the Chair if Q2 keeps New Zone there), or is greyed with its reason where the face shows no zone (the Chair: `Open the Floor`; the Astra-role check r1 F7).
+- [x] Shots at 1440 and 393 beside the canvas artboards.
 
 ## Effort (not a promise)
 
@@ -50,3 +58,5 @@ PROVISIONAL: 0.75–1.25 engineering days of effort, plus the canvas and the own
 - 2026-09-26 — round two: the Astra-role check (`checks/charter-astra-role-r1.md`) paid: C3 the free name matches the hub's rule in full, never replaces a passed name, and Retry refreshes after a 409 (the store-side fix ruled the smallest lawful one); C4 the rename covers the F2 Rename key.
 - 2026-09-26 — half A BUILT (Fedaykin, Opus 5.5; branch `feat/philo-8-01-zone-name`): the free name (`web/src/desk/zoneName.ts`; `createPrimitive` in `web/src/desk/store/dataSlice.ts` — a caller's name is never replaced, a name in flight counts as taken, Retry refreshes before it picks); the Chair withholds New Zone (`Verb.needsZones`, `offeredHere()` in `web/src/desk/verbRegistry.ts`, honoured by `DeskToolShelf.tsx` and `DeskMenuBar.tsx`); F2 on a zone ghosts `Open the Floor` on the Chair; a face change clears `renamingZoneId` and a create landing after a face change opens no rename (`web/src/desk/DeskApp.tsx`); ONE rename behaviour `web/src/desk/hooks/useZoneRenameField.ts` (the Floor overlay composes it). Fences: `tests/e2e/test_philo8_01_zone_name_glass.py` (12, real hub, 1440 + 393; 10 red on main), `store/__tests__/zoneFreeName.test.ts`, `__tests__/philo801ZoneVerbs.test.ts`, `DeskApp.test.tsx` (8 red on main); the runs in `assets/story-01-half-a-proof.md`. Found on the way: the post-create refresh takes about 4.7 s on the isolated rig at 1440, so a second New Zone inside it read a stale store and still 409'd — paid by the in-flight name set. The list's in-row field: canvas `assets/story-01-canvas/README.md` (12 live boards at 1440 and 393, three questions); NOT built until the owner ratifies it.
 - 2026-09-26 — round two: the Astra-role check on PR #671 (`checks/story-01-built-astra-role-r1.md`, RATIFY-WITH-CONDITIONS) paid: C1 the list-to-spatial fence waits for the create to land, red on true main 26f7b005 under parallel load (`assets/story-01-half-a-proof.md`); C2 origin/main merged; C3 board 7 re-shot after a reload, captioned (the Chair search still lists zones to open); C4 Limits quote `17 SHOWNS OF 17` and name the raw sort-header buttons, BACKLOG "PHILO-8-01 follow-ups"; C5 the refusal chip on its own line in a slot that adds no column width (columns measured still), the selection recorded; C6 the failed-rename line in Limits and fences; AC F2 wording "greyed with its reason"; boards 8–10 added for the MISSED states (long name, spaces only, two fast presses).
+- 2026-09-26 — half B BUILT on `feat/philo-8-01-half-b` after the owner ratified the canvas (above): the one row component `web/src/desk/components/ZoneRenameRow.tsx` (input + MicButton + the StateChip refusal on its own line) composes `hooks/useZoneRenameField.ts` (the name opens selected); the list draws it in the zone's Name cell (`components/DeskListView.tsx`) and opens it on F2 on a focused zone row; the Floor overlay (`gl/WorldStage.tsx`) draws the same row and the 11 px sentence and its rule (`desk.css`) are gone; `renameZone` (`store/dataSlice.ts`) never fails silently — `NAME TAKEN` (409) or `NOT SAVED` (422, 500, network; the hub's reason in the chip's title) on the chip while the field is open, else the write receipt `RENAME ZONE` + Retry; a refusal still on the chip moves to the write receipt on a face change (`DeskApp.tsx`); a non-409 refusal no longer leaves the optimistic name. The list field adds no column width (`speak-to-fill.css`). Fences: `tests/e2e/test_philo8_01_list_rename_glass.py` 14 cases at 1440 and 393, all red on main 808a9c30; `store/__tests__/zoneRenameRefusal.test.ts` + `DeskApp.test.tsx` 6 red on main. Shots `assets/story-01-shots/`.
+

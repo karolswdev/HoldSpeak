@@ -1,6 +1,6 @@
 # PHILO-8-01 canvas: the zone name field in the list row
 
-**Status: FOR THE OWNER'S RATIFICATION (2026-09-26).** Nothing on this canvas is built in the product. Half A of story 01 is built on this branch (the free name, the Chair without New Zone, the face-change rule); this canvas is the face half the owner ruled on in Q2 (c): "on the list, the name field opens in the new zone's row".
+**Status: RATIFIED by the owner, 2026-09-26 (AskUserQuestion; review page https://claude.ai/artifact/CdReb8UtJBjXe98Cpv7MJz).** His answers, verbatim: (1) **"Ratify as drawn"** — the in-row field exactly as boards 1–6 and 8–10 show (the name selected; typing replaces; Enter or a click elsewhere saves; Escape keeps "New zone 2"; spaces only keeps the name; the field's style as drawn); (2) **"Chip on the list and the Floor"** — `✗ NAME TAKEN` on its own line under the field on both faces, replacing the Floor's 11 px sentence; a failed save (422 / network) in the same slot (`NOT SAVED`); a refusal after the field closed goes to the write receipt `RENAME ZONE` with Retry; (3) **"Keep F2 on zone rows"**. Built in half B (`web/src/desk/components/ZoneRenameRow.tsx`); the product shots are in `../story-01-shots/`.
 
 - Review page (every board embedded, both widths): `docs/internal/philo/phase-8/rename-canvas/index.html`.
 - Boards: `shots/<n>-<board>-<width>.png`; rendered facts: `shots/facts.json`.

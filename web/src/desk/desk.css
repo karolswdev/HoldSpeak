@@ -242,14 +242,6 @@
   transform: translateX(-50%);
   padding-top: 10px;
 }
-.desk-next .desk-zone-rename-error {
-  display: block;
-  color: var(--danger-signal);
-  font-size: 11px;
-  line-height: 1.3;
-  margin-top: 4px;
-  white-space: nowrap;
-}
 
 /* -- HS-118-07: Sprite state CSS hint classes --
    Compositor-only (opacity, transform) -- no layout, no paint.
