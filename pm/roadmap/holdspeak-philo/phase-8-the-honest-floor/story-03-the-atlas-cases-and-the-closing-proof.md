@@ -15,7 +15,7 @@ The repaired faces have no atlas case. The FINDING gives the reproduction steps 
 
 ## Scope
 
-- **In:** new face cases at 1440 and 393 with `.op` siblings where the outcome is durable; proposed ids (fixed here against `docs/internal/philo/graph/atlas.schema.json`): `case.p8.zone_create.second_unnamed`, `case.p8.zone_rename.chair`, `case.p8.zone_rename.list`, `case.p8.list_delete.gone`, `case.p8.list_delete.undo`, `case.p8.delete_twice.both_gone`; the file (`atlas-phase7.json` or a new `atlas-phase8.json`) decided here; the rig's missing step or predicate added only if a case needs it (else the FINDING's fallback: focus the row and press Shift+F10); the closing rehearsal of the four jobs through the real hub on an isolated HOME at both widths, the shots published for the owner.
+- **In:** new face cases at 1440 and 393 with `.op` siblings where the outcome is durable; proposed ids (fixed here against `docs/internal/philo/graph/atlas.schema.json`): `case.p8.zone_create.second_unnamed`, `case.p8.zone_rename.chair`, `case.p8.zone_rename.list`, `case.p8.list_delete.gone`, `case.p8.list_delete.undo`, `case.p8.list_delete.long_list_393`, `case.p8.delete_twice.both_gone`, `case.p8.delete_then_leave.gone`; the file (`atlas-phase7.json` or a new `atlas-phase8.json`) decided here; the rig's missing step or predicate added only if a case needs it (else the FINDING's fallback: focus the row and press Shift+F10); the closing rehearsal of the four jobs through the real hub on an isolated HOME at both widths, the shots published for the owner.
 - **Out:** any product change (a failing case goes back to its story); cases for faces this phase does not touch.
 
 ## Acceptance criteria
@@ -23,12 +23,12 @@ The repaired faces have no atlas case. The FINDING gives the reproduction steps 
 - [ ] Every new face case fails on main and passes on the phase branch at 1440 and 393; each `.op` sibling passes headless.
 - [ ] The 27 cases of `atlas-phase7.json` still pass; the atlas counts over the named files are reported at the branch commit.
 - [ ] Face checks use `readable_text` (visible, in viewport, unobscured), never text containment.
-- [ ] The closing rehearsal: two unnamed zones, a rename where he is, a list delete with Undo and without, two deletes in one window, at both widths; the hub read back after each; the owner reviews the shots before merge. Never recorded as a sitting.
+- [ ] The closing rehearsal: two unnamed zones, a rename where he is, a list delete with Undo and without, two deletes in one window, a delete and a face change inside the window, at both widths; the hub read back after each; the owner reviews the shots before merge. Never recorded as a sitting.
 - [ ] `final-summary.md` drafted for the close: exits, both checks per story labelled, the reds, the ledger.
 
 ## Effort (not a promise)
 
-PROVISIONAL: 1–1.5 engineering days.
+PROVISIONAL: 0.75–1 engineering days of effort (calibrated from Phase 7's record).
 
 ## Test plan
 

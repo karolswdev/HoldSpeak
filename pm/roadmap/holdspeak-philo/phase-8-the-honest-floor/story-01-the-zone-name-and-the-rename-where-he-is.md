@@ -6,16 +6,19 @@
 - **Depends on:** the owner's ratification of the charter and his answer to Q1; the face build depends on the canvas ratification (Q2)
 - **Unblocks:** PHILO-8-03
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Astra role (Opus 5.5 stand-in; Codex Astra on return) checks
-- **Closure finding:** Phase 7 final summary, THE LEDGER rows 1–2; `docs/internal/philo/phase-7/floor-diag/FINDING.md` Finding 1 and S1; BACKLOG "PHILO-7-03 follow-ups" row 2
+- **Closure finding:** Phase 7 final summary, THE LEDGER rows 1–2; `docs/internal/philo/phase-7/floor-diag/FINDING.md` Finding 1 and S1; BACKLOG "PHILO-7-03 follow-ups" row 2; `checks/charter-astra-role-r1.md` F4–F6 and RULING (3)
 - **Canvas:** the default name none if Q1 = (a); the rename on the Chair and the list a SMALL CANVAS at 1440 and 393, ratified by the owner before build
 
 ## Problem
 
-New Zone always posts `{name: "New zone"}` (`web/src/desk/store/dataSlice.ts:322`), and a live zone name must be unique, ignoring case (`holdspeak/operations.py:655`). After the store makes a zone it sets `renamingZoneId` (`dataSlice.ts:370`), but only the spatial Floor draws the rename field (`web/src/desk/gl/WorldStage.tsx:206-207`, `:271-280`, `:400`), and it mounts only on the spatial Floor (`web/src/desk/DeskApp.tsx:192-206`). So on the Chair (the default face) and on the list (the default at 393 when the desk holds more than 16 objects, `web/src/desk/store/types.ts:65-72`) the zone is made and nothing shows. Then every further New Zone, on every face, answers `409 zone_name_taken`, and Retry fails the same way (FINDING S1). The stale field appears later on another face and takes focus (FINDING Finding 1).
+New Zone always posts `{name: "New zone"}` (`web/src/desk/store/dataSlice.ts:322`), and a live zone name must be unique, ignoring case (`holdspeak/operations.py:655`). After the store makes a zone it sets `renamingZoneId` (`dataSlice.ts:370`), but only the spatial Floor draws the rename field (`web/src/desk/gl/WorldStage.tsx:206-207`, `:271-280`, `:400`), and it mounts only on the spatial Floor (`web/src/desk/DeskApp.tsx:192-206`). So on the Chair (the default face) and on the list (the default at 393 when the desk holds more than 16 objects, `web/src/desk/store/types.ts:65-72`) the zone is made and nothing shows. Then every further New Zone, on every face, answers `409 zone_name_taken`, and Retry fails the same way (FINDING S1). The stale field appears later on another face and takes focus (FINDING Finding 1). The same dead path holds for the F2 Rename key: `object.rename` sets `renamingZoneId` for a zone (`web/src/desk/verbRegistry.ts:502`), and on a face without `WorldStage` nothing draws the field (`checks/charter-astra-role-r1.md` F6).
 
 ## Scope
 
-- **In:** the default name as the owner rules Q1 (recommended: the store picks the next free "New zone N" from the zones it holds, ignoring case, inside `createPrimitive`, so Retry picks again); the rename where the owner is, on the Chair and the list, as the ratified canvas shows it, composing the spatial field's behaviour (Enter commits, blur commits, Escape cancels) rather than copying it; the rename state cleared when the face changes, so it never comes up on another face.
+- **In:**
+  - **The free default name (Q1 (a) unless the owner objects).** The store picks the next free "New zone N" from the zones it holds, inside `createPrimitive`. The rule that decides "free" matches the hub's name rule IN FULL: strip, collapse whitespace, NFC, casefold (`holdspeak/db/primitives.py:60-68`, `normalize_zone_name`). A name the caller passed (`overrides.name`) is never replaced; a zone the owner named "New zone 2" himself is his, and the picker skips it. After a `409 zone_name_taken`, Retry refreshes the store BEFORE it picks again (today Retry re-calls `createPrimitive` over the same store, `web/src/desk/store/dataSlice.ts:339`, so a stale store would post the same name). The ruling (`checks/charter-astra-role-r1.md` RULING (3)): the store-side free name is the smallest lawful fix; a hub-side fix (the hub picks the name) changes a declared contract (the `operations.py` descriptor and its refusal, the generated docs, the MCP args schema) and is rejected under Tenet 1.
+  - **The rename where the owner is**, as the ratified canvas shows it (Q2), composing the spatial field's behaviour (Enter commits, blur commits, Escape cancels) rather than copying it. It hangs off `renamingZoneId`, not off the New Zone verb, so it covers both New Zone and the F2 Rename key (`verbRegistry.ts:502`) on every face that offers them.
+  - The rename state cleared when the face changes, so it never comes up on another face.
 - **Out:** the hub's uniqueness rule; the zone's position on the Floor; the clipped field width at 1440 ("ew zone", FINDING, not examined) unless the canvas's field is the same element; any other create verb's default name.
 
 ## Acceptance criteria
@@ -25,19 +28,23 @@ New Zone always posts `{name: "New zone"}` (`web/src/desk/store/dataSlice.ts:322
 - [ ] New Zone on the Chair and the list opens the rename with focus, as ratified; Enter writes the name (`GET /api/directories` shows it); Escape keeps the default name and closes the field.
 - [ ] After a New Zone on one face and a change of face without a rename, no rename field appears on the new face (the FINDING rows "Chair, then go to the Floor" and "Floor list → Spatial view" are red on main).
 - [ ] The rename field is one implementation: `grep` finds one Enter/blur/Escape commit path for zone rename.
-- [ ] A 409 from a real name clash (a zone the owner named "New zone 2" himself, then New Zone twice) still ends in two zones or the existing named failure row with a Retry that succeeds.
+- [ ] The free-name rule matches `normalize_zone_name`: a zone named "  new   ZONE " counts as taken for "New zone".
+- [ ] `createPrimitive("zone", {name: "X"})` posts "X" unchanged.
+- [ ] A 409 from a zone made outside the store (by MCP or another tab, not yet refreshed): Retry refreshes, picks the next free name, and succeeds.
+- [ ] The F2 Rename key on a selected zone opens the same rename on each face that offers it (the list; the Chair if Q2 keeps New Zone there), or is withheld where the face shows no zone.
 - [ ] Shots at 1440 and 393 beside the canvas artboards.
 
 ## Effort (not a promise)
 
-PROVISIONAL: 1–1.5 engineering days, plus the canvas and the owner's word (0.5 d in the phase estimate).
+PROVISIONAL: 0.75–1.25 engineering days of effort, plus the canvas and the owner's word (calibrated from Phase 7's record, `checks/charter-astra-role-r1.md` F11).
 
 ## Test plan
 
-- **Unit (vitest):** the free-name choice (none, "New zone", "new zone" case, "New zone 2" taken); the rename state cleared on a face change.
+- **Unit (vitest):** the free-name choice (none, "New zone", case and whitespace variants per `normalize_zone_name`, "New zone 2" taken); an explicit `overrides.name` never replaced; Retry refreshes the store after a 409; the rename state cleared on a face change; F2 Rename sets the same rename state.
 - **Integration (glass, the real hub, isolated HOME):** the FINDING's reproduction steps at 1440 and 393 on the Chair, the list and the spatial Floor; two New Zone in sequence.
 - **Web baseline:** `uv run python scripts/check_web_baseline.py --run`, zero branch-new; every `scripts/philo_*.py --check` exits 0 before push (handover XXIX law 3).
 
 ## Notes
 
 - 2026-09-26 — drafted by the Fedaykin docs lane for Muad'Dib from the owner's word closing Phase 7; unratified.
+- 2026-09-26 — round two: the Astra-role check (`checks/charter-astra-role-r1.md`) paid: C3 the free name matches the hub's rule in full, never replaces a passed name, and Retry refreshes after a 409 (the store-side fix ruled the smallest lawful one); C4 the rename covers the F2 Rename key.
