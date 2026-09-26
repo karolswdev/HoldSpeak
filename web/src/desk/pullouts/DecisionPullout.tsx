@@ -11,6 +11,7 @@ import { Material } from "../surface/Material";
 import {
   SurfaceRow,
   SurfaceRows,
+  SurfaceSection,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
@@ -110,9 +111,19 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
             </div>
           ) : (
             <>
-              <section><h3>Decision context</h3><Material>{String(ir.contextMarkdown || "")}</Material></section>
-              <section><h3>Decision</h3><Material>{String(ir.decisionMarkdown || "")}</Material></section>
-              <section><h3>Consequences</h3><Material>{String(ir.consequencesMarkdown || "")}</Material></section>
+              {/* PHILO-8-04 — a heading shows only with text under it
+                  (UX-CANON: no empty labels); Edit still offers all three. */}
+              {([
+                ["Decision context", ir.contextMarkdown],
+                ["Decision", ir.decisionMarkdown],
+                ["Consequences", ir.consequencesMarkdown],
+              ] as const).map(([label, text]) =>
+                String(text || "").trim() ? (
+                  <SurfaceSection key={label} label={label}>
+                    <Material>{String(text)}</Material>
+                  </SurfaceSection>
+                ) : null,
+              )}
             </>
           )}
           {Array.isArray(ir.alternatives) && ir.alternatives.length ? (

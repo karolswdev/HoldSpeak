@@ -56,6 +56,13 @@
   border-top: 0;
   padding-top: 0;
 }
+/* PHILO-8-04: in the decision window the section itself already draws the
+   hairline (window-chrome.css, `.desk-pullout-body section:not(:first-child)`);
+   the head does not draw a second one. */
+.desk-decision-card > .surface-section > .surface-section-head {
+  border-top: 0;
+  padding-top: 0;
+}
 /* PHILO-4-01: at the 12 px floor the head is tight at 393. The label
    wraps; a head verb, the egress chip and a quiet fact beside the label
    (`123 members`) keep their width (a squeezed Button paints its word

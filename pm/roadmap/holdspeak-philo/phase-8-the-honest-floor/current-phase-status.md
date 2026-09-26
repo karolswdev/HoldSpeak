@@ -59,7 +59,7 @@ Every behavioural fence is red on main before the repair, through the real hub o
 - [ ] 4. Two deletes (A then B) inside one undo window, on the spatial Floor and on the list, in both selection orders: both reach the hub (A 404, B 404). Leave the face inside the window: the object is gone (404). Undo keeps the one pending object; a delete committed by a second delete stays gone. The face never says "Removed" for an object the hub keeps. Each of the three causes has a mutation that turns its fence red.
 - [ ] 5. The atlas has a case for each repaired face at both widths, with an `.op` sibling where the outcome is durable; each new face case fails on main; the 27 cases of `docs/internal/philo/graph/atlas-phase7.json` still pass.
 - [ ] 6. The closing proof: the jobs (two zones, a rename where he is, a list delete, two deletes in one window, a delete then a face change) rehearsed through the real hub at both widths; the owner reviews the shots before merge. Never recorded as a sitting.
-- [ ] 7. (Only if Q3 keeps them) (a) the decision window shows no heading with nothing under it ("Decision context", "Decision", "Consequences"); (b) the brief on a fresh hub says what is true for the people sections, in the owner's words.
+- [x] 7. (Only if Q3 keeps them; the owner kept (a), dropped (b); (a) met by PHILO-8-04) (a) the decision window shows no heading with nothing under it ("Decision context", "Decision", "Consequences"); (b) the brief on a fresh hub says what is true for the people sections, in the owner's words.
 
 ## Story status
 
@@ -68,7 +68,7 @@ Every behavioural fence is red on main before the repair, through the real hub o
 | PHILO-8-01 | The zone name and the rename where he is (canvas first) | backlog | [story-01-the-zone-name-and-the-rename-where-he-is](./story-01-the-zone-name-and-the-rename-where-he-is.md) | - |
 | PHILO-8-02 | One delete everywhere | backlog | [story-02-one-delete-everywhere](./story-02-one-delete-everywhere.md) | - |
 | PHILO-8-03 | The atlas cases and the closing proof | backlog | [story-03-the-atlas-cases-and-the-closing-proof](./story-03-the-atlas-cases-and-the-closing-proof.md) | - |
-| PHILO-8-04 | The two small face notes (OPTIONAL) | backlog | [story-04-the-two-small-face-notes](./story-04-the-two-small-face-notes.md) | - |
+| PHILO-8-04 | The two small face notes (OPTIONAL) | done | [story-04-the-two-small-face-notes](./story-04-the-two-small-face-notes.md) | [evidence-story-04](./evidence-story-04.md) |
 
 The stories stay `backlog` until the owner ratifies the charter. Story 04 is removed if the owner drops both notes (Q3).
 
@@ -87,6 +87,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 2026-09-26: DRAFTED from the owner's word closing Phase 7, the Phase 7 final summary's ledger (rows 1–4, 11–13), the Floor diagnostic (`docs/internal/philo/phase-7/floor-diag/FINDING.md`, PR #667), the BACKLOG tables "PHILO-7-03 follow-ups", "The Floor delete receipt follow-ups" and "PHILO-7-04 follow-ups", and `checks/delete-receipt-astra-role-r1.md` F7. The source lines above were re-read on main `6ac73757`. Owed: the Astra-role check; the owner's ratification and his answers to Q1–Q3; the story 01 canvas (before story 01's face build). Nothing is built.
 
 2026-09-26, round two: the Astra-role check (Opus 5.5 stand-in, `checks/charter-astra-role-r1.md`): RATIFY-WITH-CONDITIONS. It re-read every cited line on main (all true), reproduced the lost deletes and named three causes, found a third (a face change inside the window), and ruled the free-name repair and the delete repair shape. C1–C9 are paid in this revision ("Decisions made").
+
+2026-09-26, PHILO-8-04 (a) built: the decision window draws "Decision context", "Decision" and "Consequences" only with text under them (the library `SurfaceSection`); Edit still offers all three fields. The glass fence (1440 and 393) was red on main and is green; shots in `assets/story-04-shots/`. Part (b) is dropped by the owner and stays in the Arrival lane.
 
 **Estimate (PROVISIONAL, placed before build):** effort **2.5–4 engineering days** (01 0.75–1.25 · 02 0.75–1.25 · 03 0.75–1 · the rename canvas and the check rounds 0.25–0.5), plus about 0.25 d if story 04 (a) is kept. Calibrated from Phase 7's record (`checks/charter-astra-role-r1.md` F11): Phase 7's story 01 took about 25 agent-minutes (`../phase-7-the-desk-on-the-contract/current-phase-status.md` "Calibration"), and the whole 11–15-day phase closed in about two elapsed days, most of it check rounds and the owner's word; these repairs are small (a free-name helper, a hook flush, a selection drop, a hoisted listener, a foot wrapper, one rename composition). **Elapsed-time forecast: about 1–2 days elapsed, gated by the owner's canvas word and the checks.**
 

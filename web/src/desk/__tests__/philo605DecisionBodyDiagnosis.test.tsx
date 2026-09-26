@@ -150,6 +150,14 @@ beforeEach(() => {
   });
 });
 
+/** PHILO-8-04 — the read view's "Decision" section, found by its heading
+ * (an empty field draws no heading, so a position is not stable). */
+function decisionSection(): Element | undefined {
+  return Array.from(document.querySelectorAll(".desk-decision-card > section")).find(
+    (section) => section.querySelector("h3")?.textContent === "Decision",
+  );
+}
+
 describe("PHILO-6-05 decision body fences", () => {
   it("rolls a failed save back to the prior body before a slow refresh resolves", async () => {
     const prior = { ...decision, decisionMarkdown: "Prior saved decision" };
@@ -165,7 +173,7 @@ describe("PHILO-6-05 decision body fences", () => {
       });
     });
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
-    const body = Array.from(document.querySelectorAll(".desk-decision-card > section"))[1];
+    const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
       "SAVE FAILED",
     );
@@ -192,7 +200,7 @@ describe("PHILO-6-05 decision body fences", () => {
       });
     });
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
-    const body = Array.from(document.querySelectorAll(".desk-decision-card > section"))[1];
+    const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
       "SAVE FAILED",
     );
@@ -227,15 +235,14 @@ describe("PHILO-6-05 decision body fences", () => {
     });
 
     const stored = useDesk.getState().items.decision[0];
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
-    const decisionSection = sections[1];
+    const sections = [undefined, decisionSection()];
+    const held = sections[1];
     // The real store producer has the value before the request resolves.
     expect(stored.decisionMarkdown).toBe("Keep the local ledger");
     // The held prop intentionally carries the old record. This synthetic
     // control stays green and must not be cited as the production cause.
-    expect(decisionSection?.textContent).toBe("Decision");
+    // PHILO-8-04: the old record's decision is empty, so its heading hides.
+    expect(held).toBeUndefined();
   });
 
   it("does not reproduce when the production host derives the object from items", async () => {
@@ -249,9 +256,7 @@ describe("PHILO-6-05 decision body fences", () => {
       fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
+    const sections = [undefined, decisionSection()];
     // This is the production-host control: if it fails, inspect refresh or
     // host/window caching rather than assuming a stale prop.
     expect(sections[1]?.textContent).toContain("Keep the local ledger");
@@ -272,9 +277,7 @@ describe("PHILO-6-05 decision body fences", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
-    const liveSections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
+    const liveSections = [undefined, decisionSection()];
     expect(liveSections[1]?.textContent).toContain("Keep the local ledger");
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Keep the local ledger");
 
@@ -282,9 +285,7 @@ describe("PHILO-6-05 decision body fences", () => {
       requests.resolveDecisionRead?.();
       await refresh;
     });
-    const staleSections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
+    const staleSections = [undefined, decisionSection()];
     // This is the red acceptance assertion: a refresh that began before the
     // write must not replace the newer optimistic item when it resolves.
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
@@ -315,9 +316,7 @@ describe("PHILO-6-05 decision body fences", () => {
       await Promise.all([save, refresh]);
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
+    const sections = [undefined, decisionSection()];
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Keep the local ledger",
     );
@@ -361,9 +360,7 @@ describe("PHILO-6-05 decision body fences", () => {
       await firstSave;
     });
 
-    const sections = Array.from(
-      document.querySelectorAll(".desk-decision-card > section"),
-    );
+    const sections = [undefined, decisionSection()];
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Second decision",
     );
