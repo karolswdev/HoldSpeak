@@ -61,8 +61,10 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
   api       {method, path, body?, expect_status?}   HTTP against the hub
   ui        {action: goto|click|click_role|fill|press|wait_for|focus, ...}
             Any ui step may carry `requires: {visible, text?, seconds_left?:
-            {selector, min}}` (PHILO-8-03): re-read at delivery; not met is
-            BLOCKED by name (e.g. an Undo pressed after the window closed).
+            {selector, min}}` (PHILO-8-03): the guard and the event are ONE
+            page task (click: resolve the target, then check guard +
+            actionability and `el.click()`; press: keydown+keyup to the focused
+            element); not met is BLOCKED by name, nothing is sent.
             `click` and `click_role` take `button: "right"` (PHILO-8-03: the
             list's row menu opens on a right-click, DeskListView.tsx).
             A TRIGGER may carry `then: [ui steps]` (PHILO-8-03): the rest of
@@ -222,7 +224,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.5.1"
+RIG_VERSION = "1.5.2"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -3860,6 +3862,15 @@ _GUARD_JS = r"""([selector, secondsSelector]) => {
 }"""
 
 
+def _check_guard_shape(guard: Any) -> None:
+    if not isinstance(guard, dict) or not isinstance(guard.get("visible"), str):
+        raise Blocked(f"requires {guard!r}: needs a `visible` selector")
+    left = guard.get("seconds_left")
+    if left is not None and (not isinstance(left, dict) or not isinstance(left.get("selector"), str)
+                             or not isinstance(left.get("min"), int)):
+        raise Blocked(f"requires {guard!r}: seconds_left needs a selector and an int min")
+
+
 def _check_guard(page: Any, guard: Any) -> dict[str, Any]:
     """PHILO-8-03: a delivery guard, read on the page at the moment of delivery.
 
@@ -3867,12 +3878,8 @@ def _check_guard(page: Any, guard: Any) -> dict[str, Any]:
     "min": <int>}}` -- the element is visible, carries the text, and a
     countdown inside it (or on the page) still reads at least `min` seconds.
     """
-    if not isinstance(guard, dict) or not isinstance(guard.get("visible"), str):
-        raise Blocked(f"requires {guard!r}: needs a `visible` selector")
+    _check_guard_shape(guard)
     left = guard.get("seconds_left")
-    if left is not None and (not isinstance(left, dict) or not isinstance(left.get("selector"), str)
-                             or not isinstance(left.get("min"), int)):
-        raise Blocked(f"requires {guard!r}: seconds_left needs a selector and an int min")
     seen = page.evaluate(_GUARD_JS, [guard["visible"], left.get("selector") if left else None])
     reasons = []
     if not seen.get("visible"):
@@ -3884,6 +3891,92 @@ def _check_guard(page: Any, guard: Any) -> dict[str, Any]:
         reasons.append(f"{left['selector']!r} reads {seen.get('secondsText')!r}, wanted >= {left['min']}s")
     return {"holds": not reasons, "seen": seen,
             "reading": "; ".join(reasons) if reasons else "held at delivery"}
+
+
+_DELIVER_JS = r"""([el, guard, key]) => {
+  const g = document.querySelector(guard.visible);
+  const gVisible = !!g && !!(g.offsetWidth || g.offsetHeight || g.getClientRects().length);
+  const reasons = [];
+  if (!gVisible) reasons.push(`${guard.visible} is not visible`);
+  const gText = g ? (g.innerText || "").trim() : "";
+  if (guard.text != null && !gText.includes(guard.text)) reasons.push(`${JSON.stringify(guard.text)} not in ${JSON.stringify(gText.slice(0, 80))}`);
+  let seconds = null, secondsText = null;
+  if (guard.seconds_left) {
+    const n = (g && g.querySelector(guard.seconds_left.selector)) || document.querySelector(guard.seconds_left.selector);
+    secondsText = n ? (n.innerText || n.textContent || "").trim() : null;
+    const m = secondsText && secondsText.match(/(\d+)/);
+    seconds = m ? parseInt(m[1], 10) : null;
+    if (seconds == null || seconds < guard.seconds_left.min) reasons.push(`${guard.seconds_left.selector} reads ${JSON.stringify(secondsText)}, wanted >= ${guard.seconds_left.min}s`);
+  }
+  const target = key ? (document.activeElement || document.body) : el;
+  let actionable = true, why = null;
+  if (!key) {
+    if (!target || !target.isConnected) { actionable = false; why = "the target is detached"; }
+    else {
+      const r = target.getBoundingClientRect();
+      const cs = getComputedStyle(target);
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (target.disabled || target.getAttribute("aria-disabled") === "true") { actionable = false; why = "the target is disabled"; }
+      else if (!(r.width > 0 && r.height > 0) || cs.visibility === "hidden" || cs.pointerEvents === "none") { actionable = false; why = "the target is hidden or takes no pointer"; }
+      else if (!hit || !(hit === target || target.contains(hit))) { actionable = false; why = "the target is covered at its centre"; }
+    }
+  }
+  if (!actionable) reasons.push(why);
+  const seen = {text: gText.slice(0, 120), seconds, secondsText, actionable, at: performance.now()};
+  if (reasons.length) return {delivered: false, reasons, seen};
+  if (key) {
+    const init = {key, bubbles: true, cancelable: true};
+    target.dispatchEvent(new KeyboardEvent("keydown", init));
+    target.dispatchEvent(new KeyboardEvent("keyup", init));
+  } else {
+    target.click();
+  }
+  return {delivered: true, reasons: [], seen};
+}"""
+
+
+def _guarded_delivery(page: Any, step: dict[str, Any], record: dict[str, Any],
+                      guard: Any, timeout: float) -> dict[str, Any]:
+    """PHILO-8-03 (Codex Astra r2): check the guard and deliver in ONE page task.
+
+    click / click_role: the target is resolved and waited for (attached and
+    visible) WITHOUT clicking; press: the event goes to the focused element.
+    Then one evaluate re-reads the guard and the target's actionability
+    (connected, enabled, visible, takes the pointer, owns its centre) and sends
+    `el.click()` / a keydown+keyup in the same task -- or sends nothing and the
+    case is BLOCKED by name. Unguarded steps keep the Playwright path.
+    """
+    action = step.get("action")
+    if action not in ("click", "click_role", "press"):
+        raise Blocked(f"requires on a {action!r} step: only click, click_role and press are guarded")
+    _check_guard_shape(guard)
+    record["requires"] = guard
+    handle = None
+    if action != "press":
+        locator = (page.locator(step["selector"]).first if action == "click" else
+                   page.get_by_role(step.get("role", "button"), name=step["name"],
+                                    exact=bool(step.get("exact", True))).first)
+        try:
+            locator.wait_for(state="visible", timeout=timeout)
+            handle = locator.element_handle(timeout=timeout)
+        except Exception as exc:  # noqa: BLE001
+            record.update(done=False, error=repr(exc)[:400])
+            raise Blocked(f"ui step {action}: the guarded target never appeared: "
+                          f"{type(exc).__name__}: {str(exc)[:200]}") from exc
+    result = page.evaluate(_DELIVER_JS, [handle, guard, step.get("key") if action == "press" else None])
+    record["guard"] = {"holds": result["delivered"], "seen": result["seen"],
+                       "reading": "; ".join(r for r in result["reasons"] if r) or "held at delivery",
+                       "atomic": True}
+    for field in ("selector", "name", "key"):
+        if step.get(field):
+            record[field] = step[field]
+    if not result["delivered"]:
+        record["done"] = False
+        raise Blocked(
+            f"ui step {action} not delivered: its guard {guard!r} did not hold at "
+            f"delivery ({record['guard']['reading']})")
+    record["done"] = True
+    return record
 
 
 def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]:
@@ -3914,12 +4007,13 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     # produced the outcome. An optional step does not soften it.
     guard = step.get("requires")
     if guard is not None:
-        record["requires"] = guard
-        record["guard"] = _check_guard(page, guard)
-        if not record["guard"]["holds"]:
-            raise Blocked(
-                f"ui step {action} not delivered: its guard {guard!r} did not hold at "
-                f"delivery ({record['guard']['reading']})")
+        # Codex Astra r2: the guard and the delivery are ONE page task. The
+        # target is resolved first (its normal wait, no click); then a single
+        # evaluate checks the guard AND the target's actionability and sends
+        # the event, or sends nothing. No actionability wait can sit between
+        # the check and the event.
+        return _guarded_delivery(page, step, record, guard,
+                                 float(step.get("timeout_s", 10)) * 1000)
     # PHILO-8-03: a right-click opens the list's row menu (DeskListView.tsx
     # onContextMenu). Only a click takes a button; any other value blocks.
     button = step.get("button", "left")

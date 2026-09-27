@@ -1,12 +1,16 @@
-load { 7.78 5.05 5.45 }
-1440: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404
-F393: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404
-        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+# PHILO8_GUARD_RED=1 (guard stripped), this rig 1.5.2, merged main product; load { 6.48 4.10 4.32 }
+1440 before_guard: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_14d93027781b answered 200, wanted 200 (body sha256 e952165b1bab) | protocol_reads: GET /api/decisions/decision_14d93027781b answered 404
+F1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+F393 before_guard: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_9c970c802378 answered 200, wanted 200 (body sha256 6c74b3b358b3) | protocol_reads: GET /api/decisions/decision_9c970c802378 answered 404
+F393 click_wait: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_cf419f8f662b answered 200, wanted 200 (body sha256 59b7d4fe0d67) | protocol_reads: GET /api/decisions/decision_cf419f8f662b answered 404
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
 >       assert record["verdict"] == "blocked", (record["verdict"], notes)
-E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404')
-tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
-        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+        assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+E       assert 'did not hold at delivery' in 'BLOCKED: ui step click on \'[data-testid=chair-floor-toggle]\' failed: TimeoutError: Locator.click: Timeout 10000ms e...estid=chair-floor-toggle]").first\n    - locator resolved to <button disabled type="button" aria-label="Chair" aria-pr'
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
 >       assert record["verdict"] == "blocked", (record["verdict"], notes)
-E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404')
-tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
-2 failed in 59.29s
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+4 failed, 6 deselected in 117.68s (0:01:57)

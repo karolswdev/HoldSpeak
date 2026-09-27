@@ -1,0 +1,1156 @@
+{
+  "id": "obs-20260927T065528Z-case.p8.delete_twice.both_gone-muaddib-393",
+  "run_id": "20260927T065528Z-case.p8.delete_twice.both_gone-muaddib-393",
+  "case_id": "case.p8.delete_twice.both_gone",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "4905986f98909b86d379676df01111698d263df9",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "83f15f92a14b95607018855a69392092b0acf2474f7575bd41eb00b9a04a94f0",
+      "assets": [
+        "index-BKGKDXds.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62217",
+      "port": 62217,
+      "pid": 75673,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o081f8vy",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o081f8vy/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-27T06:55:28.699555+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "3c5dac699f65c90e36d995d1b43e064a2a0646e92d0b694600c66e702858f4ad",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_08f632f8d2a5",
+          "title": "Atlas probe A",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-27T06:55:33Z",
+          "updated_at": "2026-09-27T06:55:33Z",
+          "deleted": false
+        },
+        "operation_id": "op_2cad9be24df54182a6169fe41835c254",
+        "receipt": {
+          "receipt_id": "rcpt_48c05277e81f419fb4a9c1e49da996ff",
+          "operation_id": "op_2cad9be24df54182a6169fe41835c254",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_08f632f8d2a5",
+          "created_at": 1790492133.594837,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_08f632f8d2a5"
+        }
+      },
+      "response_sha256": "e234b03fda764d39f8ee76b48f5229a9777aa3f6f67fac11b93c0605fd1f0dd0",
+      "captured": {
+        "name": "a_id",
+        "path": "decision.id",
+        "value": "decision_08f632f8d2a5"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_8bef25192033",
+          "title": "Atlas probe B",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-27T06:55:33Z",
+          "updated_at": "2026-09-27T06:55:33Z",
+          "deleted": false
+        },
+        "operation_id": "op_372321120d2944f19ac173f7a9fe4b93",
+        "receipt": {
+          "receipt_id": "rcpt_8f5a89786e9e4b7783ddc7f87225d553",
+          "operation_id": "op_372321120d2944f19ac173f7a9fe4b93",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_8bef25192033",
+          "created_at": 1790492133.598925,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_8bef25192033"
+        }
+      },
+      "response_sha256": "369321e045a6d7dbbfac9b6c3abfc609f01bd10383de499d06b4e007ab2f6f09",
+      "captured": {
+        "name": "b_id",
+        "path": "decision.id",
+        "value": "decision_8bef25192033"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_08f632f8d2a5']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_08f632f8d2a5']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "a_id": "decision_08f632f8d2a5",
+    "b_id": "decision_8bef25192033"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "press",
+    "adapter": "ui-keyboard",
+    "key": "Delete",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": ".undo-receipt.is-pending",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": "[data-obj-id='decision:decision_8bef25192033']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "focus",
+        "adapter": "ui-keyboard",
+        "selector": "[data-obj-id='decision:decision_8bef25192033']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Shift+Enter",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": ".undo-receipt.is-pending",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "requires": {
+          "visible": ".undo-receipt.is-pending",
+          "text": "Undo",
+          "seconds_left": {
+            "selector": ".undo-receipt-time",
+            "min": 2
+          }
+        },
+        "guard": {
+          "holds": true,
+          "seen": {
+            "text": "Removed Atlas probe A\nUndo\n06s",
+            "seconds": 6,
+            "secondsText": "06s",
+            "actionable": true,
+            "at": 10586.899999976158
+          },
+          "reading": "held at delivery",
+          "atomic": true
+        },
+        "key": "Delete",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Removal committed"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "undo-receipt is-committed"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 127,
+        "y": 628,
+        "w": 138,
+        "h": 27
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Atlas probe A",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n12:55 AM\nRemoval committed"
+    },
+    "document_text_sha256": {
+      "before": "dab3a00f0bb9403c03c00d49ff0c2bf58616e06485d082aa1aae1516aba03baf",
+      "after": "8edfb1a66818123069d69d532cba1693ccb21757ba006a107d893bbc453608c6"
+    },
+    "document_text_len": {
+      "before": 281,
+      "after": 249
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_08f632f8d2a5",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_08f632f8d2a5",
+              "title": "Atlas probe A",
+              "status": "accepted",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-27T06:55:33Z",
+              "updated_at": "2026-09-27T06:55:33Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "383d88c77913f254ad3fab9777d7360c24f42d857219ef1a4fd2ab071dc01649"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_8bef25192033",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_8bef25192033",
+              "title": "Atlas probe B",
+              "status": "accepted",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-27T06:55:33Z",
+              "updated_at": "2026-09-27T06:55:33Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "59823f78f4af04bf3976280d9e0862eca546ec615393f4ac3d962564e42574fe"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_08f632f8d2a5",
+          "status": 404,
+          "payload": "{\"error\":\"decision_not_found\"}",
+          "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_8bef25192033",
+          "status": 404,
+          "payload": "{\"error\":\"decision_not_found\"}",
+          "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".undo-receipt",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas probe A",
+    "url": "http://127.0.0.1:62217/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "dab3a00f0bb9403c03c00d49ff0c2bf58616e06485d082aa1aae1516aba03baf",
+    "document_text_len": 281,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_08f632f8d2a5",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_08f632f8d2a5",
+            "title": "Atlas probe A",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-27T06:55:33Z",
+            "updated_at": "2026-09-27T06:55:33Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "383d88c77913f254ad3fab9777d7360c24f42d857219ef1a4fd2ab071dc01649"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8bef25192033",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_8bef25192033",
+            "title": "Atlas probe B",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-27T06:55:33Z",
+            "updated_at": "2026-09-27T06:55:33Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "59823f78f4af04bf3976280d9e0862eca546ec615393f4ac3d962564e42574fe"
+      }
+    ],
+    "at_utc": "2026-09-27T06:55:41.002093+00:00"
+  },
+  "after": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Removal committed",
+    "attrs": {
+      "class": "undo-receipt is-committed"
+    },
+    "rect": {
+      "x": 127,
+      "y": 628,
+      "w": 138,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 127,
+        "y": 628,
+        "w": 138,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 129,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 129,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 129,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 197,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 197,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed > span.undo-receipt-label"
+        },
+        {
+          "x": 197,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 264,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 264,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        },
+        {
+          "x": 264,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-committed"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n12:55 AM\nRemoval committed",
+    "url": "http://127.0.0.1:62217/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "8edfb1a66818123069d69d532cba1693ccb21757ba006a107d893bbc453608c6",
+    "document_text_len": 249,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_08f632f8d2a5",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8bef25192033",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      }
+    ],
+    "at_utc": "2026-09-27T06:55:54.832943+00:00",
+    "trigger_response": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_08f632f8d2a5",
+      "status": 200,
+      "body_sha256": "003d008b3600ffe31707e6af8df0aa7fd9a66a3e0754d1734e28161da48aad3e",
+      "body": {
+        "success": true,
+        "operation_id": "op_bdc47210af574d949f5ba0c94e239f11",
+        "receipt": {
+          "receipt_id": "rcpt_9ca05a42604b465989bdcb66af083351",
+          "operation_id": "op_bdc47210af574d949f5ba0c94e239f11",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_08f632f8d2a5",
+          "created_at": 1790492144.19281,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_08f632f8d2a5"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62217) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Removed Atlas probe B\nUndo\n08s",
+    "attrs": {
+      "class": "undo-receipt is-pending"
+    },
+    "rect": {
+      "x": 47,
+      "y": 628,
+      "w": 300,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 47,
+        "y": 628,
+        "w": 300,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 49,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 49,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 197,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 197,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending > span.undo-receipt-label"
+        },
+        {
+          "x": 197,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 344,
+          "y": 630,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 344,
+          "y": 642,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        },
+        {
+          "x": 344,
+          "y": 653,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-world > div.desk-world-foot > span.undo-receipt.is-pending"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas probe B",
+    "url": "http://127.0.0.1:62217/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "cae52fdf43976eaa8d5ae9011fa4b3e77b8c1547adfb8ff0c880c2e373166e10",
+    "document_text_len": 290,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_08f632f8d2a5",
+        "status": 404,
+        "payload": "{\"error\":\"decision_not_found\"}",
+        "body_sha256": "e96c1febd835b13404a5795ab9cd751be6954829d0b1e7834eb6fbe182505fe9"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_8bef25192033",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_8bef25192033",
+            "title": "Atlas probe B",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-27T06:55:33Z",
+            "updated_at": "2026-09-27T06:55:33Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "59823f78f4af04bf3976280d9e0862eca546ec615393f4ac3d962564e42574fe"
+      }
+    ],
+    "at_utc": "2026-09-27T06:55:45.200486+00:00",
+    "trigger_response": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_08f632f8d2a5",
+      "status": 200,
+      "body_sha256": "003d008b3600ffe31707e6af8df0aa7fd9a66a3e0754d1734e28161da48aad3e",
+      "body": {
+        "success": true,
+        "operation_id": "op_bdc47210af574d949f5ba0c94e239f11",
+        "receipt": {
+          "receipt_id": "rcpt_9ca05a42604b465989bdcb66af083351",
+          "operation_id": "op_bdc47210af574d949f5ba0c94e239f11",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_08f632f8d2a5",
+          "created_at": 1790492144.19281,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_08f632f8d2a5"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62217) non-GET response after the click"
+    },
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_reads: GET /api/decisions/decision_8bef25192033 answered 200, wanted 404",
+    "elapsed_s": 3.416
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/decisions/decision_08f632f8d2a5 answered 404; GET /api/decisions/decision_8bef25192033 answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, 'y': 628, 'w': 138, 'h': 27}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 12.963,
+    "first_satisfied_at_s": 12.663,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_reads: GET /api/decisions/decision_08f632f8d2a5 answered 404; GET /api/decisions/decision_8bef25192033 answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, 'y': 628, 'w': 138, 'h': 27}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:62217) non-GET response after the click",
+    "chosen": {
+      "method": "DELETE",
+      "path": "/api/decisions/decision_08f632f8d2a5",
+      "status": 200,
+      "body_sha256": "003d008b3600ffe31707e6af8df0aa7fd9a66a3e0754d1734e28161da48aad3e",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62217) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:62217) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note_sel.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/decisions/decision_08f632f8d2a5",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/r3-merged/20260927T065528Z-case.p8.delete_twice.both_gone-muaddib-393/before.png",
+    "/private/tmp/claude-501/p803/r3-merged/20260927T065528Z-case.p8.delete_twice.both_gone-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o081f8vy/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o081f8vy/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62217"
+  ],
+  "duration_s": 27.268
+}

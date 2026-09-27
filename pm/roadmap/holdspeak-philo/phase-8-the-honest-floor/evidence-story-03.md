@@ -1,12 +1,105 @@
 # Evidence - PHILO-8-03
 
 - **Story:** PHILO-8-03 - The atlas cases and the closing proof
-- **Status:** done (2026-09-27: Codex Astra r1 paid; the owner reviewed the closing shots — "Reviewed — close it after the check")
+- **Status:** done (2026-09-27: Codex Astra r1 and r2 paid; the owner reviewed the closing shots — "Reviewed — close it after the check")
 - **Date:** 2026-09-26
 
 ## The owner's review
 
 2026-09-27, the owner, on the closing shots (`assets/story-03-shots/rehearsal-a6c94db2/`, published at https://claude.ai/artifact/YBJfm8bu2BGAy5e9QHaDUB): "Reviewed — close it after the check". This is his review of rehearsal shots, not a sitting.
+
+## Round three — Codex Astra r2 on PR #674 @ `4905986f` (BOUNCE), paid
+
+`checks/story-03-built-astra-r2.md`. Confirmed paid: the r1 reproduction (a pause before the step) blocks at both widths; 219 scoped unit tests; the fences reject a bad `then`; the 26 FAIL + 2 BLOCKED baseline and the HOME correction are honest.
+
+### The blocker: the guard sat before Playwright's wait, not at delivery
+
+Rig 1.5.1 checked the guard, then let Playwright's click wait up to 10 s for actionability. Astra disabled only the click target for 8.5 s on `267f692a` at 393: the guard read "Undo · 08s", the click landed after "Removal committed", and the case PASSED.
+
+### The design: guard and delivery in ONE page task (rig 1.5.2, `_guarded_delivery` / `_DELIVER_JS` in `scripts/graph_walk.py`)
+
+For a guarded `click` / `click_role`, the rig resolves the target and waits for it (attached, visible) WITHOUT clicking and takes its element handle. Then ONE `page.evaluate` re-reads the guard (the receipt pending, "Undo", countdown ≥ min) AND the target's actionability at that instant (connected; not disabled or `aria-disabled`; positive size, not `visibility: hidden`, not `pointer-events: none`; `elementFromPoint` at its centre is the target or inside it) and, only if all hold, calls `el.click()` in the same task. A guarded `press` sends keydown+keyup to the focused element in the same task (the desk keymap listens on `document`, `web/src/desk/keymap.ts:115`). Otherwise it sends nothing and the case is BLOCKED with the reasons named. Unguarded steps keep the Playwright path. Every guarded delivery records `guard.atomic: true` and what it saw (the merged runs below saw the countdown at 02s–07s).
+
+### The fences
+
+`tests/e2e/test_philo8_03_then_guard.py` (MISSED 1: the r1 test paused only BEFORE the guard): the real `case.p8.delete_then_leave.gone` through the real rig and hub, two delays — `before_guard` (a pause before the step) and `click_wait` (the Chair button disabled for 8.5 s from the moment the step starts: any waiting falls inside delivery) — at 1440 and 393; plus the delivery script on a static page (held + actionable delivers one click; disabled, covered, committed, 1 s left each send nothing; a guarded press reaches the document keymap and a closed window sends none). Green on this branch, merged main: 10 passed. On the pre-fix product with this rig (`reds/guard-1-5-2-on-pre-fix-blocked.txt`):
+
+```text
+# this rig 1.5.2, guard kept, both modes, pre-fix product 267f692a; load { 15.28 7.49 5.61 }
+1440 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in "";
+.1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+.393 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in "";
+.393 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+4 passed, 6 deselected in 104.48s (0:01:44)
+```
+
+The red — Astra's reproduction, the r2-checked rig `4905986f` with the guard KEPT, `click_wait`, on `267f692a` (`reds/guard-r2-rig-click-wait-passes.txt`): at 393 the late click PASSES (at 1440 Playwright's own 10 s click timeout expired first, so that leg blocked):
+
+```text
+# the r2-checked rig 4905986f (1.5.1), guard KEPT, click_wait, pre-fix product 267f692a (git archive); load { 7.65 5.55 4.87 }
+1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+F393 click_wait: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_4fe3fd4951e9 answered 200, wanted 200 (body sha256 c3a9142ecd7b) | protocol_reads: GET /api/decisions/decision_4fe3fd4951e9 answered 404
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+        assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+E       assert 'did not hold at delivery' in 'BLOCKED: ui step click on \'[data-testid=chair-floor-toggle]\' failed: TimeoutError: Locator.click: Timeout 10000ms e...estid=chair-floor-toggle]").first\n    - locator resolved to <button disabled type="button" aria-label="Chair" aria-pr'
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+2 failed, 8 deselected in 61.10s (0:01:01)
+```
+
+And with the guard stripped on merged main (`reds/guard-stripped-passes-late.txt`): `before_guard` PASSES at both widths, `click_wait` PASSES at 393:
+
+```text
+# PHILO8_GUARD_RED=1 (guard stripped), this rig 1.5.2, merged main product; load { 6.48 4.10 4.32 }
+1440 before_guard: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_14d93027781b answered 200, wanted 200 (body sha256 e952165b1bab) | protocol_reads: GET /api/decisions/decision_14d93027781b answered 404
+F1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+F393 before_guard: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_9c970c802378 answered 200, wanted 200 (body sha256 6c74b3b358b3) | protocol_reads: GET /api/decisions/decision_9c970c802378 answered 404
+F393 click_wait: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_cf419f8f662b answered 200, wanted 200 (body sha256 59b7d4fe0d67) | protocol_reads: GET /api/decisions/decision_cf419f8f662b answered 404
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+        assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+E       assert 'did not hold at delivery' in 'BLOCKED: ui step click on \'[data-testid=chair-floor-toggle]\' failed: TimeoutError: Locator.click: Timeout 10000ms e...estid=chair-floor-toggle]").first\n    - locator resolved to <button disabled type="button" aria-label="Chair" aria-pr'
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+4 failed, 6 deselected in 117.68s (0:01:57)
+```
+
+Unit fences (`tests/unit/test_philo8_atlas.py`): a guarded click is one page task and never a Playwright click; a guarded press goes to the focused element in the same task; a guard or target failing at delivery blocks, optional or not; only click, click_role and press are guarded.
+
+### The three guarded gestures re-run, serially, at both widths (rig 1.5.2)
+
+Merged main `a6c94db2` — all pass (`merged-a6c94db2/`; the round-two runs moved to `attempts/merged-a6c94db2-guard-r1/`):
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p8.delete_then_leave.gone` | 1440 | **pass** | 26s | load1=9.92 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_e894c5d45d4d answered 200, wanted 200 (body sha256 3013bab9fa3a) / protocol_reads: GET /api/decisions/decision_e894c5d45d4d answered  |
+| `case.p8.delete_then_leave.gone` | 393 | **pass** | 17s | load1=8.35 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_73f918712383 answered 200, wanted 200 (body sha256 2df874e7227a) / protocol_reads: GET /api/decisions/decision_73f918712383 answered  |
+| `case.p8.delete_twice.both_gone` | 1440 | **pass** | 41s | load1=8.33 | predicate: all_of: protocol_reads: GET /api/decisions/decision_a9fdd76399c9 answered 404; GET /api/decisions/decision_7da94f6aca48 answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.delete_twice.both_gone` | 393 | **pass** | 27s | load1=8.77 | predicate: all_of: protocol_reads: GET /api/decisions/decision_08f632f8d2a5 answered 404; GET /api/decisions/decision_8bef25192033 answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.list_delete.undo` | 1440 | **pass** | 28s | load1=8.82 | predicate: all_of: protocol_reads: GET /api/decisions/decision_fd57a7cf80e8 answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 1440, 'height': 900} with rect  |
+| `case.p8.list_delete.undo` | 393 | **pass** | 14s | load1=10.36 | predicate: all_of: protocol_reads: GET /api/decisions/decision_e8d5160a3b7a answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect { |
+
+Pre-fix `267f692a` — fail or BLOCKED, never pass (`main-267f692a/`; round two's runs moved to `attempts/main-267f692a-guard-r1/`):
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p8.delete_then_leave.gone` | 1440 | **fail** | 48s | load1=9.53 | predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call |
+| `case.p8.delete_then_leave.gone` | 393 | **fail** | 41s | load1=6.33 | predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call |
+| `case.p8.delete_twice.both_gone` | 1440 | **fail** | 66s | load1=6.15 | predicate: all_of part protocol_reads: GET /api/decisions/decision_f9122f10a1e0 answered 200, wanted 404 |
+| `case.p8.delete_twice.both_gone` | 393 | **fail** | 57s | load1=10.78 | predicate: all_of part protocol_reads: GET /api/decisions/decision_18cd353dfb20 answered 200, wanted 404 |
+| `case.p8.list_delete.undo` | 1440 | **blocked** | 36s | load1=10.05 | BLOCKED: ui step click: the guarded target never appeared: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded. |
+| `case.p8.list_delete.undo` | 393 | **blocked** | 25s | load1=11.28 | BLOCKED: ui step click: the guarded target never appeared: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded. |
+
+**Main: 26 of 28 face runs fail by assertion, 2 BLOCKED (`list_delete.undo` at both widths: the pre-fix list shows no receipt, so the guarded Undo's target never appears); merged main: 28 of 28 pass.** A note on margin: `delete_twice.both_gone` at 1440 delivered B's Delete with the countdown at 02s, the guard's minimum; had the gesture been slower it would have BLOCKED, never passed.
+
+### MISSED 2
+
+`docs/internal/philo/phase-8/atlas/README.md` said the list Undo was optional so main runs to a fail; it now describes the guard and says a guarded step blocks where main has no receipt.
 
 ## Round two — Codex Astra r1 on PR #674 @ `edd90f0e` (BOUNCE on the rig), paid
 
@@ -663,4 +756,64 @@ philo_doctor_reference --check exit 0
 philo_graph_reference --check exit 0
 philo_openapi_reference --check exit 0
 philo_repository_census --check exit 0
+```
+
+### Captured run — 2026-09-27T07:02:27Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.8xUzFhWDab uv run pytest -q -p no:cacheprovider tests/unit/test_philo8_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo7_rig_faithful.py tests/unit/test_philo5_graph_op.py tests/unit/test_philo_graph_reference.py tests/unit/test_evidence_scratch_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b2862a1b4d4c9abbe360c75a681f602ce67b523c
+
+```text
+........................................................................ [ 32%]
+........................................................................ [ 64%]
+........................................................................ [ 96%]
+.......                                                                  [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+223 passed, 2 warnings in 15.93s
+```
+
+### Captured run — 2026-09-27T07:02:44Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.e8RYPljCEg PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -s -p no:cacheprovider tests/e2e/test_philo8_03_then_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b2862a1b4d4c9abbe360c75a681f602ce67b523c
+
+```text
+1440 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in ""; .undo-receipt-time reads null, wanted >= 2s)
+.1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+.393 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in ""; .undo-receipt-time reads null, wanted >= 2s)
+.393 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+.......
+10 passed in 106.21s (0:01:46)
+```
+
+### Captured run — 2026-09-27T07:04:31Z
+
+- **Command:** `bash -c for s in api_reference boundary_census config_reference council_check doctor_reference graph_reference openapi_reference repository_census; do HOME=$(mktemp -d) uv run python scripts/philo_$s.py --check >/dev/null 2>&1; echo "philo_$s --check exit $?"; done; HOME=$(mktemp -d) uv run python scripts/graph_walk.py calibrate --headless --out $(mktemp -d) | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** b2862a1b4d4c9abbe360c75a681f602ce67b523c
+
+```text
+philo_api_reference --check exit 0
+philo_boundary_census --check exit 0
+philo_config_reference --check exit 0
+philo_council_check --check exit 0
+philo_doctor_reference --check exit 0
+philo_graph_reference --check exit 0
+philo_openapi_reference --check exit 0
+philo_repository_census --check exit 0
+RIG 1.5.2 calibration: OK
 ```

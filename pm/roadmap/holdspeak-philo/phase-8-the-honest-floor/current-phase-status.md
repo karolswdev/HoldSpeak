@@ -122,6 +122,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-27, PHILO-8-03 DONE and Phase 8 CLOSED 2026-09-27 on the owner's word ("Reviewed — close it after the check"). Round two paid Codex Astra r1 (BOUNCE on the rig, `checks/story-03-built-astra-r1.md`): the delivery guard `requires` (rig 1.5.1) on every timed follow-up, a late one BLOCKED and never a pass; the delayed real-atlas fence; the optional-step fence visits `then`; the rehearsal HOME. The three guarded gestures re-run serially at both widths: merged main 6/6 pass; main 4 fail, 2 BLOCKED. The owner reviewed the closing shots: "Reviewed — close it after the check".
 
+2026-09-27, round three on PHILO-8-03 (Codex Astra r2 on PR #674 @ `4905986f`, BOUNCE, `checks/story-03-built-astra-r2.md`), paid: the delivery guard is now atomic (rig 1.5.2: the guard, the target's actionability and the event in one page task, or nothing is sent); the in-click delay fenced at both widths; the three gestures re-run serially (merged main 6/6 pass; pre-fix 4 fail, 2 BLOCKED). The CLOSED line stands on the owner's word and holds once this check lifts.
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

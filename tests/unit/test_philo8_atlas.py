@@ -324,41 +324,66 @@ def test_every_timed_follow_up_is_guarded_at_delivery(atlas8, cid) -> None:
                                     "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}, last
 
 
-class _GuardPage(_Page):
-    def __init__(self, seen: dict) -> None:
-        super().__init__()
-        self.seen = seen
+class _GuardLocator(_Locator):
+    def wait_for(self, state: str, timeout: float) -> None:
+        self.log.append(f"wait:{state}")
 
-    def evaluate(self, _js: str, _args: Any) -> dict:
-        return self.seen
+    def element_handle(self, timeout: float) -> str:
+        return "handle"
+
+
+class _GuardPage(_Page):
+    """The atomic path: the page's ONE evaluate decides and delivers."""
+
+    def __init__(self, delivered: bool, reasons: list[str] | None = None) -> None:
+        super().__init__()
+        self.result = {"delivered": delivered, "reasons": reasons or [],
+                       "seen": {"text": "Removed A Undo 05s", "seconds": 5}}
+        self.evaluated: list = []
+
+    def locator(self, _selector: str) -> _GuardLocator:
+        return _GuardLocator(self.log)
+
+    def evaluate(self, _js: str, args: Any) -> dict:
+        self.evaluated.append(args)
+        return self.result
 
 
 _IN_WINDOW = {"visible": ".undo-receipt.is-pending", "text": "Undo",
               "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}
-_PENDING = {"present": True, "visible": True, "text": "Removed A Undo 05s", "seconds": 5, "secondsText": "05s"}
 
 
-def test_a_guard_that_holds_delivers_the_step() -> None:
-    page = _GuardPage(_PENDING)
+def test_a_guarded_click_is_one_page_task_and_never_a_playwright_click() -> None:
+    """Codex Astra r2: no actionability wait between the guard and the event."""
+    page = _GuardPage(delivered=True)
     record = gw._ui_step(page, {"kind": "ui", "action": "click", "selector": ".desk-x", "requires": _IN_WINDOW})
-    assert page.log == ["left"] and record["guard"]["holds"], record
+    assert page.log == ["wait:visible"], page.log  # resolved, NOT clicked by Playwright
+    assert page.evaluated == [["handle", _IN_WINDOW, None]]
+    assert record["done"] and record["guard"]["atomic"] and record["guard"]["holds"]
 
 
-@pytest.mark.parametrize("seen", [
-    {"present": True, "visible": True, "text": "Removal committed", "seconds": None, "secondsText": None},
-    {"present": False, "visible": False, "text": None, "seconds": None, "secondsText": None},
-    {**_PENDING, "seconds": 1, "secondsText": "01s"},
-])
+def test_a_guarded_press_goes_to_the_focused_element_in_the_same_task() -> None:
+    page = _GuardPage(delivered=True)
+    gw._ui_step(page, {"kind": "ui", "action": "press", "key": "Delete", "requires": _IN_WINDOW})
+    assert page.log == [] and page.evaluated == [[None, _IN_WINDOW, "Delete"]]
+
+
+@pytest.mark.parametrize("reasons", [["'.undo-receipt.is-pending' is not visible"],
+                                     ["'.undo-receipt-time' reads '01s', wanted >= 2s"],
+                                     ["the target is disabled"], ["the target is covered at its centre"]])
 @pytest.mark.parametrize("optional", [False, True])
-def test_a_guard_that_fails_blocks_and_delivers_nothing(seen, optional) -> None:
-    """The window has closed (committed), was never there, or is about to
-    close: the step is NOT delivered and the case is BLOCKED -- also when
-    the step is optional."""
-    page = _GuardPage(seen)
-    with pytest.raises(gw.Blocked, match="guard"):
+def test_a_guard_or_target_that_fails_at_delivery_blocks(reasons, optional) -> None:
+    page = _GuardPage(delivered=False, reasons=reasons)
+    with pytest.raises(gw.Blocked, match="did not hold at delivery"):
         gw._ui_step(page, {"kind": "ui", "action": "click", "selector": ".desk-x",
                            "requires": _IN_WINDOW, "optional": optional})
-    assert page.log == []
+    assert "left" not in page.log
+
+
+def test_only_click_and_press_are_guarded() -> None:
+    with pytest.raises(gw.Blocked, match="only click"):
+        gw._ui_step(_GuardPage(delivered=True), {"kind": "ui", "action": "fill", "selector": "input.desk-x",
+                                                 "value": "x", "requires": _IN_WINDOW})
 
 
 def test_the_list_cases_right_click_the_row(atlas8) -> None:

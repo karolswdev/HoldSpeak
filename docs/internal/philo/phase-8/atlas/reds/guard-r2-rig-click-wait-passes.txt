@@ -1,0 +1,10 @@
+# the r2-checked rig 4905986f (1.5.1), guard KEPT, click_wait, pre-fix product 267f692a (git archive); load { 7.65 5.55 4.87 }
+1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+F393 click_wait: verdict pass; delayed True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_4fe3fd4951e9 answered 200, wanted 200 (body sha256 c3a9142ecd7b) | protocol_reads: GET /api/decisions/decision_4fe3fd4951e9 answered 404
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+        assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: BLOCKED: ui step click on '[data-testid=chair-floor-toggle]' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+E       assert 'did not hold at delivery' in 'BLOCKED: ui step click on \'[data-testid=chair-floor-toggle]\' failed: TimeoutError: Locator.click: Timeout 10000ms e...estid=chair-floor-toggle]").first\n    - locator resolved to <button disabled type="button" aria-label="Chair" aria-pr'
+        print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+2 failed, 8 deselected in 61.10s (0:01:01)
