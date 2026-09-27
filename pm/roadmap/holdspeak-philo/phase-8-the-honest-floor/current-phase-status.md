@@ -106,6 +106,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, story 02 round four (Codex Astra r2 on PR #672 @ d3eab7e8, BOUNCE, `checks/story-02-built-astra-r2.md`; round three confirmed paid): a landed delete no longer clears an unrelated failure; a refused Workbench Remove frees the item; a re-created reference can be deleted again; "Removal committed" only after the commit lands; the hub's refusal words on the failure label's title. Record: `checks/story-02-round-three-muaddib.md`.
 
+2026-09-26, story 02 round five (Codex Astra r3 on PR #672 @ a84d1a37, BOUNCE narrowing; round four confirmed): the Workbench's Undo is never hidden by an old refusal; on the list a refused delete is named with Retry in the fixed foot, readable without scrolling at 393; the resize fence is time-bounded. Record: `checks/story-02-round-three-muaddib.md` §"Round five".
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

@@ -26,6 +26,7 @@ import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
 import { DeskDeleteSeat } from "../deleteReceipt";
+import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
@@ -99,6 +100,11 @@ function useFootReserve() {
 
 export function DeskListView() {
   const { rootRef, footRef } = useFootReserve();
+  // PHILO-8-02 round five: on the scrolling list a desk write failure (a
+  // refused delete, with Retry) seats in the foot, where the undo receipt
+  // was, never above the work off-screen. The near mount makes the bar's
+  // fallback yield, so the failure shows once.
+  const { receipt: failureReceipt } = useDeskWriteReceipt();
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const selectedIds = useDesk((s) => s.selectedIds);
@@ -386,6 +392,7 @@ export function DeskListView() {
       {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
           flow directly above the selection bar it acted on. */}
       <div className="desk-world-foot" ref={footRef}>
+        {failureReceipt}
         <DeskDeleteSeat />
         <AskBar />
       </div>

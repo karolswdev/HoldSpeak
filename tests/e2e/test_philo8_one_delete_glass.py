@@ -153,6 +153,24 @@ _ROW_MENU_DELETE_JS = """async (title) => {
 }"""
 
 
+_IN_VIEW_JS = """(sel) => [...document.querySelectorAll(sel)].map((e) => {
+  const r = e.getBoundingClientRect();
+  const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+  return {top: r.top, bottom: r.bottom, left: r.left, right: r.right,
+          inViewport: r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
+          own: !!hit && (hit === e || e.contains(hit))};
+})"""
+
+
+def _readable_in_view(page: Any, selector: str) -> dict[str, Any]:
+    """Read BEFORE any click (a Playwright click scrolls): one match of the
+    selector is inside the viewport and owns the point at its centre."""
+    boxes = page.evaluate(_IN_VIEW_JS, selector)
+    seen = [b for b in boxes if b["inViewport"] and b["own"]]
+    assert seen, f"{selector} is not readable in the viewport: {boxes}"
+    return seen[0]
+
+
 def _observe_receipts(page: Any) -> None:
     """Record every change of the receipt texts from now on (the transition)."""
     page.evaluate("""() => {
@@ -639,6 +657,11 @@ class TestOneDelete:
                     page.keyboard.press("Delete")
                 page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 6_000)
                 page.wait_for_timeout(300)
+                # Round five (P2): the failure and its Retry are where the owner's
+                # eyes are, without scrolling (read before any click).
+                failure_box = _readable_in_view(page, ".write-receipt")
+                retry_box = _readable_in_view(page, ".write-receipt-retry")
+                print(f"refused {face} {width}: failure at {failure_box}; Retry at {retry_box}")
                 history = page.evaluate("() => window.__receipts")
                 failure = page.locator(".write-receipt").first.inner_text()
                 title = page.locator(".write-receipt-label").first.get_attribute("title") or ""
@@ -692,6 +715,12 @@ class TestOneDelete:
                 page.unroute(url, refuse)
                 before = len(self.deletes)
                 window.get_by_role("button", name="Remove", exact=True).click()
+                # Round five (MISSED 1): the renewed window shows its Undo.
+                page.wait_for_function(
+                    "() => (document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || '').includes('Removed Refused item')",
+                    timeout=5_000,
+                )
+                _readable_in_view(page, ".desk-workbench-window .undo-receipt-btn")
                 page.wait_for_timeout(WINDOW_WAIT_MS)
                 history = page.evaluate("() => window.__receipts")
                 items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
@@ -702,6 +731,56 @@ class TestOneDelete:
                 first_failure = next(i for i, h in enumerate(history) if "REMOVE ITEM" in h["text"])
                 before_failure = [h["text"] for h in history[:first_failure + 1]]
                 assert not any("Removal committed" in t for t in before_failure), before_failure
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_workbench_remove_after_a_refusal_offers_undo(self, width: int) -> None:
+        """Round five P1: refusal, then an ordinary Remove: its Undo is visible
+        (the old refusal never hides it) and Undo keeps the item."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, _ids, errors = self._open(pw, width, [])
+            try:
+                wb = _api(page, "POST", "/api/workbenches", {"name": "Undo WB"}, token=TOKEN)["workbench"]["id"]
+                item = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Undo item"}, token=TOKEN)["item"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+                _name_button(page, "Undo WB").click()
+                window = page.locator(".desk-workbench-window")
+                window.wait_for(timeout=10_000)
+                window.get_by_text("Undo item", exact=True).click()
+                url = f"**/api/workbenches/{wb}/items/{item}"
+
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"Item locked by the glass"}')
+                    else:
+                        route.continue_()
+
+                page.route(url, refuse)
+                window.get_by_role("button", name="Remove", exact=True).click()
+                window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(url, refuse)
+                before = len(self.deletes)
+                window.get_by_role("button", name="Remove", exact=True).click()
+                page.wait_for_function(
+                    "() => !!document.querySelector('.desk-workbench-window .undo-receipt-btn')", timeout=5_000,
+                )
+                box = _readable_in_view(page, ".desk-workbench-window .undo-receipt-btn")
+                footer = page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || ''")
+                page.screenshot(path=str(SHOTS / f"workbench-undo-after-refusal-{width}.png"))
+                page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt-btn').click()")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                sent = len(self.deletes) - before
+                print(f"workbench undo after refusal {width}: Undo at {box}; receipt {footer!r}; kept {len(items)}; DELETE {sent}")
+                assert "Removed Undo item" in footer, footer
+                assert [i["id"] for i in items] == [item] and sent == 0, (items, sent)
                 self._clean(errors)
             finally:
                 browser.close()
@@ -780,6 +859,13 @@ class TestOneDelete:
                 _to_face(page, "list", 393)
                 _row_menu_delete(page, "Resize me")
                 _readable_receipt(page, "Removed Resize me", 5_000)
+                # Round five (MISSED 3): the DELETE must start with the face
+                # change, well before the window could end on its own.
+                page.evaluate("""() => { window.__deleteAt = null; const f = window.fetch;
+                  window.fetch = (input, init) => { if ((init?.method || '').toUpperCase() === 'DELETE' && window.__deleteAt === null)
+                    window.__deleteAt = performance.now(); return f(input, init); }; }""")
+                left = page.evaluate("() => (document.querySelector('.undo-receipt-time')?.innerText || '')")
+                resized_at = page.evaluate("() => performance.now()")
                 page.set_viewport_size({"width": 1440, "height": 900})
                 page.locator(".desk-world-a11y").wait_for(state="attached", timeout=10_000)
                 page.wait_for_timeout(500)
@@ -787,7 +873,10 @@ class TestOneDelete:
                 receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
                 page.wait_for_timeout(1_000)
                 status = _status(page, decision_id)
-                print(f"resize: {status}; receipt {receipt!r}")
+                delete_at = page.evaluate("() => window.__deleteAt")
+                lag = None if delete_at is None else delete_at - resized_at
+                print(f"resize: {status}; receipt {receipt!r}; window left {left!r}; DELETE {lag} ms after the resize")
+                assert lag is not None and lag < 1_000, (lag, left)
                 # The face change started the commit: no Undo is offered any more
                 # (round four: "Removed …" while in flight, then "Removal committed").
                 assert "Undo" not in receipt and receipt, (status, receipt)

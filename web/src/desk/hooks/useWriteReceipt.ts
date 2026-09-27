@@ -45,7 +45,7 @@ export type WriteResult<T> =
 export type WriteAttempt = <T>(
   verb: string,
   run: () => Promise<T>,
-  opts?: { retry?: boolean },
+  opts?: { retry?: boolean; subject?: string },
 ) => Promise<WriteResult<T>>;
 
 /** Name the cause in label grammar — never prose, never a sentence. */
@@ -146,7 +146,7 @@ export function useWriteReceipt() {
     async function attemptWrite<T>(
       verb: string,
       run: () => Promise<T>,
-      opts: { retry?: boolean } = {},
+      opts: { retry?: boolean; subject?: string } = {},
     ): Promise<WriteResult<T>> {
       const label = verb.toUpperCase();
       const seat = (reason: string, detail?: string) => {
@@ -154,6 +154,7 @@ export function useWriteReceipt() {
           verb: label,
           reason,
           detail,
+          subject: opts.subject,
           retry:
             opts.retry === false
               ? null

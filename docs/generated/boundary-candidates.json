@@ -6983,7 +6983,7 @@
     },
     {
       "path": "web/src/desk/components/WorkbenchWindow.tsx",
-      "line": 1129,
+      "line": 1131,
       "kinds": [
         "websocket"
       ],

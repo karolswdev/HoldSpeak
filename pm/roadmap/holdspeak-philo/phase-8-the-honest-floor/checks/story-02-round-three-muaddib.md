@@ -33,3 +33,22 @@ The transition on the fix (list 1440): `'Removed Refuse me Undo 08s' … '01s'`,
 Unit fences (vitest):
 - the hook: a key stays blocked while its commit is in flight and is free after it settles; "Removal committed" shows only after the commit lands; a refused commit goes pending → committing → idle;
 - the listener: the mock `deletePrimitive` answers `true`.
+
+## Round five (Codex Astra r3 on `a84d1a37`, BOUNCE, narrowing — `story-02-built-astra-r3.md`)
+
+Astra r3 confirmed round four: all 13 of its r2 probes pass, every commit callback returns the boolean, B's success keeps A's failure, a double press sends one DELETE, and a re-created ref deletes again. It ruled the refusal overlap acceptable (135–430 ms, and it never says "Removal committed"). My round-four text said "one render"; it lasts 135–430 ms.
+
+| Item | Cause | Repair (file:line) |
+|---|---|---|
+| P1. After a refusal, the Workbench's renewed Remove hid its Undo; the item was deleted when the window ended | the footer ranked `writeReceipt` over the pending undo receipt | A live Undo is never hidden: the footer shows the undo receipt first while it is pending or committing (`web/src/desk/components/WorkbenchWindow.tsx:1911`). A new Remove of the same item clears that item's old refusal (`:1205`). The refusal carries the item as its subject (`:1217`; `web/src/desk/hooks/useWriteReceipt.ts:157`, `attempt(…, { subject })`). A failure for another item stays |
+| P2. The phone list's refusal was off-screen (y −1196…−1138); Retry could not be reached | the desk failure fallback renders above the scrolling work (`DeskReceiptRow`) | On the list, the desk write failure sits in the fixed foot, above the undo receipt, in the #665 seat (`web/src/desk/components/DeskListView.tsx:107`, `:395`). Mounting it there makes the bar's copy yield, so the failure shows once. It uses the foot's ground (`list-view.css`). No new element |
+| MISSED 1. The Workbench fence waited out the renewed window without checking the receipt | — | The fence now requires the renewed Undo to be readable in the viewport before it waits |
+| MISSED 2. A click proves nothing about the viewport (Playwright scrolls to the target) | — | `_readable_in_view` checks the viewport bounds and that the element's centre point lands on the element, BEFORE any click |
+| MISSED 3. The resize fence had no time bound | — | The fence now records when the DELETE starts, relative to the resize, and requires less than 1 s |
+
+Red on `a84d1a37` (serial, load 2.70 → 11.64; `docs/internal/philo/phase-8/one-delete/red-round-five-a84d1a37.log`):
+- the phone list refusal: `.write-receipt is not readable in the viewport: [{'top': -1196, 'bottom': -1138, … 'inViewport': False, 'own': False}]`;
+- Workbench, both fences at both widths: the renewed Undo never shows (`Page.wait_for_function: Timeout 5000ms exceeded.`);
+- the resize time bound: it passes on `a84d1a37`, which already had the fix (69 ms on this branch). On `b65107f5` it fails: `AssertionError: (4146.1, '05s')`, the DELETE 4146 ms after the resize, which is the timer ending, not the face change.
+
+Green: the refusal fence passes at list and Floor, 1440 and 393. The Workbench undo-after-refusal fence passes (Undo readable, the item kept, zero DELETE). Both story 01 glass files still pass (42 of 42 in the scoped run).
