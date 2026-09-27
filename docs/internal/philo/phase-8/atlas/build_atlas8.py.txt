@@ -109,6 +109,8 @@ def gone_read(var: str) -> dict:
 RELOAD = {"kind": "ui", "action": "reload", "adapter": "ui-navigation", "why": "a fresh Desk read after the seed"}
 PENDING = {"kind": "ui", "action": "wait_for", "adapter": "ui-pointer", "selector": ".undo-receipt.is-pending",
            "timeout_s": 3, "why": "the first delete is still inside its window (the receipt's pending phase)"}
+IN_WINDOW = {"visible": ".undo-receipt.is-pending", "text": "Undo",
+             "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}
 FLOOR_PRE = {"kind": "check", "predicate": {"kind": "attr_equals", "attr": "aria-pressed", "value": "true"},
              "observe_at": "[data-testid=chair-floor-toggle]",
              "why": "the Floor is the surface in front (the toggle is pressed)"}
@@ -284,8 +286,8 @@ cases.append(case(
              "then": [{**PENDING, "optional": True,
                        "why": "the delete is pending (inside its window); optional so main runs to a verdict: on main the list shows no receipt"},
                       {"kind": "ui", "action": "click", "adapter": "ui-pointer", "selector": "button.undo-receipt-btn",
-                       "optional": True,
-                       "why": "the receipt's Undo, inside the window (one gesture with the Delete); optional so main runs to a verdict"}]},
+                       "optional": True, "requires": IN_WINDOW,
+                       "why": "the receipt's Undo, inside the window (one gesture with the Delete), re-checked at delivery; optional so a missing button is recorded, but a guard that does not hold BLOCKS (main shows no receipt: blocked)"}]},
     expected={
         "predicate": {"kind": "all_of", "predicates": [
             {"kind": "protocol_reads", "expect": [{"status": 200}]},
@@ -332,7 +334,8 @@ cases.append(case(
              "why": "A queued: the receipt reads 'Removed Atlas probe A'",
              "then": [PENDING, *select_chip("b_id"), PENDING,
                       {"kind": "ui", "action": "press", "adapter": "ui-keyboard", "key": "Delete",
-                       "why": "B inside A's window: the second delete commits A at once (useUndoReceipt flush) and queues B"}]},
+                       "requires": IN_WINDOW,
+                       "why": "B inside A's window, re-checked at delivery (A's receipt pending with Undo and at least 2 s left): the second delete commits A at once (useUndoReceipt flush) and queues B"}]},
     expected={
         "predicate": {"kind": "all_of", "predicates": [
             {"kind": "protocol_reads", "expect": [{"status": 404}, {"status": 404}]},
@@ -354,7 +357,8 @@ cases.append(case(
              "then": [PENDING,
                       {"kind": "ui", "action": "click", "adapter": "ui-pointer",
                        "selector": "[data-testid=chair-floor-toggle]",
-                       "why": "leave the Floor for the Chair inside the window: a face change commits the pending delete (deleteReceipt.tsx)"}]},
+                       "requires": IN_WINDOW,
+                       "why": "leave the Floor for the Chair inside the window, re-checked at delivery (the receipt pending with Undo and at least 2 s left): a face change commits the pending delete (deleteReceipt.tsx)"}]},
     expected={
         "predicate": {"kind": "all_of", "predicates": [
             {"kind": "protocol_status", "method": "DELETE", "path": "/api/decisions/{decision_id}", "status": 200},

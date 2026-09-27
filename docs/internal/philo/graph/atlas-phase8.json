@@ -1396,7 +1396,15 @@
             "adapter": "ui-pointer",
             "selector": "button.undo-receipt-btn",
             "optional": true,
-            "why": "the receipt's Undo, inside the window (one gesture with the Delete); optional so main runs to a verdict"
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "the receipt's Undo, inside the window (one gesture with the Delete), re-checked at delivery; optional so a missing button is recorded, but a guard that does not hold BLOCKS (main shows no receipt: blocked)"
           }
         ]
       },
@@ -2035,7 +2043,15 @@
             "action": "press",
             "adapter": "ui-keyboard",
             "key": "Delete",
-            "why": "B inside A's window: the second delete commits A at once (useUndoReceipt flush) and queues B"
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "B inside A's window, re-checked at delivery (A's receipt pending with Undo and at least 2 s left): the second delete commits A at once (useUndoReceipt flush) and queues B"
           }
         ]
       },
@@ -2227,7 +2243,15 @@
             "action": "click",
             "adapter": "ui-pointer",
             "selector": "[data-testid=chair-floor-toggle]",
-            "why": "leave the Floor for the Chair inside the window: a face change commits the pending delete (deleteReceipt.tsx)"
+            "requires": {
+              "visible": ".undo-receipt.is-pending",
+              "text": "Undo",
+              "seconds_left": {
+                "selector": ".undo-receipt-time",
+                "min": 2
+              }
+            },
+            "why": "leave the Floor for the Chair inside the window, re-checked at delivery (the receipt pending with Undo and at least 2 s left): a face change commits the pending delete (deleteReceipt.tsx)"
           }
         ]
       },

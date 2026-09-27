@@ -1,0 +1,12 @@
+load { 7.78 5.05 5.45 }
+1440: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404
+F393: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404
+        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404')
+tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
+        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404')
+tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
+2 failed in 59.29s

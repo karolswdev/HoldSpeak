@@ -3,7 +3,7 @@
   "revision": "b941f2e1d13465e2550bedd83484eef2c41065f8",
   "rig_hub": "scripts/graph_walk.py Hub",
   "engine": "none",
-  "home": "isolated (mkdtemp), removed after the run",
+  "home": "isolated (mkdtemp); CORRECTED (Codex Astra r1 MISSED 2): the driver stopped the hub but did NOT remove this HOME; the driver removes it from PHILO-8-03 round two on",
   "loadavg": [
     13.08642578125,
     9.26904296875,
@@ -213,5 +213,6 @@
       "width": 393,
       "page_errors": []
     }
-  ]
+  ],
+  "home_removed": false
 }

@@ -291,17 +291,95 @@ def test_then_takes_ui_steps_only(then) -> None:
     assert gw.trigger_then({"kind": "ui", "action": "press", "key": "Delete"}) == []
 
 
+def test_the_walk_reaches_then_steps(atlas8) -> None:
+    """The fence above must see the Undo's optional `then` step; a walk that
+    stops at the trigger would not (red on the r1 walk: `general._acts`)."""
+    undo = _cases(atlas8)["case.p8.list_delete.undo"]
+    assert any(s.get("optional") for s in _acts_with_then(undo) if s.get("selector") == "button.undo-receipt-btn")
+    assert not any(s.get("selector") == "button.undo-receipt-btn" for s in general._acts(undo))
+
+
+def test_every_then_step_is_a_legal_ui_step(atlas8, ) -> None:
+    """`then` steps validate against the schema's ui step (actions, `requires`)."""
+    from jsonschema import Draft202012Validator
+    schema = json.loads(general.SCHEMA_PATH.read_text())
+    ui = next(branch for branch in schema["$defs"]["step"]["oneOf"]
+              if branch.get("properties", {}).get("kind", {}).get("const") == "ui")
+    validator = Draft202012Validator({"$defs": schema["$defs"], **ui})
+    actions = general._rig_ui_actions()
+    for case in atlas8["cases"]:
+        for step in (case.get("trigger") or {}).get("then") or []:
+            errors = [e.message for e in validator.iter_errors(step)]
+            assert not errors, (case["id"], errors)
+            assert step["action"] in actions, (case["id"], step["action"])
+
+
+@pytest.mark.parametrize("cid", ["case.p8.delete_twice.both_gone", "case.p8.delete_then_leave.gone",
+                                 "case.p8.list_delete.undo"])
+def test_every_timed_follow_up_is_guarded_at_delivery(atlas8, cid) -> None:
+    """Codex Astra r1 (blocking): the act that must land inside the window
+    re-reads the window at delivery -- pending, Undo offered, >= 2 s left."""
+    last = _cases(atlas8)[cid]["trigger"]["then"][-1]
+    assert last.get("requires") == {"visible": ".undo-receipt.is-pending", "text": "Undo",
+                                    "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}, last
+
+
+class _GuardPage(_Page):
+    def __init__(self, seen: dict) -> None:
+        super().__init__()
+        self.seen = seen
+
+    def evaluate(self, _js: str, _args: Any) -> dict:
+        return self.seen
+
+
+_IN_WINDOW = {"visible": ".undo-receipt.is-pending", "text": "Undo",
+              "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}
+_PENDING = {"present": True, "visible": True, "text": "Removed A Undo 05s", "seconds": 5, "secondsText": "05s"}
+
+
+def test_a_guard_that_holds_delivers_the_step() -> None:
+    page = _GuardPage(_PENDING)
+    record = gw._ui_step(page, {"kind": "ui", "action": "click", "selector": ".desk-x", "requires": _IN_WINDOW})
+    assert page.log == ["left"] and record["guard"]["holds"], record
+
+
+@pytest.mark.parametrize("seen", [
+    {"present": True, "visible": True, "text": "Removal committed", "seconds": None, "secondsText": None},
+    {"present": False, "visible": False, "text": None, "seconds": None, "secondsText": None},
+    {**_PENDING, "seconds": 1, "secondsText": "01s"},
+])
+@pytest.mark.parametrize("optional", [False, True])
+def test_a_guard_that_fails_blocks_and_delivers_nothing(seen, optional) -> None:
+    """The window has closed (committed), was never there, or is about to
+    close: the step is NOT delivered and the case is BLOCKED -- also when
+    the step is optional."""
+    page = _GuardPage(seen)
+    with pytest.raises(gw.Blocked, match="guard"):
+        gw._ui_step(page, {"kind": "ui", "action": "click", "selector": ".desk-x",
+                           "requires": _IN_WINDOW, "optional": optional})
+    assert page.log == []
+
+
 def test_the_list_cases_right_click_the_row(atlas8) -> None:
     for cid in ("case.p8.list_delete.gone", "case.p8.list_delete.undo", "case.p8.list_delete.long_list_393"):
         rights = [s for s in _cases(atlas8)[cid]["setup"] if s.get("button") == "right"]
         assert len(rights) == 1 and rights[0]["action"] == "click_role", cid
 
 
+def _acts_with_then(case: dict) -> list[dict]:
+    """Every act INCLUDING a trigger's `then` steps (Codex Astra r1 MISSED 1:
+    the general `_acts` visits setup and the top-level trigger only)."""
+    acts = list(general._acts(case))
+    return acts + list((case.get("trigger") or {}).get("then") or [])
+
+
 def test_optional_steps_never_decide_a_verdict(atlas8) -> None:
     """A step marked optional (so main runs to a verdict) is never the only
-    carrier of the outcome: its case's predicate reads the outcome itself."""
+    carrier of the outcome: its case's predicate reads the outcome itself.
+    The walk visits `then` steps too."""
     for case in atlas8["cases"]:
-        optional = [s for s in general._acts(case) if s.get("optional")
+        optional = [s for s in _acts_with_then(case) if s.get("optional")
                     and s.get("name") != "Continue later"]
         if optional:
             assert case["expected"]["predicate"]["kind"] == "all_of", case["id"]

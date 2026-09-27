@@ -60,6 +60,9 @@ A step is `{"kind": <one of STEP_KINDS>, ...}`:
 
   api       {method, path, body?, expect_status?}   HTTP against the hub
   ui        {action: goto|click|click_role|fill|press|wait_for|focus, ...}
+            Any ui step may carry `requires: {visible, text?, seconds_left?:
+            {selector, min}}` (PHILO-8-03): re-read at delivery; not met is
+            BLOCKED by name (e.g. an Undo pressed after the window closed).
             `click` and `click_role` take `button: "right"` (PHILO-8-03: the
             list's row menu opens on a right-click, DeskListView.tsx).
             A TRIGGER may carry `then: [ui steps]` (PHILO-8-03): the rest of
@@ -219,7 +222,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.5.0"
+RIG_VERSION = "1.5.1"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -3841,6 +3844,48 @@ UI_ACTIONS = frozenset({
 })
 
 
+_GUARD_JS = r"""([selector, secondsSelector]) => {
+  const el = document.querySelector(selector);
+  const visible = !!el && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  let seconds = null, secondsText = null;
+  if (secondsSelector) {
+    const node = el ? el.querySelector(secondsSelector) || document.querySelector(secondsSelector)
+                    : document.querySelector(secondsSelector);
+    secondsText = node ? (node.innerText || node.textContent || "").trim() : null;
+    const m = secondsText && secondsText.match(/(\d+)/);
+    seconds = m ? parseInt(m[1], 10) : null;
+  }
+  return {present: !!el, visible, text: el ? (el.innerText || "").trim().slice(0, 120) : null,
+          seconds, secondsText};
+}"""
+
+
+def _check_guard(page: Any, guard: Any) -> dict[str, Any]:
+    """PHILO-8-03: a delivery guard, read on the page at the moment of delivery.
+
+    `{"visible": <css>, "text"?: <substring>, "seconds_left"?: {"selector": <css>,
+    "min": <int>}}` -- the element is visible, carries the text, and a
+    countdown inside it (or on the page) still reads at least `min` seconds.
+    """
+    if not isinstance(guard, dict) or not isinstance(guard.get("visible"), str):
+        raise Blocked(f"requires {guard!r}: needs a `visible` selector")
+    left = guard.get("seconds_left")
+    if left is not None and (not isinstance(left, dict) or not isinstance(left.get("selector"), str)
+                             or not isinstance(left.get("min"), int)):
+        raise Blocked(f"requires {guard!r}: seconds_left needs a selector and an int min")
+    seen = page.evaluate(_GUARD_JS, [guard["visible"], left.get("selector") if left else None])
+    reasons = []
+    if not seen.get("visible"):
+        reasons.append(f"{guard['visible']!r} is not visible")
+    want = guard.get("text")
+    if want is not None and want not in (seen.get("text") or ""):
+        reasons.append(f"{want!r} not in {seen.get('text')!r}")
+    if left is not None and (seen.get("seconds") is None or seen["seconds"] < left["min"]):
+        reasons.append(f"{left['selector']!r} reads {seen.get('secondsText')!r}, wanted >= {left['min']}s")
+    return {"holds": not reasons, "seen": seen,
+            "reading": "; ".join(reasons) if reasons else "held at delivery"}
+
+
 def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]:
     action = step.get("action")
     if action not in UI_ACTIONS:
@@ -3862,6 +3907,19 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
             return record
         record["at_width"] = at_width
     timeout = float(step.get("timeout_s", 10)) * 1000
+    # PHILO-8-03 (Codex Astra r1): a step that must land INSIDE a live state
+    # (a follow-up inside the 8 s undo window) declares `requires`; it is
+    # re-read at delivery, immediately before the action. Not met: BLOCKED by
+    # name, never a pass or a fail -- the timer, not the gesture, would have
+    # produced the outcome. An optional step does not soften it.
+    guard = step.get("requires")
+    if guard is not None:
+        record["requires"] = guard
+        record["guard"] = _check_guard(page, guard)
+        if not record["guard"]["holds"]:
+            raise Blocked(
+                f"ui step {action} not delivered: its guard {guard!r} did not hold at "
+                f"delivery ({record['guard']['reading']})")
     # PHILO-8-03: a right-click opens the list's row menu (DeskListView.tsx
     # onContextMenu). Only a click takes a button; any other value blocks.
     button = step.get("button", "left")

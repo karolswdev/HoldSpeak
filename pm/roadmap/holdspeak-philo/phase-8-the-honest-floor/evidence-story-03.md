@@ -1,14 +1,102 @@
-# Evidence - PHILO-8-03 (held as `assets/story-03-proof.md` until the story flips done; then it moves to `evidence-story-03.md`)
+# Evidence - PHILO-8-03
 
 - **Story:** PHILO-8-03 - The atlas cases and the closing proof
-- **Status:** in-progress (re-run on merged main `a6c94db2`: all green; the owner reviews the rehearsal shots before done)
+- **Status:** done (2026-09-27: Codex Astra r1 paid; the owner reviewed the closing shots — "Reviewed — close it after the check")
 - **Date:** 2026-09-26
+
+## The owner's review
+
+2026-09-27, the owner, on the closing shots (`assets/story-03-shots/rehearsal-a6c94db2/`, published at https://claude.ai/artifact/YBJfm8bu2BGAy5e9QHaDUB): "Reviewed — close it after the check". This is his review of rehearsal shots, not a sitting.
+
+## Round two — Codex Astra r1 on PR #674 @ `edd90f0e` (BOUNCE on the rig), paid
+
+`checks/story-03-built-astra-r1.md`. The product checks passed (10/10 of its own atlas runs at both widths; the rehearsal's database read-backs real; the BLOCKED-on-main label honest; the selection finding belongs in the ledger). The bounce was the rig's.
+
+### C1 (blocking): a late follow-up is now BLOCKED, never a pass
+
+**The defect.** A trigger's `then` steps did not enforce "inside the undo window". Astra injected an 8.5 s pause after the pending check of `case.p8.delete_then_leave.gone` on the unchanged pre-fix product `267f692a`, and the case PASSED: the receipt already read "Removal committed" before the face click, so the timer supplied the DELETE and the 404 that the predicate credits to leaving the face.
+
+**The guard (rig 1.5.0 → 1.5.1, `scripts/graph_walk.py` `_check_guard` / `_ui_step`).** Any ui step may declare `requires: {visible, text?, seconds_left?: {selector, min}}`. It is re-read on the page at delivery, immediately before the action. If it does not hold, the step is not delivered and the case is BLOCKED with the guard and the reading named — also for an optional step. Schema-declared (`atlas.schema.json`, the ui step). Every timed follow-up in `atlas-phase8.json` carries the same guard: the receipt `.undo-receipt.is-pending` visible, "Undo" in it, and its countdown `.undo-receipt-time` at 2 s or more (the countdown is a ceiling of the seconds left, so 2 means more than 1 s of margin):
+- `case.p8.delete_then_leave.gone`: the face click (to the Chair);
+- `case.p8.delete_twice.both_gone`: B's Delete;
+- `case.p8.list_delete.undo`: the Undo click.
+
+**The fence: the demonstrated delayed real-atlas case** — `tests/e2e/test_philo8_03_then_guard.py`: the REAL `case.p8.delete_then_leave.gone` through the REAL rig and a real hub, an 8.5 s pause injected in-process (a test-only wrapper around `_ui_step`) right before the guarded face click, at 1440 and 393. Green on this branch (merged main):
+
+```text
+load { 2.73 3.83 5.08 }
+1440: verdict blocked; paused True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-receipt.is-pending' is not visible; 'Undo' not in None; '.undo-receipt-time' reads None, wanted >= 2s)
+.393: verdict blocked; paused True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-receipt.is-pending' is not visible; 'Undo' not in None; '.undo-receipt-time' reads None, wanted >= 2s)
+2 passed in 57.62s
+```
+
+Red with the guard stripped (`PHILO8_GUARD_RED=1`: the round-one atlas shape) on the same product — the late click falsely PASSES, exactly Astra's reproduction (`docs/internal/philo/phase-8/atlas/reds/guard-stripped-passes-late.txt`):
+
+```text
+load { 7.78 5.05 5.45 }
+1440: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404
+F393: verdict pass; paused True; predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404
+        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_f826b8692fdf answered 200, wanted 200 (body sha256 854c76fcb676) | protocol_reads: GET /api/decisions/decision_f826b8692fdf answered 404')
+tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
+        print(f"{width}: verdict {record['verdict']}; paused {state['paused']}; {notes[:400]}")
+>       assert record["verdict"] == "blocked", (record["verdict"], notes)
+E       AssertionError: ('pass', 'predicate: all_of: protocol_status: DELETE /api/decisions/decision_115144196881 answered 200, wanted 200 (body sha256 d204c09cce20) | protocol_reads: GET /api/decisions/decision_115144196881 answered 404')
+tests/e2e/test_philo8_03_then_guard.py:65: AssertionError
+2 failed in 59.29s
+```
+
+And the round-one rig given a guarded step with the window closed delivers it (`docs/internal/philo/phase-8/atlas/reds/guard-r1-rig-delivers.txt`):
+
+```text
+r1 rig edd90f0e (RIG 1.5.0): the window had closed ('Removal committed') and the step WAS DELIVERED: clicks=['left'] done=True
+this branch (RIG 1.5.1): BLOCKED, nothing delivered (clicks=[]): ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did
+```
+
+Unit fences (`tests/unit/test_philo8_atlas.py`): a held guard delivers the step; a failed guard (committed, absent, 1 s left) blocks and delivers nothing, optional or not; every timed follow-up carries the guard.
+
+### MISSED 1: the optional-step fence now visits `then`
+
+`test_optional_steps_never_decide_a_verdict` walks `_acts_with_then` (setup, the trigger and its `then` steps); `test_the_walk_reaches_then_steps` shows the Undo's optional `then` step is reached by the new walk and missed by `general._acts` (the round-one walk); `test_every_then_step_is_a_legal_ui_step` validates every `then` step against the schema's ui step.
+
+### MISSED 2: the rehearsal HOME
+
+`scripts/philo8_rehearsal.py` stopped the hub but did not remove the HOME, while `rehearsal.json` said "removed". The driver now removes it and records `home_removed`. The two retained `rehearsal.json` files are corrected in place: `home_removed: false`, with the correction named.
+
+### The three guarded gestures re-run, serially, at both widths
+
+Merged main `a6c94db2` (this tree) — all pass (`merged-a6c94db2/`, the pre-guard runs of these cases moved to `attempts/merged-a6c94db2-pre-guard/`):
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p8.delete_then_leave.gone` | 1440 | **pass** | 26s | load1=10.55 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_50eb1d761b6a answered 200, wanted 200 (body sha256 7339368fa5fc) / protocol_reads: GET /api/decisions/decision_50eb1d761b6a answered  |
+| `case.p8.delete_then_leave.gone` | 393 | **pass** | 17s | load1=9.47 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_d180fac640d2 answered 200, wanted 200 (body sha256 ce281344ba98) / protocol_reads: GET /api/decisions/decision_d180fac640d2 answered  |
+| `case.p8.delete_twice.both_gone` | 1440 | **pass** | 42s | load1=8.97 | predicate: all_of: protocol_reads: GET /api/decisions/decision_6a6d3d1c26cc answered 404; GET /api/decisions/decision_73dafee8e862 answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.delete_twice.both_gone` | 393 | **pass** | 27s | load1=10.89 | predicate: all_of: protocol_reads: GET /api/decisions/decision_42561db829d3 answered 404; GET /api/decisions/decision_fe4d1adfcf4f answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.list_delete.undo` | 1440 | **pass** | 29s | load1=10.02 | predicate: all_of: protocol_reads: GET /api/decisions/decision_62959c7d1048 answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 1440, 'height': 900} with rect  |
+| `case.p8.list_delete.undo` | 393 | **pass** | 14s | load1=9.90 | predicate: all_of: protocol_reads: GET /api/decisions/decision_8b27fde98ff6 answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect { |
+
+Main before the repair `267f692a` — fail or BLOCKED, never pass (`main-267f692a/`, the pre-guard runs moved to `attempts/main-267f692a-pre-guard/`):
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p8.delete_then_leave.gone` | 1440 | **fail** | 49s | load1=9.70 | predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call |
+| `case.p8.delete_then_leave.gone` | 393 | **fail** | 41s | load1=6.90 | predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call |
+| `case.p8.delete_twice.both_gone` | 1440 | **fail** | 65s | load1=5.01 | predicate: all_of part protocol_reads: GET /api/decisions/decision_7d22cd724f69 answered 200, wanted 404 |
+| `case.p8.delete_twice.both_gone` | 393 | **fail** | 58s | load1=7.73 | predicate: all_of part protocol_reads: GET /api/decisions/decision_31149024eec0 answered 200, wanted 404 |
+| `case.p8.list_delete.undo` | 1440 | **blocked** | 26s | load1=10.66 | BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-r |
+| `case.p8.list_delete.undo` | 393 | **blocked** | 15s | load1=10.97 | BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-r |
+
+What changed on main: `delete_twice.both_gone` at 1440 now FAILS (A 200: at load 5 the gesture fit A's window, and the second `remove()` cleared A's timer — cause 2), where round one recorded BLOCKED at load 26–31; `list_delete.undo` is now BLOCKED at both widths (main's list shows no receipt, so the guarded Undo is not delivered), where round one recorded fail. **Main now: 26 of 28 face runs fail by assertion, 2 are BLOCKED (`list_delete.undo` at both widths); merged main: 28 of 28 pass.** The Undo's red on main is story 02's glass (`docs/internal/philo/phase-8/one-delete/README.md`, "Undo on the list": the receipt timeout). The expectation mutations (`mutations/`) ran on the pre-guard atlas; the guard changes no expectation.
 
 ## Re-run on merged main `a6c94db2` (PR #672 merged; this branch at `b941f2e1`)
 
 The product under test is main itself: `a6c94db2` merged into this branch (merge commit `b941f2e1`, the atlas state anchors re-anchored to it, no case changed). A real `npm ci --ignore-scripts && npm run build` in the worktree. Every run serial, one hub per run on a fresh HOME, `--engine none`; load 3–13 (each run's load in `runs.tsv`). The 8 s undo-window cases ran serially with everything else.
 
 ### Every Phase 8 case — `assets/story-03-shots/merged-a6c94db2/`
+
+(The rows of `delete_then_leave.gone`, `delete_twice.both_gone` and `list_delete.undo` below are the pre-guard runs, moved to `attempts/merged-a6c94db2-pre-guard/`; their guarded re-runs are in "Round two" above. All pass either way.)
 
 | Case | Width | Verdict | Duration | Load | Reading |
 |---|---|---|---|---|---|
@@ -518,4 +606,61 @@ main-267f692a {'fail': 27, 'blocked': 1}
 phase-b65107f5 {'pass': 33}
 phase7-on-b65107f5 {'pass': 36}
 mutations {'fail': 19}
+```
+
+### Captured run — 2026-09-27T06:28:40Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.XetsviEpxc uv run pytest -q -p no:cacheprovider tests/unit/test_philo8_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo7_rig_faithful.py tests/unit/test_philo5_graph_op.py tests/unit/test_philo_graph_reference.py tests/unit/test_evidence_scratch_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f3df669e31b18e34d9d3665dc19949c9cbbc0b03
+
+```text
+........................................................................ [ 32%]
+........................................................................ [ 65%]
+........................................................................ [ 98%]
+...                                                                      [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+219 passed, 2 warnings in 16.00s
+```
+
+### Captured run — 2026-09-27T06:28:57Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.t8XbvkYcHJ PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q -s -p no:cacheprovider tests/e2e/test_philo8_03_then_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f3df669e31b18e34d9d3665dc19949c9cbbc0b03
+
+```text
+1440: verdict blocked; paused True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-receipt.is-pending' is not visible; 'Undo' not in None; '.undo-receipt-time' reads None, wanted >= 2s)
+.393: verdict blocked; paused True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery ('.undo-receipt.is-pending' is not visible; 'Undo' not in None; '.undo-receipt-time' reads None, wanted >= 2s)
+.
+2 passed in 57.04s
+```
+
+### Captured run — 2026-09-27T06:29:55Z
+
+- **Command:** `bash -c for s in api_reference boundary_census config_reference council_check doctor_reference graph_reference openapi_reference repository_census; do HOME=$(mktemp -d) uv run python scripts/philo_$s.py --check >/dev/null 2>&1; echo "philo_$s --check exit $?"; done`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f3df669e31b18e34d9d3665dc19949c9cbbc0b03
+
+```text
+philo_api_reference --check exit 0
+philo_boundary_census --check exit 0
+philo_config_reference --check exit 0
+philo_council_check --check exit 0
+philo_doctor_reference --check exit 0
+philo_graph_reference --check exit 0
+philo_openapi_reference --check exit 0
+philo_repository_census --check exit 0
 ```

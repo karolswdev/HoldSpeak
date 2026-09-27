@@ -461,6 +461,39 @@
               ],
               "description": "PHILO-7-03: the step runs at this viewport width only; the rig records it skipped at the other."
             },
+            "requires": {
+              "type": "object",
+              "required": [
+                "visible"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "visible": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "text": {
+                  "type": "string"
+                },
+                "seconds_left": {
+                  "type": "object",
+                  "required": [
+                    "selector",
+                    "min"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "selector": {
+                      "type": "string"
+                    },
+                    "min": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "description": "PHILO-8-03 (Codex Astra r1): a delivery guard re-read immediately before the step fires; not met is BLOCKED by name."
+            },
             "then": {
               "type": "array",
               "minItems": 1,

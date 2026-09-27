@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -226,11 +227,15 @@ def main() -> int:
             rehearse(width, hub, out, log)
     finally:
         hub.stop()
+        # Codex Astra r1 MISSED 2: the record said the HOME was removed while
+        # only the hub was stopped. Remove it, and record what happened.
+        shutil.rmtree(home, ignore_errors=True)
+    home_removed = not home.exists()
     revision = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
                               cwd=gw.REPO).stdout.strip() or None
     (out / "rehearsal.json").write_text(json.dumps({
         "label": args.label, "revision": revision, "rig_hub": "scripts/graph_walk.py Hub",
-        "engine": "none", "home": "isolated (mkdtemp), removed after the run",
+        "engine": "none", "home": "isolated (mkdtemp)", "home_removed": home_removed,
         "loadavg": os.getloadavg(), "duration_s": round(time.monotonic() - started, 1),
         "jobs": log,
     }, indent=2) + "\n")

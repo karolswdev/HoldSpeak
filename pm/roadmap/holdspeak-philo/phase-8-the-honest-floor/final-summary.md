@@ -1,9 +1,8 @@
 # Phase 8 — The Honest Floor — final summary
 
-<!-- owner word pending -->
-**CLOSED — (the owner's word is pending).** This is the DRAFT for the close, written by the PHILO-8-03 lane (Fedaykin, Opus 5.5) for Muad'Dib. The closing line goes here in the Phase 7 form ("CLOSED <date> on the owner's word (<his words>): rehearsed, owner-reviewed; not a sitting") only after the owner reviews the rehearsal shots.
+**CLOSED 2026-09-27 on the owner's word ("Reviewed — close it after the check")**: rehearsed on merged main, owner-reviewed shots; not a sitting. The owner reviewed the closing shots on https://claude.ai/artifact/YBJfm8bu2BGAy5e9QHaDUB, 2026-09-27; the close followed Codex Astra's check on PR #674 (r1 BOUNCE on the rig, paid in round two).
 
-**Status: stories 01, 02 and 04 merged (01: #671 `808a9c30`, #673 `ce772ef9`; 02: #672 `a6c94db2`, after seven Codex Astra rounds; 04: #669 `26f7b005`); story 03 is PR #674, re-run on merged main `a6c94db2`.** Exits 1, 2 and 7 are flipped in `current-phase-status.md`. Exits 3–5 are met on merged main (the table below); exit 6 waits on the owner's review of the rehearsal shots. No sitting is claimed. The owner has not used this on his own desk.
+**Status: stories 01, 02 and 04 merged (01: #671 `808a9c30`, #673 `ce772ef9`; 02: #672 `a6c94db2`, after seven Codex Astra rounds; 04: #669 `26f7b005`); story 03 is PR #674 (done; re-run on merged main `a6c94db2`; Codex Astra r1 paid).** All seven exits are met (exit 5 with a qualification, the table below). No sitting is claimed. No sitting is claimed. The owner has not used this on his own desk.
 
 ## What he can do now that he could not on 2026-09-26 morning
 
@@ -29,7 +28,7 @@
 
 ## The closing rehearsal (story 03)
 
-`assets/story-03-shots/rehearsal-a6c94db2/` — `scripts/philo8_rehearsal.py`: one real hub on an isolated HOME, one page per width, the six jobs in order, the hub read back after each (`rehearsal.json`). A rehearsal, not a sitting. See `assets/story-03-proof.md` "The closing rehearsal" for the index of shots and the hub answers. It ran on merged main `a6c94db2` (branch HEAD `b941f2e1`), load 8–13, zero page errors at both widths; every job's hub answer is the one the job promises (two zones `New zone`/`New zone 2`; the rename on the hub; 404 without Undo; 200 after Undo and after the window; A 404 and B 404; 404 after the face change). The first rehearsal, on the #672 head `b65107f5`, is kept under `assets/story-03-shots/attempts/` (superseded). **The owner reviews these shots before merge.**
+`assets/story-03-shots/rehearsal-a6c94db2/` — `scripts/philo8_rehearsal.py`: one real hub on an isolated HOME, one page per width, the six jobs in order, the hub read back after each (`rehearsal.json`). A rehearsal, not a sitting. See `evidence-story-03.md` "The closing rehearsal" for the index of shots and the hub answers. It ran on merged main `a6c94db2` (branch HEAD `b941f2e1`), load 8–13, zero page errors at both widths; every job's hub answer is the one the job promises (two zones `New zone`/`New zone 2`; the rename on the hub; 404 without Undo; 200 after Undo and after the window; A 404 and B 404; 404 after the face change). The first rehearsal, on the #672 head `b65107f5`, is kept under `assets/story-03-shots/attempts/` (superseded). The owner reviewed them: "Reviewed — close it after the check" (2026-09-27).
 
 ## Both brains, per story
 
@@ -42,7 +41,7 @@ Who checked. Codex Astra (`gpt-6-astra`) was out from 2026-09-25 15:38 MDT (the 
 | 01 half B — the in-row field, the chip, F2 | the Fedaykin lane (Opus 5.5) | Astra role (Opus 5.5 stand-in) | r1 RATIFY-WITH-CONDITIONS (C1 the evidence, C2 the Floor failed-save glass, C3 the BACKLOG rows), paid (`checks/story-01-halfb-astra-role-r1.md`) | #673 `ce772ef9` |
 | 04 (a) — the empty decision headings | the Fedaykin lane (Opus 5.5) | Astra role (Opus 5.5 stand-in) | r1 RATIFY-WITH-CONDITIONS (one test condition), paid (`checks/story-04-built-astra-role-r1.md`) | #669 `26f7b005` |
 | 02 — one delete everywhere | the Fedaykin lane (Opus 5.5) | Codex Astra (`gpt-6-astra`), seven rounds | Round two (the Chair withholds Delete) is Muad'Dib's ruling (`docs/internal/philo/phase-8/one-delete/README.md` decision 3). Then Codex Astra: r1 BOUNCE @ `b65107f5` (a repeated Delete offered a false Undo; a failed refresh unmounted the host and committed early; the list foot covered the last row) → r2 BOUNCE @ `d3eab7e8` (a landed delete cleared an unrelated failure; "Removal committed" before the commit landed; a refused Workbench Remove held the item) → r3 BOUNCE @ `a84d1a37` (the Workbench Undo hidden by an old refusal; the list's refusal and Retry in the fixed foot) → r4 BOUNCE @ `daedfc99` (the Workbench lost another item's refusal on a successful Remove) → r5 BOUNCE @ `ba55892e` (the same class: the failure channel made subject-aware) → r6 BOUNCE @ `f95e03ab` (the rename chip's refusal lost its subject across a face change) → r7 **RATIFY** @ `4f419de0`, no conditions (`checks/story-02-built-astra-r1.md` … `-r7.md`; the lane's record `checks/story-02-round-three-muaddib.md`) | #672 `a6c94db2` |
-| 03 — the atlas cases and the closing proof | the Fedaykin lane (Opus 5.5) | Codex Astra | <!-- pending: Codex Astra's check on PR #674 --> | PR #674 (open at this draft) |
+| 03 — the atlas cases and the closing proof | the Fedaykin lane (Opus 5.5) | Codex Astra (`gpt-6-astra`) | r1 BOUNCE on the RIG @ `edd90f0e`, not the product (10/10 of its own atlas runs passed at both widths; the rehearsal's DB read-backs real; the BLOCKED-on-main label honest; the selection finding for the ledger): C1 a trigger's `then` did not enforce "inside the undo window" — an injected 8.5 s pause made `delete_then_leave.gone` PASS on the pre-fix product; MISSED 1 the optional-step fence did not visit `then`; MISSED 2 the rehearsal claimed its HOME removed. Paid in round two: the delivery guard `requires` (rig 1.5.1), the delayed real-atlas fence, the `then` walk, the HOME (`checks/story-03-built-astra-r1.md`; `evidence-story-03.md` "Round two"). The owner: "Reviewed — close it after the check" | PR #674 |
 
 ## Fences that failed pre-fix
 
@@ -50,7 +49,7 @@ Who checked. Codex Astra (`gpt-6-astra`) was out from 2026-09-25 15:38 MDT (the 
 - **01 half B:** 14 glass cases, all red on main `808a9c30`; 6 unit cases red on main (`evidence-story-01.md` "Red on main 808a9c30").
 - **02:** the list's Delete (row menu, key, palette), Undo, the long list, two deletes in both orders on both faces, the face change, the Chair: red on main `267f692a` (+#669) through the real hub; 6 vitest red; the mutations M1, M2, M3b, M4 each turn a fence red; M3 was the wrong mutation and is recorded (`docs/internal/philo/phase-8/one-delete/README.md`).
 - **04 (a):** the glass fence red on main, green on the branch (`evidence-story-04.md`).
-- **03:** on main `267f692a` 27 of 28 new face runs FAIL by assertion and 1 is blocked (`case.p8.delete_twice.both_gone` at 1440: the two-delete gesture outlasted the 8 s window on main under load 26–31, three attempts; its 393 run fails); 19 of 19 cases fail under one expectation mutation each on the phase build (`assets/story-03-proof.md` "The reds").
+- **03:** on main `267f692a`, after round two's delivery guard, 26 of 28 new face runs FAIL by assertion and 2 are BLOCKED (`case.p8.list_delete.undo` at both widths: main's list shows no receipt, so the guarded Undo is not delivered); 19 of 19 cases fail under one expectation mutation each. The guard's own red: with the guard stripped, the delayed real `delete_then_leave.gone` PASSES (`docs/internal/philo/phase-8/atlas/reds/guard-stripped-passes-late.txt`); with it, BLOCKED; the round-one rig delivers a guarded step with the window closed (`reds/guard-r1-rig-delivers.txt`).
 
 ## The exits
 
@@ -58,10 +57,10 @@ Who checked. Codex Astra (`gpt-6-astra`) was out from 2026-09-25 15:38 MDT (the 
 |---|---|---|---|
 | 1 | Two New Zone presses make two zones on every face offering it, both widths, zero 409 | **MET** (flipped) | `evidence-story-01.md`; atlas `case.p8.zone_create.second_unnamed` and `_floor` pass at both widths, fail on main |
 | 2 | New Zone and F2 open the rename where he is; Enter writes; no stale field | **MET** (flipped) for the list and the Floor; the Chair withholds New Zone (Q2 (c)) | `evidence-story-01.md`; atlas `case.p8.zone_rename.list`, `.f2_row`, `.name_taken_*`, `case.p8.chair.no_new_zone` |
-| 3 | The list's Delete with the Floor's receipt, readable, the long list at 393; 404 after the window, 200 after Undo | **MET** (merged main) | `evidence-story-02.md`; atlas `case.p8.list_delete.gone`, `.undo`, `.long_list_393` pass at 1440 and 393 on `a6c94db2` and fail on main `267f692a`; the rehearsal reads 200 after Undo and after the window |
-| 4 | Two deletes both reach the hub; a face change commits; Undo keeps the pending one; each cause has a mutation | **MET** (merged main) | `evidence-story-02.md` (M1, M2, M3b); atlas `case.p8.delete_twice.both_gone`, `case.p8.delete_then_leave.gone` pass at both widths on `a6c94db2`; on main `delete_then_leave` fails at both widths and `delete_twice` fails at 393 and is blocked at 1440 (the qualification in exit 5) |
-| 5 | An atlas case per repaired face at both widths, `.op` siblings where durable; each new face case fails on main; the 27 Phase 7 cases still pass | **MET WITH QUALIFICATION** | `assets/story-03-proof.md`: on merged main `a6c94db2` 28/28 face runs pass, 5/5 `.op`, 27/27 Phase 7 cases (36 runs). Qualification: on main `267f692a` 27 of 28 face runs fail by assertion and 1 is blocked, not failed (`case.p8.delete_twice.both_gone` at 1440: three tries at load 26–31, the gesture outlasted A's window on main); its 393 run fails, and story 02's glass is red on main for the same fence |
-| 6 | The closing proof rehearsed through the real hub at both widths; the owner reviews the shots | **PENDING the owner's review** (rehearsed on merged main `a6c94db2`) | `assets/story-03-shots/rehearsal-a6c94db2/`; `assets/story-03-proof.md` "The closing rehearsal" |
+| 3 | The list's Delete with the Floor's receipt, readable, the long list at 393; 404 after the window, 200 after Undo | **MET** (merged main; the guarded Undo re-run in round two) | `evidence-story-02.md`; atlas `case.p8.list_delete.gone`, `.undo`, `.long_list_393` pass at 1440 and 393 on `a6c94db2` and fail on main `267f692a`; the rehearsal reads 200 after Undo and after the window |
+| 4 | Two deletes both reach the hub; a face change commits; Undo keeps the pending one; each cause has a mutation | **MET** (merged main) | `evidence-story-02.md` (M1, M2, M3b); atlas `case.p8.delete_twice.both_gone`, `case.p8.delete_then_leave.gone` pass at both widths on `a6c94db2`; after round two's guard, on main both fail at both widths (`delete_twice`: A 200 — cause 2) |
+| 5 | An atlas case per repaired face at both widths, `.op` siblings where durable; each new face case fails on main; the 27 Phase 7 cases still pass | **MET WITH QUALIFICATION** | `evidence-story-03.md`: on merged main `a6c94db2` 28/28 face runs pass, 5/5 `.op`, 27/27 Phase 7 cases (36 runs). Qualification: on main `267f692a` 26 of 28 face runs fail by assertion and 2 are BLOCKED, not failed — `case.p8.list_delete.undo` at 1440 and 393: main's list shows no receipt, so the guarded Undo is never delivered (a late or absent follow-up blocks, it never passes); the Undo's red on main is story 02's glass |
+| 6 | The closing proof rehearsed through the real hub at both widths; the owner reviews the shots | **MET** — rehearsed on merged main `a6c94db2`; the owner, 2026-09-27: "Reviewed — close it after the check"; never recorded as a sitting | `assets/story-03-shots/rehearsal-a6c94db2/`; `evidence-story-03.md` "The closing rehearsal" |
 | 7 | (a) no empty decision heading; (b) dropped by the owner | **MET** (flipped) | `evidence-story-04.md`; atlas `case.p8.decision_heads.hidden` |
 
 The exit boxes in `current-phase-status.md` stay as they are; the flips are the orchestrator's.
@@ -73,29 +72,30 @@ The exit boxes in `current-phase-status.md` stay as they are; the flips are the 
 3. **2026-09-26 — the list rename canvas:** "Ratify as drawn"; "Chip on the list and the Floor"; "Keep F2 on zone rows".
 4. **2026-09-26 — Muad'Dib's ruling on #672 round two:** the Chair withholds Delete (UX-CANON §A.11).
 5. **2026-09-26 — #672 merged** on Codex Astra's r7 RATIFY (no conditions).
+6. **2026-09-27 — the closing shots:** "Reviewed — close it after the check" (https://claude.ai/artifact/YBJfm8bu2BGAy5e9QHaDUB).
 
 ## The numbers
 
 - **Atlas cases (at the branch HEAD):** 148 → 167 (`atlas.json` 85, `atlas-phase3.json` 36, `atlas-phase7.json` 27 unchanged; `atlas-phase8.json` 19: 14 face, 5 `.op`).
-- **Rig:** 1.4.0 → 1.5.0 (`protocol_reads`, `all_of`, `button: "right"`, a trigger's `then`).
+- **Rig:** 1.4.0 → 1.5.1 (`protocol_reads`, `all_of`, `button: "right"`, a trigger's `then`; 1.5.1 the delivery guard `requires`).
 
 ## THE LEDGER: what he still cannot do, and the debts (ranked by owner cost)
 
-1. **The owner has not reviewed the closing shots** (exit 6). ASSIGNED: Muad'Dib, to the owner.
-2. **A selected name can hardly be seen.** New Zone and F2 open the name SELECTED (`selectionStart 0`, `selectionEnd` = the name's length, focused; `assets/story-03-shots/rehearsal-a6c94db2/rehearsal.json`), but the desk-wide `::selection` background is `--accent-soft` (the accent at 12 % alpha, `web/src/styles/global.css:68`): 1.13:1 against the field (`assets/story-03-shots/selection-probe/`). Typing still replaces the name. BACKLOG "PHILO-8-03 follow-ups". Desk-wide, not a story 01 defect.
-3. **The row menu's Delete row is cut 15 px at the bottom at 393** (FINDING S2; BACKLOG "PHILO-8-02 follow-ups").
-4. **A failed rename, reopened with F2 and resubmitted, shows the row chip and the old receipt together** (Codex Astra r4 MISSED 2; BACKLOG "PHILO-8-02 follow-ups").
-5. **About 4.7 s from New Zone to the name field** on the rig (BACKLOG "PHILO-8-01 follow-ups"; cause not measured).
-6. **The Floor's zone name field is clipped** to the zone label's width; after a refused rename each blur re-sends the refused name; a late 422 or network refusal drops the hub's reason (BACKLOG "PHILO-8-01 follow-ups").
-7. **The list face's 10 px text, the plural `SHOWNS`, the Zone column cut at 393, the raw sort-header buttons** (BACKLOG "PHILO-8-01 follow-ups"). The list face repair.
-8. **F2 on a zone on the Chair has no face path to reach it** (a zone is selectable only on the WebGL Floor); the ghost is unit-fenced only (`web/src/desk/__tests__/philo801ZoneVerbs.test.ts`; `atlas-phase8.json` `excluded.p8.chair_f2_face`).
-9. **The doubled hairline on the Intelligence Follow-through lanes** (BACKLOG "PHILO-8-04 follow-ups").
-10. **The two-delete case cannot be shown red on main at 1440 under load** (the gesture outlasts the 8 s window there); red at 393 and in story 02's glass. Recorded, not a product debt.
-11. **Carried from Phase 7, unchanged:** the six non-desk two-step terminal writes; DESK palette = ALL; the tombstoned Thought's note 500; "find it cold"; the ToolSearch confound; the 11/10 px rules outside Settings; the Workbench footer linger; the privacy note; Projects on the contract (the next PHILO phase, on the owner's word).
+1. **A selected name can hardly be seen.** New Zone and F2 open the name SELECTED (`selectionStart 0`, `selectionEnd` = the name's length, focused; `assets/story-03-shots/rehearsal-a6c94db2/rehearsal.json`), but the desk-wide `::selection` background is `--accent-soft` (the accent at 12 % alpha, `web/src/styles/global.css:68`): 1.13:1 against the field (`assets/story-03-shots/selection-probe/`). Typing still replaces the name. BACKLOG "PHILO-8-03 follow-ups". Desk-wide, not a story 01 defect.
+2. **The row menu's Delete row is cut 15 px at the bottom at 393** (FINDING S2; BACKLOG "PHILO-8-02 follow-ups").
+3. **A failed rename, reopened with F2 and resubmitted, shows the row chip and the old receipt together** (Codex Astra r4 MISSED 2; BACKLOG "PHILO-8-02 follow-ups").
+4. **About 4.7 s from New Zone to the name field** on the rig (BACKLOG "PHILO-8-01 follow-ups"; cause not measured).
+5. **The Floor's zone name field is clipped** to the zone label's width; after a refused rename each blur re-sends the refused name; a late 422 or network refusal drops the hub's reason (BACKLOG "PHILO-8-01 follow-ups").
+6. **The list face's 10 px text, the plural `SHOWNS`, the Zone column cut at 393, the raw sort-header buttons** (BACKLOG "PHILO-8-01 follow-ups"). The list face repair.
+7. **F2 on a zone on the Chair has no face path to reach it** (a zone is selectable only on the WebGL Floor); the ghost is unit-fenced only (`web/src/desk/__tests__/philo801ZoneVerbs.test.ts`; `atlas-phase8.json` `excluded.p8.chair_f2_face`).
+8. **The doubled hairline on the Intelligence Follow-through lanes** (BACKLOG "PHILO-8-04 follow-ups").
+9. **The list Undo cannot be shown red on main through the atlas** (main's list has no receipt, so the guarded Undo is BLOCKED at both widths); its red is story 02's glass. Recorded, not a product debt. (Round one's BLOCKED `delete_twice` at 1440 is now a real red at load 5.)
+10. **Carried from Phase 7, unchanged:** the six non-desk two-step terminal writes; DESK palette = ALL; the tombstoned Thought's note 500; "find it cold"; the ToolSearch confound; the 11/10 px rules outside Settings; the Workbench footer linger; the privacy note; Projects on the contract (the next PHILO phase, on the owner's word).
 
 ## Laws learned
 
 - **An atlas case can carry a hub half and a face half of one outcome.** `all_of` reads the receipt AND the hub's 404 on the same observation; a readable "Removal committed" alone does not prove the delete (the Phase 7 decision-delete case read the hub only as a record).
 - **A case inside an 8 s window is one gesture.** The rig's before-capture (settle, preconditions, hub reads, a 2x screenshot) outlasted the undo window under load, so a second act written as the trigger ran after the timer: main passed two delete cases at 1440 that way. The first act is the trigger; the rest is its `then`.
+- **A timed follow-up carries its window, re-read at delivery.** `then` made the gesture one act but did not prove it landed inside the window: an 8.5 s pause made a pre-fix case pass (Codex Astra r1). A guard that does not hold blocks by name; it never passes and never fails.
 - **A step that does not exist on main is optional, never the outcome.** The step records `done: false`, the predicate reads the outcome, so main runs to a `fail` verdict instead of `blocked`, and the branch cannot pass on a skipped step.
 - **The general atlas fences read `atlas.json` only.** A phase file must apply them itself (`tests/unit/test_philo8_atlas.py` "the general fences"); `atlas-phase7.json` held anchors that drifted on main after story 01 (re-anchored here, three lines).
