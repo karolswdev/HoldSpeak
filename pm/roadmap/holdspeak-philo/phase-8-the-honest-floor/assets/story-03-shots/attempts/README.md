@@ -1,0 +1,3 @@
+# Superseded: the runs on the #672 head `b65107f5`
+
+Before PR #672 merged, story 03 ran its cases, the 27 Phase 7 cases and the closing rehearsal on a `git archive` build of `b65107f5` (main `ce772ef9` + story 02 at that commit). #672 then changed through seven Codex Astra rounds and merged as main `a6c94db2`. These folders are kept as the record of that first proof; the verdicts that count are in `../merged-a6c94db2/`, `../phase7-merged-a6c94db2/` and `../rehearsal-a6c94db2/`. The red-on-main runs (`../main-267f692a/`) and the expectation mutations (`../mutations/`, run on `b65107f5`) are not superseded.

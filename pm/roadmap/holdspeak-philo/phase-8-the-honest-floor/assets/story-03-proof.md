@@ -1,8 +1,189 @@
 # Evidence - PHILO-8-03 (held as `assets/story-03-proof.md` until the story flips done; then it moves to `evidence-story-03.md`)
 
 - **Story:** PHILO-8-03 - The atlas cases and the closing proof
-- **Status:** in-progress (the delete cases run on merged main after #672 merges, and the owner reviews the rehearsal shots; neither has happened)
+- **Status:** in-progress (re-run on merged main `a6c94db2`: all green; the owner reviews the rehearsal shots before done)
 - **Date:** 2026-09-26
+
+## Re-run on merged main `a6c94db2` (PR #672 merged; this branch at `b941f2e1`)
+
+The product under test is main itself: `a6c94db2` merged into this branch (merge commit `b941f2e1`, the atlas state anchors re-anchored to it, no case changed). A real `npm ci --ignore-scripts && npm run build` in the worktree. Every run serial, one hub per run on a fresh HOME, `--engine none`; load 3–13 (each run's load in `runs.tsv`). The 8 s undo-window cases ran serially with everything else.
+
+### Every Phase 8 case — `assets/story-03-shots/merged-a6c94db2/`
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p8.zone_create.second_unnamed` | 1440 | **pass** | 31s | load1=12.76 | predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 d03d78e1c650) / protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET |
+| `case.p8.zone_create.second_unnamed` | 393 | **pass** | 16s | load1=11.19 | predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 12776bc47e6d) / protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET |
+| `case.p8.zone_create.second_unnamed_floor` | 1440 | **pass** | 38s | load1=10.31 | predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 b5eb94de837d) / protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET |
+| `case.p8.zone_create.second_unnamed_floor` | 393 | **pass** | 22s | load1=9.89 | predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 bf3028ddf091) / protocol_reads: GET /api/directories answered 200 with one row {'name': 'New zone'}; GET |
+| `case.p8.zone_rename.list` | 1440 | **pass** | 25s | load1=8.95 | predicate: all_of: readable_text: 'Platform' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 237, 'y': 280, 'w': 53, 'h': 24} / protocol_reads: GET /api/directories answered 200 |
+| `case.p8.zone_rename.list` | 393 | **pass** | 13s | load1=7.51 | predicate: all_of: readable_text: 'Platform' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 364, 'w': 53, 'h': 24} / protocol_reads: GET /api/directories answered 200 w |
+| `case.p8.zone_rename.name_taken_list` | 1440 | **pass** | 25s | load1=6.73 | predicate: all_of: readable_text: 'NAME TAKEN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 237, 'y': 322, 'w': 112, 'h': 18} / protocol_reads: GET /api/directories answered  |
+| `case.p8.zone_rename.name_taken_list` | 393 | **pass** | 14s | load1=7.01 | predicate: all_of: readable_text: 'NAME TAKEN' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 394, 'w': 112, 'h': 18} / protocol_reads: GET /api/directories answered 20 |
+| `case.p8.zone_rename.name_taken_floor` | 1440 | **pass** | 30s | load1=6.80 | predicate: all_of: readable_text: 'NAME TAKEN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1208, 'y': 167, 'w': 112, 'h': 18} / protocol_reads: GET /api/directories answered |
+| `case.p8.zone_rename.name_taken_floor` | 393 | **pass** | 20s | load1=9.33 | predicate: all_of: readable_text: 'NAME TAKEN' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 14, 'y': 315, 'w': 112, 'h': 18} / protocol_reads: GET /api/directories answered 20 |
+| `case.p8.zone_rename.f2_row` | 1440 | **pass** | 17s | load1=8.49 | predicate: all_of: input_value: value is 'Inbox', wanted 'Inbox' / hit_target: control owns all 9 hit points in viewport {'width': 1440, 'height': 900} with rect {'x': 237, 'y': 196, 'w': 389, 'h': 36 |
+| `case.p8.zone_rename.f2_row` | 393 | **pass** | 12s | load1=9.18 | predicate: all_of: input_value: value is 'Inbox', wanted 'Inbox' / hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 220, 'w': 122, 'h': 36} |
+| `case.p8.chair.no_new_zone` | 1440 | **pass** | 8s | load1=8.96 | predicate: 'No matching tools or Desk items.' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1031, 'y': 73, 'w': 382, 'h': 44} |
+| `case.p8.chair.no_new_zone` | 393 | **pass** | 8s | load1=8.24 | predicate: 'No matching tools or Desk items.' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 51, 'w': 363, 'h': 44} |
+| `case.p8.list_delete.gone` | 1440 | **pass** | 35s | load1=7.82 | predicate: all_of: protocol_reads: GET /api/decisions/decision_1f429cb05330 answered 404 / readable_text: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651 |
+| `case.p8.list_delete.gone` | 393 | **pass** | 22s | load1=8.13 | predicate: all_of: protocol_reads: GET /api/decisions/decision_3b87fd4104a3 answered 404 / readable_text: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, |
+| `case.p8.list_delete.undo` | 1440 | **pass** | 28s | load1=7.98 | predicate: all_of: protocol_reads: GET /api/decisions/decision_260dacda11e6 answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 1440, 'height': 900} with rect  |
+| `case.p8.list_delete.undo` | 393 | **pass** | 14s | load1=8.96 | predicate: all_of: protocol_reads: GET /api/decisions/decision_7073e3dd8596 answered 200 / readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect { |
+| `case.p8.list_delete.long_list_393` | 1440 | **pass** | 33s | load1=9.11 | predicate: all_of: protocol_reads: GET /api/decisions/decision_607ba7a514c1 answered 404 / readable_text: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651 |
+| `case.p8.list_delete.long_list_393` | 393 | **pass** | 22s | load1=9.04 | predicate: all_of: protocol_reads: GET /api/decisions/decision_0e81defdc9d9 answered 404 / readable_text: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, |
+| `case.p8.delete_twice.both_gone` | 1440 | **pass** | 42s | load1=10.08 | predicate: all_of: protocol_reads: GET /api/decisions/decision_c61bcc2c3498 answered 404; GET /api/decisions/decision_9fcad4861876 answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.delete_twice.both_gone` | 393 | **pass** | 27s | load1=10.82 | predicate: all_of: protocol_reads: GET /api/decisions/decision_bd558d0198df answered 404; GET /api/decisions/decision_8a9cb97b9950 answered 404 / readable_text: 'Removal committed' is readable in view |
+| `case.p8.delete_then_leave.gone` | 1440 | **pass** | 25s | load1=11.02 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_c7c142749a5a answered 200, wanted 200 (body sha256 ce5d73111c35) / protocol_reads: GET /api/decisions/decision_c7c142749a5a answered  |
+| `case.p8.delete_then_leave.gone` | 393 | **pass** | 16s | load1=11.83 | predicate: all_of: protocol_status: DELETE /api/decisions/decision_ed36a299fcd8 answered 200, wanted 200 (body sha256 a29bb03ece25) / protocol_reads: GET /api/decisions/decision_ed36a299fcd8 answered  |
+| `case.p8.chair.delete_withheld` | 1440 | **pass** | 20s | load1=10.36 | predicate: all_of: readable_text: 'Open the Floor or the list' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1031, 'y': 96, 'w': 382, 'h': 26} / attr_equals: aria-disabled='tr |
+| `case.p8.chair.delete_withheld` | 393 | **pass** | 15s | load1=9.04 | predicate: all_of: readable_text: 'Open the Floor or the list' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26} / attr_equals: aria-disabled='true' |
+| `case.p8.decision_heads.hidden` | 1440 | **pass** | 9s | load1=8.63 | predicate: all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 117, 'w': 370, 'h': 94} / text_absent: 'CONSEQUENCES' absent at o |
+| `case.p8.decision_heads.hidden` | 393 | **pass** | 8s | load1=8.04 | predicate: all_of: readable_text: 'DECISION CONTEXT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 439, 'w': 363, 'h': 122} / text_absent: 'CONSEQUENCES' absent at obs |
+| `case.p8.zone_create.second_unnamed.op` | op | **pass** | 3s | load1=7.88 | predicate: all 3 facts hold: observe_at <root> holds; observe_at <root> holds; the trigger operation_id is absent |
+| `case.p8.zone_rename.list.op` | op | **pass** | 3s | load1=7.49 | predicate: all 3 facts hold: observe_at directory.id holds; observe_at directory.name holds; the trigger operation_id is absent |
+| `case.p8.zone_rename.name_taken_list.op` | op | **pass** | 3s | load1=7.49 | predicate: all 3 facts hold: the trigger error holds; the trigger existing_name holds; observe_at directory.name holds |
+| `case.p8.list_delete.gone.op` | op | **pass** | 3s | load1=7.13 | predicate: all 7 facts hold: observe_at <root> holds; op read #0 (decision.read) error holds; op read #1 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #1 (kernel.receipt.read) ob |
+| `case.p8.delete_twice.both_gone.op` | op | **pass** | 2s | load1=6.56 | predicate: all 10 facts hold: observe_at <root> holds; observe_at <root> holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receip |
+
+**28 of 28 face runs pass at 1440 and 393; 5 of 5 `.op` pass headless.** The delete cases needed no change for story 02's "committing" phase: each reads "Removal committed" and the hub's 404 on the same observation and polls to its bound, so it passes only after the DELETE has landed (the merged hook shows "Removal committed" only then, `web/src/desk/hooks/useUndoReceipt.ts:34`).
+
+### The 27 Phase 7 cases — `assets/story-03-shots/phase7-merged-a6c94db2/`
+
+| Case | Width | Verdict | Duration | Load | Reading |
+|---|---|---|---|---|---|
+| `case.p7.zone_create.visible` | 1440 | **pass** | 18s | load1=6.56 | predicate: 'Atlas zone' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1031, 'y': 96, 'w': 382, 'h': 26} |
+| `case.p7.zone_create.visible` | 393 | **pass** | 19s | load1=5.25 | predicate: 'Atlas zone' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 74, 'w': 363, 'h': 26} |
+| `case.p7.zone_file.note_in_zone` | 1440 | **pass** | 9s | load1=5.01 | predicate: 'Filed · Atlas zone' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1055, 'y': 161, 'w': 98, 'h': 18} |
+| `case.p7.zone_file.note_in_zone` | 393 | **pass** | 8s | load1=4.46 | predicate: 'Filed · Atlas zone' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 33, 'y': 403, 'w': 98, 'h': 18} |
+| `case.p7.zone_file.refile_moves` | 1440 | **pass** | 11s | load1=4.00 | predicate: 'Filed · Atlas zone B' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1055, 'y': 161, 'w': 109, 'h': 18} |
+| `case.p7.zone_file.refile_moves` | 393 | **pass** | 10s | load1=3.69 | predicate: 'Filed · Atlas zone B' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 33, 'y': 403, 'w': 109, 'h': 18} |
+| `case.p7.zone_unfile.note_leaves` | 1440 | **pass** | 9s | load1=3.60 | predicate: '+ Atlas zone' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1045, 'y': 189, 'w': 354, 'h': 170} |
+| `case.p7.zone_unfile.note_leaves` | 393 | **pass** | 9s | load1=3.44 | predicate: '+ Atlas zone' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 23, 'y': 431, 'w': 347, 'h': 170} |
+| `case.p7.kb_create.visible` | 1440 | **pass** | 9s | load1=3.06 | predicate: 'New Knowledge' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1031, 'y': 145, 'w': 382, 'h': 26} |
+| `case.p7.kb_create.visible` | 393 | **pass** | 10s | load1=4.67 | predicate: 'New Knowledge' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 123, 'w': 363, 'h': 26} |
+| `case.p7.kb_member.add_and_remove` | 1440 | **pass** | 9s | load1=4.37 | predicate: '+ Atlas knowledge' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1045, 'y': 189, 'w': 354, 'h': 137} |
+| `case.p7.kb_member.add_and_remove` | 393 | **pass** | 9s | load1=4.01 | predicate: '+ Atlas knowledge' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 23, 'y': 464, 'w': 347, 'h': 137} |
+| `case.p7.decision_status.review_list` | 1440 | **pass** | 10s | load1=4.33 | predicate: 'Review decision: Atlas review decision' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 302, 'w': 928, 'h': 54} |
+| `case.p7.decision_status.review_list` | 393 | **pass** | 10s | load1=4.52 | predicate: 'Review decision: Atlas review decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 12, 'y': 383, 'w': 369, 'h': 103} |
+| `case.p7.decision_supersede.successor_visible` | 1440 | **pass** | 8s | load1=4.22 | predicate: 'Supersedes Atlas old decision' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1037, 'y': 117, 'w': 370, 'h': 56} |
+| `case.p7.decision_supersede.successor_visible` | 393 | **pass** | 8s | load1=3.95 | predicate: 'Supersedes Atlas old decision' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 449, 'w': 363, 'h': 112} |
+| `case.p7.decision_delete.gone` | 1440 | **pass** | 33s | load1=3.96 | predicate: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651, 'y': 748, 'w': 138, 'h': 27} |
+| `case.p7.decision_delete.gone` | 393 | **pass** | 25s | load1=5.47 | predicate: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, 'y': 628, 'w': 138, 'h': 27} |
+| `case.p7.zone_create.visible.op` | op | **pass** | 2s | load1=4.94 | predicate: all 5 facts hold: observe_at directory.id holds; observe_at directory.name holds; observe_at directory.parent_id holds; op read #0 (zone.list) <root> holds; the trigger operation_id is abse |
+| `case.p7.zone_file.note_in_zone.op` | op | **pass** | 3s | load1=4.94 | predicate: all 10 facts hold: observe_at <root> holds; observe_at <root> holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operat |
+| `case.p7.zone_file.refile_moves.op` | op | **pass** | 5s | load1=4.71 | predicate: all 16 facts hold: observe_at <root> holds; op read #0 (zone.members) <root> holds; op read #1 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #1 (kernel.receipt.read) o |
+| `case.p7.zone_unfile.note_leaves.op` | op | **pass** | 3s | load1=4.49 | predicate: all 17 facts hold: observe_at <root> holds; observe_at <root> holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operat |
+| `case.p7.kb_create.visible.op` | op | **pass** | 2s | load1=4.49 | predicate: all 4 facts hold: observe_at id holds; observe_at name holds; op read #0 (kb.list) <root> holds; the trigger operation_id is absent |
+| `case.p7.kb_member.add_and_remove.op` | op | **pass** | 3s | load1=4.61 | predicate: all 15 facts hold: observe_at <root> holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read # |
+| `case.p7.decision_status.review_list.op` | op | **pass** | 3s | load1=4.61 | predicate: all 9 facts hold: observe_at status holds; observe_at id holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.operation.n |
+| `case.p7.decision_supersede.successor_visible.op` | op | **pass** | 3s | load1=4.56 | predicate: all 6 facts hold: observe_at status holds; observe_at superseded_by holds; op read #0 (decision.read) id holds; op read #0 (decision.read) deleted holds; the trigger receipt.target_ref hold |
+| `case.p7.decision_supersede.receipt.op` | op | **pass** | 3s | load1=4.19 | predicate: all 9 facts hold: observe_at objects.0.receipt.operation_id holds; observe_at objects.0.operation.name holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_ki |
+| `case.p7.decision_delete.gone.op` | op | **pass** | 3s | load1=4.19 | predicate: all 9 facts hold: observe_at <root> holds; op read #0 (decision.read) error holds; op read #1 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #1 (kernel.receipt.read) ob |
+| `case.p7.decision_create.receipt.op` | op | **pass** | 3s | load1=4.02 | predicate: all 7 facts hold: observe_at objects.0.receipt.operation_id holds; observe_at objects.0.operation.name holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_ki |
+| `case.p7.zone_file.refused_unknown_zone.op` | op | **pass** | 2s | load1=4.02 | predicate: all 8 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_kind holds; observe_ |
+| `case.p7.kb_member.refused_bad_ref.op` | op | **pass** | 3s | load1=3.94 | predicate: all 8 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_kind holds; observe_ |
+| `case.p7.decision_status.refused_invalid.op` | op | **pass** | 3s | load1=3.94 | predicate: all 8 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_kind holds; observe_ |
+| `case.p7.decision_delete.refused_unknown.op` | op | **pass** | 3s | load1=3.70 | predicate: all 8 facts hold: the trigger error holds; observe_at objects.0.receipt.operation_id holds; observe_at objects.0.receipt.state holds; observe_at objects.0.receipt.actor_kind holds; observe_ |
+| `case.j1.first_words_keep_as_note.kept.op` | op | **pass** | 3s | load1=3.65 | predicate: all 5 facts hold: observe_at id holds; observe_at body_markdown holds; observe_at title holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent |
+| `case.j11.write_a_thought.window_open.op` | op | **pass** | 3s | load1=3.65 | predicate: all 3 facts hold: observe_at thought.id holds; observe_at thought.working_note.id holds; the trigger operation_id is absent |
+| `case.j11.thought_keep.kept.op` | op | **pass** | 3s | load1=4.55 | predicate: all 4 facts hold: observe_at id holds; observe_at body_markdown holds; op read #0 (note.list) <root> holds; the trigger operation_id is absent |
+
+**36 of 36 runs pass** (9 face cases at 1440 and 393, 18 `.op`).
+
+### The closing rehearsal (exit 6) — `assets/story-03-shots/rehearsal-a6c94db2/`
+
+`scripts/philo8_rehearsal.py` on the merged tree (`rehearsal.json`: revision `b941f2e1`, load 13.1, 9.3, 8.4, 213.0 s, zero page errors at both widths). A rehearsal, not a sitting. **For the owner's review.**
+
+| Width | Job | What the face showed | The hub, read back after the job | Shots |
+|---|---|---|---|---|
+| 1440 | two unnamed zones | list; the second field reads 'New zone 2'; the field's selection 0–10 of 10 characters, focused True (at the shot: 0–10, focused True) | new zones: ['New zone', 'New zone 2'] | `1440-1-second-zone-field.png` |
+| 1440 | rename where he is | list; Enter in the row | zones now: ['New zone', 'Platform 1440'] | `1440-2-renamed-in-row.png` |
+| 1440 | list delete, no Undo | 'Removed Rehearsal keep 1440\nUndo\n07s' then 'Removal committed' | Rehearsal keep 1440: 404 | `1440-3a-list-delete-pending.png`, `1440-3b-list-delete-committed.png` |
+| 1440 | list delete with Undo | 'Restored Rehearsal undo 1440'; the row still listed after the window: True | Rehearsal undo 1440 (after the window): 200 | `1440-4a-list-undo-restored.png`, `1440-4b-list-undo-after-window.png` |
+| 1440 | two deletes in one window | after B: 'Removed Rehearsal B 1440\nUndo\n08s' | Rehearsal A 1440: 404; Rehearsal B 1440: 404 | `1440-5a-two-deletes-b-pending.png`, `1440-5b-two-deletes-committed.png` |
+| 1440 | delete, then a face change | list -> Chair inside the window | Rehearsal leave 1440: 404 | `1440-6a-delete-pending-before-leaving.png`, `1440-6b-on-the-chair.png` |
+| 393 | two unnamed zones | list; the second field reads 'New zone 3'; the field's selection 0–10 of 10 characters, focused True (at the shot: 0–10, focused True) | new zones: ['New zone 2', 'New zone 3'] | `393-1-second-zone-field.png` |
+| 393 | rename where he is | list; Enter in the row | zones now: ['New zone 2', 'Platform 393'] | `393-2-renamed-in-row.png` |
+| 393 | list delete, no Undo | 'Removed Rehearsal keep 393\nUndo\n08s' then 'Removal committed' | Rehearsal keep 393: 404 | `393-3a-list-delete-pending.png`, `393-3b-list-delete-committed.png` |
+| 393 | list delete with Undo | 'Restored Rehearsal undo 393'; the row still listed after the window: True | Rehearsal undo 393 (after the window): 200 | `393-4a-list-undo-restored.png`, `393-4b-list-undo-after-window.png` |
+| 393 | two deletes in one window | after B: 'Removed Rehearsal B 393\nUndo\n08s' | Rehearsal A 393: 404; Rehearsal B 393: 404 | `393-5a-two-deletes-b-pending.png`, `393-5b-two-deletes-committed.png` |
+| 393 | delete, then a face change | list -> Chair inside the window | Rehearsal leave 393: 404 | `393-6a-delete-pending-before-leaving.png`, `393-6b-on-the-chair.png` |
+
+### The name opens selected: verified, and hard to see
+
+The coordinator flagged that `1440-1-second-zone-field.png` (the first rehearsal) showed the new zone's name not drawn as selected. On merged main the field IS selected and focused, at open and at the shot (the table above; the hook selects on focus, `web/src/desk/hooks/useZoneRenameField.ts:55`). The highlight IS painted, but faintly: the desk-wide `::selection` background is `--accent-soft`, `rgba(168,110,74,.12)` (`web/src/styles/global.css:68`), over the field's `rgb(21,23,29)`, a 1.13:1 contrast. A cropped 2x shot of the field shows a barely lighter box behind the name; the palette's search field with its text selected looks the same (`assets/story-03-shots/selection-probe/field-*.png`, `palette-selected-*.png`; probe `docs/internal/philo/phase-8/atlas/selection_probe.py.txt`). **Not a screenshot-timing artefact, and not a story 01 behaviour defect: a real, desk-wide visibility defect of the selection colour.** Filed: BACKLOG "PHILO-8-03 follow-ups" row 1 (the library's next pass).
+
+### The merged-main captures (`dw evidence capture`, moved here from the evidence slot; the main and mutation runs were `git archive` copies, so their observations carry no git revision)
+
+### Captured run — 2026-09-27T05:55:33Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.2P1Xyox0ID uv run pytest -q -p no:cacheprovider tests/unit/test_philo8_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo7_atlas.py tests/unit/test_philo7_rig_faithful.py tests/unit/test_philo5_graph_op.py tests/unit/test_philo_graph_reference.py tests/unit/test_evidence_scratch_guard.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fc31a109d97079b4afdaecf95b57079debeb5b3b
+
+```text
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+...............................................................          [100%]
+=============================== warnings summary ===============================
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:260: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+    ? '.' + el.className.trim().split(/\s+/)
+
+tests/unit/test_evidence_scratch_guard.py::test_no_test_writes_into_tracked_evidence
+  tests/e2e/test_hs202_05_first_use_type_floor.py:439: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+    const m = /rgba?\(([^)]+)\)/.exec(s || '');
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+207 passed, 2 warnings in 16.06s
+```
+
+### Captured run — 2026-09-27T05:55:51Z
+
+- **Command:** `python3 -c 
+import json,glob,collections,sys
+for d in sys.argv[1:]:
+    c=collections.Counter(); revs=set()
+    for f in sorted(glob.glob(d+'/*/observation.json')):
+        r=json.load(open(f)); c[r['verdict']]+=1; revs.add((r.get('provenance') or {}).get('revision'))
+    print(d.rsplit('/',1)[1], dict(c), 'revision', sorted(x for x in revs if x))
+print('rehearsal', json.load(open(sys.argv[-1].rsplit('/',1)[0]+'/rehearsal-a6c94db2/rehearsal.json'))['revision'])
+ pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-03-shots/merged-a6c94db2 pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-03-shots/phase7-merged-a6c94db2 pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-03-shots/main-267f692a pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-03-shots/mutations`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fc31a109d97079b4afdaecf95b57079debeb5b3b
+
+```text
+merged-a6c94db2 {'pass': 33} revision ['b941f2e1d13465e2550bedd83484eef2c41065f8']
+phase7-merged-a6c94db2 {'pass': 36} revision ['b941f2e1d13465e2550bedd83484eef2c41065f8']
+main-267f692a {'fail': 27, 'blocked': 1} revision []
+mutations {'fail': 19} revision []
+rehearsal b941f2e1d13465e2550bedd83484eef2c41065f8
+```
+
+### Captured run — 2026-09-27T05:55:51Z
+
+- **Command:** `bash -c for s in api_reference boundary_census config_reference council_check doctor_reference graph_reference openapi_reference repository_census; do HOME=$(mktemp -d) uv run python scripts/philo_$s.py --check >/dev/null 2>&1; echo "philo_$s --check exit $?"; done`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** fc31a109d97079b4afdaecf95b57079debeb5b3b
+
+```text
+philo_api_reference --check exit 0
+philo_boundary_census --check exit 0
+philo_config_reference --check exit 0
+philo_council_check --check exit 0
+philo_doctor_reference --check exit 0
+philo_graph_reference --check exit 0
+philo_openapi_reference --check exit 0
+philo_repository_census --check exit 0
+```
+
+## Before the merge (superseded where named)
+
+The sections below record the first proof. The runs on the #672 head `b65107f5` are moved to `assets/story-03-shots/attempts/` (superseded by the merged-main runs above). The red-on-main runs (`main-267f692a/`) and the expectation mutations (`mutations/`) stand.
 
 ## Summary
 
@@ -12,7 +193,7 @@
 
 ## Every new case, both builds
 
-`assets/story-03-shots/main-267f692a/` and `assets/story-03-shots/phase-b65107f5/` — one folder per run with its `observation.json` (the rig's full record: provenance incl. the atlas sha256, setup, preconditions, before, trigger and its `then`, the trigger's own response, after, the reading) and the shots as JPEG (converted from the rig's 2x PNG by `sips`, 70 %, 1600 px, to keep the tree small; the main runs keep `after` only). `runs.tsv` in each folder: case, width, verdict, duration, the load average at the start, the reading. `python3 docs/internal/philo/phase-8/atlas/verdicts.py <folder>` prints the verdicts from the observations.
+`assets/story-03-shots/main-267f692a/` and `assets/story-03-shots/attempts/phase-b65107f5/` — one folder per run with its `observation.json` (the rig's full record: provenance incl. the atlas sha256, setup, preconditions, before, trigger and its `then`, the trigger's own response, after, the reading) and the shots as JPEG (converted from the rig's 2x PNG by `sips`, 70 %, 1600 px, to keep the tree small; the main runs keep `after` only). `runs.tsv` in each folder: case, width, verdict, duration, the load average at the start, the reading. `python3 docs/internal/philo/phase-8/atlas/verdicts.py <folder>` prints the verdicts from the observations.
 
 | Case | Width | main `267f692a` (before the repair) | phase build `b65107f5` |
 |---|---|---|---|
@@ -54,7 +235,7 @@
 
 ## The 27 Phase 7 cases on the phase build
 
-`assets/story-03-shots/phase7-on-b65107f5/` (the Phase 7 atlas with only its three re-anchored lines changed; no case changed).
+`assets/story-03-shots/attempts/phase7-on-b65107f5/` (the Phase 7 atlas with only its three re-anchored lines changed; no case changed).
 
 | Case | Width | Verdict | Duration | Load | Reading |
 |---|---|---|---|---|---|
@@ -125,7 +306,7 @@
 
 ## The closing rehearsal (exit 6)
 
-`assets/story-03-shots/rehearsal-b65107f5/` — `scripts/philo8_rehearsal.py` on the phase build `b65107f5` (a `git archive` copy; main `ce772ef9` + story 02): one real hub (the rig's `Hub`, its own process, a fresh isolated HOME), one Chromium page per width (1440x900, 393x852, 2x), the six jobs in order on the list, the hub read back after each job (`rehearsal.json`, which also records the load average and zero page errors at both widths). A rehearsal, not a sitting. **For the owner's review before merge; it is re-run on merged main after #672 merges.**
+`assets/story-03-shots/attempts/rehearsal-b65107f5/` — `scripts/philo8_rehearsal.py` on the phase build `b65107f5` (a `git archive` copy; main `ce772ef9` + story 02): one real hub (the rig's `Hub`, its own process, a fresh isolated HOME), one Chromium page per width (1440x900, 393x852, 2x), the six jobs in order on the list, the hub read back after each job (`rehearsal.json`, which also records the load average and zero page errors at both widths). A rehearsal, not a sitting. **For the owner's review before merge; it is re-run on merged main after #672 merges.**
 
 | Width | Job | What the face showed | The hub, read back after the job | Shots |
 |---|---|---|---|---|
@@ -161,7 +342,7 @@ Notes for the reviewer: at 393 the first zone job made "New zone 2" and "New zon
 - `docs/internal/philo/graph/atlas-phase7.json`: `test_every_source_reference_lands_on_its_symbol[atlas-phase7.json]` was RED on main `ce772ef9` (`verbRegistry.ts:204 no longer holds 'id: "desk.new-zone"'`, and 160, 547): story 01 moved the lines. Re-anchored to 220, 176, 568.
 - Generators: `docs/generated/api-reference.json` regenerated; every `scripts/philo_*.py --check` exits 0 (captured below); `philo_graph_validate.py docs/generated/graph.json` OK.
 
-## What waits on #672 (and on the owner)
+## What waited on #672 (done: see "Re-run on merged main" above) and what waits on the owner
 
 - The delete cases (`case.p8.list_delete.*`, `case.p8.delete_twice.both_gone`, `case.p8.delete_then_leave.gone`, `case.p8.chair.delete_withheld`) re-run on MERGED main; the state anchors in `atlas-phase8.json` re-checked (the builder re-anchors: `docs/internal/philo/phase-8/atlas/build_atlas8.py.txt`).
 - The closing rehearsal re-run on merged main; the owner reviews the shots. Then this story flips done and `final-summary.md` gets its CLOSED line.

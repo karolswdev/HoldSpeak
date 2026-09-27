@@ -1,0 +1,654 @@
+{
+  "id": "obs-20260927T054235Z-case.p8.zone_rename.list.op-muaddib-1440",
+  "run_id": "20260927T054235Z-case.p8.zone_rename.list.op-muaddib-1440",
+  "case_id": "case.p8.zone_rename.list.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.zone_rename"
+  ],
+  "state_id": "state.desk_presentation.p8_zone_name",
+  "provenance": {
+    "revision": "b941f2e1d13465e2550bedd83484eef2c41065f8",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "83f15f92a14b95607018855a69392092b0acf2474f7575bd41eb00b9a04a94f0",
+      "assets": [
+        "index-BKGKDXds.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57302",
+      "port": 57302,
+      "pid": 31012,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pekxbz37",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pekxbz37/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-27T05:42:35.750969+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "5c88dfece0fbd4efc8c9a26984d6bbc260e8954fe7604600991e8272263a71a5",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.create",
+      "args": {
+        "name": "New zone"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "directories",
+            "data": {
+              "name": "New zone"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "New zone",
+        "name_normalized": "new zone",
+        "parent_id": null
+      },
+      "domain_response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "New zone",
+        "name_normalized": "new zone",
+        "parent_id": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.008,
+      "captured": {
+        "name": "zone_id",
+        "path": "id",
+        "value": "dir_a8849cabd6ad"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "zone_id": "dir_a8849cabd6ad"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "zone.update",
+    "args": {
+      "directory_id": "dir_a8849cabd6ad",
+      "name": "Platform"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.update",
+        "arguments": {
+          "kind": "directories",
+          "id": "dir_a8849cabd6ad",
+          "data": {
+            "name": "Platform"
+          }
+        }
+      }
+    },
+    "response": {
+      "created_at": "2026-09-27T05:42:37Z",
+      "deleted": false,
+      "id": "dir_a8849cabd6ad",
+      "last_modified": "2026-09-27T05:42:37Z",
+      "name": "Platform",
+      "name_normalized": "platform",
+      "parent_id": null
+    },
+    "domain_response": {
+      "created_at": "2026-09-27T05:42:37Z",
+      "deleted": false,
+      "id": "dir_a8849cabd6ad",
+      "last_modified": "2026-09-27T05:42:37Z",
+      "name": "Platform",
+      "name_normalized": "platform",
+      "parent_id": null
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.001
+  },
+  "diff": {
+    "op_digest": {
+      "before": "3e8d1c997ec42f39f16ef57634575060c6f6f68d77ab26d5c35b43a6e7bfee8d",
+      "after": "4ba852e55fb672792da88a9c012c77a558f47810f593873b8885c19d50c8f386"
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57302",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_a8849cabd6ad"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "New zone",
+          "name_normalized": "new zone",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"New zone\", \"name_normalized\": \"new zone\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "3e8d1c997ec42f39f16ef57634575060c6f6f68d77ab26d5c35b43a6e7bfee8d",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-27T05:42:37.304434+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57302",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_a8849cabd6ad"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "Platform",
+          "name_normalized": "platform",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "Platform",
+          "name_normalized": "platform",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.005
+    },
+    "op_digest": "4ba852e55fb672792da88a9c012c77a558f47810f593873b8885c19d50c8f386",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-27T05:42:38.234710+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "zone.update",
+      "body_sha256": "4b6af88d43fe0081c8326cb539756b61cdecc32893afb7fa55d325c355e38129",
+      "body": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.update",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad",
+        "name": "Platform"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_a8849cabd6ad",
+            "data": {
+              "name": "Platform"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "domain_response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:57302",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      }
+    },
+    "op": {
+      "name": "zone.read",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_a8849cabd6ad"
+          }
+        }
+      },
+      "response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "Platform",
+          "name_normalized": "platform",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "domain_response": {
+        "directory": {
+          "created_at": "2026-09-27T05:42:37Z",
+          "deleted": false,
+          "id": "dir_a8849cabd6ad",
+          "last_modified": "2026-09-27T05:42:37Z",
+          "name": "Platform",
+          "name_normalized": "platform",
+          "parent_id": null
+        },
+        "member_ids": [],
+        "members": []
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"directory\": {\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}, \"member_ids\": [], \"members\": []}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.012
+    },
+    "op_digest": "4ba852e55fb672792da88a9c012c77a558f47810f593873b8885c19d50c8f386",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-27T05:42:38.228184+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "zone.update",
+      "body_sha256": "4b6af88d43fe0081c8326cb539756b61cdecc32893afb7fa55d325c355e38129",
+      "body": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "zone.update",
+      "args": {
+        "directory_id": "dir_a8849cabd6ad",
+        "name": "Platform"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.update",
+          "arguments": {
+            "kind": "directories",
+            "id": "dir_a8849cabd6ad",
+            "data": {
+              "name": "Platform"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "domain_response": {
+        "created_at": "2026-09-27T05:42:37Z",
+        "deleted": false,
+        "id": "dir_a8849cabd6ad",
+        "last_modified": "2026-09-27T05:42:37Z",
+        "name": "Platform",
+        "name_normalized": "platform",
+        "parent_id": null
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-27T05:42:37Z\", \"deleted\": false, \"id\": \"dir_a8849cabd6ad\", \"last_modified\": \"2026-09-27T05:42:37Z\", \"name\": \"Platform\", \"name_normalized\": \"platform\", \"parent_id\": null}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: observe_at directory.id holds; observe_at directory.name holds; the trigger operation_id is absent",
+    "elapsed_s": 0.924
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: observe_at directory.id holds; observe_at directory.name holds; the trigger operation_id is absent",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.93,
+    "first_satisfied_at_s": 0.924,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all 3 facts hold: observe_at directory.id holds; observe_at directory.name holds; the trigger operation_id is absent"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pekxbz37/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pekxbz37/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57302"
+  ],
+  "duration_s": 2.708
+}

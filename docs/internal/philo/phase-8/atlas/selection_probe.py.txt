@@ -1,0 +1,47 @@
+import tempfile, json
+from pathlib import Path
+from scripts import graph_walk as gw
+from playwright.sync_api import sync_playwright
+hub = gw.Hub(Path(tempfile.mkdtemp(prefix="selprobe-")), token="selprobe").start()
+out = Path("/private/tmp/claude-501/p803/selprobe"); out.mkdir(exist_ok=True)
+try:
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(headless=True)
+        for w in (1440, 393):
+            p = b.new_page(viewport={"width": w, "height": 900 if w > 720 else 852}, device_scale_factor=2)
+            p.goto(f"{hub.url}/?token=selprobe", wait_until="load")
+            try: p.get_by_role("button", name="Continue later").click(timeout=5000)
+            except Exception: pass
+            p.locator("[data-testid=chair-floor-toggle]").click()
+            if w > 720:
+                p.locator("[aria-controls=desk-tool-shelf]").click()
+                p.locator("[aria-controls=desk-palette-listbox]").fill("List view")
+                p.locator("[id='desk-palette-option-desk.toggle-view']").click()
+            p.locator(".desk-listmode").wait_for()
+            p.locator("[aria-controls=desk-tool-shelf]").click()
+            p.locator("[aria-controls=desk-palette-listbox]").fill("New Zone")
+            p.locator("[id='desk-palette-option-desk.new-zone']").click()
+            f = p.locator(".desk-listmode input.desk-zone-rename"); f.wait_for(timeout=20000)
+            p.wait_for_timeout(500)
+            info = p.evaluate("""() => { const f=document.querySelector('.desk-listmode input.desk-zone-rename');
+              const s=getComputedStyle(f,'::selection'); const c=getComputedStyle(f);
+              return {start:f.selectionStart,end:f.selectionEnd,focused:document.activeElement===f,
+                sel_bg:s.backgroundColor, sel_color:s.color, field_bg:c.backgroundColor, field_color:c.color,
+                accent_soft:getComputedStyle(f).getPropertyValue('--accent-soft')}; }""")
+            f.screenshot(path=str(out / f"field-{w}.png"))
+            # control: the same field after a script select() on an already focused input
+            p.evaluate("() => document.querySelector('.desk-listmode input.desk-zone-rename').select()")
+            p.wait_for_timeout(200)
+            f.screenshot(path=str(out / f"field-reselect-{w}.png"))
+            # control 2: a plain input elsewhere: the palette search, typed + select-all
+            p.keyboard.press("Escape")
+            p.locator("[aria-controls=desk-tool-shelf]").click()
+            q = p.locator("[aria-controls=desk-palette-listbox]"); q.fill("control text"); q.select_text()
+            p.wait_for_timeout(200)
+            q.screenshot(path=str(out / f"palette-selected-{w}.png"))
+            info["palette_sel_bg"] = p.evaluate("() => getComputedStyle(document.querySelector('[aria-controls=desk-palette-listbox]'),'::selection').backgroundColor")
+            print(w, json.dumps(info))
+            p.close()
+        b.close()
+finally:
+    hub.stop()
