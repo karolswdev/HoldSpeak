@@ -13,6 +13,11 @@
 
 A client that knows only the catalogue cannot put a thing in a project: the only "add" verb is `project.add_suggested_source` (F4); items and resources are HTTP only (`holdspeak/web/routes/projects.py:294-325`, `:411-515`). The face makes a project through the Door (`holdspeak/web/routes/project_door.py:69`), which arms and baselines watches; MCP makes a bare project (`project.create`). The Room read says the updates and the steward are `absent · not_yet_built` after both ran (`holdspeak/services/project_service.py:510-511`, F6). `desk.needs_you` counts muted projects on MCP and not on HTTP (`holdspeak/mcp/tools.py:1077-1090` vs `projects.py:546-573`, F13). The descriptions name mechanisms, not his jobs (F12). A base install cannot import the catalogue (`holdspeak/operations.py:38`; `jsonschema` only in the `test` and `dev` extras, `pyproject.toml:85`, `:139`; F14). Health ignores a past-due milestone and RECEIPTS lists the Room's reads (`project_service.py:1457-1461`, `:1933`; F2, F7 backend).
 
+## Pre-brief conditions (Codex Astra r3; settled in the charter's "Pre-brief conditions")
+
+- **A1:** the HTTP resource routes forward `expected_revision` and `command_id` to the service (`holdspeak/web/routes/projects.py:303`, `:316`; today both are dropped — Astra: two PUTs, `expected_revision=-1`, one command id, both 200, revision 1 → 3). Fence red on main: stale revision → 409 `stale_revision`; reused command id with a different body → 409 `idempotency_conflict`; same-body replay → the recorded result.
+- **A2:** the refusal codes per tool (transition includes `idempotency_conflict`) and the per-route HTTP envelopes as the charter's compatibility mapping states them; the equivalence fence uses that mapping, never message text.
+
 ## Scope
 
 - **Prerequisite (first commit):** F14 — `jsonschema` in the base dependencies; a fence that imports `holdspeak.mcp.tools` in a clean venv built from the base dependencies only.
@@ -47,5 +52,6 @@ PROVISIONAL: 2.5–3.5 engineering days.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+- 2026-09-27 — round four (Codex Astra r3): pre-brief conditions A1 (route repair) and A2 (mapping).
 - 2026-09-27 — round three (Codex Astra r2 F3 paid): the tools' contracts follow the service; own/foreign receipt fences; F22.
 - 2026-09-27 — round two (Codex Astra r1 paid): F14 as prerequisite; the new tools tabled in the charter; this story owns every `ProjectService` edit; Q0 words; fences ship here.

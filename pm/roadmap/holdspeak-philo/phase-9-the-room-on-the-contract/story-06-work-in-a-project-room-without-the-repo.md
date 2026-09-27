@@ -49,5 +49,6 @@ PROVISIONAL: about 1 engineering day, plus the owner's review.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
+- 2026-09-27 — round four (Codex Astra r3 C4): Q3 (c) stays conditional until its exact producer call and proposal chain are proved on a rig; this does not block Q3 (a).
 - 2026-09-27 — round three (Codex Astra r2 F4 paid): acceptance conditional on Q3; the Q3 (c) fixture named; Astra's probe cited.
 - 2026-09-27 — round two (Codex Astra r1 F1, F5, F9 paid): the job ends at publication in the Room; the launch pinned; the fixture fixed before the run; content checks.

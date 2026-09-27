@@ -1,8 +1,8 @@
 # Phase 9 - The Room on the Contract
 
-**Last updated:** 2026-09-27 (round three: Codex Astra r2 DO-NOT-RATIFY paid (`checks/charter-astra-r2.md`); Codex Astra r3 owed; the owner's ratification owed. Round three admitted the active probes (Door count, GitHub/Jira connection checks) and all four proposal decisions, reconciled the seven new tools with the real service, assigned the steward review-id repair to story 02, recorded Astra's fixture probe, made the Q3 (c) fixture concrete and story 06 conditional on Q3. Earlier: round two: Codex Astra r1 DO-NOT-RATIFY paid (`checks/charter-astra-r1.md`). Round two added Q0 (the job ends at publication in the Room), the admission table for every in-scope identity, the source-addition and agent-authority probes (F16–F19, reproduced), the new-tool contracts, the HTTP exceptions inventory, the steward lifecycle beat, the red-first matrix and the pinned closing contract. Earlier: DRAFTED by the Fedaykin docs lane (Opus 5.5) for Muad'Dib on the owner's rulings D1–D3 of 2026-09-27, grounded on main `b37dc2fb`. Nothing is built.)
+**Last updated:** 2026-09-27 (round four: Codex Astra r3 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r3.md`); its conditions are written as the pre-brief conditions of stories 01 and 02 ("Pre-brief conditions"); the owner's ratification owed. Earlier: round three: Codex Astra r2 DO-NOT-RATIFY paid (`checks/charter-astra-r2.md`); Codex Astra r3 owed; the owner's ratification owed. Round three admitted the active probes (Door count, GitHub/Jira connection checks) and all four proposal decisions, reconciled the seven new tools with the real service, assigned the steward review-id repair to story 02, recorded Astra's fixture probe, made the Q3 (c) fixture concrete and story 06 conditional on Q3. Earlier: round two: Codex Astra r1 DO-NOT-RATIFY paid (`checks/charter-astra-r1.md`). Round two added Q0 (the job ends at publication in the Room), the admission table for every in-scope identity, the source-addition and agent-authority probes (F16–F19, reproduced), the new-tool contracts, the HTTP exceptions inventory, the steward lifecycle beat, the red-first matrix and the pinned closing contract. Earlier: DRAFTED by the Fedaykin docs lane (Opus 5.5) for Muad'Dib on the owner's rulings D1–D3 of 2026-09-27, grounded on main `b37dc2fb`. Nothing is built.)
 
-**Status:** DRAFT — round three: Codex Astra r2 DO-NOT-RATIFY paid; Codex Astra r3 owed; the owner's ratification owed.
+**Status:** DRAFT — Codex Astra r3 RATIFY-WITH-CONDITIONS; conditions written as pre-brief conditions of stories 01 and 02; the owner's ratification owed.
 
 ## Goal
 
@@ -110,12 +110,12 @@ New MCP exposure for capabilities the hub already has over HTTP. **Each tool mat
 | `project.item.list` | `project_id` (req); `item_type` (the closed set); `limit` integer, clamped to 1–1000, default 200; `offset` ≥ 0 | `{items, limit, offset}` (no total) | `not_found` (project), `validation` (unknown `item_type`) | `list_items` (`:4243-4290`) | read: palette |
 | `project.item.create` | `project_id`, `item_type`, `title` (req); `summary`, `severity`, `owner_ref` (qualified ref), `due_at`, `sort_key` (number), `lifecycle` (the type's set), `details` (the type's closed schema); `expected_revision`; `command_id` | `{success: true, item}` | `validation`, `not_found`, `stale_revision`, `idempotency_conflict` | `create_item` (`:3628`) | exempt: palette |
 | `project.item.update` | `project_id`, `item_id` (req); `patch` (req) with exactly the updatable fields `title` (non-empty), `summary`, `severity`, `owner_ref`, `due_at`, `sort_key`, `details`, `lifecycle` (not `reached` for a milestone), at least one; `expected_revision`; `command_id` | `{success: true, item}` | `validation` (incl. "No updatable fields supplied"), `not_found`, `stale_revision`, `idempotency_conflict` | `update_item` (`:3947-4000`) | exempt: palette |
-| `project.item.transition` | `project_id`, `item_id`, `verb` (req; the target lifecycle in the type's set); `expected_revision`; `command_id` | `{success: true, item}` (a no-change envelope when already there) | `validation`, `not_found`, `stale_revision` | `transition_item` (`:4106`) | exempt: palette |
+| `project.item.transition` | `project_id`, `item_id`, `verb` (req; the target lifecycle in the type's set); `expected_revision`; `command_id` | `{success: true, item}` (a no-change envelope when already there) | `validation`, `not_found`, `stale_revision`, `idempotency_conflict` (Codex Astra r3 reproduced HTTP 409 on a reused command id, `project_service.py:4149`, `:4454`) | `transition_item` (`:4106`) | exempt: palette |
 | `project.resource.list` | `project_id` (req) | `{resources}` | `not_found` | `list_resources` (`:374`) | read: palette |
 | `project.resource.add` | `project_id`, `resource_ref` (req); `relationship` (the closed set, default member); `expected_revision`; `command_id` | `{resource}` | `validation` (bad ref kind or relationship — the service raises `ValueError`, mapped to `validation`), `not_found`, `stale_revision`, `idempotency_conflict` | `add_resource` (`:3169`) | admitted (filing) |
 | `project.resource.remove` | `project_id`, `resource_ref` (req); `expected_revision`; `command_id` | `{success: true, removed}` | as add | `remove_resource` (`:3286`) | admitted (unfiling) |
 
-**Compatibility mapping (the only deliberate differences):** MCP carries the service's error `code` in its refusal; HTTP keeps its bodies unchanged (`{success: false, error}` with HTTP 400 for `validation`, 404 for `not_found`, 409 with `error_code` for `stale_revision`/`idempotency_conflict`; `projects.py:294-325`, `:411-515`). Equivalence is checked on durable state, result bodies and this code↔status mapping, never on message text. The HTTP resource routes already answer 400 for the service's `ValueError` (`holdspeak/web/routes/projects.py:309-310`, `:320-321`); MCP maps the same case to `validation`.
+**Compatibility mapping (the only deliberate differences):** MCP carries the service's error `code` in its refusal. HTTP keeps its bodies, which are **not uniform**, per route (`holdspeak/web/routes/projects.py`): `GET …/items` — 400 `{error}` (bad filter, `:425`), 404 `{error}`; `POST …/items`, `PATCH …/items/{id}`, `POST …/items/{id}/transition` — 400 `{success: false, error}`, 404 `{success: false, error}`, 409 `{success: false, error, error_code}`; `GET …/resources` — 404 `{error}`; `PUT …/resources/{ref}` — 400 `{error}` (bad ref, `:309`), 404 `{error}`; `DELETE …/resources/{ref}` — 400 `{error}`, 404 `{error}`. Status ↔ code: 400 ↔ `validation`, 404 ↔ `not_found`, 409 ↔ `stale_revision` / `idempotency_conflict`. Equivalence is checked on durable state, result bodies and this mapping, never on message text. **The HTTP resource routes drop `expected_revision` and `command_id`** (`projects.py:303`, `:316`; the service takes them, `project_service.py:3172`): Codex Astra r3 sent two PUTs with `expected_revision=-1`, one command id and different relationships — both 200, revision 1 → 3, no command row. Story 01 repairs the routes to forward both (pre-brief condition A1, recommended), so the tools and the routes share one contract.
 
 ### The admission table (Q1 (a), every in-scope identity)
 
@@ -124,7 +124,7 @@ New MCP exposure for capabilities the hub already has over HTTP. **Each tool mat
 | Operation | Arguments that change the effect | Effect (read from the code) | Admission |
 |---|---|---|---|
 | `project.list`, `get`, `get_room`, `get_delta`, `list_updates`, `get_steward_run`, `steward.nudges`, `watch.inspect`, `suggested_sources`, `desk.needs_you`, `item.list`, `resource.list` | — | reads | none |
-| `connection.list` | — | today: probes GitHub auth and persists its state through `_github_entry` (F21) | **chartered as a cached read:** story 02 makes it return each provider's last stored state and check time, with no probe (a provider never checked reads as never checked); the probe moves to `connection.recheck` |
+| `connection.list` | — | today: probes GitHub auth and persists its state through `_github_entry` (F21) | **chartered as a cached read for the remote providers only** (story 02, pre-brief condition B1): GitHub, Jira and Confluence rows return the last stored state with that row's own checked-at time, and a provider never checked reads as "never checked" (not "Off" or "Not set up"); Calendar and Models stay live local reads (no egress, `holdspeak/services/connections_service.py:392`, `:431`); no probe |
 | Door count (`POST /api/projects/door/count`) | `provider`, `scope`, `watches` | fetches GitHub/Jira snapshots to count (`project_door_service.py:146`, `gh pr list`; F21) | admitted (egress) |
 | `project.create` (bare) | — | a project row, revision, change, event; no watch (`project_service.py:2342-2433`) | exempt |
 | Door create (`POST /api/projects/door`) | `sources` | a project, and for each source an armed watch that reads GitHub/Jira on a schedule, then a baseline read (`holdspeak/services/project_door_service.py:300-315`) | admitted when any source is given (egress); exempt without sources |
@@ -151,7 +151,7 @@ New MCP exposure for capabilities the hub already has over HTTP. **Each tool mat
 | `project.watch.pause`, `resume`, `retire` | — | stops or starts scheduled source reads | admitted (controls a process) |
 | `project.add_suggested_source` | `reference` | a resource and a watch on the Room, or a named refusal with the suggestion pending (story 02) | admitted (filing; arms egress) |
 | `project.dismiss_suggested_source` | `reference` | the suggestion never shows again | exempt |
-| `connection.recheck` | `provider_id`, `ref` | `github`, `jira`, `confluence`: probes the provider (egress) and stores the state; `calendar`, `models`: returns local readiness, no probe (`connections_service.py:123-141`) | admitted for `github`, `jira`, `confluence`; exempt for `calendar`, `models` |
+| `connection.recheck` | `provider_id`, `ref` | `github`, `jira`: probe the provider (egress) and store the state; `confluence`: **no probe today** — it reads stored rows and binary availability (`connections_service.py:135`, `:314`; `holdspeak/services/confluence_provider.py:502`; Codex Astra r3: zero subprocess calls, state stays `disconnected`, `last_checked_at` null); `calendar`, `models`: local readiness, no probe (`connections_service.py:123-141`) | admitted for `github`, `jira` and — after story 02's repair gives it a real probe (B1) — `confluence`; exempt for `calendar`, `models` |
 | `project.item.create`, `update`, `transition` | — | the owner's own records in the Room | exempt |
 | `project.resource.add`, `remove` | `relationship` | files or unfiles a thing in the Room | admitted (filing) |
 
@@ -268,6 +268,8 @@ Ownership: story 01 owns `holdspeak/services/project_service.py`, `holdspeak/ope
 
 2026-09-27: DRAFTED from the owner's rulings D1–D3, the BACKLOG row "Projects on the contract", the Phase 8 ledger and the grounding on main `b37dc2fb` (`docs/internal/philo/phase-9/grounding/README.md`).
 
+2026-09-27, round four: Codex Astra r3 RATIFY-WITH-CONDITIONS (`checks/charter-astra-r3.md`); the conditions are the pre-brief conditions A1–A2 (story 01) and B1–B2 (story 02); Q3 (c) stays conditional. Owed: the owner's ratification.
+
 2026-09-27, round three: Codex Astra r2 DO-NOT-RATIFY, converging (`checks/charter-astra-r2.md`), paid: admission by effect for the Door count and the connection probes, all four proposal decisions admitted, the seven tools reconciled with the service, the steward review-id repair (F20) in story 02, Astra's fixture probe recorded, Q3 (c) made concrete, story 06 conditional on Q3. Owed: Codex Astra r3; the owner's word.
 
 2026-09-27, round two: Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`), paid on Muad'Dib's rulings. The three probes reproduced on a fresh isolated HOME (grounding "Round two"): P1 GitHub 404 / Jira `accepted_no_watch` with nothing added (F16, F17; `qualified_ref` refuses both kinds, and a successful add writes no watch); P2 archive turns unattended runs off (F18); P3 a PROJECT credential without a grant turns unattended runs on and archives (F19); zero kernel rows in each. F3 and F15 corrected. Owed: Codex Astra r2; the owner's ratification and Q0–Q3; the steward lifecycle beat before story 02; the items canvas (Q3 (a)/(b)) and the list canvas before their face builds. Nothing is built.
@@ -297,7 +299,7 @@ Ownership: story 01 owns `holdspeak/services/project_service.py`, `holdspeak/ope
   - (b) Every project write.
   - (c) None in this phase. This is migration only, carrying constitutional debt: it cannot meet the Article XI exit (exit 4 stays NOT MET), and the steward keeps acting with no kernel receipt.
 - **Q2 — "What may an agent do in my projects?"** Today an agent with a PROJECT credential can turn on unattended steward runs and archive a project with no grant (F19). **Recommended: (a).**
-  - (a) The owner executes consequential project writes; an agent calling an admitted row is refused by name (`delegation_required`) with a receipt — so an agent cannot decide, defer or dismiss your proposals, probe your GitHub or Jira accounts, archive a project or change the steward's policy. Reads and exempt edits keep today's behaviour. This changes behaviour, and your answer ratifies the change.
+  - (a) The owner executes consequential project writes; an agent calling an admitted row is refused by name (`delegation_required`) with a receipt, over MCP and over HTTP (story 02 repairs the HTTP edge, which today answers 403 before any operation — pre-brief condition B2) — so an agent cannot decide, defer or dismiss your proposals, probe your GitHub or Jira accounts, archive a project or change the steward's policy. Reads and exempt edits keep today's behaviour. This changes behaviour, and your answer ratifies the change.
   - (b) Bounded project delegation: extend the Phase 7 grant to the admitted project rows, with an agent leg in the closing use; DESK palette = ALL repaired first.
 - **Q3 — "Where do I see the things in my project?"** Today a milestone or a risk is stored but the Room never shows it (F2). **Recommended: (a).** Each answer's effect on the stories: "Q3 propagation".
   - (a) The Room shows its items in one section and counts a late milestone in health and NEEDS YOU; items are added through owner-authenticated MCP (and the existing HTTP route); canvas first.
@@ -319,6 +321,36 @@ Ownership: story 01 owns `holdspeak/services/project_service.py`, `holdspeak/ope
 | F9 | Closing launch not pinned | "The closing contract": `--client codex --legs owner`, fresh homes and sessions, no resume, name-only find-it-cold, full context, event/hub reconciliation, fixture before the run, content checks |
 | MISSED 4 | F14 unassigned | a prerequisite repair in story 01 with a clean-install fence |
 
+## Pre-brief conditions (Codex Astra r3, RATIFY-WITH-CONDITIONS)
+
+Codex Astra r3 (`checks/charter-astra-r3.md`) recommends the charter to the owner with Q0 (a), Q1 (a), Q2 (a), Q3 (a). Its conditions are settled here, before the stories are briefed; they are not demands to build before ratification. The probe facts below are Codex Astra's (its isolated-hub HTTP, credential, database and real-adapter probes); the lane did not re-run them.
+
+**Before story 01 is briefed:**
+
+- **A1 — the resource routes' revision and idempotency.** `PUT`/`DELETE /api/projects/{id}/resources/{ref}` forward neither `expected_revision` nor `command_id` (`holdspeak/web/routes/projects.py:303`, `:316`); Astra's two PUTs with `expected_revision=-1` and one command id both answered 200 and moved the project revision 1 → 3 with no command row (project `proj-feb228e16585`). **Settled: story 01 repairs both routes to forward both arguments** (recommended; a declared difference was the alternative), with a fence red on main: a stale `expected_revision` answers 409 `stale_revision`; a reused command id with a different body answers 409 `idempotency_conflict`; a same-body replay returns the recorded result.
+- **A2 — the refusal and envelope mapping.** `project.item.transition` also refuses `idempotency_conflict` (Astra reproduced HTTP 409); HTTP error envelopes differ per route (`{error}` vs `{success: false, error}`). **Settled:** the new-tool table and the per-route compatibility mapping above; story 01's equivalence fence uses that mapping.
+
+**Before story 02 is briefed:**
+
+- **B1 — the connection read contract.**
+  - GitHub, Jira and Confluence rows in `connection.list` are cached: each row carries its own checked-at time and age, and a provider never checked reads as "never checked". Today the Connections face decodes an unknown state as `not_configured` ("Off" / "Not set up", `web/src/pages/cores/connections/api.ts:65`, `ConnectionsPane.tsx:65`) and its footer shows one newest time for all providers, time only (`ConnectionsPane.tsx:502`, `:509`); both change.
+  - Calendar and Models stay live local reads (`holdspeak/services/connections_service.py:392`, `:431`); their face controls open settings and offer no Recheck (`ConnectionsPane.tsx:608`).
+  - **Confluence Recheck is a repair, not existing behaviour:** today it reads stored rows and binary availability (`connections_service.py:135`, `:314`; `holdspeak/services/confluence_provider.py:502`); Astra, with a connection made through the real adapter producer, saw zero subprocess calls, the state still `disconnected`, `last_checked_at` null. Story 02 gives it a real probe that stores its state and time, or withholds its Recheck control on the face (UX-CANON §A.11).
+  - **Affected callers named:** the Connections face (`web/src/pages/cores/connections/ConnectionsPane.tsx`), the Door's source rows, and the setup interview's proposal annotations (`holdspeak/services/project_setup_service.py:1431`), which consume the list although the interview's migration is deferred.
+  - **Owner:** story 02 owns the Connections face's words and fences (per-row age, "never checked", the Confluence control). If the face changes beyond words and chips — a new element or layout — a canvas comes first (UX-CANON §A.2).
+- **B2 — the HTTP edge refusal.** With a real Settings-issued PROJECT credential, Door Count, Door Create with sources and GitHub Recheck each answered **403 `principal_right_required`** (missing right `owner`) and created zero kernel operations: the central HTTP gate refuses before the route or any declared operation runs (`holdspeak/principals.py:354`, `holdspeak/web_server.py:655`). Admission inside the service cannot produce the Q2 (a) `delegation_required` receipt on HTTP. **Settled: story 02 repairs the boundary** so an identifiable consequential HTTP request from an authenticated agent reaches its declared operation's refusal path (refused `delegation_required`, with its receipt), and fences it with real Settings-issued PROJECT credentials over HTTP, including the HTTP-only Door count and create. Phase 7's line is kept: a read, an exempt edit, an unknown route or an unauthenticated request stays a protocol refusal with no receipt.
+
+**Q3 (c) stays conditional** until its exact producer call and proposal chain are proved on a rig (story 06 names and proves them before any Q3 (c) run). This does not block Q3 (a).
+
+## Round four: Codex Astra r3, conditions written
+
+| r3 | Condition | Where |
+|---|---|---|
+| F2 / C1 | connection cache vs live local reads; never-checked and per-row age; Confluence probe; affected callers; face ownership | B1; the admission table's `connection.list` and `connection.recheck` rows; story 02 |
+| F3 / C2 | resource-route revision and idempotency; transition's `idempotency_conflict`; per-route envelopes | A1, A2; the new-tool table and compatibility mapping; story 01 |
+| F4 / C3 | the HTTP edge refusal and production-credential fences | B2; Q2 (a); story 02 |
+| C4 | Q3 (c) conditional | above; story 06 |
+
 ## Round three: Codex Astra r2, paid
 
 | r2 | Finding | Paid |
@@ -337,6 +369,7 @@ Ownership: story 01 owns `holdspeak/services/project_service.py`, `holdspeak/ope
 
 - 2026-09-27 — the owner: D1 "Work in a project room"; D2 "Yes, one bounded story"; D3 Codex closes it (AskUserQuestion).
 - 2026-09-27 — DRAFTED: six stories; 38 MCP + 6 HTTP identities; the grounding on main `b37dc2fb` — Fedaykin docs lane for Muad'Dib.
+- 2026-09-27 — round four: Codex Astra r3 RATIFY-WITH-CONDITIONS; conditions A1, A2 (story 01) and B1, B2 (story 02) written as pre-brief conditions; A1 settled as a route repair — Fedaykin docs lane for Muad'Dib.
 - 2026-09-27 — round three on Muad'Dib's rulings, paying Codex Astra r2: admission by effect (Door count, connection probes, all four decisions); the seven tools reconciled; F20 to story 02; Q3 (c) fixture; wording and verification corrections — Fedaykin docs lane for Muad'Dib.
 - 2026-09-27 — round two on Muad'Dib's rulings, paying Codex Astra r1: Q0 added; the admission table; Q2 restated; Q3 propagated; the new-tool contracts, the exceptions inventory, the steward beat, the red-first matrix, the closing contract; F14 into story 01 — Fedaykin docs lane for Muad'Dib.
 
