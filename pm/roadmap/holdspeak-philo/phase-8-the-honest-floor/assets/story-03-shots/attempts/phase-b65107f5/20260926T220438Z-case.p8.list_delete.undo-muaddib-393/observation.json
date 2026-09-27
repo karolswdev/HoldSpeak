@@ -1,0 +1,624 @@
+{
+  "id": "obs-20260926T220438Z-case.p8.list_delete.undo-muaddib-393",
+  "run_id": "20260926T220438Z-case.p8.list_delete.undo-muaddib-393",
+  "case_id": "case.p8.list_delete.undo",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55790",
+      "port": 55790,
+      "pid": 81575,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3ps6y6ew",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3ps6y6ew/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T22:04:38.597906+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "25f7b4134ef0d479f1b49406c01b4467dcbfbd62eff3f2c32c5b4ef4c5c638fe",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.29,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_93a3482d4066",
+          "title": "Atlas list delete",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:04:44Z",
+          "updated_at": "2026-09-26T22:04:44Z",
+          "deleted": false
+        },
+        "operation_id": "op_56053b0687c34040bb496404d5886008",
+        "receipt": {
+          "receipt_id": "rcpt_23acae033a0a46eb8ec7ee6574307bda",
+          "operation_id": "op_56053b0687c34040bb496404d5886008",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_93a3482d4066",
+          "created_at": 1790460284.9492428,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_93a3482d4066"
+        }
+      },
+      "response_sha256": "e0e0572ee668f955900ae4f2d2356d3c8c4f7e715ae212e1b0f94f038d3af4a7",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_93a3482d4066"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list delete']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "button": "right",
+      "name": "Atlas list delete",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_93a3482d4066"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "name": "Delete",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": ".undo-receipt.is-pending",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.undo-receipt-btn",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Restored Atlas list delete"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "undo-receipt is-restored"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 98,
+        "y": 668,
+        "w": 198,
+        "h": 27
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Open",
+      "after": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:04 PM\nDesk items\n18 ITE"
+    },
+    "document_text_sha256": {
+      "before": "4957d3f3c47c64609672a9974f77db778679a4cd07a60fcde260a36bf9a5e124",
+      "after": "f7e1791b12bef21b47607836c1c1adda76d4b07d4bf52909ebbaebd75587e923"
+    },
+    "document_text_len": {
+      "before": 1089,
+      "after": 938
+    }
+  },
+  "before": {
+    "observe_at": ".undo-receipt",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > nav.desk-menu-list.desk-work-menu > button.btn--chrome",
+    "focus_label": "Open",
+    "url": "http://127.0.0.1:55790/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "4957d3f3c47c64609672a9974f77db778679a4cd07a60fcde260a36bf9a5e124",
+    "document_text_len": 1089,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_93a3482d4066",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_93a3482d4066",
+            "title": "Atlas list delete",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:04:44Z",
+            "updated_at": "2026-09-26T22:04:44Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "4e7b94384dd98a337ba4b1dd992fa597598b3949abf3cd598915c889692a85cf"
+      }
+    ],
+    "at_utc": "2026-09-26T22:04:50.794381+00:00"
+  },
+  "after": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Restored Atlas list delete",
+    "attrs": {
+      "class": "undo-receipt is-restored"
+    },
+    "rect": {
+      "x": 98,
+      "y": 668,
+      "w": 198,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 98,
+        "y": 668,
+        "w": 198,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 100,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 100,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 100,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 197,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 197,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored > span.undo-receipt-label"
+        },
+        {
+          "x": 197,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:04 PM\nDesk items\n18 ITE",
+    "url": "http://127.0.0.1:55790/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "f7e1791b12bef21b47607836c1c1adda76d4b07d4bf52909ebbaebd75587e923",
+    "document_text_len": 938,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_93a3482d4066",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_93a3482d4066",
+            "title": "Atlas list delete",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:04:44Z",
+            "updated_at": "2026-09-26T22:04:44Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "4e7b94384dd98a337ba4b1dd992fa597598b3949abf3cd598915c889692a85cf"
+      }
+    ],
+    "at_utc": "2026-09-26T22:04:56.725527+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".undo-receipt",
+    "target_present": true,
+    "text": "Restored Atlas list delete",
+    "attrs": {
+      "class": "undo-receipt is-restored"
+    },
+    "rect": {
+      "x": 98,
+      "y": 668,
+      "w": 198,
+      "h": 27
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 98,
+        "y": 668,
+        "w": 198,
+        "h": 27
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 100,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 100,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 100,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 197,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 197,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored > span.undo-receipt-label"
+        },
+        {
+          "x": 197,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 670,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 682,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        },
+        {
+          "x": 293,
+          "y": 693,
+          "owned": true,
+          "owner": "div#desk-next > div.desk-listmode > div.desk-world-foot > span.undo-receipt.is-restored"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2302 THIS DEVICE\nSearch\n04:04 PM\nDesk items\n18 ITE",
+    "url": "http://127.0.0.1:55790/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "f7e1791b12bef21b47607836c1c1adda76d4b07d4bf52909ebbaebd75587e923",
+    "document_text_len": 938,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_93a3482d4066",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_93a3482d4066",
+            "title": "Atlas list delete",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:04:44Z",
+            "updated_at": "2026-09-26T22:04:44Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "4e7b94384dd98a337ba4b1dd992fa597598b3949abf3cd598915c889692a85cf"
+      }
+    ],
+    "at_utc": "2026-09-26T22:04:56.408692+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/decisions/decision_93a3482d4066 answered 200 | readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 98, 'y': 668, 'w': 198, 'h': 27}",
+    "elapsed_s": 4.274
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_reads: GET /api/decisions/decision_93a3482d4066 answered 200 | readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 98, 'y': 668, 'w': 198, 'h': 27}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 4.59,
+    "first_satisfied_at_s": 4.274,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_reads: GET /api/decisions/decision_93a3482d4066 answered 200 | readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 98, 'y': 668, 'w': 198, 'h': 27}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55790) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:55790) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/final-phase-list/20260926T220438Z-case.p8.list_delete.undo-muaddib-393/before.png",
+    "/private/tmp/claude-501/p803/final-phase-list/20260926T220438Z-case.p8.list_delete.undo-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3ps6y6ew/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3ps6y6ew/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55790"
+  ],
+  "duration_s": 19.001
+}

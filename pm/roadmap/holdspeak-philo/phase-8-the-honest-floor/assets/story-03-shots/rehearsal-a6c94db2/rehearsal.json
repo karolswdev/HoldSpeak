@@ -1,0 +1,218 @@
+{
+  "label": "merged main a6c94db2 (branch HEAD b941f2e1), --engine none",
+  "revision": "b941f2e1d13465e2550bedd83484eef2c41065f8",
+  "rig_hub": "scripts/graph_walk.py Hub",
+  "engine": "none",
+  "home": "isolated (mkdtemp); CORRECTED (Codex Astra r1 MISSED 2): the driver stopped the hub but did NOT remove this HOME; the driver removes it from PHILO-8-03 round two on",
+  "loadavg": [
+    13.08642578125,
+    9.26904296875,
+    8.421875
+  ],
+  "duration_s": 213.0,
+  "jobs": [
+    {
+      "width": 1440,
+      "job": "two unnamed zones",
+      "face": "list; the second field reads 'New zone 2'",
+      "hub": {
+        "new zones": [
+          "New zone",
+          "New zone 2"
+        ],
+        "selection at open": {
+          "value": "New zone 2",
+          "start": 0,
+          "end": 10,
+          "focused": true,
+          "window_focused": true
+        },
+        "selection at the shot": {
+          "value": "New zone 2",
+          "start": 0,
+          "end": 10,
+          "focused": true,
+          "window_focused": true
+        }
+      },
+      "shots": [
+        "1440-1-second-zone-field.png"
+      ],
+      "at_utc": "2026-09-27T05:48:27.759470+00:00"
+    },
+    {
+      "width": 1440,
+      "job": "rename where he is",
+      "face": "list; Enter in the row",
+      "hub": {
+        "zones now": [
+          "New zone",
+          "Platform 1440"
+        ]
+      },
+      "shots": [
+        "1440-2-renamed-in-row.png"
+      ],
+      "at_utc": "2026-09-27T05:48:37.415462+00:00"
+    },
+    {
+      "width": 1440,
+      "job": "list delete, no Undo",
+      "face": "'Removed Rehearsal keep 1440\\nUndo\\n07s' then 'Removal committed'",
+      "hub": {
+        "Rehearsal keep 1440": 404
+      },
+      "shots": [
+        "1440-3a-list-delete-pending.png",
+        "1440-3b-list-delete-committed.png"
+      ],
+      "at_utc": "2026-09-27T05:48:56.211316+00:00"
+    },
+    {
+      "width": 1440,
+      "job": "list delete with Undo",
+      "face": "'Restored Rehearsal undo 1440'; the row still listed after the window: True",
+      "hub": {
+        "Rehearsal undo 1440 (after the window)": 200
+      },
+      "shots": [
+        "1440-4a-list-undo-restored.png",
+        "1440-4b-list-undo-after-window.png"
+      ],
+      "at_utc": "2026-09-27T05:49:28.424152+00:00"
+    },
+    {
+      "width": 1440,
+      "job": "two deletes in one window",
+      "face": "after B: 'Removed Rehearsal B 1440\\nUndo\\n08s'",
+      "hub": {
+        "Rehearsal A 1440": 404,
+        "Rehearsal B 1440": 404
+      },
+      "shots": [
+        "1440-5a-two-deletes-b-pending.png",
+        "1440-5b-two-deletes-committed.png"
+      ],
+      "at_utc": "2026-09-27T05:49:53.307592+00:00"
+    },
+    {
+      "width": 1440,
+      "job": "delete, then a face change",
+      "face": "list -> Chair inside the window",
+      "hub": {
+        "Rehearsal leave 1440": 404
+      },
+      "shots": [
+        "1440-6a-delete-pending-before-leaving.png",
+        "1440-6b-on-the-chair.png"
+      ],
+      "at_utc": "2026-09-27T05:50:07.748079+00:00"
+    },
+    {
+      "width": 1440,
+      "page_errors": []
+    },
+    {
+      "width": 393,
+      "job": "two unnamed zones",
+      "face": "list; the second field reads 'New zone 3'",
+      "hub": {
+        "new zones": [
+          "New zone 2",
+          "New zone 3"
+        ],
+        "selection at open": {
+          "value": "New zone 3",
+          "start": 0,
+          "end": 10,
+          "focused": true,
+          "window_focused": true
+        },
+        "selection at the shot": {
+          "value": "New zone 3",
+          "start": 0,
+          "end": 10,
+          "focused": true,
+          "window_focused": true
+        }
+      },
+      "shots": [
+        "393-1-second-zone-field.png"
+      ],
+      "at_utc": "2026-09-27T05:50:22.799067+00:00"
+    },
+    {
+      "width": 393,
+      "job": "rename where he is",
+      "face": "list; Enter in the row",
+      "hub": {
+        "zones now": [
+          "New zone 2",
+          "Platform 393"
+        ]
+      },
+      "shots": [
+        "393-2-renamed-in-row.png"
+      ],
+      "at_utc": "2026-09-27T05:50:25.930353+00:00"
+    },
+    {
+      "width": 393,
+      "job": "list delete, no Undo",
+      "face": "'Removed Rehearsal keep 393\\nUndo\\n08s' then 'Removal committed'",
+      "hub": {
+        "Rehearsal keep 393": 404
+      },
+      "shots": [
+        "393-3a-list-delete-pending.png",
+        "393-3b-list-delete-committed.png"
+      ],
+      "at_utc": "2026-09-27T05:50:38.622823+00:00"
+    },
+    {
+      "width": 393,
+      "job": "list delete with Undo",
+      "face": "'Restored Rehearsal undo 393'; the row still listed after the window: True",
+      "hub": {
+        "Rehearsal undo 393 (after the window)": 200
+      },
+      "shots": [
+        "393-4a-list-undo-restored.png",
+        "393-4b-list-undo-after-window.png"
+      ],
+      "at_utc": "2026-09-27T05:51:02.325263+00:00"
+    },
+    {
+      "width": 393,
+      "job": "two deletes in one window",
+      "face": "after B: 'Removed Rehearsal B 393\\nUndo\\n08s'",
+      "hub": {
+        "Rehearsal A 393": 404,
+        "Rehearsal B 393": 404
+      },
+      "shots": [
+        "393-5a-two-deletes-b-pending.png",
+        "393-5b-two-deletes-committed.png"
+      ],
+      "at_utc": "2026-09-27T05:51:22.340986+00:00"
+    },
+    {
+      "width": 393,
+      "job": "delete, then a face change",
+      "face": "list -> Chair inside the window",
+      "hub": {
+        "Rehearsal leave 393": 404
+      },
+      "shots": [
+        "393-6a-delete-pending-before-leaving.png",
+        "393-6b-on-the-chair.png"
+      ],
+      "at_utc": "2026-09-27T05:51:32.801017+00:00"
+    },
+    {
+      "width": 393,
+      "page_errors": []
+    }
+  ],
+  "home_removed": false
+}

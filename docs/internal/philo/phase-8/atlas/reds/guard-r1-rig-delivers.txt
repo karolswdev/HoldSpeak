@@ -1,0 +1,2 @@
+r1 rig edd90f0e (RIG 1.5.0): the window had closed ('Removal committed') and the step WAS DELIVERED: clicks=['left'] done=True
+this branch (RIG 1.5.1): BLOCKED, nothing delivered (clicks=[]): ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did

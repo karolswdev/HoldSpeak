@@ -1,0 +1,749 @@
+{
+  "id": "obs-20260926T220922Z-case.p8.delete_then_leave.gone-muaddib-1440",
+  "run_id": "20260926T220922Z-case.p8.delete_then_leave.gone-muaddib-1440",
+  "case_id": "case.p8.delete_then_leave.gone",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1d0b8550fb91cfe87b9716f7d44d003fe7a5a68753fb3ad815f7de5ade8296c4",
+      "assets": [
+        "index-CP50dthT.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57008",
+      "port": 57008,
+      "pid": 85650,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f2pepwff",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f2pepwff/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T22:09:22.724802+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "25f7b4134ef0d479f1b49406c01b4467dcbfbd62eff3f2c32c5b4ef4c5c638fe",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.64,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_6725c241889b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:09:29Z",
+          "updated_at": "2026-09-26T22:09:29Z",
+          "deleted": false
+        },
+        "operation_id": "op_d55dc7af02bb4647b8a3dc1bfd662cbd",
+        "receipt": {
+          "receipt_id": "rcpt_ed7ba73ac5314fe9a57118818c9a3d4a",
+          "operation_id": "op_d55dc7af02bb4647b8a3dc1bfd662cbd",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_6725c241889b",
+          "created_at": 1790460569.980225,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_6725c241889b"
+        }
+      },
+      "response_sha256": "7144daf99692d90ddeaee123543fb8d16cd49b2015003fcb64b01997e59ca13b",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_6725c241889b"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_6725c241889b']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_6725c241889b']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_6725c241889b"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "press",
+    "adapter": "ui-keyboard",
+    "key": "Delete",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-pointer",
+        "selector": ".undo-receipt.is-pending",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "[data-testid=chair-floor-toggle]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "focus": {
+      "before": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+      "after": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch"
+    },
+    "focus_label": {
+      "before": "Atlas leave",
+      "after": "Floor"
+    },
+    "document_text_sha256": {
+      "before": "d6ad81b8c12286dc76682887e3446bf6b46afb22560025f4224c692cf1e50d5d",
+      "after": "07ffbf881a4aa542e435aa460b859f2a635408c563b843d21fafd85a2707f382"
+    },
+    "document_text_len": {
+      "before": 376,
+      "after": 359
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/decisions/decision_6725c241889b",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-world > div.desk-world-a11y > button",
+    "focus_label": "Atlas leave",
+    "url": "http://127.0.0.1:57008/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_6725c241889b",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0",
+      "rows": [],
+      "payload": {
+        "decision": {
+          "id": "decision_6725c241889b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:09:29Z",
+          "updated_at": "2026-09-26T22:09:29Z",
+          "deleted": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+    },
+    "document_text_sha256": "d6ad81b8c12286dc76682887e3446bf6b46afb22560025f4224c692cf1e50d5d",
+    "document_text_len": 376,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_6725c241889b",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_6725c241889b",
+            "title": "Atlas leave",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:09:29Z",
+            "updated_at": "2026-09-26T22:09:29Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+      }
+    ],
+    "at_utc": "2026-09-26T22:09:49.283204+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/decisions/decision_6725c241889b",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+    "focus_label": "Floor",
+    "url": "http://127.0.0.1:57008/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_6725c241889b",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0",
+      "rows": [],
+      "payload": {
+        "decision": {
+          "id": "decision_6725c241889b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:09:29Z",
+          "updated_at": "2026-09-26T22:09:29Z",
+          "deleted": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+    },
+    "document_text_sha256": "07ffbf881a4aa542e435aa460b859f2a635408c563b843d21fafd85a2707f382",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_6725c241889b",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_6725c241889b",
+            "title": "Atlas leave",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:09:29Z",
+            "updated_at": "2026-09-26T22:09:29Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+      }
+    ],
+    "at_utc": "2026-09-26T22:10:19.123656+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/decisions/decision_6725c241889b",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+    "focus_label": "Floor",
+    "url": "http://127.0.0.1:57008/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/decisions/decision_6725c241889b",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0",
+      "rows": [],
+      "payload": {
+        "decision": {
+          "id": "decision_6725c241889b",
+          "title": "Atlas leave",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:09:29Z",
+          "updated_at": "2026-09-26T22:09:29Z",
+          "deleted": false
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+    },
+    "document_text_sha256": "787bb7da7367c8370dc7c026629ef91fd0505a9b651942e8a1a0109294e70a79",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_6725c241889b",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_6725c241889b",
+            "title": "Atlas leave",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:09:29Z",
+            "updated_at": "2026-09-26T22:09:29Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "b8695051d673ec0004cb5ddd31a268de9af8682b7d95c7d81b3fc78d24dd52a0"
+      }
+    ],
+    "at_utc": "2026-09-26T22:10:01.276896+00:00",
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "elapsed_s": 7.392
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 25.239,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 25.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: all_of part protocol_status: no trigger response was recorded; `protocol_status` reads the status of the trigger's own call",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['document_text_len', 'document_text_sha256', 'focus', 'focus_label'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route DELETE /api/decisions/decision_6725c241889b",
+    "chosen": null,
+    "why": "NO response matched the declared trigger_route DELETE /api/decisions/decision_6725c241889b; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/final-main/20260926T220922Z-case.p8.delete_then_leave.gone-muaddib-1440/before.png",
+    "/private/tmp/claude-501/p803/final-main/20260926T220922Z-case.p8.delete_then_leave.gone-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f2pepwff/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-f2pepwff/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57008"
+  ],
+  "duration_s": 58.776
+}

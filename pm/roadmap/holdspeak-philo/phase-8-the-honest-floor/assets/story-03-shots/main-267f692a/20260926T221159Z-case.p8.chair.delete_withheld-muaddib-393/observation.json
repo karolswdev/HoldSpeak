@@ -1,0 +1,833 @@
+{
+  "id": "obs-20260926T221159Z-case.p8.chair.delete_withheld-muaddib-393",
+  "run_id": "20260926T221159Z-case.p8.chair.delete_withheld-muaddib-393",
+  "case_id": "case.p8.chair.delete_withheld",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "1d0b8550fb91cfe87b9716f7d44d003fe7a5a68753fb3ad815f7de5ade8296c4",
+      "assets": [
+        "index-CP50dthT.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57769",
+      "port": 57769,
+      "pid": 88015,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5oqgnjl9",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5oqgnjl9/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T22:12:00.078875+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "25f7b4134ef0d479f1b49406c01b4467dcbfbd62eff3f2c32c5b4ef4c5c638fe",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.32,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_4888fd42cf32",
+          "title": "Atlas chair keep",
+          "status": "accepted",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T22:12:06Z",
+          "updated_at": "2026-09-26T22:12:06Z",
+          "deleted": false
+        },
+        "operation_id": "op_e975ce7f934a47bf899916be024b499b",
+        "receipt": {
+          "receipt_id": "rcpt_56540a99fbbc472cae497ad40a60b0b2",
+          "operation_id": "op_e975ce7f934a47bf899916be024b499b",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_4888fd42cf32",
+          "created_at": 1790460726.501357,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_4888fd42cf32"
+        }
+      },
+      "response_sha256": "a0348023d67e6821bba7f830e4737382ed337610a669701b452f17193e0703c2",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_4888fd42cf32"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "at_width": 393,
+      "selector": "[id='desk-palette-option-desk.toggle-view']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-world-a11y",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-obj-id='decision:decision_4888fd42cf32']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": "[data-obj-id='decision:decision_4888fd42cf32']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Shift+Enter",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "key": "Delete",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_4888fd42cf32"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-keyboard",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "\u25b8\nDelete\nVERB\nDelete"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "type": "button",
+        "class": "btn--chrome desk-deck-row is-selected",
+        "id": "desk-palette-option-object.delete",
+        "role": "option",
+        "aria-selected": "true",
+        "aria-current": "true"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "3fe2594647fb104869598441050f7de3b6b95ff34eb3a8acbb7d4688fd251fc8",
+      "after": "b53d5863366b91236a4b6ac5f66caef2606f9bd933072e4c39cb74ccf8e78a8b"
+    },
+    "document_text_len": {
+      "before": 916,
+      "after": 407
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+          "value": ""
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [
+      {
+        "selector": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+        "value": ""
+      }
+    ],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57769/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "3fe2594647fb104869598441050f7de3b6b95ff34eb3a8acbb7d4688fd251fc8",
+    "document_text_len": 916,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_4888fd42cf32",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_4888fd42cf32",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:12:06Z",
+            "updated_at": "2026-09-26T22:12:06Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "f06ec1332be1cbbc5041a208fe437694fc44986d5e7907ca26437d31543e94e4"
+      }
+    ],
+    "at_utc": "2026-09-26T22:12:18.901707+00:00"
+  },
+  "after": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": true,
+    "text": "\u25b8\nDelete\nVERB\nDelete",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row is-selected",
+      "id": "desk-palette-option-object.delete",
+      "role": "option",
+      "aria-selected": "true",
+      "aria-current": "true"
+    },
+    "rect": {
+      "x": 15,
+      "y": 74,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete > span.desk-deck-label"
+        },
+        {
+          "x": 197,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57769/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b53d5863366b91236a4b6ac5f66caef2606f9bd933072e4c39cb74ccf8e78a8b",
+    "document_text_len": 407,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_4888fd42cf32",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_4888fd42cf32",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:12:06Z",
+            "updated_at": "2026-09-26T22:12:06Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "f06ec1332be1cbbc5041a208fe437694fc44986d5e7907ca26437d31543e94e4"
+      }
+    ],
+    "at_utc": "2026-09-26T22:12:39.453979+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": "[id='desk-palette-option-object.delete']",
+    "target_present": true,
+    "text": "\u25b8\nDelete\nVERB\nDelete",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome desk-deck-row is-selected",
+      "id": "desk-palette-option-object.delete",
+      "role": "option",
+      "aria-selected": "true",
+      "aria-current": "true"
+    },
+    "rect": {
+      "x": 15,
+      "y": 74,
+      "w": 363,
+      "h": 26
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 15,
+        "y": 74,
+        "w": 363,
+        "h": 26
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 17,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 17,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 197,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete > span.desk-deck-label"
+        },
+        {
+          "x": 197,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 76,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 87,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        },
+        {
+          "x": 376,
+          "y": 98,
+          "owned": true,
+          "owner": "button#desk-palette-option-object.delete"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "aside#desk-tool-shelf > label.desk-tool-search > span.gadget-string > input",
+    "focus_label": "Search tools and Desk items",
+    "url": "http://127.0.0.1:57769/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "b53d5863366b91236a4b6ac5f66caef2606f9bd933072e4c39cb74ccf8e78a8b",
+    "document_text_len": 407,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_4888fd42cf32",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_4888fd42cf32",
+            "title": "Atlas chair keep",
+            "status": "accepted",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T22:12:06Z",
+            "updated_at": "2026-09-26T22:12:06Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "f06ec1332be1cbbc5041a208fe437694fc44986d5e7907ca26437d31543e94e4"
+      }
+    ],
+    "at_utc": "2026-09-26T22:12:19.885785+00:00",
+    "predicate_satisfied": false,
+    "reading": "all_of part readable_text: 'Open the Floor or the list' NOT in observe_at text",
+    "elapsed_s": 0.918
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "all_of part readable_text: 'Open the Floor or the list' NOT in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 20.486,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: all_of part readable_text: 'Open the Floor or the list' NOT in observe_at text",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['attrs', 'document_text_len', 'document_text_sha256', 'rect', 'target_present', 'text', 'values', 'visible'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:57769) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:57769) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/final-main/20260926T221159Z-case.p8.chair.delete_withheld-muaddib-393/before.png",
+    "/private/tmp/claude-501/p803/final-main/20260926T221159Z-case.p8.chair.delete_withheld-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5oqgnjl9/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5oqgnjl9/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57769"
+  ],
+  "duration_s": 41.668
+}

@@ -1,0 +1,89 @@
+"""One expectation mutation per Phase 8 atlas case (PHILO-8-03 reds).
+
+Writes <out>: the atlas with every case's expected result mutated ONCE, and
+prints `case_id<TAB>mutation` lines. Each mutated case must FAIL (never
+block) on the phase build: the case can say no by assertion.
+"""
+import copy
+import json
+import sys
+
+src, out = sys.argv[1], sys.argv[2]
+atlas = json.load(open(src))
+
+
+def parts(pred):
+    return pred["predicates"] if pred["kind"] == "all_of" else [pred]
+
+
+def first(case, kind):
+    return next(p for p in parts(case["expected"]["predicate"]) if p["kind"] == kind)
+
+
+M = {}
+
+
+def mut(cid, what, fn):
+    M[cid] = (what, fn)
+
+
+def reads(statuses):
+    def f(c):
+        first(c, "protocol_reads")["expect"] = [{**e, "status": s} for e, s in zip(first(c, "protocol_reads")["expect"], statuses)]
+    return f
+
+
+def setv(kind, key, value):
+    def f(c):
+        first(c, kind)[key] = value
+    return f
+
+
+def row(name):
+    def f(c):
+        first(c, "protocol_reads")["expect"][0]["row"]["match"]["name"] = name
+    return f
+
+
+mut("case.p8.zone_create.second_unnamed", "the field must read 'New zone 3'", setv("input_value", "equals", "New zone 3"))
+mut("case.p8.zone_create.second_unnamed_floor", "the field must read 'New zone 3'", setv("input_value", "equals", "New zone 3"))
+mut("case.p8.zone_rename.list", "the hub must list 'Platform 2'", row("Platform 2"))
+mut("case.p8.zone_rename.name_taken_list", "the chip must read 'NOT SAVED'", setv("readable_text", "value", "NOT SAVED"))
+mut("case.p8.zone_rename.name_taken_floor", "the chip must read 'NOT SAVED'", setv("readable_text", "value", "NOT SAVED"))
+mut("case.p8.zone_rename.f2_row", "the field must read 'Inbox 2'", setv("input_value", "equals", "Inbox 2"))
+mut("case.p8.chair.no_new_zone", "the palette must read 'New Zone'", setv("readable_text", "value", "New Zone"))
+mut("case.p8.list_delete.gone", "the hub must still answer 200", reads([200]))
+mut("case.p8.list_delete.undo", "the hub must answer 404", reads([404]))
+mut("case.p8.list_delete.long_list_393", "the hub must still answer 200", reads([200]))
+mut("case.p8.delete_twice.both_gone", "A 404, B 200 (the old defect's shape)", reads([404, 200]))
+mut("case.p8.delete_then_leave.gone", "the hub must still answer 200", reads([200]))
+mut("case.p8.chair.delete_withheld", "the hub must answer 404", reads([404]))
+mut("case.p8.decision_heads.hidden", "the window must read 'CONSEQUENCES'", setv("readable_text", "value", "CONSEQUENCES"))
+
+
+def fact(i, value):
+    def f(c):
+        c["expected"]["predicate"]["facts"][i]["value" if "value" in c["expected"]["predicate"]["facts"][i] else "contains"] = value
+    return f
+
+
+def contains_name(i, name):
+    def f(c):
+        c["expected"]["predicate"]["facts"][i]["contains"]["name"] = name
+    return f
+
+
+mut("case.p8.zone_create.second_unnamed.op", "the list must hold 'New zone 3'", contains_name(1, "New zone 3"))
+mut("case.p8.zone_rename.list.op", "the zone must read 'Platform 2'", fact(1, "Platform 2"))
+mut("case.p8.zone_rename.name_taken_list.op", "the refusal must name 'Inbox 2'", fact(1, "Inbox 2"))
+mut("case.p8.list_delete.gone.op", "the receipt must be refused", fact(4, "refused"))
+mut("case.p8.delete_twice.both_gone.op", "B's receipt must be refused", fact(7, "refused"))
+
+ids = {c["id"] for c in atlas["cases"]}
+assert ids == set(M), sorted(ids ^ set(M))
+for c in atlas["cases"]:
+    what, fn = M[c["id"]]
+    fn(c)
+    c["expected"]["words"] = "MUTATION: " + what
+    print(f"{c['id']}\t{what}")
+json.dump(atlas, open(out, "w"), indent=2)

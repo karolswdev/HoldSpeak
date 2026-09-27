@@ -1,0 +1,2317 @@
+{
+  "id": "obs-20260926T212149Z-case.p8.delete_twice.both_gone.op-muaddib-1440",
+  "run_id": "20260926T212149Z-case.p8.delete_twice.both_gone.op-muaddib-1440",
+  "case_id": "case.p8.delete_twice.both_gone.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase8-mutated.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.decision_delete"
+  ],
+  "state_id": "state.desk_presentation.p8_one_delete",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62763",
+      "port": 62763,
+      "pid": 43125,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q355ongr",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q355ongr/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:21:49.821492+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8-mutated.json",
+      "sha256": "e5ab95a59f1bfd4e22b36e8ee73b27458a1b3cc982b8c81c4f7f3b96c63b2bbf",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Atlas probe A",
+        "status": "accepted"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Atlas probe A",
+              "status": "accepted"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-26T21:21:51Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_48e47658ecbd",
+        "operation_id": "op_1774b54fd7b54b36b277fe6d82783a93",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.876601,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_1774b54fd7b54b36b277fe6d82783a93",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c769151b328942f4a7e82ff75251d4db",
+          "result_ref": "decision:decision_48e47658ecbd",
+          "state": "succeeded",
+          "target_ref": "decision:decision_48e47658ecbd"
+        },
+        "status": "accepted",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Atlas probe A",
+        "updated_at": "2026-09-26T21:21:51Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-26T21:21:51Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_48e47658ecbd",
+        "operation_id": "op_1774b54fd7b54b36b277fe6d82783a93",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.876601,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_1774b54fd7b54b36b277fe6d82783a93",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_c769151b328942f4a7e82ff75251d4db",
+          "result_ref": "decision:decision_48e47658ecbd",
+          "state": "succeeded",
+          "target_ref": "decision:decision_48e47658ecbd"
+        },
+        "status": "accepted",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Atlas probe A",
+        "updated_at": "2026-09-26T21:21:51Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-26T21:21:51Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_48e47658ecbd\", \"operation_id\": \"op_1774b54fd7b54b36b277fe6d82783a93\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.876601, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_1774b54fd7b54b36b277fe6d82783a93\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_c769151b328942f4a7e82ff75251d4db\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"status\": \"accepted\", \"superseded_by\": null, \"tags\": [], \"title\": \"Atlas probe A\", \"updated_at\": \"2026-09-26T21:21:51Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.012,
+      "captured": {
+        "name": "a_id",
+        "path": "id",
+        "value": "decision_48e47658ecbd"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.create",
+      "args": {
+        "title": "Atlas probe B",
+        "status": "accepted"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "decisions",
+            "data": {
+              "title": "Atlas probe B",
+              "status": "accepted"
+            }
+          }
+        }
+      },
+      "response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-26T21:21:51Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_f50280109c2f4cb1a1d49324ebf25ad2",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.8826041,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f50280109c2f4cb1a1d49324ebf25ad2",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e66fc04b04704c648dd8c6f0c1b17dd6",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        },
+        "status": "accepted",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Atlas probe B",
+        "updated_at": "2026-09-26T21:21:51Z"
+      },
+      "domain_response": {
+        "alternatives": [],
+        "consequences_markdown": "",
+        "context_markdown": "",
+        "created_at": "2026-09-26T21:21:51Z",
+        "decided_at": null,
+        "deciders": [],
+        "decision_markdown": "",
+        "deleted": false,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_f50280109c2f4cb1a1d49324ebf25ad2",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.8826041,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_f50280109c2f4cb1a1d49324ebf25ad2",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_e66fc04b04704c648dd8c6f0c1b17dd6",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        },
+        "status": "accepted",
+        "superseded_by": null,
+        "tags": [],
+        "title": "Atlas probe B",
+        "updated_at": "2026-09-26T21:21:51Z"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-26T21:21:51Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_f50280109c2f4cb1a1d49324ebf25ad2\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8826041, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_f50280109c2f4cb1a1d49324ebf25ad2\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_e66fc04b04704c648dd8c6f0c1b17dd6\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}, \"status\": \"accepted\", \"superseded_by\": null, \"tags\": [], \"title\": \"Atlas probe B\", \"updated_at\": \"2026-09-26T21:21:51Z\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "b_id",
+        "path": "id",
+        "value": "decision_614ad484b5ec"
+      }
+    },
+    {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.delete",
+      "args": {
+        "decision_id": "decision_48e47658ecbd"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.delete",
+          "arguments": {
+            "kind": "decisions",
+            "id": "decision_48e47658ecbd"
+          }
+        }
+      },
+      "response": {
+        "deleted": true,
+        "id": "decision_48e47658ecbd",
+        "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.8860102,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+          "result_ref": "decision:decision_48e47658ecbd",
+          "state": "succeeded",
+          "target_ref": "decision:decision_48e47658ecbd"
+        }
+      },
+      "domain_response": {
+        "deleted": true,
+        "id": "decision_48e47658ecbd",
+        "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.8860102,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+          "result_ref": "decision:decision_48e47658ecbd",
+          "state": "succeeded",
+          "target_ref": "decision:decision_48e47658ecbd"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"deleted\": true, \"id\": \"decision_48e47658ecbd\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004,
+      "captured": {
+        "name": "a_op",
+        "path": "operation_id",
+        "value": "op_98277e891dbf444591c8a232ece2ae3d"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "a_id": "decision_48e47658ecbd",
+    "b_id": "decision_614ad484b5ec",
+    "a_op": "op_98277e891dbf444591c8a232ece2ae3d",
+    "b_op": "op_437868be2489414e80728198d507d9cc"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "decision.delete",
+    "args": {
+      "decision_id": "decision_614ad484b5ec"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.delete",
+        "arguments": {
+          "kind": "decisions",
+          "id": "decision_614ad484b5ec"
+        }
+      }
+    },
+    "response": {
+      "deleted": true,
+      "id": "decision_614ad484b5ec",
+      "operation_id": "op_437868be2489414e80728198d507d9cc",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790457711.897233,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+        "result_ref": "decision:decision_614ad484b5ec",
+        "state": "succeeded",
+        "target_ref": "decision:decision_614ad484b5ec"
+      }
+    },
+    "domain_response": {
+      "deleted": true,
+      "id": "decision_614ad484b5ec",
+      "operation_id": "op_437868be2489414e80728198d507d9cc",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790457711.897233,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+        "result_ref": "decision:decision_614ad484b5ec",
+        "state": "succeeded",
+        "target_ref": "decision:decision_614ad484b5ec"
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"deleted\": true, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.002,
+    "captured": {
+      "name": "b_op",
+      "path": "operation_id",
+      "value": "op_437868be2489414e80728198d507d9cc"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "3a755592e2c63e486227a2c375e047adc7c756a2270d0e40b3670c76a91079fb",
+      "after": "a1c1501892a5629e14ca21a4a9ff979443b5277dc70ecd45687f43391c3a79b3"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "created_at": 1790457711.884932,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "name": "decision.delete",
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "updated_at": 1790457711.885996,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                    "execution_expires_at": 1790461311.885346,
+                    "expires_at": 1790457741.885346,
+                    "issued_at": 1790457711.885346,
+                    "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                    "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                    "target_binding": "decision:decision_48e47658ecbd",
+                    "target_ref": "decision:decision_48e47658ecbd",
+                    "uses": 1,
+                    "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.8860102,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                  "result_ref": "decision:decision_48e47658ecbd",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd"
+                },
+                "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "created_at": 1790457711.884932,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "name": "decision.delete",
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "updated_at": 1790457711.885996,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                    "execution_expires_at": 1790461311.885346,
+                    "expires_at": 1790457741.885346,
+                    "issued_at": 1790457711.885346,
+                    "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                    "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                    "target_binding": "decision:decision_48e47658ecbd",
+                    "target_ref": "decision:decision_48e47658ecbd",
+                    "uses": 1,
+                    "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.8860102,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                  "result_ref": "decision:decision_48e47658ecbd",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd"
+                },
+                "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"created_at\": 1790457711.884932, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"idempotency_key\": \"decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c\", \"name\": \"decision.delete\", \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"updated_at\": 1790457711.885996, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"execution_expires_at\": 1790461311.885346, \"expires_at\": 1790457741.885346, \"issued_at\": 1790457711.885346, \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3\", \"target_binding\": \"decision:decision_48e47658ecbd\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"uses\": 1, \"warrant_id\": \"war_36717d6490f748c4a46c6934e4658bcd\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"ref\": \"operation:op_98277e891dbf444591c8a232ece2ae3d\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.002
+        },
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": null,
+          "skipped": "unresolved placeholder; not sent"
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 224,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "created_at": 1790457711.884932,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "name": "decision.delete",
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "updated_at": 1790457711.885996,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                    "execution_expires_at": 1790461311.885346,
+                    "expires_at": 1790457741.885346,
+                    "issued_at": 1790457711.885346,
+                    "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                    "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                    "target_binding": "decision:decision_48e47658ecbd",
+                    "target_ref": "decision:decision_48e47658ecbd",
+                    "uses": 1,
+                    "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.8860102,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                  "result_ref": "decision:decision_48e47658ecbd",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd"
+                },
+                "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "created_at": 1790457711.884932,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "name": "decision.delete",
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "updated_at": 1790457711.885996,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                    "execution_expires_at": 1790461311.885346,
+                    "expires_at": 1790457741.885346,
+                    "issued_at": 1790457711.885346,
+                    "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                    "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                    "target_binding": "decision:decision_48e47658ecbd",
+                    "target_ref": "decision:decision_48e47658ecbd",
+                    "uses": 1,
+                    "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.8860102,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                  "result_ref": "decision:decision_48e47658ecbd",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_48e47658ecbd"
+                },
+                "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 224,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"created_at\": 1790457711.884932, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"idempotency_key\": \"decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c\", \"name\": \"decision.delete\", \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"updated_at\": 1790457711.885996, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"execution_expires_at\": 1790461311.885346, \"expires_at\": 1790457741.885346, \"issued_at\": 1790457711.885346, \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3\", \"target_binding\": \"decision:decision_48e47658ecbd\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"uses\": 1, \"warrant_id\": \"war_36717d6490f748c4a46c6934e4658bcd\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"ref\": \"operation:op_98277e891dbf444591c8a232ece2ae3d\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        },
+        {
+          "kind": "op",
+          "name": "kernel.receipt.read",
+          "args": {
+            "operation_id": "op_437868be2489414e80728198d507d9cc"
+          },
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 225,
+            "method": "tools/call",
+            "params": {
+              "name": "kernel.receipt",
+              "arguments": {
+                "operation_id": "op_437868be2489414e80728198d507d9cc"
+              }
+            }
+          },
+          "response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                  "created_at": 1790457711.896214,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "name": "decision.delete",
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "updated_at": 1790457711.8972201,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                    "execution_expires_at": 1790461311.896644,
+                    "expires_at": 1790457741.896644,
+                    "issued_at": 1790457711.896644,
+                    "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                    "operation_id": "op_437868be2489414e80728198d507d9cc",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                    "target_binding": "decision:decision_614ad484b5ec",
+                    "target_ref": "decision:decision_614ad484b5ec",
+                    "uses": 1,
+                    "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.897233,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                  "result_ref": "decision:decision_614ad484b5ec",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_614ad484b5ec"
+                },
+                "ref": "operation:op_437868be2489414e80728198d507d9cc"
+              }
+            ],
+            "view": "receipt"
+          },
+          "domain_response": {
+            "consistency": "committed",
+            "objects": [
+              {
+                "native_receipts": [],
+                "operation": {
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "claimed_by": "hub-desk-writer",
+                  "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                  "created_at": 1790457711.896214,
+                  "decision": "approve",
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "name": "decision.delete",
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "revision": 5,
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "updated_at": 1790457711.8972201,
+                  "version": 1,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                    "execution_expires_at": 1790461311.896644,
+                    "expires_at": 1790457741.896644,
+                    "issued_at": 1790457711.896644,
+                    "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                    "operation_id": "op_437868be2489414e80728198d507d9cc",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-desk-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                    "target_binding": "decision:decision_614ad484b5ec",
+                    "target_ref": "decision:decision_614ad484b5ec",
+                    "uses": 1,
+                    "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                  },
+                  "warrant_revoked": 0
+                },
+                "receipt": {
+                  "actor_identity": "owner-session",
+                  "actor_kind": "owner",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "created_at": 1790457711.897233,
+                  "delegator_identity": "",
+                  "delegator_kind": "",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "outcome": "succeeded",
+                  "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                  "result_ref": "decision:decision_614ad484b5ec",
+                  "state": "succeeded",
+                  "target_ref": "decision:decision_614ad484b5ec"
+                },
+                "ref": "operation:op_437868be2489414e80728198d507d9cc"
+              }
+            ],
+            "view": "receipt"
+          },
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 225,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_437868be2489414e80728198d507d9cc\", \"created_at\": 1790457711.896214, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"idempotency_key\": \"decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"name\": \"decision.delete\", \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"updated_at\": 1790457711.8972201, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"execution_expires_at\": 1790461311.896644, \"expires_at\": 1790457741.896644, \"issued_at\": 1790457711.896644, \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537\", \"target_binding\": \"decision:decision_614ad484b5ec\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"uses\": 1, \"warrant_id\": \"war_7b3a7654b18a4645af88d50853bbf577\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}, \"ref\": \"operation:op_437868be2489414e80728198d507d9cc\"}], \"view\": \"receipt\"}"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.001
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:62763",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.list",
+      "args": {}
+    },
+    "op": {
+      "name": "decision.list",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.list",
+          "arguments": {
+            "kind": "decisions"
+          }
+        }
+      },
+      "response": [
+        {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-26T21:21:51Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_614ad484b5ec",
+          "status": "accepted",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Atlas probe B",
+          "updated_at": "2026-09-26T21:21:51Z"
+        }
+      ],
+      "domain_response": [
+        {
+          "alternatives": [],
+          "consequences_markdown": "",
+          "context_markdown": "",
+          "created_at": "2026-09-26T21:21:51Z",
+          "decided_at": null,
+          "deciders": [],
+          "decision_markdown": "",
+          "deleted": false,
+          "id": "decision_614ad484b5ec",
+          "status": "accepted",
+          "superseded_by": null,
+          "tags": [],
+          "title": "Atlas probe B",
+          "updated_at": "2026-09-26T21:21:51Z"
+        }
+      ],
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[{\"alternatives\": [], \"consequences_markdown\": \"\", \"context_markdown\": \"\", \"created_at\": \"2026-09-26T21:21:51Z\", \"decided_at\": null, \"deciders\": [], \"decision_markdown\": \"\", \"deleted\": false, \"id\": \"decision_614ad484b5ec\", \"status\": \"accepted\", \"superseded_by\": null, \"tags\": [], \"title\": \"Atlas probe B\", \"updated_at\": \"2026-09-26T21:21:51Z\"}]"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.003
+    },
+    "op_digest": "3a755592e2c63e486227a2c375e047adc7c756a2270d0e40b3670c76a91079fb",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"created_at\": 1790457711.884932, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"idempotency_key\": \"decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c\", \"name\": \"decision.delete\", \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"updated_at\": 1790457711.885996, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"execution_expires_at\": 1790461311.885346, \"expires_at\": 1790457741.885346, \"issued_at\": 1790457711.885346, \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3\", \"target_binding\": \"decision:decision_48e47658ecbd\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"uses\": 1, \"warrant_id\": \"war_36717d6490f748c4a46c6934e4658bcd\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"ref\": \"operation:op_98277e891dbf444591c8a232ece2ae3d\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      },
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": null,
+        "skipped": "unresolved placeholder; not sent"
+      }
+    ],
+    "at_utc": "2026-09-26T21:21:51.894817+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:62763",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.list",
+      "args": {}
+    },
+    "op": {
+      "name": "decision.list",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 223,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.list",
+          "arguments": {
+            "kind": "decisions"
+          }
+        }
+      },
+      "response": [],
+      "domain_response": [],
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 223,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[]"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "a1c1501892a5629e14ca21a4a9ff979443b5277dc70ecd45687f43391c3a79b3",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 224,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 224,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"created_at\": 1790457711.884932, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"idempotency_key\": \"decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c\", \"name\": \"decision.delete\", \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"updated_at\": 1790457711.885996, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"execution_expires_at\": 1790461311.885346, \"expires_at\": 1790457741.885346, \"issued_at\": 1790457711.885346, \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3\", \"target_binding\": \"decision:decision_48e47658ecbd\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"uses\": 1, \"warrant_id\": \"war_36717d6490f748c4a46c6934e4658bcd\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"ref\": \"operation:op_98277e891dbf444591c8a232ece2ae3d\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      },
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_437868be2489414e80728198d507d9cc"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 225,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_437868be2489414e80728198d507d9cc"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                "created_at": 1790457711.896214,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "name": "decision.delete",
+                "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec",
+                "updated_at": 1790457711.8972201,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "execution_expires_at": 1790461311.896644,
+                  "expires_at": 1790457741.896644,
+                  "issued_at": 1790457711.896644,
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                  "target_binding": "decision:decision_614ad484b5ec",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "uses": 1,
+                  "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.897233,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                "result_ref": "decision:decision_614ad484b5ec",
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec"
+              },
+              "ref": "operation:op_437868be2489414e80728198d507d9cc"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                "created_at": 1790457711.896214,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "name": "decision.delete",
+                "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec",
+                "updated_at": 1790457711.8972201,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "execution_expires_at": 1790461311.896644,
+                  "expires_at": 1790457741.896644,
+                  "issued_at": 1790457711.896644,
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                  "target_binding": "decision:decision_614ad484b5ec",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "uses": 1,
+                  "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.897233,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                "result_ref": "decision:decision_614ad484b5ec",
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec"
+              },
+              "ref": "operation:op_437868be2489414e80728198d507d9cc"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 225,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_437868be2489414e80728198d507d9cc\", \"created_at\": 1790457711.896214, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"idempotency_key\": \"decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"name\": \"decision.delete\", \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"updated_at\": 1790457711.8972201, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"execution_expires_at\": 1790461311.896644, \"expires_at\": 1790457741.896644, \"issued_at\": 1790457711.896644, \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537\", \"target_binding\": \"decision:decision_614ad484b5ec\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"uses\": 1, \"warrant_id\": \"war_7b3a7654b18a4645af88d50853bbf577\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}, \"ref\": \"operation:op_437868be2489414e80728198d507d9cc\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.001
+      }
+    ],
+    "at_utc": "2026-09-26T21:22:22.096184+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.delete",
+      "body_sha256": "d15870c08c79f9043b16e82f8c9ffe63332088fb413129ee55a97cdd0aad4473",
+      "body": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"deleted\": true, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.delete",
+      "args": {
+        "decision_id": "decision_614ad484b5ec"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.delete",
+          "arguments": {
+            "kind": "decisions",
+            "id": "decision_614ad484b5ec"
+          }
+        }
+      },
+      "response": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "domain_response": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"deleted\": true, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "b_op",
+        "path": "operation_id",
+        "value": "op_437868be2489414e80728198d507d9cc"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:62763",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "decision.list",
+      "args": {}
+    },
+    "op": {
+      "name": "decision.list",
+      "args": {},
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.list",
+          "arguments": {
+            "kind": "decisions"
+          }
+        }
+      },
+      "response": [],
+      "domain_response": [],
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[]"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "a1c1501892a5629e14ca21a4a9ff979443b5277dc70ecd45687f43391c3a79b3",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "created_at": 1790457711.884932,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                "idempotency_key": "decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "name": "decision.delete",
+                "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd",
+                "updated_at": 1790457711.885996,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd",
+                  "execution_expires_at": 1790461311.885346,
+                  "expires_at": 1790457741.885346,
+                  "issued_at": 1790457711.885346,
+                  "native_id": "442403c6-8650-4262-bc9d-04f8b2990b2c",
+                  "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3",
+                  "target_binding": "decision:decision_48e47658ecbd",
+                  "target_ref": "decision:decision_48e47658ecbd",
+                  "uses": 1,
+                  "warrant_id": "war_36717d6490f748c4a46c6934e4658bcd"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.8860102,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_98277e891dbf444591c8a232ece2ae3d",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_7c08b65fb739410dadddbb280a47cce0",
+                "result_ref": "decision:decision_48e47658ecbd",
+                "state": "succeeded",
+                "target_ref": "decision:decision_48e47658ecbd"
+              },
+              "ref": "operation:op_98277e891dbf444591c8a232ece2ae3d"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"created_at\": 1790457711.884932, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"idempotency_key\": \"decision.delete:442403c6-8650-4262-bc9d-04f8b2990b2c\", \"name\": \"decision.delete\", \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"updated_at\": 1790457711.885996, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:044546a54a1824de215129953f13c298a6005771be9f10fee390a913540278fd\", \"execution_expires_at\": 1790461311.885346, \"expires_at\": 1790457741.885346, \"issued_at\": 1790457711.885346, \"native_id\": \"442403c6-8650-4262-bc9d-04f8b2990b2c\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"18c25784b61f28e74f0c00c4b77cba72c29005fd4756c4a695f603129a71c0e3\", \"target_binding\": \"decision:decision_48e47658ecbd\", \"target_ref\": \"decision:decision_48e47658ecbd\", \"uses\": 1, \"warrant_id\": \"war_36717d6490f748c4a46c6934e4658bcd\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.8860102, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_98277e891dbf444591c8a232ece2ae3d\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_7c08b65fb739410dadddbb280a47cce0\", \"result_ref\": \"decision:decision_48e47658ecbd\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_48e47658ecbd\"}, \"ref\": \"operation:op_98277e891dbf444591c8a232ece2ae3d\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.006
+      },
+      {
+        "kind": "op",
+        "name": "kernel.receipt.read",
+        "args": {
+          "operation_id": "op_437868be2489414e80728198d507d9cc"
+        },
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "method": "tools/call",
+          "params": {
+            "name": "kernel.receipt",
+            "arguments": {
+              "operation_id": "op_437868be2489414e80728198d507d9cc"
+            }
+          }
+        },
+        "response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                "created_at": 1790457711.896214,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "name": "decision.delete",
+                "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec",
+                "updated_at": 1790457711.8972201,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "execution_expires_at": 1790461311.896644,
+                  "expires_at": 1790457741.896644,
+                  "issued_at": 1790457711.896644,
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                  "target_binding": "decision:decision_614ad484b5ec",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "uses": 1,
+                  "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.897233,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                "result_ref": "decision:decision_614ad484b5ec",
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec"
+              },
+              "ref": "operation:op_437868be2489414e80728198d507d9cc"
+            }
+          ],
+          "view": "receipt"
+        },
+        "domain_response": {
+          "consistency": "committed",
+          "objects": [
+            {
+              "native_receipts": [],
+              "operation": {
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "claimed_by": "hub-desk-writer",
+                "correlation_id": "op_437868be2489414e80728198d507d9cc",
+                "created_at": 1790457711.896214,
+                "decision": "approve",
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                "idempotency_key": "decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "name": "decision.delete",
+                "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "parent_operation_id": "",
+                "placement": "node:hub-desk-writer",
+                "policy_version": "operation-policy/v2",
+                "principal_identity": "owner-session",
+                "principal_kind": "owner",
+                "request_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                "revision": 5,
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec",
+                "updated_at": 1790457711.8972201,
+                "version": 1,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83",
+                  "execution_expires_at": 1790461311.896644,
+                  "expires_at": 1790457741.896644,
+                  "issued_at": 1790457711.896644,
+                  "native_id": "ddee3abf-d743-4dc3-a777-8e07a47663e2",
+                  "operation_id": "op_437868be2489414e80728198d507d9cc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-desk-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537",
+                  "target_binding": "decision:decision_614ad484b5ec",
+                  "target_ref": "decision:decision_614ad484b5ec",
+                  "uses": 1,
+                  "warrant_id": "war_7b3a7654b18a4645af88d50853bbf577"
+                },
+                "warrant_revoked": 0
+              },
+              "receipt": {
+                "actor_identity": "owner-session",
+                "actor_kind": "owner",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "created_at": 1790457711.897233,
+                "delegator_identity": "",
+                "delegator_kind": "",
+                "operation_id": "op_437868be2489414e80728198d507d9cc",
+                "outcome": "succeeded",
+                "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+                "result_ref": "decision:decision_614ad484b5ec",
+                "state": "succeeded",
+                "target_ref": "decision:decision_614ad484b5ec"
+              },
+              "ref": "operation:op_437868be2489414e80728198d507d9cc"
+            }
+          ],
+          "view": "receipt"
+        },
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"consistency\": \"committed\", \"objects\": [{\"native_receipts\": [], \"operation\": {\"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"claimed_by\": \"hub-desk-writer\", \"correlation_id\": \"op_437868be2489414e80728198d507d9cc\", \"created_at\": 1790457711.896214, \"decision\": \"approve\", \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"idempotency_key\": \"decision.delete:ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"name\": \"decision.delete\", \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"request_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"revision\": 5, \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"updated_at\": 1790457711.8972201, \"version\": 1, \"warrant\": {\"continuation_identities\": [], \"envelope_sha256\": \"sha256:402cb31078489e9e555be5e140435127b603b042e4c4068d305c3cbb9e9fec83\", \"execution_expires_at\": 1790461311.896644, \"expires_at\": 1790457741.896644, \"issued_at\": 1790457711.896644, \"native_id\": \"ddee3abf-d743-4dc3-a777-8e07a47663e2\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"parent_operation_id\": \"\", \"placement\": \"node:hub-desk-writer\", \"policy_version\": \"operation-policy/v2\", \"principal_identity\": \"owner-session\", \"principal_kind\": \"owner\", \"signature\": \"08407527bd303ab126c1e0d0f226bf2bc7807b9ed80dc226f1f813d2dff77537\", \"target_binding\": \"decision:decision_614ad484b5ec\", \"target_ref\": \"decision:decision_614ad484b5ec\", \"uses\": 1, \"warrant_id\": \"war_7b3a7654b18a4645af88d50853bbf577\"}, \"warrant_revoked\": 0}, \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}, \"ref\": \"operation:op_437868be2489414e80728198d507d9cc\"}], \"view\": \"receipt\"}"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "at_utc": "2026-09-26T21:21:52.817928+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "decision.delete",
+      "body_sha256": "d15870c08c79f9043b16e82f8c9ffe63332088fb413129ee55a97cdd0aad4473",
+      "body": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"deleted\": true, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "decision.delete",
+      "args": {
+        "decision_id": "decision_614ad484b5ec"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.delete",
+          "arguments": {
+            "kind": "decisions",
+            "id": "decision_614ad484b5ec"
+          }
+        }
+      },
+      "response": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "domain_response": {
+        "deleted": true,
+        "id": "decision_614ad484b5ec",
+        "operation_id": "op_437868be2489414e80728198d507d9cc",
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790457711.897233,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_437868be2489414e80728198d507d9cc",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_0abe2c33ac454d79995c7bdc91e61db4",
+          "result_ref": "decision:decision_614ad484b5ec",
+          "state": "succeeded",
+          "target_ref": "decision:decision_614ad484b5ec"
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"deleted\": true, \"id\": \"decision_614ad484b5ec\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790457711.897233, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_437868be2489414e80728198d507d9cc\", \"outcome\": \"succeeded\", \"receipt_id\": \"rcpt_0abe2c33ac454d79995c7bdc91e61db4\", \"result_ref\": \"decision:decision_614ad484b5ec\", \"state\": \"succeeded\", \"target_ref\": \"decision:decision_614ad484b5ec\"}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "b_op",
+        "path": "operation_id",
+        "value": "op_437868be2489414e80728198d507d9cc"
+      }
+    },
+    "predicate_satisfied": false,
+    "reading": "fact #7 failed: op read #1 (kernel.receipt.read) objects.0.receipt.state = 'succeeded', wanted 'refused'",
+    "elapsed_s": 0.923
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "fact #7 failed: op read #1 (kernel.receipt.read) objects.0.receipt.state = 'succeeded', wanted 'refused'",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 30.201,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "placeholder(s) ['b_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: fact #7 failed: op read #1 (kernel.receipt.read) objects.0.receipt.state = 'succeeded', wanted 'refused'",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['op_digest', 'op_reads'])."
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "b_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q355ongr/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q355ongr/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62763"
+  ],
+  "duration_s": 34.473
+}

@@ -1,0 +1,763 @@
+{
+  "id": "obs-20260926T212500Z-case.p7.kb_create.visible.op-muaddib-1440",
+  "run_id": "20260926T212500Z-case.p7.kb_create.visible.op-muaddib-1440",
+  "case_id": "case.p7.kb_create.visible.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.kb_create"
+  ],
+  "state_id": "state.desk_presentation.p7_knowledge_membership",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63506",
+      "port": 63506,
+      "pid": 45493,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pzg5oye7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pzg5oye7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:25:00.364232+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "4a06598df6ae1a859e4b91b7d6828158ed40147e79f3007bef56989c5a67e8d9",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "kb_id": "kb_886708ad4956"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "kb.create",
+    "args": {
+      "name": "New Knowledge"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "tools/call",
+      "params": {
+        "name": "desk.create",
+        "arguments": {
+          "kind": "kbs",
+          "data": {
+            "name": "New Knowledge"
+          }
+        }
+      }
+    },
+    "response": {
+      "created_at": "2026-09-26T21:25:02Z",
+      "deleted": false,
+      "id": "kb_886708ad4956",
+      "last_modified": "2026-09-26T21:25:02Z",
+      "member_ids": [],
+      "name": "New Knowledge"
+    },
+    "domain_response": {
+      "created_at": "2026-09-26T21:25:02Z",
+      "deleted": false,
+      "id": "kb_886708ad4956",
+      "last_modified": "2026-09-26T21:25:02Z",
+      "member_ids": [],
+      "name": "New Knowledge"
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.002,
+    "captured": {
+      "name": "kb_id",
+      "path": "id",
+      "value": "kb_886708ad4956"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "8d3c2e86fbd1447507e0853aedd3c34f18eea975249618599909d6fa72ea3021"
+    },
+    "op_reads": {
+      "before": [
+        {
+          "kind": "op",
+          "name": "kb.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "kbs"
+              }
+            }
+          },
+          "response": [],
+          "domain_response": [],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.019
+        }
+      ],
+      "after": [
+        {
+          "kind": "op",
+          "name": "kb.list",
+          "args": {},
+          "request": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+              "name": "desk.list",
+              "arguments": {
+                "kind": "kbs"
+              }
+            }
+          },
+          "response": [
+            {
+              "created_at": "2026-09-26T21:25:02Z",
+              "deleted": false,
+              "id": "kb_886708ad4956",
+              "last_modified": "2026-09-26T21:25:02Z",
+              "member_ids": [],
+              "name": "New Knowledge"
+            }
+          ],
+          "domain_response": [
+            {
+              "created_at": "2026-09-26T21:25:02Z",
+              "deleted": false,
+              "id": "kb_886708ad4956",
+              "last_modified": "2026-09-26T21:25:02Z",
+              "member_ids": [],
+              "name": "New Knowledge"
+            }
+          ],
+          "refusal": null,
+          "envelope": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}]"
+                }
+              ],
+              "isError": false
+            }
+          },
+          "elapsed_s": 0.003
+        }
+      ]
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63506",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kb.read",
+      "args": null
+    },
+    "op": {
+      "name": "kb.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "kbs"
+            }
+          }
+        },
+        "response": [],
+        "domain_response": [],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.019
+      }
+    ],
+    "at_utc": "2026-09-26T21:25:02.451959+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63506",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kb.read",
+      "args": {
+        "kb_id": "kb_886708ad4956"
+      }
+    },
+    "op": {
+      "name": "kb.read",
+      "args": {
+        "kb_id": "kb_886708ad4956"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "kbs",
+            "id": "kb_886708ad4956"
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.001
+    },
+    "op_digest": "8d3c2e86fbd1447507e0853aedd3c34f18eea975249618599909d6fa72ea3021",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "kbs"
+            }
+          }
+        },
+        "response": [
+          {
+            "created_at": "2026-09-26T21:25:02Z",
+            "deleted": false,
+            "id": "kb_886708ad4956",
+            "last_modified": "2026-09-26T21:25:02Z",
+            "member_ids": [],
+            "name": "New Knowledge"
+          }
+        ],
+        "domain_response": [
+          {
+            "created_at": "2026-09-26T21:25:02Z",
+            "deleted": false,
+            "id": "kb_886708ad4956",
+            "last_modified": "2026-09-26T21:25:02Z",
+            "member_ids": [],
+            "name": "New Knowledge"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.003
+      }
+    ],
+    "at_utc": "2026-09-26T21:25:03.367491+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "kb.create",
+      "body_sha256": "e03360940f29eb510dcee94c648a1d561fec34beb875332f08c7b78a47900193",
+      "body": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "kb.create",
+      "args": {
+        "name": "New Knowledge"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "kbs",
+            "data": {
+              "name": "New Knowledge"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "kb_id",
+        "path": "id",
+        "value": "kb_886708ad4956"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63506",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "kb.read",
+      "args": {
+        "kb_id": "kb_886708ad4956"
+      }
+    },
+    "op": {
+      "name": "kb.read",
+      "args": {
+        "kb_id": "kb_886708ad4956"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.get",
+          "arguments": {
+            "kind": "kbs",
+            "id": "kb_886708ad4956"
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.004
+    },
+    "op_digest": "8d3c2e86fbd1447507e0853aedd3c34f18eea975249618599909d6fa72ea3021",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [],
+    "op_reads": [
+      {
+        "kind": "op",
+        "name": "kb.list",
+        "args": {},
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "method": "tools/call",
+          "params": {
+            "name": "desk.list",
+            "arguments": {
+              "kind": "kbs"
+            }
+          }
+        },
+        "response": [
+          {
+            "created_at": "2026-09-26T21:25:02Z",
+            "deleted": false,
+            "id": "kb_886708ad4956",
+            "last_modified": "2026-09-26T21:25:02Z",
+            "member_ids": [],
+            "name": "New Knowledge"
+          }
+        ],
+        "domain_response": [
+          {
+            "created_at": "2026-09-26T21:25:02Z",
+            "deleted": false,
+            "id": "kb_886708ad4956",
+            "last_modified": "2026-09-26T21:25:02Z",
+            "member_ids": [],
+            "name": "New Knowledge"
+          }
+        ],
+        "refusal": null,
+        "envelope": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "[{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}]"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "elapsed_s": 0.002
+      }
+    ],
+    "at_utc": "2026-09-26T21:25:03.362650+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "kb.create",
+      "body_sha256": "e03360940f29eb510dcee94c648a1d561fec34beb875332f08c7b78a47900193",
+      "body": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "kb.create",
+      "args": {
+        "name": "New Knowledge"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "desk.create",
+          "arguments": {
+            "kind": "kbs",
+            "data": {
+              "name": "New Knowledge"
+            }
+          }
+        }
+      },
+      "response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "domain_response": {
+        "created_at": "2026-09-26T21:25:02Z",
+        "deleted": false,
+        "id": "kb_886708ad4956",
+        "last_modified": "2026-09-26T21:25:02Z",
+        "member_ids": [],
+        "name": "New Knowledge"
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"created_at\": \"2026-09-26T21:25:02Z\", \"deleted\": false, \"id\": \"kb_886708ad4956\", \"last_modified\": \"2026-09-26T21:25:02Z\", \"member_ids\": [], \"name\": \"New Knowledge\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.002,
+      "captured": {
+        "name": "kb_id",
+        "path": "id",
+        "value": "kb_886708ad4956"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 4 facts hold: observe_at id holds; observe_at name holds; op read #0 (kb.list) <root> holds; the trigger operation_id is absent",
+    "elapsed_s": 0.91
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 4 facts hold: observe_at id holds; observe_at name holds; op read #0 (kb.list) <root> holds; the trigger operation_id is absent",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.915,
+    "first_satisfied_at_s": 0.91,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['kb_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 4 facts hold: observe_at id holds; observe_at name holds; op read #0 (kb.list) <root> holds; the trigger operation_id is absent"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "kb_id"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pzg5oye7/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pzg5oye7/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63506"
+  ],
+  "duration_s": 3.148
+}

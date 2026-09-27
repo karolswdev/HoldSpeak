@@ -562,7 +562,9 @@
                     "hit_target",
                     "op_field",
                     "op_refusal",
-                    "op_facts"
+                    "op_facts",
+                    "protocol_reads",
+                    "all_of"
                   ]
                 }
               }

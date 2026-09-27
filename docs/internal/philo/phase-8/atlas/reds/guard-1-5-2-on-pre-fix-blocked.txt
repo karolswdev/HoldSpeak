@@ -1,0 +1,6 @@
+# this rig 1.5.2, guard kept, both modes, pre-fix product 267f692a; load { 15.28 7.49 5.61 }
+1440 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in "";
+.1440 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+.393 before_guard: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (.undo-receipt.is-pending is not visible; "Undo" not in "";
+.393 click_wait: verdict blocked; delayed True; BLOCKED: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'text': 'Undo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)
+4 passed, 6 deselected in 104.48s (0:01:44)

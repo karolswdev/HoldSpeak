@@ -59,7 +59,17 @@ when that is not the identity itself.
 A step is `{"kind": <one of STEP_KINDS>, ...}`:
 
   api       {method, path, body?, expect_status?}   HTTP against the hub
-  ui        {action: goto|click|click_role|fill|press|wait_for, ...}
+  ui        {action: goto|click|click_role|fill|press|wait_for|focus, ...}
+            Any ui step may carry `requires: {visible, text?, seconds_left?:
+            {selector, min}}` (PHILO-8-03): the guard and the event are ONE
+            page task (click: resolve the target, then check guard +
+            actionability and `el.click()`; press: keydown+keyup to the focused
+            element); not met is BLOCKED by name, nothing is sent.
+            `click` and `click_role` take `button: "right"` (PHILO-8-03: the
+            list's row menu opens on a right-click, DeskListView.tsx).
+            A TRIGGER may carry `then: [ui steps]` (PHILO-8-03): the rest of
+            one owner gesture, fired right after the trigger and before any
+            observation (delete, then leave the face inside the 8 s window).
   fixture   {path, route:{method,path}, field?, expect_status?} the WAV at the documented
             input boundary — never a microphone
   cli       {action: "restart_hub", adapter}
@@ -158,6 +168,16 @@ PREDICATES (`expected.predicate.kind`):
   hit_target {min_width, min_height}
                                  the named control is visible, in the viewport,
                                  and owns nine interior hit-test points
+  protocol_reads {expect: [{status, row?}]}
+                                 PHILO-8-03: the HTTP status of each of the
+                                 case's `expected.reads`, in order (404 = the
+                                 hub no longer has it; 200 = it does). `row`
+                                 {path, match} also asks for exactly one row
+                                 at `path` in that read whose fields equal
+                                 `match`. A read that was not sent FAILS.
+  all_of {predicates: [...]}     PHILO-8-03: every listed predicate holds on
+                                 the SAME observation (a face half and a hub
+                                 half of one outcome). Two or more; no nesting.
 
 A predicate written in PROSE is not read: the run is recorded in full and the
 verdict is `blocked`, naming the structure the rig needs.
@@ -204,7 +224,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-RIG_VERSION = "1.4.0"
+RIG_VERSION = "1.5.2"
 
 # PHILO-3-02's real engine is supplied by the LAN endpoint configured through
 # the normal Concierge field.  The URL and model are provenance inputs for a
@@ -1039,6 +1059,18 @@ def brief_db_snapshot(hub: Any, brief_id: str) -> dict[str, Any]:
             "items": [dict(row) for row in items], "shelf": [dict(row) for row in shelf]}
 
 
+def _value_selector(predicate: Any) -> str | None:
+    """The form control an `input_value` reads, at the top or inside `all_of`."""
+    if not isinstance(predicate, dict):
+        return None
+    if predicate.get("kind") == "all_of":
+        for part in predicate.get("predicates") or []:
+            if isinstance(part, dict) and part.get("selector"):
+                return part["selector"]
+        return None
+    return predicate.get("selector")
+
+
 def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[str, Any]:
     """The SCOPED observation: the intended object, plus the presentation state.
 
@@ -1076,7 +1108,7 @@ def snapshot(page: Any, case: dict[str, Any], hub: Any | None = None) -> dict[st
             _SNAPSHOT_JS,
             [None if target or op_target else observe_at,
              expected.get("pending_marker"),
-             predicate.get("selector") if isinstance(predicate, dict) else None],
+             _value_selector(predicate)],
         )
     raw["observe_at"] = expected.get("observe_at")
     if page is not None and isinstance(predicate, dict) and predicate.get("first_paint_after"):
@@ -1402,6 +1434,56 @@ def check_predicate(
 
     if kind == "op_facts":
         return _op_facts(predicate, after)
+
+    if kind == "all_of":
+        # PHILO-8-03: one outcome with a face half and a hub half (the receipt
+        # reads "Removal committed" AND the hub answers 404). Every part is
+        # read on the same observation; the first that does not hold decides.
+        parts = predicate.get("predicates")
+        if not isinstance(parts, list) or len(parts) < 2:
+            return False, "BLOCKED: all_of needs two or more predicates"
+        readings: list[str] = []
+        for part in parts:
+            if not isinstance(part, dict) or part.get("kind") in (None, "all_of", "unchanged"):
+                return False, (f"BLOCKED: all_of part {part!r} is not a structured, "
+                               "single-observation predicate")
+            if placement_contract(part):
+                return False, "BLOCKED: all_of does not carry a placement fence"
+            ok, why = check_predicate(part, before, after)
+            if not ok:
+                return False, f"all_of part {part.get('kind')}: {why}"
+            readings.append(f"{part.get('kind')}: {why}")
+        return True, "all_of: " + " | ".join(readings)
+
+    if kind == "protocol_reads":
+        # PHILO-8-03: the hub's answer to each declared read, by position.
+        # The FINDING's "HTTP-status predicate": 404 after a delete commits.
+        expect = predicate.get("expect")
+        if not isinstance(expect, list) or not expect:
+            return False, "BLOCKED: protocol_reads needs a non-empty `expect` list"
+        reads = after.get("api_reads") or []
+        if len(reads) < len(expect):
+            return False, (f"{len(reads)} read(s) observed; {len(expect)} expected "
+                           "(declare them in expected.reads)")
+        readings = []
+        for index, want in enumerate(expect):
+            read = reads[index]
+            where = f"{read.get('method')} {read.get('path')}"
+            if "status" not in read:
+                return False, f"read {index} ({where}) was not sent: {read.get('skipped')}"
+            if read["status"] != int(want["status"]):
+                return False, f"{where} answered {read['status']}, wanted {want['status']}"
+            row = want.get("row")
+            if row:
+                found, rows = _json_path(read.get("payload"), row.get("path", ""))
+                matched = ([r for r in rows if _op_row_matches(r, row.get("match") or {})]
+                           if found and isinstance(rows, list) else [])
+                if len(matched) != 1:
+                    return False, (f"{where}: {len(matched)} row(s) at {row.get('path')!r} "
+                                   f"match {row.get('match')!r}; exactly one is required")
+            readings.append(f"{where} answered {read['status']}"
+                            + (f" with one row {row.get('match')!r}" if row else ""))
+        return True, "; ".join(readings)
 
     if kind == "protocol_status":
         # The TRIGGER's own response. A refusal is a promised result: the rig
@@ -3764,6 +3846,139 @@ UI_ACTIONS = frozenset({
 })
 
 
+_GUARD_JS = r"""([selector, secondsSelector]) => {
+  const el = document.querySelector(selector);
+  const visible = !!el && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  let seconds = null, secondsText = null;
+  if (secondsSelector) {
+    const node = el ? el.querySelector(secondsSelector) || document.querySelector(secondsSelector)
+                    : document.querySelector(secondsSelector);
+    secondsText = node ? (node.innerText || node.textContent || "").trim() : null;
+    const m = secondsText && secondsText.match(/(\d+)/);
+    seconds = m ? parseInt(m[1], 10) : null;
+  }
+  return {present: !!el, visible, text: el ? (el.innerText || "").trim().slice(0, 120) : null,
+          seconds, secondsText};
+}"""
+
+
+def _check_guard_shape(guard: Any) -> None:
+    if not isinstance(guard, dict) or not isinstance(guard.get("visible"), str):
+        raise Blocked(f"requires {guard!r}: needs a `visible` selector")
+    left = guard.get("seconds_left")
+    if left is not None and (not isinstance(left, dict) or not isinstance(left.get("selector"), str)
+                             or not isinstance(left.get("min"), int)):
+        raise Blocked(f"requires {guard!r}: seconds_left needs a selector and an int min")
+
+
+def _check_guard(page: Any, guard: Any) -> dict[str, Any]:
+    """PHILO-8-03: a delivery guard, read on the page at the moment of delivery.
+
+    `{"visible": <css>, "text"?: <substring>, "seconds_left"?: {"selector": <css>,
+    "min": <int>}}` -- the element is visible, carries the text, and a
+    countdown inside it (or on the page) still reads at least `min` seconds.
+    """
+    _check_guard_shape(guard)
+    left = guard.get("seconds_left")
+    seen = page.evaluate(_GUARD_JS, [guard["visible"], left.get("selector") if left else None])
+    reasons = []
+    if not seen.get("visible"):
+        reasons.append(f"{guard['visible']!r} is not visible")
+    want = guard.get("text")
+    if want is not None and want not in (seen.get("text") or ""):
+        reasons.append(f"{want!r} not in {seen.get('text')!r}")
+    if left is not None and (seen.get("seconds") is None or seen["seconds"] < left["min"]):
+        reasons.append(f"{left['selector']!r} reads {seen.get('secondsText')!r}, wanted >= {left['min']}s")
+    return {"holds": not reasons, "seen": seen,
+            "reading": "; ".join(reasons) if reasons else "held at delivery"}
+
+
+_DELIVER_JS = r"""([el, guard, key]) => {
+  const g = document.querySelector(guard.visible);
+  const gVisible = !!g && !!(g.offsetWidth || g.offsetHeight || g.getClientRects().length);
+  const reasons = [];
+  if (!gVisible) reasons.push(`${guard.visible} is not visible`);
+  const gText = g ? (g.innerText || "").trim() : "";
+  if (guard.text != null && !gText.includes(guard.text)) reasons.push(`${JSON.stringify(guard.text)} not in ${JSON.stringify(gText.slice(0, 80))}`);
+  let seconds = null, secondsText = null;
+  if (guard.seconds_left) {
+    const n = (g && g.querySelector(guard.seconds_left.selector)) || document.querySelector(guard.seconds_left.selector);
+    secondsText = n ? (n.innerText || n.textContent || "").trim() : null;
+    const m = secondsText && secondsText.match(/(\d+)/);
+    seconds = m ? parseInt(m[1], 10) : null;
+    if (seconds == null || seconds < guard.seconds_left.min) reasons.push(`${guard.seconds_left.selector} reads ${JSON.stringify(secondsText)}, wanted >= ${guard.seconds_left.min}s`);
+  }
+  const target = key ? (document.activeElement || document.body) : el;
+  let actionable = true, why = null;
+  if (!key) {
+    if (!target || !target.isConnected) { actionable = false; why = "the target is detached"; }
+    else {
+      const r = target.getBoundingClientRect();
+      const cs = getComputedStyle(target);
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (target.disabled || target.getAttribute("aria-disabled") === "true") { actionable = false; why = "the target is disabled"; }
+      else if (!(r.width > 0 && r.height > 0) || cs.visibility === "hidden" || cs.pointerEvents === "none") { actionable = false; why = "the target is hidden or takes no pointer"; }
+      else if (!hit || !(hit === target || target.contains(hit))) { actionable = false; why = "the target is covered at its centre"; }
+    }
+  }
+  if (!actionable) reasons.push(why);
+  const seen = {text: gText.slice(0, 120), seconds, secondsText, actionable, at: performance.now()};
+  if (reasons.length) return {delivered: false, reasons, seen};
+  if (key) {
+    const init = {key, bubbles: true, cancelable: true};
+    target.dispatchEvent(new KeyboardEvent("keydown", init));
+    target.dispatchEvent(new KeyboardEvent("keyup", init));
+  } else {
+    target.click();
+  }
+  return {delivered: true, reasons: [], seen};
+}"""
+
+
+def _guarded_delivery(page: Any, step: dict[str, Any], record: dict[str, Any],
+                      guard: Any, timeout: float) -> dict[str, Any]:
+    """PHILO-8-03 (Codex Astra r2): check the guard and deliver in ONE page task.
+
+    click / click_role: the target is resolved and waited for (attached and
+    visible) WITHOUT clicking; press: the event goes to the focused element.
+    Then one evaluate re-reads the guard and the target's actionability
+    (connected, enabled, visible, takes the pointer, owns its centre) and sends
+    `el.click()` / a keydown+keyup in the same task -- or sends nothing and the
+    case is BLOCKED by name. Unguarded steps keep the Playwright path.
+    """
+    action = step.get("action")
+    if action not in ("click", "click_role", "press"):
+        raise Blocked(f"requires on a {action!r} step: only click, click_role and press are guarded")
+    _check_guard_shape(guard)
+    record["requires"] = guard
+    handle = None
+    if action != "press":
+        locator = (page.locator(step["selector"]).first if action == "click" else
+                   page.get_by_role(step.get("role", "button"), name=step["name"],
+                                    exact=bool(step.get("exact", True))).first)
+        try:
+            locator.wait_for(state="visible", timeout=timeout)
+            handle = locator.element_handle(timeout=timeout)
+        except Exception as exc:  # noqa: BLE001
+            record.update(done=False, error=repr(exc)[:400])
+            raise Blocked(f"ui step {action}: the guarded target never appeared: "
+                          f"{type(exc).__name__}: {str(exc)[:200]}") from exc
+    result = page.evaluate(_DELIVER_JS, [handle, guard, step.get("key") if action == "press" else None])
+    record["guard"] = {"holds": result["delivered"], "seen": result["seen"],
+                       "reading": "; ".join(r for r in result["reasons"] if r) or "held at delivery",
+                       "atomic": True}
+    for field in ("selector", "name", "key"):
+        if step.get(field):
+            record[field] = step[field]
+    if not result["delivered"]:
+        record["done"] = False
+        raise Blocked(
+            f"ui step {action} not delivered: its guard {guard!r} did not hold at "
+            f"delivery ({record['guard']['reading']})")
+    record["done"] = True
+    return record
+
+
 def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]:
     action = step.get("action")
     if action not in UI_ACTIONS:
@@ -3785,6 +4000,27 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
             return record
         record["at_width"] = at_width
     timeout = float(step.get("timeout_s", 10)) * 1000
+    # PHILO-8-03 (Codex Astra r1): a step that must land INSIDE a live state
+    # (a follow-up inside the 8 s undo window) declares `requires`; it is
+    # re-read at delivery, immediately before the action. Not met: BLOCKED by
+    # name, never a pass or a fail -- the timer, not the gesture, would have
+    # produced the outcome. An optional step does not soften it.
+    guard = step.get("requires")
+    if guard is not None:
+        # Codex Astra r2: the guard and the delivery are ONE page task. The
+        # target is resolved first (its normal wait, no click); then a single
+        # evaluate checks the guard AND the target's actionability and sends
+        # the event, or sends nothing. No actionability wait can sit between
+        # the check and the event.
+        return _guarded_delivery(page, step, record, guard,
+                                 float(step.get("timeout_s", 10)) * 1000)
+    # PHILO-8-03: a right-click opens the list's row menu (DeskListView.tsx
+    # onContextMenu). Only a click takes a button; any other value blocks.
+    button = step.get("button", "left")
+    if button not in ("left", "right") or ("button" in step and action not in ("click", "click_role")):
+        raise Blocked(f"ui step {action}: button {button!r} is not left|right on a click")
+    if button == "right":
+        record["button"] = "right"
     try:
         if action == "goto":
             url = step["url"]
@@ -3799,13 +4035,13 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
         elif action == "reload":
             page.reload(wait_until=step.get("wait_until", "load"))
         elif action == "click":
-            page.locator(step["selector"]).first.click(timeout=timeout)
+            page.locator(step["selector"]).first.click(timeout=timeout, button=button)
             record["selector"] = step["selector"]
         elif action == "click_role":
             page.get_by_role(
                 step.get("role", "button"), name=step["name"],
                 exact=bool(step.get("exact", True)),
-            ).first.click(timeout=timeout)
+            ).first.click(timeout=timeout, button=button)
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)
@@ -4603,6 +4839,15 @@ def case_needs_producer_clock(case: dict[str, Any]) -> bool:
     )
 
 
+def trigger_then(trigger: dict[str, Any]) -> list[dict[str, Any]]:
+    """PHILO-8-03: the trigger's `then` steps (the rest of one gesture); ui only."""
+    then = trigger.get("then") or []
+    if not isinstance(then, list) or any(
+            not isinstance(step, dict) or step.get("kind") != "ui" for step in then):
+        raise Blocked("trigger `then` takes ui steps only; nothing was fired")
+    return then
+
+
 def case_trigger(case: dict[str, Any]) -> dict[str, Any]:
     """The case's trigger: the top-level field, or a setup step marked as one."""
     if case.get("trigger"):
@@ -4909,8 +5154,19 @@ def exercise(
     arm_first_paint(page, pre_case)
     fired_at = time.monotonic()
     try:
-        trigger_record = run_step(trigger, page, hub, provenance, pre_case,
+        trigger_record = run_step({k: v for k, v in trigger.items() if k != "then"},
+                                  page, hub, provenance, pre_case,
                                   allow_error=True, variables=variables)
+        # PHILO-8-03: `then` — the rest of ONE owner gesture, fired right after
+        # the trigger and before any observation (delete, then leave the face
+        # inside the 8 s undo window). The rig's before-capture between setup
+        # and trigger can outlast that window under load; these steps cannot.
+        # UI steps only; each one is recorded; a failed one blocks.
+        then = trigger_then(trigger)
+        if then:
+            trigger_record["then"] = [
+                run_step(step, page, hub, provenance, pre_case, variables=variables)
+                for step in then]
         wait = trigger_record.get("completion_wait")
         if wait and not wait.get("matched"):
             recorder.set(trigger=trigger_record, provenance=provenance,

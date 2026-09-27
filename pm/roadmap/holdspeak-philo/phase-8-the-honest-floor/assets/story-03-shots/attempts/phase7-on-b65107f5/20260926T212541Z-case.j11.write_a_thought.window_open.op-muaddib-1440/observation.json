@@ -1,0 +1,995 @@
+{
+  "id": "obs-20260926T212541Z-case.j11.write_a_thought.window_open.op-muaddib-1440",
+  "run_id": "20260926T212541Z-case.j11.write_a_thought.window_open.op-muaddib-1440",
+  "case_id": "case.j11.write_a_thought.window_open.op",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.arrival_develop_thought"
+  ],
+  "state_id": "state.desk_presentation.window_open_thought",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63741",
+      "port": 63741,
+      "pid": 46256,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o_bfjyee",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o_bfjyee/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:25:41.813643+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "4a06598df6ae1a859e4b91b7d6828158ed40147e79f3007bef56989c5a67e8d9",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/directories",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "directory": {
+          "id": "hs-seed-inbox",
+          "name": "Inbox",
+          "name_normalized": "inbox",
+          "parent_id": null,
+          "created_at": "2026-09-26T21:25:43Z",
+          "last_modified": "2026-09-26T21:25:43Z",
+          "deleted": false
+        },
+        "operation_id": "op_926832fa8e0a4f5fb67f1b1c3b2fb782",
+        "receipt": {
+          "receipt_id": "rcpt_78e64ed327dc48e0bd6698a190b5664e",
+          "operation_id": "op_926832fa8e0a4f5fb67f1b1c3b2fb782",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "directory:hs-seed-inbox",
+          "created_at": 1790457943.856179,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "directory:hs-seed-inbox"
+        }
+      },
+      "response_sha256": "2fdb9300672afe0772138d1cf9d348e6ae391fed25e613c75689fb2ac2146148"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. Every id is captured from this run's own producer.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "thought_id": "thought_ed9ebbeafbe5"
+  },
+  "trigger": {
+    "kind": "op",
+    "adapter": "mcp-http",
+    "name": "thought.create",
+    "args": {
+      "request_id": "philo7-window",
+      "raw_text": "Graph walk J11 window",
+      "initial_note": {
+        "title": "Thought",
+        "body_markdown": "Graph walk J11 window",
+        "tags": []
+      }
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "tools/call",
+      "params": {
+        "name": "thought.create",
+        "arguments": {
+          "request_id": "philo7-window",
+          "raw_text": "Graph walk J11 window",
+          "initial_note": {
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 window",
+            "tags": []
+          }
+        }
+      }
+    },
+    "response": {
+      "default_context_receipt": {
+        "action": "apply_default_context",
+        "attachment_revision": 0,
+        "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachments": [],
+        "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+        "default_revision": 0,
+        "failure": null,
+        "id": "rdapp_1898238cb8da",
+        "scope": "this_thought",
+        "status": "empty",
+        "thought_id": "thought_ed9ebbeafbe5"
+      },
+      "thought": {
+        "aggregate_revision": 1,
+        "attachment_revision": 0,
+        "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachments": [],
+        "continuity": {
+          "code": "",
+          "state": "idle"
+        },
+        "directory_id": "hs-seed-inbox",
+        "directory_name": "Inbox",
+        "filing_status": "filed",
+        "id": "thought_ed9ebbeafbe5",
+        "lifecycle_revision": 1,
+        "raw_captured_at": "2026-09-26T21:25:43Z",
+        "raw_id": "thought_ed9ebbeafbe5",
+        "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+        "source": {
+          "kind": "typed"
+        },
+        "state": "working",
+        "working_note": {
+          "body_markdown": "Graph walk J11 window",
+          "deleted": false,
+          "id": "note_thought_09df89ff25b944ea",
+          "last_modified": "2026-09-26T21:25:43Z",
+          "tags": [],
+          "title": "Thought"
+        },
+        "working_revision": 1
+      }
+    },
+    "domain_response": {
+      "default_context_receipt": {
+        "action": "apply_default_context",
+        "attachment_revision": 0,
+        "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachments": [],
+        "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+        "default_revision": 0,
+        "failure": null,
+        "id": "rdapp_1898238cb8da",
+        "scope": "this_thought",
+        "status": "empty",
+        "thought_id": "thought_ed9ebbeafbe5"
+      },
+      "thought": {
+        "aggregate_revision": 1,
+        "attachment_revision": 0,
+        "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+        "attachments": [],
+        "continuity": {
+          "code": "",
+          "state": "idle"
+        },
+        "directory_id": "hs-seed-inbox",
+        "directory_name": "Inbox",
+        "filing_status": "filed",
+        "id": "thought_ed9ebbeafbe5",
+        "lifecycle_revision": 1,
+        "raw_captured_at": "2026-09-26T21:25:43Z",
+        "raw_id": "thought_ed9ebbeafbe5",
+        "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+        "source": {
+          "kind": "typed"
+        },
+        "state": "working",
+        "working_note": {
+          "body_markdown": "Graph walk J11 window",
+          "deleted": false,
+          "id": "note_thought_09df89ff25b944ea",
+          "last_modified": "2026-09-26T21:25:43Z",
+          "tags": [],
+          "title": "Thought"
+        },
+        "working_revision": 1
+      }
+    },
+    "refusal": null,
+    "envelope": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"default_context_receipt\": {\"action\": \"apply_default_context\", \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachment_zero_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"default_configuration_sha256\": \"4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778\", \"default_revision\": 0, \"failure\": null, \"id\": \"rdapp_1898238cb8da\", \"scope\": \"this_thought\", \"status\": \"empty\", \"thought_id\": \"thought_ed9ebbeafbe5\"}, \"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+          }
+        ],
+        "isError": false
+      }
+    },
+    "elapsed_s": 0.011,
+    "captured": {
+      "name": "thought_id",
+      "path": "thought.id",
+      "value": "thought_ed9ebbeafbe5"
+    }
+  },
+  "diff": {
+    "op_digest": {
+      "before": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+      "after": "327ccfb819d770b0dc813932a5ccfcc848db1d33eca0696ac26d2464a3d93c15"
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63741",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "thought.read",
+      "args": null
+    },
+    "op": {
+      "name": "thought.read",
+      "args": {},
+      "response": null,
+      "domain_response": null,
+      "refusal": {
+        "code": "unresolved_arguments",
+        "error": "op observation has unresolved arguments"
+      },
+      "envelope": null,
+      "elapsed_s": 0.0
+    },
+    "op_digest": "0b0f873c776462fbfbadcc210fd5b9844c1e5acc551bdb7ff3f0664cdbb9b423",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:25:43.858078+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63741",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "thought.read",
+      "args": {
+        "thought_id": "thought_ed9ebbeafbe5"
+      }
+    },
+    "op": {
+      "name": "thought.read",
+      "args": {
+        "thought_id": "thought_ed9ebbeafbe5"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "resources/read",
+        "params": {
+          "uri": "holdspeak://thoughts/thought_ed9ebbeafbe5"
+        }
+      },
+      "response": {
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "domain_response": {
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "contents": [
+            {
+              "uri": "holdspeak://thoughts/thought_ed9ebbeafbe5",
+              "mimeType": "application/json",
+              "text": "{\"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ]
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "327ccfb819d770b0dc813932a5ccfcc848db1d33eca0696ac26d2464a3d93c15",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:25:44.778811+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "thought.create",
+      "body_sha256": "7cb2880cbbac7061156fe2154b72d33b5b6c413e253fb7d2b22dae9a095c03c3",
+      "body": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"default_context_receipt\": {\"action\": \"apply_default_context\", \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachment_zero_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"default_configuration_sha256\": \"4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778\", \"default_revision\": 0, \"failure\": null, \"id\": \"rdapp_1898238cb8da\", \"scope\": \"this_thought\", \"status\": \"empty\", \"thought_id\": \"thought_ed9ebbeafbe5\"}, \"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "thought.create",
+      "args": {
+        "request_id": "philo7-window",
+        "raw_text": "Graph walk J11 window",
+        "initial_note": {
+          "title": "Thought",
+          "body_markdown": "Graph walk J11 window",
+          "tags": []
+        }
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "thought.create",
+          "arguments": {
+            "request_id": "philo7-window",
+            "raw_text": "Graph walk J11 window",
+            "initial_note": {
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 window",
+              "tags": []
+            }
+          }
+        }
+      },
+      "response": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "domain_response": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"default_context_receipt\": {\"action\": \"apply_default_context\", \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachment_zero_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"default_configuration_sha256\": \"4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778\", \"default_revision\": 0, \"failure\": null, \"id\": \"rdapp_1898238cb8da\", \"scope\": \"this_thought\", \"status\": \"empty\", \"thought_id\": \"thought_ed9ebbeafbe5\"}, \"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.011,
+      "captured": {
+        "name": "thought_id",
+        "path": "thought.id",
+        "value": "thought_ed9ebbeafbe5"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:63741",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": {
+      "kind": "op",
+      "name": "thought.read",
+      "args": {
+        "thought_id": "thought_ed9ebbeafbe5"
+      }
+    },
+    "op": {
+      "name": "thought.read",
+      "args": {
+        "thought_id": "thought_ed9ebbeafbe5"
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "resources/read",
+        "params": {
+          "uri": "holdspeak://thoughts/thought_ed9ebbeafbe5"
+        }
+      },
+      "response": {
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "domain_response": {
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "contents": [
+            {
+              "uri": "holdspeak://thoughts/thought_ed9ebbeafbe5",
+              "mimeType": "application/json",
+              "text": "{\"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ]
+        }
+      },
+      "elapsed_s": 0.002
+    },
+    "op_digest": "327ccfb819d770b0dc813932a5ccfcc848db1d33eca0696ac26d2464a3d93c15",
+    "pending_marker_present": false,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:25:44.776825+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/mcp",
+      "status": 200,
+      "name": "thought.create",
+      "body_sha256": "7cb2880cbbac7061156fe2154b72d33b5b6c413e253fb7d2b22dae9a095c03c3",
+      "body": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"default_context_receipt\": {\"action\": \"apply_default_context\", \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachment_zero_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"default_configuration_sha256\": \"4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778\", \"default_revision\": 0, \"failure\": null, \"id\": \"rdapp_1898238cb8da\", \"scope\": \"this_thought\", \"status\": \"empty\", \"thought_id\": \"thought_ed9ebbeafbe5\"}, \"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    "operation_trigger": {
+      "kind": "op",
+      "adapter": "mcp-http",
+      "name": "thought.create",
+      "args": {
+        "request_id": "philo7-window",
+        "raw_text": "Graph walk J11 window",
+        "initial_note": {
+          "title": "Thought",
+          "body_markdown": "Graph walk J11 window",
+          "tags": []
+        }
+      },
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "thought.create",
+          "arguments": {
+            "request_id": "philo7-window",
+            "raw_text": "Graph walk J11 window",
+            "initial_note": {
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 window",
+              "tags": []
+            }
+          }
+        }
+      },
+      "response": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "domain_response": {
+        "default_context_receipt": {
+          "action": "apply_default_context",
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachment_zero_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "default_configuration_sha256": "4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778",
+          "default_revision": 0,
+          "failure": null,
+          "id": "rdapp_1898238cb8da",
+          "scope": "this_thought",
+          "status": "empty",
+          "thought_id": "thought_ed9ebbeafbe5"
+        },
+        "thought": {
+          "aggregate_revision": 1,
+          "attachment_revision": 0,
+          "attachment_sha256": "dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff",
+          "attachments": [],
+          "continuity": {
+            "code": "",
+            "state": "idle"
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox",
+          "filing_status": "filed",
+          "id": "thought_ed9ebbeafbe5",
+          "lifecycle_revision": 1,
+          "raw_captured_at": "2026-09-26T21:25:43Z",
+          "raw_id": "thought_ed9ebbeafbe5",
+          "raw_sha256": "15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9",
+          "source": {
+            "kind": "typed"
+          },
+          "state": "working",
+          "working_note": {
+            "body_markdown": "Graph walk J11 window",
+            "deleted": false,
+            "id": "note_thought_09df89ff25b944ea",
+            "last_modified": "2026-09-26T21:25:43Z",
+            "tags": [],
+            "title": "Thought"
+          },
+          "working_revision": 1
+        }
+      },
+      "refusal": null,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"default_context_receipt\": {\"action\": \"apply_default_context\", \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachment_zero_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"default_configuration_sha256\": \"4e04806a2695b3ac90e3ed39b69cb2ffa41f94f7af6cc55d262764c240c6a778\", \"default_revision\": 0, \"failure\": null, \"id\": \"rdapp_1898238cb8da\", \"scope\": \"this_thought\", \"status\": \"empty\", \"thought_id\": \"thought_ed9ebbeafbe5\"}, \"thought\": {\"aggregate_revision\": 1, \"attachment_revision\": 0, \"attachment_sha256\": \"dc5517e0033ef5a67b13f33a746f29990468df066488eda21741faf08c54efff\", \"attachments\": [], \"continuity\": {\"code\": \"\", \"state\": \"idle\"}, \"directory_id\": \"hs-seed-inbox\", \"directory_name\": \"Inbox\", \"filing_status\": \"filed\", \"id\": \"thought_ed9ebbeafbe5\", \"lifecycle_revision\": 1, \"raw_captured_at\": \"2026-09-26T21:25:43Z\", \"raw_id\": \"thought_ed9ebbeafbe5\", \"raw_sha256\": \"15929b1c7f523cd82f90b14057d36b12226887044b0058a2b5385a0b328318d9\", \"source\": {\"kind\": \"typed\"}, \"state\": \"working\", \"working_note\": {\"body_markdown\": \"Graph walk J11 window\", \"deleted\": false, \"id\": \"note_thought_09df89ff25b944ea\", \"last_modified\": \"2026-09-26T21:25:43Z\", \"tags\": [], \"title\": \"Thought\"}, \"working_revision\": 1}}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      "elapsed_s": 0.011,
+      "captured": {
+        "name": "thought_id",
+        "path": "thought.id",
+        "value": "thought_ed9ebbeafbe5"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: observe_at thought.id holds; observe_at thought.working_note.id holds; the trigger operation_id is absent",
+    "elapsed_s": 0.919
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all 3 facts hold: observe_at thought.id holds; observe_at thought.working_note.id holds; the trigger operation_id is absent",
+    "pending_marker": null,
+    "pending_marker_present": false,
+    "elapsed_s": 0.921,
+    "first_satisfied_at_s": 0.919,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['thought_id'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: all 3 facts hold: observe_at thought.id holds; observe_at thought.working_note.id holds; the trigger operation_id is absent"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "thought_id"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o_bfjyee/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-o_bfjyee/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63741"
+  ],
+  "duration_s": 3.145
+}

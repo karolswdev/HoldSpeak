@@ -1,0 +1,517 @@
+{
+  "id": "obs-20260926T215551Z-case.p8.zone_rename.f2_row-muaddib-393",
+  "run_id": "20260926T215551Z-case.p8.zone_rename.f2_row-muaddib-393",
+  "case_id": "case.p8.zone_rename.f2_row",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase8.json",
+  "job": "p8",
+  "edge_ids": [
+    "edge.face.zone_rename"
+  ],
+  "state_id": "state.desk_presentation.p8_zone_name",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53907",
+      "port": 53907,
+      "pid": 72753,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s83p8j53",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s83p8j53/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:55:51.923630+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase8.json",
+      "sha256": "67d46a6643996efa445234a67d55b49fc6e75e6e03a188cc31049f19e8a06941",
+      "version": "phase8-floor"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.64,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=chair-floor-toggle]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-listmode",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "focus",
+      "adapter": "ui-keyboard",
+      "selector": ".desk-listmode .desk-sortable-table-open[aria-label^=Inbox]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-floor-toggle]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "aria-pressed",
+        "value": "true"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "aria-pressed='true', wanted 'true'"
+    }
+  ],
+  "variables": {},
+  "trigger": {
+    "kind": "ui",
+    "action": "press",
+    "adapter": "ui-keyboard",
+    "key": "F2",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": ""
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "desk-zone-rename",
+        "aria-label": "Zone name",
+        "value": "Inbox"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 77,
+        "y": 220,
+        "w": 122,
+        "h": 36
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > button.btn.btn--ghost",
+      "after": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+    },
+    "focus_label": {
+      "before": "Inbox zone, 1 item",
+      "after": "Zone name"
+    },
+    "document_text_sha256": {
+      "before": "e63e6895e9edee5dc850ddc41c10f65880b2abd7a4967f45c35caeb449341746",
+      "after": "fe508320fc38fb81ae9a628569f3e1aac3b94286ba4c211915edd74c32dacf67"
+    },
+    "document_text_len": {
+      "before": 866,
+      "after": 862
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+          "value": "Inbox"
+        }
+      ]
+    },
+    "field_value": {
+      "before": {
+        "selector": ".desk-listmode input.desk-zone-rename",
+        "present": false,
+        "value": null
+      },
+      "after": {
+        "selector": ".desk-listmode input.desk-zone-rename",
+        "present": true,
+        "value": "Inbox"
+      }
+    }
+  },
+  "before": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": false,
+      "value": null
+    },
+    "focus": "div.desk-sortable-table-wrap.desk-list-sortable > table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > button.btn.btn--ghost",
+    "focus_label": "Inbox zone, 1 item",
+    "url": "http://127.0.0.1:53907/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e63e6895e9edee5dc850ddc41c10f65880b2abd7a4967f45c35caeb449341746",
+    "document_text_len": 866,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:56:00.764394+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": true,
+    "text": "",
+    "attrs": {
+      "class": "desk-zone-rename",
+      "aria-label": "Zone name",
+      "value": "Inbox"
+    },
+    "rect": {
+      "x": 77,
+      "y": 220,
+      "w": 122,
+      "h": 36
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 77,
+        "y": 220,
+        "w": 122,
+        "h": 36
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 79,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+        "value": "Inbox"
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": true,
+      "value": "Inbox"
+    },
+    "focus": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+    "focus_label": "Zone name",
+    "url": "http://127.0.0.1:53907/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "fe508320fc38fb81ae9a628569f3e1aac3b94286ba4c211915edd74c32dacf67",
+    "document_text_len": 862,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:56:09.685505+00:00"
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-listmode input.desk-zone-rename",
+    "target_present": true,
+    "text": "",
+    "attrs": {
+      "class": "desk-zone-rename",
+      "aria-label": "Zone name",
+      "value": "Inbox"
+    },
+    "rect": {
+      "x": 77,
+      "y": 220,
+      "w": 122,
+      "h": 36
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 77,
+        "y": 220,
+        "w": 122,
+        "h": 36
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 79,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 79,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 138,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 222,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 238,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        },
+        {
+          "x": 197,
+          "y": 254,
+          "owned": true,
+          "owner": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+        "value": "Inbox"
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "present": true,
+      "value": "Inbox"
+    },
+    "focus": "table.desk-sortable-table > tbody > tr.desk-sortable-table-row > td > span.desk-zone-rename-row.is-inrow > input.desk-zone-rename",
+    "focus_label": "Zone name",
+    "url": "http://127.0.0.1:53907/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "fe508320fc38fb81ae9a628569f3e1aac3b94286ba4c211915edd74c32dacf67",
+    "document_text_len": 862,
+    "replay_identity": null,
+    "at_utc": "2026-09-26T21:56:09.285742+00:00",
+    "predicate_satisfied": true,
+    "reading": "all_of: input_value: value is 'Inbox', wanted 'Inbox' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 220, 'w': 122, 'h': 36}",
+    "elapsed_s": 2.109
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: input_value: value is 'Inbox', wanted 'Inbox' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 220, 'w': 122, 'h': 36}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.509,
+    "first_satisfied_at_s": 2.109,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: input_value: value is 'Inbox', wanted 'Inbox' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 77, 'y': 220, 'w': 122, 'h': 36}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:53907) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:53907) non-GET response after the click; the click fired none",
+    "seen": []
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/final-phase/20260926T215551Z-case.p8.zone_rename.f2_row-muaddib-393/before.png",
+    "/private/tmp/claude-501/p803/final-phase/20260926T215551Z-case.p8.zone_rename.f2_row-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s83p8j53/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s83p8j53/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53907"
+  ],
+  "duration_s": 19.68
+}

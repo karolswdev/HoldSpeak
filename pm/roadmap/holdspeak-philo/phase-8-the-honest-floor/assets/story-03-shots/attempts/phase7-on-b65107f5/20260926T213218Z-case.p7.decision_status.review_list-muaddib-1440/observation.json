@@ -1,0 +1,937 @@
+{
+  "id": "obs-20260926T213218Z-case.p7.decision_status.review_list-muaddib-1440",
+  "run_id": "20260926T213218Z-case.p7.decision_status.review_list-muaddib-1440",
+  "case_id": "case.p7.decision_status.review_list",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.decision_status"
+  ],
+  "state_id": "state.desk_presentation.p7_decision_lifecycle",
+  "provenance": {
+    "revision": "",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "e1257def375ef7e648aab10967cc9b5b9f55ed6f07444a98c93c74a6c839cf26",
+      "assets": [
+        "index-Bz9uo4lG.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:49270",
+      "port": 49270,
+      "pid": 53209,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5lwtnxpx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5lwtnxpx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-26T21:32:18.849570+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.0",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "4a06598df6ae1a859e4b91b7d6828158ed40147e79f3007bef56989c5a67e8d9",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/decisions",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "decision": {
+          "id": "decision_d50746a01164",
+          "title": "Atlas review decision",
+          "status": "deprecated",
+          "deciders": [],
+          "decided_at": null,
+          "context_markdown": "",
+          "decision_markdown": "",
+          "alternatives": [],
+          "consequences_markdown": "",
+          "superseded_by": null,
+          "tags": [],
+          "created_at": "2026-09-26T21:32:21Z",
+          "updated_at": "2026-09-26T21:32:21Z",
+          "deleted": false
+        },
+        "operation_id": "op_acc45feb426646fea38cebaf612823d5",
+        "receipt": {
+          "receipt_id": "rcpt_289e33ed0e164104b69de2ff91671d31",
+          "operation_id": "op_acc45feb426646fea38cebaf612823d5",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "decision:decision_d50746a01164",
+          "created_at": 1790458341.44754,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "decision:decision_d50746a01164"
+        }
+      },
+      "response_sha256": "c3edc638f80271d8b7acff6954af21ada06f5e94ff592bb3bdf279066d706662",
+      "captured": {
+        "name": "decision_id",
+        "path": "decision.id",
+        "value": "decision_d50746a01164"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.64,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-decision:decision_d50746a01164']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[role=region][aria-label='Atlas review decision'] .desk-decision-card",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "deprecated \u21bb",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/decisions/decision_d50746a01164",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "decision.status",
+        "value": "proposed"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "decision.status equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-brief-generate]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "decision_id": "decision_d50746a01164"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-brief-generate]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Review decision: Atlas review decision\nAck\nDefer"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "surface-ledger",
+        "data-cols": "room"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 256,
+        "y": 302,
+        "w": 928,
+        "h": 54
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "document_text_sha256": {
+      "before": "c5b2072d969815f0a40bbb7153df184318be6ea8eccc9f4b0d63cccdac2c50ea",
+      "after": "ffa6577bd5da52196dd06aa4a55e28b36aeab546e921a11bc7bc8a4094e317c3"
+    },
+    "document_text_len": {
+      "before": 359,
+      "after": 486
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": null,
+          "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_d50746a01164",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_d50746a01164",
+              "title": "Atlas review decision",
+              "status": "proposed",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-26T21:32:21Z",
+              "updated_at": "2026-09-26T21:32:27Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "8ae420673e6418be494b637629804889e4678406fdce3cc73d5c8a26e0d2affb"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "payload": {
+            "id": "brief-a25161435732453eb4939160ec0f3a78",
+            "period_start": "2026-09-25T17:00:00",
+            "period_end": "2026-09-26T15:32:29.479934",
+            "headline": "1 decision waiting.",
+            "sections": {
+              "this_week": [],
+              "changed": [],
+              "broke": [],
+              "waiting": [],
+              "decisions": [
+                {
+                  "id": "brief-item-64bde424a1f845b6b1618cb9320972a4",
+                  "section": "decisions",
+                  "text": "Review decision: Atlas review decision",
+                  "detail": null,
+                  "source_ref": "decision:decision_d50746a01164",
+                  "priority": 200,
+                  "created_at": "2026-09-26T21:32:21Z"
+                }
+              ]
+            },
+            "generated_at": "2026-09-26T15:32:29.479934",
+            "is_empty": false,
+            "shelf": {},
+            "ledger": {
+              "operations": 0,
+              "since": null
+            },
+            "period_label": "SEP 21 \u2013 26",
+            "generated_label": "GENERATED SEP 26 15:32",
+            "person_sections_state": "unavailable"
+          },
+          "body_sha256": "85925e7ba7b047f5137df4b8b340d43a1872cabae881ce87b72d2d23b9fdc3ac"
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions/decision_d50746a01164",
+          "status": 200,
+          "payload": {
+            "decision": {
+              "id": "decision_d50746a01164",
+              "title": "Atlas review decision",
+              "status": "proposed",
+              "deciders": [],
+              "decided_at": null,
+              "context_markdown": "",
+              "decision_markdown": "",
+              "alternatives": [],
+              "consequences_markdown": "",
+              "superseded_by": null,
+              "tags": [],
+              "created_at": "2026-09-26T21:32:21Z",
+              "updated_at": "2026-09-26T21:32:27Z",
+              "deleted": false
+            }
+          },
+          "body_sha256": "8ae420673e6418be494b637629804889e4678406fdce3cc73d5c8a26e0d2affb"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nSat,",
+    "url": "http://127.0.0.1:49270/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "c5b2072d969815f0a40bbb7153df184318be6ea8eccc9f4b0d63cccdac2c50ea",
+    "document_text_len": 359,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": null,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_d50746a01164",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_d50746a01164",
+            "title": "Atlas review decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T21:32:21Z",
+            "updated_at": "2026-09-26T21:32:27Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "8ae420673e6418be494b637629804889e4678406fdce3cc73d5c8a26e0d2affb"
+      }
+    ],
+    "at_utc": "2026-09-26T21:32:29.358487+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Review decision: Atlas review decision\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 256,
+      "y": 302,
+      "w": 928,
+      "h": 54
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 256,
+        "y": 302,
+        "w": 928,
+        "h": 54
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 258,
+          "y": 329,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 258,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 720,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 720,
+          "y": 329,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 720,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1182,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 1182,
+          "y": 329,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1182,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nSat,",
+    "url": "http://127.0.0.1:49270/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ffa6577bd5da52196dd06aa4a55e28b36aeab546e921a11bc7bc8a4094e317c3",
+    "document_text_len": 486,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-a25161435732453eb4939160ec0f3a78",
+          "period_start": "2026-09-25T17:00:00",
+          "period_end": "2026-09-26T15:32:29.479934",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-64bde424a1f845b6b1618cb9320972a4",
+                "section": "decisions",
+                "text": "Review decision: Atlas review decision",
+                "detail": null,
+                "source_ref": "decision:decision_d50746a01164",
+                "priority": 200,
+                "created_at": "2026-09-26T21:32:21Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-26T15:32:29.479934",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 26",
+          "generated_label": "GENERATED SEP 26 15:32",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "85925e7ba7b047f5137df4b8b340d43a1872cabae881ce87b72d2d23b9fdc3ac"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_d50746a01164",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_d50746a01164",
+            "title": "Atlas review decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T21:32:21Z",
+            "updated_at": "2026-09-26T21:32:27Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "8ae420673e6418be494b637629804889e4678406fdce3cc73d5c8a26e0d2affb"
+      }
+    ],
+    "at_utc": "2026-09-26T21:32:30.527954+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "084181f59032549116f7d645ceecf0bd86e7a5f6080a761de9c8f97e6f2852e1",
+      "body": {
+        "id": "brief-a25161435732453eb4939160ec0f3a78",
+        "period_start": "2026-09-25T17:00:00",
+        "period_end": "2026-09-26T15:32:29.479934",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-64bde424a1f845b6b1618cb9320972a4",
+              "section": "decisions",
+              "text": "Review decision: Atlas review decision",
+              "detail": null,
+              "source_ref": "decision:decision_d50746a01164",
+              "priority": 200,
+              "created_at": "2026-09-26T21:32:21Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-26T15:32:29.479934",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 2,
+          "since": "1790458341.447093"
+        },
+        "period_label": "SEP 21 \u2013 26",
+        "generated_label": "GENERATED SEP 26 15:32",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49270) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=arrival-brief] .surface-ledger",
+    "target_present": true,
+    "text": "Review decision: Atlas review decision\nAck\nDefer",
+    "attrs": {
+      "class": "surface-ledger",
+      "data-cols": "room"
+    },
+    "rect": {
+      "x": 256,
+      "y": 302,
+      "w": 928,
+      "h": 54
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 256,
+        "y": 302,
+        "w": 928,
+        "h": 54
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 258,
+          "y": 329,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 258,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 720,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 720,
+          "y": 329,
+          "owned": true,
+          "owner": "div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary"
+        },
+        {
+          "x": 720,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1182,
+          "y": 304,
+          "owned": true,
+          "owner": "div#desk-next > div.chair > div > section.surface-section > div.surface-ledger > div.surface-ledger-head"
+        },
+        {
+          "x": 1182,
+          "y": 329,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        },
+        {
+          "x": 1182,
+          "y": 354,
+          "owned": true,
+          "owner": "div.chair > div > section.surface-section > div.surface-ledger > li.surface-ledger-row > div.surface-ledger-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 240,
+        "y": 54,
+        "w": 960,
+        "h": 794
+      },
+      "capture_bar": {
+        "x": 256,
+        "y": 758,
+        "w": 928,
+        "h": 74
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\n\u2302 THIS DEVICE\nSearch\n\u2318K\nSat,",
+    "url": "http://127.0.0.1:49270/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "ffa6577bd5da52196dd06aa4a55e28b36aeab546e921a11bc7bc8a4094e317c3",
+    "document_text_len": 486,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "payload": {
+          "id": "brief-a25161435732453eb4939160ec0f3a78",
+          "period_start": "2026-09-25T17:00:00",
+          "period_end": "2026-09-26T15:32:29.479934",
+          "headline": "1 decision waiting.",
+          "sections": {
+            "this_week": [],
+            "changed": [],
+            "broke": [],
+            "waiting": [],
+            "decisions": [
+              {
+                "id": "brief-item-64bde424a1f845b6b1618cb9320972a4",
+                "section": "decisions",
+                "text": "Review decision: Atlas review decision",
+                "detail": null,
+                "source_ref": "decision:decision_d50746a01164",
+                "priority": 200,
+                "created_at": "2026-09-26T21:32:21Z"
+              }
+            ]
+          },
+          "generated_at": "2026-09-26T15:32:29.479934",
+          "is_empty": false,
+          "shelf": {},
+          "ledger": {
+            "operations": 0,
+            "since": null
+          },
+          "period_label": "SEP 21 \u2013 26",
+          "generated_label": "GENERATED SEP 26 15:32",
+          "person_sections_state": "unavailable"
+        },
+        "body_sha256": "85925e7ba7b047f5137df4b8b340d43a1872cabae881ce87b72d2d23b9fdc3ac"
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions/decision_d50746a01164",
+        "status": 200,
+        "payload": {
+          "decision": {
+            "id": "decision_d50746a01164",
+            "title": "Atlas review decision",
+            "status": "proposed",
+            "deciders": [],
+            "decided_at": null,
+            "context_markdown": "",
+            "decision_markdown": "",
+            "alternatives": [],
+            "consequences_markdown": "",
+            "superseded_by": null,
+            "tags": [],
+            "created_at": "2026-09-26T21:32:21Z",
+            "updated_at": "2026-09-26T21:32:27Z",
+            "deleted": false
+          }
+        },
+        "body_sha256": "8ae420673e6418be494b637629804889e4678406fdce3cc73d5c8a26e0d2affb"
+      }
+    ],
+    "at_utc": "2026-09-26T21:32:30.391561+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "084181f59032549116f7d645ceecf0bd86e7a5f6080a761de9c8f97e6f2852e1",
+      "body": {
+        "id": "brief-a25161435732453eb4939160ec0f3a78",
+        "period_start": "2026-09-25T17:00:00",
+        "period_end": "2026-09-26T15:32:29.479934",
+        "headline": "1 decision waiting.",
+        "sections": {
+          "this_week": [],
+          "changed": [],
+          "broke": [],
+          "waiting": [],
+          "decisions": [
+            {
+              "id": "brief-item-64bde424a1f845b6b1618cb9320972a4",
+              "section": "decisions",
+              "text": "Review decision: Atlas review decision",
+              "detail": null,
+              "source_ref": "decision:decision_d50746a01164",
+              "priority": 200,
+              "created_at": "2026-09-26T21:32:21Z"
+            }
+          ]
+        },
+        "generated_at": "2026-09-26T15:32:29.479934",
+        "is_empty": false,
+        "shelf": {},
+        "ledger": {
+          "operations": 2,
+          "since": "1790458341.447093"
+        },
+        "period_label": "SEP 21 \u2013 26",
+        "generated_label": "GENERATED SEP 26 15:32",
+        "person_sections_state": "unavailable"
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49270) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'Review decision: Atlas review decision' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 302, 'w': 928, 'h': 54}",
+    "elapsed_s": 0.93
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Review decision: Atlas review decision' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 302, 'w': 928, 'h': 54}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.063,
+    "first_satisfied_at_s": 0.93,
+    "completion_bound_s": 90.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Review decision: Atlas review decision' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 256, 'y': 302, 'w': 928, 'h': 54}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:49270) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/brief/generate",
+      "status": 200,
+      "body_sha256": "084181f59032549116f7d645ceecf0bd86e7a5f6080a761de9c8f97e6f2852e1",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:49270) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:49270) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/brief/generate",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/p803/runs-p7/20260926T213218Z-case.p7.decision_status.review_list-muaddib-1440/before.png",
+    "/private/tmp/claude-501/p803/runs-p7/20260926T213218Z-case.p7.decision_status.review_list-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5lwtnxpx/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-5lwtnxpx/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:49270"
+  ],
+  "duration_s": 12.008
+}

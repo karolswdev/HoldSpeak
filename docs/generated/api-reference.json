@@ -8078,6 +8078,7 @@
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8159,6 +8160,7 @@
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8259,6 +8261,7 @@
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8337,6 +8340,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8376,6 +8380,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8451,6 +8456,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8534,6 +8540,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8573,6 +8580,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8612,6 +8620,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8651,6 +8660,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8690,6 +8700,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8729,6 +8740,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8814,6 +8826,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8853,6 +8866,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8931,6 +8945,7 @@
         "tests/unit/test_philo7_atlas.py",
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo8_atlas.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
