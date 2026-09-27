@@ -298,3 +298,34 @@ agent: `project.configure_steward(unattended_enabled=True)` succeeded (the polic
 **The census, rechecked by Codex Astra:** 284 = 223 MCP + 61 HTTP; 229 public tools; 61 project-adjacent MCP; the 38
 proposed MCP identities and six HTTP tuples exist; 284 → 240–246 correct (r1 F6).
 
+
+## Round three (2026-09-27): Codex Astra r2's probe and the lane's code reads
+
+Codex Astra checked the charter at `f72db808` (`pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/charter-astra-r2.md`,
+DO-NOT-RATIFY, converging).
+
+**Astra's fixture probe (Codex Astra's run, not the lane's; recorded as Astra reported it).** On an isolated real hub
+Astra created the charter's milestone ("Cutover rehearsal") and risk ("Old ledger freeze slips") through the production
+HTTP routes, set the steward policy `eligible_effect_kinds: ["draft_update"]`, and ran the steward over MCP: one
+`draft_update` effect completed; the draft named both titles; publication persisted across a readback; a later edit was
+refused `published_update`. Ids: run `pstrun_aee671c2319c4d00ad51d15dae12024a`, review
+`prev_34d7867155cf42509b0f2b2fe1eca11f`, update `pupd_1d86640c7ab64a5ba6f3c9e82b6179c8`. Astra's records
+(`probe.json`, `readback.json`) sit in a temporary directory outside the repository and are not retained here; the lane
+did not re-run this probe.
+
+**F20 — the steward records a blank review id.** In that run `compare.review_id` was `""` although the review existed:
+`_phase_compare` reads `review.get("id")` (`holdspeak/services/project_steward_service.py:869`); `open_review` returns
+`review_id` (`holdspeak/services/project_delta_service.py:1848`). Code-read confirmed in the lane.
+
+**F21 — "list" and "count" probe providers.** The Door's count fetches GitHub/Jira snapshots
+(`holdspeak/services/project_door_service.py:146`, through `holdspeak/services/watch_sources.py:75`, `gh pr list`);
+`connection.list` calls `_github_entry`, which calls `connection_status` and so probes GitHub authentication and persists
+its state (`holdspeak/services/connections_service.py:113-121`, `:154-177`; `holdspeak/services/github_provider.py:183`).
+`connection.recheck` for `calendar` and `models` returns local readiness (`connections_service.py:123-141`). Code-read.
+
+**Q3 (c)'s attention item.** An open review alone is not in NEEDS YOU; only pending proposals are
+(`holdspeak/services/project_service.py:814-826`). Astra's review had zero proposals and zero attention items. A pending
+proposal needs an observation the closed rules turn into one (`holdspeak/services/project_delta_service.py:224-248`:
+`followthrough.overdue`, `followthrough.stale`, `decision.review_due`, `watch.transition`).
+
+**F22 — "1 proposals waiting".** `project_service.py:822` writes `f"{pending} proposals waiting"`. Code-read.

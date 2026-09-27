@@ -3,7 +3,7 @@
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** the owner's ratification of the charter and his answer to Q3; the items canvas ratified before the items section is built; PHILO-9-01 for the backend reads (health, NEEDS YOU, RECEIPTS, the Room read)
+- **Depends on:** the owner's ratification of the charter and his answer to Q3; the items canvas ratified before the items section is built; PHILO-9-01 for the backend reads (health, NEEDS YOU, RECEIPTS, the Room read); PHILO-9-02's review-id repair (F20) before the steward face can show the review its run opened
 - **Unblocks:** PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
 - **Closure finding:** `docs/internal/philo/phase-9/grounding/README.md` F1, F2, F3, F7, F10, F11, F15 (corrected); shots under `docs/internal/philo/phase-9/grounding/face/`; Codex Astra r1 F5, F7, F8

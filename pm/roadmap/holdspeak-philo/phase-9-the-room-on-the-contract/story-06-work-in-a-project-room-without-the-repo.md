@@ -20,6 +20,8 @@ D1's closing test: a cold-context client runs a real project job from the MCP ca
   - Two sessions — creation and "find it cold" — each with its own fresh scratch directory, `HOME` and `CODEX_HOME` (only `auth.json`), distinct session ids, no resumed transcript; `--ignore-user-config --ignore-rules --disable apps --disable plugins`; no preamble; the isolated hub the only MCP server.
   - The complete initial context of each session retained; the client's events reconciled with the hub's recorded exchanges; zero repository reads (a repository resource read is a read); the zero-read fence red on the Phase 5 logs; redaction at capture and its leak fence (handover XXX law 12).
   - **The fixture, written to this story's fixture file before the run** (Q3 (a) shown; the charter's "Q3 propagation" gives the (b) and (c) jobs): project "Payments ledger cutover"; milestone "Cutover rehearsal" due the run date minus 3 days, `planned`; risk "Old ledger freeze slips", likelihood "medium", impact "high", mitigation "Freeze the schema by Friday"; expected attention: NEEDS YOU lists "Cutover rehearsal" as overdue, health not ON TRACK; steward: policy `eligible_effect_kinds: ["draft_update"]`, one run, completed, COMPARE's review exists, ACT drafts one update, the face's counts equal the run; publication: the client publishes that draft in the Room; readback: `published`, read-only, the body names "Cutover rehearsal" and "Old ledger freeze slips"; find it cold: the second session gets only "Payments ledger cutover" in the owner's words, finds the project and reads its published update.
+  - Under Q3 (c) the fixture is instead: a linked meeting, a resource, and a follow-through commitment tied to that meeting and due before the run, made through the real follow-through producer (this story names the call); expected attention: the steward's COMPARE turns `followthrough.overdue` into a `risk_attention` proposal and NEEDS YOU shows "DECISION PENDING". An open review alone is not in NEEDS YOU (`holdspeak/services/project_service.py:814-826`).
+  - Codex Astra r2 already reproduced the Q3 (a) steward and publication half on a real hub (grounding "Round three"): one draft effect, the draft names both titles, publication persists, an edit after is refused `published_update`.
   - Each expectation confirmed reachable on the rig before the run; one that is not goes back to its story, never softened.
   - Each result read back from the hub (and its kernel receipt, as Q1 rules) and shown on the Room's face at 1440 and 393; checks compare the fixture's values, not success flags.
 - **Out:** delivery of the update (Q0 (a)); an agent leg unless Q2 (b); a sitting (never claimed).
@@ -28,7 +30,9 @@ D1's closing test: a cold-context client runs a real project job from the MCP ca
 
 - [ ] The launch matches the pinned contract (client, legs, homes, session ids, flags); the retained initial contexts prove it.
 - [ ] The job completes from the catalogue alone: every tool choice comes from `tools/list`; zero repository reads; the zero-read fence fails on the Phase 5 logs; client events reconcile with hub exchanges.
-- [ ] Every fixture value is read back and matches: the milestone and risk facts, the overdue attention item, the steward run (review, one drafted update, counts), the publication lifecycle and body content, and each admitted write's receipt.
+- [ ] Every fixture value of the job Q3 selects is read back and matches:
+  - **Q3 (a) or (b):** the milestone and risk facts; the overdue milestone in NEEDS YOU; the steward run (its recorded review id equals the open review — story 02's F20 repair — one drafted update, the face's counts); the publication lifecycle and body content (it names "Cutover rehearsal" and "Old ledger freeze slips"); each admitted write's receipt.
+  - **Q3 (c):** the linked meeting and the added resource; the follow-through commitment fixture; the `risk_attention` proposal and "DECISION PENDING" in NEEDS YOU; the steward run (review id, draft, counts); the publication readback; each admitted write's receipt. If the rig cannot produce the proposal before the run, this box is not met and the owner is told.
 - [ ] "Find it cold": the second, fresh session finds the project from its name alone and reads its published update.
 - [ ] The Room's face at 1440 and 393 shows each result; the retained sessions carry no account data (the leak fence).
 - [ ] The owner reviews the shots before merge; the evidence reads "REHEARSED; OWNER REVIEW PENDING" until he does.
@@ -45,4 +49,5 @@ PROVISIONAL: about 1 engineering day, plus the owner's review.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
+- 2026-09-27 — round three (Codex Astra r2 F4 paid): acceptance conditional on Q3; the Q3 (c) fixture named; Astra's probe cited.
 - 2026-09-27 — round two (Codex Astra r1 F1, F5, F9 paid): the job ends at publication in the Room; the launch pinned; the fixture fixed before the run; content checks.

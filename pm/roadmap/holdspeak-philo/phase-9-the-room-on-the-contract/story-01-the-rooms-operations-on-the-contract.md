@@ -25,7 +25,9 @@ Per the charter's red-first law: behavioural red through the real hub where the 
 
 - [ ] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
 - [ ] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
-- [ ] The seven new tools match the charter's table; each one's durable outcome and refusals equal the HTTP route's in one hub and across a restart.
+- [ ] The seven new tools match the charter's table, which follows the service (`project.item.list` → `{items, limit, offset}`, limit clamped 1–1000; refusal codes `validation`, `not_found`, `stale_revision`, `idempotency_conflict`; the closed patch fields and vocabularies); each one's durable outcome, result body and code↔status mapping equal the HTTP route's in one hub and across a restart — the charter's compatibility mapping is the only difference, and message text is never compared.
+- [ ] `kernel.receipt` is in the `PROJECT` and `SWEEP` palettes; an agent on each reads its own operation's receipt and is refused another principal's (fenced through dispatch).
+- [ ] NEEDS YOU's review row says "1 proposal waiting" for one (F22; red on main: "1 proposals waiting").
 - [ ] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project" (Q3 (a)/(b)), "what needs me", "draft my update" and "publish my update in the Room" to a tool and an argument path; the description of `project.publish_update` contains none of send, deliver, email.
 - [ ] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
 - [ ] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
@@ -45,4 +47,5 @@ PROVISIONAL: 2.5–3.5 engineering days.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+- 2026-09-27 — round three (Codex Astra r2 F3 paid): the tools' contracts follow the service; own/foreign receipt fences; F22.
 - 2026-09-27 — round two (Codex Astra r1 paid): F14 as prerequisite; the new tools tabled in the charter; this story owns every `ProjectService` edit; Q0 words; fences ship here.
