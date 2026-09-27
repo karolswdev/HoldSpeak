@@ -522,8 +522,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           });
         }
       }
-      reportWriteFailure(verb, cause, () =>
-        void get().updatePrimitive(kind, id, patch, verb),
+      reportWriteFailure(
+        verb,
+        cause,
+        () => void get().updatePrimitive(kind, id, patch, verb),
+        qualifiedRef(kind, id),
       );
       await runRefresh(
         rollback
@@ -544,7 +547,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       const state = primitiveWrites.get(key);
       if (!state || state.version !== writeVersion) return;
       primitiveWrites.set(key, { ...state, pending: false });
-      clearWriteFailure();
+      clearWriteFailure(qualifiedRef(kind, id));
       // HS-202-02 — the hub answered ok: the object is KEPT, and the
       // editor's foot may say so (04-sober-eye.md, rank 5).
       set({ keptAt: { ...get().keptAt, [id]: Date.now() } });
@@ -583,11 +586,9 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       void get().refresh();
       return false;
     }
-    // Round four: a landed delete clears only its OWN earlier refusal, never
-    // an unrelated failure (a failed rename keeps its receipt and Retry).
-    const standing = currentWriteFailure();
-    if (standing?.verb === "DELETE" && standing.subject === qualifiedRef(kind, id))
-      clearWriteFailure();
+    // Round four/seven: a landed delete clears only a failure about its own
+    // object (the channel's subject rule), never an unrelated one.
+    clearWriteFailure(qualifiedRef(kind, id));
     get().clearPosition(id);
     set({
       editingId: get().editingId === id ? null : get().editingId,
@@ -635,7 +636,12 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       if (get().renamingZoneId === id) {
         set({ zoneRenameError: { ...error, zoneId: id, name: trimmed } });
       } else {
-        reportWriteFailure("RENAME ZONE", error.label, () => void get().renameZone(id, trimmed));
+        reportWriteFailure(
+          "RENAME ZONE",
+          error.label,
+          () => void get().renameZone(id, trimmed),
+          qualifiedRef("directory", id),
+        );
       }
     };
     try {
@@ -647,7 +653,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           body: JSON.stringify({ name: trimmed }),
         },
       );
-      if (res.ok) return;
+      if (res.ok) {
+        // Round seven: a landed rename answers its own earlier refusal.
+        clearWriteFailure(qualifiedRef("directory", id));
+        return;
+      }
       const body = await res.json().catch(() => ({}));
       if (res.status === 409) {
         const existingName = body?.existing_name || trimmed;

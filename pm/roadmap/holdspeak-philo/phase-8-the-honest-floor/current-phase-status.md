@@ -110,6 +110,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, story 02 round six (Codex Astra r4 on PR #672 @ daedfc99, BOUNCE on one defect): the Workbench keeps another item's refusal across a successful Remove; the resize console error classified (inherited late-texture race, guarded in `engine.ts`); the rename duplicate ledgered. Record: `checks/story-02-round-three-muaddib.md` §"Round six".
 
+2026-09-26, story 02 round seven (Codex Astra r5 on PR #672 @ ba55892e, BOUNCE on the same class): the desk failure channel is subject-aware by construction — no other object's success erases an unresolved refusal and its Retry. Record: `checks/story-02-round-three-muaddib.md` §"Round seven".
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

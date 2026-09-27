@@ -837,6 +837,73 @@ class TestOneDelete:
             finally:
                 browser.close()
 
+    def _refuse_then(self, width: int, other_write: str) -> None:
+        """Round seven: A's delete is refused; then another desk write lands
+        (a New Zone create, or a rename update); A's failure and a reachable
+        Retry remain; Retry deletes A."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refused A"])
+            try:
+                note = _api(page, "POST", "/api/notes", {"title": "Rename me"}, token=TOKEN)["note"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"A is locked"}')
+                    else:
+                        route.continue_()
+
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refused A")
+                page.locator(".write-receipt", has_text="DELETE").first.wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(f"**/api/decisions/{decision_id}", refuse)
+                if other_write == "create":
+                    _palette(page, "New Zone", "desk.new-zone")
+                    page.locator("input.desk-zone-rename").wait_for(timeout=10_000)
+                    page.keyboard.press("Escape")
+                    landed = lambda: len(_api(page, "GET", "/api/directories", token=TOKEN)["directories"]) >= 1
+                else:
+                    # An update: edit the note's body in its editor (the
+                    # debounced save, updatePrimitive).
+                    _name_button(page, "Rename me").click(button="right")
+                    page.locator(".desk-world-menu [role=menuitem]", has_text="Edit").last.click()
+                    body = page.locator(".desk-editor-window .cm-content").first
+                    body.wait_for(timeout=10_000)
+                    body.click()
+                    page.keyboard.type(" edited by the glass")
+                    import json as _json
+                    landed = lambda: "edited by the glass" in _json.dumps(
+                        _api(page, "GET", f"/api/notes/{note}", token=TOKEN))
+                page.wait_for_timeout(2_000)
+                assert landed(), f"the {other_write} did not land"
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(500)
+                standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "DELETE" in t]
+                print(f"{other_write} {width}: A {_status(page, decision_id)}; standing {standing}")
+                assert standing, "A's failure was erased"
+                _readable_in_view(page, ".write-receipt-retry")
+                page.screenshot(path=str(SHOTS / f"list-delete-failure-kept-after-{other_write}-{width}.png"))
+                page.locator(".write-receipt", has_text="DELETE").locator(".write-receipt-retry").first.click()
+                page.wait_for_timeout(2_000)
+                assert _status(page, decision_id) == 404
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_create_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+        self._refuse_then(width, "create")
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_an_update_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+        self._refuse_then(width, "update")
+
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
     def test_a_delete_keeps_an_unrelated_rename_failure(self, width: int) -> None:

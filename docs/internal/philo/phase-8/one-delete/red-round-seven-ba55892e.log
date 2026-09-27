@@ -1,0 +1,256 @@
+21:35  up 5 days,  3:14, 9 users, load averages: 2.17 7.35 13.30
+create 1440: A 200; standing []
+Fcreate 393: A 200; standing []
+FFF
+=================================== FAILURES ===================================
+_____ TestOneDelete.test_a_create_keeps_an_unrelated_delete_failure[1440] ______
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a270>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_create_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+>       self._refuse_then(width, "create")
+
+tests/e2e/test_philo8_one_delete_glass.py:896: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a270>
+width = 1440, other_write = 'create'
+
+    def _refuse_then(self, width: int, other_write: str) -> None:
+        """Round seven: A's delete is refused; then another desk write lands
+        (a New Zone create, or a rename update); A's failure and a reachable
+        Retry remain; Retry deletes A."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refused A"])
+            try:
+                note = _api(page, "POST", "/api/notes", {"title": "Rename me"}, token=TOKEN)["note"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+    
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"A is locked"}')
+                    else:
+                        route.continue_()
+    
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refused A")
+                page.locator(".write-receipt", has_text="DELETE").first.wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(f"**/api/decisions/{decision_id}", refuse)
+                if other_write == "create":
+                    _palette(page, "New Zone", "desk.new-zone")
+                    page.locator("input.desk-zone-rename").wait_for(timeout=10_000)
+                    page.keyboard.press("Escape")
+                    landed = lambda: len(_api(page, "GET", "/api/directories", token=TOKEN)["directories"]) >= 1
+                else:
+                    _name_button(page, "Rename me").click(button="right")
+                    page.locator(".desk-world-menu [role=menuitem]", has_text="Get Info").last.click()
+                    page.locator(".info-name").first.click()
+                    field = page.locator(".info-name-edit input").first
+                    field.fill("Renamed note")
+                    field.press("Enter")
+                    landed = lambda: _api(page, "GET", f"/api/notes/{note}", token=TOKEN)["note"]["title"] == "Renamed note"
+                page.wait_for_timeout(2_000)
+                assert landed(), f"the {other_write} did not land"
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(500)
+                standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "DELETE" in t]
+                print(f"{other_write} {width}: A {_status(page, decision_id)}; standing {standing}")
+>               assert standing, "A's failure was erased"
+E               AssertionError: A's failure was erased
+E               assert []
+
+tests/e2e/test_philo8_one_delete_glass.py:883: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+______ TestOneDelete.test_a_create_keeps_an_unrelated_delete_failure[393] ______
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a330>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_create_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+>       self._refuse_then(width, "create")
+
+tests/e2e/test_philo8_one_delete_glass.py:896: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a330>
+width = 393, other_write = 'create'
+
+    def _refuse_then(self, width: int, other_write: str) -> None:
+        """Round seven: A's delete is refused; then another desk write lands
+        (a New Zone create, or a rename update); A's failure and a reachable
+        Retry remain; Retry deletes A."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Refused A"])
+            try:
+                note = _api(page, "POST", "/api/notes", {"title": "Rename me"}, token=TOKEN)["note"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+    
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"A is locked"}')
+                    else:
+                        route.continue_()
+    
+                page.route(f"**/api/decisions/{decision_id}", refuse)
+                _row_menu_delete(page, "Refused A")
+                page.locator(".write-receipt", has_text="DELETE").first.wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(f"**/api/decisions/{decision_id}", refuse)
+                if other_write == "create":
+                    _palette(page, "New Zone", "desk.new-zone")
+                    page.locator("input.desk-zone-rename").wait_for(timeout=10_000)
+                    page.keyboard.press("Escape")
+                    landed = lambda: len(_api(page, "GET", "/api/directories", token=TOKEN)["directories"]) >= 1
+                else:
+                    _name_button(page, "Rename me").click(button="right")
+                    page.locator(".desk-world-menu [role=menuitem]", has_text="Get Info").last.click()
+                    page.locator(".info-name").first.click()
+                    field = page.locator(".info-name-edit input").first
+                    field.fill("Renamed note")
+                    field.press("Enter")
+                    landed = lambda: _api(page, "GET", f"/api/notes/{note}", token=TOKEN)["note"]["title"] == "Renamed note"
+                page.wait_for_timeout(2_000)
+                assert landed(), f"the {other_write} did not land"
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(500)
+                standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "DELETE" in t]
+                print(f"{other_write} {width}: A {_status(page, decision_id)}; standing {standing}")
+>               assert standing, "A's failure was erased"
+E               AssertionError: A's failure was erased
+E               assert []
+
+tests/e2e/test_philo8_one_delete_glass.py:883: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestOneDelete.test_an_update_keeps_an_unrelated_delete_failure[1440] _____
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a3f0>
+width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_an_update_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+>       self._refuse_then(width, "update")
+
+tests/e2e/test_philo8_one_delete_glass.py:901: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:872: in _refuse_then
+    page.locator(".info-name").first.click()
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x113d52710>
+cb = <function Channel.send.<locals>.<lambda> at 0x112527740>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for locator(".info-name").first
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_____ TestOneDelete.test_an_update_keeps_an_unrelated_delete_failure[393] ______
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10851a4b0>
+width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_an_update_keeps_an_unrelated_delete_failure(self, width: int) -> None:
+>       self._refuse_then(width, "update")
+
+tests/e2e/test_philo8_one_delete_glass.py:901: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:872: in _refuse_then
+    page.locator(".info-name").first.click()
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x114b6efd0>
+cb = <function Channel.send.<locals>.<lambda> at 0x1150e9f30>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E           Call log:
+E             - waiting for locator(".info-name").first
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: TimeoutError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_create_keeps_an_unrelated_delete_failure[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_create_keeps_an_unrelated_delete_failure[393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_an_update_keeps_an_unrelated_delete_failure[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_an_update_keeps_an_unrelated_delete_failure[393]
+4 failed, 48 deselected in 172.57s (0:02:52)
+21:38  up 5 days,  3:17, 9 users, load averages: 11.04 9.07 12.90
+update 1440: A 200; standing []
+E               AssertionError: A's failure was erased
+E               assert []
+E               AssertionError: A's failure was erased
+E               assert []
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_an_update_keeps_an_unrelated_delete_failure[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_an_update_keeps_an_unrelated_delete_failure[393]
+2 failed, 50 deselected in 70.27s (0:01:10)

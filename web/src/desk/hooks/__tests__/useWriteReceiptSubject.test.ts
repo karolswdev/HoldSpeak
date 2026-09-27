@@ -29,3 +29,30 @@ describe("useWriteReceipt subject rule", () => {
     expect(result.current.failure).toBeNull();
   });
 });
+
+// Round seven — the desk (module) channel, by construction.
+import { clearWriteFailure, currentWriteFailure, dismissWriteFailure, reportWriteFailure } from "../useWriteReceipt";
+
+describe("desk channel subject rule", () => {
+  it("a subject-less clear does not remove a failure about a subject; a matching clear does", () => {
+    reportWriteFailure("DELETE", "HTTP 403", undefined, "decision:a");
+    clearWriteFailure();
+    expect(currentWriteFailure()?.subject).toBe("decision:a");
+    clearWriteFailure("decision:b");
+    expect(currentWriteFailure()?.subject).toBe("decision:a");
+    clearWriteFailure("decision:a");
+    expect(currentWriteFailure()).toBeNull();
+  });
+
+  it("a failure with no subject is removed by any clear", () => {
+    reportWriteFailure("CREATE zone", "HTTP 500");
+    clearWriteFailure("note:x");
+    expect(currentWriteFailure()).toBeNull();
+  });
+
+  it("the owner's dismissal removes any failure", () => {
+    reportWriteFailure("DELETE", "HTTP 403", undefined, "decision:a");
+    dismissWriteFailure();
+    expect(currentWriteFailure()).toBeNull();
+  });
+});

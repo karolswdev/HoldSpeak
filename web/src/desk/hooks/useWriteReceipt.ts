@@ -235,8 +235,23 @@ export function reportWriteFailure(
   return failure;
 }
 
-/** A landed write is quiet: it only clears whatever was standing. */
-export function clearWriteFailure() {
+/** A landed write is quiet: it clears the standing failure it answers.
+ *
+ * PHILO-8-02 round seven — one rule for the whole desk channel, by
+ * construction: a clear carries the landed write's subject (or none). A
+ * standing failure about a subject is removed only by a clear with that same
+ * subject; a standing failure with no subject is removed by any clear. So no
+ * other object's success (a create, an update, a delete, a seed) can erase
+ * an unresolved refusal and its Retry. The owner's own dismissal (OK) is
+ * `dismissWriteFailure`. */
+export function clearWriteFailure(subject?: string) {
+  if (deskFailure === null) return;
+  if (deskFailure.subject !== undefined && deskFailure.subject !== subject) return;
+  publish(null);
+}
+
+/** The owner dismissed the receipt (OK): it goes, whatever it was about. */
+export function dismissWriteFailure() {
   if (deskFailure !== null) publish(null);
 }
 
@@ -286,7 +301,7 @@ export function useDeskWriteReceipt({ fallback = false } = {}) {
 
   return {
     failure,
-    clear: clearWriteFailure,
-    receipt: receiptElement(failure, clearWriteFailure),
+    clear: dismissWriteFailure,
+    receipt: receiptElement(failure, dismissWriteFailure),
   };
 }

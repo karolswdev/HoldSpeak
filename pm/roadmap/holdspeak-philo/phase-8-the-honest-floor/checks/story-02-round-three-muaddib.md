@@ -81,3 +81,60 @@ TypeError: Cannot read properties of null (reading 'x')
 - **Caveat:** my own build never reproduced it (0 in 70), so the fix can only be shown against Astra's build. The record is `docs/internal/philo/phase-8/one-delete/resize-console-error.txt`.
 
 Red on `daedfc99` (Astra's build; its only change is the engine guard, which does not touch this path; `red-round-six-daedfc99.log`): `workbench two items 1440: standing []` / `AssertionError: []` at both widths.
+
+## Round seven (Codex Astra r5 on `ba55892e`, BOUNCE: the same class of defect, one more caller — `story-02-built-astra-r5.md`)
+
+Astra r5 confirmed round six: the Workbench repair holds at both widths, a zone rename keeps the delete failure, and the sprite guards are sound (0 page errors in 40 runs). The new finding: New Zone (POST 201) erased an unrelated Delete failure and its Retry, with A still 200 on the hub, at both widths. The cause: `createPrimitive` called the desk channel's unconditional `clearWriteFailure()`, and so did `updatePrimitive`.
+
+**Correction of my round-six claim.** Round six said "one rule in both channels". That was stronger than the code: only the delete path followed the rule in the desk channel. As of round seven it is true by construction, as follows.
+
+**The repair closes the class.** The desk channel's `clearWriteFailure(subject?)` now follows the subject rule itself (`web/src/desk/hooks/useWriteReceipt.ts`):
+- a standing failure about a subject is removed only by a clear with that same subject;
+- a standing failure with no subject is removed by any clear.
+
+The owner's explicit dismissal (OK) is the new `dismissWriteFailure()`, used by the receipt's OK button and the hook's `clear`. The Workbench's local channel has had the same rule since round six (`useWriteReceipt.ts`, `attempt`'s success path).
+
+Subjects are passed where the caller has one:
+- `updatePrimitive`: its refusal and its clear both carry `kind:id`;
+- `deletePrimitive`: `kind:id`;
+- `renameZone`: its refusal and a new success-path clear both carry `directory:id`.
+
+**Every call site of `clearWriteFailure` / `dismissWriteFailure`**, all now covered by construction:
+
+| Call site | What it answers |
+|---|---|
+| `web/src/desk/callLoopWiring.ts:40` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/newThought.ts:32` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:718` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:936` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:974` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:982` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:1591` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:1871` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:1926` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/ChairHome.tsx:1981` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/chair/_parked/lanes/BriefLane.tsx:112` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/store/dataSlice.ts:251` | a READ failure healed by a clean refresh (READ failures carry no subject) |
+| `web/src/desk/store/dataSlice.ts:382` | `createPrimitive` landed (New Zone, New Note…): a new object has no earlier failure, so no subject; it clears only a subject-less failure (a CREATE refusal) |
+| `web/src/desk/store/dataSlice.ts:550` | `updatePrimitive` landed: subject `kind:id`; its refusal now carries the same subject |
+| `web/src/desk/store/dataSlice.ts:591` | `deletePrimitive` landed: subject `kind:id` (replaces the round-four inline check) |
+| `web/src/desk/store/dataSlice.ts:658` | `renameZone` landed: subject `directory:id`; its refusal now carries it (the success path cleared nothing before) |
+| `web/src/desk/store/dataSlice.ts:860` | SEED DESK landed (subject-less) |
+| `web/src/desk/store/recordingSlice.ts:55` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/store/recordingSlice.ts:68` | a subject-less write landed (Chair capture/meeting posts, the call loop, a new thought, a recording); it clears only a subject-less failure |
+| `web/src/desk/hooks/useWriteReceipt.ts` (`useDeskWriteReceipt`: `clear`, the receipt's OK) | `dismissWriteFailure()`: the owner's own dismissal, which removes any failure |
+
+**Fences** (glass, 1440 and 393; the same parameterised fence covers both writes):
+- `test_a_create_keeps_an_unrelated_delete_failure`: A's delete is refused, then New Zone lands (POST 201). A's failure stays, its Retry is readable in the viewport, and Retry deletes A (404).
+- `test_an_update_keeps_an_unrelated_delete_failure`: the same, with an update in place of New Zone. The update edits a note's body in its editor, which goes through the debounced save to `updatePrimitive`.
+
+All the earlier fences still pass. Channel-level vitest (`hooks/__tests__/useWriteReceiptSubject.test.ts`):
+- a clear with no subject does not remove a failure about a subject;
+- a clear with another subject does not remove it either;
+- a clear with the matching subject does;
+- a failure with no subject is removed by any clear;
+- the owner's dismissal removes any failure.
+
+Red on `ba55892e` (serial, load average 2.17 → 11.04; `docs/internal/philo/phase-8/one-delete/red-round-seven-ba55892e.log`):
+- create: `create 1440: A 200; standing []` / `AssertionError: A's failure was erased`, at both widths;
+- update: `update 1440: A 200; standing []` / `AssertionError: A's failure was erased`, at both widths. The first attempt at this fence used Get Info, which the list does not mount; the fence now uses the note's editor.
