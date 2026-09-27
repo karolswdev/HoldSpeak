@@ -1,0 +1,68 @@
+"""PHILO-9 grounding: open the Room from a linked meeting (a `project-room` caller)."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+res: dict = {"width": WIDTH}
+
+
+def windows(page):
+    return page.evaluate("""() => [...document.querySelectorAll('[aria-label^="Close "]')]
+      .map(b => b.getAttribute('aria-label').slice(6))""")
+
+
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    page = b.new_page(viewport={"width": WIDTH, "height": HEIGHT})
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(1500)
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(1500)
+    page.keyboard.press("Meta+k")
+    page.wait_for_timeout(600)
+    page.keyboard.type("Ledger cutover sync")
+    page.wait_for_timeout(1200)
+    page.screenshot(path=str(OUT / f"30-palette-meeting-{WIDTH}.png"))
+    opts = page.evaluate("""() => [...document.querySelectorAll('[id^=desk-palette-option]')].map(e => e.innerText.replace(/\\s+/g,' ').trim())""")
+    res["palette"] = opts
+    page.get_by_text("Ledger cutover sync").last.click()
+    page.wait_for_timeout(3000)
+    page.screenshot(path=str(OUT / f"31-meeting-{WIDTH}.png"))
+    res["windows_before"] = windows(page)
+    res["url_before"] = page.url
+    rv = page.get_by_role("button", name="Review meeting")
+    res["review_meeting_buttons"] = rv.count()
+    if rv.count():
+        rv.first.click()
+        page.wait_for_timeout(3000)
+        page.screenshot(path=str(OUT / f"31b-review-{WIDTH}.png"))
+        res["windows_review"] = windows(page)
+    tab = page.get_by_role("button", name="REVIEW", exact=True)
+    if not tab.count():
+        tab = page.get_by_role("tab", name="REVIEW")
+    res["review_tab"] = tab.count()
+    if tab.count():
+        tab.first.click()
+        page.wait_for_timeout(2500)
+        page.screenshot(path=str(OUT / f"31c-review-tab-{WIDTH}.png"))
+    btn = page.locator("[data-testid=review-project]")
+    res["project_buttons"] = btn.count()
+    if btn.count():
+        btn.first.click()
+        page.wait_for_timeout(3000)
+        page.screenshot(path=str(OUT / f"32-after-open-project-{WIDTH}.png"))
+        res["windows_after"] = windows(page)
+        res["url_after"] = page.url
+    else:
+        res["meeting_text"] = page.evaluate("() => document.body.innerText.slice(0, 2500)")
+    b.close()
+(OUT / f"open-room-{WIDTH}.json").write_text(json.dumps(res, indent=1))
+print(json.dumps(res, indent=1)[:2500])

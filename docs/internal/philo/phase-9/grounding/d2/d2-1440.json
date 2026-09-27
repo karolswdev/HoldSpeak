@@ -1,0 +1,114 @@
+{
+ "width": 1440,
+ "list": {
+  "census": "27 ITEMS \u00b7 9 ZONES\n\n27 SHOWNS OF 27",
+  "census_px": 10,
+  "status": "27 SHOWNS OF 27",
+  "status_px": 10,
+  "small_count": 51,
+  "small_sample": [
+   {
+    "text": "27 ITEMS \u00b7 9 ZONES",
+    "px": 10,
+    "cls": ""
+   },
+   {
+    "text": "27 SHOWNS",
+    "px": 10,
+    "cls": "desk-list-status"
+   },
+   {
+    "text": "of",
+    "px": 10,
+    "cls": "desk-list-status"
+   },
+   {
+    "text": "27",
+    "px": 10,
+    "cls": "desk-list-status"
+   },
+   {
+    "text": "Name",
+    "px": 10,
+    "cls": "desk-sortable-table-sort is-current"
+   },
+   {
+    "text": "\u2191",
+    "px": 10,
+    "cls": "desk-sortable-table-direction"
+   },
+   {
+    "text": "Kind",
+    "px": 10,
+    "cls": "desk-sortable-table-sort"
+   },
+   {
+    "text": "Zone",
+    "px": 10,
+    "cls": "desk-sortable-table-sort"
+   },
+   {
+    "text": "Attention",
+    "px": 10,
+    "cls": "desk-sortable-table-sort"
+   },
+   {
+    "text": "ZONES",
+    "px": 10,
+    "cls": ""
+   },
+   {
+    "text": "ZONE",
+    "px": 10,
+    "cls": ""
+   },
+   {
+    "text": "EMPTY",
+    "px": 10,
+    "cls": ""
+   }
+  ],
+  "sort_heads": [
+   {
+    "text": "NAME \u2191",
+    "cls": "desk-sortable-table-sort is-current"
+   },
+   {
+    "text": "KIND",
+    "cls": "desk-sortable-table-sort"
+   },
+   {
+    "text": "ZONE",
+    "cls": "desk-sortable-table-sort"
+   },
+   {
+    "text": "ATTENTION",
+    "cls": "desk-sortable-table-sort"
+   }
+  ],
+  "cells_cut": [],
+  "vw": 1440
+ },
+ "row_menu": {
+  "row_text": null,
+  "top": 847,
+  "bottom": 875,
+  "vh": 900,
+  "cut_px": 0,
+  "row_index": 17,
+  "row_y": 792
+ },
+ "selection": {
+  "start": 0,
+  "end": 8,
+  "focused": true,
+  "sel_bg": "rgba(168, 110, 74, 0.12)",
+  "field_bg": "rgb(21, 23, 29)",
+  "painted": [
+   39,
+   33,
+   34
+  ],
+  "contrast_selection_vs_field": 1.13
+ }
+}

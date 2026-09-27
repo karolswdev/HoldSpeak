@@ -1,0 +1,159 @@
+"""PHILO-9 grounding: a Senior-Architect project job through /api/mcp only.
+
+Reads the catalogue (tools/list), then walks the job the way a client would:
+make a project, add a thing to it, see what needs him, ask the steward,
+draft an update. Every request and answer is written verbatim to a JSONL
+file; nothing is inferred. Run against a hub on an isolated HOME.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+URL = sys.argv[1]
+TOKEN = sys.argv[2]
+OUT = Path(sys.argv[3])
+OUT.mkdir(parents=True, exist_ok=True)
+LOG = (OUT / "mcp-walk.jsonl").open("w")
+_id = 0
+
+
+def rpc(method: str, params: dict | None = None, *, bearer: str | None = None) -> dict:
+    global _id
+    _id += 1
+    body = {"jsonrpc": "2.0", "id": _id, "method": method, "params": params or {}}
+    req = urllib.request.Request(
+        f"{URL}/api/mcp", data=json.dumps(body).encode(), method="POST",
+        headers={"Authorization": f"Bearer {bearer or TOKEN}", "Content-Type": "application/json"})
+    t0 = time.monotonic()
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            status, raw = r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        status, raw = e.code, e.read().decode()
+    try:
+        answer = json.loads(raw) if raw else {}
+    except ValueError:
+        answer = {"raw": raw[:4000]}
+    LOG.write(json.dumps({"id": _id, "method": method, "params": params, "http": status,
+                          "ms": round((time.monotonic() - t0) * 1000), "answer": answer}) + "\n")
+    LOG.flush()
+    return answer
+
+
+def call(name: str, args: dict | None = None) -> tuple[object, bool]:
+    env = rpc("tools/call", {"name": name, "arguments": args or {}})
+    if "error" in env:
+        return env["error"], True
+    res = env.get("result") or {}
+    content = res.get("content") or []
+    text = content[0].get("text") if content else None
+    try:
+        decoded = json.loads(text) if isinstance(text, str) else text
+    except ValueError:
+        decoded = text
+    return decoded, bool(res.get("isError"))
+
+
+def http(method: str, path: str, body: dict | None = None) -> tuple[int, object]:
+    req = urllib.request.Request(
+        f"{URL}{path}", data=json.dumps(body).encode() if body is not None else None, method=method,
+        headers={"X-HoldSpeak-Token": TOKEN, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            status, raw = r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        status, raw = e.code, e.read().decode()
+    try:
+        return status, json.loads(raw)
+    except ValueError:
+        return status, raw[:2000]
+
+
+summary: list[dict] = []
+
+
+def step(label: str, name: str, args: dict | None = None) -> object:
+    value, is_error = call(name, args)
+    short = json.dumps(value, default=str)[:600]
+    summary.append({"step": label, "tool": name, "args": args or {}, "isError": is_error, "answer": short})
+    print(f"[{'ERR' if is_error else 'ok '}] {label}: {name} -> {short[:300]}")
+    return value
+
+
+rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
+                   "clientInfo": {"name": "philo9-grounding", "version": "0"}})
+listing = rpc("tools/list")
+tools = (listing.get("result") or {}).get("tools") or []
+(OUT / "tools-list.json").write_text(json.dumps(listing, indent=1))
+names = sorted(t["name"] for t in tools)
+proj = [t for t in tools if t["name"].startswith(("project.", "provider.", "connection.", "steward.", "desk.needs_you"))]
+print("tools/list:", len(names), "project-ish:", len(proj))
+(OUT / "tools-project-descriptions.json").write_text(json.dumps(
+    [{"name": t["name"], "description": t.get("description"),
+      "required": (t.get("inputSchema") or {}).get("required")} for t in proj], indent=1))
+
+# The job, as a client reads it from the catalogue alone.
+p = step("make a project", "project.create", {
+    "name": "Payments migration",
+    "description": "Move card payments to the new ledger by end of quarter.",
+    "keywords": ["payments", "ledger"], "team_members": ["Priya", "Tomas"]})
+pid = ((p or {}).get("project") or {}).get("id") if isinstance(p, dict) else None
+print("project id:", pid)
+step("list projects", "project.list")
+room = step("open the room", "project.get_room", {"project_id": pid})
+(OUT / "room-after-create.json").write_text(json.dumps(room, indent=1, default=str))
+
+# "Add a thing to it": the catalogue offers no item / resource / note verb.
+item_tools = [n for n in names if n.startswith("project.") and any(k in n for k in ("item", "resource", "task", "note", "add"))]
+summary.append({"step": "find a verb to add a thing to the project", "catalogue_matches": item_tools})
+print("add-a-thing candidates in catalogue:", item_tools)
+step("add a watch source (the only 'add' verb)", "project.add_suggested_source",
+     {"project_id": pid, "reference": "acme/payments"})
+step("list suggested sources", "project.suggested_sources", {"project_id": pid})
+step("dismiss a suggested source", "project.dismiss_suggested_source",
+     {"project_id": pid, "reference": "acme/payments"})
+# The HTTP face has items; record what exists there for comparison.
+st, item = http("POST", f"/api/projects/{pid}/items", {"item_type": "task", "title": "Freeze the old ledger schema"})
+summary.append({"step": "HTTP comparison: POST /api/projects/{id}/items", "http": st, "answer": json.dumps(item)[:600]})
+print("HTTP item create:", st, json.dumps(item)[:300])
+st, items = http("GET", f"/api/projects/{pid}/items")
+summary.append({"step": "HTTP comparison: GET items", "http": st, "answer": json.dumps(items)[:600]})
+
+# "What needs me"
+step("what needs me (desk)", "desk.needs_you")
+step("what changed (delta)", "project.get_delta", {"project_id": pid})
+review = step("open a review", "project.open_review", {"project_id": pid})
+
+# "Ask the steward"
+step("read steward policy", "project.configure_steward", {"project_id": pid})
+run = step("ask the steward to run", "project.run_steward", {"project_id": pid})
+run_id = run.get("run_id") if isinstance(run, dict) else None
+if run_id:
+    for _ in range(20):
+        r = step("poll steward run", "project.get_steward_run", {"run_id": run_id})
+        state = ((r or {}).get("run") or {}).get("state") if isinstance(r, dict) else None
+        if state and state not in ("queued", "running", "pending"):
+            break
+        time.sleep(1)
+step("trigger due work now", "project.steward.trigger")
+step("steward nudges", "steward.nudges")
+
+# "Tell my boss": draft and publish an update
+upd = step("draft an update", "project.draft_update", {"project_id": pid})
+uid = ((upd or {}).get("update") or {}).get("id") if isinstance(upd, dict) else None
+step("list updates", "project.list_updates", {"project_id": pid})
+if uid:
+    step("publish the update", "project.publish_update", {"update_id": uid})
+
+# Connectors
+step("list connections", "connection.list")
+step("list providers", "provider.list")
+room2 = step("room after the job", "project.get_room", {"project_id": pid})
+(OUT / "room-after-job.json").write_text(json.dumps(room2, indent=1, default=str))
+(OUT / "summary.json").write_text(json.dumps({"project_id": pid, "steps": summary}, indent=1))
+print("PROJECT_ID", pid)

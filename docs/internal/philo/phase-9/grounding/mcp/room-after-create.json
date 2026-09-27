@@ -1,0 +1,184 @@
+{
+ "changes": {
+  "recent": [
+   {
+    "actor_ref": "principal:owner-session",
+    "after_hash": "82ef315b9d12069553333219e57b6ff5",
+    "before_hash": null,
+    "change_kind": "project.created",
+    "command_id": "pcmd_cf6e6576c32d47e382e828ec563c26ac",
+    "created_at": "2026-09-27T14:10:00.644106",
+    "id": "pchg_6e10644f0c98289f800c52741e0c37d6",
+    "project_id": "proj-dbb2d234f2ce",
+    "project_revision": 1,
+    "summary_json": "{\"name\": \"Payments migration\"}",
+    "target_ref": "project:proj-dbb2d234f2ce"
+   }
+  ],
+  "state": "ok"
+ },
+ "commitments": {
+  "items": [],
+  "state": "ok"
+ },
+ "decisions": {
+  "items": [],
+  "state": "ok"
+ },
+ "health": {
+  "assessment": "on_track",
+  "checked_at": null,
+  "inputs": {
+   "ciFailing": false,
+   "overdue": 0,
+   "reviewWaitingDays": null,
+   "targetPassed": false
+  },
+  "merge_queue_depth": 0,
+  "people": [],
+  "reason": null,
+  "signals": {
+   "ci": {
+    "failures_last_3": 0,
+    "flaky_branch_count": 0,
+    "present": false,
+    "queue": 0,
+    "tone": "green"
+   },
+   "issue_aging": {
+    "aged_count": 0,
+    "present": false,
+    "threshold_days": 14,
+    "tone": "green"
+   },
+   "release": {
+    "blockers": [],
+    "blockers_count": 0,
+    "composite": "green",
+    "present": false,
+    "signals": {
+     "blockers": "green",
+     "ci": "green",
+     "overdue": "green",
+     "review_wait": "green"
+    },
+    "tone": "green"
+   },
+   "review_wait": {
+    "median_days": 0.0,
+    "per_reviewer": [],
+    "present": false,
+    "tone": "green",
+    "waiting_count": 0
+   }
+  },
+  "state": "ok"
+ },
+ "items": {
+  "focus": [],
+  "state": "ok",
+  "total": 0,
+  "totals_by_type": {}
+ },
+ "meetings": {
+  "count": 0,
+  "latest": null,
+  "state": "ok"
+ },
+ "needsYou": {
+  "count": 0,
+  "items": [],
+  "state": "ok"
+ },
+ "nextCheckAt": null,
+ "observed_at": "2026-09-27T14:10:00.644106",
+ "project": {
+  "context": {},
+  "created_at": "2026-09-27T14:10:00.644106",
+  "description": "Move card payments to the new ledger by end of quarter.",
+  "detection_threshold": 0.4,
+  "id": "proj-dbb2d234f2ce",
+  "is_archived": false,
+  "keywords": [
+   "payments",
+   "ledger"
+  ],
+  "last_review_at": null,
+  "last_review_id": null,
+  "lifecycle": "active",
+  "meeting_count": 0,
+  "modules_json": null,
+  "name": "Payments migration",
+  "next_review_at": null,
+  "outcome_text": null,
+  "owner_ref": null,
+  "posture": null,
+  "posture_reason": null,
+  "purpose": null,
+  "review_cadence_json": null,
+  "revision": 1,
+  "start_at": null,
+  "target_at": null,
+  "team_members": [
+   "Priya",
+   "Tomas"
+  ],
+  "template_key": null,
+  "updated_at": "2026-09-27T14:10:00.644106"
+ },
+ "project_id": "proj-dbb2d234f2ce",
+ "receipts": {
+  "items": [
+   {
+    "at": 1790539800.647138,
+    "caller": "127.0.0.1",
+    "id": "f494087e-61ff-4763-864e-624b86105790",
+    "identity": "owner-session",
+    "label": "ProjectService.list_meetings",
+    "op": "list_meetings",
+    "origin": null,
+    "outcome": "ok",
+    "timestamp": 1790539800.647138,
+    "title": "ProjectService.list_meetings"
+   }
+  ],
+  "state": "ok"
+ },
+ "resources": {
+  "count": 0,
+  "latest": null,
+  "state": "ok"
+ },
+ "review": {
+  "last_accepted_at": null,
+  "open_review_id": null,
+  "pending_count": 0,
+  "state": "ok"
+ },
+ "revision": 1,
+ "sinceRead": {
+  "groups": [],
+  "readAt": null,
+  "state": "ok"
+ },
+ "sources": {
+  "count": 0,
+  "items": [],
+  "nextCheckAt": null,
+  "state": "ok"
+ },
+ "steward": {
+  "reason": "not_yet_built",
+  "state": "absent"
+ },
+ "target": {
+  "daysLeft": null,
+  "passed": false,
+  "state": "ok",
+  "targetAt": null
+ },
+ "updates": {
+  "reason": "not_yet_built",
+  "state": "absent"
+ }
+}

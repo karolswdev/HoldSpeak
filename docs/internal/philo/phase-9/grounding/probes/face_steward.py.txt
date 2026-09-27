@@ -1,0 +1,108 @@
+"""PHILO-9 grounding: the Steward and the way back, on the Room's face, one width."""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.request
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+NAME = f"Card ledger cutover {WIDTH}"
+log: list[dict] = []
+
+
+def hub(path: str):
+    req = urllib.request.Request(f"{URL}{path}", headers={"X-HoldSpeak-Token": TOKEN})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode())
+
+
+def shot(page, name: str) -> None:
+    page.screenshot(path=str(OUT / f"{name}-{WIDTH}.png"))
+    buttons = page.evaluate("""() => [...document.querySelectorAll('button')]
+      .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight; })
+      .map(e => (e.getAttribute('aria-label') || e.innerText || '').trim().replace(/\\s+/g,' ').slice(0,60)).filter(Boolean)""")
+    win = page.evaluate("""() => { const w = [...document.querySelectorAll('[class*=surface-window]')].pop();
+      return w ? w.innerText.slice(0, 2500) : ''; }""")
+    log.append({"shot": f"{name}-{WIDTH}.png", "buttons": buttons, "window_text": win})
+    print(f"--- {name}-{WIDTH}\n  BTN {buttons}\n  WIN {win[:1400]!r}")
+
+
+def open_room(page) -> None:
+    page.keyboard.press("Meta+k")
+    page.wait_for_timeout(700)
+    page.keyboard.type(NAME)
+    page.wait_for_timeout(900)
+    page.get_by_text(f"Open {NAME}").first.click()
+    page.wait_for_timeout(3000)
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page(viewport={"width": WIDTH, "height": HEIGHT})
+    net: list[str] = []
+    page.on("response", lambda r: net.append(f"{r.request.method} {r.url.split(URL)[-1][:120]} {r.status}")
+            if "/api/" in r.url and r.request.method != "GET" else None)
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(2000)
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(2000)
+    open_room(page)
+    shot(page, "20-room-reopened")
+    # A. the way back from a published update
+    page.get_by_role("button", name="Draft update", exact=True).last.click()
+    page.wait_for_timeout(2500)
+    shot(page, "21-update-posture-with-published")
+    back = page.get_by_role("button", name="Back", exact=True)
+    closer = page.get_by_role("button", name="Close", exact=True)
+    if back.count():
+        back.last.click()
+    elif closer.count():
+        closer.last.click()
+    page.wait_for_timeout(2000)
+    shot(page, "22-after-back")
+    if not page.get_by_role("button", name="Steward", exact=True).count():
+        closer = page.get_by_role("button", name="Close", exact=True)
+        if closer.count():
+            closer.last.click()
+            page.wait_for_timeout(2000)
+            shot(page, "23-after-close")
+    # B. the Steward verb: a real click (Playwright refuses a covered target)
+    steward = page.get_by_role("button", name="Steward", exact=True)
+    try:
+        steward.last.click(timeout=6000)
+        log.append({"steward_click": "delivered"})
+    except Exception as exc:  # noqa: BLE001 -- record, never hide
+        log.append({"steward_click": "refused", "error": str(exc).splitlines()[0][:300]})
+        print("  STEWARD CLICK REFUSED:", str(exc).splitlines()[0][:300])
+        page.mouse.wheel(0, 600)
+        page.wait_for_timeout(800)
+        shot(page, "24-room-scrolled")
+        try:
+            steward.last.click(timeout=6000)
+            log.append({"steward_click_after_scroll": "delivered"})
+        except Exception as exc2:  # noqa: BLE001
+            log.append({"steward_click_after_scroll": "refused", "error": str(exc2).splitlines()[0][:300]})
+            print("  STEWARD CLICK REFUSED AFTER SCROLL:", str(exc2).splitlines()[0][:300])
+    page.wait_for_timeout(2500)
+    shot(page, "25-steward-posture")
+    run_once = page.get_by_role("button", name="Run once", exact=False)
+    if run_once.count():
+        disabled = run_once.last.is_disabled()
+        label = run_once.last.get_attribute("aria-label")
+        log.append({"run_once": {"disabled": disabled, "aria": label}})
+        print("  RUN ONCE:", disabled, label)
+        if not disabled:
+            run_once.last.click()
+            page.wait_for_timeout(5000)
+            shot(page, "26-steward-ran")
+    pid = next((x["id"] for x in hub("/api/projects")["projects"] if x["name"] == NAME), None)
+    (OUT / f"face-steward-{WIDTH}.json").write_text(json.dumps(
+        {"log": log, "writes": net, "project_id": pid}, indent=1, default=str))
+    print("  WRITES", net)
+    browser.close()

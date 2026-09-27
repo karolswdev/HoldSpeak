@@ -1,0 +1,57 @@
+"""PHILO-9 grounding: the list row menu's Delete row near the bottom edge (FINDING S2)."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from urllib.parse import quote
+
+from playwright.sync_api import sync_playwright
+
+URL, TOKEN, OUT, WIDTH = sys.argv[1], sys.argv[2], Path(sys.argv[3]), int(sys.argv[4])
+HEIGHT = 900 if WIDTH == 1440 else 852
+out: list[dict] = []
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    page = b.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=2)
+    page.goto(f"{URL}/?token={quote(TOKEN)}", wait_until="networkidle")
+    page.wait_for_timeout(1500)
+    if page.get_by_role("button", name="Continue later").count():
+        page.get_by_role("button", name="Continue later").first.click()
+        page.wait_for_timeout(1500)
+    page.locator("[data-testid=chair-floor-toggle]").click()
+    page.wait_for_timeout(1500)
+    if WIDTH > 720:
+        page.locator("[aria-controls=desk-tool-shelf]").click()
+        page.locator("[aria-controls=desk-palette-listbox]").fill("List view")
+        page.locator("[id='desk-palette-option-desk.toggle-view']").click()
+    page.locator(".desk-listmode").wait_for(timeout=20000)
+    page.wait_for_timeout(1000)
+    # scroll until object rows sit near the bottom edge, then right-click the lowest one in view
+    for _ in range(12):
+        rows = page.evaluate("""(H) => [...document.querySelectorAll('.desk-listmode tbody tr')].map((r, i) => {
+            const b = r.getBoundingClientRect(); return {i, top: b.top, bottom: b.bottom, text: r.innerText.trim().slice(0, 40)}; })
+            .filter(r => r.bottom > 0 && r.top < H)""", HEIGHT)
+        objs = [r for r in rows if "ZONE" not in r["text"] and r["bottom"] < HEIGHT - 90]
+        if objs and max(r["bottom"] for r in objs) > HEIGHT - 260:
+            break
+        page.mouse.move(WIDTH / 2, HEIGHT / 2)
+        page.mouse.wheel(0, 250)
+        page.wait_for_timeout(400)
+    target = max(objs, key=lambda r: r["bottom"]) if objs else None
+    if target:
+        y = (target["top"] + target["bottom"]) / 2
+        page.mouse.click(60, y, button="right")
+        page.wait_for_timeout(800)
+        m = page.evaluate("""() => { const items = [...document.querySelectorAll('[role=menuitem]')];
+          const d = items.find(e => /Delete/.test(e.innerText));
+          if (!d) return {items: items.map(e => e.innerText.trim())};
+          const r = d.getBoundingClientRect();
+          return {menu_items: items.map(e => e.innerText.trim().split('\\n')[0]), delete_top: Math.round(r.top),
+                  delete_bottom: Math.round(r.bottom), vh: innerHeight, cut_px: Math.max(0, Math.round(r.bottom - innerHeight))}; }""")
+        m.update({"row": target["text"], "row_top": round(target["top"]), "click_y": round(y)})
+        page.screenshot(path=str(OUT / f"row-menu-{WIDTH}.png"))
+        out.append(m)
+    b.close()
+(OUT / f"row-menu-{WIDTH}.json").write_text(json.dumps(out, indent=1))
+print(WIDTH, json.dumps(out))
