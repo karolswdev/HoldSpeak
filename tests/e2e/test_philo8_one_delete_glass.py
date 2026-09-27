@@ -196,8 +196,8 @@ class TestOneDelete:
         finally:
             server.stop()
 
-    def _open(self, pw: Any, width: int, titles: list[str]) -> tuple[Any, Any, list[str], list[str]]:
-        browser = pw.chromium.launch(headless=True)
+    def _open(self, pw: Any, width: int, titles: list[str], engine: str = "chromium") -> tuple[Any, Any, list[str], list[str]]:
+        browser = getattr(pw, engine).launch(headless=True)
         page = browser.new_page(viewport={"width": width, "height": 852 if width <= 720 else 900})
         errors: list[str] = []
         page.on("pageerror", lambda err: (errors.append(str(err)), print(f"PAGEERROR {err.stack}")))
@@ -906,19 +906,26 @@ class TestOneDelete:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_a_delete_keeps_an_unrelated_rename_failure(self, width: int) -> None:
-        """Round four item 1: a rename failure stands (NAME TAKEN, with Retry);
-        a successful delete of another object must not clear it."""
+    @pytest.mark.parametrize("engine", ["chromium", "webkit"])
+    def test_a_delete_keeps_an_unrelated_rename_failure(self, engine: str, width: int) -> None:
+        """Round four item 1, round eight: a rename refusal is SEATED on the
+        chip (NAME TAKEN); a face change moves it to the desk receipt; a
+        successful delete of another object must not clear it (its failure and
+        a reachable Retry remain). Chromium and WebKit (Astra reproduced in
+        WebKit)."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
-            browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"])
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"], engine)
             try:
                 _to_face(page, "list", width)
                 _palette(page, "New Zone", "desk.new-zone")
                 field = page.locator("input.desk-zone-rename")
                 field.wait_for(timeout=10_000)
                 field.fill("Inbox")
+                field.press("Enter")
+                # The refusal is seated on the chip BEFORE the face changes.
+                page.locator("[data-testid=zone-name-refused]").first.wait_for(timeout=10_000)
                 page.locator("[data-testid=chair-floor-toggle]").click()
                 page.locator(".chair").wait_for(timeout=10_000)
                 rename = page.locator(".write-receipt").filter(has_text="RENAME ZONE")
@@ -929,10 +936,11 @@ class TestOneDelete:
                 page.wait_for_timeout(WINDOW_WAIT_MS)
                 status = _status(page, decision_id)
                 standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "RENAME ZONE" in t]
-                page.screenshot(path=str(SHOTS / f"list-rename-failure-kept-{width}.png"))
-                print(f"unrelated {width}: {status}; standing {standing}")
+                page.screenshot(path=str(SHOTS / f"list-rename-failure-kept-{engine}-{width}.png"))
+                print(f"unrelated {engine} {width}: {status}; standing {standing}")
                 assert status == 404
                 assert standing and "Retry" in standing[0], standing
+                _readable_in_view(page, ".write-receipt-retry")
                 self._clean(errors)
             finally:
                 browser.close()

@@ -933,9 +933,9 @@ function Arrival() {
         else (updated as Record<string, string>)[itemId] = next;
         return { ...prev, shelf: updated };
       });
-      clearWriteFailure();
+      clearWriteFailure(`brief-item:${itemId}`);
     } catch (error) {
-      reportWriteFailure(state === "acknowledged" ? "Acknowledge" : "Defer", error, () => void doBriefShelf(itemId, state));
+      reportWriteFailure(state === "acknowledged" ? "Acknowledge" : "Defer", error, () => void doBriefShelf(itemId, state), `brief-item:${itemId}`);
     }
     finally { setBusyBriefId(null); }
   };
@@ -971,7 +971,7 @@ function Arrival() {
       if (!outcome.ok) {
         setIntelRefusal({ meetingId, refusal: outcome.refusal });
         void useDesk.getState().refresh();
-        clearWriteFailure();
+        clearWriteFailure(`meeting:${meetingId}`);
         return;
       }
       setIntelReceipt({
@@ -979,9 +979,9 @@ function Arrival() {
         drainer: outcome.result.drainer === "running" ? "running" : "absent",
       });
       void useDesk.getState().refresh();
-      clearWriteFailure();
+      clearWriteFailure(`meeting:${meetingId}`);
     } catch (error) {
-      reportWriteFailure("Run summary", error, () => void runIntelligence(meetingId, route));
+      reportWriteFailure("Run summary", error, () => void runIntelligence(meetingId, route), `meeting:${meetingId}`);
     }
     finally { setRunningIntel(null); }
   };
@@ -1588,10 +1588,10 @@ function NeedsYouRow({
       setCommitResult((prev) => (verb === "delegate" ? { ...prev, owner: value } : { ...prev, dueAt: value }));
       setCommitWell(null);
       setCommitDraft("");
-      clearWriteFailure();
+      clearWriteFailure(`action-item:${item.actionItemId}`);
       onCommitmentChanged?.();
     } catch (error) {
-      reportWriteFailure(verb === "delegate" ? "Name an owner" : "Set a date", error, () => void saveCommit());
+      reportWriteFailure(verb === "delegate" ? "Name an owner" : "Set a date", error, () => void saveCommit(), `action-item:${item.actionItemId}`);
     } finally { setCommitBusy(false); }
   };
   // The row reflects what it just wrote until the arrival re-reads.
@@ -1868,9 +1868,9 @@ function NeedsYouRowVerbs({
           json: { card_id: item.actionItemId, verb: "done", payload: {} },
         });
         setDone(true);
-        clearWriteFailure();
+        clearWriteFailure(`action-item:${item.actionItemId}`);
       } catch (error) {
-        reportWriteFailure("Mark done", error, () => void markDone());
+        reportWriteFailure("Mark done", error, () => void markDone(), `action-item:${item.actionItemId}`);
       } finally { setBusy(false); }
     };
     if (done) return null;
@@ -1923,9 +1923,9 @@ function NeedsYouRowVerbs({
         );
         setDone(true);
         onProposalConfirm?.(item.proposalId!);
-        clearWriteFailure();
+        clearWriteFailure(`proposal:${item.proposalId}`);
       } catch (error) {
-        reportWriteFailure("Confirm", error, () => void confirmProposal());
+        reportWriteFailure("Confirm", error, () => void confirmProposal(), `proposal:${item.proposalId}`);
       }
       finally { setBusy(false); }
     };
@@ -1978,9 +1978,9 @@ function NeedsYouRowVerbs({
       try {
         await apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
         setDone(true);
-        clearWriteFailure();
+        clearWriteFailure(`door:${cmd.endpoint}`);
       } catch (error) {
-        reportWriteFailure(labelFor(firstVerb), error, () => void fireVerb());
+        reportWriteFailure(labelFor(firstVerb), error, () => void fireVerb(), `door:${cmd.endpoint}`);
       }
       finally { setBusy(false); }
     };

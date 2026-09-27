@@ -433,7 +433,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       // HS-132-07 — a kind with no update path is never offered an edit
       // (see `renameLock` in infoContract). Reaching here anyway is a wiring
       // fault, and it is named instead of swallowed.
-      reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`);
+      reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`, undefined, qualifiedRef(kind, id));
       return;
     }
     const camel: Record<string, string> = {

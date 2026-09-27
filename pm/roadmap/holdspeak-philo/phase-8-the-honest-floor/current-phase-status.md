@@ -112,6 +112,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, story 02 round seven (Codex Astra r5 on PR #672 @ ba55892e, BOUNCE on the same class): the desk failure channel is subject-aware by construction — no other object's success erases an unresolved refusal and its Retry. Record: `checks/story-02-round-three-muaddib.md` §"Round seven".
 
+2026-09-26, story 02 round eight (Codex Astra r6 on PR #672 @ f95e03ab, BOUNCE on one producer): the rename chip's refusal keeps its subject across a face change; every failure producer that knows its subject carries it (producer census in the record). Record: `checks/story-02-round-three-muaddib.md` §"Round eight".
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

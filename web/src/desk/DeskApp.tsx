@@ -40,6 +40,7 @@ import { takeFirstValueNoteOpen } from "./firstValue";
 import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
 import { DeskDeleteHost } from "./deleteReceipt";
+import { qualifiedRef } from "./api";
 import { noteFaceChange } from "./zoneName";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import "./desk.css";
@@ -158,7 +159,14 @@ function DeskFaces() {
     const refused = s.zoneRenameError;
     if (refused) {
       s.clearZoneRenameError();
-      reportWriteFailure("RENAME ZONE", refused.label, () => void useDesk.getState().renameZone(refused.zoneId, refused.name));
+      // PHILO-8-02 round eight: the refusal keeps its subject on the move, so
+      // another object's success never clears it (the desk channel's rule).
+      reportWriteFailure(
+        "RENAME ZONE",
+        refused.label,
+        () => void useDesk.getState().renameZone(refused.zoneId, refused.name),
+        qualifiedRef("directory", refused.zoneId),
+      );
     }
   }, [showFloor, viewMode]);
   const chairOpenCards = pullouts

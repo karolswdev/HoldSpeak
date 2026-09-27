@@ -138,3 +138,63 @@ All the earlier fences still pass. Channel-level vitest (`hooks/__tests__/useWri
 Red on `ba55892e` (serial, load average 2.17 → 11.04; `docs/internal/philo/phase-8/one-delete/red-round-seven-ba55892e.log`):
 - create: `create 1440: A 200; standing []` / `AssertionError: A's failure was erased`, at both widths;
 - update: `update 1440: A 200; standing []` / `AssertionError: A's failure was erased`, at both widths. The first attempt at this fence used Get Info, which the list does not mount; the fence now uses the note's editor.
+
+## Round eight (Codex Astra r6 on `f95e03ab`, BOUNCE on one producer the clear census missed — `story-02-built-astra-r6.md`)
+
+Astra r6 confirmed round seven:
+- New Zone and note edits keep A's failure and Retry;
+- a refused update clears when its note is deleted;
+- a kept failure can still be dismissed with OK;
+- a successful zone rename clears its own refusal;
+- all 13 subject-less clear callers were audited, and none is wrong.
+
+The finding is a round-seven regression; the same probe passes on `ba55892e`. In WebKit, at both widths:
+1. Submit "Inbox"; the NAME TAKEN chip shows.
+2. Visit the Chair, then come back.
+3. Delete another decision. It 404s, and the zone stays "New zone".
+4. The rename failure and its Retry disappear.
+
+The cause: `DeskApp`'s face-change effect moved the chip's refusal into the desk receipt without its subject. A failure with no subject is removed by any clear, so the unrelated delete's `clearWriteFailure("decision:…")` removed it. In Chromium the same steps usually go through `renameZone`'s own refusal, which has carried `directory:id` since round seven, so Chromium did not show the defect.
+
+**Repair:** `web/src/desk/DeskApp.tsx:164` now carries `qualifiedRef("directory", zoneId)` when it moves the refusal.
+
+**The producer census.** Every `reportWriteFailure(` call site, checked for whether the producer knows its subject. There is no `setWriteFailure(` in the tree. The local channel's `attempt` / `fail` are the Workbench's, with subjects since round five and six.
+
+| Producer | Subject known? | Now |
+|---|---|---|
+| `web/src/desk/DeskApp.tsx:164` (the chip's refusal, moved on a face change) | yes, `directory:id` | **carried (round eight)** |
+| `web/src/desk/store/dataSlice.ts:525` (update refused) | yes, `kind:id` | carried (round seven) |
+| `web/src/desk/store/dataSlice.ts:580` (delete refused) | yes, `kind:id` | carried (round four) |
+| `web/src/desk/store/dataSlice.ts:639` (zone rename refused off the field) | yes, `directory:id` | carried (round seven) |
+| `web/src/desk/store/dataSlice.ts:436` (no update path) | yes, `kind:id` | **carried (round eight)** |
+| `web/src/desk/chair/ChairHome.tsx:938` (Acknowledge/Defer a brief item) | yes, `brief-item:id` | **carried, report and both clears (round eight)** |
+| `web/src/desk/chair/ChairHome.tsx:984` (Run summary) | yes, `meeting:id` | **carried, report and both clears (`:974`, `:982`)** |
+| `web/src/desk/chair/ChairHome.tsx:1594` (Name an owner / Set a date) | yes, `action-item:id` | **carried, report and clear** |
+| `web/src/desk/chair/ChairHome.tsx:1873` (Mark done) | yes, `action-item:id` | **carried, report and clear** |
+| `web/src/desk/chair/ChairHome.tsx:1928` (Confirm a proposal) | yes, `proposal:id` | **carried, report and clear** |
+| `web/src/desk/chair/ChairHome.tsx:1983` (a Door card's verb) | yes, `door:<endpoint>` | **carried, report and clear** |
+| `web/src/desk/store/dataSlice.ts:78` (CREATE refused) | no: the object does not exist yet | subject-less |
+| `web/src/desk/store/dataSlice.ts:249` (READ of a collection) | no: a collection, not an object | subject-less |
+| `web/src/desk/store/dataSlice.ts:853`, `:857` (SEED DESK) | no | subject-less |
+| `web/src/desk/store/recordingSlice.ts:59`, `:71` (start / stop recording) | no object id | subject-less |
+| `web/src/desk/newThought.ts:38` (write a thought) | no: the thought is not created yet | subject-less |
+| `web/src/desk/callLoopWiring.ts:41` (send turn) | no id in scope | subject-less |
+| `web/src/desk/chair/_parked/lanes/BriefLane.tsx:121` | parked (not mounted) | untouched |
+
+The Chair producers keep their own success clears: each report and its clear carry the same subject, so a Chair write's own success, or its Retry, still clears its own failure. The ChairHome lines above are from before this round's edit and shift by 0–1.
+
+**Fence:** `test_a_delete_keeps_an_unrelated_rename_failure` now runs in Chromium and WebKit, at 1440 and 393. The WebKit build this Playwright expects (v2227) was installed into the shared browser cache for this.
+1. The rename refusal is seated on the chip first: Enter, then wait for `[data-testid=zone-name-refused]`.
+2. Face change (the Chair), then back.
+3. An unrelated delete succeeds (404).
+4. The rename failure and a reachable Retry (read before any click) remain.
+
+This also fixes the old fence, which left the field before the chip showed and so missed this transition.
+
+**Red on `f95e03ab`** (`docs/internal/philo/phase-8/one-delete/red-round-eight-f95e03ab.log`). It is intermittent: whether the move path or the `renameZone` path wins depends on timing.
+- WebKit on an `f95e03ab` git archive failed 1 of 8, then 7 of 16. The first failure was the WebKit 393 case, `AssertionError: []`.
+- Chromium passed at both widths.
+
+**Green on the fix:** WebKit passed 8 of 8, then 16 of 16. All four engine and width pairs pass.
+
+The other surfaces' local channels (for example the Workbench's `failWrite("DROP TO WORK", …)`, or a pullout's `attempt` with no subject) have no object subject, so they stay subject-less, as before.
