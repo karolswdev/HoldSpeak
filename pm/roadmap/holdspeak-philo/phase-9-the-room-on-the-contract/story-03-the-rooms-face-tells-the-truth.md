@@ -3,11 +3,11 @@
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** the owner's ratification of the charter and his answer to Q3; the items canvas ratified before the items section is built; PHILO-9-01 for the backend reads (health, NEEDS YOU, RECEIPTS, the Room read); PHILO-9-02's review-id repair (F20) before the steward face can show the review its run opened
+- **Depends on:** the owner's ratification of the charter (his Q0 and Q3 rulings); the items canvas and the copy-and-confirm canvas, each ratified before its face is built; PHILO-9-01 for the backend reads (health, NEEDS YOU, RECEIPTS, the Room read); PHILO-9-02's review-id repair (F20) before the steward face can show the review its run opened
 - **Unblocks:** PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
 - **Closure finding:** `docs/internal/philo/phase-9/grounding/README.md` F1, F2, F3, F7, F10, F11, F15 (corrected); shots under `docs/internal/philo/phase-9/grounding/face/`; Codex Astra r1 F5, F7, F8
-- **Canvas:** under Q3 (a) the items section; under Q3 (b) the items section and its Add control; under Q3 (c) none — at both widths, from the library species, ratified by the owner before build. The other repairs draw an existing state honestly and need no canvas.
+- **Canvas:** two, at both widths, from the library species, ratified by the owner before build: **the items section** (the Q3 ruling: no Add control) and **the copy-and-confirm moment** (the Q0 ruling: after Copy of a published update, Mark delivered with an optional inline To field; the DELIVERED chip; no modal, UX-CANON §A.4; no egress badge, because the product sends nothing). The other repairs draw an existing state honestly and need no canvas.
 - **Backend:** none here. Health, NEEDS YOU, RECEIPTS and the Room read are story 01's `ProjectService` edits; a backend change this lane finds goes to story 01's lane by patch, never co-edited.
 
 ## Problem
@@ -18,19 +18,21 @@
 - **F7:** RECEIPTS shows the Room's own reads ("READ MEETINGS" ×n), not the writes.
 - **F10:** at 393 the Ask well covers the Steward verb and the SOURCES heading on first view.
 - **F11:** the update list says "DRAFTS" for a published update, its row words run together, and its emblem is a fixed "E" (`web/src/features/project-room/update/UpdatePosture.tsx:257`, `:268-270`).
+- **Delivery (the Q0 ruling):** Copy exists (`web/src/features/project-room/update/UpdatePosture.tsx:580-587`, `useUpdateController.ts:163-179`) but nothing lets him say he delivered it, and nothing shows that he did.
 - **F15 (corrected, code-read):** the normal SUGGESTED row's Add and Dismiss are wired (`ProjectRoomCore.tsx:976-1000`); the Button with no action (`:1050`) is on a watch source row whose `src.suggested` is set.
 
 ## Scope
 
-- **In:** one registered key for the Room and every `openSurfaceOr("project-room", …)` caller moved to it (close the class: a census of callers, handover XXX law 9); the items section as Q3 rules (under (a): no Add control, items come from owner-authenticated MCP; under (b): with the Add control; under (c): none); the steward counts read from the run's effect steps, the review COMPARE opened shown, and "no effect allowed" said in words; RECEIPTS drawn from story 01's write receipts; the Ask well not covering a verb at 393; the update list's head, spacing and emblem; the `:1050` branch reproduced, then wired or withheld (UX-CANON §A.11).
-- **Out:** an Add control unless Q3 (b); the Room's other postures (Prepare, Ask, people); any `ProjectService` edit (story 01).
+- **In:** one registered key for the Room and every `openSurfaceOr("project-room", …)` caller moved to it (close the class: a census of callers, handover XXX law 9); the items section (the Q3 ruling: no Add control; items come from owner-authenticated MCP); **the copy-and-confirm moment** on a published update — Copy, then Mark delivered with the optional To, calling story 01's `project.mark_update_delivered` route, the DELIVERED chip with its time on the update and in the update list, the delivery in RECEIPTS; the refusals (`already_delivered`) named on the face; the steward counts read from the run's effect steps, the review COMPARE opened shown, and "no effect allowed" said in words; RECEIPTS drawn from story 01's write receipts; the Ask well not covering a verb at 393; the update list's head, spacing and emblem; the `:1050` branch reproduced, then wired or withheld (UX-CANON §A.11).
+- **Out:** an Add control for items (BACKLOG); automated send (BACKLOG); the Room's other postures (Prepare, Ask, people); any `ProjectService` edit (story 01).
 
 ## Acceptance criteria
 
 Per the charter's red-first matrix: behavioural red where affected, preservation green where not.
 
 - [ ] Every caller of the Room opens the Room for its project, one caller per face fenced, at 1440 and 393 (red on main at both: the meeting's project button).
-- [ ] Under Q3 (a)/(b): a past-due milestone and a risk show in the Room as the ratified canvas draws them, at both widths (red on main at both). Under Q3 (c): no box; F2 stays on the BACKLOG.
+- [ ] A past-due milestone and a risk show in the Room as the ratified canvas draws them, at both widths (red on main at both).
+- [ ] On a published update, Copy then Mark delivered (with To "Priya") writes the record — read back from the hub in the same fence — and the face shows DELIVERED with its time at 1440 and 393; a second press is refused and named; a draft offers no Mark delivered; no egress badge appears (a new capability: no red claimed; readbacks and a mutation).
 - [ ] The steward face's source, proposal and effect counts equal the hub's run, read in the same fence; the opened review is shown; a run with nothing allowed says so (red on main at both widths: "Act 1 effect" for 0 actions).
 - [ ] RECEIPTS lists the writes (create, publish, steward run), as rendered after each transition (red on main at both widths).
 - [ ] At 393 `elementFromPoint` at the Steward verb's centre hits the verb (red on main: `room-ask-well`); at 1440 preservation green.
@@ -39,7 +41,7 @@ Per the charter's red-first matrix: behavioural red where affected, preservation
 
 ## Effort (not a promise)
 
-PROVISIONAL: 1.5–2.5 engineering days, the items canvas included.
+PROVISIONAL: 2–3 engineering days, the two canvases included.
 
 ## Test plan
 
@@ -51,4 +53,5 @@ PROVISIONAL: 1.5–2.5 engineering days, the items canvas included.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The Chair, shade and recall callers of F1 were not clicked in the grounding (they need a connector snapshot or a decision in a Room).
+- 2026-09-27 — round five (the owner's rulings): the copy-and-confirm moment and its canvas; the Q3 branches removed.
 - 2026-09-27 — round two (Codex Astra r1 paid): Q3 propagated; backend moved to story 01; F3 and F15 corrected; the red-first matrix.

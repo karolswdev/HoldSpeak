@@ -3,7 +3,7 @@
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** PHILO-9-01, PHILO-9-02, PHILO-9-03, PHILO-9-04 (each ships its own fences and atlas cases)
+- **Depends on:** PHILO-9-01, PHILO-9-02, PHILO-9-03, PHILO-9-04, PHILO-9-07 (each ships its own fences and atlas cases)
 - **Unblocks:** PHILO-9-06
 - **Owner:** Astra (Luna); Muad'Dib checks
 - **Closure finding:** Phase 7 exit 4 and Phase 8 exit 5 (the method); Codex Astra r1 F7, F8 (`checks/charter-astra-r1.md`)

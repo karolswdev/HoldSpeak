@@ -1,0 +1,48 @@
+# PHILO-9-07 - The project delegation grant (canvas first)
+
+- **Project:** holdspeak-philo
+- **Phase:** 9
+- **Status:** backlog
+- **Depends on:** PHILO-9-02 (the admission path and the HTTP edge repair, B2); the owner's word on the grant's bound; **the grant lifecycle beat** (`design/project-grant-beat.md`, checked by Codex Astra before build); the grant-face canvas ratified by the owner before the face build
+- **Unblocks:** PHILO-9-05, PHILO-9-06
+- **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
+- **Closure finding:** the owner's Q2 ruling (2026-09-27, verbatim: "Grant an agent a bounded project delegation, like Phase 7's filing grant. This is a bigger scope, with a new grant face and a canvas."); grounding F19 (an agent with a PROJECT credential and no grant turned unattended runs on and archived a project, zero kernel rows); BACKLOG "PHILO-7-02 canvas follow-ups" (DESK palette = ALL)
+- **Canvas:** the grant's verb and chip per project on the credential row (Settings → Remote Access), at 1440 and 393, from the library species, as Phase 7 story 02's grant canvas
+
+## Problem
+
+Today an agent's consequential project writes need no grant (F19). After story 02 they are refused `project_delegation_required`. The owner ruled that an agent may do bounded project work under a grant he gives, as Phase 7's desk filing grant does for the desk (`holdspeak/kernel/desk.py:31-45`; `kernel_desk_delegations`, `holdspeak/db/schema.py:1839-1853`; `PUT`/`DELETE /api/settings/remote/delegations/{identity}`, `holdspeak/web/routes/mcp_http.py:387-400`; `pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-contract/design/grant-lifecycle-beat.md`). The desk grant is one per agent with a fixed desk set; it cannot hold a per-project bound.
+
+## Scope
+
+- **In:** the charter's "The project delegation grant", built as proposed there:
+  - `kernel_project_delegations` (the desk table's columns plus `project_id`; one LIVE per `(agent_identity, project_id)`; the terms, including the operations, stored in the row).
+  - `PROJECT_GRANT_OPERATIONS` = the bound the owner ratifies (recommended: `project.run_steward`, `project.stop_steward`, `project.publish_update`); every other admitted row owner-only, and `project.mark_update_delivered`, `project.archive` and `project.configure_steward` writes never grantable.
+  - `project.delegation.grant` / `project.delegation.revoke`: owner-only, admitted with receipts, HTTP only (`PUT`/`DELETE /api/settings/remote/delegations/{identity}/projects/{project_id}`), in no MCP palette.
+  - The check at admission: an AGENT's admitted project write executes when a LIVE grant for that agent and that project names the operation, its receipt naming the delegation; otherwise `project_delegation_required` → `_expired` → `_revoked` with a refusal receipt, over MCP and HTTP.
+  - The lifecycle as Phase 7's: optional `expires_at`, no default; owner revoke; a credential revoke revokes its project grants durably first (handover XXIX law 4); identity-keyed, so a grant survives a restart and a credential reissue; atomic terminal writes (`transition_and_receipt`).
+  - The grant face on the credential row, as the ratified canvas draws it; DESK palette = ALL repaired on the same row (store the issued palette name, never reverse the map; BACKLOG "PHILO-7-02 canvas follow-ups").
+- **Out:** widening the desk grant; a HELD state for agent writes (Phase 7 R1: none); any grant over owner-only rows.
+
+## Acceptance criteria
+
+- [ ] With a real Settings-issued PROJECT credential, over MCP and HTTP: each operation in the bound is refused `project_delegation_required` with a receipt without a grant (red on main: P3-style success with zero rows), and executes with a LIVE grant on that project, its receipt naming the delegation (new).
+- [ ] A grant on project A does nothing on project B; an operation outside the bound stays refused with the grant; `project.mark_update_delivered`, `project.archive` and `project.configure_steward` writes are refused for an agent in every case.
+- [ ] Revoke, expiry and a credential revoke end the grant (refusals change to `_revoked` / `_expired`); a restart and a credential reissue keep a LIVE grant; the lifecycle beat's interleavings fenced; a mutation of each check turns its fence red.
+- [ ] `project.delegation.grant` and `revoke` are owner-only, admitted, with receipts; an agent calling them is refused.
+- [ ] The grant face matches the owner-ratified canvas at 1440 and 393, fenced as rendered after each change; a DESK credential reads back as DESK (red on main: ALL).
+
+## Effort (not a promise)
+
+PROVISIONAL: 2.5–3.5 engineering days (the beat and the canvas included).
+
+## Test plan
+
+- **Fences ship with this story** (story 05 only assembles and reruns).
+- **Integration:** grant, refusal, lifecycle and per-project fences through the real hub on an isolated HOME with real credentials (the Phase 7 story 02 pattern; boundary fences with an authenticated principal, handover XXIX law 5).
+- **Glass:** the credential row at 1440 and 393.
+- **Manual / device:** the owner's review of the canvas and the shots.
+
+## Notes
+
+- 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib on the owner's Q2 ruling; unratified. A new story rather than growing story 02 (Tenet 1): story 02 already carries 20 descriptors, the admission table, the steward beat and the B1/B2 repairs, and this grant has its own beat, canvas and owner review.
