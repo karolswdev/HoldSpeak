@@ -1343,3 +1343,43 @@ Suite totals: 2922 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+### Captured run — 2026-09-27T02:55:54Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.Ro6989JGAm PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -q -rf`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 04bff0b47d1576d29a572a67a8f0c659ff70a88b
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 90%]
+........                                                                 [100%]
+80 passed in 1172.95s (0:19:32)
+```
+
+### Captured run — 2026-09-27T03:15:57Z
+
+- **Command:** `uv run python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d650d0e64cedf4d5888c9762032d13ade51de112
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2924 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

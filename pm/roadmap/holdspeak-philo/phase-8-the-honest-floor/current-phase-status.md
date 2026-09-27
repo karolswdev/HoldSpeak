@@ -108,6 +108,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, story 02 round five (Codex Astra r3 on PR #672 @ a84d1a37, BOUNCE narrowing; round four confirmed): the Workbench's Undo is never hidden by an old refusal; on the list a refused delete is named with Retry in the fixed foot, readable without scrolling at 393; the resize fence is time-bounded. Record: `checks/story-02-round-three-muaddib.md` §"Round five".
 
+2026-09-26, story 02 round six (Codex Astra r4 on PR #672 @ daedfc99, BOUNCE on one defect): the Workbench keeps another item's refusal across a successful Remove; the resize console error classified (inherited late-texture race, guarded in `engine.ts`); the rename duplicate ledgered. Record: `checks/story-02-round-three-muaddib.md` §"Round six".
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

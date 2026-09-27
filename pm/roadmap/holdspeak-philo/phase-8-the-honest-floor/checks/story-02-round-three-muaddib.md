@@ -52,3 +52,32 @@ Red on `a84d1a37` (serial, load 2.70 → 11.64; `docs/internal/philo/phase-8/one
 - the resize time bound: it passes on `a84d1a37`, which already had the fix (69 ms on this branch). On `b65107f5` it fails: `AssertionError: (4146.1, '05s')`, the DELETE 4146 ms after the resize, which is the timer ending, not the face change.
 
 Green: the refusal fence passes at list and Floor, 1440 and 393. The Workbench undo-after-refusal fence passes (Undo readable, the item kept, zero DELETE). Both story 01 glass files still pass (42 of 42 in the scoped run).
+
+## Round six (Codex Astra r4 on `daedfc99`, BOUNCE on one defect — `story-02-built-astra-r4.md`)
+
+Astra r4 confirmed round five: all nine r3 probes pass. It ruled the wider use of the list foot lawful and the Undo precedence acceptable.
+
+| Item | Cause | Repair (file:line) |
+|---|---|---|
+| P2. In the Workbench, a successful removal of B erased A's unresolved failure and its Retry | the Workbench's local channel cleared its failure on any landed write; the `subject` was recorded but not used there | One rule in both channels: a failure about a subject is cleared only by a landed write about the same subject (`web/src/desk/hooks/useWriteReceipt.ts`, `attempt`'s success path). A failure with no subject still clears on any landed write, as before |
+| MISSED 1. The unrelated-failure fence covered only the desk channel | — | New fence `test_a_workbench_success_keeps_another_items_refusal` (1440, 393): A refused; B removed and committed (the hub keeps A); after B's linger, A's failure and Retry still show, and Retry is readable in the viewport; Retry removes A. Vitest: `hooks/__tests__/useWriteReceiptSubject.test.ts` |
+| The resize console error `Cannot read properties of null (reading 'x')` | CLASSIFIED, see below | `web/src/desk/gl/engine.ts:423`, `:571`, `:678`: a late sprite texture is not set on a destroyed sprite |
+| MISSED 2. The inherited rename duplicate (chip and old receipt together after F2) | inherited from story 01's rename path | LEDGERED, not fixed: BACKLOG "PHILO-8-02 follow-ups", home the Floor lane |
+
+**The console error, classified.** I captured the stack on Astra's own `daedfc99` build: 2 page errors in 40 runs of the resize fence at `-n 4`.
+```
+TypeError: Cannot read properties of null (reading 'x')
+    at Tt._setWidth (…/WorldStage-BDUnZ0VN.js:5:41608)     (pixi Sprite)
+    at set texture (…/WorldStage-BDUnZ0VN.js:5:61118)      (pixi Sprite)
+    at …/WorldStage-BDUnZ0VN.js:295:6775                    (engine: loadSprite's onReady, `t.spriteUrl===o&&(t.sprite.texture=d)`)
+    at …/WorldStage-BDUnZ0VN.js:295:1263                    (textures.ts loadSprite: Assets.load(...).then(... onReady))
+```
+- **Cause:** a world sprite loads late, on the first paint. When it arrives, its node may already be gone and pixi throws on the destroyed sprite. In this fence the resize commits the pending delete during the spatial world's first paint, and the refresh then removes that object's node before its PNG has loaded.
+- **Inherited code:** `engine.ts` and `textures.ts` have not changed since `aa35cdb3`, on main and on this branch. So the defect is inherited.
+- **Trigger:** this story's face-change commit is what fires it.
+- **Main:** not reproduced. A resize-only probe on main `ce772ef9` (393 list to 1440, no delete, because main has no list delete) gave 0 errors in 30 runs.
+- **Fix:** it sits on this story's path, so it is fixed here. The guard `!node.sprite.destroyed` covers all three late-texture callbacks.
+- **Verification:** the same guards, patched into Astra's reproducing bundle, gave 0 errors in 80 runs (load about 30, with 41 timing failures, so fewer than 80 reached the face change) and 0 in a further 40 runs (1 timing failure). Unpatched, it was 2 in 40.
+- **Caveat:** my own build never reproduced it (0 in 70), so the fix can only be shown against Astra's build. The record is `docs/internal/philo/phase-8/one-delete/resize-console-error.txt`.
+
+Red on `daedfc99` (Astra's build; its only change is the engine guard, which does not touch this path; `red-round-six-daedfc99.log`): `workbench two items 1440: standing []` / `AssertionError: []` at both widths.

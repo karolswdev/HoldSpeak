@@ -1,0 +1,9 @@
+Workbench channel fence on Astra's daedfc99 build (its only change: the three-guard engine patch, unrelated to this fence): 20:51  up 5 days,  2:30, 9 users, load averages: 21.03 25.40 27.45
+workbench two items 1440: standing []
+E               AssertionError: []
+E               assert ([])
+E               AssertionError: []
+E               assert ([])
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_success_keeps_another_items_refusal[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_success_keeps_another_items_refusal[393]
+2 failed, 46 deselected in 94.06s (0:01:34)

@@ -169,7 +169,12 @@ export function useWriteReceipt() {
           seat(reason);
           return { ok: false, reason };
         }
-        setFailure(null);
+        // PHILO-8-02 round six — one rule in both channels: a failure about a
+        // subject (an item, an object) is cleared only by a landed write
+        // about that same subject; another item's success never erases it.
+        setFailure((standing) =>
+          standing?.subject !== undefined && standing.subject !== opts.subject ? standing : null,
+        );
         return { ok: true, value };
       } catch (cause) {
         const reason = writeFailureReason(cause);

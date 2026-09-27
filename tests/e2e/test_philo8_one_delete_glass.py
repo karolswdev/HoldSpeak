@@ -200,7 +200,7 @@ class TestOneDelete:
         browser = pw.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": width, "height": 852 if width <= 720 else 900})
         errors: list[str] = []
-        page.on("pageerror", lambda err: errors.append(str(err)))
+        page.on("pageerror", lambda err: (errors.append(str(err)), print(f"PAGEERROR {err.stack}")))
         page.on("request", lambda req: self.deletes.append(req.url) if req.method == "DELETE" else None)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         ids = [_decision(page, title) for title in titles]
@@ -781,6 +781,58 @@ class TestOneDelete:
                 print(f"workbench undo after refusal {width}: Undo at {box}; receipt {footer!r}; kept {len(items)}; DELETE {sent}")
                 assert "Removed Undo item" in footer, footer
                 assert [i["id"] for i in items] == [item] and sent == 0, (items, sent)
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_workbench_success_keeps_another_items_refusal(self, width: int) -> None:
+        """Round six (the Workbench's local channel): A's Remove is refused; B is
+        removed and commits; A's failure and Retry still show; Retry removes A."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, _ids, errors = self._open(pw, width, [])
+            try:
+                wb = _api(page, "POST", "/api/workbenches", {"name": "Two items WB"}, token=TOKEN)["workbench"]["id"]
+                a = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Item A"}, token=TOKEN)["item"]["id"]
+                b = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Item B"}, token=TOKEN)["item"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+                _name_button(page, "Two items WB").click()
+                window = page.locator(".desk-workbench-window")
+                window.wait_for(timeout=10_000)
+                url = f"**/api/workbenches/{wb}/items/{a}"
+
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"Item A locked"}')
+                    else:
+                        route.continue_()
+
+                page.route(url, refuse)
+                window.get_by_text("Item A", exact=True).click()
+                window.get_by_role("button", name="Remove", exact=True).click()
+                window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(url, refuse)
+                window.get_by_text("Item B", exact=True).click()
+                window.get_by_role("button", name="Remove", exact=True).click()
+                page.wait_for_timeout(WINDOW_WAIT_MS + 1_000)
+                items = [i["id"] for i in _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]]
+                assert items == [a], items  # B committed, A kept
+                page.wait_for_timeout(7_000)  # past B's "Removal committed" linger
+                standing = page.evaluate(
+                    "() => [...document.querySelectorAll('.desk-workbench-window .write-receipt')].map((e) => e.innerText)"
+                )
+                print(f"workbench two items {width}: standing {standing}")
+                assert standing and "REMOVE ITEM" in standing[0], standing
+                _readable_in_view(page, ".desk-workbench-window .write-receipt-retry")
+                page.locator(".desk-workbench-window .write-receipt-retry").click()
+                page.wait_for_timeout(2_000)
+                items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                assert items == [], items
                 self._clean(errors)
             finally:
                 browser.close()
