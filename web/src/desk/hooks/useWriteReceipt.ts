@@ -29,6 +29,12 @@ export interface WriteFailure {
   reason: string;
   /** Re-issues the exact same write, or null when it cannot be replayed. */
   retry: (() => void) | null;
+  /** The hub's own words for the refusal, when it sent any (shown as the
+   *  label's title, never as prose on the face). */
+  detail?: string;
+  /** What the failed write was about (e.g. "decision:abc"), so a later
+   *  landed write clears only its own failure. */
+  subject?: string;
 }
 
 export type WriteResult<T> =
@@ -59,6 +65,15 @@ export function writeFailureReason(cause: unknown): string {
   return "WRITE REFUSED";
 }
 
+/** The hub's own refusal words (an ApiError's message), when it sent any:
+ * the generic fallback is not the hub's words and is dropped. */
+export function writeFailureDetail(cause: unknown): string | undefined {
+  if (!(cause instanceof Error) || cause.name !== "ApiError") return undefined;
+  const message = cause.message.trim();
+  if (!message || message.startsWith("HoldSpeak could not complete")) return undefined;
+  return message;
+}
+
 /** The one label every write refusal wears. */
 export function writeFailureLabel(failure: WriteFailure): string {
   return `${failure.verb} FAILED · ${failure.reason}`;
@@ -83,7 +98,12 @@ function receiptElement(
     createElement(
       "span",
       // PHILO-3-01: the whole label stays readable where the strip clips it.
-      { className: "write-receipt-label", title: writeFailureLabel(failure) },
+      {
+        className: "write-receipt-label",
+        title: failure.detail
+          ? `${writeFailureLabel(failure)} · ${failure.detail}`
+          : writeFailureLabel(failure),
+      },
       writeFailureLabel(failure),
     ),
     failure.retry
@@ -129,10 +149,11 @@ export function useWriteReceipt() {
       opts: { retry?: boolean } = {},
     ): Promise<WriteResult<T>> {
       const label = verb.toUpperCase();
-      const seat = (reason: string) => {
+      const seat = (reason: string, detail?: string) => {
         setFailure({
           verb: label,
           reason,
+          detail,
           retry:
             opts.retry === false
               ? null
@@ -151,7 +172,7 @@ export function useWriteReceipt() {
         return { ok: true, value };
       } catch (cause) {
         const reason = writeFailureReason(cause);
-        seat(reason);
+        seat(reason, writeFailureDetail(cause));
         return { ok: false, reason };
       }
     },
@@ -165,6 +186,7 @@ export function useWriteReceipt() {
         verb: verb.toUpperCase(),
         reason: writeFailureReason(cause),
         retry: retry ?? null,
+        detail: writeFailureDetail(cause),
       });
     },
     [],
@@ -194,11 +216,14 @@ export function reportWriteFailure(
   verb: string,
   cause: unknown,
   retry?: () => void,
+  subject?: string,
 ): WriteFailure {
   const failure: WriteFailure = {
     verb: verb.toUpperCase(),
     reason: writeFailureReason(cause),
     retry: retry ?? null,
+    detail: writeFailureDetail(cause),
+    subject,
   };
   publish(failure);
   return failure;

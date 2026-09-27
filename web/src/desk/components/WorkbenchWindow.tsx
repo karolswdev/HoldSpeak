@@ -1200,11 +1200,13 @@ export function WorkbenchWindow({
   const handleRemove = (item: WorkbenchItem) => {
     remove(
       item.title,
+      // Round four: the commit answers the one result contract (true when the
+      // hub took it), so a refusal frees the item for another Remove.
       () =>
-        void write("REMOVE ITEM", async () => {
+        write("REMOVE ITEM", async () => {
           await deleteWorkbenchItem(workbenchId, item.id);
           load();
-        }),
+        }).then((result) => result.ok),
       () => load(),
       // PHILO-8-02 round three: keyed, so a second Remove of this item never
       // opens a second Undo for an item already gone.
@@ -1300,12 +1302,12 @@ export function WorkbenchWindow({
         remove(
           countToken(doneItems.length, "DONE ITEM") ?? "done items",
           () =>
-            void write("CLEAR DONE", async () => {
+            write("CLEAR DONE", async () => {
               for (const item of doneItems) {
                 await deleteWorkbenchItem(workbenchId, item.id);
               }
               load();
-            }),
+            }).then((result) => result.ok),
           () => load(),
         );
         break;

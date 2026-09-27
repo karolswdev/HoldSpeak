@@ -9,7 +9,7 @@ import { useChairState } from "../chairState";
 import { OBJECT_DELETE_REQUEST, verbById } from "../verbRegistry";
 import { DeskDeleteHost, DeskDeleteSeat } from "../deleteReceipt";
 
-const deletePrimitive = vi.fn(async () => undefined);
+const deletePrimitive = vi.fn(async () => true);
 
 function request(ref: string) {
   act(() => {
@@ -68,11 +68,13 @@ describe("DeskDeleteHost", () => {
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
   });
 
-  it("list to spatial is a face change too", () => {
+  it("list to spatial is a face change too", async () => {
     render(<><DeskDeleteHost /><DeskDeleteSeat /></>);
     request("decision:a");
     act(() => useDesk.setState({ viewMode: "spatial" }));
     expect(deletePrimitive).toHaveBeenCalledWith("a", "decision");
+    // Round four: "Removal committed" only once the delete has landed.
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(screen.getByText("Removal committed")).toBeTruthy();
   });
 

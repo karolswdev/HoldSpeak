@@ -104,6 +104,8 @@ The stories stay `backlog` until the owner ratifies the charter. Story 04 is rem
 
 2026-09-26, story 02 round three (Codex Astra's check on PR #672 @ b65107f5, BOUNCE, `checks/story-02-built-astra-r1.md`; one receipt slot ruled lawful): P1-a a repeated Delete of one object offered "Restored" with the object gone (list, Floor, Workbench) — the hook now keys a removal by its target, so a repeat keeps the one pending entry and a committed target opens nothing; P1-b a failed setup refresh unmounted the host through DeskApp's early return and committed the pending delete early — the host now sits above every DeskApp render branch; P2 the list's fixed foot covered the last remaining row at 393 — the list reserves the foot's measured reach at its end; MISSED 1 a refused DELETE (403) read "Removal committed" with the object kept — `deletePrimitive` used `apiRequest`, which never throws, inside a swallowing catch; it now uses `apiFetch`, names the failure on the desk receipt line with Retry, and the undo receipt clears; MISSED 2 the face is the resolved one (a resize that turns the list into the spatial Floor commits); MISSED 3 this record corrected. Record: `docs/internal/philo/phase-8/one-delete/README.md` §"Round three".
 
+2026-09-26, story 02 round four (Codex Astra r2 on PR #672 @ d3eab7e8, BOUNCE, `checks/story-02-built-astra-r2.md`; round three confirmed paid): a landed delete no longer clears an unrelated failure; a refused Workbench Remove frees the item; a re-created reference can be deleted again; "Removal committed" only after the commit lands; the hub's refusal words on the failure label's title. Record: `checks/story-02-round-three-muaddib.md`.
+
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |

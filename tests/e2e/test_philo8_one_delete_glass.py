@@ -153,6 +153,19 @@ _ROW_MENU_DELETE_JS = """async (title) => {
 }"""
 
 
+def _observe_receipts(page: Any) -> None:
+    """Record every change of the receipt texts from now on (the transition)."""
+    page.evaluate("""() => {
+      window.__receipts = []; let last = null;
+      const read = () => {
+        const text = [...document.querySelectorAll('.undo-receipt, .write-receipt')].map((e) => e.innerText).join(' | ');
+        if (text !== last) { window.__receipts.push({t: performance.now(), text}); last = text; }
+      };
+      new MutationObserver(read).observe(document.body, {subtree: true, childList: true, characterData: true});
+      read();
+    }""")
+
+
 class TestOneDelete:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -595,41 +608,162 @@ class TestOneDelete:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_a_refused_delete_says_so_with_retry(self, width: int) -> None:
-        """MISSED 1: the hub refuses the DELETE (403). The face must not say
-        "Removal committed"; it names the failure with Retry; the object stays."""
+    @pytest.mark.parametrize("face", ["list", "floor"])
+    def test_a_refused_delete_says_so_with_retry(self, face: str, width: int) -> None:
+        """MISSED 1 (round three) + round four item 4: the hub refuses the DELETE
+        (403, one second late). From the press to the failure the face never
+        says "Removal committed"; it names the failure with Retry and the
+        hub's own words in the chip's title; the object stays; Retry deletes."""
+        import time
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
             browser, page, (decision_id,), errors = self._open(pw, width, ["Refuse me"])
             try:
-                _to_face(page, "list", width)
+                _to_face(page, face, width)
+                _observe_receipts(page)
 
                 def refuse(route: Any) -> None:
                     if route.request.method == "DELETE":
+                        time.sleep(1)
                         route.fulfill(status=403, content_type="application/json",
                                       body='{"detail":"Delete refused by the glass"}')
                     else:
                         route.continue_()
 
                 page.route(f"**/api/decisions/{decision_id}", refuse)
-                _row_menu_delete(page, "Refuse me")
-                _readable_receipt(page, "Removed Refuse me", 5_000)
-                page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 3_000)
-                page.wait_for_timeout(500)
+                if face == "list":
+                    _row_menu_delete(page, "Refuse me")
+                else:
+                    _select(page, face, decision_id, "Refuse me")
+                    page.keyboard.press("Delete")
+                page.locator(".write-receipt").first.wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.wait_for_timeout(300)
+                history = page.evaluate("() => window.__receipts")
                 failure = page.locator(".write-receipt").first.inner_text()
-                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                title = page.locator(".write-receipt-label").first.get_attribute("title") or ""
                 status = _status(page, decision_id)
-                page.screenshot(path=str(SHOTS / f"list-delete-refused-{width}.png"))
-                print(f"refused {width}: {status}; failure {failure!r}; receipt {receipt!r}")
+                page.screenshot(path=str(SHOTS / f"{face}-delete-refused-{width}.png"))
+                print(f"refused {face} {width}: {status}; failure {failure!r}; title {title!r};"
+                      f" history {[h['text'] for h in history]}")
                 assert status == 200
-                assert "Removal committed" not in receipt, receipt
+                assert not any("Removal committed" in h["text"] for h in history), history
                 assert "DELETE" in failure and "Retry" in failure, failure
-                assert page.locator(".write-receipt").first.is_visible()
+                assert "Delete refused by the glass" in title, title
                 page.unroute(f"**/api/decisions/{decision_id}", refuse)
                 page.locator(".write-receipt-retry").first.click()
                 page.wait_for_timeout(2_000)
                 assert _status(page, decision_id) == 404
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_workbench_remove_works_again_after_a_refusal(self, width: int) -> None:
+        """Round four item 2: a refused Remove (403) frees the item: the next
+        Remove sends a DELETE; the window never says "Removal committed"."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, _ids, errors = self._open(pw, width, [])
+            try:
+                wb = _api(page, "POST", "/api/workbenches", {"name": "Refused WB"}, token=TOKEN)["workbench"]["id"]
+                item = _api(page, "POST", f"/api/workbenches/{wb}/items", {"title": "Refused item"}, token=TOKEN)["item"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                _to_face(page, "list", width)
+                _name_button(page, "Refused WB").click()
+                window = page.locator(".desk-workbench-window")
+                window.wait_for(timeout=10_000)
+                window.get_by_text("Refused item", exact=True).click()
+                _observe_receipts(page)
+                url = f"**/api/workbenches/{wb}/items/{item}"
+
+                def refuse(route: Any) -> None:
+                    if route.request.method == "DELETE":
+                        route.fulfill(status=403, content_type="application/json", body='{"detail":"Item locked by the glass"}')
+                    else:
+                        route.continue_()
+
+                page.route(url, refuse)
+                window.get_by_role("button", name="Remove", exact=True).click()
+                window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
+                page.unroute(url, refuse)
+                before = len(self.deletes)
+                window.get_by_role("button", name="Remove", exact=True).click()
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                history = page.evaluate("() => window.__receipts")
+                items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                sent = len(self.deletes) - before
+                print(f"workbench refusal {width}: DELETE after refusal {sent}; items {len(items)};"
+                      f" history {[h['text'] for h in history]}")
+                assert sent == 1 and not items, (sent, items)
+                first_failure = next(i for i, h in enumerate(history) if "REMOVE ITEM" in h["text"])
+                before_failure = [h["text"] for h in history[:first_failure + 1]]
+                assert not any("Removal committed" in t for t in before_failure), before_failure
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_delete_keeps_an_unrelated_rename_failure(self, width: int) -> None:
+        """Round four item 1: a rename failure stands (NAME TAKEN, with Retry);
+        a successful delete of another object must not clear it."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"])
+            try:
+                _to_face(page, "list", width)
+                _palette(page, "New Zone", "desk.new-zone")
+                field = page.locator("input.desk-zone-rename")
+                field.wait_for(timeout=10_000)
+                field.fill("Inbox")
+                page.locator("[data-testid=chair-floor-toggle]").click()
+                page.locator(".chair").wait_for(timeout=10_000)
+                rename = page.locator(".write-receipt").filter(has_text="RENAME ZONE")
+                rename.first.wait_for(timeout=10_000)
+                page.locator("[data-testid=chair-floor-toggle]").click()
+                page.locator(".desk-listmode").wait_for(timeout=10_000)
+                _row_menu_delete(page, "Unrelated decision")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "RENAME ZONE" in t]
+                page.screenshot(path=str(SHOTS / f"list-rename-failure-kept-{width}.png"))
+                print(f"unrelated {width}: {status}; standing {standing}")
+                assert status == 404
+                assert standing and "Retry" in standing[0], standing
+                self._clean(errors)
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    def test_a_recreated_object_can_be_deleted_again(self) -> None:
+        """Round four item 3: delete A; the hub re-creates A with the same id;
+        after a refresh, Delete on it sends a DELETE and it is gone."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, 1440, ["First incarnation"])
+            try:
+                _to_face(page, "list", 1440)
+                _row_menu_delete(page, "First incarnation")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                assert _status(page, decision_id) == 404
+                made = _api(page, "POST", "/api/decisions",
+                            {"id": decision_id, "title": "Second incarnation", "status": "accepted"}, token=TOKEN)
+                assert made["decision"]["id"] == decision_id, made
+                _palette(page, "Refresh from hub", "desk.refresh")
+                _name_button(page, "Second incarnation").wait_for(timeout=10_000)
+                before = len(self.deletes)
+                _row_menu_delete(page, "Second incarnation")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                sent = len(self.deletes) - before
+                print(f"recreated: {status}; DELETE {sent}")
+                assert (status, sent) == (404, 1), (status, sent)
                 self._clean(errors)
             finally:
                 browser.close()
@@ -654,7 +788,9 @@ class TestOneDelete:
                 page.wait_for_timeout(1_000)
                 status = _status(page, decision_id)
                 print(f"resize: {status}; receipt {receipt!r}")
-                assert "Removal committed" in receipt, (status, receipt)
+                # The face change started the commit: no Undo is offered any more
+                # (round four: "Removed …" while in flight, then "Removal committed").
+                assert "Undo" not in receipt and receipt, (status, receipt)
                 assert status == 404, (status, receipt)
                 self._clean(errors)
             finally:

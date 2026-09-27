@@ -2,17 +2,18 @@ import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { OUTCOME_LINGER_MS } from "../linger";
 
 interface UndoState {
-  phase: "pending" | "restored" | "committed";
+  phase: "pending" | "committing" | "restored" | "committed";
   label: string;
   remaining: number;
   fire: Fire;
   revert: () => void;
 }
 
-/** A removal's commit. It may answer a promise: `false` means the commit
- * failed (the caller names the failure), and the receipt stops saying
- * "Removal committed". */
-type Fire = () => void | Promise<unknown>;
+/** A removal's commit. One result contract for every caller: it answers
+ * nothing (a commit that cannot fail here) or a promise of a boolean —
+ * `true` when the hub took it, `false` when it refused (the caller names
+ * the failure on its write receipt). */
+type Fire = () => void | Promise<boolean>;
 
 /** PHILO-8-02 — a removal is never dropped. The receipt keeps ONE slot: a
  * second `remove()` COMMITS the pending one at once (its Undo goes away),
@@ -23,7 +24,13 @@ type Fire = () => void | Promise<unknown>;
  * Round three (Codex Astra, PR #672): a removal may carry its target's key.
  * A second request for the target already pending keeps that one entry (its
  * Undo still restores it); a request for a target already committed opens
- * nothing. So Undo only ever offers to restore what is still restorable. */
+ * nothing. So Undo only ever offers to restore what is still restorable.
+ *
+ * Round four (Codex Astra r2): "Removal committed" is said only after the
+ * commit lands. While it is in flight the receipt keeps "Removed …" with no
+ * Undo and no countdown; a refused commit clears the receipt (the failure
+ * receipt speaks). A key guards only its window and its commit: it is freed
+ * when the commit settles, so a re-created object can be deleted again. */
 export function useUndoReceipt(window = 8) {
   const [state, setState] = useState<UndoState | null>(null);
   const deadlineRef = useRef<number>(0);
@@ -36,20 +43,44 @@ export function useUndoReceipt(window = 8) {
   const committedKeysRef = useRef<Set<string>>(new Set());
   const entryRef = useRef(0);
 
-  /** Run a commit; a failed commit frees its key and clears its receipt. */
-  const run = useCallback((fire: Fire, key: string | null, entry: number) => {
-    if (key) committedKeysRef.current.add(key);
-    const out = fire();
-    if (out && typeof (out as Promise<unknown>).then === "function") {
-      void (out as Promise<unknown>).then((ok) => {
-        if (ok !== false) return;
+  /** Run a commit. Its key is held only until the commit settles. When
+   * `announce` is set, the receipt says "Removal committed" only on success
+   * and clears on a refusal. */
+  const run = useCallback(
+    (fire: Fire, key: string | null, entry: number, announce: boolean) => {
+      const committed = () => {
+        if (!announce || entryRef.current !== entry) return;
+        setState((previous) =>
+          previous ? { ...previous, phase: "committed", remaining: 0 } : null,
+        );
+        clearTimeout(postRef.current);
+        postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
+      };
+      if (key) committedKeysRef.current.add(key);
+      const out = fire();
+      if (!out || typeof (out as Promise<boolean>).then !== "function") {
         if (key) committedKeysRef.current.delete(key);
-        if (entryRef.current !== entry) return;
+        committed();
+        return;
+      }
+      if (announce)
+        setState((previous) =>
+          previous ? { ...previous, phase: "committing", remaining: 0 } : null,
+        );
+      const settle = (ok: boolean) => {
+        if (key) committedKeysRef.current.delete(key);
+        if (ok) return committed();
+        if (!announce || entryRef.current !== entry) return;
         clearTimeout(postRef.current);
         setState(null);
-      });
-    }
-  }, []);
+      };
+      void (out as Promise<boolean>).then(
+        (ok) => settle(ok !== false),
+        () => settle(false),
+      );
+    },
+    [],
+  );
 
   const cleanup = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -64,11 +95,7 @@ export function useUndoReceipt(window = 8) {
     pendingRef.current = null;
     pendingKeyRef.current = null;
     cleanup();
-    setState((previous) =>
-      previous ? { ...previous, phase: "committed", remaining: 0 } : null,
-    );
-    postRef.current = setTimeout(() => setState(null), OUTCOME_LINGER_MS);
-    run(fire, key, entryRef.current);
+    run(fire, key, entryRef.current, true);
   }, [cleanup, run]);
 
   useEffect(
@@ -78,7 +105,7 @@ export function useUndoReceipt(window = 8) {
       pendingRef.current = null;
       pendingKeyRef.current = null;
       cleanup();
-      if (fire) run(fire, key, entryRef.current);
+      if (fire) run(fire, key, entryRef.current, false);
     },
     [cleanup, run],
   );

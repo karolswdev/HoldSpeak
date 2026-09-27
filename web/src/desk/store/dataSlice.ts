@@ -574,11 +574,20 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     } catch (cause) {
       // PHILO-8-02 round three — a refused delete is named on the desk's
       // receipt line with Retry; the object stays and so does its card.
-      reportWriteFailure("DELETE", cause, () => void get().deletePrimitive(id, kind));
+      reportWriteFailure(
+        "DELETE",
+        cause,
+        () => void get().deletePrimitive(id, kind),
+        qualifiedRef(kind, id),
+      );
       void get().refresh();
       return false;
     }
-    clearWriteFailure();
+    // Round four: a landed delete clears only its OWN earlier refusal, never
+    // an unrelated failure (a failed rename keeps its receipt and Retry).
+    const standing = currentWriteFailure();
+    if (standing?.verb === "DELETE" && standing.subject === qualifiedRef(kind, id))
+      clearWriteFailure();
     get().clearPosition(id);
     set({
       editingId: get().editingId === id ? null : get().editingId,

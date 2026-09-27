@@ -1210,3 +1210,96 @@ Suite totals: 2920 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
 ```
+
+### Captured run — 2026-09-26T23:51:07Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.KTJui60UdH PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -q -rf`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 132ceec1e7974855e088d7d0b1a871b50f03ee2a
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+..............................................F......................... [ 94%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+__________ TestOneDelete.test_a_resize_that_changes_the_face_commits ___________
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-8-02/.venv/bin/python
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10a6384d0>
+
+    @pytest.mark.e2e
+    def test_a_resize_that_changes_the_face_commits(self) -> None:
+        """MISSED 2: the face is the one the owner SEES. 393 opens the list;
+        widening to 1440 resolves the spatial Floor: the pending delete commits."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, 393, ["Resize me"])
+            try:
+                _to_face(page, "list", 393)
+                _row_menu_delete(page, "Resize me")
+                _readable_receipt(page, "Removed Resize me", 5_000)
+                page.set_viewport_size({"width": 1440, "height": 900})
+                page.locator(".desk-world-a11y").wait_for(state="attached", timeout=10_000)
+                page.wait_for_timeout(500)
+                # Read at once: the commit is the face change's, not the window's end.
+                receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
+                page.wait_for_timeout(1_000)
+                status = _status(page, decision_id)
+                print(f"resize: {status}; receipt {receipt!r}")
+>               assert "Removal committed" in receipt, (status, receipt)
+E               AssertionError: (404, 'Removed Resize me')
+E               assert 'Removal committed' in 'Removed Resize me'
+
+tests/e2e/test_philo8_one_delete_glass.py:791: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+resize: 404; receipt 'Removed Resize me'
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_resize_that_changes_the_face_commits
+1 failed, 75 passed in 1053.75s (0:17:33)
+```
+
+### Captured run — 2026-09-27T00:09:58Z
+
+- **Command:** `env HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.sf9NWqufoK PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright HOLDSPEAK_EVIDENCE_WRITE=1 uv run pytest tests/e2e/test_philo8_one_delete_glass.py tests/e2e/test_philo7_delete_receipt_glass.py tests/e2e/test_philo8_01_zone_name_glass.py tests/e2e/test_philo8_01_list_rename_glass.py -p no:cacheprovider -n 2 -q -rf`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** de2b4f4cdc88c6c12ce54c925abd242cc3fc8bc1
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 1056.63s (0:17:36)
+```
+
+### Captured run — 2026-09-27T00:27:44Z
+
+- **Command:** `uv run python scripts/check_web_baseline.py --run`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** f6bcbe69dd206fae92f051fd2acff587e3f0e57e
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2922 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+```

@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useUndoReceipt } from "../useUndoReceipt";
 import { OUTCOME_LINGER_MS } from "../../linger";
@@ -180,16 +180,54 @@ describe("useUndoReceipt", () => {
     expect(revert).toHaveBeenCalledTimes(1);
   });
 
-  it("a key already committed opens no new Undo", () => {
+  it("a key opens nothing while its commit is in flight, and is free once it settles", async () => {
     vi.useFakeTimers();
-    const fire = vi.fn();
+    let land: (ok: boolean) => void = () => undefined;
+    const fire = vi.fn(() => new Promise<boolean>((done) => { land = done; }));
     const { result } = renderHook(() => useUndoReceipt(1));
     act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
     act(() => vi.advanceTimersByTime(1500));
-    expect(result.current.phase).toBe("committed");
+    expect(result.current.phase).toBe("committing");
     act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
-    expect(result.current.phase).toBe("committed");
+    expect(result.current.phase).toBe("committing");
     expect(fire).toHaveBeenCalledTimes(1);
+    await act(async () => { land(true); await Promise.resolve(); });
+    expect(result.current.phase).toBe("committed");
+    // Round four: a re-created object with the same reference can go again.
+    act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
+    expect(result.current.phase).toBe("pending");
+  });
+
+  it("says Removal committed only after the commit lands", async () => {
+    vi.useFakeTimers();
+    let land: (ok: boolean) => void = () => undefined;
+    const fire = () => new Promise<boolean>((done) => { land = done; });
+    const { result } = renderHook(() => useUndoReceipt(8));
+    act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
+    act(() => result.current.flush());
+    expect(result.current.phase).toBe("committing");
+    const { container, rerender } = render(result.current.receipt as never);
+    expect(container.textContent).toContain("Removed A");
+    expect(container.textContent).not.toContain("Removal committed");
+    expect(container.textContent).not.toContain("Undo");
+    await act(async () => { land(true); await Promise.resolve(); });
+    rerender(result.current.receipt as never);
+    expect(container.textContent).toContain("Removal committed");
+  });
+
+  it("a refused commit never says Removal committed", async () => {
+    vi.useFakeTimers();
+    let land: (ok: boolean) => void = () => undefined;
+    const fire = () => new Promise<boolean>((done) => { land = done; });
+    const { result } = renderHook(() => useUndoReceipt(8));
+    const seen: string[] = [];
+    act(() => result.current.remove("A", fire, vi.fn(), "decision:a"));
+    seen.push(result.current.phase);
+    act(() => result.current.flush());
+    seen.push(result.current.phase);
+    await act(async () => { land(false); await Promise.resolve(); });
+    seen.push(result.current.phase);
+    expect(seen).toEqual(["pending", "committing", "idle"]);
   });
 
   it("a failed commit clears the receipt and frees the key", async () => {
