@@ -68,7 +68,7 @@ An agent can act only through the operations and grants that you give it.
 - **Local first.** The database and Whisper transcription stay on the hub. See [Security & Privacy](docs/SECURITY.md).
 - **Your models.** The Concierge in **Settings > Models** finds your engines and proposes an assignment per capability. See [Models](docs/MODELS.md).
 - **Receipts.** An operation that files or decides records a Receipt, and a refused operation records its refusal. See [Kernel](docs/KERNEL.md).
-- **Control modes.** The default is **YOLO**. **Normal** and **Secure** ask before more effects. See [Control modes](docs/AUTHORITY.md).
+- **Control modes.** The default is **YOLO**. For supported external writes, **Normal** and **Secure** require approval or a scoped grant. See [Control modes](docs/AUTHORITY.md).
 - **Egress is named.** A model endpoint, a connector, a remote client, or an outbound action can send data off the hub. The badge and the Receipt name the destination.
 - **Honest limits.** `holdspeak doctor` reports what is broken. Upgrades back up the database first. See [Release and recovery](docs/RELEASING.md).
 
@@ -77,7 +77,7 @@ An agent can act only through the operations and grants that you give it.
 One service layer declares each operation. HTTP, MCP, and the test rig reach the same operation, with the same authority checks and the same Receipts.
 
 - The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 229 tools across 42 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
-- A tool name does not grant permission. An agent acts only under the palette and grants that you give it.
+- A tool name does not grant permission. An agent acts only under the palette and grants that you give it. To let an agent file notes and record decisions, select **Allow filing** on its row in Settings, Remote Access. Select **Stop filing** to end the grant.
 - [Reach](docs/USER_GUIDE.md#reach) lets a remote agent connect with a scoped credential (a palette and a time limit, shown once).
 - [Reach Runner](docs/REACH_RUNNER.md) requests a Heartbeat sweep and steward runs from another machine.
 - Threads, Workflows, and Coder steering direct AI work from the Desk. See [Automation](docs/AUTOMATION.md) and [Agents and Threads](docs/AGENTS_AND_THREADS.md).
