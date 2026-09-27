@@ -1,0 +1,29 @@
+# vitest under each mutation (web/src/desk/hooks/__tests__/useUndoReceipt.test.ts, web/src/desk/__tests__/deleteReceipt.test.tsx, web/src/desk/components/__tests__/workbenchUndoFlush.test.tsx)
+# M1 first run: the mutation did not compile (a syntax error), so deleteReceipt.test.tsx did not load (15 passed = the other two files). Rerun with a valid mutation below.
+== M1
+      Tests  15 passed (15)
+== M2
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > a second delete commits the first (cause 2)
+ FAIL  src/desk/components/__tests__/workbenchUndoFlush.test.tsx > PHILO-8-02 the Workbench window's Remove > a second Remove commits the first at once
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > a second remove commits the first at once and keeps one slot
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > undo after a second remove keeps only the pending one
+      Tests  4 failed | 18 passed (22)
+== M3
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > the last seat leaving commits the pending delete (cause 3)
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > a face swap commits too: the old seat leaves as the new one comes
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > with no seat mounted (the Chair) the delete commits at once
+ FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > unmount commits a pending removal
+ FAIL  src/desk/components/__tests__/workbenchUndoFlush.test.tsx > PHILO-8-02 the Workbench window's Remove > closing the window commits a pending Remove
+      Tests  5 failed | 17 passed (22)
+== M1 (valid mutation: desk.setSelected( -> ((_ids: string[]) => undefined)( )
+ FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > takes the queued object out of the selection (cause 1)
+AssertionError: expected [ 'decision:a' ] to deeply equal []
+      Tests  1 failed | 6 passed (7)
+M3b vitest ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > the last seat leaving commits the pending delete (cause 3)
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > a face swap commits too: the old seat leaves as the new one comes
+M3b vitest  FAIL  src/desk/__tests__/deleteReceipt.test.tsx > DeskDeleteHost > with no seat mounted (the Chair) the delete commits at once
+M3b vitest  FAIL  src/desk/hooks/__tests__/useUndoReceipt.test.ts > useUndoReceipt > unmount commits a pending removal
+M3b vitest       Tests  4 failed | 15 passed (19)

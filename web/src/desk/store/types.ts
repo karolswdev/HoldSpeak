@@ -245,7 +245,8 @@ export interface DeskState {
     verb?: string,
   ): Promise<void>;
   /** Tombstone a deletable primitive, then settle all local desk faces. */
-  deletePrimitive(id: string, kind: string): Promise<void>;
+  /** Resolves `true` when the hub took the delete, `false` when it refused. */
+  deletePrimitive(id: string, kind: string): Promise<boolean>;
   renameZone(id: string, name: string): Promise<void>;
   clearZoneRenameError(): void;
   /** Open an object card. A second object opens a SECOND card (windows

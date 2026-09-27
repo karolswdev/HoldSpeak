@@ -32,6 +32,13 @@ from typing import Any
 
 from scripts import graph_walk as gw
 
+_SELECTION_JS = """() => {
+  const f = document.querySelector('.desk-listmode input.desk-zone-rename');
+  if (!f) return null;
+  return {value: f.value, start: f.selectionStart, end: f.selectionEnd,
+          focused: document.activeElement === f, window_focused: document.hasFocus()};
+}"""
+
 WINDOW_WAIT_MS = 12_000  # the 8 s undo window plus the hub's round trip
 T = 20_000
 
@@ -128,11 +135,17 @@ def rehearse(width: int, hub: Any, out: Path, log: list[dict[str, Any]]) -> None
         page.locator(".desk-listmode input.desk-zone-rename").wait_for(state="detached", timeout=T)
         _run(page, "New Zone", "desk.new-zone")
         page.locator(".desk-listmode input.desk-zone-rename").wait_for(timeout=T)
+        # The ratified canvas: the name opens SELECTED. Read the field's own
+        # selection and focus at once and again at the shot (a shot alone can
+        # not tell "not selected" from "selected, not painted").
+        at_open = page.evaluate(_SELECTION_JS)
         page.wait_for_timeout(300)
         field = page.locator(".desk-listmode input.desk-zone-rename").input_value()
+        at_shot = page.evaluate(_SELECTION_JS)
         s1 = shot("1-second-zone-field", page)
         made = [z for z in zones() if z not in before]
-        record("two unnamed zones", f"list; the second field reads {field!r}", {"new zones": made}, [s1])
+        record("two unnamed zones", f"list; the second field reads {field!r}",
+               {"new zones": made, "selection at open": at_open, "selection at the shot": at_shot}, [s1])
 
         # 2. the rename where he is (the field is open on 'New zone 2')
         page.keyboard.type(f"Platform {width}")

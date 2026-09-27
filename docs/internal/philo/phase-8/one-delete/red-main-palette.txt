@@ -1,0 +1,5 @@
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 5000ms exceeded.
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[393]
+2 failed, 23 deselected in 31.67s

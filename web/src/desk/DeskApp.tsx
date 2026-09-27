@@ -39,6 +39,8 @@ import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import { useAtmospherePreference } from "./gl/atmospherePreference";
 import { useSettleState } from "./settleState";
+import { DeskDeleteHost } from "./deleteReceipt";
+import { qualifiedRef } from "./api";
 import { noteFaceChange } from "./zoneName";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import "./desk.css";
@@ -77,7 +79,20 @@ function menuGlyphsVariant(): string {
   return "launcher";
 }
 
+/** PHILO-8-02 round three — the one delete listener and its receipt sit
+ * ABOVE every DeskApp render branch (the setup-pending and setup-failure
+ * branch returns early), so a failed refresh never unmounts it and never
+ * commits a pending delete or takes its Undo away. */
 export default function DeskApp() {
+  return (
+    <>
+      <DeskDeleteHost />
+      <DeskFaces />
+    </>
+  );
+}
+
+function DeskFaces() {
   const compact = useCompactViewport();
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
@@ -144,7 +159,14 @@ export default function DeskApp() {
     const refused = s.zoneRenameError;
     if (refused) {
       s.clearZoneRenameError();
-      reportWriteFailure("RENAME ZONE", refused.label, () => void useDesk.getState().renameZone(refused.zoneId, refused.name));
+      // PHILO-8-02 round eight: the refusal keeps its subject on the move, so
+      // another object's success never clears it (the desk channel's rule).
+      reportWriteFailure(
+        "RENAME ZONE",
+        refused.label,
+        () => void useDesk.getState().renameZone(refused.zoneId, refused.name),
+        qualifiedRef("directory", refused.zoneId),
+      );
     }
   }, [showFloor, viewMode]);
   const chairOpenCards = pullouts

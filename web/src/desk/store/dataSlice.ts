@@ -3,7 +3,7 @@
  * createPrimitive, updatePrimitive, deletePrimitive, renameZone,
  * fileIntoDir, removeFromDir, fileIntoKnowledge, seedDesk, resetDesk,
  * registerRepository, answerCoder, speakToCoder, runCapability. */
-import { apiRequest, newDeliveryId } from "../../lib/api";
+import { apiFetch, apiRequest, newDeliveryId } from "../../lib/api";
 import {
   clearWriteFailure,
   currentWriteFailure,
@@ -433,7 +433,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       // HS-132-07 — a kind with no update path is never offered an edit
       // (see `renameLock` in infoContract). Reaching here anyway is a wiring
       // fault, and it is named instead of swallowed.
-      reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`);
+      reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`, undefined, qualifiedRef(kind, id));
       return;
     }
     const camel: Record<string, string> = {
@@ -522,8 +522,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           });
         }
       }
-      reportWriteFailure(verb, cause, () =>
-        void get().updatePrimitive(kind, id, patch, verb),
+      reportWriteFailure(
+        verb,
+        cause,
+        () => void get().updatePrimitive(kind, id, patch, verb),
+        qualifiedRef(kind, id),
       );
       await runRefresh(
         rollback
@@ -544,7 +547,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       const state = primitiveWrites.get(key);
       if (!state || state.version !== writeVersion) return;
       primitiveWrites.set(key, { ...state, pending: false });
-      clearWriteFailure();
+      clearWriteFailure(qualifiedRef(kind, id));
       // HS-202-02 — the hub answered ok: the object is KEPT, and the
       // editor's foot may say so (04-sober-eye.md, rank 5).
       set({ keptAt: { ...get().keptAt, [id]: Date.now() } });
@@ -564,14 +567,28 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       workflow: "workflows",
     } satisfies Partial<Record<PrimitiveKind, string>>;
     const path = (paths as Partial<Record<string, string>>)[kind];
-    if (!path) return;
+    if (!path) return false;
     try {
-      await apiRequest(`/api/${path}/${encodeURIComponent(id)}`, {
+      // apiFetch, not apiRequest: a refusal (4xx/5xx) throws with its named
+      // reason; apiRequest answered the Response and the refusal went unseen.
+      await apiFetch(`/api/${path}/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-    } catch {
-      /* refresh reports reachability and preserves the object on failure */
+    } catch (cause) {
+      // PHILO-8-02 round three — a refused delete is named on the desk's
+      // receipt line with Retry; the object stays and so does its card.
+      reportWriteFailure(
+        "DELETE",
+        cause,
+        () => void get().deletePrimitive(id, kind),
+        qualifiedRef(kind, id),
+      );
+      void get().refresh();
+      return false;
     }
+    // Round four/seven: a landed delete clears only a failure about its own
+    // object (the channel's subject rule), never an unrelated one.
+    clearWriteFailure(qualifiedRef(kind, id));
     get().clearPosition(id);
     set({
       editingId: get().editingId === id ? null : get().editingId,
@@ -584,6 +601,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       ),
     });
     await get().refresh();
+    return true;
   },
 
   async renameZone(id, name) {
@@ -618,7 +636,12 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       if (get().renamingZoneId === id) {
         set({ zoneRenameError: { ...error, zoneId: id, name: trimmed } });
       } else {
-        reportWriteFailure("RENAME ZONE", error.label, () => void get().renameZone(id, trimmed));
+        reportWriteFailure(
+          "RENAME ZONE",
+          error.label,
+          () => void get().renameZone(id, trimmed),
+          qualifiedRef("directory", id),
+        );
       }
     };
     try {
@@ -630,7 +653,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           body: JSON.stringify({ name: trimmed }),
         },
       );
-      if (res.ok) return;
+      if (res.ok) {
+        // Round seven: a landed rename answers its own earlier refusal.
+        clearWriteFailure(qualifiedRef("directory", id));
+        return;
+      }
       const body = await res.json().catch(() => ({}));
       if (res.status === 409) {
         const existingName = body?.existing_name || trimmed;

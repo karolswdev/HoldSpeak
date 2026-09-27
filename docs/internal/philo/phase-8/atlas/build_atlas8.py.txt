@@ -107,6 +107,8 @@ def gone_read(var: str) -> dict:
 
 
 RELOAD = {"kind": "ui", "action": "reload", "adapter": "ui-navigation", "why": "a fresh Desk read after the seed"}
+PENDING = {"kind": "ui", "action": "wait_for", "adapter": "ui-pointer", "selector": ".undo-receipt.is-pending",
+           "timeout_s": 3, "why": "the first delete is still inside its window (the receipt's pending phase)"}
 FLOOR_PRE = {"kind": "check", "predicate": {"kind": "attr_equals", "attr": "aria-pressed", "value": "true"},
              "observe_at": "[data-testid=chair-floor-toggle]",
              "why": "the Floor is the surface in front (the toggle is pressed)"}
@@ -251,7 +253,7 @@ ROW_MENU = [
      "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list delete']",
      "why": "the seeded row is drawn (the list refreshes after the reload)"},
     {"kind": "ui", "action": "click_role", "adapter": "ui-pointer", "role": "button",
-     "name": "Atlas list delete", "button": "right",
+     "name": "Atlas list delete", "button": "right", "timeout_s": 25,
      "why": "the row menu opens on a right-click (DeskListView.tsx onRowContextMenu)"},
 ]
 MENU_DELETE = {"kind": "ui", "action": "click_role", "adapter": "ui-pointer", "role": "menuitem",
@@ -277,11 +279,13 @@ cases.append(case(
 cases.append(case(
     "case.p8.list_delete.undo", edge="edge.face.decision_delete", state=DEL,
     pre=[FRESH, FLOOR_PRE],
-    setup=[*GATE, decision("Atlas list delete", "decision_id"), {"kind": "ui", "action": "reload", "adapter": "ui-navigation", "why": "a fresh Desk read after the seed"}, *to_list(), *ROW_MENU,
-           {**MENU_DELETE}],
-    trigger={"kind": "ui", "action": "click", "adapter": "ui-pointer", "selector": "button.undo-receipt-btn",
-             "optional": True,
-             "why": "the receipt's Undo; optional so main runs to a verdict: on main the list shows no receipt"},
+    setup=[*GATE, decision("Atlas list delete", "decision_id"), RELOAD, *to_list(), *ROW_MENU],
+    trigger={**MENU_DELETE,
+             "then": [{**PENDING, "optional": True,
+                       "why": "the delete is pending (inside its window); optional so main runs to a verdict: on main the list shows no receipt"},
+                      {"kind": "ui", "action": "click", "adapter": "ui-pointer", "selector": "button.undo-receipt-btn",
+                       "optional": True,
+                       "why": "the receipt's Undo, inside the window (one gesture with the Delete); optional so main runs to a verdict"}]},
     expected={
         "predicate": {"kind": "all_of", "predicates": [
             {"kind": "protocol_reads", "expect": [{"status": 200}]},
@@ -289,7 +293,7 @@ cases.append(case(
         ]},
         "observe_at": ".undo-receipt",
         "reads": [gone_read("decision_id")],
-        "words": "on the list the owner deletes the decision from its row menu and presses Undo inside the window; the receipt reads 'Restored Atlas list delete', readable, and the hub still answers 200 (the 200 after the window is read back in the closing rehearsal)",
+        "words": "on the list the owner deletes the decision from its row menu and presses Undo inside the window (one gesture: the trigger and its `then` steps); the receipt reads 'Restored Atlas list delete', readable, and the hub still answers 200 (the 200 after the window is read back in the closing rehearsal)",
     },
     bound=20))
 
@@ -305,7 +309,7 @@ cases.append(case(
             "selector": ".desk-listmode .desk-list-name-cell[aria-label='Everyday context']",
             "why": "keyboard travel to the list's LAST row (the seeded knowledge base; decisions sort above agents and knowledge) scrolls the page to its end"},
            {"kind": "ui", "action": "click_role", "adapter": "ui-pointer", "role": "button",
-            "name": "Atlas long list 20", "button": "right"}],
+            "name": "Atlas long list 20", "button": "right", "timeout_s": 25}],
     trigger=MENU_DELETE,
     expected={
         "predicate": {"kind": "all_of", "predicates": [
@@ -319,8 +323,6 @@ cases.append(case(
     bound=40))
 
 # ── 8. two deletes in one window (the spatial Floor) ──────────────────────
-PENDING = {"kind": "ui", "action": "wait_for", "adapter": "ui-pointer", "selector": ".undo-receipt.is-pending",
-           "timeout_s": 3, "why": "the first delete is still inside its window (the receipt's pending phase)"}
 cases.append(case(
     "case.p8.delete_twice.both_gone", edge="edge.face.decision_delete", state=DEL,
     pre=[FRESH, FLOOR_PRE],

@@ -1,0 +1,216 @@
+22:30  up 5 days,  4:09, 9 users, load averages: 5.56 6.55 9.59
+unrelated chromium 1440: 404; standing ['RENAME ZONE FAILED · NAME TAKEN\nRetry\nOK']
+.unrelated chromium 393: 404; standing ['RENAME ZONE FAILED · NAME TAKEN\nRetry\nOK']
+.FF
+=================================== FAILURES ===================================
+__ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[webkit-1440] __
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10a6b65d0>
+engine = 'webkit', width = 1440
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("engine", ["chromium", "webkit"])
+    def test_a_delete_keeps_an_unrelated_rename_failure(self, engine: str, width: int) -> None:
+        """Round four item 1, round eight: a rename refusal is SEATED on the
+        chip (NAME TAKEN); a face change moves it to the desk receipt; a
+        successful delete of another object must not clear it (its failure and
+        a reachable Retry remain). Chromium and WebKit (Astra reproduced in
+        WebKit)."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+>           browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"], engine)
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_philo8_one_delete_glass.py:919: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:200: in _open
+    browser = getattr(pw, engine).launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:14568: in launch
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x115ccca50>
+cb = <function Channel.send.<locals>.<lambda> at 0x115cbb1c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/karol/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+__ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[webkit-393] ___
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x10a6b6630>
+engine = 'webkit', width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("engine", ["chromium", "webkit"])
+    def test_a_delete_keeps_an_unrelated_rename_failure(self, engine: str, width: int) -> None:
+        """Round four item 1, round eight: a rename refusal is SEATED on the
+        chip (NAME TAKEN); a face change moves it to the desk receipt; a
+        successful delete of another object must not clear it (its failure and
+        a reachable Retry remain). Chromium and WebKit (Astra reproduced in
+        WebKit)."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+>           browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"], engine)
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/e2e/test_philo8_one_delete_glass.py:919: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_philo8_one_delete_glass.py:200: in _open
+    browser = getattr(pw, engine).launch(headless=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:14568: in launch
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_browser_type.py:98: in launch
+    await self._channel.send(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x116c48640>
+cb = <function Channel.send.<locals>.<lambda> at 0x116c44670>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        st: List[inspect.FrameInfo] = getattr(
+            task, "__pw_stack__", None
+        ) or inspect.stack(0)
+    
+        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /Users/karol/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
+E           ╔════════════════════════════════════════════════════════════╗
+E           ║ Looks like Playwright was just installed or updated.       ║
+E           ║ Please run the following command to download new browsers: ║
+E           ║                                                            ║
+E           ║     playwright install                                     ║
+E           ║                                                            ║
+E           ║ <3 Playwright Team                                         ║
+E           ╚════════════════════════════════════════════════════════════╝
+
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: Error
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+==================================== PASSES ====================================
+_ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[chromium-1440] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+_ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[chromium-393] __
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[chromium-1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[chromium-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-393]
+2 failed, 2 passed, 50 deselected in 79.00s (0:01:18)
+22:31  up 5 days,  4:10, 9 users, load averages: 11.02 8.10 9.91
+--- WebKit (playwright build v2227 installed): 22:32  up 5 days,  4:11, 9 users, load averages: 7.73 7.56 9.67
+unrelated webkit 1440: 404; standing ['RENAME ZONE FAILED · NAME TAKEN\nRetry\nOK\n']
+.unrelated webkit 393: 404; standing []
+F
+=================================== FAILURES ===================================
+__ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[webkit-393] ___
+
+self = <tests.e2e.test_philo8_one_delete_glass.TestOneDelete object at 0x1090fe450>
+engine = 'webkit', width = 393
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    @pytest.mark.parametrize("engine", ["chromium", "webkit"])
+    def test_a_delete_keeps_an_unrelated_rename_failure(self, engine: str, width: int) -> None:
+        """Round four item 1, round eight: a rename refusal is SEATED on the
+        chip (NAME TAKEN); a face change moves it to the desk receipt; a
+        successful delete of another object must not clear it (its failure and
+        a reachable Retry remain). Chromium and WebKit (Astra reproduced in
+        WebKit)."""
+        from playwright.sync_api import sync_playwright
+    
+        with sync_playwright() as pw:
+            browser, page, (decision_id,), errors = self._open(pw, width, ["Unrelated decision"], engine)
+            try:
+                _to_face(page, "list", width)
+                _palette(page, "New Zone", "desk.new-zone")
+                field = page.locator("input.desk-zone-rename")
+                field.wait_for(timeout=10_000)
+                field.fill("Inbox")
+                field.press("Enter")
+                # The refusal is seated on the chip BEFORE the face changes.
+                page.locator("[data-testid=zone-name-refused]").first.wait_for(timeout=10_000)
+                page.locator("[data-testid=chair-floor-toggle]").click()
+                page.locator(".chair").wait_for(timeout=10_000)
+                rename = page.locator(".write-receipt").filter(has_text="RENAME ZONE")
+                rename.first.wait_for(timeout=10_000)
+                page.locator("[data-testid=chair-floor-toggle]").click()
+                page.locator(".desk-listmode").wait_for(timeout=10_000)
+                _row_menu_delete(page, "Unrelated decision")
+                page.wait_for_timeout(WINDOW_WAIT_MS)
+                status = _status(page, decision_id)
+                standing = [t for t in page.locator(".write-receipt").all_inner_texts() if "RENAME ZONE" in t]
+                page.screenshot(path=str(SHOTS / f"list-rename-failure-kept-{engine}-{width}.png"))
+                print(f"unrelated {engine} {width}: {status}; standing {standing}")
+                assert status == 404
+>               assert standing and "Retry" in standing[0], standing
+E               AssertionError: []
+E               assert ([])
+
+tests/e2e/test_philo8_one_delete_glass.py:942: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+==================================== PASSES ====================================
+__ TestOneDelete.test_a_delete_keeps_an_unrelated_rename_failure[webkit-1440] __
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-393]
+1 failed, 1 passed, 52 deselected in 46.68s
+fix (round eight), WebKit rename fence x8 at both widths: 8 passed in 84.03s (0:01:24)
+f95e03ab (git archive), WebKit rename fence x8: FAILED tests/e2e/test_zz_dbg.py::TestDbg::test_loop[393-0] - AssertionError: []
+f95e03ab (git archive), WebKit rename fence x8: 1 failed, 7 passed in 93.96s (0:01:33)
+f95e03ab, WebKit rename fence x16 more: 7 failed, 9 passed
+fix, WebKit rename fence x16 more: 16 passed

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "atlas_version": "phase8-floor",
   "extends": "docs/internal/philo/graph/atlas.json",
-  "source_commit": "ce772ef9a17d869c1ee1030b5accd93083d8b02c",
+  "source_commit": "a6c94db290990042c346f789a5b7ace7875d2d77",
   "cases": [
     {
       "id": "case.p8.zone_create.second_unnamed",
@@ -3075,7 +3075,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-zone\"",
-          "line": 220,
+          "line": 221,
           "claim": "the face makes a zone with the New Zone verb (Floor only: needsZones)"
         }
       ],
@@ -3104,13 +3104,13 @@
         {
           "path": "web/src/desk/hooks/useUndoReceipt.ts",
           "symbol": "export function useUndoReceipt",
-          "line": 12,
+          "line": 34,
           "claim": "the one undo receipt: 8 s window, Undo, 'Removal committed'"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"object.delete\"",
-          "line": 568,
+          "line": 569,
           "claim": "the face deletes an object with the Delete verb"
         }
       ],

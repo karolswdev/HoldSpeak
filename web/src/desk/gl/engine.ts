@@ -420,7 +420,7 @@ export class WorldEngine {
     if (node.spriteUrl !== sprite) {
       node.spriteUrl = sprite;
       const tex = loadSprite(sprite, (t) => {
-        if (node.spriteUrl === sprite) node.sprite.texture = t;
+        if (node.spriteUrl === sprite && !node.sprite.destroyed) node.sprite.texture = t;
       });
       if (tex) node.sprite.texture = tex;
     }
@@ -568,7 +568,7 @@ export class WorldEngine {
   private setObjectSprite(node: ObjectNode, url: string): void {
     node.spriteUrl = url;
     const tex = loadSprite(url, (t) => {
-      if (node.spriteUrl === url) node.sprite.texture = t;
+      if (node.spriteUrl === url && !node.sprite.destroyed) node.sprite.texture = t;
     });
     if (tex) node.sprite.texture = tex;
   }
@@ -675,7 +675,7 @@ export class WorldEngine {
     if (node.spriteUrl !== sprite) {
       node.spriteUrl = sprite;
       const tex = loadSprite(sprite, (t) => {
-        if (node.spriteUrl === sprite) node.sprite.texture = t;
+        if (node.spriteUrl === sprite && !node.sprite.destroyed) node.sprite.texture = t;
       });
       if (tex) node.sprite.texture = tex;
     }
