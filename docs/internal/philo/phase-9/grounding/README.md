@@ -42,7 +42,7 @@ the service. **No project write is admitted through the kernel** (see F8).
 | 3 | `project.get_room` | `ProjectService.room` (`:1181`) | no | palette | read (the Room) |
 | 4 | `project.create` | `ProjectService.create_project` (`:1188`) | yes | palette | Room lifecycle |
 | 5 | `project.update` | `ProjectService.update_project` (`:1198`) | yes | palette | Room lifecycle |
-| 6 | `project.archive` | `ProjectService.archive_project` (`:1212`) | yes | palette | Room lifecycle |
+| 6 | `project.archive` | `ProjectService.archive_project` (`:1212`) | yes: also pauses the project's watches and turns unattended steward runs off in the same transaction (`project_service.py:3023-3035`; probe P2) | palette | Room lifecycle |
 | 7 | `project.restore` | `ProjectService.restore_project` (`:1225`) | yes | palette | Room lifecycle |
 | 8 | `project.link` | `ProjectService.associate_meeting` (`:1241`) | yes (files a meeting in the Room) | palette | Room lifecycle |
 | 9 | `project.unlink` | `ProjectService.disassociate_meeting` (`:1254`) | yes | palette | Room lifecycle |
@@ -70,7 +70,7 @@ the service. **No project write is admitted through the kernel** (see F8).
 | 31 | `project.setup.test_proposal` | generic `getattr` (`:1155-1166`) | yes (a real source read) | OWNER (`:555`) | setup interview |
 | 32 | `project.setup.clarify_repo_scope` | generic `getattr` (`:1155-1166`) | yes | OWNER (`:1020`) | setup interview |
 | 33 | `project.watch.inspect` | `WatchService.get_watch` (`:1975`) | no | palette | connector read |
-| 34 | `project.watch.test` | `WatchService.test_watch` (`:1982`) | no durable change (a source read) | OWNER (`watch_service.py:488`) | connector |
+| 34 | `project.watch.test` | `WatchService.test_watch` (`:1982`) | yes: fetches the source and persists `test_state` / `test_result_json` (`watch_service.py:595-600`; round two, Codex Astra r1 F3) | OWNER (`watch_service.py:488`) | connector |
 | 35 | `project.watch.evaluate` | `WatchService.evaluate_once` (`:1989`) | yes | OWNER (`:952`) | connector |
 | 36 | `project.watch.set_rules` | `WatchService.set_rules` + direct cadence write (`:1997-2016`) | yes | OWNER (`:1391`) | connector |
 | 37 | `project.watch.pause` | `WatchService.pause_watch` (`:2018`) | yes | OWNER (`:425`) | connector |
@@ -118,7 +118,7 @@ create-with-sources (`holdspeak/web/routes/project_door.py:4`).
 ## The job
 
 One plausible Senior-Architect job, picked from what the Room offers: make a project, add a thing to it, see what
-needs him, ask the steward, draft and publish the update to his boss. Walked both ways.
+needs him, ask the steward, draft and publish the update in the Room (publication is local; it sends nothing — round two, Q0). Walked both ways.
 
 - **Over MCP** (`mcp/summary.json`): `project.create` ok; `project.get_room` ok; **add a thing: the catalogue has no
   verb** (F4); `project.add_suggested_source` / `suggested_sources` / `dismiss_suggested_source` fail (F5);
@@ -154,13 +154,15 @@ stays `ON TRACK`: the overdue input counts follow-through commitments only (`hol
 Shots: `face/04-room-1440.png`, `face/04-room-393.png`. (A risk without `details.likelihood` is refused 400,
 "details.likelihood is required for risk"; the milestone was the item the lane could add with a title and a date.)
 
-**F3 — The steward face says it acted when it did nothing.** After Run once on a new project the face reads
+**F3 — The steward face overstates what the run did.** After Run once on a new project the face reads
 "Observe 1 source · Propose 1 · Act 1 effect" (`face/26-steward-ran-1440.png`, `-393.png`). The hub's run: every
 phase completed, `proposal_count: 0`, `actions_taken: 0`, `effect_receipts: []`, and all six effect kinds skipped with
 `not_in_eligible_effect_kinds` (`GET /api/projects/{id}/steward/runs`, read back in the lane). The face counts each
 phase's checkpoint step (`effect_kind: "phase:observe"` etc.) as a source, a proposal and an effect
 (`web/src/features/project-room/steward/StewardPosture.tsx:155-164`). With no policy (`project.configure_steward` →
-`{"policy": null}`) no effect kind is eligible, so a new project's steward can do nothing, and no word says so.
+`{"policy": null}`) no effect kind is eligible, so ACT performs no action, and no word says so. The run is not
+"nothing": COMPARE opens a review (`holdspeak/services/project_steward_service.py:860-869`, `self._delta.open_review`),
+so a run leaves an open review window even when ACT takes no action (corrected in round two, Codex Astra r1 F5).
 
 **F4 — No MCP verb adds anything to a project.** The catalogue's only "add" verb is `project.add_suggested_source`
 (`mcp/summary.json`, "find a verb to add a thing"). Items (`list`, `create`, `update`, `transition`:
@@ -221,10 +223,13 @@ dependencies. In this lane a fresh `uv run` venv (base
 dependencies, 79 packages) failed `from holdspeak.mcp.tools import TOOLS` with `ModuleNotFoundError: No module named
 'jsonschema'` (at `operations.py:38`). Route modules import `operations` at load (`holdspeak/web/routes/monday_brief.py:14`,
 `meeting_import.py:17`, `primitives/kbs.py:17`), so the hub likely cannot start on a base install; **not booted** —
-unknown. Not a Room defect; BACKLOG.
+unknown. Not a Room defect; round two makes it a prerequisite repair in story 01 (Codex Astra r1 MISSED 4).
 
-**F15 (code-read, not seen) — a SUGGESTED source row's "Add" is a Button with no action** (`ProjectRoomCore.tsx:1050`).
-No suggested row could be seeded on the isolated HOME.
+**F15 (corrected in round two) — the handlerless "Add" is not the suggested-source row.** The Room's normal SUGGESTED
+row has wired Add and Dismiss (`ProjectRoomCore.tsx:976-1000`, `ctrl.handleAddSuggestion` / `handleDismissSuggestion`).
+The Button with no action at `ProjectRoomCore.tsx:1050` sits on a different branch: a *watch source* row whose
+`src.suggested` is set. Code-read; that branch was not rendered. The real source-addition wall is F16 and F17 (Codex
+Astra r1 F2).
 
 ## The D2 debts, measured on main `b37dc2fb`
 
@@ -248,3 +253,48 @@ this main and this seed the whole column is off screen at 393.
   Jira or Confluence account.
 - Whether the hub boots on a base install (F14).
 - The Chair, shade and recall callers of `project-room` were not clicked (F1).
+
+## Round two (2026-09-27): Codex Astra r1's probes, reproduced
+
+Codex Astra checked the charter at `3066dccb` (`pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/charter-astra-r1.md`,
+DO-NOT-RATIFY). The lane reproduced its three probes on a fresh isolated HOME with the rig's real hub
+(`probes/r2_probes.py.txt`; the record `round-two/r2-probes.json`; product code unchanged since `b37dc2fb`).
+
+**P1 — source addition.** Two suggestions minted through the real scanner and persistence
+(`SuggestedSourceService.scan_transcript` + `create_suggestions`, the calls `holdspeak/intel_queue.py:383-385` makes) from
+"We should watch example/payments and PAY-123 before the cutover." `GET …/suggested-sources` lists both. Then the routes
+the face calls, the reference URL-encoded as `web/src/features/project-room/api.ts:178` does:
+
+| Reference | Request | Answer | Suggestion after | Resource / watch after |
+|---|---|---|---|---|
+| `example/payments` (GitHub) | `POST …/suggested-sources/example%2Fpayments/add` | **404** `{"detail":"Not Found"}` | `pending` | none |
+| `PAY-123` (Jira) | `POST …/suggested-sources/PAY-123/add` | **200** `resource.state: "accepted_no_watch"`; the body's suggestion still says `"status": "pending"` | **`accepted`** | **none**: zero `project_resources`, zero `connector_watches` |
+
+**F16 — A GitHub source cannot be added from a suggestion.** The route's `{ref}` is one path segment
+(`holdspeak/web/routes/projects.py:608`); an `owner/repo` reference, encoded or not, never reaches it (404).
+
+**F17 — A Jira suggestion is "accepted" and nothing is added, and the answer says otherwise.** The route accepts the
+suggestion first (`projects.py:628`), then calls `add_resource`, whose failure is swallowed into
+`accepted_no_watch` (`projects.py:633-639`); the MCP twin does the same (`holdspeak/mcp/families/project.py:2055-2063`).
+The cause, reproduced in the lane: `qualified_ref("jira:PAY-123")` and `qualified_ref("github:example/payments")` both
+raise `ValueError: unknown resource kind` (`holdspeak/db/relationships.py:25`, reached from `project_service.py:3177`).
+And even when `add_resource` succeeds it writes a `project_resources` row only, no watch (`project_service.py:3169-3284`),
+while the tool says "create a Watch source on the Room" (`project.py:833`). The accepted suggestion no longer offers
+itself again. So no path turns a suggestion into a watched source.
+
+**P2 — archive as the owner (F18).** `project.configure_steward(enabled=True, unattended_enabled=True)`, then
+`project.archive` over MCP: the policy went from `unattended_enabled 1` to `0` (`enabled` stayed 1); zero
+`kernel_operations` rows before and after (`round-two/r2-probes.json` `p2`). The archive also pauses the project's
+watches in the same transaction (`project_service.py:3023-3035`). **F18: archive changes the steward's authority
+(unattended runs), not only a label.**
+
+**P3 — a PROJECT credential without a delegation (F19).** Remote Access enabled, a credential issued through Settings
+(`POST /api/settings/remote/credentials`, palette `PROJECT`, identity `probe-agent`); no delegation row exists. As that
+agent: `project.configure_steward(unattended_enabled=True)` succeeded (the policy row reads `unattended_enabled 1`);
+`project.archive` succeeded (`is_archived 1`); zero `kernel_operations` rows (`round-two/r2-probes.json` `p3`).
+**F19: an agent can turn on unattended steward runs and archive a project with no grant and no receipt**
+(Article XI.4: "Only the owner approves, rejects, or delegates").
+
+**The census, rechecked by Codex Astra:** 284 = 223 MCP + 61 HTTP; 229 public tools; 61 project-adjacent MCP; the 38
+proposed MCP identities and six HTTP tuples exist; 284 → 240–246 correct (r1 F6).
+

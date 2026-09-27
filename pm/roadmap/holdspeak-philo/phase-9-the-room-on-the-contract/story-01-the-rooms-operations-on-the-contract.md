@@ -3,39 +3,46 @@
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** the owner's ratification of the charter
-- **Unblocks:** PHILO-9-02, PHILO-9-05, PHILO-9-06
+- **Depends on:** the owner's ratification of the charter (Q0, Q1, Q3 shape this story)
+- **Unblocks:** PHILO-9-02, PHILO-9-03's backend, PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
-- **Closure finding:** `docs/internal/philo/phase-9/grounding/README.md` F4, F6, F12, F13; the census table there; BACKLOG "Projects on the contract"
-- **Canvas:** none (no face change)
+- **Closure finding:** `docs/internal/philo/phase-9/grounding/README.md` F4, F6, F12, F13, F14, and the backend halves of F2 and F7; the census table there; BACKLOG "Projects on the contract"; Codex Astra r1 F1, F3, F7, MISSED 4 (`checks/charter-astra-r1.md`)
+- **Canvas:** none (no face file)
 
 ## Problem
 
-A client that knows only the catalogue cannot put a thing in a project: the only "add" verb is `project.add_suggested_source` (grounding F4); items and resources are HTTP only (`holdspeak/web/routes/projects.py:294-325`, `:411-515`). The face makes a project through the Door (`holdspeak/web/routes/project_door.py:4`) and MCP through `project.create`: two create paths. The Room read says the updates and the steward are `absent · not_yet_built` after both ran (`holdspeak/services/project_service.py:510-511`, F6). `desk.needs_you` counts muted projects on MCP and not on HTTP (`holdspeak/mcp/tools.py:1077-1090` vs `holdspeak/web/routes/projects.py:546-573`, F13). The descriptions name mechanisms, not his jobs (F12). The 18 MCP identities below are hand-wired (`holdspeak/mcp/families/project.py:1170-1414`, `holdspeak/mcp/tools.py:1077`).
+A client that knows only the catalogue cannot put a thing in a project: the only "add" verb is `project.add_suggested_source` (F4); items and resources are HTTP only (`holdspeak/web/routes/projects.py:294-325`, `:411-515`). The face makes a project through the Door (`holdspeak/web/routes/project_door.py:69`), which arms and baselines watches; MCP makes a bare project (`project.create`). The Room read says the updates and the steward are `absent · not_yet_built` after both ran (`holdspeak/services/project_service.py:510-511`, F6). `desk.needs_you` counts muted projects on MCP and not on HTTP (`holdspeak/mcp/tools.py:1077-1090` vs `projects.py:546-573`, F13). The descriptions name mechanisms, not his jobs (F12). A base install cannot import the catalogue (`holdspeak/operations.py:38`; `jsonschema` only in the `test` and `dev` extras, `pyproject.toml:85`, `:139`; F14). Health ignores a past-due milestone and RECEIPTS lists the Room's reads (`project_service.py:1457-1461`, `:1933`; F2, F7 backend).
 
 ## Scope
 
-- **In:** explicit descriptors in `holdspeak/operations.py` for the 18 MCP identities of the charter's table (Room lifecycle 9, review 4, updates 4, `desk.needs_you` 1), bound at hub composition to the hub's `ProjectService`, `ProjectDeltaService` and `ProjectUpdateService`; the 3 HTTP constructors (`projects.py::_build_needs_you`, `automations.py::_project_service`, `people.py::projects`) reach the hub's services; new MCP exposure for the items (list, create, update, transition) and the resources (list, add, remove) over the same services; one create path (the Door's and `project.create` reach one operation, or the difference is a named field of one descriptor); the Room read reports the updates and the steward as they are; one needs-you count on both transports; descriptions and argument descriptions in his words (where each id comes from); the canonical names fixed in the first commit; a three-state compatibility table (base, round one, built) per operation; `docs/generated/operations.json` and the tool roster regenerated.
-- **Out:** the steward, the nudges, the watches, the suggested sources and the connections (story 02); any face (story 03); the setup interview and the provider discovery tools (charter Out).
+- **Prerequisite (first commit):** F14 — `jsonschema` in the base dependencies; a fence that imports `holdspeak.mcp.tools` in a clean venv built from the base dependencies only.
+- **In:** descriptors in `holdspeak/operations.py` for the 18 MCP identities of the charter's enumeration (Room lifecycle 9, review 4, updates 4, `desk.needs_you` 1), bound at hub composition to the hub's `ProjectService`, `ProjectDeltaService` and `ProjectUpdateService`; the 3 HTTP constructors reach the hub's services; the seven new public tools exactly as the charter's table "The new public tools" (names, schemas, palettes, refusals, authority; `kernel.receipt` added to `PROJECT` and `SWEEP`); the Door's create declared beside `project.create`, each admitted or exempt by its own effect (the charter's admission table; admission itself lands with story 02's kernel path, this story declares the rows); **every `ProjectService` edit of the phase**: F6, F13, and for story 03 the health and NEEDS YOU count of a past-due milestone (F2, under Q3 (a)/(b)) and RECEIPTS from the Room's writes (F7); descriptions and argument descriptions in his words (where each id comes from), and **no description says or implies that publishing sends or delivers** (Q0 (a)); a three-state compatibility table (base, round one, built) per operation; `docs/generated/operations.json` and the tool roster regenerated.
+- **Out:** the steward, the nudges, the watches, the suggested sources and the connections (story 02); every face file (story 03); the setup interview and the provider discovery tools (migration deferred, still callable); delivery of an update (Q0 (a)).
 
 ## Acceptance criteria
 
-- [ ] The 18 MCP identities and the 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
-- [ ] A client can list, create, update and transition an item, and list, add and remove a resource, over MCP; each reaches the same live service as the route in one hub; durable across a restart.
-- [ ] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project", "what needs me", "draft my update" and "send my update" to a tool and an argument path; red on main.
+Per the charter's red-first law: behavioural red through the real hub where the defect lives; new exposure proved by equivalence; missing-symbol or unknown-tool failures are never counted.
+
+- [ ] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
+- [ ] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
+- [ ] The seven new tools match the charter's table; each one's durable outcome and refusals equal the HTTP route's in one hub and across a restart.
+- [ ] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project" (Q3 (a)/(b)), "what needs me", "draft my update" and "publish my update in the Room" to a tool and an argument path; the description of `project.publish_update` contains none of send, deliver, email.
 - [ ] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
 - [ ] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
+- [ ] Under Q3 (a)/(b): a past-due milestone turns the Room's health and appears in its NEEDS YOU read (red on main). RECEIPTS in the Room read are the Room's writes (red on main: reads).
 - [ ] Existing names, arguments, envelopes and refusals are kept (the compatibility tables); palette refusal tested through dispatch.
 
 ## Effort (not a promise)
 
-PROVISIONAL: 2–3 engineering days (the charter's estimate).
+PROVISIONAL: 2.5–3.5 engineering days.
 
 ## Test plan
 
-- **Unit/integration:** descriptor fences; the discovery fence over `tools/list`; the Room-read and needs-you fences through the real hub on an isolated HOME; `scripts/residual_census.py --check` on the branch and on a copy of main.
-- **Rig:** `op` steps for each new operation via `/api/mcp`.
+- **Fences ship with this story** (story 05 only assembles and reruns).
+- **Unit/integration:** descriptor fences; the clean-install import fence; the discovery fence over `tools/list`; Room-read, needs-you, health and receipts fences through the real hub on an isolated HOME; `scripts/residual_census.py --check` on the branch and on a copy of main.
+- **Rig:** `op` steps for each new operation via `/api/mcp`, with their equivalence against the route.
 
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+- 2026-09-27 — round two (Codex Astra r1 paid): F14 as prerequisite; the new tools tabled in the charter; this story owns every `ProjectService` edit; Q0 words; fences ship here.

@@ -30,9 +30,9 @@ Measured on main `b37dc2fb` (grounding `d2/`):
 - [ ] The selected zone name on the list reaches at least 3:1 against the field at 1440 and 393 (measured, as the grounding probe measures it); the palette search field too (red on main: 1.13:1).
 - [ ] The list shows no product text under 12 px at 1440 and 393 (red on main: 51 and 33 nodes).
 - [ ] The status says "SHOWN" for any count (red on main: "SHOWNS").
-- [ ] At 393 every column the canvas keeps is inside the viewport (red on main: three columns off screen).
-- [ ] The sort headers are the library Button (red on main: raw `<button>`).
-- [ ] At 393 the row menu's last entry is inside the viewport when opened on a row near the bottom edge (red on main: cut 15 px).
+- [ ] At 393 every column the canvas keeps is inside the viewport (red on main: three columns off screen); at 1440 preservation green.
+- [ ] The sort headers are the library Button (a structural fence; a mutation re-adding a raw `<button>` turns it red).
+- [ ] At 393 the row menu's last entry is inside the viewport when opened on a row near the bottom edge (red on main: cut 15 px); at 1440 preservation green (in view on main).
 - [ ] The face matches the owner-ratified canvas at both widths; the web baseline has zero branch-new.
 
 ## Effort (not a promise)
@@ -41,10 +41,12 @@ PROVISIONAL: 1–1.5 engineering days, the canvas included.
 
 ## Test plan
 
-- **Glass:** fences through the real hub on an isolated HOME at 1440 and 393, red on main (reuse `docs/internal/philo/phase-9/grounding/probes/d2_probe.py.txt` and `menu_probe.py.txt` as the red record).
+- **Fences and atlas cases ship with this story** (story 05 only assembles and reruns).
+- **Glass:** executable failing assertions through the real hub on an isolated HOME at 1440 and 393. The grounding probes (`docs/internal/philo/phase-9/grounding/probes/d2_probe.py.txt`, `menu_probe.py.txt`) are diagnostic measurements, not fences: they record numbers and exit 0.
 - **Web unit:** `uv run python scripts/check_web_baseline.py --run`; `docs/generated/boundary-candidates.json` regenerated if `web/src` changes (handover XXIX law 3).
 - **Manual / device:** the owner's review of the canvas and the shots.
 
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The 393 Zone column is worse than the Phase 8 record ("`1 ITEM` shows as `1 ITE`"): on this main the whole column is off screen.
+- 2026-09-27 — round two (Codex Astra r1 F7, F8 paid): preservation green at the unaffected width; the sort headers a structural fence; fences ship with the story.

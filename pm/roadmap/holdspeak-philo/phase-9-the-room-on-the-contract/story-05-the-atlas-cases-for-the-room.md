@@ -1,32 +1,32 @@
-# PHILO-9-05 - The atlas cases for the Room
+# PHILO-9-05 - The atlas: assembly, rerun and equivalence
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
 - **Status:** backlog
-- **Depends on:** PHILO-9-01, PHILO-9-02, PHILO-9-03, PHILO-9-04
+- **Depends on:** PHILO-9-01, PHILO-9-02, PHILO-9-03, PHILO-9-04 (each ships its own fences and atlas cases)
 - **Unblocks:** PHILO-9-06
 - **Owner:** Astra (Luna); Muad'Dib checks
-- **Closure finding:** Phase 7 exit 4 and Phase 8 exit 5 (the method); `docs/internal/philo/phase-9/grounding/README.md`
+- **Closure finding:** Phase 7 exit 4 and Phase 8 exit 5 (the method); Codex Astra r1 F7, F8 (`checks/charter-astra-r1.md`)
 - **Canvas:** none
 
 ## Problem
 
-The atlas has no case for a project, the Room, the steward or the list face repair. The grounding walked the job with lane probes, not atlas cases (`docs/internal/philo/phase-9/grounding/probes/`).
+Stories 01–04 each ship the executable fences and atlas cases for their own repairs, with their red-first record. Nothing yet runs them together with the Phase 7 and Phase 8 cases, or checks that the api, `op` and browser paths agree on the same outcomes. Authoring the cases a second time here would duplicate work (Tenet 1).
 
 ## Scope
 
-- **In:** face cases at 1440 and 393, with an `.op` sibling where the outcome is durable, for: the Room opened from a meeting's project button; a milestone shown and health turned; the steward counts equal to the run; RECEIPTS as writes; the Steward verb unobscured at 393; the update list's words; the selection contrast; the list face at 393 (columns, text size, plural, the row menu in view); and `.op` cases for each admitted project write that read its kernel receipt (as Q1 rules). The ids and the file are fixed here against `docs/internal/philo/graph/atlas.schema.json`. The general atlas fences applied to the new file (Phase 8 law).
-- **Out:** any product change (a failing case goes back to its story).
+- **In:** assemble the Phase 9 cases the stories shipped into the phase atlas file (fixed by story 01's first case against `docs/internal/philo/graph/atlas.schema.json`); apply the general atlas fences to it (Phase 8 law: they read `atlas.json` only); rerun every Phase 7, Phase 8 and Phase 9 case at 1440 and 393 on the phase head; run the api/`op`/browser equivalence for each durable outcome, including each admitted write's kernel receipt read with its actor; report the atlas counts over the named files.
+- **Out:** authoring a new face case (a gap goes back to the story that owns the seam); any product change.
 
 ## Acceptance criteria
 
-- [ ] Every new face case fails on main and passes on the phase head at 1440 and 393; each `.op` sibling passes headless and reads its receipt with the actor.
-- [ ] The Phase 7 and Phase 8 atlas cases still pass; the atlas counts over the named files are reported at the phase head.
-- [ ] Real and replayed runs are retained apart.
+- [ ] Every Phase 9 case passes at the widths the charter's red-first matrix names, on the phase head; each case's red (or preservation green) record is the one its story kept — this story claims no new red.
+- [ ] The Phase 7 and Phase 8 atlas cases still pass; the counts are reported.
+- [ ] The api/`op`/browser equivalence holds for each durable outcome and refusal; real and replayed runs are retained apart.
 
 ## Effort (not a promise)
 
-PROVISIONAL: about 1 engineering day.
+PROVISIONAL: 0.5–1 engineering day.
 
 ## Test plan
 
@@ -35,3 +35,4 @@ PROVISIONAL: about 1 engineering day.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+- 2026-09-27 — round two (Codex Astra r1 F7 paid): assembly, rerun and equivalence only; the file keeps its name for the story link.
