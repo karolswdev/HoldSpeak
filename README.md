@@ -1,13 +1,87 @@
 # HoldSpeak
 
-HoldSpeak connects voice typing, meetings, project records, and AI work on one Desk.
-You choose the models, data sources, and authority for each kind of work.
+One local copilot, two modes.
+Dictation types anywhere and learns how you work.
+Meetings end with decisions, actions, and follow-ups instead of a recording.
+Both modes feed one Desk that also holds your Projects, your people, your calendar, and your agents.
 
-Use it to dictate into an editor, prepare a decision brief, review a meeting, or direct a Coder session.
-The **Interview** mode helps you describe your work and develop useful suggestions through a conversation.
+*Hold a key, speak, it types. Record a meeting, it closes the loop. All local.*
 
-These documents describe the code on `main`. A published release can have fewer features.
-See the [change history](CHANGELOG.md) for release information.
+HoldSpeak is for a developer or architect who leads other people.
+Whisper runs on your machine. The models are yours: a local GGUF or MLX model, or an OpenAI-compatible endpoint that you choose.
+Each consequential write records a Receipt.
+An agent can act only through the operations and grants that you give it.
+
+> **Status:** these documents describe the code on `main`. This is not a release.
+> The project is before its first real use (pre-alpha). Defaults and APIs still change.
+> See the [change history](CHANGELOG.md) for release information.
+
+## What you can do
+
+### Speak: voice typing that learns
+
+| Task | How HoldSpeak helps | Guide |
+| --- | --- | --- |
+| Dictate into another app | Hold the global hotkey, speak, and release it. The text goes into the focused field. | [Voice typing](docs/USER_GUIDE.md#voice-typing) |
+| Refine a coding prompt | The dictation pipeline adds project facts and context, and can rewrite with your model. | [Dictation pipeline](docs/DICTATION_PIPELINE_GUIDE.md) |
+| Teach a correction | Select **Wrong** on a result, correct it, then select **Teach**. The next matching dictation is corrected. | [Speak](docs/USER_GUIDE.md#speak) |
+| See what it learned | The dictation journal, the correction memory, and the learning digest show each rule and when it fired. | [Speak](docs/USER_GUIDE.md#speak) |
+| Speak commands | Voice commands and the wake word run defined actions. | [Voice commands](docs/VOICE_COMMANDS.md) |
+
+### Meetings: the loop closes
+
+| Task | How HoldSpeak helps | Guide |
+| --- | --- | --- |
+| Capture a meeting | Record the microphone and system audio, or use meeting import for recordings and transcript files. | [Meeting mode](docs/MEETING_MODE_GUIDE.md) |
+| Get decisions and actions | Meeting intelligence runs 14 built-in plugins on your model. Each proposal waits for **Confirm**. | [Meeting intelligence](docs/MEETING_INTELLIGENCE.md) |
+| Follow up | Meeting aftercare shows what is open, decided, and changed since the last meeting. | [Meeting aftercare](docs/MEETING_AFTERCARE.md) |
+| File an action | An actuator proposes an external action, such as an issue. It runs only as previewed. | [Actuators](docs/ACTUATOR_DEVELOPMENT.md) |
+| Let the calendar set the clock | Connect an ICS calendar. See the week on the arrival, arm recordings before meetings, and read the weekly brief. | [The clock](docs/USER_GUIDE.md#the-clock) |
+
+### Projects and people: the work you lead
+
+| Task | How HoldSpeak helps | Guide |
+| --- | --- | --- |
+| Keep one room per Project | A Project Room shows its sources, health rows, People in the Room, and what needs you. | [Project Rooms](docs/PROJECT_ROOMS.md) |
+| Watch sources | Project-scoped Watches observe repositories, issues, and meetings for changes. | [Project Rooms](docs/PROJECT_ROOMS.md) |
+| Send a weekly update | HoldSpeak prepares the drafted update from the Room's records. You review it before it goes out. | [Prepared work](docs/USER_GUIDE.md#prepared-work-preparation-review-and-the-weekly-update) |
+| Let the steward work | The steward's hand takes bounded external actions, such as a reviewer nudge, under your Control mode. | [The steward's hand](docs/USER_GUIDE.md#the-stewards-hand) |
+| Prepare for a 1:1 | The People ledger records reports and peers. The 1:1 card collects open items before you meet. | [People](docs/USER_GUIDE.md#people) |
+| Read Jira and Confluence | The Atlassian connectors use your local `acli` sign-in, for many accounts and sites. | [Integrations](docs/INTEGRATIONS.md) |
+| Review open loops | Cadence reviews unresolved work and prepares next actions. The Heartbeat sweep runs it on a schedule. | [Cadence](docs/CADENCE.md) |
+
+### The Desk: one place to work
+
+| Task | How HoldSpeak helps | Guide |
+| --- | --- | --- |
+| Start the day | The arrival shows what needs you, unfinished Thoughts, a brief, the WEEK strip, and recent Meetings. | [The Desk](docs/WEB_DESK.md) |
+| Arrange your records | The Floor shows records as objects. Move them and file them in Zones. | [The Desk](docs/WEB_DESK.md) |
+| Develop a thought | Open a Thought and refine it with sources and a model. | [Develop a thought](docs/USER_GUIDE.md#develop-a-thought) |
+| Talk to your records | Threads keep a saved conversation with sources and tools. Keep a reply as a Note or an Artifact. | [Threads](docs/USER_GUIDE.md#threads) |
+| Describe your work | Interview mode asks about your goals, Projects, cadences, and decisions, and saves the context. | [Interview](docs/INTERVIEW.md) |
+| Find earlier work | Search Notes, Meetings, Decisions, Threads, and Project items from one memory window. | [Relationship-aware memory](docs/RELATIONSHIP_AWARE_MEMORY.md) |
+| Prepare architecture work | Draft a decision brief, review questions, or an agent brief from your records. | [Architecture work](docs/ARCHITECTURE_WORK.md) |
+| Change the room | Select one of the Places, or use **Settle in** for a quiet view. | [Places](docs/ENVIRONMENTS.md) |
+
+## You stay in control
+
+- **Local first.** The database and Whisper transcription stay on the hub. See [Security & Privacy](docs/SECURITY.md).
+- **Your models.** The Concierge in **Settings > Models** finds your engines and proposes an assignment per capability. See [Models](docs/MODELS.md).
+- **Receipts.** An operation that files or decides records a Receipt, and a refused operation records its refusal. See [Kernel](docs/KERNEL.md).
+- **Control modes.** The default is **YOLO**. **Normal** and **Secure** ask before more effects. See [Control modes](docs/AUTHORITY.md).
+- **Egress is named.** A model endpoint, a connector, a remote client, or an outbound action can send data off the hub. The badge and the Receipt name the destination.
+- **Honest limits.** `holdspeak doctor` reports what is broken. Upgrades back up the database first. See [Release and recovery](docs/RELEASING.md).
+
+## Agents and MCP
+
+One service layer declares each operation. HTTP, MCP, and the test rig reach the same operation, with the same authority checks and the same Receipts.
+
+- The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 229 tools across 42 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
+- A tool name does not grant permission. An agent acts only under the palette and grants that you give it.
+- [Reach](docs/USER_GUIDE.md#reach) lets a remote agent connect with a scoped credential (a palette and a time limit, shown once).
+- [Reach Runner](docs/REACH_RUNNER.md) requests a Heartbeat sweep and steward runs from another machine.
+- Threads, Workflows, and Coder steering direct AI work from the Desk. See [Automation](docs/AUTOMATION.md) and [Agents and Threads](docs/AGENTS_AND_THREADS.md).
+- You can add [meeting plugins](docs/PLUGIN_AUTHORING.md) and [activity connectors](docs/CONNECTOR_DEVELOPMENT.md).
 
 ## Start here
 
@@ -35,59 +109,9 @@ System audio dependencies and desktop permissions depend on your platform.
 This first result creates the initial Desk contents.
 If capture fails, use the recovery action on the screen or run `holdspeak doctor`.
 
-## What you can do
-
-| Task | How HoldSpeak helps | Guide |
-| --- | --- | --- |
-| Dictate into another app | Hold the global hotkey, speak, then release it to insert text. | [Voice typing](docs/USER_GUIDE.md#voice-typing) |
-| Refine a coding prompt | Use project facts, project context, and an optional model in the dictation pipeline. | [Dictation pipeline](docs/DICTATION_PIPELINE_GUIDE.md) |
-| Teach a dictation correction | Select **Wrong** on a result, correct the words or the route, then **Teach**. The next dictation that carries the phrase is corrected. | [Speak](docs/USER_GUIDE.md#speak) |
-| Review a meeting | Record or import a meeting. Review the transcript, decisions, action items, and artifacts. | [Meeting mode](docs/MEETING_MODE_GUIDE.md) |
-| Develop your working context | Revisit Interview sections for goals, Projects, cadences, decisions, and delegation. | [Interview](docs/INTERVIEW.md) |
-| Prepare architecture work | Draft a decision brief, review questions, or an agent brief from available records. | [Architecture work recipes](docs/ARCHITECTURE_WORK.md) |
-| Follow project changes | Connect Project sources and configure supported Watches. | [Project Rooms](docs/PROJECT_ROOMS.md) |
-| Find earlier work | Search Notes, Meetings, Decisions, Threads, Project items, Workbench results, and Cadence loops from one Desk memory window. Connected evidence arrives with the relationship that reached it. | [Relationship-aware memory](docs/RELATIONSHIP_AWARE_MEMORY.md) |
-| Let the calendar set the clock | Connect an ICS calendar. See the week on the arrival, arm recordings before meetings under your consent, and read the weekly brief. | [The clock](docs/USER_GUIDE.md#the-clock) |
-| Direct AI work | Use Threads, Workflows, Coder steering, or an MCP client. | [Automation](docs/AUTOMATION.md) |
-| Change your workspace | Select a place, save favorites, or use **Settle in**. | [Places](docs/ENVIRONMENTS.md) |
-
-## The Desk
-
-The **arrival** shows work that needs you, unfinished Thoughts, a brief, and recent Meetings.
-The **Floor** shows your records as objects that you can open, move, and file in Zones.
-Speak, Meetings, Settings, and other tools open in Desk windows.
-
-Threads save your conversation on the hub.
-Your sent prompt appears before the answer arrives. Routine tool calls stay inside the collapsed **Actions** control.
-Requests for a decision, tool questions, and failures remain visible.
-You can keep a reply as a separate Note or Artifact.
-
-Interview uses the existing Thread conversation and MCP tools.
-It saves context with source references and records suggestions that you can revisit.
-**Try draft** sends a request for a manual draft. **Keep idea** saves your choice about a suggestion.
-Neither action installs a recurring automation.
-
-The current Interview supports manual preparation and the existing Project setup path.
-General agent delegation and recurring setup through Interview remain outside this increment.
-Model quality also varies. Check source claims, assumptions, and draft placeholders before you use a result.
-
-## Models and data
-
-Open **Settings > Models** to use the **Concierge**.
-It detects engines and proposes an assignment for each capability group.
-Check the engine and host for each group before you select **Use these**.
-Use **Adjust** for individual capability assignments.
-See [Models](docs/MODELS.md) for local runtimes and endpoint setup.
-
-HoldSpeak stores its database on the hub. Whisper transcription runs on the hub.
-Configured model endpoints, providers, remote clients, and outbound actions can transfer data to other systems.
-The boundary and Receipt for a run identify where that work went.
-See [Security & Privacy](docs/SECURITY.md) for storage, credentials, and network boundaries.
-
-The default Control mode is **YOLO**.
-Eligible actions to configured destinations can execute without another HoldSpeak approval prompt.
-**Secure** and **Normal** provide different approval rules.
-See [Control modes](docs/AUTHORITY.md) before you configure actions with external effects.
+The main configuration file is `~/.config/holdspeak/config.json`.
+Use Settings for normal changes.
+Run `holdspeak backup` before an upgrade.
 
 ## Platform support
 
@@ -98,45 +122,32 @@ See [Control modes](docs/AUTHORITY.md) before you configure actions with externa
 | Meeting capture | Microphone and optional BlackHole system audio | Microphone and PulseAudio/PipeWire system audio | Microphone and PulseAudio/PipeWire system audio |
 
 The Web app also accepts browser microphone input.
-On Wayland, clipboard paste can provide an alternative when direct text insertion is unavailable.
-See [Getting Started](docs/GETTING_STARTED.md) for setup and recovery.
+There is no Windows support today.
+The [iPad app](apple/README.md) and [AIPI-Lite](docs/AIPI_LITE_DEV_WORKFLOW.md) connect to a hub. The iPad track is dormant.
 
-## Extend HoldSpeak
+## How it compares (mid-2026)
 
-The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 222 tools across 40 families.
-It shares the product service layer. A tool name does not grant permission to execute it.
-Some live delivery operations require the running Web runtime and are absent from the sidecar.
+| Tool or category | They do better | HoldSpeak does better | Pick them if |
+| --- | --- | --- | --- |
+| OS dictation (Apple Dictation, Windows Voice Typing) | Zero setup, free, always there | Your own models, the learning loop, meetings | You dictate occasionally |
+| Local Whisper menu-bar apps (superwhisper, MacWhisper, VoiceInk) | Simpler setup, polished single-purpose UX | Local LLM rewriting, the visible learning loop, meetings, Linux | You want local transcription on a Mac and nothing else |
+| AI dictation services (Wispr Flow, Aqua Voice) | Strong accuracy and editing UX, no model management | Everything local, open source, no subscription, meetings | Your voice in their cloud is acceptable to you |
+| Talon | The deepest hands-free coding control; mature ecosystem | Prose dictation with LLM rewriting, meetings, a lower learning curve | You need full hands-free computer control |
+| Raw Whisper tooling (whisper.cpp, faster-whisper) | Total control, minimal surface | A product: typing, routing, journal, meetings, a Desk | You enjoy building your own pipeline |
 
-Meeting intelligence includes 14 built-in plugins.
-You can add [meeting plugins](docs/PLUGIN_AUTHORING.md) or [activity connectors](docs/CONNECTOR_DEVELOPMENT.md).
-[Automation](docs/AUTOMATION.md) explains the available triggers, execution paths, and limits.
+The trade-offs: HoldSpeak is 0.x. The smart parts need a local model or an endpoint you provide.
+Setup is heavier than a menu-bar app. Wayland limits global hotkeys to best effort.
 
-## Companions
+## Read next
 
-The [iPad app](apple/README.md) connects to a HoldSpeak hub for capture and review.
-[AIPI-Lite](docs/AIPI_LITE_DEV_WORKFLOW.md) provides a portable device for meeting controls and spoken replies.
-Both depend on the hub and its configured capabilities.
-
-## Configuration and recovery
-
-The main configuration file is `~/.config/holdspeak/config.json`.
-Use Settings for normal configuration changes.
-Run `holdspeak backup` before an upgrade when you need a recoverable snapshot.
-See [Release and recovery](docs/RELEASING.md) before you use `holdspeak restore`.
-
-## Contributing
-
-See [Contributing](CONTRIBUTING.md) for development setup, documentation rules, checks, and the commit workflow.
-The [documentation index](docs/README.md) links the user guides and technical references.
-
-## License
-
-HoldSpeak uses the [Apache License 2.0](LICENSE).
-
-## See also
-
-- [Getting Started](docs/GETTING_STARTED.md): install and capture your first sentence.
+- [What is HoldSpeak?](docs/WHAT_IS_HOLDSPEAK.md): the product in one page.
 - [User Guide](docs/USER_GUIDE.md): operate the product each day.
-- [Architecture](docs/ARCHITECTURE.md): understand the runtime and data flow.
-- [Documentation index](docs/README.md): find a task, reference, or internal specification.
-- [Graph join](docs/generated/graph.json): see which triggers reach which actions, and what the audit observed.
+- [Use cases](docs/USE_CASES.md): choose a workflow by the result you need.
+- [Architecture](docs/ARCHITECTURE.md): the runtime and data flow.
+- [Documentation index](docs/README.md): every guide and reference.
+- [Graph join](docs/generated/graph.json): which triggers reach which actions.
+
+## Contributing and license
+
+See [Contributing](CONTRIBUTING.md) for development setup, checks, and the commit workflow.
+HoldSpeak uses the [Apache License 2.0](LICENSE).
