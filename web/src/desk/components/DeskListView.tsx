@@ -5,7 +5,7 @@
 // HS-113-03 — the floor and zone-window lists now share DeskSortableTable:
 // compact real table rows, sortable headers, sprites, and kind bands.
 import "./list-view.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { qualifiedRef } from "../api";
 import { countToken } from "../surface";
@@ -25,6 +25,8 @@ import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
 import { DeskSortableTable, type Column } from "./DeskSortableTable";
+import { DeskDeleteSeat } from "../deleteReceipt";
+import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
@@ -69,7 +71,40 @@ function loadListSort(): ListSort {
   return DEFAULT_SORT;
 }
 
+/** PHILO-8-02 round three — the list's foot is held to the viewport, so the
+ * list reserves the foot's measured reach at its end (the Chair's dock-lift
+ * idiom): every row can scroll clear of the receipt and the selection bar. */
+function useFootReserve() {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const footRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const foot = footRef.current;
+    if (!root || !foot) return;
+    const seat = () => {
+      const reach = window.innerHeight - foot.getBoundingClientRect().top;
+      root.style.setProperty("--desk-list-foot-reserve", `${Math.max(0, Math.ceil(reach)) + 12}px`);
+    };
+    seat();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(seat) : null;
+    observer?.observe(foot);
+    window.addEventListener("resize", seat);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", seat);
+      root.style.removeProperty("--desk-list-foot-reserve");
+    };
+  }, []);
+  return { rootRef, footRef };
+}
+
 export function DeskListView() {
+  const { rootRef, footRef } = useFootReserve();
+  // PHILO-8-02 round five: on the scrolling list a desk write failure (a
+  // refused delete, with Retry) seats in the foot, where the undo receipt
+  // was, never above the work off-screen. The near mount makes the bar's
+  // fallback yield, so the failure shows once.
+  const { receipt: failureReceipt } = useDeskWriteReceipt();
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const selectedIds = useDesk((s) => s.selectedIds);
@@ -281,7 +316,7 @@ export function DeskListView() {
     });
 
   return (
-    <div className="desk-listmode">
+    <div className="desk-listmode" ref={rootRef}>
       <div data-aftercare-floor-slot="top" />
       <section aria-labelledby="desk-list-title" className="desk-list-face">
         <h2 id="desk-list-title" className="sr-only">
@@ -354,7 +389,13 @@ export function DeskListView() {
       <PrReceiptsSection />
       {editing && <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />}
       {openCards.map((p) => <Pullout key={p.id} o={p.obj!} origin={p.origin} />)}
-      <AskBar />
+      {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
+          flow directly above the selection bar it acted on. */}
+      <div className="desk-world-foot" ref={footRef}>
+        {failureReceipt}
+        <DeskDeleteSeat />
+        <AskBar />
+      </div>
       {askOpen && <AskPanel />}
     </div>
   );

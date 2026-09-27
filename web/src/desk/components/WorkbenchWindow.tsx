@@ -965,13 +965,15 @@ export function WorkbenchWindow({
   const loadSkills = skillsHook.refresh;
   const loadAutomations = automationsHook.refresh;
   const loadResourceful = resourcefulHook.refresh;
-  const { remove, receipt: undoReceipt } = useUndoReceipt();
+  const { remove, receipt: undoReceipt, phase: undoPhase } = useUndoReceipt();
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   // HS-132-06 — every write verb in this window reports here; the receipt
   // seats in the footer's receipt slot, never over the work.
   const {
     attempt: write,
     fail: failWrite,
+    clear: clearWrite,
+    failure: writeFailure,
     receipt: writeReceipt,
   } = useWriteReceipt();
 
@@ -1198,14 +1200,26 @@ export function WorkbenchWindow({
   /* ── item actions ──────────────────────────────────────────────── */
 
   const handleRemove = (item: WorkbenchItem) => {
+    // PHILO-8-02 round five: a new Remove of this item supersedes its old
+    // refusal (another item's failure stays).
+    if (writeFailure?.verb === "REMOVE ITEM" && writeFailure.subject === item.id) clearWrite();
     remove(
       item.title,
+      // Round four: the commit answers the one result contract (true when the
+      // hub took it), so a refusal frees the item for another Remove.
       () =>
-        void write("REMOVE ITEM", async () => {
-          await deleteWorkbenchItem(workbenchId, item.id);
-          load();
-        }),
+        write(
+          "REMOVE ITEM",
+          async () => {
+            await deleteWorkbenchItem(workbenchId, item.id);
+            load();
+          },
+          { subject: item.id },
+        ).then((result) => result.ok),
       () => load(),
+      // PHILO-8-02 round three: keyed, so a second Remove of this item never
+      // opens a second Undo for an item already gone.
+      item.id,
     );
   };
 
@@ -1297,12 +1311,12 @@ export function WorkbenchWindow({
         remove(
           countToken(doneItems.length, "DONE ITEM") ?? "done items",
           () =>
-            void write("CLEAR DONE", async () => {
+            write("CLEAR DONE", async () => {
               for (const item of doneItems) {
                 await deleteWorkbenchItem(workbenchId, item.id);
               }
               load();
-            }),
+            }).then((result) => result.ok),
           () => load(),
         );
         break;
@@ -1891,7 +1905,10 @@ export function WorkbenchWindow({
 
       <SurfaceFooter
         receipt={
-          // HS-132-06 — a refused write outranks the quieter receipts.
+          // PHILO-8-02 round five: a live Undo (its window, or its commit in
+          // flight) is never hidden. Otherwise (HS-132-06) a refused write
+          // outranks the quieter receipts.
+          (undoPhase === "pending" || undoPhase === "committing" ? undoReceipt : null) ||
           writeReceipt ||
           undoReceipt ||
           copyReceipt || (

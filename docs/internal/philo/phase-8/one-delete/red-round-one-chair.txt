@@ -1,0 +1,8 @@
+chair 1440: 404; DELETE 1; receipt ''
+E               AssertionError: (404, ['http://127.0.0.1:62362/api/decisions/decision_41d9b70dfc48'])
+E               assert (404, ['http:...1d9b70dfc48']) == (200, [])
+E               AssertionError: (404, ['http://127.0.0.1:62375/api/decisions/decision_4d8da73fc7eb'])
+E               assert (404, ['http:...d8da73fc7eb']) == (200, [])
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_chair_withholds_delete_with_its_reason[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_chair_withholds_delete_with_its_reason[393]
+2 failed, 23 deselected in 32.40s

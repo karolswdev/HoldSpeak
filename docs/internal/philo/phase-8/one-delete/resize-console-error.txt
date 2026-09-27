@@ -1,0 +1,14 @@
+# The resize console error (Codex Astra r4 UNKNOWN), classified
+
+## Unpatched Astra daedfc99 build, resize fence x40 at -n 4: 2 page errors
+Cannot read properties of null (reading 'x')
+TypeError: Cannot read properties of null (reading 'x')
+    at Tt._setWidth (http://127.0.0.1:60185/_built/assets/WorldStage-BDUnZ0VN.js:5:41608)
+    at set texture (http://127.0.0.1:60185/_built/assets/WorldStage-BDUnZ0VN.js:5:61118)
+    at http://127.0.0.1:60185/_built/assets/WorldStage-BDUnZ0VN.js:295:6775
+    at http://127.0.0.1:60185/_built/assets/WorldStage-BDUnZ0VN.js:295:1263
+----
+
+## The same build with the three destroyed-guards patched into the bundle, x80 (load ~30, 41 timing failures) and x40 (1 timing failure): 0 page errors
+
+## This branch's own build (daedfc99 + round six sources before the guard), x70 across loops: 0 page errors; main ce772ef9 resize-only probe (list 393 -> 1440, no delete) x30: 0 page errors

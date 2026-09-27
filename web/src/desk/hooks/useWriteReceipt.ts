@@ -29,6 +29,12 @@ export interface WriteFailure {
   reason: string;
   /** Re-issues the exact same write, or null when it cannot be replayed. */
   retry: (() => void) | null;
+  /** The hub's own words for the refusal, when it sent any (shown as the
+   *  label's title, never as prose on the face). */
+  detail?: string;
+  /** What the failed write was about (e.g. "decision:abc"), so a later
+   *  landed write clears only its own failure. */
+  subject?: string;
 }
 
 export type WriteResult<T> =
@@ -39,7 +45,7 @@ export type WriteResult<T> =
 export type WriteAttempt = <T>(
   verb: string,
   run: () => Promise<T>,
-  opts?: { retry?: boolean },
+  opts?: { retry?: boolean; subject?: string },
 ) => Promise<WriteResult<T>>;
 
 /** Name the cause in label grammar — never prose, never a sentence. */
@@ -57,6 +63,15 @@ export function writeFailureReason(cause: unknown): string {
     if (cause.name === "AbortError") return "ABORTED";
   }
   return "WRITE REFUSED";
+}
+
+/** The hub's own refusal words (an ApiError's message), when it sent any:
+ * the generic fallback is not the hub's words and is dropped. */
+export function writeFailureDetail(cause: unknown): string | undefined {
+  if (!(cause instanceof Error) || cause.name !== "ApiError") return undefined;
+  const message = cause.message.trim();
+  if (!message || message.startsWith("HoldSpeak could not complete")) return undefined;
+  return message;
 }
 
 /** The one label every write refusal wears. */
@@ -83,7 +98,12 @@ function receiptElement(
     createElement(
       "span",
       // PHILO-3-01: the whole label stays readable where the strip clips it.
-      { className: "write-receipt-label", title: writeFailureLabel(failure) },
+      {
+        className: "write-receipt-label",
+        title: failure.detail
+          ? `${writeFailureLabel(failure)} · ${failure.detail}`
+          : writeFailureLabel(failure),
+      },
       writeFailureLabel(failure),
     ),
     failure.retry
@@ -126,13 +146,15 @@ export function useWriteReceipt() {
     async function attemptWrite<T>(
       verb: string,
       run: () => Promise<T>,
-      opts: { retry?: boolean } = {},
+      opts: { retry?: boolean; subject?: string } = {},
     ): Promise<WriteResult<T>> {
       const label = verb.toUpperCase();
-      const seat = (reason: string) => {
+      const seat = (reason: string, detail?: string) => {
         setFailure({
           verb: label,
           reason,
+          detail,
+          subject: opts.subject,
           retry:
             opts.retry === false
               ? null
@@ -147,11 +169,16 @@ export function useWriteReceipt() {
           seat(reason);
           return { ok: false, reason };
         }
-        setFailure(null);
+        // PHILO-8-02 round six — one rule in both channels: a failure about a
+        // subject (an item, an object) is cleared only by a landed write
+        // about that same subject; another item's success never erases it.
+        setFailure((standing) =>
+          standing?.subject !== undefined && standing.subject !== opts.subject ? standing : null,
+        );
         return { ok: true, value };
       } catch (cause) {
         const reason = writeFailureReason(cause);
-        seat(reason);
+        seat(reason, writeFailureDetail(cause));
         return { ok: false, reason };
       }
     },
@@ -165,6 +192,7 @@ export function useWriteReceipt() {
         verb: verb.toUpperCase(),
         reason: writeFailureReason(cause),
         retry: retry ?? null,
+        detail: writeFailureDetail(cause),
       });
     },
     [],
@@ -194,18 +222,36 @@ export function reportWriteFailure(
   verb: string,
   cause: unknown,
   retry?: () => void,
+  subject?: string,
 ): WriteFailure {
   const failure: WriteFailure = {
     verb: verb.toUpperCase(),
     reason: writeFailureReason(cause),
     retry: retry ?? null,
+    detail: writeFailureDetail(cause),
+    subject,
   };
   publish(failure);
   return failure;
 }
 
-/** A landed write is quiet: it only clears whatever was standing. */
-export function clearWriteFailure() {
+/** A landed write is quiet: it clears the standing failure it answers.
+ *
+ * PHILO-8-02 round seven — one rule for the whole desk channel, by
+ * construction: a clear carries the landed write's subject (or none). A
+ * standing failure about a subject is removed only by a clear with that same
+ * subject; a standing failure with no subject is removed by any clear. So no
+ * other object's success (a create, an update, a delete, a seed) can erase
+ * an unresolved refusal and its Retry. The owner's own dismissal (OK) is
+ * `dismissWriteFailure`. */
+export function clearWriteFailure(subject?: string) {
+  if (deskFailure === null) return;
+  if (deskFailure.subject !== undefined && deskFailure.subject !== subject) return;
+  publish(null);
+}
+
+/** The owner dismissed the receipt (OK): it goes, whatever it was about. */
+export function dismissWriteFailure() {
   if (deskFailure !== null) publish(null);
 }
 
@@ -255,7 +301,7 @@ export function useDeskWriteReceipt({ fallback = false } = {}) {
 
   return {
     failure,
-    clear: clearWriteFailure,
-    receipt: receiptElement(failure, clearWriteFailure),
+    clear: dismissWriteFailure,
+    receipt: receiptElement(failure, dismissWriteFailure),
   };
 }
