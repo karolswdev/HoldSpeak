@@ -15,7 +15,7 @@ Stories 01–04 each ship the executable fences and atlas cases for their own re
 
 ## Scope
 
-- **In:** assemble the Phase 9 cases the stories shipped into the phase atlas file (fixed by story 01's first case against `docs/internal/philo/graph/atlas.schema.json`); apply the general atlas fences to it (Phase 8 law: they read `atlas.json` only); rerun every Phase 7, Phase 8 and Phase 9 case at 1440 and 393 on the phase head; run the api/`op`/browser equivalence for each durable outcome, including each admitted write's kernel receipt read with its actor; report the atlas counts over the named files.
+- **In:** assemble the Phase 9 cases stories 01–04 and 07 shipped (story 07's grant cases included, R4-4) into the phase atlas file (fixed by story 01's first case against `docs/internal/philo/graph/atlas.schema.json`); apply the general atlas fences to it (Phase 8 law: they read `atlas.json` only); rerun every Phase 7, Phase 8 and Phase 9 case at 1440 and 393 on the phase head; run the api/`op`/browser equivalence for each durable outcome, including each admitted write's kernel receipt read with its actor; report the atlas counts over the named files.
 - **Out:** authoring a new face case (a gap goes back to the story that owns the seam); any product change.
 
 ## Acceptance criteria

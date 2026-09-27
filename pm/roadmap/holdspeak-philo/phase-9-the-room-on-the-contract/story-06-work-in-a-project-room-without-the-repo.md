@@ -23,6 +23,7 @@ D1's closing test: a cold-context client runs a real project job from the MCP ca
   - Codex Astra r2 already reproduced the steward and publication half on a real hub (grounding "Round three"): one draft effect, the draft names both titles, publication persists, an edit after is refused `published_update`.
   - Each expectation confirmed reachable on the rig before the run; one that is not goes back to its story, never softened.
   - Each result read back from the hub (and its kernel receipt) and shown on the Room's face at 1440 and 393; checks compare the fixture's values, not success flags.
+  - The run proves the MCP contract (reading `body_md`, recording the owner's confirmation). It claims nothing about the clipboard (story 03's glass) or about delivery outside HoldSpeak (R4-4).
 - **Out:** automated send (the owner ruled copy only); a sitting (never claimed).
 
 ## Acceptance criteria
@@ -47,6 +48,7 @@ PROVISIONAL: about 1.5 engineering days (two legs), plus the owner's review.
 ## Notes
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
+- 2026-09-27 — round six (Codex Astra r4, R4-4): three sessions; MCP-contract proof kept apart from clipboard and external-delivery claims.
 - 2026-09-27 — round five (the owner's rulings): the job ends at copy and a confirmed delivery; the AGENT leg (`--legs owner,agent`); the Q3 (c) branch removed.
 - 2026-09-27 — round three (Codex Astra r2 F4 paid) and round four (r3 C4): acceptance conditional on Q3, now ruled (a).
 - 2026-09-27 — round two (Codex Astra r1 F1, F5, F9 paid): the launch pinned; the fixture fixed before the run; content checks.
