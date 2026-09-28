@@ -1330,6 +1330,22 @@ def migrate_claims_json(
 
 # ── The service ───────────────────────────────────────────────────────
 
+def attach_deliveries(db: Any, updates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """PHILO-9-01: each update carries its ``deliveries``, oldest first.
+
+    The owner's Q0 ruling (copy and confirm): each row is one confirmation
+    that he delivered the published text himself. The product sends nothing;
+    a draft has none.
+    """
+    by_update = db.project_update_deliveries.list_for_updates(
+        [str(u.get("id") or "") for u in updates if u],
+    )
+    for update in updates:
+        if update:
+            update["deliveries"] = by_update.get(str(update.get("id") or ""), [])
+    return updates
+
+
 class ProjectUpdateService:
     """The Update Factory service (SRS SS8).
 
@@ -1683,7 +1699,7 @@ class ProjectUpdateService:
         rows = self._db.project_updates.list_updates(
             project_id, lifecycle=lifecycle,
         )
-        return [self._project_axes(r) for r in rows]
+        return attach_deliveries(self._db, [self._project_axes(r) for r in rows])
 
     def get_update(
         self,
@@ -1697,7 +1713,7 @@ class ProjectUpdateService:
         row = self._db.project_updates.get_update(update_id)
         if row is None:
             raise NotFound("update", update_id)
-        return self._project_axes(row)
+        return attach_deliveries(self._db, [self._project_axes(row)])[0]
 
     def draft_update_command(
         self,

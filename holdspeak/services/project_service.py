@@ -249,6 +249,21 @@ ROOM_CHANGES_CAP: int = 10
 # Absent-section marker for domains not yet built (Art VI, NFR-006).
 _ABSENT_SECTION: dict[str, str] = {"state": "absent", "reason": "not_yet_built"}
 
+#: PHILO-9-01 (F7): the observed service methods that WRITE a Room; the
+#: Room's RECEIPTS list these pipeline events only (its reads are not
+#: receipts). Only ``@observe_service`` classes emit pipeline events:
+#: ProjectService and WatchService.
+ROOM_WRITE_METHODS: frozenset[str] = frozenset({
+    # ProjectService
+    "create_project", "create_from_setup", "update_project", "archive_project",
+    "restore_project", "add_resource", "remove_resource", "associate_meeting",
+    "disassociate_meeting", "create_item", "create_item_in_transaction",
+    "update_item", "transition_item", "save_ask", "record_ask_stop", "discard_ask",
+    # WatchService (a Room's watches)
+    "update_watch", "pause_watch", "resume_watch", "retire_watch",
+    "test_watch", "baseline_watch", "evaluate_once", "set_rules",
+})
+
 
 def _count_unit(count: int, unit: str) -> str:
     """``1 DAY`` / ``2 DAYS`` -- HS-200-16.
@@ -346,10 +361,15 @@ class ProjectService:
 
     # ── reads (unchanged) ────────────────────────────────────────────
 
-    def list_projects(self, principal: Principal, filters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    def list_projects(
+        self, principal: Principal, filters: dict[str, Any] | None = None,
+        *, include_archived: bool | None = None,
+    ) -> list[dict[str, Any]]:
         filters = filters or {}
+        if include_archived is None:
+            include_archived = bool(filters.get("include_archived", False))
         return [self._project_payload(project) for project in self._db.projects.list_projects(
-            include_archived=bool(filters.get("include_archived", False))
+            include_archived=bool(include_archived)
         )]
 
     def get_project(self, principal: Principal, project_id: str) -> dict[str, Any]:
@@ -414,6 +434,35 @@ class ProjectService:
                  "title": item.title, "body_markdown": item.body_markdown, "confidence": item.confidence,
                  "status": item.status, "plugin_id": item.plugin_id, "created_at": item.created_at.isoformat()}
                 for item in self._db.projects.get_project_artifacts(project_id)]
+
+    # ── the desk's NEEDS YOU (PHILO-9-01, F13) ────────────────────────
+
+    def needs_you(self, principal: Principal, *, door_upcoming: Any = None) -> dict[str, Any]:
+        """What needs the owner across every Room: ONE aggregate, ONE count.
+
+        PHILO-9-01 (F13): the HTTP route applied the heartbeat's muted
+        projects and MCP ``desk.needs_you`` did not, so the two counts
+        differed with a muted project. Both transports reach this method
+        through the declared ``desk.needs_you`` operation now. ``door_upcoming``
+        is the hub's calendar read (``DoorService._upcoming``), held by the
+        transport; ``None`` when the process has none.
+        """
+        from .needs_you_aggregate import apply_mute, build_aggregate, shared_last_known
+
+        aggregate = build_aggregate(
+            list_projects=self.list_projects,
+            room=self.room,
+            principal=principal,
+            door_upcoming=door_upcoming,
+            last_known=shared_last_known(lambda: self._db),
+        )
+        try:
+            from .heartbeat_service import HeartbeatService
+
+            muted_ids = set(HeartbeatService(self._db).get_settings().get("muted_projects", []))
+        except Exception:
+            muted_ids = set()
+        return apply_mute(aggregate, muted_ids)
 
     # ── room projection (HS-158-04, SS6.2) ────────────────────────────
 
@@ -507,8 +556,11 @@ class ProjectService:
                 "commitments", lambda: self._read_room_commitments(project_id)),
             "target": self._room_section(
                 "target", lambda: self._read_room_target(target_at)),
-            "updates": dict(_ABSENT_SECTION),
-            "steward": dict(_ABSENT_SECTION),
+            # PHILO-9-01 (F6): the updates and the steward read what exists.
+            "updates": self._room_section(
+                "updates", lambda: self._read_room_updates(project_id)),
+            "steward": self._room_section(
+                "steward", lambda: self._read_room_steward(project_id)),
             # HS-174-04: pipeline receipts scoped to this project.
             "receipts": self._room_section(
                 "receipts", lambda: self._read_room_receipts(project_id)),
@@ -592,6 +644,64 @@ class ProjectService:
         changes = self._db.projects.list_project_changes(
             project_id, limit=ROOM_CHANGES_CAP)
         return {"recent": changes}
+
+    #: PHILO-9-01 (F6): the Room's update list is bounded like its other sections.
+    _ROOM_UPDATES_CAP = 10
+
+    def _read_room_updates(self, project_id: str) -> dict[str, Any]:
+        """PHILO-9-01 (F6): the Room's updates, newest first, each with its deliveries.
+
+        Before this the section was ``absent · not_yet_built`` after an update
+        was drafted and published. Counts are per lifecycle; ``recent`` is
+        bounded; every listed update carries its ``deliveries`` (the owner's
+        copy-and-confirm record, oldest first).
+        """
+        from .project_update_service import attach_deliveries
+
+        rows = self._db.project_updates.list_updates(project_id, limit=1000)
+        counts: dict[str, int] = {}
+        for row in rows:
+            key = str(row.get("lifecycle") or "draft")
+            counts[key] = counts.get(key, 0) + 1
+        fields = ("id", "project_id", "lifecycle", "draft_revision", "generator",
+                  "created_at", "updated_at", "published_at", "review_id")
+        recent = attach_deliveries(self._db, [
+            {key: row.get(key) for key in fields}
+            for row in rows[: self._ROOM_UPDATES_CAP]
+        ])
+        # PHILO-9-01 round two (Codex Astra r1, P4): the newest PUBLISHED
+        # update, read on its own -- newer drafts must not push it out of view.
+        latest_published = None
+        with self._db._connection() as conn:
+            pub = conn.execute(
+                "SELECT * FROM project_updates WHERE project_id = ? AND lifecycle = 'published' "
+                "ORDER BY published_at DESC, created_at DESC, id DESC LIMIT 1",
+                (project_id,),
+            ).fetchone()
+        if pub is not None:
+            latest_published = attach_deliveries(self._db, [{key: dict(pub).get(key) for key in fields}])[0]
+        return {
+            "count": len(rows),
+            "counts": counts,
+            "recent": recent,
+            "latest_published": latest_published,
+        }
+
+    def _read_room_steward(self, project_id: str) -> dict[str, Any]:
+        """PHILO-9-01 (F6): the Room's steward — its policy switch and its latest run.
+
+        Before this the section was ``absent · not_yet_built`` after a run
+        completed.
+        """
+        from holdspeak.web.routes.steward import _serialize_run
+
+        runs = self._db.steward_runs.list_runs(project_id, limit=1)
+        policy = self._db.steward_policies.get_policy_for_project(project_id)
+        return {
+            "latest_run": _serialize_run(runs[0]) if runs else None,
+            "enabled": bool(policy.get("enabled")) if policy else False,
+            "unattended_enabled": bool(policy.get("unattended_enabled")) if policy else False,
+        }
 
     def _read_room_review(self, project_id: str) -> dict[str, Any]:
         """Review section: pending_count, last_accepted_at, open_review_id.
@@ -819,7 +929,8 @@ class ProjectService:
                 if pending > 0:
                     needs.append({
                         "source": "delta",
-                        "title": f"{pending} proposals waiting",
+                        # PHILO-9-01 (F22): one proposal is singular.
+                        "title": f"{pending} proposal{'' if pending == 1 else 's'} waiting",
                         "why": "DECISION PENDING",
                         "since": "",
                         "url": None,
@@ -877,6 +988,13 @@ class ProjectService:
                 })
         except Exception:
             pass
+
+        # PHILO-9-01 (F2, the Q3 ruling): a milestone still planned after its
+        # date is an attention row, and it turns the Room's health.
+        try:
+            needs.extend(self._room_overdue_milestone_items(project_id, now))
+        except Exception as exc:
+            _log.warning("room overdue milestones failed for %s: %s", project_id, exc)
 
         # HS-200-13 (AC3): the Room's open commitments are attention items.
         # HS-200-15 built the `commitment` source, the `CMT` emblem and the
@@ -936,6 +1054,49 @@ class ProjectService:
         ))
 
         return {"items": needs, "count": len(needs)}
+
+    def _overdue_milestones(self, project_id: str, now: datetime) -> list[tuple[dict[str, Any], int]]:
+        """PHILO-9-01 (F2): each milestone still ``planned`` after its due date, with its days late.
+
+        Only ``planned`` is owed: ``reached``, ``missed`` and ``dropped`` are
+        settled by the owner. A due date the service cannot read is not
+        counted (never guessed).
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM project_items WHERE project_id = ? AND item_type = 'milestone' "
+                "AND lifecycle = 'planned' AND due_at IS NOT NULL AND due_at != '' "
+                "ORDER BY due_at ASC, created_at ASC, id ASC",
+                (project_id,),
+            ).fetchall()
+        today = now.date()
+        late: list[tuple[dict[str, Any], int]] = []
+        for row in rows:
+            item = dict(row)
+            try:
+                due = datetime.fromisoformat(str(item["due_at"]).replace("Z", "+00:00").split("T")[0]).date()
+            except (ValueError, TypeError):
+                continue
+            days = (today - due).days
+            if days > 0:
+                late.append((item, days))
+        return late
+
+    def _room_overdue_milestone_items(self, project_id: str, now: datetime) -> list[dict[str, Any]]:
+        """PHILO-9-01 (F2): the Room's past-due milestones as attention rows."""
+        return [{
+            "source": "item",
+            "kind": "milestone",
+            "title": str(item.get("title") or "").strip() or "Untitled milestone",
+            "why": f"OVERDUE · {_count_unit(days, 'DAY')}",
+            "since": str(item["due_at"]),
+            "due_at": str(item["due_at"]),
+            "url": None,
+            "verb": "open",
+            "severity": "danger",
+            "item_id": str(item["id"]),
+            "item_type": "milestone",
+        } for item, days in self._overdue_milestones(project_id, now)]
 
     #: HS-200-13: the commitment states that are still owed.  `closed` is
     #: what `FollowThroughService.complete` writes on done/dismiss;
@@ -1413,6 +1574,10 @@ class ProjectService:
                             except (ValueError, TypeError):
                                 pass
 
+        # PHILO-9-01 (F2): a milestone still planned after its date is overdue.
+        overdue_milestones = len(self._overdue_milestones(project_id, now))
+        overdue_count += overdue_milestones
+
         # Target passed
         target_passed = False
         if target_at:
@@ -1501,6 +1666,7 @@ class ProjectService:
             "reason": reason,
             "inputs": {
                 "overdue": overdue_count,
+                "overdueMilestones": overdue_milestones,
                 "ciFailing": ci_failing,
                 "reviewWaitingDays": review_waiting_days,
                 "targetPassed": target_passed,
@@ -1945,15 +2111,20 @@ class ProjectService:
         # id -- improbable, not impossible.  The exact form is
         # ``json_extract(args_summary, '$.project_id') = ?``; V0 keeps
         # LIKE because summaries are not guaranteed to be JSON objects.
+        # PHILO-9-01 (F7): the Room's RECEIPTS are its WRITES. Every service
+        # call is a pipeline event, so the Room's own reads ("READ MEETINGS"
+        # x n) filled the list; only the named write methods count now.
+        writes = sorted(ROOM_WRITE_METHODS)
+        marks = ",".join("?" for _ in writes)
         with self._db._connection() as conn:
             rows = conn.execute(
                 "SELECT event_id, timestamp, service, method, "
                 "       origin, caller, caller_identity, "
                 "       result_summary, error "
                 "FROM pipeline_events "
-                "WHERE args_summary LIKE ? "
+                f"WHERE args_summary LIKE ? AND method IN ({marks}) "
                 "ORDER BY timestamp DESC LIMIT ?",
-                (f"%{project_id}%", _LIMIT),
+                (f"%{project_id}%", *writes, _LIMIT),
             ).fetchall()
         items = []
         for row in rows:
@@ -2340,9 +2511,12 @@ class ProjectService:
     # ── writes (graduated to revision law) ───────────────────────────
 
     def create_project(
-        self, principal: Principal, payload: dict[str, Any],
-        *, command_id: Optional[str] = None,
+        self, principal: Principal, payload: dict[str, Any] | None = None,
+        *, command_id: Optional[str] = None, **fields: Any,
     ) -> dict[str, Any]:
+        # PHILO-9-01: ``project.create`` passes its declared fields by name;
+        # the route's body dict and the named fields are one payload.
+        payload = {**(payload or {}), **fields}
         name = str(payload.get("name") or "").strip()
         if not name:
             raise ValidationError("Project name is required")
@@ -3171,9 +3345,12 @@ class ProjectService:
         resource_ref: str, payload: dict[str, Any] | None = None,
         *, expected_revision: Optional[int] = None,
         command_id: Optional[str] = None,
+        relationship: Optional[str] = None,
     ) -> dict[str, Any]:
         self._require_project(project_id)
-        body = payload or {}
+        body = dict(payload or {})
+        if relationship is not None:
+            body["relationship"] = relationship
         ref_str = qualified_ref(resource_ref)
 
         # Idempotency
@@ -3181,7 +3358,15 @@ class ProjectService:
                                   "resource_ref": ref_str, **body})
         replay = self._check_idempotency(command_id, req_hash, "add_resource")
         if replay is not None:
-            return replay
+            # PHILO-9-01 round three (Codex Astra r2, R1-2): the replay answers
+            # the ORIGINAL response, recorded whole with the command -- never
+            # one rebuilt from the row as it is now. A command recorded before
+            # this change holds only its envelope: that one is answered as the
+            # row plus the envelope, as round two did.
+            if "resource_ref" in replay:
+                return replay
+            row = self._db.project_relationships.get(project_id, ref_str, include_deleted=True)
+            return {**row.to_dict(), **replay} if row is not None else replay
 
         cmd_id = command_id or generate_pcmd_id()
         now_iso = datetime.now().isoformat()
@@ -3270,17 +3455,20 @@ class ProjectService:
                 project_revision=new_revision,
                 changed_refs=(parse_ref(project_ref),),
             )
+            # The response, read in the same transaction, is recorded WITH the
+            # command (the existing result_json column), so a replay answers
+            # exactly it (Codex Astra r2, R1-2).
+            filed = conn.execute(
+                "SELECT * FROM project_resources WHERE project_id=? AND resource_ref=?",
+                (project_id, ref_str),
+            ).fetchone()
+            result = self._db.project_relationships._row(filed).to_dict()
+            result.update(_envelope_to_dict(envelope))
             self._record_command(
                 conn, cmd_id, project_id, "add_resource",
-                req_hash, envelope,
+                req_hash, envelope, result=result,
             )
 
-        # Read the committed row through the repo layer (read-only).
-        row = self._db.project_relationships.get(
-            project_id, ref_str, include_deleted=True,
-        )
-        result = row.to_dict()  # type: ignore[union-attr]
-        result.update(_envelope_to_dict(envelope))
         return result
 
     def remove_resource(
@@ -3296,7 +3484,10 @@ class ProjectService:
                                   "resource_ref": ref_str, "action": "remove"})
         replay = self._check_idempotency(command_id, req_hash, "remove_resource")
         if replay is not None:
-            return True
+            # Codex Astra r2 (R1-2): the original answer, a no-op's false
+            # included. A command recorded before this change has no
+            # ``removed``: it answers True, as before.
+            return bool(replay.get("removed", True))
 
         cmd_id = command_id or generate_pcmd_id()
         now_iso = datetime.now().isoformat()
@@ -3373,6 +3564,7 @@ class ProjectService:
             self._record_command(
                 conn, cmd_id, project_id, "remove_resource",
                 req_hash, envelope,
+                result={**_envelope_to_dict(envelope), "removed": deleted},
             )
 
         return deleted
@@ -3627,15 +3819,18 @@ class ProjectService:
 
     def create_item(
         self, principal: Principal, project_id: str,
-        payload: dict[str, Any],
+        payload: dict[str, Any] | None = None,
         *, expected_revision: Optional[int] = None,
         command_id: Optional[str] = None,
+        **fields: Any,
     ) -> dict[str, Any]:
         """Create a typed item under a project (SYS-030, DOM-001).
 
         Items are Project-OWNED records (SS5.3); they increment the
         project's revision (not citizens, not in CITIZEN_TYPES).
+        PHILO-9-01: ``project.item.create`` passes its fields by name.
         """
+        payload = {**(payload or {}), **fields}
         self._require_project(project_id)
 
         item_type = str(payload.get("item_type") or "").strip()
@@ -4468,10 +4663,16 @@ class ProjectService:
         command_kind: str,
         request_hash: str,
         envelope: CommandResultEnvelope,
+        *,
+        result: Optional[dict[str, Any]] = None,
     ) -> None:
-        """Record a completed command in the idempotency ledger."""
+        """Record a completed command in the idempotency ledger.
+
+        ``result``: the whole response to replay (PHILO-9-01 round three);
+        by default the envelope alone, as before.
+        """
         now_iso = datetime.now().isoformat()
-        result_json = json.dumps(_envelope_to_dict(envelope), ensure_ascii=False)
+        result_json = json.dumps(result if result is not None else _envelope_to_dict(envelope), ensure_ascii=False)
         conn.execute(
             """
             INSERT INTO project_commands (

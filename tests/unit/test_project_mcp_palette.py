@@ -93,9 +93,10 @@ def test_palette_contains_project_provider_connection_only() -> None:
         )
 
 
-def test_palette_size_is_57() -> None:
-    """Includes suggested sources, Confluence, and four Interview setup operations."""
-    assert len(PROJECT_PALETTE) == 57
+def test_palette_size_is_64() -> None:
+    """Includes suggested sources, Confluence, four Interview setup operations and
+    (PHILO-9-01) the seven item and resource tools."""
+    assert len(PROJECT_PALETTE) == 64
 
 
 # ────────────────────────────────────────────────────────────────────

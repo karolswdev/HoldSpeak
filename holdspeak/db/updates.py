@@ -17,6 +17,7 @@ Lifecycle law (UPD-004):
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -459,3 +460,102 @@ class UpdatesRepository(BaseRepository):
             (str(new_update_id).strip(),),
         ).fetchone()
         return dict(new_row)
+
+
+class UpdateNotPublishedError(Exception):
+    """A delivery was recorded for an update that is not published."""
+
+
+class UpdateDeliveriesRepository(BaseRepository):
+    """PHILO-9-01: the delivery record, one row per confirmation (append-only).
+
+    The owner's Q0 ruling: the product sends nothing. He copies the finished
+    text, delivers it himself, and confirms; each confirmation is one row.
+    ``delivered_at`` is his confirmation time. There is no update or delete
+    path: a row is final, and a delivery never writes ``project_updates``
+    (the published-update guard above stays untouched). ``project_id`` is
+    derived from the stored update, never from a caller.
+    """
+
+    table = "project_update_deliveries"  # registration anchor
+
+    def insert_delivery(
+        self,
+        *,
+        update_id: str,
+        operation_id: str,
+        delivered_to: Optional[str] = None,
+        delivered_at: Optional[str] = None,
+        delivery_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Append one delivery row for a published update."""
+        with self._connection() as conn:
+            return self.insert_delivery_in_transaction(
+                conn, update_id=update_id, operation_id=operation_id,
+                delivered_to=delivered_to, delivered_at=delivered_at,
+                delivery_id=delivery_id,
+            )
+
+    def insert_delivery_in_transaction(
+        self,
+        conn: Any,
+        *,
+        update_id: str,
+        operation_id: str,
+        delivered_to: Optional[str] = None,
+        delivered_at: Optional[str] = None,
+        delivery_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Append one delivery row on a caller-owned connection.
+
+        PHILO-9-02 calls this inside the transaction that writes the kernel
+        operation's terminal state and receipt, so no row exists without its
+        receipt. Raises ``LookupError`` for an unknown update and
+        :class:`UpdateNotPublishedError` for a draft or superseded one.
+        """
+        clean_id = str(update_id).strip()
+        row = conn.execute(
+            "SELECT project_id, lifecycle FROM project_updates WHERE id = ?",
+            (clean_id,),
+        ).fetchone()
+        if not row:
+            raise LookupError(f"Unknown update: {clean_id}")
+        if row[1] != "published":
+            raise UpdateNotPublishedError(
+                f"Update {clean_id} is {row[1]}; only a published update can be marked delivered"
+            )
+        new_id = str(delivery_id or f"pdel_{uuid.uuid4().hex[:16]}")
+        when = delivered_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
+        to = None if delivered_to is None else (str(delivered_to).strip() or None)
+        conn.execute(
+            """INSERT INTO project_update_deliveries
+               (id, update_id, project_id, delivered_at, delivered_to, operation_id)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (new_id, clean_id, row[0], when, to, str(operation_id)),
+        )
+        return {
+            "id": new_id, "update_id": clean_id, "project_id": row[0],
+            "delivered_at": when, "delivered_to": to, "operation_id": str(operation_id),
+        }
+
+    def list_for_update(self, update_id: str) -> list[dict[str, Any]]:
+        """Every delivery of one update, oldest first."""
+        return self.list_for_updates([update_id]).get(str(update_id).strip(), [])
+
+    def list_for_updates(self, update_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+        """Every delivery of each update, oldest first, keyed by update id."""
+        ids = [str(u).strip() for u in update_ids if str(u or "").strip()]
+        out: dict[str, list[dict[str, Any]]] = {u: [] for u in ids}
+        if not ids:
+            return out
+        marks = ",".join("?" for _ in ids)
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"SELECT id, update_id, project_id, delivered_at, delivered_to, operation_id "
+                f"FROM project_update_deliveries WHERE update_id IN ({marks}) "
+                f"ORDER BY delivered_at ASC, rowid ASC",
+                tuple(ids),
+            ).fetchall()
+        for r in rows:
+            out.setdefault(r["update_id"], []).append(dict(r))
+        return out

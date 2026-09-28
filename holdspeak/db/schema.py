@@ -4148,6 +4148,24 @@ CREATE INDEX IF NOT EXISTS idx_project_updates_project
 CREATE INDEX IF NOT EXISTS idx_project_updates_review
     ON project_updates(project_id, review_id);
 
+-- PHILO-9-01: delivery by copy and confirm (the owner's Q0 ruling, "Several
+-- per update").  One row per confirmation that the owner delivered a
+-- PUBLISHED update himself; the product sends nothing.  delivered_at is his
+-- confirmation time; delivered_to is optional free text.  operation_id is the
+-- kernel operation that admitted the mark (PHILO-9-02 writes it with the
+-- terminal receipt in one transaction).  A row is final: no update, no
+-- delete, no cascade; project_updates is never written by a delivery.
+CREATE TABLE IF NOT EXISTS project_update_deliveries (
+    id TEXT PRIMARY KEY,
+    update_id TEXT NOT NULL REFERENCES project_updates(id),
+    project_id TEXT NOT NULL,
+    delivered_at TEXT NOT NULL,
+    delivered_to TEXT,
+    operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id)
+);
+CREATE INDEX IF NOT EXISTS idx_project_update_deliveries_update
+    ON project_update_deliveries(update_id);
+
 -- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
 -- bounds (retry counts, per-run action caps, cooldowns per STW-008).
 CREATE TABLE IF NOT EXISTS steward_policies (
