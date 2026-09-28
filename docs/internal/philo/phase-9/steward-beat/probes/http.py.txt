@@ -1,0 +1,141 @@
+"""B2 red probe: real Settings-issued PROJECT credential over real HTTP."""
+from __future__ import annotations
+
+import json
+import sqlite3
+import sys
+import tempfile
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+from scripts.graph_walk import Hub
+
+
+BASE = Path(__file__).resolve().parent
+OWNER_TOKEN = "http-edge-probe-owner"
+
+
+def request(base: str, method: str, path: str, token: str, body: Any = None) -> dict[str, Any]:
+    data = None if body is None else json.dumps(body).encode()
+    req = urllib.request.Request(
+        base + path,
+        data=data,
+        method=method,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            raw = response.read().decode()
+            try:
+                payload: Any = json.loads(raw)
+            except ValueError:
+                payload = raw[:2000]
+            return {"status": response.status, "body": payload}
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode()
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            payload = raw[:2000]
+        return {"status": exc.code, "body": payload}
+
+
+def counts(db_path: str) -> dict[str, Any]:
+    db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    try:
+        operations = db.execute("SELECT COUNT(*) AS n FROM kernel_operations").fetchone()["n"]
+        receipts = db.execute("SELECT COUNT(*) AS n FROM kernel_receipts").fetchone()["n"]
+        names = [
+            dict(row)
+            for row in db.execute(
+                "SELECT name, COUNT(*) AS n FROM kernel_operations GROUP BY name ORDER BY name"
+            ).fetchall()
+        ]
+        return {"kernel_operations": operations, "kernel_receipts": receipts, "operation_names": names}
+    finally:
+        db.close()
+
+
+def main() -> int:
+    BASE.mkdir(parents=True, exist_ok=True)
+    home = Path(tempfile.mkdtemp(prefix="http-probe-home-", dir=BASE))
+    hub = Hub(home, token=OWNER_TOKEN)
+    result: dict[str, Any] = {"home": str(home)}
+    try:
+        hub.start()
+        assert hub.db_path is not None
+        result["db_path"] = hub.db_path
+        result["before"] = counts(hub.db_path)
+
+        issued = request(
+            hub.url,
+            "POST",
+            "/api/settings/remote/credentials",
+            OWNER_TOKEN,
+            {"identity": "http-edge-probe-agent", "palette": "PROJECT", "ttl_seconds": 3600},
+        )
+        issued_body = issued.get("body") if isinstance(issued.get("body"), dict) else {}
+        agent_token = str(issued_body.get("token") or "")
+        result["settings_issue"] = {
+            "status": issued.get("status"),
+            "identity": issued_body.get("identity"),
+            "palette": issued_body.get("palette"),
+            "id": issued_body.get("id"),
+            "token_returned": bool(agent_token),
+        }
+        if not agent_token:
+            raise RuntimeError(f"Settings issue did not return a token: {issued}")
+
+        count_body = {
+            "provider": "github",
+            "scope": "example/payments",
+            "watches": ["open_prs"],
+            "adjust": {},
+        }
+        create_body = {
+            "outcome": "HTTP edge refusal probe",
+            "sources": [
+                {
+                    "provider": "github",
+                    "scope": "example/payments",
+                    "watches": ["open_prs"],
+                    "adjust": {},
+                }
+            ],
+        }
+        calls = [
+            ("door_count", "POST", "/api/projects/door/count", count_body),
+            ("door_create_with_sources", "POST", "/api/projects/door", create_body),
+            ("github_recheck", "POST", "/api/providers/github/connection/recheck", {}),
+        ]
+        result["agent_calls"] = {}
+        for label, method, path, body in calls:
+            response = request(hub.url, method, path, agent_token, body)
+            result["agent_calls"][label] = {
+                "method": method,
+                "path": path,
+                "request": body,
+                "response": response,
+                "counts_after": counts(hub.db_path),
+            }
+        result["after"] = counts(hub.db_path)
+        # The edge refusal should leave the journal exactly as it found it.
+        result["kernel_unchanged"] = result["after"] == result["before"]
+    finally:
+        hub.stop()
+
+    out = BASE / "http-probe-b2.json"
+    out.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    print(json.dumps(result, indent=2, sort_keys=True))
+    print(f"OUTPUT {out}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
