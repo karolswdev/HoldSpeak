@@ -14,8 +14,8 @@ product seam, the same assertion. Each is red at 24576f25 (the capture in
    class: publish over HTTP and MCP).
 6. An accepted suggestion's watch says untested and unbaselined.
 7. B1: a cached GitHub row keeps the state its last probe stored.
-9. The beat's obligations: a model draft under the draft effect names that
-   effect as its parent; ``run_once`` is admitted.
+9. The beat's obligations: ``run_once`` is admitted (the model draft's parent:
+   ``test_philo9_02_round_three.py``, through the real runner).
 """
 from __future__ import annotations
 
@@ -341,48 +341,5 @@ def test_f9_run_once_is_an_admitted_operation_with_its_receipt(hub: Hub) -> None
     assert receipt["state"] == "succeeded" and receipt["outcome"] == "completed"
 
 
-def test_f9_a_model_draft_under_the_draft_effect_names_it_as_parent(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A real steward run whose draft effect asks for the model: the invocation names the effect."""
-    svc = hub.root.project_steward_service
-    updates = svc._update_service
-    seen: list[str] = []
-
-    class Stop(Exception):
-        pass
-
-    def resolve(*_a: Any, **_k: Any) -> Any:
-        return "deprev_x", "assign_x", "profile_x"
-
-    class Capture:
-        def invoke(self, request: Any, adapter: Any, publish: Any = None) -> Any:
-            seen.append(request.parent_operation_id)
-            raise Stop("captured")
-
-    import holdspeak.services.project_update_service as update_module
-
-    monkeypatch.setattr(update_module, "_resolve_for_capability", resolve)
-    monkeypatch.setattr(updates, "_broker", type("B", (), {"inference_runner": Capture(), "database": hub.db})())
-    real_draft = updates.draft_update
-    monkeypatch.setattr(updates, "draft_update", lambda principal, project_id, **k: real_draft(
-        principal, project_id, generator="model"))
-    pid = hub.client.post("/api/projects", json={"name": "Model draft"}).json()["project"]["id"]
-    assert hub.client.put(f"/api/projects/{pid}/steward/policy", json={"eligible_effect_kinds": ["draft_update"]}).status_code == 200
-    started = hub.client.post(f"/api/projects/{pid}/steward/runs", json={}).json()
-    deadline = time.monotonic() + 20
-    while hub.db.steward_runs.get_run(started["run_id"])["state"] not in {"completed", "failed", "interrupted"} \
-            and time.monotonic() < deadline:
-        time.sleep(0.05)
-    effects = [o for o in _broker(hub).store.operations_in_state("succeeded")
-               if o["parent_operation_id"] == started["operation_id"] and o["name"] == "project.steward.effect"]
-    assert seen and seen[0] and seen[0] in {o["operation_id"] for o in effects}, (seen, effects)
-    # Off the steward (a plain draft): no parent.
-    seen.clear()
-    updates.draft_update  # noqa: B018
-    real_draft(Principal_owner(), pid, generator="model")
-    assert seen == [""]
-
-
-def Principal_owner() -> Any:
-    from holdspeak.principals import Principal, PrincipalKind
-
-    return Principal(PrincipalKind.OWNER, "owner-session")
+# The model-draft parentage fence moved to test_philo9_02_round_three.py (ruling D:
+# through the REAL inference runner, replacing the captured runner).

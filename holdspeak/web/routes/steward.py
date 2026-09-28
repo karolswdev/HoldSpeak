@@ -167,6 +167,8 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             return refused
         try:
             args = {"project_id": project_id, **{key: body.get(key) for key in STEWARD_POLICY_FIELDS}}
+            if body.get("command_id"):
+                args["command_id"] = body.get("command_id")  # a retry reaches the same operation (ruling B)
             result, kernel = ops().invoke_receipted(p, "project.configure_steward", args)
             return JSONResponse({**result, **kernel_fields(kernel)})
         except OperationRefused as exc:

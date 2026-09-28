@@ -8533,7 +8533,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 204,
+      "line": 205,
       "kinds": [
         "model_transport"
       ],
@@ -8543,7 +8543,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 668,
+      "line": 745,
       "kinds": [
         "http_client"
       ],
@@ -8553,7 +8553,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 717,
+      "line": 794,
       "kinds": [
         "http_client"
       ],
@@ -8563,7 +8563,17 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1227,
+      "line": 830,
+      "kinds": [
+        "http_client"
+      ],
+      "excerpt": "const result = await apiFetch(",
+      "line_sha256": "4e62c4812a60e0a3cb0a0e34b69472780f45742abb390cf6b7dd8e2e78cb37f9",
+      "review": "candidate_only"
+    },
+    {
+      "path": "web/src/pages/cores/SettingsCore.tsx",
+      "line": 1462,
       "kinds": [
         "http_client"
       ],
@@ -8573,7 +8583,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1232,
+      "line": 1467,
       "kinds": [
         "http_client"
       ],
@@ -8583,7 +8593,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1236,
+      "line": 1471,
       "kinds": [
         "http_client"
       ],

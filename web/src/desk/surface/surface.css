@@ -3532,6 +3532,14 @@ button.surface-edit-in-place:hover {
   align-items: center;
   gap: 4px 10px;
 }
+/* PHILO-9-07: a project line's chip, refusal and verb -- one run that wraps. */
+.prefs-project-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 8px;
+}
 
 .prefs-issue-start {
   display: flex;

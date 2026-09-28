@@ -125,7 +125,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # PHILO-9-02: the Room's admitted operations and the steward's children.
     from . import project_codec
 
-    specs = specs + project_codec.specs(database)
+    specs = specs + project_codec.specs(database, clock=clock)
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Phase 143's capability/retry law is pure composition truth.  Building it
     # here makes malformed, duplicate, confusable, or schema-drifted definitions

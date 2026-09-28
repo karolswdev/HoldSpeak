@@ -1851,6 +1851,25 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_desk_delegation_one_live
 ON kernel_desk_delegations(agent_identity) WHERE state='LIVE';
 CREATE INDEX IF NOT EXISTS idx_desk_delegations_agent_state
 ON kernel_desk_delegations(agent_identity, state);
+-- PHILO-9-07: the owner's project delegation grant (the Q2 ruling): Phase 7's
+-- desk grant columns plus project_id; one LIVE row per (agent, project); the
+-- terms, with the operations, stored in the row. Never sync.
+CREATE TABLE IF NOT EXISTS kernel_project_delegations (
+    id TEXT PRIMARY KEY,
+    agent_identity TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL, delegator_identity TEXT NOT NULL,
+    operations_json TEXT NOT NULL,
+    terms_sha256 TEXT NOT NULL, expires_at REAL,
+    state TEXT NOT NULL CHECK (state IN ('LIVE','REVOKED','EXPIRED')),
+    revoked_at REAL, revocation_reason TEXT NOT NULL DEFAULT '',
+    grant_operation_id TEXT NOT NULL,
+    created_at REAL NOT NULL, updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_project_delegation_one_live
+ON kernel_project_delegations(agent_identity, project_id) WHERE state='LIVE';
+CREATE INDEX IF NOT EXISTS idx_project_delegations_agent_project_state
+ON kernel_project_delegations(agent_identity, project_id, state);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (
@@ -4165,16 +4184,6 @@ CREATE TABLE IF NOT EXISTS project_update_deliveries (
 );
 CREATE INDEX IF NOT EXISTS idx_project_update_deliveries_update
     ON project_update_deliveries(update_id);
-
--- PHILO-9-02 (Codex Astra r1 finding 5): an admitted Room operation's
--- original answer, written in the SAME transaction as its succeeded receipt,
--- so a replay of its key answers exactly it (the class of story 01's
--- project_commands.result_json, for every admitted row). Append-only.
-CREATE TABLE IF NOT EXISTS project_operation_results (
-    operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
-    result_json TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
 
 -- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
 -- bounds (retry counts, per-run action caps, cooldowns per STW-008).

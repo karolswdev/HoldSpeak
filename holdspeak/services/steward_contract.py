@@ -192,10 +192,17 @@ class StewardContract:
                        "unattended_enabled": bool(policy.get("unattended_enabled"))},
                 refs=[f"project:{project_id}", f"steward_policy:{policy_id}"],
             )
-            written["policy_id"] = policy_id
+            # Ruling A/B (round three): the whole answer is recorded with the
+            # write and the receipt, so a replay of this key answers THESE
+            # terms, never the policy as it is now.
+            written["answer"] = {"success": True, "policy": _serialize_policy(policy)}
+            project_kernel.answered(
+                conn, command_id=command_id, project_id=project_id, command_kind="configure_steward",
+                request_hash=project_kernel.request_hash(fields), answer=written["answer"], close=False,
+            )
 
         handle.terminal("succeeded", "succeeded", f"project:{project_id}", effect=effect)
-        return {"success": True, "policy": _serialize_policy(self._db.steward_policies.get_policy(written["policy_id"]))}
+        return written["answer"]
 
     # ── the run (project.run_steward) ─────────────────────────────────
 
@@ -226,7 +233,8 @@ class StewardContract:
         remaining = self._cooldown_remaining(project_id, policy)
         if remaining:
             raise _refusal("cooldown_active", f"Cooling down: {remaining}s remaining")
-        authority = self._freeze(principal, project_id, policy, parent_operation_id)
+        authority = self._freeze(principal, project_id, policy, parent_operation_id,
+                                 grant=self._admitted_grant(handle))
         run_id = "pstrun_" + uuid.uuid5(_RUN_NAMESPACE, handle.operation_id).hex
         try:
             with self._db._connection() as conn:
@@ -288,9 +296,14 @@ class StewardContract:
             return int(cooldown - elapsed) if elapsed < cooldown else 0
         return 0
 
+    def _admitted_grant(self, handle: Any) -> Optional[dict[str, str]]:
+        """The project grant the run operation was admitted under (PHILO-9-07): ``{id, terms_sha256}``."""
+        parsed = rooms.parse_basis(str(handle.operation().get("authority_basis") or ""))
+        return {"id": parsed[0], "terms_sha256": parsed[1]} if parsed else None
+
     def _freeze(self, principal: Principal, project_id: str, policy: Optional[dict[str, Any]],
-                parent_operation_id: str) -> dict[str, Any]:
-        """The run's immutable authority (the beat, section 4)."""
+                parent_operation_id: str, grant: Optional[dict[str, str]] = None) -> dict[str, Any]:
+        """The run's immutable authority (the beat, section 4): the policy AND, for an agent, its grant."""
         sha = policy_sha256(policy)
         delegator = ""
         if policy and policy.get("configure_operation_id"):
@@ -300,7 +313,7 @@ class StewardContract:
             delegator = str(owner_op.get("principal_identity") or "")
         terms = {"project_id": project_id, "actor_kind": principal.kind.value,
                  "actor_identity": principal.identity, "policy_sha256": sha,
-                 "grant_id": "", "grant_sha256": ""}
+                 "grant_id": (grant or {}).get("id", ""), "grant_sha256": (grant or {}).get("terms_sha256", "")}
         return {
             "policy_id": (policy or {}).get("id"),
             "configure_operation_id": (policy or {}).get("configure_operation_id"),
@@ -311,7 +324,7 @@ class StewardContract:
             "delegator_kind": "owner" if principal.kind is PrincipalKind.OWNER or delegator else "",
             "delegator_identity": principal.identity if principal.kind is PrincipalKind.OWNER else delegator,
             "parent_operation_id": parent_operation_id,
-            "grant": None,
+            "grant": dict(grant) if grant else None,
         }
 
     def _work(self, principal: Principal, run_id: str, project_id: str, handle: Any,
@@ -323,6 +336,7 @@ class StewardContract:
             "authority_sha256": authority["authority_sha256"],
             "delegator_kind": authority.get("delegator_kind") or "",
             "delegator_identity": authority.get("delegator_identity") or "",
+            "grant": authority.get("grant"),
             "cutoff": lambda: self._cutoff(run_id),
         }
         try:
@@ -347,6 +361,12 @@ class StewardContract:
             authority = json.loads(run.get("authority_json") or "{}")
         except (TypeError, ValueError):
             authority = {}
+        if authority.get("grant"):
+            # PHILO-9-07: an agent's run lives by its FROZEN grant (G1): a
+            # revoke, an expiry or a re-grant cuts it off (never replaced by G2).
+            code = self._grant_code(run, authority, conn)
+            if code:
+                return code
         policy_id = authority.get("policy_id")
         if not policy_id:
             return ""  # a no-policy owner run: nothing to cut it off (Muad'Dib r1 C2)
@@ -357,6 +377,18 @@ class StewardContract:
         if policy_sha256(policy) != authority.get("policy_sha256"):
             return "steward_policy_changed"
         return ""
+
+    def _grant_code(self, run: dict[str, Any], authority: dict[str, Any], conn: Any = None) -> str:
+        from holdspeak.kernel.runtime import _configure
+
+        now = float(_configure(self._db)._clock())
+        terms = authority.get("authority_terms") or {}
+        kwargs = {"agent_identity": str(terms.get("actor_identity") or ""),
+                  "project_id": str(run.get("project_id") or ""), "now": now}
+        if conn is not None:
+            return rooms.frozen_grant_code(conn, authority.get("grant"), **kwargs)
+        with self._db._connection() as own:
+            return rooms.frozen_grant_code(own, authority.get("grant"), **kwargs)
 
     def _frozen_terms(self, run_id: str) -> Optional[dict[str, Any]]:
         """The run's frozen policy terms (``{}`` for a no-policy owner run); ``None`` off the contract."""
@@ -391,7 +423,12 @@ class StewardContract:
         context = rooms.current_steward_context()
         if context is None:
             return call()  # a run outside the contract (the engine's own test seam, run_once)
-        self._boundary(str(context["run_id"]))
+        code = self._cutoff(str(context["run_id"]))
+        if code not in rooms.GRANT_CODES:
+            # A lost GRANT is left to the child's own admission (PHILO-9-07,
+            # R4-1): the attempted child is refused WITH its receipt, then the
+            # run ends refused. A stop or a changed policy stops here.
+            self._boundary(str(context["run_id"]))
         try:
             result, _kernel = project_kernel.run(
                 self._db, principal, name, payload, lambda _payload: call(),
@@ -400,7 +437,7 @@ class StewardContract:
         except project_kernel.ProjectKernelRefused as exc:
             if exc.code == "stop_requested":
                 raise StopRequested(str(context["run_id"])) from exc
-            if exc.code in {"steward_policy_changed", "steward_disabled"}:
+            if exc.code in {"steward_policy_changed", "steward_disabled"} | rooms.GRANT_CODES:
                 raise StewardAuthorityLost(exc.code) from exc
             raise
         return result
@@ -619,7 +656,9 @@ class StewardContract:
             raise ServiceError(code, code.replace("_", " "),
                                context={"status": 404 if code == "nudge_not_found" else 409,
                                         **{k: v for k, v in result.items() if k != "error"}})
-        return result
+        # Codex Astra r3: the comment's own evidence (URL, reviewer, time) and the
+        # kernel receipt the transports add are two things, under two keys.
+        return {"success": True, "comment_receipt": result.get("receipt")}
 
     # ── recovery (the beat, section 3; L6) ────────────────────────────
 

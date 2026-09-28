@@ -993,12 +993,11 @@ class ProjectDeltaService:
                         parse_ref(format_ref("project", project_id)),
                     ),
                 )
+                result["lifecycle"] = "accepted"
                 self._record_command(
                     conn, cmd_id, project_id,
-                    "decide_proposal", req_hash, envelope,
+                    "decide_proposal", req_hash, envelope, result=result,
                 )
-
-            result["lifecycle"] = "accepted"
 
         elif verb == "defer":
             with self._db._connection() as conn:
@@ -1017,12 +1016,12 @@ class ProjectDeltaService:
                         parse_ref(format_ref("project", project_id)),
                     ),
                 )
+                result["lifecycle"] = "deferred"
+                result["deferred_until"] = deferred_until
                 self._record_command(
                     conn, cmd_id, project_id,
-                    "decide_proposal", req_hash, envelope,
+                    "decide_proposal", req_hash, envelope, result=result,
                 )
-            result["lifecycle"] = "deferred"
-            result["deferred_until"] = deferred_until
 
         elif verb == "dismiss":
             # DEL-003: compute dismissal_basis_hash
@@ -1046,12 +1045,12 @@ class ProjectDeltaService:
                         parse_ref(format_ref("project", project_id)),
                     ),
                 )
+                result["lifecycle"] = "dismissed"
+                result["dismissal_basis_hash"] = basis_hash
                 self._record_command(
                     conn, cmd_id, project_id,
-                    "decide_proposal", req_hash, envelope,
+                    "decide_proposal", req_hash, envelope, result=result,
                 )
-            result["lifecycle"] = "dismissed"
-            result["dismissal_basis_hash"] = basis_hash
 
         result.update(_envelope_to_dict(CommandResultEnvelope(
             result_kind=ResultKind.PROPOSAL_DECIDED,
@@ -1234,15 +1233,14 @@ class ProjectDeltaService:
                 project_revision=new_revision,
                 changed_refs=(parse_ref(project_ref),),
             )
+            result = _envelope_to_dict(envelope)
+            result["review_id"] = review_id
+            result["accepted_at"] = now
+            result["accepted_by_ref"] = accepted_by
             self._record_command(
                 conn, cmd_id, project_id,
-                "accept_review", req_hash, envelope,
+                "accept_review", req_hash, envelope, answer=result,
             )
-
-        result = _envelope_to_dict(envelope)
-        result["review_id"] = review_id
-        result["accepted_at"] = now
-        result["accepted_by_ref"] = accepted_by
         return result
 
     # ── Decision helpers ────────────────────────────────────────────────
@@ -1274,23 +1272,23 @@ class ProjectDeltaService:
         command_kind: str,
         request_hash: str,
         envelope: CommandResultEnvelope,
+        *,
+        result: Optional[dict[str, Any]] = None,
+        answer: Optional[dict[str, Any]] = None,
     ) -> None:
-        """Record a completed command in the idempotency ledger."""
-        now_iso = _now_iso()
-        result_json = json.dumps(
-            _envelope_to_dict(envelope), ensure_ascii=False,
-        )
-        conn.execute(
-            """INSERT INTO project_commands
-               (id, project_id, command_kind, request_hash,
-                status, result_json, completed_at, created_at)
-               VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
-               ON CONFLICT(id) DO UPDATE SET
-                   status = 'completed',
-                   result_json = excluded.result_json,
-                   completed_at = excluded.completed_at""",
-            (command_id, project_id, command_kind, request_hash,
-             result_json, now_iso, now_iso),
+        """Record the command's WHOLE answer; its admitted operation ends in this transaction.
+
+        PHILO-9-02 round three (ruling A): story 01's ``project_commands``
+        row is the one answer per command. A decision's answer is its
+        ``result`` with the envelope merged in (what the method returns).
+        """
+        from holdspeak.services import project_kernel
+
+        if answer is None:
+            answer = {**(result or {}), **_envelope_to_dict(envelope)}
+        project_kernel.answered(
+            conn, command_id=command_id, project_id=project_id, command_kind=command_kind,
+            request_hash=request_hash, answer=answer,
         )
 
     # ── HS-160-04: Recurrence logic (DEL-003, DEL-004) ──────────────

@@ -238,6 +238,15 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "desk.needs_you",
         "project.item.list", "project.item.create", "project.item.update", "project.item.transition",
         "project.resource.list", "project.resource.add", "project.resource.remove",
+        # PHILO-9-02: the steward, the nudges, the watches, the suggested
+        # sources, the connections, the Door count and the delivery mark.
+        "project.configure_steward", "project.run_steward", "project.stop_steward", "project.get_steward_run",
+        "project.steward.trigger", "steward.nudges", "nudge.send", "nudge.dismiss",
+        "project.watch.inspect", "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
+        "project.watch.pause", "project.watch.resume", "project.watch.retire", "project.watch.update",
+        "project.watch.baseline", "project.suggested_sources", "project.add_suggested_source",
+        "project.dismiss_suggested_source", "connection.list", "connection.recheck", "project.door.count",
+        "project.mark_update_delivered",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

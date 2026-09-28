@@ -35,7 +35,12 @@ OUT = CANVAS / "shots"
 SETS = sys.argv[1:] or ["a", "b"]
 BOARDS = ("0-today", "1-never", "2-live", "3-live-open", "4-stopped", "5-expired",
           "6-orphan", "7-orphan-off", "7b-off-credential", "8-refused", "9-two-projects",
-          "10-last-orphan-stopped", "11-credential-revoked")
+          "10-last-orphan-stopped", "11-credential-revoked", "12-archived", "12b-archived-off")
+# ONLY_BOARDS=a,b shoots only those boards (their facts go to facts-<first>.json):
+# added 2026-09-28 so a new board is shot without re-shooting the ratified ones.
+import os as _os
+if _os.environ.get("ONLY_BOARDS"):
+    BOARDS = tuple(b for b in BOARDS if b in _os.environ["ONLY_BOARDS"].split(","))
 BASE = "http://127.0.0.1:4442"
 
 FACTS = """() => {
@@ -221,7 +226,8 @@ def main() -> None:
         "points_probed": sum(len(p["points"]) for v in facts.values() for p in v["pointer"]),
         "not_owned": [(k, p["text"], [pt["hit"] for pt in p["points"] if not (pt["efp"] and pt["pointer"])]) for k, v in facts.items() for p in v["pointer"] if not p["owned"]],
     }
-    (OUT / "facts.json").write_text(json.dumps({"summary": summary, "boards": facts}, indent=1, ensure_ascii=False) + "\n")
+    facts_name = f"facts-{BOARDS[0]}.json" if _os.environ.get("ONLY_BOARDS") else "facts.json"
+    (OUT / facts_name).write_text(json.dumps({"summary": summary, "boards": facts}, indent=1, ensure_ascii=False) + "\n")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
 

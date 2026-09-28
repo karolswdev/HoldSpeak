@@ -77,19 +77,24 @@ def approval(broker: Any, operation: Mapping[str, Any], principal: Any, expected
     """
     from .project import scheduler_approves
 
+    from .project import project_approval_code
+
     if scheduler_approves(operation, principal):
         # PHILO-9-02: the scheduler approves ONLY its own steward operation,
         # inside the hub's steward path (the steward beat, section 4).
         return True
-    if not (
-        principal.kind is PrincipalKind.AGENT
-        and operation["name"] in DESK_GRANT_OPERATIONS
-        and operation["principal_kind"] == "agent"
-        and operation["principal_identity"] == principal.identity
-    ):
+    own_agent = (principal.kind is PrincipalKind.AGENT and operation["principal_kind"] == "agent"
+                 and operation["principal_identity"] == principal.identity)
+    # PHILO-9-07: the agent's own granted Room operation (its frozen project
+    # grant) or a child of its own steward run (the run's frozen grant).
+    project_code = project_approval_code(broker, operation, principal) if own_agent else None
+    if project_code is not None:
+        code = project_code
+    elif not (own_agent and operation["name"] in DESK_GRANT_OPERATIONS):
         return False
-    with broker.store._connection() as conn:
-        code = by_basis(conn, operation, broker._clock(), authoritative=True)
+    else:
+        with broker.store._connection() as conn:
+            code = by_basis(conn, operation, broker._clock(), authoritative=True)
     if not code:
         return True
     if operation["state"] != "awaiting_decision" or operation["revision"] != expected_revision:

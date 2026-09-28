@@ -22,6 +22,7 @@ R = "tests/unit/test_philo9_steward_restart.py"
 D = "tests/unit/test_philo9_mark_delivered.py"
 C = "tests/unit/test_philo9_command_race.py"
 T = "tests/unit/test_philo9_02_round_two.py"
+U = "tests/unit/test_philo9_02_round_three.py"
 H = "tests/web/test_hs168_connections_routes.py"
 
 MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
@@ -196,7 +197,8 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "holdspeak/services/project_kernel.py",
      "        if stored is not _NO_RESULT:\n",
      "        if False:\n",
-     [f"{T}::test_f5_a_publication_retry_answers_the_original_success_and_receipt"]),
+     [f"{T}::test_f5_a_publication_retry_answers_the_original_success_and_receipt",
+      f"{U}::test_b_a_policy_retry_answers_its_own_terms_over_mcp"]),
     ("M35 f6: an accepted suggestion's watch declares passed/established",
      "holdspeak/services/project_service.py",
      "test_state=\"\", baseline_state=\"pending\")",
@@ -216,12 +218,43 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "holdspeak/services/project_update_service.py",
      "            parent_operation_id=parent_operation_id,",
      "            parent_operation_id=\"\",",
-     [f"{T}::test_f9_a_model_draft_under_the_draft_effect_names_it_as_parent"]),
+     [f"{U}::test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child"]),
     ("M39 f9: run_once works unadmitted",
      "holdspeak/services/project_steward_service.py",
      "        started, _kernel = project_kernel.run(\n            self._db, principal, \"project.run_steward\",",
      "        started, _kernel = (lambda *a, **k: (a[4](a[3]), None))(\n            self._db, principal, \"project.run_steward\",",
      [f"{T}::test_f9_run_once_is_an_admitted_operation_with_its_receipt"]),
+    # ── round three (Codex Astra r2 on 7119cfd9; Muad'Dib's rulings A-D) ──
+    ("M40 A: the service's transaction does not end the operation (terminal after its commit)",
+     "holdspeak/services/project_kernel.py",
+     "    if closing:\n        handle.close_in(conn)\n",
+     "",
+     [f"{U}::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication"]),
+    ("M41 A: a failure in the terminal transaction closes the operation failed (no take-over)",
+     "holdspeak/services/project_kernel.py",
+     "        handle.write_failed = True\n\n\ndef _room_outcome",
+     "        pass\n\n\ndef _room_outcome",
+     [f"{U}::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication"]),
+    ("M42 B: the HTTP policy route drops command_id",
+     "holdspeak/web/routes/steward.py",
+     "            if body.get(\"command_id\"):\n",
+     "            if False:\n",
+     [f"{U}::test_b_a_policy_retry_answers_its_own_terms_over_http"]),
+    ("M43 C: an approved child's claim deadline is not clamped",
+     "holdspeak/kernel/broker.py",
+     "\"expires_at\": desk_broker.child_deadline(self.store, operation, now + claim_ttl),",
+     "\"expires_at\": now + claim_ttl,",
+     [f"{U}::test_c_an_unclaimed_child_is_settled_before_its_expired_parent"]),
+    ("M44 D: the Room's trusted path ends before the service executes",
+     "holdspeak/services/project_kernel.py",
+     "        with rooms.project_path():\n            result = call(payload)\n    except KernelRefused as lost:",
+     "        if True:\n            result = call(payload)\n    except KernelRefused as lost:",
+     [f"{U}::test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child"]),
+    ("M45 r3: a sent nudge answers the raw service result (the kernel receipt overwrites the comment's)",
+     "holdspeak/services/steward_contract.py",
+     "        return {\"success\": True, \"comment_receipt\": result.get(\"receipt\")}\n",
+     "        return result\n",
+     [f"{U}::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt"]),
 ]
 
 

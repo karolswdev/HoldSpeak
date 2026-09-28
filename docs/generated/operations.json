@@ -2727,7 +2727,10 @@
         "invalid_arguments",
         "authority_in_arguments",
         "NotFound not_found: unknown update",
-        "PublishedUpdateError published_update: not a draft"
+        "PublishedUpdateError published_update: not a draft",
+        "project_delegation_required",
+        "project_delegation_expired",
+        "project_delegation_revoked"
       ],
       "completion": "synchronous; project.list_updates returns lifecycle published",
       "exposure": [
@@ -3412,7 +3415,9 @@
         "active_run_exists",
         "steward_disabled",
         "cooldown_active",
-        "project_delegation_required"
+        "project_delegation_required",
+        "project_delegation_expired",
+        "project_delegation_revoked"
       ],
       "completion": "asynchronous; project.get_steward_run returns the run's state, its steps and its one terminal receipt",
       "exposure": [
@@ -3462,7 +3467,9 @@
         "not_found: unknown run",
         "steward_run_already_terminal",
         "steward_run_owner_required",
-        "project_delegation_required"
+        "project_delegation_required",
+        "project_delegation_expired",
+        "project_delegation_revoked"
       ],
       "completion": "synchronous for the request; project.get_steward_run shows the run end interrupted",
       "exposure": [
@@ -3635,7 +3642,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "{success: true, receipt: the comment receipt (comment_url, pr_number, reviewer ...)} and the kernel operation_id and receipt",
+      "result": "{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

@@ -20,7 +20,13 @@ three additions the Room needs:
    ``journal_atomic.transition_and_receipt``); a method that starts
    asynchronous work (the steward's run) :meth:`KernelHandle.detach` es it, and
    its daemon writes the one terminal receipt later.
-3. **Take-over of an abandoned operation.** A replay that finds its operation
+3. **One answer per command** (round three, Muad'Dib's ruling A). A write
+   that carries ``command_id`` records its whole answer in story 01's
+   ``project_commands.result_json`` and ends its operation (terminal state and
+   receipt) in the SAME transaction as its domain write (:func:`answered`); a
+   replay of the key answers that record. A failure anywhere in that
+   transaction rolls back all three.
+4. **Take-over of an abandoned operation.** A replay that finds its operation
    non-terminal while no call in this process is executing it (the terminal
    transaction failed and rolled back) executes it again and closes it ONCE
    (the strict revision check picks one winner).
@@ -46,7 +52,7 @@ from .errors import ServiceError
 _NODE = Principal(PrincipalKind.NODE, rooms.PROJECT_EXECUTOR)
 #: The namespace the command-keyed native ids are derived in.
 _NAMESPACE = uuid.UUID("4f8a3d2e-9c61-4b7e-a0d5-2c1f9e7b6a43")
-_FORBIDDEN_STATUS = ("project_delegation", "principal", "declared_capability", rooms.RUN_OWNER_REQUIRED)
+_FORBIDDEN_STATUS = ("project_delegation", "principal", "owner_principal", "declared_capability", rooms.RUN_OWNER_REQUIRED)
 
 _CURRENT: ContextVar["KernelHandle | None"] = ContextVar("project_kernel_current", default=None)
 _IN_FLIGHT: set[str] = set()
@@ -92,6 +98,10 @@ class KernelHandle:
         #: method answers from what it recorded and writes nothing.
         self.replay = False
         self.write_failed = False
+        #: Set while :func:`answered` ends the operation inside the service's
+        #: own transaction; the receipt's journal entry follows the commit.
+        self.terminal_in_txn = False
+        self._journal: tuple[Any, str, str] | None = None
 
     @property
     def store(self) -> Any:
@@ -134,6 +144,27 @@ class KernelHandle:
         self.closed = True
         self.receipt = dict(receipt) if receipt is not None else None
         return self.receipt
+
+    def close_in(self, conn: Any) -> None:
+        """Succeeded, with its receipt, inside the caller's write transaction (ruling A)."""
+        from ..kernel.journal_atomic import transition_and_receipt_in
+
+        result_ref = _result_ref(self.target)
+        operation, receipt = transition_and_receipt_in(
+            conn, self.broker.store, self.operation_id, self.revision, "succeeded", "succeeded", result_ref,
+            strict=True,
+        )
+        self.closed = True
+        self.receipt = dict(receipt)
+        self._journal = (operation, "succeeded", result_ref)
+
+    def committed(self) -> None:
+        """After the service's commit: the receipt's journal entry (as :meth:`terminal` writes it)."""
+        self.terminal_in_txn = False
+        if self._journal is not None:
+            operation, outcome, result_ref = self._journal
+            self._journal = None
+            journal_receipt(self.broker.store, operation, outcome, result_ref)
 
     def kernel(self) -> dict[str, Any]:
         return {"operation_id": self.operation_id, "receipt": self.receipt}
@@ -267,10 +298,15 @@ def _call(broker: Any, name: str, handle: KernelHandle, payload: dict[str, Any],
           call: Callable[[dict[str, Any]], Any]) -> tuple[Any, dict[str, Any]]:
     token = _CURRENT.set(handle)
     try:
-        result = call(payload)
+        # Ruling D: the Room's trusted path lasts while the service executes,
+        # so a child it submits (a scheduled model draft's inference.invoke)
+        # is admitted under the same rules as the operation itself.
+        with rooms.project_path():
+            result = call(payload)
     except KernelRefused as lost:
         _CURRENT.reset(token)
         token = None
+        _unwind(handle)
         if lost.reason not in STRICT_CONFLICTS:
             raise
         # Another caller of this key closed it first: its outcome answers.
@@ -280,6 +316,7 @@ def _call(broker: Any, name: str, handle: KernelHandle, payload: dict[str, Any],
             raise _refused(name, broker, handle.operation_id, receipt) from lost
         return _answer(broker, handle.principal, name, operation, handle.target, payload, call, receipt)
     except Exception as exc:
+        _unwind(handle, exc)
         if not handle.closed and not handle.detached and not handle.write_failed:
             state, outcome = _room_outcome(exc)
             try:
@@ -292,12 +329,12 @@ def _call(broker: Any, name: str, handle: KernelHandle, payload: dict[str, Any],
     finally:
         if token is not None:
             _CURRENT.reset(token)
+    handle.committed()
     if handle.detached and not handle.closed:
         return result, {"operation_id": handle.operation_id, "receipt": None, "state": "claimed"}
     if not handle.closed:
         try:
-            handle.terminal("succeeded", "succeeded", _result_ref(handle.target),
-                            effect=_store_result(handle.operation_id, result))
+            handle.terminal("succeeded", "succeeded", _result_ref(handle.target))
         except KernelRefused as lost:
             if lost.reason not in STRICT_CONFLICTS:
                 raise
@@ -305,6 +342,25 @@ def _call(broker: Any, name: str, handle: KernelHandle, payload: dict[str, Any],
             if str((broker.store.operation(handle.operation_id) or {}).get("state")) != "succeeded":
                 raise _refused(name, broker, handle.operation_id, handle.receipt) from lost
     return result, handle.kernel()
+
+
+def _unwind(handle: KernelHandle, exc: BaseException | None = None) -> None:
+    """The service's transaction rolled back after :func:`answered` began: nothing was written.
+
+    A domain refusal (a ServiceError) is closed refused as usual; any other
+    failure inside the terminal transaction leaves the operation non-terminal
+    (no invented outcome) for a replay of its key to take over and close once.
+    """
+    if not handle.terminal_in_txn:
+        return
+    handle.terminal_in_txn = False
+    handle._journal = None
+    if handle.broker.store.receipt(handle.operation_id) is not None:
+        return
+    handle.closed = False
+    handle.receipt = None
+    if exc is not None and not isinstance(exc, (ServiceError, KernelRefused)):
+        handle.write_failed = True
 
 
 def _room_outcome(exc: BaseException) -> tuple[str, str]:
@@ -354,23 +410,87 @@ def _replayed(broker: Any, principal: Any, name: str, operation_id: str, payload
 
 _NO_RESULT = object()
 
+#: The command kind each admitted Room write records its answer under
+#: (story 01's ``project_commands.command_kind``).
+COMMAND_KINDS: dict[str, str] = {
+    "project.archive": "archive_project",
+    "project.link": "associate_meeting",
+    "project.unlink": "disassociate_meeting",
+    "project.resource.add": "add_resource",
+    "project.resource.remove": "remove_resource",
+    "project.add_suggested_source": "add_source_watch",
+    "project.publish_update": "publish_update",
+    "project.decide_proposal": "decide_proposal",
+    "project.accept_review": "accept_review",
+    "project.configure_steward": "configure_steward",
+}
 
-def _store_result(operation_id: str, result: Any) -> Callable[[Any], None]:
-    """The original answer, written in the terminal transaction (Codex Astra r1 finding 5)."""
-    material = json.dumps(result, default=str)
 
-    def effect(conn: Any) -> None:
-        conn.execute("INSERT OR IGNORE INTO project_operation_results (operation_id, result_json) VALUES (?, ?)",
-                     (operation_id, material))
-
-    return effect
+#: The writes whose method has no replay of its own: the kernel's replay
+#: answers their record directly. Every other kind's method answers a replay
+#: from the same record itself (story 01's ``_check_idempotency``).
+RECORD_ANSWERS = frozenset({"project.publish_update", "project.configure_steward"})
 
 
-def _stored_result(broker: Any, operation_id: str) -> Any:
+def answered(conn: Any, *, command_id: str | None, project_id: str, command_kind: str, request_hash: str,
+             answer: Any, close: bool = True) -> None:
+    """THE one answer per command, and the running operation's end, in the caller's transaction.
+
+    Records *answer* (the whole response) in ``project_commands.result_json``
+    under *command_id*; when the admitted operation of this command kind is
+    running this call, ends it (succeeded, with its receipt) in the SAME
+    transaction (ruling A). A failure anywhere rolls back the domain write, the
+    answer and the receipt together.
+    """
+    handle = current()
+    closing = (close and handle is not None and not handle.replay and not handle.closed
+               and not handle.detached and COMMAND_KINDS.get(handle.name) == command_kind)
+    if closing:
+        handle.terminal_in_txn = True
+    if command_id:
+        _record_answer(conn, command_id, project_id, command_kind, request_hash, answer)
+    if closing:
+        handle.close_in(conn)
+
+
+def request_hash(payload: Mapping[str, Any]) -> str:
+    """The request's hash, as story 01 records it (``project_commands.request_hash``)."""
+    import hashlib
+
+    material = json.dumps(dict(payload), sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
+
+
+def _record_answer(conn: Any, command_id: str, project_id: str, command_kind: str, request_hash: str,
+                   answer: Any) -> None:
+    from datetime import datetime
+
+    existing = conn.execute("SELECT command_kind, status FROM project_commands WHERE id=?", (command_id,)).fetchone()
+    if existing is not None and existing["status"] == "completed" and existing["command_kind"] != command_kind:
+        from .errors import ConflictError
+
+        raise ConflictError("idempotency conflict: this command_id answered another command",
+                            code="idempotency_conflict", context={"command_id": command_id})
+    now_iso = datetime.now().isoformat()
+    conn.execute(
+        """INSERT INTO project_commands (
+               id, project_id, command_kind, request_hash, status, result_json, completed_at, created_at
+           ) VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+               status = 'completed', result_json = excluded.result_json, completed_at = excluded.completed_at""",
+        (command_id, project_id, command_kind, request_hash, json.dumps(answer, ensure_ascii=False, default=str),
+         now_iso, now_iso),
+    )
+
+
+def _recorded_answer(broker: Any, name: str, payload: Mapping[str, Any]) -> Any:
+    command_id, kind = payload.get("command_id"), COMMAND_KINDS.get(name)
+    if not command_id or kind is None or name not in RECORD_ANSWERS:
+        return _NO_RESULT
     with broker.store._connection() as conn:
-        row = conn.execute("SELECT result_json FROM project_operation_results WHERE operation_id=?",
-                           (operation_id,)).fetchone()
-    return json.loads(row[0]) if row is not None else _NO_RESULT
+        row = conn.execute("SELECT result_json FROM project_commands WHERE id=? AND command_kind=? AND status='completed'",
+                           (str(command_id), kind)).fetchone()
+    return json.loads(row[0]) if row is not None and row[0] else _NO_RESULT
 
 
 def _durable(broker: Any, name: str, operation_id: str) -> bool:
@@ -385,7 +505,7 @@ def _answer(broker: Any, principal: Any, name: str, operation: Mapping[str, Any]
             payload: dict[str, Any], call: Callable[[dict[str, Any]], Any], receipt: Any) -> tuple[Any, dict[str, Any]]:
     """A replay: the method answers from what it recorded, under a handle that writes nothing."""
     if receipt is not None:
-        stored = _stored_result(broker, str(operation["operation_id"]))
+        stored = _recorded_answer(broker, name, payload)
         if stored is not _NO_RESULT:
             # The original answer, recorded with the receipt: nothing runs again.
             return stored, {"operation_id": str(operation["operation_id"]), "receipt": dict(receipt)}
@@ -395,7 +515,8 @@ def _answer(broker: Any, principal: Any, name: str, operation: Mapping[str, Any]
     handle.closed = receipt is not None
     token = _CURRENT.set(handle)
     try:
-        result = call(payload)
+        with rooms.project_path():
+            result = call(payload)
     finally:
         _CURRENT.reset(token)
     kernel = handle.kernel()

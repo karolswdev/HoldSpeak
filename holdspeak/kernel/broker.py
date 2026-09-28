@@ -250,7 +250,7 @@ class Broker(ExecutorPlane):
                 "principal_identity": operation["principal_identity"],
                 "parent_operation_id": operation.get("parent_operation_id") or "",
                 "issued_at": now,
-                "expires_at": now + claim_ttl,
+                "expires_at": desk_broker.child_deadline(self.store, operation, now + claim_ttl),
                 "execution_expires_at": desk_broker.child_deadline(self.store, operation, now + execution_ttl),
                 "uses": 1,
                 "continuation_identities": list(

@@ -45,6 +45,8 @@ Settings routes:
   LIVE desk grant first, durably, with its own receipt; PHILO-7-02)
 - PUT    /api/settings/remote/delegations/{identity} -> delegation.grant
 - DELETE /api/settings/remote/delegations/{identity} -> delegation.revoke
+- PUT    /api/settings/remote/delegations/{identity}/projects/{project_id} -> project.delegation.grant
+- DELETE /api/settings/remote/delegations/{identity}/projects/{project_id} -> project.delegation.revoke
 
 PHILO-7-02 (R1): the owner's desk delegation grant rides the credential ledger.
 ``GET /api/settings/remote`` carries, per credential, ``delegation``: the
@@ -229,9 +231,10 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
         credentials = []
         listed = cred_store.list_credentials()
-        from ...services import desk_delegation
+        from ...services import desk_delegation, project_delegation
 
         grants = desk_delegation.views([c.principal.identity for c in listed])
+        project_grants = project_delegation.views([c.principal.identity for c in listed])
         for c in listed:
             # Convert monotonic timestamps to epoch seconds for the face.
             expires_epoch = now_epoch + (c.expires_at - now_mono)
@@ -240,8 +243,10 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 if c.last_used_at is not None
                 else None
             )
-            # Palette: return the name if it maps to a known palette.
-            palette_name = _palette_reverse.get(c.palette, None) if c.palette else None
+            # Palette: the ISSUED name (PHILO-9-07, the DESK = ALL repair:
+            # DESK resolves to every top-level tool, so the reverse map named
+            # it ALL). The reverse map only for a credential issued unnamed.
+            palette_name = c.palette_name or (_palette_reverse.get(c.palette, None) if c.palette else None)
             credentials.append({
                 "id": c.id,
                 "identity": c.principal.identity,
@@ -251,6 +256,9 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 "active": c.expires_at > now_mono,
                 # PHILO-7-02: the grant's effective state (null: never granted).
                 "delegation": grants["by_identity"].get(c.principal.identity),
+                # PHILO-9-07: one entry per project with any stored grant row,
+                # projected to its effective state (absent: never granted).
+                "project_delegations": project_grants["by_identity"].get(c.principal.identity, []),
             })
 
         return JSONResponse({
@@ -259,6 +267,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             "port": store.get("port"),
             "credentials": credentials,
             "delegations": grants["orphans"],
+            "project_delegations": project_grants["orphans"],
             "active_count": cred_store.count_active(),
             "total_count": len(credentials),
         })
@@ -320,6 +329,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             identity,
             ttl_seconds=ttl_seconds,
             palette=palette_set,
+            palette_name=palette_name,
         )
 
         return JSONResponse({
@@ -347,22 +357,27 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 {"error": "credential_not_found"},
                 status_code=404,
             )
-        from ...services import desk_delegation
+        from ...services import desk_delegation, project_delegation
         from ...services.errors import ServiceError
 
         try:
             grant = desk_delegation.revoke_for_credential(principal, identity)
+            # PHILO-9-07: every LIVE project grant of the identity, durably
+            # first too, each with its own receipt (credential_revoked).
+            project_grants = project_delegation.revoke_for_credential(principal, identity)
         except ServiceError as exc:
             return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
                                 status_code=int(exc.context.get("status") or 409))
         revoked = cred_store.revoke_by_id(credential_id)
         if not revoked:
             return JSONResponse(
-                {"error": "credential_not_found", "grant_revoked": grant is not None, **(grant or {})},
+                {"error": "credential_not_found", "grant_revoked": grant is not None, **(grant or {}),
+                 "project_grants_revoked": project_grants},
                 status_code=404,
             )
         return JSONResponse({"success": True, "revoked": credential_id,
-                             "grant_revoked": grant is not None, **(grant or {})})
+                             "grant_revoked": grant is not None, **(grant or {}),
+                             "project_grants_revoked": project_grants})
 
     # ── PUT/DELETE /api/settings/remote/delegations/{identity} ─────
     # PHILO-7-02 (R1): the owner's desk delegation grant. The edge right is
@@ -409,5 +424,40 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
                                 status_code=int(exc.context.get("status") or 409))
+
+    # ── PUT/DELETE …/delegations/{identity}/projects/{project_id} ──
+    # PHILO-9-07 (the Q2 ruling): the owner's project delegation grant.
+    # The edge right is AGENT_SUBMIT (the same prefix as the desk grant), so an
+    # agent's attempt is refused BY THE KERNEL with a receipt
+    # (owner_principal_required). HTTP only: in no MCP palette.
+
+    def _project_grant_error(exc: Any) -> JSONResponse:
+        return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
+                            status_code=int(exc.context.get("status") or 409))
+
+    @router.put("/api/settings/remote/delegations/{identity}/projects/{project_id}")
+    async def grant_project_delegation(request: Request, identity: str, project_id: str) -> JSONResponse:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        from ...services import project_delegation
+        from ...services.errors import ServiceError
+
+        body = await _delegation_body(request)
+        try:
+            return _delegation_response(project_delegation.grant(principal, identity, project_id, body))
+        except ServiceError as exc:
+            return _project_grant_error(exc)
+
+    @router.delete("/api/settings/remote/delegations/{identity}/projects/{project_id}")
+    async def revoke_project_delegation(request: Request, identity: str, project_id: str) -> JSONResponse:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        from ...services import project_delegation
+        from ...services.errors import ServiceError
+
+        body = await _delegation_body(request)
+        try:
+            return _delegation_response(project_delegation.revoke(
+                principal, identity, project_id, "owner_revoked", body=None if body == {} else body))
+        except ServiceError as exc:
+            return _project_grant_error(exc)
 
     return router

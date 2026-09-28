@@ -1,0 +1,29 @@
+E       AssertionError: the same replay body is stored in two tables
+        failed_status, _failed = publish()
+        assert failed_status != 200
+E       AssertionError: the publication committed without its answer
+        failed_status, _failed = publish()
+        assert failed_status != 200
+E       AssertionError: the publication committed without its answer
+        failed_status, _failed = publish()
+        assert failed_status != 200
+E       AssertionError: the publication committed without its answer
+E       AssertionError: same operation returns changed policy with original receipt
+E         At index 1 diff: {'operation_id': 'op_40390f6b048742d5a4fa144bed7569e1', 'policy': {'bounds': {}, 'cooldown_seconds': 0, 'created_at': '2026-09-28T15:48:57+00:00', 'eligible_effect_kinds': ['draft_update'], 'enabled': True, 'id': 
+        failed_status, _failed = publish()
+        assert failed_status != 200
+E       AssertionError: the publication committed without its answer
+E       AssertionError: the HTTP route dropped command_id
+E       AssertionError: scheduler child was refused before reaching the provider boundary: [{'operation_id': 'op_7fcc9f2a66574380b95d6539f37a9580', 'name': 'project.steward.effect', 'parent_operation_id': 'op_6c2cd7197ea445d69924779c9ab58ce
+WARNING  holdspeak.services.project_update_service:project_update_service.py:1637 Model drafter failed (no_output); falling back to deterministic.
+E       AssertionError: the claim outlives the parent
+FAILED tests/unit/test_philo9_02_round_three.py::test_a_there_is_one_replay_store
+FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http-receipt]
+FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http-answer]
+FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-answer]
+FAILED tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_mcp
+FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-receipt]
+FAILED tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_http
+FAILED tests/unit/test_philo9_02_round_three.py::test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child
+FAILED tests/unit/test_philo9_02_round_three.py::test_c_an_unclaimed_child_is_settled_before_its_expired_parent
+9 failed in 3.96s

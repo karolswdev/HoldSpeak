@@ -409,7 +409,10 @@ def _p_nudge_send(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
         return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#c1\n", "")
 
     monkeypatch.setattr(hub.root.project_steward_service, "_subprocess_runner", gh)
-    return hub.root.operations.invoke(OWNER, "nudge.send", {"step_id": _nudge_step(hub), "text": "A look, please."})
+    # The TRANSPORTED answer (Codex Astra r3): the comment's receipt and the kernel's, both.
+    resp = hub.client.post(f"/api/nudges/{_nudge_step(hub)}/send", json={"text": "A look, please."})
+    assert resp.status_code == 200, resp.text
+    return resp.json()
 
 
 def _p_nudge_dismiss(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
