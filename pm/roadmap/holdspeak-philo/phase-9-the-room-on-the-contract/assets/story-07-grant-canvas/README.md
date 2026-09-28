@@ -1,6 +1,8 @@
 # PHILO-9-07 canvas: the project delegation grant on the Remote Access ledger
 
-**Status: DRAFT, for the owner's ratification** (UX-CANON §A.2: the canvas before the build). Nothing here is built in product code. The review page is `index.html` in this folder (every board, both widths, both word sets). Round two pays Codex Astra r1 findings 2 and 3 (`../../checks/canvases-astra-r1.md`).
+**Status: RATIFIED 2026-09-27 by the owner ("Ratify as drawn"), after Codex Astra r1 DNR → r2 DNR → r3 RATIFY** (`../../checks/canvases-astra-r1.md`, `../../checks/canvases-astra-r2.md`, `../../checks/canvases-astra-r3.md`; AskUserQuestion; review page https://claude.ai/artifact/ADQeZoxRYmWfYKEfL8wePT). His pick, verbatim: "Ratify as drawn (Recommended)", all seven recommendations. This canvas: Q4 the grant words set A (`Allow run and publish` / `RUN AND PUBLISH ALLOWED`); Q5 the per-project list behind a visible `▸ Projects`. Build exactly this. The seven answers across the four canvases: Q1 items after NEEDS YOU, omitted when empty; Q2 DELIVERED ×N; Q3 To + Mark delivered above the body; Q4 grant words set A; Q5 per-project list behind a visible ▸ Projects; Q6 the accent selection colours; Q7 at 393 the fold line.
+
+Earlier status: (UX-CANON §A.2: the canvas before the build). Nothing here is built in product code. The review page is `index.html` in this folder (every board, both widths, both word sets). Round two pays Codex Astra r1 findings 2 and 3 (`../../checks/canvases-astra-r1.md`).
 
 Sources: the charter's "The project delegation grant" (`../../current-phase-status.md`), story 07 (`../../story-07-the-project-delegation-grant.md`), the pre-canvas condition R4-3, and the ratified Phase 7 canvas it extends (`../../../phase-7-the-desk-on-the-contract/assets/story-02-canvas/README.md`: set A words, the credential row, the footer receipt).
 

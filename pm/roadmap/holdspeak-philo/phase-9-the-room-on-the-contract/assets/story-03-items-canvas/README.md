@@ -1,6 +1,8 @@
 # PHILO-9-03 canvas 1: the ITEMS section in the Room
 
-**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The Q3 ruling: "Show them; enter by MCP" — the Room shows its items; no Add control on the face. Round two paid Codex Astra r1 findings 5 and 7 (`../../checks/canvases-astra-r1.md`); round three adds the real nine-point pointer pass (Codex Astra r2 F3, `../../checks/canvases-astra-r2.md`).
+**Status: RATIFIED 2026-09-27 by the owner ("Ratify as drawn"), after Codex Astra r1 DNR → r2 DNR → r3 RATIFY** (`../../checks/canvases-astra-r1.md`, `../../checks/canvases-astra-r2.md`, `../../checks/canvases-astra-r3.md`; AskUserQuestion; review page https://claude.ai/artifact/ADQeZoxRYmWfYKEfL8wePT). His pick, verbatim: "Ratify as drawn (Recommended)", all seven recommendations. This canvas: Q1 the items section after NEEDS YOU, omitted when empty. Build exactly this. The seven answers across the four canvases: Q1 items after NEEDS YOU, omitted when empty; Q2 DELIVERED ×N; Q3 To + Mark delivered above the body; Q4 grant words set A; Q5 per-project list behind a visible ▸ Projects; Q6 the accent selection colours; Q7 at 393 the fold line.
+
+Earlier status: (UX-CANON §A.2). Nothing here is built in product code. The Q3 ruling: "Show them; enter by MCP" — the Room shows its items; no Add control on the face. Round two paid Codex Astra r1 findings 5 and 7 (`../../checks/canvases-astra-r1.md`); round three adds the real nine-point pointer pass (Codex Astra r2 F3, `../../checks/canvases-astra-r2.md`).
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<board>-<width>.png` (1440x900 and 393x852, device scale 2); rendered facts: `shots/facts.json`.

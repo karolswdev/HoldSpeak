@@ -1,6 +1,8 @@
 # PHILO-9-03 canvas 2: copy and confirm delivery
 
-**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The rulings: Q0 "Copy to clipboard only" and "Several per update". Round two paid Codex Astra r1 findings 4 and 5 (`../../checks/canvases-astra-r1.md`); round three pays Codex Astra r2 findings 1–3 (`../../checks/canvases-astra-r2.md`): the held confirmation bound to its update, the draft's content repairs under the `surface` container, and a real nine-point pointer pass.
+**Status: RATIFIED 2026-09-27 by the owner ("Ratify as drawn"), after Codex Astra r1 DNR → r2 DNR → r3 RATIFY** (`../../checks/canvases-astra-r1.md`, `../../checks/canvases-astra-r2.md`, `../../checks/canvases-astra-r3.md`; AskUserQuestion; review page https://claude.ai/artifact/ADQeZoxRYmWfYKEfL8wePT). His pick, verbatim: "Ratify as drawn (Recommended)", all seven recommendations. This canvas: Q2 the list chip `DELIVERED ×N`; Q3 the To field and Mark delivered above the update body. Build exactly this. The seven answers across the four canvases: Q1 items after NEEDS YOU, omitted when empty; Q2 DELIVERED ×N; Q3 To + Mark delivered above the body; Q4 grant words set A; Q5 per-project list behind a visible ▸ Projects; Q6 the accent selection colours; Q7 at 393 the fold line.
+
+Earlier status: (UX-CANON §A.2). Nothing here is built in product code. The rulings: Q0 "Copy to clipboard only" and "Several per update". Round two paid Codex Astra r1 findings 4 and 5 (`../../checks/canvases-astra-r1.md`); round three pays Codex Astra r2 findings 1–3 (`../../checks/canvases-astra-r2.md`): the held confirmation bound to its update, the draft's content repairs under the `surface` container, and a real nine-point pointer pass.
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<board>-<width>.png` (1440x900 and 393x852, device scale 2); rendered facts: `shots/facts.json`.

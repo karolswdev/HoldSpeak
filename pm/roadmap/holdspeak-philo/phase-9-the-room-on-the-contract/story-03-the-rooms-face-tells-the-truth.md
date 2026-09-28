@@ -52,6 +52,7 @@ PROVISIONAL: 2–3 engineering days, the two canvases included.
 
 ## Notes
 
+- 2026-09-27 — both canvases RATIFIED by the owner ("Ratify as drawn"), after Codex Astra canvases r1 DNR → r2 DNR → r3 RATIFY: the items section after NEEDS YOU, omitted when empty (Q1); `DELIVERED ×N` (Q2); To + Mark delivered above the body (Q3). Canvases: `assets/story-03-items-canvas/`, `assets/story-03-delivery-canvas/`.
 - 2026-09-27 — canvases round three (Codex Astra canvases r2 finding 5): the build owns one open the canvas accepted: at 1440 the sticky Ask well covers the `RECEIPTS` head on first view (items canvas boards 1a, 2a); the F10 repair drawn at 393 does not reach it. Repair it in this build, fenced at 1440.
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The Chair, shade and recall callers of F1 were not clicked in the grounding (they need a connector snapshot or a decision in a Room).
 - 2026-09-27 — round eight (Codex Astra r5): one key per confirm gesture; double-click and the pending/success transition fenced; the mistaken mark shown faithfully.

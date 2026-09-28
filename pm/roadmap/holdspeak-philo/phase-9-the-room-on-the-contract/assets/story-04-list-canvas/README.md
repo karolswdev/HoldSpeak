@@ -1,6 +1,8 @@
 # PHILO-9-04 canvas: the desk debts (the selection and the list face)
 
-**Status: DRAFT round two, for the owner's ratification** (UX-CANON §A.2). Round two pays Codex Astra r1 finding 6 (`../../checks/canvases-astra-r1.md`); the ledger is at the end. Nothing is built in product code. The story is `../../story-04-the-desk-debts.md`; the debts are measured in `docs/internal/philo/phase-9/grounding/README.md` "The D2 debts".
+**Status: RATIFIED 2026-09-27 by the owner ("Ratify as drawn"), after Codex Astra r1 DNR → r2 DNR → r3 RATIFY** (`../../checks/canvases-astra-r1.md`, `../../checks/canvases-astra-r2.md`, `../../checks/canvases-astra-r3.md`; AskUserQuestion; review page https://claude.ai/artifact/ADQeZoxRYmWfYKEfL8wePT). His pick, verbatim: "Ratify as drawn (Recommended)", all seven recommendations. This canvas: Q6 the accent selection colours (`--selection-bg: var(--accent)`, `--selection-ink: var(--bg)`); Q7 at 393 the fold line (Kind, Zone and Attention on a second line under the name). Build exactly this. The seven answers across the four canvases: Q1 items after NEEDS YOU, omitted when empty; Q2 DELIVERED ×N; Q3 To + Mark delivered above the body; Q4 grant words set A; Q5 per-project list behind a visible ▸ Projects; Q6 the accent selection colours; Q7 at 393 the fold line.
+
+Earlier status: (UX-CANON §A.2). Round two pays Codex Astra r1 finding 6 (`../../checks/canvases-astra-r1.md`); the ledger is at the end. Nothing is built in product code. The story is `../../story-04-the-desk-debts.md`; the debts are measured in `docs/internal/philo/phase-9/grounding/README.md` "The D2 debts".
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<n>-<board>-<width>.png`; rendered facts: `shots/facts.json`.
