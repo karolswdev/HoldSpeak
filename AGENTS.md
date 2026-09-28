@@ -121,7 +121,8 @@ When Muad'Dib dispatched you (`scripts/astra lane|check|counsel`), do
 NOT obtain his check yourself: report back, leave the artifact DRAFT,
 and he checks it. Only when you author something (a charter, a settled
 design, a merge verdict) and Muad'Dib is not your caller (the owner ran
-`codex` directly), get a check yourself:
+`codex` directly), you MAY get a Claude second opinion — ADVICE, never
+Muad'Dib's check (§3 still requires his):
 
 ```
 claude -p --model claude-fable-5-1 --permission-mode bypassPermissions "$(cat brief.md)"
@@ -130,9 +131,9 @@ claude -p --model claude-fable-5-1 --permission-mode bypassPermissions "$(cat br
 Record the check next to the artifact, labelled as what it is
 (`checks/<artifact>-claude-p-invoked-by-astra.md`, or a
 `## Check — claude -p (<model>), invoked by Astra, <date>` section);
-never write it as Muad'Dib's check or counsel. If he
-is unreachable, mark the artifact `UNCHECKED — Muad'Dib unreachable`
-and do not act on it.
+never write it as Muad'Dib's check or counsel. Either way, mark the
+artifact `UNCHECKED — awaiting Muad'Dib` and do not act on it until a
+Muad'Dib session has checked it.
 
 Disagreement runs one round each; then the lane owner rules and the
 dissent is recorded verbatim under "Open dissents" in the phase status
