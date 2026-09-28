@@ -1,0 +1,261 @@
+"""PHILO-9-06 fences for the closing-use driver (``scripts/philo9_room_job.py``).
+
+Every input is a real producer's output: the Phase 5 rehearsal's retained
+Codex logs (the zero-read fence's red), and this story's retained rehearsal
+(Codex's own event logs and rollouts, the hub's recorded exchanges, the
+readbacks through the contract). The reds are those records themselves and
+deliberate mutations of copies of them.
+"""
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import shutil
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location("philo9_room_job", REPO / "scripts/philo9_room_job.py")
+assert SPEC and SPEC.loader
+driver = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(driver)
+
+PHASE5_RUN = REPO / (
+    "pm/roadmap/holdspeak-philo/phase-5-the-one-service-layer/assets/story-04-shots/"
+    "final/20260925T001407Z-his-words-real"
+)
+STORY = REPO / "pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract"
+SHOTS = STORY / "assets/story-06-shots"
+#: The retained rehearsal (the first full run of the three MCP legs).
+RUN = SHOTS / "attempts/20260928T164015Z-room-job"
+
+
+def _events(stage_dir: Path) -> list[dict[str, Any]]:
+    return driver.read_events(stage_dir / "events.jsonl")
+
+
+def _copy_run(tmp_path: Path) -> Path:
+    target = tmp_path / RUN.name
+    shutil.copytree(RUN, target, ignore=shutil.ignore_patterns("*.sqlite", "rehearsal-transcript.jsonl"))
+    return target
+
+
+def _json(path: Path) -> Any:
+    return json.loads(path.read_text())
+
+
+# ── the zero-read fence (the Phase 7 implementation, one copy) ───────────
+
+
+def test_the_driver_uses_the_phase7_fences_unchanged() -> None:
+    assert driver.zero_read_findings is driver.p7.zero_read_findings
+    assert driver.account_leak_findings is driver.p7.account_leak_findings
+
+
+@pytest.mark.parametrize(("stage", "count"), [("decision_thought", 25), ("import", 3)])
+def test_the_zero_read_fence_fails_on_the_phase5_logs(stage: str, count: int) -> None:
+    findings = driver.zero_read_findings(_events(PHASE5_RUN / "codex" / stage))
+    assert len(findings) == count
+    assert {f["type"] for f in findings} == {"command_execution"}
+
+
+@pytest.mark.parametrize("stage", driver.SESSIONS)
+def test_every_retained_session_has_zero_reads_and_used_the_catalogue(stage: str) -> None:
+    events = _events(RUN / "codex" / stage)
+    assert driver.zero_read_findings(events) == []
+    audit = _json(RUN / "codex" / stage / "mcp-audit.json")
+    assert audit["chosen_tools"], f"{stage}: no holdspeak tool was called"
+    assert audit["unlisted_tools"] == []
+    assert audit["initial_context_findings"] == []
+
+
+def test_every_client_call_pairs_with_one_hub_exchange_from_the_retained_records() -> None:
+    """Re-paired from the retained events and transcript: the rehearsal's own
+    audit refused the two agent sessions before the Codex ``status: failed``
+    repair (``scripts/philo5_his_words.py`` ``_codex_mcp_calls``)."""
+    repaired = driver.repair_findings(RUN)
+    for stage in driver.SESSIONS:
+        assert repaired[f"pairing {stage}"] == [], stage
+    retained = _json(RUN / "codex" / "agent_ungranted" / "mcp-audit.json")
+    assert "project.run_steward" in str(retained["reconciliation_error"])
+
+
+def test_a_refused_call_without_the_failed_status_does_not_pair(tmp_path: Path) -> None:
+    """Codex records a server ``isError: true`` answer as ``status: failed``;
+    read as a success, the refused call pairs with no server row."""
+    run = _copy_run(tmp_path)
+    shutil.copy2(RUN / "rehearsal-transcript.jsonl", run / "rehearsal-transcript.jsonl")
+    events = run / "codex" / "agent_ungranted" / "events.jsonl"
+    rows = driver.read_events(events)
+    for row in rows:
+        if (row.get("item") or {}).get("status") == "failed":
+            row["item"]["status"] = "completed"
+    events.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    assert driver.repair_findings(run)["pairing agent_ungranted"]
+
+
+def test_a_shell_command_in_a_retained_session_turns_the_fence_red() -> None:
+    events = copy.deepcopy(_events(RUN / "codex" / "owner_job"))
+    call = next(e for e in events if e.get("type") == "item.completed"
+                and (e.get("item") or {}).get("type") == "mcp_tool_call")
+    call["item"] = {"id": "x", "type": "command_execution", "command": "cat README.md"}
+    assert len(driver.zero_read_findings(events)) == 1
+
+
+# ── the redaction and the leak fence (law XXX-12) ────────────────────────
+
+
+def test_no_retained_story06_record_holds_an_email_or_a_token() -> None:
+    assert driver.account_leak_findings(SHOTS) == []
+
+
+@pytest.mark.parametrize("planted", [
+    "someone.real@example.org",
+    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV",
+    "Authorization: Bearer abcdefghijklmnopqrstuvwx",
+])
+def test_the_leak_fence_turns_red_on_a_planted_value(tmp_path: Path, planted: str) -> None:
+    target = tmp_path / "run" / "rollout.jsonl"
+    target.parent.mkdir()
+    target.write_text((RUN / "codex" / "owner_job" / "rollout.jsonl").read_text()
+                      + json.dumps({"planted": planted}) + "\n")
+    assert driver.account_leak_findings(tmp_path / "run")
+
+
+def test_the_redaction_at_capture_removes_a_planted_address(tmp_path: Path) -> None:
+    run = _copy_run(tmp_path)
+    path = run / "codex" / "owner_job" / "last.md"
+    path.write_text(path.read_text() + "\nsent by someone.real@example.org\n")
+    assert driver.account_leak_findings(run)
+    driver.redact_run(run)
+    assert driver.account_leak_findings(run) == []
+
+
+# ── the fixture was fixed before the run ─────────────────────────────────
+
+
+def test_the_fixture_was_in_the_run_before_the_first_session() -> None:
+    assert driver.fixture_before_run_findings(RUN) == []
+    record = _json(RUN / "fixture.json")
+    assert record["fixture"]["project"] == "Payments ledger cutover"
+    assert record["fixture"]["delivery"]["delivered_to"] == ["Priya", "Tomas"]
+
+
+def test_a_fixture_written_after_the_first_session_is_red(tmp_path: Path) -> None:
+    run = _copy_run(tmp_path)
+    record = _json(run / "fixture.json")
+    record["written_at"] = _json(run / "codex" / "owner_job" / "timing.json")["finished_at"]
+    (run / "fixture.json").write_text(json.dumps(record))
+    assert any("not before the first session" in f for f in driver.fixture_before_run_findings(run))
+
+
+def test_a_changed_fixture_value_or_changed_words_are_red(tmp_path: Path) -> None:
+    run = _copy_run(tmp_path)
+    record = _json(run / "fixture.json")
+    record["fixture"]["delivery"]["delivered_to"] = ["Tomas", "Priya"]
+    (run / "fixture.json").write_text(json.dumps(record))
+    (run / "codex" / "owner_find" / "owner-prompt.txt").write_text("Find project proj-1234abcd.\n")
+    findings = driver.fixture_before_run_findings(run)
+    assert any("values differ" in f for f in findings)
+    assert any("owner_find: the words sent" in f for f in findings)
+
+
+def test_the_story_fixture_words_are_ordinary() -> None:
+    for stage, words in driver.load_fixture()["prompts"].items():
+        assert driver.prompt_findings(words) == [], stage
+
+
+# ── the sessions are isolated: fresh roots, distinct ids, no resume ──────
+
+
+def test_the_retained_sessions_are_isolated() -> None:
+    assert driver.session_isolation_findings(RUN) == []
+    ids = [_json(RUN / "codex" / s / "mcp-audit.json")["session_id"] for s in driver.SESSIONS]
+    assert len(set(ids)) == len(driver.SESSIONS)
+
+
+@pytest.mark.parametrize("mutation", ["same_session", "resumed", "shared_home", "user_config"])
+def test_each_isolation_mutation_is_red(tmp_path: Path, mutation: str) -> None:
+    run = _copy_run(tmp_path)
+    stage = run / "codex" / "owner_find"
+    if mutation == "same_session":
+        audit = _json(stage / "mcp-audit.json")
+        audit["session_id"] = _json(run / "codex" / "owner_job" / "mcp-audit.json")["session_id"]
+        (stage / "mcp-audit.json").write_text(json.dumps(audit))
+    elif mutation == "resumed":
+        (stage / "command.txt").write_text((stage / "command.txt").read_text().replace(
+            "codex exec ", "codex exec resume 0199 "))
+    elif mutation == "shared_home":
+        env = _json(stage / "environment.json")
+        env["env"]["HOME"] = _json(run / "codex" / "owner_job" / "environment.json")["env"]["HOME"]
+        (stage / "environment.json").write_text(json.dumps(env))
+    else:
+        (stage / "command.txt").write_text((stage / "command.txt").read_text().replace(
+            " --ignore-user-config", ""))
+    assert driver.session_isolation_findings(run)
+
+
+# ── the content checks compare the fixture's values ──────────────────────
+
+
+def _owner_back() -> dict[str, Any]:
+    return _json(RUN / "owner_job" / "readbacks.json")
+
+
+def test_the_owner_job_reads_back_every_fixture_value() -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    back = _owner_back()
+    assert driver.owner_job_findings(fixture, back["readbacks"]) == []
+    assert driver.owner_receipt_findings(back["receipts"]) == []
+
+
+@pytest.mark.parametrize("mutation", ["order", "due", "body", "impact", "second_run_effect"])
+def test_each_content_mutation_is_red(mutation: str) -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    back = copy.deepcopy(_owner_back()["readbacks"])
+    update = next(u for u in back["updates"] if u["lifecycle"] == "published")
+    if mutation == "order":
+        update["deliveries"].reverse()
+    elif mutation == "due":
+        fixture["milestone"]["due_at"] = fixture["run_date"]
+    elif mutation == "body":
+        update["body_md"] = update["body_md"].replace("Old ledger freeze slips", "a risk")
+    elif mutation == "impact":
+        risk = next(i for i in back["items"] if i["item_type"] == "risk")
+        risk["details_json"] = risk["details_json"].replace('"high"', '"low"')
+    else:
+        effects = back["steward_run"]["run"]["summary"]["phase_results"]["act"]["effect_receipts"]
+        effects.append({"effect_kind": "create_door_item", "outcome": "applied"})
+    assert driver.owner_job_findings(fixture, back)
+
+
+def test_a_missing_or_extra_owner_write_is_red() -> None:
+    receipts = _owner_back()["receipts"]
+    marks = [r for r in receipts if r["operation"]["name"] == "project.mark_update_delivered"]
+    assert len(marks) == 2
+    assert driver.owner_receipt_findings([r for r in receipts if r is not marks[0]])
+    assert driver.owner_receipt_findings(receipts + [marks[0]])
+
+
+def test_the_agent_leg_refused_then_ran_inside_the_bound() -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    grant = _json(RUN / "agent" / "grant.json")
+    identity = fixture["agent"]["identity"]
+    ungranted = _json(RUN / "agent_ungranted" / "readbacks.json")["receipts"]
+    granted = _json(RUN / "agent_granted" / "readbacks.json")["receipts"]
+    assert driver.agent_findings("ungranted", ungranted, identity=identity, fixture=fixture, grant_id=None) == []
+    assert driver.agent_findings("granted", granted, identity=identity, fixture=fixture,
+                                 grant_id=grant["response"]["grant_id"]) == []
+    # The same receipts against the wrong phase or grant are red.
+    assert driver.agent_findings("granted", ungranted, identity=identity, fixture=fixture,
+                                 grant_id=grant["response"]["grant_id"])
+    assert driver.agent_findings("granted", granted, identity=identity, fixture=fixture, grant_id="pdg_other")
+
+
+def test_the_run_status_is_labelled_rehearsed_and_the_face_pending() -> None:
+    status = _json(RUN / "run-status.json")
+    assert status["label"] == "REHEARSED; OWNER REVIEW PENDING"
+    assert "FACE LEG PENDING" in str(status["face"])

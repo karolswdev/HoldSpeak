@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-9-05, PHILO-9-07; the owner's rulings on Q0–Q3 (they fix the job)
 - **Unblocks:** the phase close
 - **Owner:** Astra (Luna) drives Codex; Muad'Dib checks
@@ -47,6 +47,7 @@ PROVISIONAL: about 1.5 engineering days (two legs), plus the owner's review.
 
 ## Notes
 
+- 2026-09-28 — the driver `scripts/philo9_room_job.py` (the Phase 7 machinery reused) and its fences (`tests/unit/test_philo9_room_job.py`); the fixture `story-06-fixture.json`; one rehearsal of the three MCP legs, every fixture value read back (`docs/internal/philo/phase-9/room-job/rehearsal.md`; it becomes `evidence-story-06.md` with the done flip). The AGENT leg runs as two fresh sessions (before and after the grant; the owner grants between them), the Phase 7 precedent. The face leg waits for PHILO-9-03. Status stays in-progress — Fedaykin lane (Opus 5.5).
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
 - 2026-09-27 — round seven (the owner's "Several per update"): the fixture marks delivered twice and reads both back.
 - 2026-09-27 — round six (Codex Astra r4, R4-4): three sessions; MCP-contract proof kept apart from clipboard and external-delivery claims.
