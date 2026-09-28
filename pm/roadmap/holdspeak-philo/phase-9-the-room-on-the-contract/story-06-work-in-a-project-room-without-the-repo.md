@@ -34,7 +34,7 @@ D1's closing test: a cold-context client runs a real project job from the MCP ca
 - [x] The AGENT leg: refused with receipts before the grant; executing with receipts naming the delegation after it; marking delivered refused throughout.
 - [x] "Find it cold": the fresh session finds the project from its name alone and reads its published, delivered update.
 - [x] The Room's face at 1440 and 393 shows each result; the retained sessions carry no account data (the leak fence).
-- [ ] The owner reviews the shots before merge; the evidence reads "REHEARSED; OWNER REVIEW PENDING" until he does. — PENDING: the evidence reads REHEARSED; OWNER REVIEW PENDING; his review of the final run's shots is owed before merge.
+- [x] The owner reviews the shots before merge; the evidence reads "REHEARSED; OWNER REVIEW PENDING" until he does. — REVIEWED 2026-09-28 (AskUserQuestion, verbatim: "Reviewed — close after story 05 (Recommended)"; https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD); the evidence reads REHEARSED; OWNER-REVIEWED.
 
 ## Effort (not a promise)
 
@@ -47,6 +47,7 @@ PROVISIONAL: about 1.5 engineering days (two legs), plus the owner's review.
 
 ## Notes
 
+- 2026-09-28 — the owner reviewed the closing shots (https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD), verbatim: "Reviewed — close after story 05 (Recommended)". Box 7 closed; the evidence reads REHEARSED; OWNER-REVIEWED (never a sitting). The phase closes after story 05.
 - 2026-09-28 — round four (Codex Astra r1 on #687, RATIFY-WITH-CONDITIONS, `checks/story-06-built-astra-r1.md`): the face collector counts only rows seen in the unobscured viewport; ITEMS recaptured at 1440 and 393 against a copy of the retained hub state (the 393 shot now shows the complete risk row); three face-word follow-ups ledgered in BACKLOG; historical owner-only refusals still render NO GRANT (not overclaimed).
 - 2026-09-28 — DONE on the final closing run (`assets/story-06-shots/final/20260928T172621Z-room-job`, merged main `79fdee3c` + this branch): four fresh Codex sessions and the face at 1440 and 393, every fixture value read back and shown; the grant row's board 12 state after the owner archived the project. The face's refusal and grant words aligned with the grant row's (round three). The evidence reads REHEARSED; OWNER REVIEW PENDING: the owner reviews the shots before merge. The milestone is 3 days late (the fixture), so the face says MILESTONE · 3 DAYS LATE (the ratified words with the fixture's count).
 - 2026-09-28 — round two (Muad'Dib's ruling on rehearsal one): the two catalogue gaps paid red → green (an owner-only operation refuses an agent `owner_principal_required`; `project.list` names "find a project by its name", `memory.search` no longer reads as a project search); the grant pointer to BACKLOG. Rehearsal two completed with no blocker; find it cold took `project.list`.

@@ -1,7 +1,7 @@
 # Evidence - PHILO-9-06
 
 - **Story:** PHILO-9-06 - Work in a project room without the repo (Codex)
-- **Status:** done — REHEARSED; OWNER REVIEW PENDING (the owner reviews the shots before merge)
+- **Status:** done — REHEARSED; OWNER-REVIEWED (2026-09-28, AskUserQuestion, his pick verbatim: "Reviewed — close after story 05 (Recommended)"; he reviewed https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD)
 - **Date:** 2026-09-28
 
 ## Summary
@@ -20,6 +20,10 @@ The run's own status reads BLOCKED on four lines, two driver defects, both repai
 2. The pairing refused every refused call: Codex 0.155 records a server `isError: true` answer as item `status: "failed"` and omits the flag; the canonical projection read the omission as false. Repaired in `scripts/philo5_his_words.py` `_codex_mcp_calls` (one implementation); fenced red by `test_a_refused_call_without_the_failed_status_does_not_pair`.
 
 Pending: the Room's face at 1440 and 393 (after PHILO-9-03 merges; `--face`), then the owner's review of the shots. A fresh full run with `--face` replaces this attempt as the final record.
+
+## The owner's review (2026-09-28)
+
+The owner reviewed the closing shots in https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD — including the recaptured `room-items-1-{1440,393}` shots and the board 12 archived-grant state — and picked, verbatim: "Reviewed — close after story 05 (Recommended)". The record is REHEARSED; OWNER-REVIEWED: a rehearsal he reviewed, not a sitting. The run output below keeps its label as captured ("REHEARSED; OWNER REVIEW PENDING"), written before his review.
 
 ## Round four — Codex Astra r1 on #687 (RATIFY-WITH-CONDITIONS, `checks/story-06-built-astra-r1.md`)
 
