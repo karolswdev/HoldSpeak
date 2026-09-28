@@ -79,7 +79,18 @@ Committed verbatim: `checks/story-01-built-astra-r2.md`. R1-1, 3, 4, 5 and the a
 | `tests/integration/test_phase200_recipe_catalog.py::TestWebWire::test_the_plan_compiles_against_the_real_project` | `automations.py` read the Room through the global database, not the automations service's own (a partial route context) | `operations.for_context(..., bare_db=service._db)`; the bare builds take the database the route names | green (same capture) |
 | `tests/e2e/test_philo8_one_delete_glass.py::…::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]` | not this story: the one-delete glass family times out on CI on main too (main run: `test_a_repeated_delete_never_offers_a_false_undo[list-1440]`, the same `Locator.click` 30 s timeout) | none | green locally at both widths (capture 09:09:30) |
 
-**Run 2** (the head with the three repairs): recorded below when it completes.
+**Run 2 on the final head** — https://github.com/karolswdev/HoldSpeak/actions/runs/36404423861 on `6f5f90be` (the three repairs, round three, `origin/main` 294632c0 merged): **failure**, the same jobs as main. Documentation Navigation, DeskOS Web Quality, Linux Smoke, Critical Journeys (G0) **and Integration Tests (macOS)** green; Unit Tests (25 failed, 31 errors, 10740 passed) and E2E Tests (18 failed, 356 passed) red. Compared failure-by-failure with main's own run on the merge base `294632c0` (https://github.com/karolswdev/HoldSpeak/actions/runs/36388076834: Unit Tests and E2E red, the other five green): **74 failing ids on each, 71 identical** (inherited, listed below). The three run 1 regressions (thread gate, tool count, automations) are gone. **Zero lane regressions**: the three branch-only ids were each classified on their OWN evidence — run serially at the same widths, isolated HOME, the web bundle built by the e2e conftest, on an export of main `294632c0` (capture 11:59:27) and on this branch (capture 12:00:27):
+
+| Branch-only in run 2 | Main export, local | Branch, local | Classification |
+|---|---|---|---|
+| `tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393]` | PASSED | PASSED | does not reproduce on either tree: a CI-only failure of the one-delete glass family, which fails on main's CI too with other members (main run 36388076834: `test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]`, `test_a_workbench_remove_after_a_refusal_offers_undo[1440]`, `test_the_list_row_menu_delete_removes_the_object[1440]`, all green in this branch's run) |
+| `…::test_the_list_delete_key_removes_the_selected_object[1440]` | PASSED | PASSED | the same |
+| `tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame` | PASSED | PASSED | does not reproduce; it failed on main's CI on `ffbeb04b` (run 36367372840) |
+| (run 1's) `…::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo` | PASSED at 1440 and 393 (capture 09:46:56) | PASSED at 1440 and 393 (capture 09:09:30) | the same; green in run 2 |
+
+Investigation, since none reproduces on main locally: this branch changes no web file and no desk-primitive route (`git diff --stat origin/main HEAD -- holdspeak/ web/`: only the Room's services, routes, MCP family, `operations.py`, `composition.py`, `thread_tools.py`, the updates schema). The one change on the delete path is `OperationRegistry._admits` reading `Admission.enforced`, which is true for every desk row, so the desk deletes run the kernel path unchanged (`tests/unit/test_philo7_article_xi.py`, in the scoped run, green). The member that fails changes from run to run on both main and this branch; UNKNOWN: the CI-side cause (runner timing is the likely one; not proven here).
+
+**The 71 inherited failures (identical in main run 36388076834):** Unit — `test_graph_walk_calibration.py` (34: 27 ERROR at setup, 7 FAILED; the CI runner has no Playwright Chromium under the isolated HOME), `test_graph_walk_first_paint.py` (4 ERROR, the same cause), `test_philo4_02_readable_rows.py` (6, the same cause), the Phase 143 census (5: `test_phase143_inference_capability_census.py` ×4, `test_phase143_routing_authority_census.py` ×1; BACKLOG row), `test_thread_modes.py::TestAllowLists::test_chase_size` and `test_desk_size`, `test_product_copy.py::test_recorded_copy_debt_only_shrinks`, `test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart`, `test_philo_graph_reference.py::test_council_revision_holds_the_resolutions_the_join_read` and `test_philo3_01_decision_route.py::test_pre_fix_route_answers_500_on_create` (a `git show` of a commit absent from the CI checkout); E2E — `test_graph_walk_smoke.py` [1440, 393], `test_hs200_preparation_brief_glass.py` [393], `test_hs200_task_resume_glass.py` [393], `test_hs201_12_thought_note_glass.py` (4), `test_philo8_03_then_guard.py` (2), and 6 shared one-delete members (among them `test_undo_on_the_list_keeps_the_object[1440]`, `test_undo_keeps_only_the_pending_object[1440]`, `test_a_repeated_workbench_remove_never_offers_a_false_undo`, and the two webkit cases whose browser is absent on the runner). Per file: calibration 34, readable_rows 6, one-delete 6, Phase 143 5, thought-note glass 4, first_paint 4, then_guard 2, graph_walk_smoke 2, thread_modes 2, and one each for product_copy, philo3_01, philo_graph_reference, phase200_continuity, hs200 task-resume and preparation-brief glass: 71. The exact list is the output of `.tmp/ci_compare.sh 36404423861 36388076834` ("INHERITED LIST"), reproduced in the capture below.
 
 ## Open, unpaid or unknown
 
@@ -1112,4 +1123,226 @@ SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not foun
 SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
 XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
 2716 passed, 3 skipped, 1 xfailed in 157.75s (0:02:37)
+```
+
+### Captured run — 2026-09-28T09:46:56Z
+
+- **Command:** `bash .tmp/run_base_e2e.sh tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 65665b0d74e77755b28e0a9da6270361096efa48
+
+```text
+holdspeak from /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/base-copy/holdspeak/__init__.py
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0
+holdspeak: HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.MxeHwZBHP7
+rootdir: /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/base-copy
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, xdist-3.8.0, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests/e2e/test_philo8_one_delete_glass.py ..                             [100%]
+
+==================================== PASSES ====================================
+_ TestOneDelete.test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440] _
+---------------------------- Captured stdout setup -----------------------------
+[glass_infra] web bundle rebuilt in 6.6s
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+refresh 1440: failure shown at 13.5s; status during None; DELETE at [17.9]; receipt after Retry 'Removed Refresh pending'
+_ TestOneDelete.test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[393] _
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+refresh 393: failure shown at 4.3s; status during 200; DELETE at [9.24]; receipt after Retry 'Removed Refresh pending'
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[393]
+========================= 2 passed in 80.85s (0:01:20) =========================
+```
+
+### Captured run — 2026-09-28T11:59:27Z
+
+- **Command:** `bash .tmp/run_base_e2e.sh tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393] tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440] tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 65665b0d74e77755b28e0a9da6270361096efa48
+
+```text
+holdspeak from /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/base-copy/holdspeak/__init__.py
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0
+holdspeak: HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.DuT4lVNQoq
+rootdir: /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/base-copy
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, xdist-3.8.0, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 3 items
+
+tests/e2e/test_philo8_one_delete_glass.py ..                             [ 66%]
+tests/unit/test_phase200_intel_drain.py .                                [100%]
+
+==================================== PASSES ====================================
+____ TestOneDelete.test_a_workbench_remove_works_again_after_a_refusal[393] ____
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+workbench refusal 393: DELETE after refusal 1; items 0; history ['', 'Removed Refused item\nUndo\n08s', 'Removed Refused item\nUndo\n07s', 'Removed Refused item\nUndo\n06s', 'Removed Refused item\nUndo\n05s', 'Removed Refused item\nUndo\n04s', 'Removed Refused item\nUndo\n03s', 'Removed Refused item\nUndo\n02s', 'Removed Refused item\nUndo\n01s', 'Removed Refused item', 'REMOVE ITEM FAILED · HTTP 403\nRetry\nOK', 'Removed Refused item\nUndo\n08s', 'Removed Refused item\nUndo\n07s', 'Removed Refused item\nUndo\n06s', 'Removed Refused item\nUndo\n05s', 'Removed Refused item\nUndo\n04s', 'Removed Refused item\nUndo\n03s', 'Removed Refused item\nUndo\n02s', 'Removed Refused item\nUndo\n01s', 'Removed Refused item', 'Removal committed']
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[1440] ___
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440]
+PASSED tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame
+============================== 3 passed in 58.85s ==============================
+```
+
+### Captured run — 2026-09-28T12:00:27Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -p no:cacheprovider -p no:xdist -rA tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393] tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440] tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 65665b0d74e77755b28e0a9da6270361096efa48
+
+```text
+============================= test session starts ==============================
+platform darwin -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0
+holdspeak: HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.OJUyDSw2PC
+rootdir: /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, xdist-3.8.0, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 3 items
+
+tests/e2e/test_philo8_one_delete_glass.py ..                             [ 66%]
+tests/unit/test_phase200_intel_drain.py .                                [100%]
+
+==================================== PASSES ====================================
+____ TestOneDelete.test_a_workbench_remove_works_again_after_a_refusal[393] ____
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+----------------------------- Captured stdout call -----------------------------
+workbench refusal 393: DELETE after refusal 1; items 0; history ['', 'Removed Refused item\nUndo\n08s', 'Removed Refused item\nUndo\n07s', 'Removed Refused item\nUndo\n06s', 'Removed Refused item\nUndo\n05s', 'Removed Refused item\nUndo\n04s', 'Removed Refused item\nUndo\n03s', 'Removed Refused item\nUndo\n02s', 'Removed Refused item\nUndo\n01s', 'Removed Refused item', 'REMOVE ITEM FAILED · HTTP 403\nRetry\nOK', 'Removed Refused item\nUndo\n08s', 'Removed Refused item\nUndo\n07s', 'Removed Refused item\nUndo\n06s', 'Removed Refused item\nUndo\n05s', 'Removed Refused item\nUndo\n04s', 'Removed Refused item\nUndo\n03s', 'Removed Refused item\nUndo\n02s', 'Removed Refused item\nUndo\n01s', 'Removed Refused item', 'Removal committed']
+___ TestOneDelete.test_the_list_delete_key_removes_the_selected_object[1440] ___
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393]
+PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440]
+PASSED tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame
+============================== 3 passed in 58.56s ==============================
+```
+
+### Captured run — 2026-09-28T12:01:55Z
+
+- **Command:** `bash .tmp/ci_compare.sh 36404423861 36388076834`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 65665b0d74e77755b28e0a9da6270361096efa48
+
+```text
+branch run 36404423861:       74 failing ids; main run 36388076834:       74
+SHARED (inherited):       71
+BRANCH-ONLY:
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_works_again_after_a_refusal[393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_delete_key_removes_the_selected_object[1440]
+FAILED tests/unit/test_phase200_intel_drain.py::test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame
+MAIN-ONLY:
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_workbench_remove_after_a_refusal_offers_undo[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_row_menu_delete_removes_the_object[1440]
+JOBS main:
+DeskOS Web Quality=success
+Integration Tests (macOS)=success
+Critical Journeys (G0)=success
+Unit Tests=failure
+E2E Tests (macOS)=failure
+Linux Smoke=success
+Documentation Navigation=success
+All Tests Summary=failure
+INHERITED LIST:
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_captured_value_drives_a_later_step_and_the_predicate
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_check_step_in_setup_blocks_where_it_stands
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_clicked_verb_reads_its_identity_from_its_own_response
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_clicked_verb_status_is_read_by_its_declared_route
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_different_id_beside_unchanged_old_content_fails
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_placeholder_nothing_binds_blocks_before_the_trigger
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_precondition_that_does_not_hold_blocks_the_case
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refresh_with_its_handler_removed_fails
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refusal_must_name_what_is_missing
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_refusal_status_is_read_from_the_triggers_own_response
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_restart_is_a_real_restart_and_the_value_survives
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_result_after_the_bound_is_never_a_pass
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_row_gone_is_named_never_merely_fewer
+ERROR tests/unit/test_graph_walk_calibration.py::test_a_words_only_case_is_blocked_and_never_a_keyerror
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_absence_needs_a_scope_that_exists
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_asserted_absence_is_earned_by_the_named_bound
+ERROR tests/unit/test_graph_walk_calibration.py::test_an_unresolved_placeholder_is_blocked_and_never_sent
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_negative_control_comes_out_as_stated
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_new_predicate_kind_gets_its_verdict
+ERROR tests/unit/test_graph_walk_calibration.py::test_every_observation_carries_provenance_and_before_after
+ERROR tests/unit/test_graph_walk_calibration.py::test_input_value_reads_the_field_not_the_dom_text
+ERROR tests/unit/test_graph_walk_calibration.py::test_no_calibration_verdict_comes_from_the_presence_of_a_diff
+ERROR tests/unit/test_graph_walk_calibration.py::test_protocol_field_reads_one_named_field
+ERROR tests/unit/test_graph_walk_calibration.py::test_run_ids_are_unique_per_case_brain_viewport
+ERROR tests/unit/test_graph_walk_calibration.py::test_six_calibration_cases_get_their_expected_verdicts
+ERROR tests/unit/test_graph_walk_calibration.py::test_the_operation_that_never_completes_is_incomplete_not_settled
+ERROR tests/unit/test_graph_walk_calibration.py::test_the_wrong_target_case_records_where_the_result_landed
+ERROR tests/unit/test_graph_walk_first_paint.py::test_a_later_blank_cannot_hide_behind_a_good_first_paint
+ERROR tests/unit/test_graph_walk_first_paint.py::test_first_read_paint_cannot_be_replaced_by_a_later_readable_frame[0-False-True]
+ERROR tests/unit/test_graph_walk_first_paint.py::test_first_read_paint_cannot_be_replaced_by_a_later_readable_frame[0-True-False]
+ERROR tests/unit/test_graph_walk_first_paint.py::test_first_read_paint_cannot_be_replaced_by_a_later_readable_frame[200-False-False]
+FAILED tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[1440]
+FAILED tests/e2e/test_graph_walk_smoke.py::test_the_rig_drives_j9_through_the_real_hub[393]
+FAILED tests/e2e/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read[393]
+FAILED tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[1440]
+FAILED tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_long_context_and_open_well_never_clip[393]
+FAILED tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-before_guard]
+FAILED tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-click_wait]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_delete_keeps_an_unrelated_rename_failure[webkit-393]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_delete_never_offers_a_false_undo[floor-1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_repeated_workbench_remove_never_offers_a_false_undo
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_keeps_only_the_pending_object[1440]
+FAILED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_undo_on_the_list_keeps_the_object[1440]
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_check_step_that_holds_lets_the_case_run
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_precondition_that_holds_lets_the_case_run
+FAILED tests/unit/test_graph_walk_calibration.py::test_a_relative_goto_resolves_against_the_hub
+FAILED tests/unit/test_graph_walk_calibration.py::test_prose_in_expected_words_is_not_a_placeholder
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_scheduler_wait_adapter_lets_a_timer_edge_produce_the_result
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_call_site_fixture_is_complete_and_fail_closed
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_censused_site_has_one_capability_and_source_owner
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_shared_helpers_have_semantic_callers
+FAILED tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+FAILED tests/unit/test_phase200_continuity.py::test_the_last_known_observation_survives_a_restart
+FAILED tests/unit/test_philo_graph_reference.py::test_council_revision_holds_the_resolutions_the_join_read
+FAILED tests/unit/test_philo3_01_decision_route.py::test_pre_fix_route_answers_500_on_create
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_rejects_missing_text_or_unreadable_geometry[<lambda>0]
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_rejects_missing_text_or_unreadable_geometry[<lambda>1]
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_rejects_missing_text_or_unreadable_geometry[<lambda>2]
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_rejects_missing_text_or_unreadable_geometry[<lambda>3]
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_rejects_missing_text_or_unreadable_geometry[<lambda>4]
+FAILED tests/unit/test_philo4_02_readable_rows.py::test_readable_text_uses_element_from_point_and_rejects_a_covering_dock
+FAILED tests/unit/test_product_copy.py::test_recorded_copy_debt_only_shrinks
+FAILED tests/unit/test_thread_modes.py::TestAllowLists::test_chase_size
+FAILED tests/unit/test_thread_modes.py::TestAllowLists::test_desk_size
 ```

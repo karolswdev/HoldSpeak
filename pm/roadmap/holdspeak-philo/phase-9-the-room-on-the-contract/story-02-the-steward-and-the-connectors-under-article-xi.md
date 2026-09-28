@@ -65,6 +65,7 @@ PROVISIONAL: 3.5–4.5 engineering days, plus about 0.5 for the lifecycle beat.
 
 ## Notes
 
+- 2026-09-28 — carried from PHILO-9-01 (Codex Astra r3, MISSED): the same-key concurrency race in the Room's command replay: `ProjectService._check_idempotency` reads the command before the write's transaction and `_record_command` writes `ON CONFLICT(id) DO UPDATE`, so two callers that both find a key absent both write (two revisions and change rows; for DELETE the first answers true, the second false, and the replay then answers false) (`holdspeak/services/project_service.py` `add_resource`, `remove_resource`, `_record_command`). Inherited: it reproduces on main `ffbeb04b` (Codex Astra r3 on PR #680, MISSED; `checks/story-01-built-astra-r3.md` finding 3). **Carry before claiming thread-safe retries**: story 02's execution work (the kernel path, the delivery idempotency fenced for two concurrent requests with one key) must make command ownership exclusive before any retry is called thread-safe. BACKLOG row: "PHILO-9 charter follow-ups".
 - 2026-09-27 — steward design beat linked at its assigned `docs/internal/philo/phase-9/steward-beat/README.md` home; Astra authors and Muad'Dib checks the design. Implementation ownership and story status unchanged. B1 remains separately required before the implementation brief.
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. `nudge.send` was not run in the grounding (no GitHub account on the isolated HOME).
