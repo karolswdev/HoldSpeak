@@ -77,17 +77,45 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def redact(text: Any, payload: bytes = b"") -> str:
-    """An error for a receipt, a log or the face: no payload text, at most 240 characters.
+#: A run of this many characters shared with the payload is an excerpt of it.
+EXCERPT_MIN = 10
+#: What a scan of an error reads (the rest is cut anyway): bounds the work for a 10 MB payload.
+_SCAN_LIMIT = 2000
+#: Secret shapes a CLI may echo (tokens, keys, bearer headers, key=value pairs).
+_SECRET = re.compile(
+    r"(?i)(bearer\s+\S+|(?:token|password|passwd|secret|api[_-]?key|authorization)\s*[=:]\s*(?:bearer\s+)?\S+"
+    r"|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|xox[abprs]-[A-Za-z0-9-]{10,}"
+    r"|SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}|ATATT[A-Za-z0-9_=-]{16,})")
+REDACTED = "[redacted]"
 
-    Any line that carries a fragment of the payload (a run of 12+ of its
-    characters) is removed before the cut.
+
+def redact(text: Any, payload: bytes = b"", secrets: Any = ()) -> str:
+    """An error for a receipt, a log or the face: no payload text, no secret, at most 240 characters.
+
+    Any run of ``EXCERPT_MIN`` or more characters that also occurs in the
+    payload is replaced (an excerpt, not only a whole line); each known
+    secret value and each secret-shaped token is replaced too. Then the cut.
     """
-    raw = str(text or "")
-    body = payload.decode("utf-8", errors="replace") if payload else ""
-    fragments = {chunk for chunk in re.split(r"\s{2,}|\n", body) if len(chunk.strip()) >= 12}
-    kept = [line for line in raw.splitlines() if not any(f.strip() in line for f in fragments)]
-    return " ".join(kept)[:ERROR_LIMIT]
+    raw = " ".join(str(text or "")[:_SCAN_LIMIT].split())
+    for value in secrets or ():
+        if value and len(str(value)) >= 4:
+            raw = raw.replace(str(value), REDACTED)
+    raw = _SECRET.sub(REDACTED, raw)
+    body = " ".join(payload.decode("utf-8", errors="replace").split()) if payload else ""
+    if body and len(raw) >= EXCERPT_MIN:
+        covered = [False] * len(raw)
+        for i in range(len(raw) - EXCERPT_MIN + 1):
+            if raw[i:i + EXCERPT_MIN] in body:
+                for j in range(i, i + EXCERPT_MIN):
+                    covered[j] = True
+        out: list[str] = []
+        for i, ch in enumerate(raw):
+            if not covered[i]:
+                out.append(ch)
+            elif i == 0 or not covered[i - 1]:
+                out.append(REDACTED)
+        raw = "".join(out)
+    return raw[:ERROR_LIMIT]
 
 
 @contextmanager

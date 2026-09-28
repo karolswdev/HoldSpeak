@@ -69,17 +69,12 @@ MUTATIONS = [
                                  (now_iso(), send_id))""",
      """WHERE id=?",
                                  (now_iso(), send_id))""",
-     [C + "test_send_and_discard_pressed_together_settle_once"]),
+     [C + "test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands"]),
     ("M8a the parked destination not re-read before dispatch", "holdspeak/services/channel_service.py",
-     """        if destination["state"] != "active":
-            raise ChannelRefused("destination_parked", f"Destination {destination['id']} is parked")
-        if destination["target_digest"]""",
-     """        if False:
-            raise ChannelRefused("destination_parked", f"Destination {destination['id']} is parked")
-        if destination["target_digest"]""",
+     """    if current is None or current["state"] != "active":""", """    if current is None:""",
      [C + "test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_historical_target"]),
     ("M8b the changed target digest not compared", "holdspeak/services/channel_service.py",
-     """        if destination["target_digest"] != frozen_digest:""", """        if False:""",
+     """    if current["target_digest"] != frozen_digest:""", """    if False:""",
      [C + "test_a_destination_whose_target_changed_after_prepare_is_refused"]),
     ("M9 the preview digest not compared", "holdspeak/services/channel_service.py",
      """            if contract.sha256(payload) != str(preview_digest):""", """            if False:""",
@@ -96,6 +91,12 @@ MUTATIONS = [
      """            return Outcome("unknown", f"write_{errno.errorcode.get(exc.errno or 0, 'error').lower()}")""",
      """            return Outcome("failed", f"write_{errno.errorcode.get(exc.errno or 0, 'error').lower()}")""",
      [C + "test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknown"]),
+    ("M13 the destination not re-read inside the boundary transaction (round two)", "holdspeak/services/channel_service.py",
+     """            _destination_still_frozen(conn, destination["id"], frozen_digest)\n""", "",
+     [C + "test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched"]),
+    ("M14 the redactor matches whole lines only, not excerpts (round two)", "holdspeak/services/channel_contract.py",
+     """    if body and len(raw) >= EXCERPT_MIN:""", """    if False:""",
+     [C + "test_an_excerpt_of_the_payload_and_a_secret_are_redacted"]),
 ]
 
 caught = 0

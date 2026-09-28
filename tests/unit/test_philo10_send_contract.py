@@ -45,7 +45,8 @@ from holdspeak.runtime import composition
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import (  # noqa: E402
-    SENTINEL, DispatchSpy, Hub, _boot, destination, files, history, op, ops, prepare, preview_digest, room, send,
+    SENTINEL, DispatchSpy, Hub, _boot, destination, files, history, in_thread, op, ops, prepare, preview_digest, room,
+    send,
     send_body, sends,
 )
 from test_philo9_steward_admission import AGENT_ID, _agent, _tool  # noqa: E402
@@ -471,6 +472,20 @@ def test_an_error_is_redacted_and_cut() -> None:
     assert SENTINEL not in cleaned and cleaned.startswith("gh: failed") and len(cleaned) <= 240
 
 
+def test_an_excerpt_of_the_payload_and_a_secret_are_redacted() -> None:
+    """Astra r1 finding 3: an excerpt (not a whole line) of the body, inside a CLI's error."""
+    from holdspeak.services.channel_contract import redact
+
+    payload = b"# Update\n\nThe SENTINEL-BODY-PRIVATE-94c2 cutover slipped by a week.\n"
+    cleaned = redact("parse error near SENTINEL-BODY-PRIVATE-94c2", payload)
+    assert "SENTINEL" not in cleaned and "94c2" not in cleaned and cleaned.startswith("parse error near"), cleaned
+    assert "slipped by a" not in redact("gh: 422 near 'cutover slipped by a week' in body", payload)
+    assert redact("gh: not found", payload) == "gh: not found"  # an error with no excerpt is kept
+    secret = redact("HTTP 401 Authorization: Bearer abc123def ghp_abcdefghijklmnop1234 key s3cr3tvalue",
+                    b"", secrets=["s3cr3tvalue"])
+    assert not any(v in secret for v in ("abc123def", "ghp_", "s3cr3tvalue")), secret
+
+
 # ── destinations: frozen twice, park never delete ───────────────────────
 
 
@@ -533,6 +548,58 @@ def test_remove_parks_and_keeps_history(hub: Hub, tmp_path: Path) -> None:
     assert again.status_code == 409 and again.json()["code"] == "destination_parked"
 
 
+@pytest.mark.parametrize("form", ["send_id", "inline"])
+def test_a_remove_that_commits_before_the_boundary_wins_and_nothing_is_dispatched(
+    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, form: str,
+) -> None:
+    """Astra r1 finding 2: Remove commits after the send's first destination read, before its boundary."""
+    from holdspeak.services.channel_contract import FileChannel
+
+    folder = tmp_path / "out"
+    _pid, update = room(hub)
+    dest = destination(hub, folder)
+    body = send_body(hub, form, update, dest, f"race-{form}")
+    spy = DispatchSpy(monkeypatch)
+    real = FileChannel.choose_path
+    removed: list[Any] = []
+
+    def choose_path(channel: Any, folder_: str, document: Any, send_id: str) -> str:
+        if not removed:  # the Remove lands here: after the early read, before the boundary
+            thread, box = in_thread(lambda: hub.client.delete(f"/api/channels/destinations/{dest}"))
+            thread.join(30)
+            removed.extend(box)
+        return real(channel, folder_, document, send_id)
+
+    monkeypatch.setattr(FileChannel, "choose_path", choose_path)
+    resp = send(hub, body)
+    assert removed and removed[0].status_code == 200, removed
+    assert removed[0].json()["destination"]["state"] == "parked"
+    _refused(hub, resp, "destination_parked", "channel.send")
+    assert spy.calls == 0 and files(folder) == [] and history(hub, update) == []
+    assert [s["state"] for s in sends(hub)] == (["prepared"] if form == "send_id" else [])
+
+
+@pytest.mark.parametrize("form", ["send_id", "inline"])
+def test_a_remove_after_the_boundary_parks_and_the_send_stands(
+    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, form: str,
+) -> None:
+    folder = tmp_path / "out"
+    _pid, update = room(hub)
+    dest = destination(hub, folder)
+    body = send_body(hub, form, update, dest, f"race-after-{form}")
+    spy = DispatchSpy(monkeypatch, hold="before")
+    thread, answer = in_thread(lambda: send(hub, body))
+    assert spy.entered.wait(30)  # the boundary is committed; the effect has not run
+    removed = hub.client.delete(f"/api/channels/destinations/{dest}")
+    assert removed.status_code == 200 and removed.json()["destination"]["state"] == "parked"
+    spy.release.set()
+    thread.join(60)
+    [sent] = answer
+    assert sent.status_code == 200 and sent.json()["outcome"] == "sent", sent.text
+    assert spy.calls == 1 and len(files(folder)) == 1 and len(history(hub, update)) == 1
+    assert hub.db.channel_destinations.get(dest)["state"] == "parked"
+
+
 def test_a_folder_marked_synced_is_badged_cloud(hub: Hub, tmp_path: Path) -> None:
     local = destination(hub, tmp_path / "local")
     synced = destination(hub, tmp_path / "synced", name="Synced", synced=True)
@@ -574,6 +641,26 @@ def test_send_and_discard_pressed_together_settle_once(hub: Hub, tmp_path: Path)
         assert state == ("sent" if winner == "send" else "discarded")
         winners.append(winner)
     assert len(files(folder)) == winners.count("send")
+
+
+def test_a_discard_pressed_while_the_send_dispatches_is_refused_and_the_send_stands(
+    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The race above made deterministic: Discard lands after the send's boundary committed."""
+    folder = tmp_path / "out"
+    _pid, update = room(hub)
+    dest = destination(hub, folder)
+    sid = prepare(hub, update, dest)["send"]["id"]
+    spy = DispatchSpy(monkeypatch, hold="before")
+    thread, answer = in_thread(lambda: hub.client.post("/api/channels/send", json={"send_id": sid}))
+    assert spy.entered.wait(30)
+    discarded = hub.client.post(f"/api/channels/sends/{sid}/discard", json={})
+    spy.release.set()
+    thread.join(60)
+    _refused(hub, discarded, "send_already_settled", "channel.discard")
+    [sent] = answer
+    assert sent.status_code == 200 and sent.json()["outcome"] == "sent", sent.text
+    assert hub.db.channel_sends.get(sid)["state"] == "sent" and len(files(folder)) == 1 and spy.calls == 1
 
 
 # ── the manual channel is unchanged ─────────────────────────────────────

@@ -322,11 +322,7 @@ class ChannelService:
             document_ref = document.ref
             send_id = _derived_id("chs_", handle.operation_id)
             row = None
-        # The destination, re-read before the boundary (section 5): parked or changed -> refused.
-        if destination["state"] != "active":
-            raise ChannelRefused("destination_parked", f"Destination {destination['id']} is parked")
-        if destination["target_digest"] != frozen_digest:
-            raise ChannelRefused("destination_changed", f"Destination {destination['id']} changed since prepare")
+        # The destination's state and digest are read again inside the boundary transaction (below).
         channel_name = destination["channel"]
         chan = contract.channel(channel_name)
         folder = chan.check_before_dispatch(frozen_target)
@@ -339,6 +335,10 @@ class ChannelService:
         claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')"
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
+            # The destination, read again INSIDE the boundary transaction: a Remove
+            # or an Edit that committed after the read above wins, and nothing is
+            # dispatched; one that comes after this commit parks it, and the send stands.
+            _destination_still_frozen(conn, destination["id"], frozen_digest)
             if row is not None:
                 moved = conn.execute(
                     "UPDATE channel_sends SET state='dispatching', send_operation_id=?, dispatch_started_at=?,"
@@ -400,3 +400,13 @@ class ChannelService:
 
 
 __all__ = ["ChannelService"]
+
+
+def _destination_still_frozen(conn: Any, destination_id: str, frozen_digest: str) -> None:
+    """Inside the boundary transaction: the destination is active and its target is the frozen one."""
+    current = conn.execute("SELECT state, target_digest FROM channel_destinations WHERE id=?",
+                           (destination_id,)).fetchone()
+    if current is None or current["state"] != "active":
+        raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
+    if current["target_digest"] != frozen_digest:
+        raise ChannelRefused("destination_changed", f"Destination {destination_id} changed since prepare")

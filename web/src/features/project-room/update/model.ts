@@ -101,7 +101,17 @@ export type Delivery = {
   deliveredAt: string;
   deliveredTo: string | null;
   operationId: string;
+  /** PHILO-10-01: `confirmed` (he marked it), `sent` (a channel proved it) or
+   *  `unknown` (a channel send whose result is not known: never a delivery). */
+  outcome: string;
+  /** `manual`, or the channel that sent it (`file`, ...). */
+  channel: string;
 };
+
+/** A row that counts as delivered: his confirmation or a channel's proof. */
+export function isDelivered(row: Delivery): boolean {
+  return row.outcome !== "unknown";
+}
 
 export function decodeDelivery(raw: Record<string, unknown>): Delivery {
   const to = raw.delivered_to != null ? String(raw.delivered_to).trim() : "";
@@ -111,6 +121,8 @@ export function decodeDelivery(raw: Record<string, unknown>): Delivery {
     deliveredAt: String(raw.delivered_at ?? ""),
     deliveredTo: to || null,
     operationId: String(raw.operation_id ?? ""),
+    outcome: String(raw.outcome ?? "confirmed") || "confirmed",
+    channel: String(raw.channel ?? "manual") || "manual",
   };
 }
 

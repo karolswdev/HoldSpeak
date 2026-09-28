@@ -1,0 +1,15 @@
+#!/bin/zsh
+# PHILO-10-01 round two: the UNKNOWN-face fence against the round-one face (db51c25c), then restored.
+# Run from the worktree root: zsh face_red.sh.txt  (exit 0 only when the fence is RED on the old face)
+set -u
+F=web/src/features/project-room/update
+KEEP=$(mktemp -d); H=$(mktemp -d)
+cp $F/model.ts $F/UpdatePosture.tsx $KEEP/
+trap 'cp $KEEP/model.ts $KEEP/UpdatePosture.tsx $F/; rm -rf "$KEEP" "$H" .tmp/bt-face-red' EXIT
+for f in model.ts UpdatePosture.tsx; do git show db51c25c:$F/$f > $F/$f; done
+HOME=$H PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-/Users/karol/Library/Caches/ms-playwright} \
+  .venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=.tmp/bt-face-red \
+  tests/e2e/test_philo10_01_unknown_send_face.py 2>&1 | grep -E "^E  .*DELIVERED|passed|failed"
+st=${pipestatus[1]}
+echo "fence exit on the round-one face: $st (nonzero = RED, as required)"
+[ $st -ne 0 ]
