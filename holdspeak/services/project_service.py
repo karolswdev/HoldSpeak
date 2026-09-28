@@ -4833,21 +4833,11 @@ class ProjectService:
         ``result``: the whole response to replay (PHILO-9-01 round three);
         by default the envelope alone, as before.
         """
-        now_iso = datetime.now().isoformat()
-        result_json = json.dumps(result if result is not None else _envelope_to_dict(envelope), ensure_ascii=False)
-        conn.execute(
-            """
-            INSERT INTO project_commands (
-                id, project_id, command_kind, request_hash,
-                status, result_json, completed_at, created_at
-            ) VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
-                status = 'completed',
-                result_json = excluded.result_json,
-                completed_at = excluded.completed_at
-            """,
-            (
-                command_id, project_id, command_kind, request_hash,
-                result_json, now_iso, now_iso,
-            ),
+        # PHILO-9-02 round three (ruling A): the one answer per command, and
+        # the admitted operation running this call ends in THIS transaction.
+        from holdspeak.services import project_kernel
+
+        project_kernel.answered(
+            conn, command_id=command_id, project_id=project_id, command_kind=command_kind,
+            request_hash=request_hash, answer=result if result is not None else _envelope_to_dict(envelope),
         )

@@ -4166,16 +4166,6 @@ CREATE TABLE IF NOT EXISTS project_update_deliveries (
 CREATE INDEX IF NOT EXISTS idx_project_update_deliveries_update
     ON project_update_deliveries(update_id);
 
--- PHILO-9-02 (Codex Astra r1 finding 5): an admitted Room operation's
--- original answer, written in the SAME transaction as its succeeded receipt,
--- so a replay of its key answers exactly it (the class of story 01's
--- project_commands.result_json, for every admitted row). Append-only.
-CREATE TABLE IF NOT EXISTS project_operation_results (
-    operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
-    result_json TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
 -- bounds (retry counts, per-run action caps, cooldowns per STW-008).
 CREATE TABLE IF NOT EXISTS steward_policies (

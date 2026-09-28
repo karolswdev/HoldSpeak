@@ -458,13 +458,13 @@
     {
      "path": "holdspeak/services/steward_contract.py",
      "symbol": "def start_run",
-     "line": 202,
+     "line": 209,
      "claim": "a start is admitted and answers its run and its non-terminal operation at once"
     },
     {
      "path": "holdspeak/services/steward_contract.py",
      "symbol": "def _close_run",
-     "line": 426,
+     "line": 433,
      "claim": "the run row and the run operation's one receipt commit in one transaction"
     },
     {

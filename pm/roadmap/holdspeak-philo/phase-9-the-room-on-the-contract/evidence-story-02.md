@@ -63,6 +63,21 @@ Named behaviour changes in round two: `run_once` on a project with an active run
 
 **Story 02's atlas cases:** `docs/internal/philo/graph/atlas-phase9-steward.json` (its own file, so story 05 assembles it beside `atlas-phase9.json`): `case.p9.steward.run_receipted`, `case.p9.update.mark_delivered_receipted`, `case.p9.project.archive_receipted`, `case.p9.connections.never_checked`. Actual observations (all `pass`, real hub, isolated HOME): `docs/internal/philo/graph/observations/muaddib/20260928T1449*Z-case.p9.*-muaddib-1440/observation.json`. `docs/generated/graph.json` joins `atlas.json` only, so it does not change (story 05 assembles). The atlas cases were not run red on the 24576f25 export.
 
+## Round three (Codex Astra r2 on 7119cfd9; Muad'Dib's rulings A-D)
+
+Counsel r2 (`checks/story-02-built-astra-r2.md`, DO-NOT-RATIFY, narrowing) confirmed r1 F1, F3, F4, F6, F7 and F8 paid. Its reproductions (`/tmp/holdspeak-counsel-684-r2-*.py`) are ported into `tests/unit/test_philo9_02_round_three.py`. Red: `assets/story-02-proof/red-7119cfd9-round-three.txt` (an export of `7119cfd9`, the fence file copied in: 9 failed, 0 passed; every red is an assertion, none a missing symbol: the injection seams fall back to 7119cfd9's own). Green: the captured runs below. Mutations M40-M44 added (44 run, 0 missed).
+
+| Ruling / finding | Fix | Fence: red at 7119cfd9 → green |
+|---|---|---|
+| A (P1 publication replay after a terminal rollback; two replay stores) | `project_operation_results` removed (it never shipped). Story 01's `project_commands.result_json` is the one answer per command: `project_kernel.answered` records the whole answer and, when the admitted operation of that command kind is running the call, ends it (succeeded, receipt) inside the service's OWN transaction (`journal_atomic.transition_and_receipt_in`). `ProjectService._record_command`, `ProjectDeltaService._record_command` (decisions now record their whole answer) and `publish_update` call it. A failure inside that transaction rolls back the domain write, the answer and the receipt; a non-domain failure leaves the operation open for the retry to take over (`project_kernel._unwind`) | `test_a_there_is_one_replay_store` ("stored in two tables"); `test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http,mcp × answer,receipt]` ("the publication committed without its answer"): nothing published, no answer, no receipt; the retry publishes and answers; a second retry answers the same body. M40, M41 |
+| B (P2 policy replay pairs changed terms with the old receipt; HTTP drops `command_id`) | `configure_policy` records its answer in its terminal transaction; the kernel's replay answers that record for the writes with no replay of their own (`RECORD_ANSWERS`: publish, policy); `PUT /api/projects/{id}/steward/policy` forwards `command_id` | `test_b_a_policy_retry_answers_its_own_terms_over_mcp`, `..._over_http` ("the HTTP route dropped command_id"). M34, M42 |
+| C (P2 an approved, unclaimed child without a receipt after its parent ends) | `broker.decide`: the claim deadline (`expires_at`) is clamped by `desk_broker.child_deadline` too; the reaper, deepest first, refuses the child before its parent | `test_c_an_unclaimed_child_is_settled_before_its_expired_parent` ("the claim outlives the parent"). M43 |
+| D (P2 the scheduled model child refused `declared_capability_required`) | `project_kernel._call` keeps `rooms.project_path()` while the service executes, so the scheduler's `inference.invoke` under the draft effect is admitted | `test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child`: a producer-minted deployment, the REAL `InferenceRunner`, the provider boundary reached, the invocation a scheduler child of the draft effect with its receipt. It replaces the captured-runner test (removed from `test_philo9_02_round_two.py`). M38, M44 |
+
+Also paid: two fences this branch had turned red since round one (green on main `1f332bc3`, red at `7119cfd9`): `tests/unit/test_philo5_one_decision.py::test_the_catalogue_is_explicit_descriptors` (the 24 story 02 rows added to its explicit list) and `tests/unit/test_project_revision_law.py::TestRouteLevelPassThrough::test_restore_route_success` (its bare router has no authenticated principal, and the archive route is now admitted; the test archives through the service, the restore route under test is exempt). The atlas line anchors moved (`steward_contract.py` 202 → 209, 426 → 433); the four atlas cases re-run on this tree: all pass (`.tmp/graph-walk/philo9-02-r3`, not committed; the committed observations stand).
+
+Not changed, stated plainly: `project.mark_update_delivered` answers a replay from its delivery row (immutable, keyed by its operation; the ratified D1 design), and `project.stop_steward` answers `{success, run_id}` from its arguments; neither reads mutable state, so neither records a second copy. The asynchronous `project.run_steward` and `project.steward.trigger` keep their pending-handle replay (the trigger has no project for a `project_commands` row).
+
 ## Round two, delta: the declared result shapes (story 07's lane found it)
 
 `tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here` was red on this branch (`aeae7bd8`, `7119cfd9`) and green on main `1f332bc3`: story 02's rows declare braced result shapes, and the fence runs a real producer for every braced declaration. Classification: a fence to extend honestly, and it found three wrong declarations. Twelve producers were added (each through `hub.root.operations.invoke` on a real hub; `gh`/`acli` are canned runners at the process edge). With them, three of story 02's declarations did not match the service's real answer (`assets/story-02-proof/red-7119cfd9-declared-shapes.txt`, the new fence on a `7119cfd9` export: 3 failed): `nudge.send` returns `{success, receipt}` (declared `{step_id, state, receipt}`); `project.stop_steward` returns `{success, run_id}` (the kernel's `operation_id` and `receipt` are added by the transport); `project.watch.evaluate` returns the evaluation (`{watch_id, evaluation_id, state, transitions, observation_ids, message}`). The three declarations now state the real shape; `docs/generated/operations.json` and `api-reference.json` regenerated. Green: the capture below.
@@ -921,4 +936,214 @@ Documentation coverage checked.
 RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-02
 Documentation navigation: 3 files checked; local targets and Markdown headings resolve.
 DOCS RC=0
+```
+
+### Captured run — 2026-09-28T15:49:05Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest -q -n 8 -p no:cacheprovider -rf tests/integration/test_actuator_kernel_real_hub.py tests/integration/test_hs165_mcp_walk.py tests/integration/test_kernel_real_hub.py tests/integration/test_principal_separation.py tests/integration/test_review_routes.py tests/integration/test_steward_routes.py tests/integration/test_update_routes.py tests/integration/test_watch_compounding.py tests/mcp/test_hs168_connection_tools.py tests/unit/test_db.py tests/unit/test_docs_navigation.py tests/unit/test_door_routes.py tests/unit/test_github_provider.py tests/unit/test_hs166_walk_fixes.py tests/unit/test_hs167_close_fixes.py tests/unit/test_hs167_debts.py tests/unit/test_hs167_walk_fixes.py tests/unit/test_hs168_connections_service.py tests/unit/test_hs168_walk_fixes.py tests/unit/test_hs169_door.py tests/unit/test_hs169_room_copy.py tests/unit/test_hs169_wire.py tests/unit/test_hs172_loop_wire.py tests/unit/test_hs173_health_wire.py tests/unit/test_hs173_nudge_wire.py tests/unit/test_hs175_door_orphan.py tests/unit/test_hs175_meeting_watch.py tests/unit/test_inference_kernel.py tests/unit/test_kernel_broker.py tests/unit/test_kernel_effect_fence.py tests/unit/test_mcp_thoughts.py tests/unit/test_mesh_receiver_authority.py tests/unit/test_mesh_relay_queue.py tests/unit/test_one_path_provenance.py tests/unit/test_phase143_inference_fallback_controller.py tests/unit/test_phase200_meeting_outcomes.py tests/unit/test_phase200_one_composition_root.py tests/unit/test_phase200_watch_arming.py tests/unit/test_philo_census.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo_graph_reference.py tests/unit/test_philo5_graph_op.py tests/unit/test_philo5_one_decision.py tests/unit/test_philo5_the_loop.py tests/unit/test_philo7_article_xi.py tests/unit/test_philo7_atlas.py tests/unit/test_philo7_compat.py tests/unit/test_philo7_contract.py tests/unit/test_philo7_discovery.py tests/unit/test_philo7_grant_lifecycle.py tests/unit/test_philo7_grant_restart.py tests/unit/test_philo7_membership_decisions.py tests/unit/test_philo7_round_two.py tests/unit/test_philo8_atlas.py tests/unit/test_philo9_02_rig_op.py tests/unit/test_philo9_02_round_three.py tests/unit/test_philo9_02_round_two.py tests/unit/test_philo9_04_atlas.py tests/unit/test_philo9_b1_connections.py tests/unit/test_philo9_command_race.py tests/unit/test_philo9_compat.py tests/unit/test_philo9_contract.py tests/unit/test_philo9_delivery_record.py tests/unit/test_philo9_discovery.py tests/unit/test_philo9_mark_delivered.py tests/unit/test_philo9_rig_op.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_steward_lifecycle.py tests/unit/test_philo9_steward_restart.py tests/unit/test_privileged_desktop_executor.py tests/unit/test_project_mcp_commands.py tests/unit/test_project_mcp_driver.py tests/unit/test_project_mcp_palette.py tests/unit/test_project_mcp.py tests/unit/test_project_revision_law.py tests/unit/test_project_room_schema.py tests/unit/test_project_service_characterization.py tests/unit/test_project_setup_service.py tests/unit/test_project_updates_schema.py tests/unit/test_rails_observer.py tests/unit/test_review_decisions.py tests/unit/test_speech_side_door_admission.py tests/unit/test_steward_conductor.py tests/unit/test_steward_effects.py tests/unit/test_steward_engine.py tests/unit/test_steward_run_due.py tests/unit/test_steward_schema.py tests/unit/test_update_drafter.py tests/unit/test_watch_evaluate_due.py tests/unit/test_watch_graduation_schema.py tests/unit/test_watch_legacy_compat.py tests/unit/test_watch_no_third_door.py tests/unit/test_watch_service.py tests/web/test_hs168_connections_routes.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 57760232229ab8188bdd862123a0a4eaf1ada977
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+.......................................................................s [ 10%]
+s................s...................................................... [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 21%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 43%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+.......................................s................................ [ 76%]
+....................................................s................... [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 84%]
+........................................................................ [ 87%]
+........................................................................ [ 90%]
+.............................................................s.......... [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+...................................                                      [100%]
+2621 passed, 6 skipped in 223.81s (0:03:43)
+```
+
+### Captured run — 2026-09-28T15:53:12Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python .tmp/mutate.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 57760232229ab8188bdd862123a0a4eaf1ada977
+
+```text
+RED (caught): M1 admission not enforced (the registry runs admitted rows without the kernel) [holdspeak/operations.py] -> FAILED tests/unit/test_philo9_steward_admission.py::test_each_admitted_mcp_tool_is_one_operation_with_one_receipt[watch rules] | FAILED tests/unit/test_philo9_steward_admission.py::test_each_admitted_mcp_tool_is_one_operation_with_one_receipt[watch test] | 49 failed in 834.93s (0:13:54)
+RED (caught): M2 the grant check point grants every agent [holdspeak/kernel/project.py] -> FAILED tests/unit/test_philo9_steward_admission.py::test_an_agent_without_a_grant_is_refused_with_a_receipt_and_nothing_changes[unattended on] | FAILED tests/unit/test_philo9_steward_admission.py::test_an_agent_without_a_grant_is_refused_with_a_receipt_and_nothing_changes[watch pause] | 13 failed in 10.34s
+RED (caught): M3 B2: the edge keeps OWNER for the Room's admitted routes [holdspeak/principals.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_admission.py:535: AssertionError: ('project.door.count', {'error': 'principal_right_required', 'missing_right': 'owner', 'principal': 'agent', 'principal_identity': 'remote-project-agent', ...}) | FAILED tests/unit/test_philo9_steward_admission.py::test_b2_a_project_credential_over_http_is_refused_with_a_receipt | 1 failed in 1.51s
+RED (caught): M4 B2: the adapter drops the exempt form's OWNER right [holdspeak/web/routes/project_door.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_admission.py:554: AssertionError: {"projectId":"proj-5bdfccda53e8"} | FAILED tests/unit/test_philo9_steward_admission.py::test_b2_protocol_refusals_stay_receipt_less | 1 failed in 1.51s
+RED (caught): M5 B2: a malformed body is FastAPI's (no receipt) [holdspeak/web/routes/_room_kernel.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_admission.py:127: AssertionError: [] | FAILED tests/unit/test_philo9_steward_admission.py::test_b2_a_malformed_identifiable_write_is_refused_invalid_arguments_with_a_receipt | 1 failed in 21.40s
+RED (caught): M6 source addition arms no watch [holdspeak/services/project_service.py] -> FAILED tests/unit/test_philo9_steward_admission.py::test_a_github_suggestion_becomes_a_resource_and_a_watch[http] | FAILED tests/unit/test_philo9_steward_admission.py::test_a_github_suggestion_becomes_a_resource_and_a_watch[mcp] | 2 failed in 2.03s
+RED (caught): M7 a Jira suggestion accepted without a connection [holdspeak/services/suggested_source_service.py] -> FAILED tests/unit/test_philo9_steward_admission.py::test_a_jira_suggestion_without_a_connected_account_is_refused_and_stays_pending[http] | FAILED tests/unit/test_philo9_steward_admission.py::test_a_jira_suggestion_without_a_connected_account_is_refused_and_stays_pending[mcp] | 2 failed in 2.05s
+RED (caught): M8 the link's meeting watch is a second top-level admission [holdspeak/services/watch_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_admission.py:422: AssertionError: [{'authority_basis': 'authenticated_principal+declared_capability+hard_prerequisites+interruption_policy', 'name': 'pr...","watch_id":"w_c4bb50107154","project_id":"proj-db7d360fb596","connector_id":"meeting","why":"meeting linked"}', ...}] | FAILED tests/unit/test_philo9_steward_admission.py::test_a_link_is_one_top_level_admission_and_its_meeting_watch_is_its_child | 1 failed in 1.32s
+RED (caught): M9 archive does not stamp the policy's owner operation [holdspeak/services/project_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_admission.py:443: AssertionError: assert 'op_095a6e6c4...f867a18b4475d' == 'op_3f64225c2...bf48176b76fa8' | FAILED tests/unit/test_philo9_steward_admission.py::test_archive_as_the_owner_is_one_operation_and_its_pause_and_unattended_off_are_inside | 1 failed in 1.31s
+RED (caught): M10 F20: COMPARE reads the old key [holdspeak/services/project_steward_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:389: AssertionError: (['prev_c16d3f790279477d9c0ffccd759bd7e0', 'prev_c16d3f790279477d9c0ffccd759bd7e0'], {'proposal_count': 0, 'proposals': [], 'review_id': ''}) | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l7_compare_and_proposal_creation_record_the_review_open_review_returned | 1 failed in 1.37s
+RED (caught): M11 L1: the command key is not derived (a replay is a new operation) [holdspeak/services/project_kernel.py] -> FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l1_one_run_and_one_operation_for_a_command_key_under_concurrent_replay | FAILED tests/unit/test_philo9_mark_delivered.py::test_a_repeat_of_one_key_and_payload_answers_the_original | 2 failed in 2.08s
+RED (caught): M12 L1: the start writes its receipt at once (no pending handle) [holdspeak/services/steward_contract.py] -> FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l1_a_start_returns_the_run_and_its_operation_non_terminal_while_it_works[http] | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l1_a_start_returns_the_run_and_its_operation_non_terminal_while_it_works[mcp] | 2 failed in 2.08s
+RED (caught): M13 L3: the run row is written outside the terminal transaction [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:268: assert False | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l3_a_fault_inside_the_terminal_transaction_rolls_all_three_writes_back | 1 failed in 21.28s
+RED (caught): M14 L4: completion does not re-read the stop under its transaction [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:314: AssertionError: assert ('completed',...completed', 1) == ('interrupted...requested', 1) | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l4_a_stop_committed_before_completion_wins | 1 failed in 1.36s
+RED (caught): M15 L4: stop does not re-read a terminal run [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:323: AssertionError: {"success":true,"run_id":"pstrun_b1941ce63c6b52b794741e89252234f6","operation_id":"op_b9cef5d32bb34ec4a49c30f29d18d037","receipt":{"receipt_id":"rcpt_074ec05126634f4a9a0d488475f87533","operation_id":"op_b9cef5d32bb34ec4a49c30f29d18d037","state":"succeeded","outcome":"stop_requested","result_ref":"steward_run:pstrun_b1941ce63c6b52b794741e89252234f6","created_at":1790611709.9937851,"actor_kind":"owner","actor_identity":"owner-session","delegator_kind":"","delegator_identity":"","authority_basis"
+RED (caught): M16 L5: no boundary check before a child (inside the proposal batch) [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:359: AssertionError: assert [('project.de...', 'refused')] == [('project.de... 'succeeded')] | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_l5_a_stop_between_two_proposal_acceptances_prevents_the_second | 1 failed in 6.91s
+RED (caught): M17 A1: a child does not name the run's frozen authority [holdspeak/kernel/project_codec.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:410: AssertionError: assert 'authenticate...uption_policy' == 'project-stew...29f2eeab5bba7' | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_a1_each_executed_effect_is_a_child_with_the_runs_actor_and_frozen_authority | 1 failed in 6.81s
+RED (caught): M18 A4: the policy digest is not checked [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:452: AssertionError: assert ('completed',..., 'completed') == ('interrupted...licy_changed') | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_a4_a_changed_policy_refuses_the_next_child_and_the_run_ends_refused | 1 failed in 1.46s
+RED (caught): M19 A4: a running run reads the live policy (a later save enlarges it) [holdspeak/services/project_steward_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:480: AssertionError: assert [{'authority_...effect', ...}] == [] | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_a4_a_first_policy_saved_during_a_no_policy_owner_run_does_not_stop_it | 1 failed in 1.43s
+RED (caught): M20 A6: a scheduler start needs no recorded policy [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:542: KeyError: 'code' | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_a6_a_scheduled_run_without_a_recorded_policy_is_refused_steward_policy_required | 1 failed in 1.36s
+RED (caught): M21 R4-1: stop is not bound to the stored run's requester [holdspeak/kernel/project_codec.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_lifecycle.py:578: AssertionError: {'code': 'project_delegation_required', 'error': 'The kernel refused project.stop_steward: project_delegation_required...t-agent', 'actor_kind': 'agent', 'authority_basis': 'refused_at_admission', 'created_at': 1790611735.070406, ...}, ...} | FAILED tests/unit/test_philo9_steward_lifecycle.py::test_r4_1_an_agents_stop_of_the_owners_run_is_refused_with_a_receipt | 1 failed in 1.55s
+RED (caught): M22 L6: the startup recovery is not wired [holdspeak/web_server.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_steward_restart.py:179: AssertionError: {'op_ed5c1f7586a14b92b594bca40b466556': ('op_ed5c1f7586a14b92b594bca40b466556', 'project.run_steward', 'claimed', '', None)} | FAILED tests/unit/test_philo9_steward_restart.py::test_l6_a_real_restart_ends_every_steward_operation_and_its_run_once[running] | 1 failed in 3.42s
+RED (caught): M23 D2: the delivery row is inserted outside the terminal transaction [holdspeak/services/project_update_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_mark_delivered.py:252: AssertionError: {'operation_id': 'op_d94ce10629f4415e866fb40128915b02', 'outcome': 'failed', 'state': 'failed'} | FAILED tests/unit/test_philo9_mark_delivered.py::test_a_failure_after_the_insert_leaves_no_row_no_state_no_receipt_and_a_replay_succeeds_once | 1 failed in 1.53s
+RED (caught): M24 D2: delivered_at is the write time, not the confirmation time [holdspeak/services/project_update_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_mark_delivered.py:263: AssertionError: assert '2026-09-28T16:09:05+00:00' == '2026-09-28T16:09:04+00:00' | FAILED tests/unit/test_philo9_mark_delivered.py::test_a_failure_after_the_insert_leaves_no_row_no_state_no_receipt_and_a_replay_succeeds_once | 1 failed, 2 passed in 3.74s
+RED (caught): M25 D1: a replay of a mark's key makes a second row [holdspeak/services/project_update_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_mark_delivered.py:160: KeyError: 'delivery' | FAILED tests/unit/test_philo9_mark_delivered.py::test_a_repeat_of_one_key_and_payload_answers_the_original | 1 failed in 1.31s
+RED (caught): M26 law 9: the kernel's replay lookup holds no write lock [holdspeak/kernel/journal_atomic.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_command_race.py:92: AssertionError: the loser raised instead of replaying: [IntegrityError('UNIQUE constraint failed: kernel_operations.principal_identity, kernel_operations.idempotency_key')] | FAILED tests/unit/test_philo9_command_race.py::test_the_kernel_replay_lookup_holds_the_write_lock | 1 failed in 0.44s
+RED (caught): M27 law 9: a Room command's write takes no lock and does not look again [holdspeak/services/project_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_command_race.py:123: AssertionError: a caller raised: [IntegrityError('UNIQUE constraint failed: project_changes.id')] | FAILED tests/unit/test_philo9_command_race.py::test_a_room_command_replay_holds_the_write_lock | 1 failed in 0.46s
+RED (caught): M28 law 9: a replay of an admitting operation re-runs its admission [holdspeak/kernel/broker.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_mark_delivered.py:205: AssertionError: ['{"success":true,"delivery":{"id":"pdel_459f6c715bea14dd","update_id":"pupd_fbec5b0d166a471fbc51caf32fb5ad35","projec...licy","target_ref":"project_update:pupd_fbec5b0d166a471fbc51caf32fb5ad35"}}', '{"error":"operation_already_terminal"}'] | FAILED tests/unit/test_philo9_mark_delivered.py::test_two_concurrent_requests_with_one_key_make_one_row | 1 failed in 1.34s
+RED (caught): M29 f1: the run write is not state-guarded [holdspeak/db/steward.py] -> FAILED tests/unit/test_philo9_02_round_two.py::test_f1_the_run_repository_never_writes_a_terminal_run_back[interrupted] | FAILED tests/unit/test_philo9_02_round_two.py::test_f1_the_run_repository_never_writes_a_terminal_run_back[completed] | 2 failed, 2 passed in 3.29s
+RED (caught): M30 f2: a child's deadline is not clamped to its parent's [holdspeak/kernel/broker.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:167: AssertionError: child outlives its parent | FAILED tests/unit/test_philo9_02_round_two.py::test_f2_a_childs_deadline_is_clamped_and_descendants_settle_first | 1 failed in 1.28s
+RED (caught): M31 f2: the reaper settles parents first [holdspeak/kernel/liveness.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:171: AssertionError: ['op_83d049ff157c4f85b53a7185b4e3aa50', 'op_c049e9beda1e4323a8ca5a5bef05f6f8'] | FAILED tests/unit/test_philo9_02_round_two.py::test_f2_a_childs_deadline_is_clamped_and_descendants_settle_first | 1 failed in 1.27s
+RED (caught): M32 f3: the trigger evaluates without admitting a child [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:212: AssertionError: provider evaluation has no admitted child of trigger | FAILED tests/unit/test_philo9_02_round_two.py::test_f3_the_triggers_watch_evaluation_is_an_admitted_child | 1 failed in 1.27s
+RED (caught): M33 f4: a start replay answers without its durable run [holdspeak/services/project_kernel.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:241: AssertionError: the replay answered before the run was durable | FAILED tests/unit/test_philo9_02_round_two.py::test_f4_a_concurrent_start_replay_answers_the_durable_run | 1 failed in 1.86s
+RED (caught): M34 f5: a replay does not answer the stored original [holdspeak/services/project_kernel.py] -> FAILED tests/unit/test_philo9_02_round_two.py::test_f5_a_publication_retry_answers_the_original_success_and_receipt | FAILED tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_mcp | 2 failed in 2.12s
+RED (caught): M35 f6: an accepted suggestion's watch declares passed/established [holdspeak/services/project_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:303: AssertionError: accepted suggestion declares an untested watch passed | FAILED tests/unit/test_philo9_02_round_two.py::test_f6_an_accepted_suggestions_watch_is_untested_and_unbaselined | 1 failed in 1.45s
+RED (caught): M36 f7: a missing gh rewrites a cached row [holdspeak/services/github_provider.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_two.py:325: AssertionError: cached GitHub state changed without a probe | FAILED tests/unit/test_philo9_02_round_two.py::test_f7_a_cached_github_row_keeps_its_stored_state | 1 failed in 0.61s
+RED (caught): M37 f8: the stored GitHub status drops the account [holdspeak/services/connections_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/web/test_hs168_connections_routes.py:237: assert None is not None | FAILED tests/web/test_hs168_connections_routes.py::TestSuggestAnnotation::test_proposals_carry_connection | 1 failed, 6 passed in 4.06s
+RED (caught): M38 f9: a model draft under the draft effect has no parent [holdspeak/services/project_update_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_three.py:271: AssertionError: scheduler child was refused before reaching the provider boundary: [{'operation_id': 'op_e5190cec2a5646c59455b95554e3d69b', 'name': 'project.steward.effect', 'parent_operation_id': 'op_b3ff14a10faa433c98885507a04b8f69', 'principal_kind': 'scheduler'}, {'operation_id': 'op_ef79918b206740ba88a384b7f5b1494c', 'name': 'inference.invoke', 'parent_operation_id': '', 'principal_kind': 'scheduler'}] | FAILED tests/unit/test_philo9_02_round_three.py::test_d_a_scheduled_model_draft_is_admitted_as_the_effec
+RED (caught): M39 f9: run_once works unadmitted [holdspeak/services/project_steward_service.py] -> /Users/karol/dev/tools/wt-philo-9-02/holdspeak/services/steward_contract.py:221: RuntimeError: project.run_steward runs only as an admitted operation | FAILED tests/unit/test_philo9_02_round_two.py::test_f9_run_once_is_an_admitted_operation_with_its_receipt | 1 failed in 1.63s
+RED (caught): M40 A: the service's transaction does not end the operation (terminal after its commit) [holdspeak/services/project_kernel.py] -> FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http-receipt] | FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-receipt] | 2 failed, 2 passed in 4.35s
+RED (caught): M41 A: a failure in the terminal transaction closes the operation failed (no take-over) [holdspeak/services/project_kernel.py] -> FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-answer] | FAILED tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-receipt] | 4 failed in 4.35s
+RED (caught): M42 B: the HTTP policy route drops command_id [holdspeak/web/routes/steward.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_three.py:179: AssertionError: the HTTP route dropped command_id | FAILED tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_http | 1 failed in 1.56s
+RED (caught): M43 C: an approved child's claim deadline is not clamped [holdspeak/kernel/broker.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_three.py:218: AssertionError: the claim outlives the parent | FAILED tests/unit/test_philo9_02_round_three.py::test_c_an_unclaimed_child_is_settled_before_its_expired_parent | 1 failed in 1.80s
+RED (caught): M44 D: the Room's trusted path ends before the service executes [holdspeak/services/project_kernel.py] -> /Users/karol/dev/tools/wt-philo-9-02/tests/unit/test_philo9_02_round_three.py:271: AssertionError: scheduler child was refused before reaching the provider boundary: [{'operation_id': 'op_1d811b41e1c64c48862caa34f19efa73', 'name': 'project.steward.effect', 'parent_operation_id': 'op_df1f4a38c17347fbb272ae3ddf5da34a', 'principal_kind': 'scheduler'}, {'operation_id': 'op_acbb9a9b4401477b8668f4d4b08db8e3', 'name': 'inference.invoke', 'parent_operation_id': '', 'principal_kind': 'scheduler'}] | FAILED tests/unit/test_philo9_02_round_three.py::test_d_a_scheduled_model_draft_is_admitted_as_the_effec
+MUTATIONS: 44 run, 0 missed
+```
+
+### Captured run — 2026-09-28T16:10:48Z
+
+- **Command:** `bash .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 57760232229ab8188bdd862123a0a4eaf1ada977
+
+```text
+== gen_operations_json.py --check
+OK docs/generated/operations.json
+== gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  237 tools across 42 families
+== check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== philo_api_reference.py --check
+API reference checked
+== philo_boundary_census.py --check
+Boundary candidate census checked
+== philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== philo_config_reference.py --check
+Configuration declaration reference is current
+== philo_graph_reference.py --check
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== check_doc_coverage.py --check
+Documentation coverage checked.
+== residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-02
+Documentation navigation: 3 files checked; local targets and Markdown headings resolve.
+DOCS RC=0
+```
+
+### Captured run — 2026-09-28T16:11:07Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest --collect-only -q -p no:cacheprovider tests/unit/test_philo9_02_round_three.py tests/unit/test_philo9_02_round_two.py tests/unit/test_philo5_the_loop_r2.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 57760232229ab8188bdd862123a0a4eaf1ada977
+
+```text
+tests/unit/test_philo9_02_round_three.py::test_a_there_is_one_replay_store
+tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http-answer]
+tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[http-receipt]
+tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-answer]
+tests/unit/test_philo9_02_round_three.py::test_a_a_failure_in_the_terminal_transaction_rolls_back_the_publication[mcp-receipt]
+tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_mcp
+tests/unit/test_philo9_02_round_three.py::test_b_a_policy_retry_answers_its_own_terms_over_http
+tests/unit/test_philo9_02_round_three.py::test_c_an_unclaimed_child_is_settled_before_its_expired_parent
+tests/unit/test_philo9_02_round_three.py::test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child
+tests/unit/test_philo9_02_round_two.py::test_f1_a_late_worker_cannot_resurrect_a_reaped_run
+tests/unit/test_philo9_02_round_two.py::test_f1_the_run_repository_never_writes_a_terminal_run_back[interrupted]
+tests/unit/test_philo9_02_round_two.py::test_f1_the_run_repository_never_writes_a_terminal_run_back[completed]
+tests/unit/test_philo9_02_round_two.py::test_f1_the_run_repository_never_writes_a_terminal_run_back[failed]
+tests/unit/test_philo9_02_round_two.py::test_f2_a_childs_deadline_is_clamped_and_descendants_settle_first
+tests/unit/test_philo9_02_round_two.py::test_f3_the_triggers_watch_evaluation_is_an_admitted_child
+tests/unit/test_philo9_02_round_two.py::test_f4_a_concurrent_start_replay_answers_the_durable_run
+tests/unit/test_philo9_02_round_two.py::test_f5_a_publication_retry_answers_the_original_success_and_receipt
+tests/unit/test_philo9_02_round_two.py::test_f5_the_replay_class_covers_the_other_admitted_writes[archive]
+tests/unit/test_philo9_02_round_two.py::test_f5_the_replay_class_covers_the_other_admitted_writes[link]
+tests/unit/test_philo9_02_round_two.py::test_f5_the_replay_class_covers_the_other_admitted_writes[resource]
+tests/unit/test_philo9_02_round_two.py::test_f6_an_accepted_suggestions_watch_is_untested_and_unbaselined
+tests/unit/test_philo9_02_round_two.py::test_f7_a_cached_github_row_keeps_its_stored_state
+tests/unit/test_philo9_02_round_two.py::test_f9_run_once_is_an_admitted_operation_with_its_receipt
+tests/unit/test_philo5_the_loop_r2.py::test_a_remote_desk_credential_cannot_make_the_hub_read_a_file
+tests/unit/test_philo5_the_loop_r2.py::test_the_http_upload_refuses_a_non_owner_before_storing_the_body
+tests/unit/test_philo5_the_loop_r2.py::test_the_contract_refuses_a_non_owner_before_anything_else
+tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[brief.shelf.read]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[brief.shelf.write]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[connection.list]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[kernel.receipt.read]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[meeting.import]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[meeting.list]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[meeting.summary.run]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[nudge.dismiss]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[nudge.send]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.add_suggested_source]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.configure_steward]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.dismiss_suggested_source]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.get_steward_run]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.item.list]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.mark_update_delivered]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.run_steward]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.steward.trigger]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.stop_steward]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.watch.evaluate]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[thought.create]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[thought.list]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[thought.save]
+tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[zone.read]
+tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
+
+51 tests collected in 0.20s
 ```
