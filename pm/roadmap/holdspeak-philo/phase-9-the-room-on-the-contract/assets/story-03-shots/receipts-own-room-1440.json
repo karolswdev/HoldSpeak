@@ -1,0 +1,20 @@
+{
+  "face": [
+    "CREATE PROJECT"
+  ],
+  "hub": [
+    {
+      "at": 1790613439.180212,
+      "caller": null,
+      "id": "2841025a-eaa2-449c-b95d-bb84251df4cc",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1790613439.180212,
+      "title": "ProjectService.create_project"
+    }
+  ]
+}

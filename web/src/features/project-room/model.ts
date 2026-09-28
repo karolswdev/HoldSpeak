@@ -424,6 +424,9 @@ export type RoomReceiptItem = {
   op: string;
   title: string;
   outcome: string;
+  /** PHILO-9-03: the hub's named outcome of a refused or failed write
+   *  (e.g. `update_not_published`); null on success. */
+  reason: string | null;
   timestamp: string;
   origin: string | null;
   caller: string | null;
@@ -784,6 +787,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             op: String(r.op ?? r.method ?? ""),
             title: String(r.title ?? ""),
             outcome: String(r.outcome ?? ""),
+            reason: typeof r.reason === "string" && r.reason ? r.reason : null,
             timestamp: String(r.timestamp ?? r.created_at ?? ""),
             origin: typeof r.origin === "string" ? r.origin : null,
             caller: typeof r.caller === "string" ? r.caller : null,

@@ -1436,13 +1436,13 @@
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
           "symbol": "function DeliverySection",
-          "line": 90,
+          "line": 82,
           "claim": "To + Mark delivered above the body of a published update, and the delivery history"
         },
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
           "symbol": "countLabel(\"UPDATES\"",
-          "line": 371,
+          "line": 363,
           "claim": "the update list's head counts updates"
         },
         {

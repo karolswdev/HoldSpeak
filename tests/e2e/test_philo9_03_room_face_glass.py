@@ -724,8 +724,117 @@ class TestRoomFaceGlass:
                 assert facts["small_text_count"] == 0, facts["small_text"]
                 assert all(not p["not_owned"] for p in pointer), pointer
                 # The review the run opened is one press away.
+                # The review the run opened is one press away: THAT review
+                # (Codex Astra r1 finding 2), by its identity.
                 page.locator("[data-testid=steward-open-review]").click()
-                page.locator("[data-testid=review-posture], .review-posture").first.wait_for(timeout=T)
+                posture = page.locator("[data-testid=review-posture]").first
+                posture.wait_for(timeout=T)
+                assert posture.get_attribute("data-review-id") == pr["compare"]["review_id"]
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_review_on_a_completed_run_opens_that_review_even_after_acceptance(self, width: int) -> None:
+        """Codex Astra r1 finding 2: complete a run, accept its review, reopen
+        the run, press Review: the face shows the run's own (accepted) review
+        and opens no new work -- the hub holds no new open review after."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = self._project(page)
+                _api(page, "POST", f"/api/projects/{pid}/steward/runs", {}, token=TOKEN)
+                page.wait_for_function(
+                    f"""async () => {{ const r = await fetch('/api/projects/{pid}/steward/runs', {{headers: {{authorization: 'Bearer {TOKEN}'}}}});
+                        const j = await r.json(); return (j.runs || [])[0]?.state === 'completed'; }}""", timeout=30_000)
+                run = _api(page, "GET", f"/api/projects/{pid}/steward/runs", token=TOKEN)["runs"][0]
+                rid = run["summary"]["phase_results"]["compare"]["review_id"]
+                assert rid
+                _api(page, "POST", f"/api/projects/{pid}/reviews/{rid}/accept", {}, token=TOKEN)
+                before = _api(page, "GET", f"/api/projects/{pid}/delta", token=TOKEN)
+                self._room(page, pid)
+                page.locator("[data-testid=steward-verb]").click()
+                page.locator("[data-testid=steward-list-item]").first.click()
+                page.locator("[data-testid=steward-open-review]").wait_for(timeout=T)
+                page.locator("[data-testid=steward-open-review]").click()
+                posture = page.locator("[data-testid=review-posture]").first
+                posture.wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                after = _api(page, "GET", f"/api/projects/{pid}/delta", token=TOKEN)
+                shown = {"id": posture.get_attribute("data-review-id"), "status": posture.get_attribute("data-review-status"),
+                         "phase": posture.get_attribute("data-phase")}
+                _record("steward-review-identity", width, {"run_review": rid, "shown": shown,
+                                                            "delta_before": before, "delta_after": after})
+                _shot(page, "steward-review-identity", width)
+                # No new work: the hub holds no open review the press created.
+                assert not (after.get("review_id") or (after.get("open_review") or {}).get("review_id")), after
+                assert shown["id"] == rid and shown["status"] == "accepted", shown
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_a_refused_delivery_receipt_says_refused_and_why(self, width: int) -> None:
+        """Codex Astra r1 finding 1: a mark refused by the hub (a draft:
+        `update_not_published`, no row) is a RECEIPT that says ✗ REFUSED and
+        NOT PUBLISHED, never a success chip or "MARKED DELIVERED"."""
+        from playwright.sync_api import sync_playwright
+
+        from .glass_infra import _api_allow_error
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = self._project(page)
+                uid = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"},
+                           token=TOKEN)["update"]["id"]
+                status, body = _api_allow_error(page, "POST", f"/api/updates/{uid}/delivered",
+                                                {"delivered_to": "Priya", "command_id": "p903-refused"}, token=TOKEN)
+                assert status == 400 and self._deliveries(page, pid, uid) == [], (status, body)
+                hub = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["receipts"]["items"]
+                self._room(page, pid)
+                row = page.locator("[data-testid=receipt-row]", has_text="DELIVERED").first
+                row.wait_for(timeout=T)
+                row.scroll_into_view_if_needed()
+                page.wait_for_timeout(300)
+                face = row.evaluate("""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
+                    lead: r.querySelector('.surface-state-chip')?.getAttribute('data-state'),
+                    code: r.querySelector('[data-outcome]')?.dataset.code})""")
+                _record("receipt-refused", width, {"hub": hub, "face": face})
+                _shot(page, "receipt-refused", width)
+                # The face first (as rendered), then the hub's record it draws.
+                assert face["lead"] == "failure", face
+                assert "MARKED DELIVERED" not in face["text"] and "MARK DELIVERED" in face["text"], face
+                assert "REFUSED" in face["text"] and "NOT PUBLISHED" in face["text"], face
+                assert face["code"] == "update_not_published", face
+                mark = [i for i in hub if i["op"] == "mark_update_delivered"]
+                assert mark and mark[0]["outcome"] == "refused" and mark[0].get("reason") == "update_not_published", hub
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_receipts_hold_only_this_rooms_work(self, width: int) -> None:
+        """Codex Astra r1 finding 3 (inherited): a project whose NAME contains
+        this project's id is not this Room's work; its create receipt stays out."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = self._project(page)
+                self._project(page, f"Mirror of {pid}")
+                hub = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)["receipts"]["items"]
+                self._room(page, pid)
+                rows = self._facts(page)["receipts"]
+                _record("receipts-own-room", width, {"hub": hub, "face": rows})
+                assert [i["op"] for i in hub].count("create_project") == 1, hub
+                assert rows.count("CREATE PROJECT") == 1, rows
                 assert not errors, errors
             finally:
                 browser.close()

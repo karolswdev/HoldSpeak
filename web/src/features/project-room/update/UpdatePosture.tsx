@@ -27,7 +27,7 @@ import {
   type ChipState,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
-import { egressFor } from "../../../desk/surface/egress";
+import { egressFor, refusalWord } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { Delivery, ProjectUpdate, UpdateClaim } from "./model";
 import {
@@ -54,14 +54,6 @@ export const DELIVERY_WORDS = {
   chip: "DELIVERED",
   retry: "Retry",
 } as const;
-
-/** The hub's refusal codes and their plain tokens (Codex Astra canvases r1
- *  F4). The code rides `data-code` for the fence. */
-const REFUSAL_TOKEN: Record<string, string> = {
-  update_not_published: "NOT PUBLISHED",
-  idempotency_conflict: "ALREADY USED",
-  project_delegation_required: "OWNER ONLY",
-};
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 /** `SEP 27 14:05` -- the owner's confirmation time, exact. */
@@ -127,7 +119,7 @@ function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: Pro
         <span className="update-deliver-outcome" data-testid="deliver-refused" data-code={ctrl.deliverOutcome.code}>
           <StateChip state="failure" label="REFUSED" />
           <span className="surface-token" data-chip>
-            {REFUSAL_TOKEN[ctrl.deliverOutcome.code] ?? ctrl.deliverOutcome.code.toUpperCase().replace(/_/g, " ")}
+            {refusalWord(ctrl.deliverOutcome.code)}
           </span>
         </span>
       ) : ctrl.deliverOutcome.kind === "uncertain" ? (

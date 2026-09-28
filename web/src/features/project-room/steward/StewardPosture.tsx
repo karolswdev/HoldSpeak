@@ -27,6 +27,7 @@ import {
   type PlanStep,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
+import { refusalWord } from "../../../desk/surface/egress";
 import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
 import {
@@ -60,15 +61,6 @@ const GRANT_TOKENS: Record<string, string> = {
   draft_update: "DRAFT UPDATE",
   create_door_item: "DOOR ITEM",
   github_comment: "REVIEWER NUDGE",
-};
-
-/** PHILO-9-03: the hub's run refusals, in plain words (the code rides
- *  `data-code`). */
-const RUN_REFUSAL_TOKEN: Record<string, string> = {
-  steward_policy_required: "NO SAVED POLICY",
-  project_delegation_required: "OWNER ONLY",
-  steward_disabled: "STEWARD OFF",
-  cooldown_active: "COOLING DOWN",
 };
 
 function grantToken(kind: string): string {
@@ -246,7 +238,7 @@ function RunDetail({
 }: {
   ctrl: StewardController;
   onOpenRef: (ref: string) => void;
-  onOpenReview?: () => void;
+  onOpenReview?: (reviewId: string) => void;
 }) {
   const run = ctrl.currentRun;
   if (!run) return null;
@@ -343,7 +335,7 @@ function RunDetail({
                 <span className="surface-token" data-chip>{pluralize(counts.proposals, "PROPOSAL")}</span>
               ) : null}
               {onOpenReview ? (
-                <Button dense variant="ghost" onClick={onOpenReview} data-testid="steward-open-review">
+                <Button dense variant="ghost" onClick={() => onOpenReview(counts.reviewId)} data-testid="steward-open-review">
                   Review
                 </Button>
               ) : null}
@@ -703,8 +695,8 @@ export function StewardPosture({
   onOpenReview,
 }: {
   ctrl: StewardController;
-  /** PHILO-9-03 (F3): open the review the run's COMPARE opened. */
-  onOpenReview?: () => void;
+  /** PHILO-9-03 (F3): open the review the run's COMPARE opened, by its id. */
+  onOpenReview?: (reviewId: string) => void;
 }) {
   const onOpenRef = useCallback((ref: string) => {
     openSourceRef(ref);
@@ -754,7 +746,7 @@ export function StewardPosture({
           <span className="steward-run-refused" data-testid="steward-run-refused" data-code={ctrl.runRefusal}>
             <StateChip state="failure" label="REFUSED" />
             <span className="surface-token" data-chip>
-              {RUN_REFUSAL_TOKEN[ctrl.runRefusal] ?? ctrl.runRefusal.toUpperCase().replace(/_/g, " ")}
+              {refusalWord(ctrl.runRefusal)}
             </span>
           </span>
         ) : null}

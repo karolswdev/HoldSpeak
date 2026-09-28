@@ -274,6 +274,37 @@ _SERVICE_OBSERVED_OPERATIONS: frozenset[str] = frozenset({
 _SERVICE_OBSERVED_PREFIXES: tuple[str, ...] = ("project.item.", "project.resource.", "project.door.")
 
 
+def _summary_names(summary: Any, project_id: str, *, key: str | None = None) -> bool:
+    """PHILO-9-03: does a pipeline summary name ``project_id`` as a VALUE, exactly?
+
+    ``key`` given: only that top-level key counts (a created project's own
+    ``id``). Otherwise any string value anywhere in the JSON object counts
+    (``project_id`` at the top, or nested). A summary that is not JSON is
+    not claimed (never guessed from a substring).
+    """
+    try:
+        data = json.loads(summary) if isinstance(summary, str) else summary
+    except (TypeError, ValueError):
+        # The observer truncates a long summary (observer.py `_truncate`), so
+        # it may not parse: then a JSON string VALUE equal to the id, exactly.
+        if not isinstance(summary, str):
+            return False
+        name = re.escape(key) if key is not None else r"[A-Za-z_][A-Za-z0-9_]*"
+        return re.search(rf'"{name}"\s*:\s*"{re.escape(project_id)}"', summary) is not None
+    if key is not None:
+        return isinstance(data, dict) and data.get(key) == project_id
+    stack = [data]
+    while stack:
+        value = stack.pop()
+        if value == project_id:
+            return True
+        if isinstance(value, dict):
+            stack.extend(value.values())
+        elif isinstance(value, list):
+            stack.extend(value)
+    return False
+
+
 def _count_unit(count: int, unit: str) -> str:
     """``1 DAY`` / ``2 DAYS`` -- HS-200-16.
 
@@ -2153,22 +2184,29 @@ class ProjectService:
             rows = conn.execute(
                 "SELECT event_id, timestamp, service, method, "
                 "       origin, caller, caller_identity, "
-                "       result_summary, error "
+                "       args_summary, result_summary, error "
                 "FROM pipeline_events "
                 # PHILO-9-03 (F7): the create that made the Room names its id
                 # in its result, not its arguments.
                 f"WHERE ((args_summary LIKE ? AND method IN ({marks})) "
                 "   OR (method = 'create_project' AND result_summary LIKE ?)) "
                 "ORDER BY timestamp DESC LIMIT ?",
-                (f"%{project_id}%", *writes, f"%{project_id}%", _LIMIT),
+                (f"%{project_id}%", *writes, f"%{project_id}%", _LIMIT * 5),
             ).fetchall()
+            # PHILO-9-03 (Codex Astra r1 finding 3): the LIKE above is only a
+            # prefilter. A receipt belongs to this Room when its summary NAMES
+            # this project's id as a value, exactly -- another project whose
+            # name merely contains the id is not this Room's work.
+            rows = [row for row in rows if _summary_names(
+                row["result_summary"] if row["method"] == "create_project" else row["args_summary"],
+                project_id, key="id" if row["method"] == "create_project" else None)]
             # PHILO-9-03 (F7): the Room's admitted writes outside the observed
             # services (publish, delivery, the steward's run, the review) are
             # kernel receipts, not pipeline events: read them by the target
             # the operation named -- the project, one of its updates or runs.
             kernel_rows = conn.execute(
                 "SELECT o.operation_id, o.name, o.principal_kind, o.principal_identity, "
-                "       r.state, r.created_at "
+                "       r.state, r.outcome, r.created_at "
                 "FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id = o.operation_id "
                 "WHERE o.parent_operation_id = '' AND ("
                 "   o.target_ref = ? "
@@ -2187,6 +2225,7 @@ class ProjectService:
                 "label": f"{row['service']}.{row['method']}",
                 "title": f"{row['service']}.{row['method']}",
                 "outcome": "error" if row["error"] else "ok",
+                "reason": None,
                 "origin": origin_val,
                 "caller": caller_val,
                 "identity": str(row["caller_identity"]) if row["caller_identity"] else None,
@@ -2206,6 +2245,10 @@ class ProjectService:
                 "label": name,
                 "title": name,
                 "outcome": "ok" if state == "succeeded" else state,
+                # PHILO-9-03 (Codex Astra r1 finding 1): a refused or failed
+                # write keeps the kernel's named outcome (e.g.
+                # `update_not_published`) so the face can say why.
+                "reason": None if state == "succeeded" else (str(row["outcome"] or "") or None),
                 "origin": None,
                 "caller": str(row["principal_identity"]) if agent else None,
                 "identity": str(row["principal_identity"]) or None,

@@ -67,7 +67,7 @@ import type {
 } from "./model";
 import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
-import { egressFor, egressForEvent, receiptLabel } from "../../desk/surface/egress";
+import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -1284,18 +1284,29 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
           {items.map((item) => {
             const egress = egressForEvent({ origin: item.origin, caller: item.caller });
             const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
+            // PHILO-9-03 (Codex Astra r1 finding 1): the row says what
+            // happened -- a refused write is ✗ REFUSED + the plain reason,
+            // never a success chip.
+            const face = receiptFace(item.outcome);
             return (
               <SurfaceLedgerRow
                 key={item.id}
-                lead={<StateChip state="success" label="" icon={"●"} />}
-                primary={<span className="surface-primary">{label}</span>}
+                lead={<StateChip state={face.state} label="" icon={face.icon} />}
+                primary={
+                  <span className="surface-primary" data-outcome={item.outcome || "ok"} data-code={item.reason ?? undefined}>
+                    {label}
+                  </span>
+                }
                 wrap
                 expands={false}
                 data-testid="receipt-row"
                 cells={
                   <>
-                    {item.outcome && item.outcome !== "ok" ? (
-                      <span className="surface-token">{item.outcome.toUpperCase()}</span>
+                    {face.word ? (
+                      <span data-testid="receipt-outcome"><StateChip state={face.state} label={face.word} /></span>
+                    ) : null}
+                    {face.word && item.reason ? (
+                      <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
                     ) : null}
                     {egress.label ? (
                       <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />
@@ -2099,9 +2110,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
         {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
         <StewardPosture
           ctrl={stewardCtrl}
-          onOpenReview={() => {
+          onOpenReview={(reviewId: string) => {
             stewardCtrl.exitSteward();
-            void reviewCtrl.enterReview();
+            void reviewCtrl.enterReview(reviewId);
           }}
         />
       </>

@@ -37,6 +37,14 @@
 - **Generated docs:** `api-reference.json`, `boundary-candidates.json`, `graph.json` regenerated; every Documentation Navigation check rc=0 (capture 15:54:21Z).
 - **Shots (both widths, from the green capture):** `assets/story-03-shots/` — `items-late-first-view-*`, `items-late-section-*`, `items-empty-omitted-*`, `items-unavailable-*`, `deliver-1-after-copy-*` … `deliver-11-retried-one-row-*`, `steward-counts-*`, `receipts-writes-*`, `ask-well-first-view-*`, `update-list-words-*`, `f1-meeting-opens-room-*`, `f1-chair-opens-room-*`, `f1-shade-opens-room-*`, with the measurements beside them (`*.json`). Walked by eye at both widths.
 
+### Round two — Codex Astra r1 on `62375d84` DO-NOT-RATIFY (`checks/story-03-built-astra-r1.md`), paid
+
+- **Finding 1 (blocking) PAID — a refused delivery appeared successful.** `holdspeak/services/project_service.py` `_read_room_receipts` keeps the kernel receipt's named outcome as `reason` for a non-success; `web/src/desk/surface/egress.ts` `receiptFace(outcome)` draws every outcome as what happened (only `ok`/`succeeded` is the success chip; `refused` → `✗ REFUSED` + the plain reason; `error`/`failed` → `✗ FAILED`; `cancelled` → `— CANCELLED`; `indeterminate` → `⚠ RESULT UNKNOWN`), and `receiptLabel` says `MARK DELIVERED` for a mark that did not happen. `ProjectRoomCore.tsx` RECEIPTS uses both. Closed as a class: `web/src/desk/__tests__/receiptFace.test.ts` is the census of every outcome the list can carry (the pipeline's two, the kernel's five). One refusal-word table (`refusalWord`) now serves the delivery line, the steward's start and RECEIPTS. Fence `test_a_refused_delivery_receipt_says_refused_and_why[1440, 393]` through the real producer (POST `/delivered` on a draft: 400, no row): red on `62375d84` (`{'lead': 'success', 'text': '● MARKED DELIVERED REFUSED'}`), green after.
+- **Finding 2 (blocking) PAID — the steward's Review opened new work.** `review/api.ts` `getReview`; `useReviewController.ts` `enterReview(reviewId?)` opens THAT review by its id (a settled one read-only, checkpointed, no verb that starts work); `StewardPosture` passes the run's `review_id`; `ReviewPosture` exposes `data-review-id` / `data-review-status`. Fence `test_review_on_a_completed_run_opens_that_review_even_after_acceptance[1440, 393]` (run, accept its review, reopen the run, press Review): red on `62375d84` (the press opened `prev_…` new: the hub's delta held a new open review), green after (the shown review is the run's, `accepted`; no open review on the hub). The existing steward fence now checks the identity too.
+- **Finding 3 (inherited) PAID — a foreign project's receipt in this Room.** The LIKE is now a prefilter; `_summary_names` claims a pipeline receipt only when its summary names the project's id as a value exactly (a created project's own `id` for `create_project`; a truncated summary by an exact JSON-string match). Fence `test_receipts_hold_only_this_rooms_work[1440, 393]` (project B named `Mirror of <A's id>`): red on `62375d84` (A's read held 2 `create_project`), green after.
+
+- **Round two proof:** red capture 16:32:22Z (the three fences on `62375d84`'s product files: 6 failed, each an assertion on the rendered face or the hub's record); green capture 16:35:53Z (374 passed: the story 03 glass, 14 tests × 2 widths, the Room backend fences and the atlas fences; the rig 8 of 8; the 16:32:48Z green attempt failed only on the atlas line anchors the edits moved, re-anchored by `add_atlas.py`); web unit 16:39:01Z (zero branch-new, vitest 325 files / 2941 tests, `npm run check` green); docs navigation 16:42:03Z (every check rc=0); preservation 16:42:20Z (129 passed; the one red is the inherited `test_mute_toggle`).
+
 ### Muad'Dib's rulings on PR #686 (2026-09-28), paid
 
 - (1) the `_read_room_receipts` edit stays; (2) the 1440 RECEIPTS overlap stays on the BACKLOG; (4) the scheduled `steward_policy_required` stays on the BACKLOG; (5) the four fence updates stand.
@@ -645,4 +653,288 @@ PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy
 WALK {"width": 1440, "proposal_id": "prop-aab689b15948", "chair_rows": ["NO DUE DATE · PROPOSED · CUTOVER SYNC · CHANGED JUST NOW"], "arrival-proposal-open": {"present": 1, "opened": "Payments ledger cutover", "room_names_project": true, "proposal_in_room": true}, "arrival-source-open": {"present": 0}}
 WALK {"width": 393, "proposal_id": "prop-d32cf3381866", "chair_rows": ["NO DUE DATE · PROPOSED · CUTOVER SYNC · CHANGED JUST NOW"], "arrival-proposal-open": {"present": 1, "opened": "Payments ledger cutover", "room_names_project": true, "proposal_in_room": true}, "arrival-source-open": {"present": 0}}
 2 passed in 23.69s
+```
+
+### Captured run — 2026-09-28T16:32:22Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/red_r2.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ce027bf0916030160a254b1205984ba034250a46
+
+```text
+✓ built in 4.62s
+E               AssertionError: [{'at': 1790613150.645154, 'caller': None, 'id': '2de0c495-9e18-490c-be89-380f2a971151', 'identity': None, ...}, {'at': 1790613150.63493, 'caller': None, 'id': 'c7143287-7244-4cc4-af37-ebe38344d38a', 'identity': None, ...}]
+E               assert 2 == 1
+E                +  where 2 = <built-in method count of list object at 0x122ed4940>('create_project')
+E                +    where <built-in method count of list object at 0x122ed4940> = ['create_project', 'create_project'].count
+E               AssertionError: [{'at': 1790613150.631618, 'caller': None, 'id': '9053c948-ef96-42e3-984b-abb3f1994fbf', 'identity': None, ...}, {'at': 1790613150.6202629, 'caller': None, 'id': '1ec8ee22-a0c5-479f-8efc-fa122bd8f3cc', 'identity': None, ...}]
+E               assert 2 == 1
+E                +  where 2 = <built-in method count of list object at 0x10fca2a40>('create_project')
+E                +    where <built-in method count of list object at 0x10fca2a40> = ['create_project', 'create_project'].count
+E               AssertionError: {'code': None, 'lead': 'success', 'text': '● MARKED DELIVERED REFUSED'}
+E               assert 'success' == 'failure'
+E                 
+E                 - failure
+E                 + success
+E               AssertionError: {'code': None, 'lead': 'success', 'text': '● MARKED DELIVERED REFUSED'}
+E               assert 'success' == 'failure'
+E                 
+E                 - failure
+E                 + success
+E               AssertionError: {'from_sequence': 0, 'materiality_version': 'v1', 'opened_at': '2026-09-28T16:32:40+00:00', 'project_id': 'proj-323457fded18', ...}
+E               assert not ('prev_d6d9ef5b96014a8ca67022d42db3f2e3')
+E                +  where 'prev_d6d9ef5b96014a8ca67022d42db3f2e3' = <built-in method get of dict object at 0x12195db80>('review_id')
+E                +    where <built-in method get of dict object at 0x12195db80> = {'from_sequence': 0, 'materiality_version': 'v1', 'opened_at': '2026-09-28T16:32:40+00:00', 'project_id': 'proj-323457fded18', ...}.get
+E               AssertionError: {'from_sequence': 0, 'materiality_version': 'v1', 'opened_at': '2026-09-28T16:32:40+00:00', 'project_id': 'proj-5c221faeb896', ...}
+E               assert not ('prev_d0952b45763d495e93f95dfedb9df9b8')
+E                +  where 'prev_d0952b45763d495e93f95dfedb9df9b8' = <built-in method get of dict object at 0x11ddb2a80>('review_id')
+E                +    where <built-in method get of dict object at 0x11ddb2a80> = {'from_sequence': 0, 'materiality_version': 'v1', 'opened_at': '2026-09-28T16:32:40+00:00', 'project_id': 'proj-5c221faeb896', ...}.get
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[393]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[1440]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[1440]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[393]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[393]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[1440]
+6 failed in 15.69s
+✓ built in 4.49s
+```
+
+### Captured run — 2026-09-28T16:32:48Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/green.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** ce027bf0916030160a254b1205984ba034250a46
+
+```text
+HEAD = 62375d847f6f0309b821c24d2926125c4daebcf3; product diff vs the base aeae7bd8:
+ 46 files changed, 1307 insertions(+), 179 deletions(-)
+✓ built in 4.42s
+ERROR    holdspeak.web.routes.project_updates:runtime_support.py:71 Failed to mark the update delivered: injected after the insert
+_________ test_l3_a_known_failure_ends_the_run_failed_with_one_receipt _________
+ERROR    holdspeak.project_steward:project_steward_service.py:792 Run pstrun_8f5e295d44bd5aaf8943d54fb72320e5 failed: the review could not open
+ERROR    holdspeak.steward_contract:steward_contract.py:332 steward run pstrun_59f447e1e14659839169c5ef125c1d0c raised outside its phases
+    self._close_run(handle, run_id, "failed", "failed", type(exc).__name__[:60] or "failed",
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[1440]
+PASSED tests/unit/test_philo9_steward_lifecycle.py::test_l3_a_known_failure_ends_the_run_failed_with_one_receipt
+PASSED tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[1440]
+FAILED tests/unit/test_philo_graph_atlas.py::test_every_source_reference_lands_on_its_symbol[atlas-phase9.json]
+1 failed, 373 passed in 92.56s (0:01:32)
+case.p9.room_items.late_row 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.room_items.late_row 393 exit=0 VERDICT: pass terminal=settled
+case.p9.update_list.head_updates 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.update_list.head_updates 393 exit=0 VERDICT: pass terminal=settled
+case.p9.update.delivered_row 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.update.delivered_row 393 exit=0 VERDICT: pass terminal=settled
+case.p9.room_steward_verb.owned 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.room_steward_verb.owned 393 exit=0 VERDICT: pass terminal=settled
+rig cases not passing: 0
+```
+
+### Captured run — 2026-09-28T16:35:53Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 2ce9e04340c7c616144e67d6a16b871ffa64f384
+
+```text
+HEAD = 62375d847f6f0309b821c24d2926125c4daebcf3; product diff vs the base aeae7bd8:
+ 46 files changed, 1307 insertions(+), 179 deletions(-)
+✓ built in 4.57s
+ERROR    holdspeak.web.routes.project_updates:runtime_support.py:71 Failed to mark the update delivered: injected after the insert
+_________ test_l3_a_known_failure_ends_the_run_failed_with_one_receipt _________
+ERROR    holdspeak.project_steward:project_steward_service.py:792 Run pstrun_68eb69d426b355358570cb9a70c71924 failed: the review could not open
+ERROR    holdspeak.steward_contract:steward_contract.py:332 steward run pstrun_c6fa508bc18d5cbd855314b207e89802 raised outside its phases
+    self._close_run(handle, run_id, "failed", "failed", type(exc).__name__[:60] or "failed",
+PASSED tests/unit/test_philo9_steward_lifecycle.py::test_l3_a_known_failure_ends_the_run_failed_with_one_receipt
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[1440]
+PASSED tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_review_on_a_completed_run_opens_that_review_even_after_acceptance[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refused_delivery_receipt_says_refused_and_why[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_hold_only_this_rooms_work[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[1440]
+374 passed in 96.86s (0:01:36)
+case.p9.room_items.late_row 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.room_items.late_row 393 exit=0 VERDICT: pass terminal=settled
+case.p9.update_list.head_updates 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.update_list.head_updates 393 exit=0 VERDICT: pass terminal=settled
+case.p9.update.delivered_row 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.update.delivered_row 393 exit=0 VERDICT: pass terminal=settled
+case.p9.room_steward_verb.owned 1440 exit=0 VERDICT: pass terminal=settled
+case.p9.room_steward_verb.owned 393 exit=0 VERDICT: pass terminal=settled
+rig cases not passing: 0
+```
+
+### Captured run — 2026-09-28T16:39:01Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/web_unit.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 046bc1b43344c22c3d258abc5657f4358580e880
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2941 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+ Test Files  325 passed (325)
+      Tests  2941 passed (2941)
+   Duration  34.69s (transform 19.19s, setup 30.61s, import 100.06s, tests 93.80s, environment 109.72s)
+token gate: clean (11 allow-listed exceptions, all in use)
+ Test Files  325 passed (325)
+      Tests  2941 passed (2941)
+✓ built in 4.49s
+bundle gate passed (Desk JS 1335414 B; Desk CSS 323598 B; source maps 0)
+baseline=0 vitest=0 check=0
+```
+
+### Captured run — 2026-09-28T16:42:03Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 046bc1b43344c22c3d258abc5657f4358580e880
+
+```text
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:5> python3 -m unittest discover -s tests/unit -p test_docs_navigation.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.003s
+
+OK
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:5> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:6> python3 scripts/check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:6> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:7> python3 scripts/check_docs.py docs/internal/philo/DELIVERY_ROADMAP.md docs/internal/philo/DESIGN_SPECIFICATION.md docs/internal/philo/EXTERNAL_RESEARCH.md docs/internal/philo/INITIAL_PLAN.md docs/internal/philo/initial-findings.md docs/internal/philo/README.md docs/internal/philo/SOURCE_HIERARCHY.md docs/internal/philo/source-checklist.md docs/internal/philo/SRS.md docs/internal/philo/adr/capability-evidence-ownership.md docs/internal/philo/adr/desktop-host.md docs/internal/philo/checks/accuracy-luna.md docs/internal/philo/checks/baseline-failures.md docs/internal/philo/checks/luna-audits.md docs/internal/philo/checks/plan-astra-response.md docs/internal/philo/checks/plan-muaddib-round2.md docs/internal/philo/checks/plan-muaddib.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/holdspeak-api-client/SKILL.md agent/skills/holdspeak-capability-verifier/SKILL.md agent/skills/holdspeak-connector-author/SKILL.md agent/skills/holdspeak-desk/SKILL.md agent/skills/holdspeak-dictation/SKILL.md agent/skills/holdspeak-doc-maintainer/SKILL.md agent/skills/holdspeak-kernel/SKILL.md agent/skills/holdspeak-meetings/SKILL.md agent/skills/holdspeak-model-routing/SKILL.md agent/skills/holdspeak-plugin-author/SKILL.md agent/skills/holdspeak-release-auditor/SKILL.md agent/skills/holdspeak-repo-navigator/SKILL.md agent/skills/holdspeak-security-review/SKILL.md agent/skills/holdspeak-troubleshooter/SKILL.md
+Documentation navigation: 33 files checked; local targets and Markdown headings resolve.
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:7> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:8> python3 scripts/philo_repository_census.py --check
+Repository census: 5 outputs verified.
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:8> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:9> python3 scripts/philo_api_reference.py --check
+API reference checked
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:9> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:10> python3 scripts/philo_boundary_census.py --check
+Boundary candidate census checked
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:10> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:11> python3 scripts/philo_doctor_reference.py --check
+Doctor reference: 41 check functions
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:11> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:12> python3 scripts/philo_config_reference.py --check
+Configuration declaration reference is current
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:12> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:13> python3 scripts/philo_graph_reference.py --check
+note: subtype conflict edge.cli.hub_restart: astra=process.restart; muaddib=cli
+note: subtype conflict edge.face.arrival_load: astra=lifecycle.mount; muaddib=navigation.load
+note: subtype conflict edge.face.thought_keep: astra=pointer.blur; muaddib=pointer.click
+note: subtype conflict edge.route.brief_item_shelf: astra=ui; muaddib=http
+note: subtype conflict edge.route.brief_latest: astra=ui; muaddib=http
+note: subtype conflict edge.route.heartbeat_run_now: astra=ui; muaddib=http
+note: subtype conflict edge.route.inference_assignments_set: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_delete: astra=ui; muaddib=http
+note: subtype conflict edge.route.model_profile_unbind: astra=ui; muaddib=http
+note: subtype conflict edge.route.projection_presentation: astra=ui; muaddib=http
+note: subtype conflict edge.route.projections_list: astra=ui; muaddib=http
+note: subtype conflict edge.timer.heartbeat_sweep: astra=ui; muaddib=timer
+note: subtype conflict iface.face.arrival: astra=face.section; muaddib=face.window
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:13> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:14> python3 scripts/validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:14> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:15> python3 scripts/generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:15> echo 'rc=0'
+rc=0
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:16> python3 scripts/check_doc_coverage.py --check
+Documentation coverage checked.
++pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/docs_nav.sh:16> echo 'rc=0'
+rc=0
+```
+
+### Captured run — 2026-09-28T16:42:20Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/preserve.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 046bc1b43344c22c3d258abc5657f4358580e880
+
+```text
+FAILED tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_mute_toggle
+1 failed, 129 passed, 14 skipped, 4 xfailed in 192.66s (0:03:12)
 ```

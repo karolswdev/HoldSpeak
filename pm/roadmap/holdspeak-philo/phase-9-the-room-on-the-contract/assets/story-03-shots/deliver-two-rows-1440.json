@@ -47,8 +47,8 @@
     "delivery_egress": 0,
     "delivery_head": "DELIVERED 2",
     "delivery_rows": [
-      "✓ Priya SEP 28 10:10",
-      "✓ Tomas SEP 28 10:10"
+      "✓ Priya SEP 28 10:37",
+      "✓ Tomas SEP 28 10:37"
     ],
     "h_overflow": false,
     "head_chips": [],
@@ -76,35 +76,35 @@
   },
   "calls": [
     {
-      "command_id": "64bbef0c-9601-49b7-9310-2b3cf9ef6592",
+      "command_id": "feb28728-5311-4b51-8030-375a6b941f1b",
       "delivered_to": "Priya",
-      "update_id": "pupd_97cd6e870f584e88aed1db0daa3caeed",
-      "url": "/api/updates/pupd_97cd6e870f584e88aed1db0daa3caeed/delivered"
+      "update_id": "pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2",
+      "url": "/api/updates/pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2/delivered"
     },
     {
-      "command_id": "b32e4a7a-6344-48d2-b046-df208b4d327a",
+      "command_id": "78774fa3-da21-4472-a4a2-bbfb5ff90a68",
       "delivered_to": "Tomas",
-      "update_id": "pupd_97cd6e870f584e88aed1db0daa3caeed",
-      "url": "/api/updates/pupd_97cd6e870f584e88aed1db0daa3caeed/delivered"
+      "update_id": "pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2",
+      "url": "/api/updates/pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2/delivered"
     }
   ],
   "clipboard_head": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nN",
   "hub": [
     {
-      "delivered_at": "2026-09-28T16:10:10+00:00",
+      "delivered_at": "2026-09-28T16:37:26+00:00",
       "delivered_to": "Priya",
-      "id": "pdel_2124ed4ecf9abf70",
-      "operation_id": "op_4002e839da024f0f9ff63154252cf76d",
-      "project_id": "proj-52952a4467f3",
-      "update_id": "pupd_97cd6e870f584e88aed1db0daa3caeed"
+      "id": "pdel_dc59c07f776d7fb7",
+      "operation_id": "op_55e08b05958d485fb510b087efe778c0",
+      "project_id": "proj-afccc481aabd",
+      "update_id": "pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2"
     },
     {
-      "delivered_at": "2026-09-28T16:10:10+00:00",
+      "delivered_at": "2026-09-28T16:37:27+00:00",
       "delivered_to": "Tomas",
-      "id": "pdel_793bdc7c70ee66fa",
-      "operation_id": "op_a1e451790b7142d5b897f09e170362d6",
-      "project_id": "proj-52952a4467f3",
-      "update_id": "pupd_97cd6e870f584e88aed1db0daa3caeed"
+      "id": "pdel_7377b17c3b55a323",
+      "operation_id": "op_a88d207d3d7c4db09140caad9b9ed890",
+      "project_id": "proj-afccc481aabd",
+      "update_id": "pupd_5d0e1e48ea5244cf9cca0fcc2148e7b2"
     }
   ],
   "once": {
@@ -119,7 +119,7 @@
     "delivery_egress": 0,
     "delivery_head": "DELIVERED 1",
     "delivery_rows": [
-      "✓ Priya SEP 28 10:10"
+      "✓ Priya SEP 28 10:37"
     ],
     "h_overflow": false,
     "head_chips": [],

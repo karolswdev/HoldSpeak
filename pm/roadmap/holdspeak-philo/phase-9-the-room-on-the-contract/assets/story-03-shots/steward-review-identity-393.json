@@ -1,0 +1,28 @@
+{
+  "delta_after": {
+    "last_accepted_at": "2026-09-28T16:37:03+00:00",
+    "open_review": null,
+    "source_coverage": {
+      "native:decisions": "ok",
+      "native:followthrough": "ok",
+      "native:meetings": "ok",
+      "native:resources": "ok"
+    }
+  },
+  "delta_before": {
+    "last_accepted_at": "2026-09-28T16:37:03+00:00",
+    "open_review": null,
+    "source_coverage": {
+      "native:decisions": "ok",
+      "native:followthrough": "ok",
+      "native:meetings": "ok",
+      "native:resources": "ok"
+    }
+  },
+  "run_review": "prev_988ba7cde37a43c98fb2471b2aea8a6a",
+  "shown": {
+    "id": "prev_988ba7cde37a43c98fb2471b2aea8a6a",
+    "phase": "exhausted",
+    "status": "accepted"
+  }
+}
