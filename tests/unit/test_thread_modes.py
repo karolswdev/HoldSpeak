@@ -113,14 +113,21 @@ class TestAllowLists:
         # HS-168-02: + connection.list / connection.recheck (evidence_read).
         # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
         # HS-171: + heartbeat.status (evidence_read).
-        assert len(_DESK_TOOLS) == 66  # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges
+        # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges.
+        # PHILO-5-02: + monday_brief.shelf_read; PHILO-7-02: + kernel.receipt
+        # (both evidence_read; the receipt is declared in the DESK palette,
+        # tests/unit/test_philo7_article_xi.py).
+        assert {"monday_brief.shelf_read", "kernel.receipt"} <= _DESK_TOOLS
+        assert len(_DESK_TOOLS) == 68
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
         # HS-168-02: + connection.list / connection.recheck (evidence_read).
         # HS-170: + concierge.detect/propose/probe, desk.needs_you, settings.hub.
         # HS-171: + heartbeat.status (evidence_read).
-        assert len(_CHASE_TOOLS) == 72  # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges
+        # HS-172 + HS-173: meeting.proposals, project.suggested_sources, steward.nudges.
+        # PHILO-5-02 + PHILO-7-02: + monday_brief.shelf_read, kernel.receipt (via Desk).
+        assert len(_CHASE_TOOLS) == 74
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0

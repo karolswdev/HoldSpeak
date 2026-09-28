@@ -45,6 +45,35 @@ restoring automatic summary behavior. The first-use Web Record/Stop path is
 fenced separately. Lane B must render an unexecuted Review chain as absent or
 “Not run”, never as “no proposals found”.
 
+## The 393 Room: UNFINISHED opens under the ask well
+
+**2026-09-27, parked by the main-reds lane (fix/main-e2e-inherited-reds).**
+`tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]`
+is a strict expected failure. It is a real product defect, not a test defect.
+Since HS-202-05 (#597, the 44px touch targets at 420px and below), the Room at
+393 puts the saved `UNFINISHED` row's `Resume` under the sticky ask well
+(`{'covered': 1, 'verbClear': -107}`). The window body is 462px high because
+the dock takes 175px. The hero (112px), the empty NEEDS YOU section (67px) and
+the 149px sticky composer leave no room for the row.
+
+Three ratified rules conflict at this width: the ask well is sticky at all
+widths (Condition 7, `web/src/features/project-room/project-room.css:306`), NEEDS YOU shows
+even when empty (HS-169-03, `web/src/features/project-room/ProjectRoomCore.tsx:772-779`), and the 44px
+targets. Removing the empty NEEDS YOU section alone frees about 87px, short of
+the 107px needed. The fix is a design ruling on the canvas, then a build. The
+strict xfail turns red when the Room is fixed; remove the mark then.
+
+## The Floor atmosphere starves a machine with no GPU
+
+**2026-09-27, found by the main-reds lane.** With software GL (a CI VM, a
+remote desktop), the Floor's full-viewport atmosphere redraws every frame
+(`web/src/desk/gl/atmosphereRuntime.ts:97-108`, mounted by
+`web/src/desk/DeskApp.tsx:219-225`). At 1440 a frame takes about 233 ms
+(median) and up to 832 ms (p95). The 8 s Undo window is then hard to hit.
+The PHILO-8 delete fences now run with reduced motion (the product's own
+still mode) so they test the delete, not the GPU. A product fix (for example,
+fall back to the still atmosphere when frames are slow) is not scheduled.
+
 ## Earlier backlog record
 
 The parking lot so good ideas do not get lost between phases. Each entry is a

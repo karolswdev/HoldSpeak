@@ -33,6 +33,13 @@ pytest.importorskip("playwright.sync_api", reason="the one-delete glass needs Pl
 TOKEN = "philo8-one-delete"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-8-the-honest-floor/assets/story-02-shots")
 WINDOW_WAIT_MS = 12_000  # the 8 s undo window plus the hub round trip
+# The Floor's atmosphere is a full-viewport WebGL scene that renders every
+# frame (web/src/desk/gl/atmosphereRuntime.ts). A runner with no GPU (CI's
+# macos-14 VM) draws it in SwiftShader: at 1440 a frame takes 200 ms to over
+# 1 s, so the 8 s Undo window ends inside Playwright's actionability wait.
+# The product's own still mode (reduced motion, atmosphereRuntime.ts:71)
+# stops that loop; the delete, the window and the Undo run the same code.
+STILL_FLOOR = "reduce"
 
 
 def _readable_receipt(page: Any, want: str, timeout_ms: int) -> dict[str, Any]:
@@ -198,7 +205,8 @@ class TestOneDelete:
 
     def _open(self, pw: Any, width: int, titles: list[str], engine: str = "chromium") -> tuple[Any, Any, list[str], list[str]]:
         browser = getattr(pw, engine).launch(headless=True)
-        page = browser.new_page(viewport={"width": width, "height": 852 if width <= 720 else 900})
+        page = browser.new_page(viewport={"width": width, "height": 852 if width <= 720 else 900},
+                                reduced_motion=STILL_FLOOR)
         errors: list[str] = []
         page.on("pageerror", lambda err: (errors.append(str(err)), print(f"PAGEERROR {err.stack}")))
         page.on("request", lambda req: self.deletes.append(req.url) if req.method == "DELETE" else None)

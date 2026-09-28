@@ -11,11 +11,6 @@
   ],
   "offenders": [
     {
-      "path": "README.md",
-      "rule_id": "legacy-product-nouns",
-      "text": "| Prepare architecture work | Draft a decision brief, review questions, or an agent brief from available records. | Architecture work recipes |"
-    },
-    {
       "path": "docs/MEETING_MODE_GUIDE.md",
       "rule_id": "legacy-product-nouns",
       "text": ": uses your assigned OpenAI-compatible endpoint and model-profile key"
