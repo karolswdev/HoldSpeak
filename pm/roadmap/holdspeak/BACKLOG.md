@@ -1362,6 +1362,13 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
 
+## PHILO-9-05 follow-ups — 2026-09-28 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-05.md`; Codex Astra r1 finding 4)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| `case.closure.chain.s5_next_day_brief_more_opened` (`docs/internal/philo/graph/atlas-phase3.json`) never establishes its input precondition: the "N more" verb renders only when the brief holds more than `BRIEF_CAP` (3) items (`web/src/desk/chair/ChairHome.tsx:2092`, `:2130`), and the case's setup does not make four. It passes when the brief happens to hold four and blocks at `[data-testid=arrival-brief-more]` when it holds three (Codex Astra reproduced both). Inherited on both products: 2 of 6 extra attempts pass on `294632c0` and 2 of 6 on merged main. Fix: the case seeds a fourth brief item before it waits. Not a Phase 9 regression. | atlas case / input precondition | PHILO-9-05 base atlas rerun | a later atlas story (the case's owner) |
+| The same case once blocked at 1440 on `[data-testid=meeting-summary-text]` after 324 s on `294632c0` (attempt `s5more-old-1`): the summary wait ran out, a different cause from the "N more" precondition. Not diagnosed. | atlas case / timeout | PHILO-9-05 base atlas rerun | unassigned |
+
 ## PHILO-9-03 follow-ups — 2026-09-28 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-03.md`)
 
 | Item | Kind | Source | Home |

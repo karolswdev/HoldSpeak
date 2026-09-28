@@ -1223,15 +1223,62 @@
         "action": "click",
         "adapter": "ui-pointer",
         "selector": "[data-testid=deliver-verb]",
-        "why": "Mark delivered: POST /api/updates/{id}/delivered (PHILO-9-02's route)"
+        "why": "Mark delivered: POST /api/updates/{id}/delivered (PHILO-9-02's route)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/updates/{update_id}/delivered"
+        }
       },
       "expected": {
         "predicate": {
-          "kind": "readable_text",
-          "value": "Priya"
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/updates/{update_id}/delivered",
+              "status": 200,
+              "body_fields": {
+                "delivery.update_id": "{update_id}",
+                "delivery.delivered_to": "Priya",
+                "delivery.operation_id": {
+                  "nonempty": true
+                },
+                "receipt.state": "succeeded",
+                "receipt.actor_kind": "owner",
+                "receipt.target_ref": "project_update:{update_id}"
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Priya"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "updates",
+                    "match": {
+                      "id": "{update_id}",
+                      "lifecycle": "published",
+                      "deliveries.0.delivered_to": "Priya"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
         },
         "observe_at": "[data-testid=delivery-row]",
-        "words": "the owner marks the published update delivered to Priya; the update's history lists the row the hub recorded, readable in the viewport. New (no red claimed): Mark delivered is a new capability."
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "the owner marks the published update delivered to Priya: that click's POST answers 200 with the delivery row for this update and the owner's succeeded receipt, the hub's stored update lists the delivery To Priya, and the update's history shows the row, readable in the viewport. New (no red claimed): Mark delivered is a new capability. (Story 05 round two, Codex Astra r1 finding 3: the durable halves added; story 03's face half unchanged.)"
       },
       "completion_bound_s": 25,
       "viewports": [

@@ -1,0 +1,1200 @@
+{
+  "id": "obs-20260928T185220Z-case.p7.zone_file.refile_moves-muaddib-393",
+  "run_id": "20260928T185220Z-case.p7.zone_file.refile_moves-muaddib-393",
+  "case_id": "case.p7.zone_file.refile_moves",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase7.json",
+  "job": "p7",
+  "edge_ids": [
+    "edge.face.zone_file"
+  ],
+  "state_id": "state.desk_presentation.p7_zone_membership",
+  "provenance": {
+    "revision": "b2fd7e8ba9f9f90470e973fc36fe07d056825d85",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "da4cbc85330c60176e3987fac44e9e14f8d7e764f6142e84b26164837010b84a",
+      "assets": [
+        "index-BUmrnq_E.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:54096",
+      "port": 54096,
+      "pid": 65713,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-20mbn7z7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-20mbn7z7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-28T18:52:20.797163+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase7.json",
+      "sha256": "80b66a323d2a2cc13db4c157ee52c76ae61567edcdccb09514b3e463f9f9653a",
+      "version": "phase7-desk"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/directories",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "directory": {
+          "id": "dir_8556b7fda41a",
+          "name": "Atlas zone A",
+          "name_normalized": "atlas zone a",
+          "parent_id": null,
+          "created_at": "2026-09-28T18:52:22Z",
+          "last_modified": "2026-09-28T18:52:22Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "d4a6c6a30020af932fe715f2093982e18f677dfe0bfdac0c098d6f108d84db97",
+      "captured": {
+        "name": "zone_a",
+        "path": "directory.id",
+        "value": "dir_8556b7fda41a"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/directories",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "directory": {
+          "id": "dir_cdcd8b7a9145",
+          "name": "Atlas zone B",
+          "name_normalized": "atlas zone b",
+          "parent_id": null,
+          "created_at": "2026-09-28T18:52:22Z",
+          "last_modified": "2026-09-28T18:52:22Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "8d51a6d92462667aa5e485f77e0ec666c1b95a1e9f3484dc683bf65836f16d5e",
+      "captured": {
+        "name": "zone_b",
+        "path": "directory.id",
+        "value": "dir_cdcd8b7a9145"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/notes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "note": {
+          "id": "note_d7d05929de63",
+          "title": "Atlas moved note",
+          "body_markdown": "Moves between zones",
+          "tags": [],
+          "created_at": "2026-09-28T18:52:22Z",
+          "updated_at": "2026-09-28T18:52:22Z",
+          "last_modified": "2026-09-28T18:52:22Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "412a169fd9dfb48b819521b6e6b9e0a81164d8d03c76c55fecac68761772cc81",
+      "captured": {
+        "name": "note_id",
+        "path": "note.id",
+        "value": "note_d7d05929de63"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.27,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[id='desk-palette-option-note:note_d7d05929de63']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[role=region][aria-label='Atlas moved note']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) > summary",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "+ Atlas zone A",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+      "predicate": {
+        "kind": "text_contains",
+        "value": "Filed \u00b7 Atlas zone A"
+      },
+      "adapter": "observation",
+      "waited_s": 1.22,
+      "holds": true,
+      "reading": "'Filed \u00b7 Atlas zone A' in observe_at text"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-headline]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-headline"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-headline', wanted 'arrival-headline'"
+    }
+  ],
+  "variables": {
+    "zone_a": "dir_8556b7fda41a",
+    "zone_b": "dir_cdcd8b7a9145",
+    "note_id": "note_d7d05929de63"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "name": "+ Atlas zone B",
+    "done": true
+  },
+  "diff": {
+    "text": {
+      "before": "Filed \u00b7 Atlas zone A",
+      "after": "Filed \u00b7 Atlas zone B"
+    },
+    "rect": {
+      "before": {
+        "x": 33,
+        "y": 403,
+        "w": 110,
+        "h": 18
+      },
+      "after": {
+        "x": 33,
+        "y": 403,
+        "w": 109,
+        "h": 18
+      }
+    },
+    "focus_label": {
+      "before": "\u2713\nAtlas zone A",
+      "after": "\u2713\nAtlas zone B"
+    },
+    "document_text_sha256": {
+      "before": "9aedf7b3735bb66bdcee2bd9034fc9478e0f330830d39a430a7b4556e11e7ffe",
+      "after": "1a849af3398d5b2d66ee90e4983276223d3346bdb9bbd9347053ec23f1af2d77"
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/directories/dir_cdcd8b7a9145/members",
+          "status": 200,
+          "payload": {
+            "directory_id": "dir_cdcd8b7a9145",
+            "members": []
+          },
+          "body_sha256": "871430caf528a0edd57ad9366cfa940fc423a3d03fd300f46721c1c38f3da2f6"
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories/dir_8556b7fda41a/members",
+          "status": 200,
+          "payload": {
+            "directory_id": "dir_8556b7fda41a",
+            "members": [
+              {
+                "primitive_id": "note:note_d7d05929de63",
+                "directory_id": "dir_8556b7fda41a",
+                "created_at": "2026-09-28T18:52:29Z",
+                "last_modified": "2026-09-28T18:52:29Z",
+                "deleted": false
+              }
+            ]
+          },
+          "body_sha256": "666d45eee6f7ffccb9ece0537fd0af0d3cc572d91aa8f45819afbe167a04a4dd"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/directories/dir_cdcd8b7a9145/members",
+          "status": 200,
+          "payload": {
+            "directory_id": "dir_cdcd8b7a9145",
+            "members": [
+              {
+                "primitive_id": "note:note_d7d05929de63",
+                "directory_id": "dir_cdcd8b7a9145",
+                "created_at": "2026-09-28T18:52:29Z",
+                "last_modified": "2026-09-28T18:52:30Z",
+                "deleted": false
+              }
+            ]
+          },
+          "body_sha256": "70a24594e54edd6ebef6f2883c91ac3634c4592a3dbbdb52254b04306bfae118"
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories/dir_8556b7fda41a/members",
+          "status": 200,
+          "payload": {
+            "directory_id": "dir_8556b7fda41a",
+            "members": []
+          },
+          "body_sha256": "dd26b43ac1cd3ec032a8c6e00a8496fa6e80492b4045f80b337a6fe870846740"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+    "target_present": true,
+    "text": "Filed \u00b7 Atlas zone A",
+    "attrs": {
+      "class": "gadget-fold-title"
+    },
+    "rect": {
+      "x": 33,
+      "y": 403,
+      "w": 110,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 33,
+        "y": 403,
+        "w": 110,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 35,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "details.gadget-fold > div.gadget-fold-body > div.desk-pullout-filed > div.desk-pullout-filed-axis > div.desk-pullout-lineage > button.btn--chrome.desk-chip",
+    "focus_label": "\u2713\nAtlas zone A",
+    "url": "http://127.0.0.1:54096/",
+    "windows": [
+      {
+        "title": "Atlas moved note",
+        "rect": {
+          "x": 0,
+          "y": 306,
+          "w": 393,
+          "h": 371
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "9aedf7b3735bb66bdcee2bd9034fc9478e0f330830d39a430a7b4556e11e7ffe",
+    "document_text_len": 497,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_cdcd8b7a9145/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_cdcd8b7a9145",
+          "members": []
+        },
+        "body_sha256": "871430caf528a0edd57ad9366cfa940fc423a3d03fd300f46721c1c38f3da2f6"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_8556b7fda41a/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_8556b7fda41a",
+          "members": [
+            {
+              "primitive_id": "note:note_d7d05929de63",
+              "directory_id": "dir_8556b7fda41a",
+              "created_at": "2026-09-28T18:52:29Z",
+              "last_modified": "2026-09-28T18:52:29Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "666d45eee6f7ffccb9ece0537fd0af0d3cc572d91aa8f45819afbe167a04a4dd"
+      }
+    ],
+    "at_utc": "2026-09-28T18:52:30.903807+00:00"
+  },
+  "after": {
+    "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+    "target_present": true,
+    "text": "Filed \u00b7 Atlas zone B",
+    "attrs": {
+      "class": "gadget-fold-title"
+    },
+    "rect": {
+      "x": 33,
+      "y": 403,
+      "w": 109,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 33,
+        "y": 403,
+        "w": 109,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 35,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 141,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 141,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 141,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "details.gadget-fold > div.gadget-fold-body > div.desk-pullout-filed > div.desk-pullout-filed-axis > div.desk-pullout-lineage > button.btn--chrome.desk-chip",
+    "focus_label": "\u2713\nAtlas zone B",
+    "url": "http://127.0.0.1:54096/",
+    "windows": [
+      {
+        "title": "Atlas moved note",
+        "rect": {
+          "x": 0,
+          "y": 306,
+          "w": 393,
+          "h": 371
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "1a849af3398d5b2d66ee90e4983276223d3346bdb9bbd9347053ec23f1af2d77",
+    "document_text_len": 497,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_cdcd8b7a9145/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_cdcd8b7a9145",
+          "members": [
+            {
+              "primitive_id": "note:note_d7d05929de63",
+              "directory_id": "dir_cdcd8b7a9145",
+              "created_at": "2026-09-28T18:52:29Z",
+              "last_modified": "2026-09-28T18:52:30Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "70a24594e54edd6ebef6f2883c91ac3634c4592a3dbbdb52254b04306bfae118"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_8556b7fda41a/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_8556b7fda41a",
+          "members": []
+        },
+        "body_sha256": "dd26b43ac1cd3ec032a8c6e00a8496fa6e80492b4045f80b337a6fe870846740"
+      }
+    ],
+    "at_utc": "2026-09-28T18:52:32.850970+00:00",
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/directories/dir_cdcd8b7a9145/members/note%3Anote_d7d05929de63",
+      "status": 200,
+      "body_sha256": "0067736a179c4a2a01fbbdfe38978a1559c361237fd5e3bf0f652a5465b3577a",
+      "body": {
+        "membership": {
+          "primitive_id": "note:note_d7d05929de63",
+          "directory_id": "dir_cdcd8b7a9145",
+          "created_at": "2026-09-28T18:52:29Z",
+          "last_modified": "2026-09-28T18:52:30Z",
+          "deleted": false
+        },
+        "operation_id": "op_44811a7cce6f4a71b11bf89b9fb2cd59",
+        "receipt": {
+          "receipt_id": "rcpt_949661179bc0483685dce1a27fde0cf9",
+          "operation_id": "op_44811a7cce6f4a71b11bf89b9fb2cd59",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "directory:dir_cdcd8b7a9145",
+          "created_at": 1790621550.990741,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "note:note_d7d05929de63"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:54096) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[role=region][aria-label='Atlas moved note'] details.gadget-fold:has(.desk-pullout-filed) .gadget-fold-title",
+    "target_present": true,
+    "text": "Filed \u00b7 Atlas zone A",
+    "attrs": {
+      "class": "gadget-fold-title"
+    },
+    "rect": {
+      "x": 33,
+      "y": 403,
+      "w": 110,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 33,
+        "y": 403,
+        "w": 110,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 35,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 35,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 88,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 405,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 412,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        },
+        {
+          "x": 142,
+          "y": 419,
+          "owned": true,
+          "owner": "div#pullout:note_d7d05929de63 > div.desk-pullout-body.desk-surface-body > details.gadget-fold > summary > span.gadget-fold-title"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "details.gadget-fold > div.gadget-fold-body > div.desk-pullout-filed > div.desk-pullout-filed-axis > div.desk-pullout-lineage > button.btn--chrome.desk-chip",
+    "focus_label": "+ Atlas zone B",
+    "url": "http://127.0.0.1:54096/",
+    "windows": [
+      {
+        "title": "Atlas moved note",
+        "rect": {
+          "x": 0,
+          "y": 306,
+          "w": 393,
+          "h": 371
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "9aedf7b3735bb66bdcee2bd9034fc9478e0f330830d39a430a7b4556e11e7ffe",
+    "document_text_len": 497,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_cdcd8b7a9145/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_cdcd8b7a9145",
+          "members": [
+            {
+              "primitive_id": "note:note_d7d05929de63",
+              "directory_id": "dir_cdcd8b7a9145",
+              "created_at": "2026-09-28T18:52:29Z",
+              "last_modified": "2026-09-28T18:52:30Z",
+              "deleted": false
+            }
+          ]
+        },
+        "body_sha256": "70a24594e54edd6ebef6f2883c91ac3634c4592a3dbbdb52254b04306bfae118"
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories/dir_8556b7fda41a/members",
+        "status": 200,
+        "payload": {
+          "directory_id": "dir_8556b7fda41a",
+          "members": []
+        },
+        "body_sha256": "dd26b43ac1cd3ec032a8c6e00a8496fa6e80492b4045f80b337a6fe870846740"
+      }
+    ],
+    "at_utc": "2026-09-28T18:52:31.899799+00:00",
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/directories/dir_cdcd8b7a9145/members/note%3Anote_d7d05929de63",
+      "status": 200,
+      "body_sha256": "0067736a179c4a2a01fbbdfe38978a1559c361237fd5e3bf0f652a5465b3577a",
+      "body": {
+        "membership": {
+          "primitive_id": "note:note_d7d05929de63",
+          "directory_id": "dir_cdcd8b7a9145",
+          "created_at": "2026-09-28T18:52:29Z",
+          "last_modified": "2026-09-28T18:52:30Z",
+          "deleted": false
+        },
+        "operation_id": "op_44811a7cce6f4a71b11bf89b9fb2cd59",
+        "receipt": {
+          "receipt_id": "rcpt_949661179bc0483685dce1a27fde0cf9",
+          "operation_id": "op_44811a7cce6f4a71b11bf89b9fb2cd59",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "directory:dir_cdcd8b7a9145",
+          "created_at": 1790621550.990741,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "note:note_d7d05929de63"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:54096) non-GET response after the click"
+    },
+    "predicate_satisfied": false,
+    "reading": "'Filed \u00b7 Atlas zone B' NOT in observe_at text",
+    "elapsed_s": 0.935
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Filed \u00b7 Atlas zone B' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 33, 'y': 403, 'w': 109, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.884,
+    "first_satisfied_at_s": 1.752,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Filed \u00b7 Atlas zone B' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 33, 'y': 403, 'w': 109, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:54096) non-GET response after the click",
+    "chosen": {
+      "method": "PUT",
+      "path": "/api/directories/dir_cdcd8b7a9145/members/note%3Anote_d7d05929de63",
+      "status": 200,
+      "body_sha256": "0067736a179c4a2a01fbbdfe38978a1559c361237fd5e3bf0f652a5465b3577a",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:54096) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:54096) non-GET response after the click",
+    "seen": [
+      {
+        "method": "PUT",
+        "path": "/api/directories/dir_cdcd8b7a9145/members/note%3Anote_d7d05929de63",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/p78-merged/case.p7.zone_file.refile_moves--393/20260928T185220Z-case.p7.zone_file.refile_moves-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/p78-merged/case.p7.zone_file.refile_moves--393/20260928T185220Z-case.p7.zone_file.refile_moves-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-20mbn7z7/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-20mbn7z7/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:54096"
+  ],
+  "duration_s": 12.28
+}

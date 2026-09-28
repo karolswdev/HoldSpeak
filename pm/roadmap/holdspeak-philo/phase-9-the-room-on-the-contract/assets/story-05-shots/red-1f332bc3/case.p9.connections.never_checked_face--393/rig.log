@@ -1,0 +1,10 @@
+PASS: live
+BRAIN: muaddib
+SOURCE: b2fd7e8ba9f9f90470e973fc36fe07d056825d85 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-1hPsy_Mx.js'] hub=http://127.0.0.1:56321 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1ts3bxfi/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: fail terminal=settled
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/red-1f332bc3/case.p9.connections.never_checked_face--393/20260928T191033Z-case.p9.connections.never_checked_face-muaddib-393/before.png', '/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/red-1f332bc3/case.p9.connections.never_checked_face--393/20260928T191033Z-case.p9.connections.never_checked_face-muaddib-393/after.png']
+NOTE: predicate: all_of part readable_text: 'NEVER CHECKED' NOT in observe_at text
+NOTE: a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'values', 'visible', 'windows']).

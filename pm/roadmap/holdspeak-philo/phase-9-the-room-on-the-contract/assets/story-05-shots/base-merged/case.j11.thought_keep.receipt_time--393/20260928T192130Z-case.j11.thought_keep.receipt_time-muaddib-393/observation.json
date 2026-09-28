@@ -1,0 +1,1603 @@
+{
+  "id": "obs-20260928T192130Z-case.j11.thought_keep.receipt_time-muaddib-393",
+  "run_id": "20260928T192130Z-case.j11.thought_keep.receipt_time-muaddib-393",
+  "case_id": "case.j11.thought_keep.receipt_time",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase3.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.thought_keep"
+  ],
+  "state_id": "state.desk_presentation.window_open_thought",
+  "provenance": {
+    "revision": "b2fd7e8ba9f9f90470e973fc36fe07d056825d85",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "da4cbc85330c60176e3987fac44e9e14f8d7e764f6142e84b26164837010b84a",
+      "assets": [
+        "index-BUmrnq_E.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:60097",
+      "port": 60097,
+      "pid": 89734,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-23sie16p",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-23sie16p/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-28T19:21:30.389772+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase3.json",
+      "sha256": "65f0da5833e79fa1a23f7332599aac3941729313c1c6e99f1df82c64029609d6",
+      "version": "phase3-closure"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-develop-thought]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[aria-label=\"Note body\"]",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/thoughts",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "items": [
+          {
+            "id": "thought_e2f96dbdded0",
+            "working_note_id": "note_9046c1c406ae",
+            "source_kind": "note",
+            "title": "Thought",
+            "body_preview": "",
+            "updated_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 1,
+            "lifecycle_revision": 1,
+            "working_revision": 1,
+            "attachment_revision": 0,
+            "continuity_state": "idle",
+            "filing_status": "filed"
+          }
+        ],
+        "next_cursor": null
+      },
+      "response_sha256": "ff0a608d0d5c7d9b48cbf914afe4b94116f66cc541de8e28c14847f9924ed5ca",
+      "captured": {
+        "name": "thought_id",
+        "path": "items.0.id",
+        "value": "thought_e2f96dbdded0"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j11.write_a_thought.window_open reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "thought_id": "thought_e2f96dbdded0"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-pointer",
+    "done": true
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "c2e17e25bb3ddb21ca30bd3e6927ba79b0070fbeb1bac58b2bd6abb9cb37605c",
+      "after": "13889acf52cca62aa34d49e41c39ae2bc2aaf12a5acba4ce799685dcc1146af3"
+    },
+    "document_text_len": {
+      "before": 427,
+      "after": 428
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "payload": {
+            "items": [
+              {
+                "id": "thought_e2f96dbdded0",
+                "working_note_id": "note_9046c1c406ae",
+                "source_kind": "note",
+                "title": "Thought",
+                "body_preview": "",
+                "updated_at": "2026-09-28T19:21:38Z",
+                "state": "working",
+                "aggregate_revision": 1,
+                "lifecycle_revision": 1,
+                "working_revision": 1,
+                "attachment_revision": 0,
+                "continuity_state": "idle",
+                "filing_status": "filed"
+              }
+            ],
+            "next_cursor": null
+          },
+          "body_sha256": "ff0a608d0d5c7d9b48cbf914afe4b94116f66cc541de8e28c14847f9924ed5ca"
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts/thought_e2f96dbdded0",
+          "status": 200,
+          "payload": {
+            "thought": {
+              "id": "thought_e2f96dbdded0",
+              "raw_id": "thought_e2f96dbdded0",
+              "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "source": {
+                "kind": "note"
+              },
+              "raw_captured_at": "2026-09-28T19:21:38Z",
+              "state": "working",
+              "aggregate_revision": 1,
+              "lifecycle_revision": 1,
+              "working_revision": 1,
+              "attachment_revision": 0,
+              "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+              "attachments": [],
+              "working_note": {
+                "id": "note_9046c1c406ae",
+                "title": "Thought",
+                "body_markdown": "",
+                "tags": [],
+                "deleted": false,
+                "last_modified": "2026-09-28T19:21:38Z"
+              },
+              "filing_status": "filed",
+              "continuity": {
+                "state": "idle",
+                "code": ""
+              },
+              "directory_id": "hs-seed-inbox",
+              "directory_name": "Inbox"
+            }
+          },
+          "body_sha256": "06f0a47e9b6816fc5bf56aa19ce8bf49d60e781ba72373613acc4a3aa719bf70"
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts/thought_e2f96dbdded0/workbench",
+          "status": 200,
+          "payload": {
+            "schema_version": 1,
+            "process_scope": {
+              "kind": "hub_local",
+              "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+              "state": "unavailable"
+            },
+            "workspace_cursor": {
+              "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+              "thought_id": "thought_e2f96dbdded0",
+              "aggregate_revision": 1,
+              "continuity_revision": 0
+            },
+            "thought": {
+              "id": "thought_e2f96dbdded0",
+              "raw_id": "thought_e2f96dbdded0",
+              "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "source": {
+                "kind": "note"
+              },
+              "raw_captured_at": "2026-09-28T19:21:38Z",
+              "state": "working",
+              "aggregate_revision": 1,
+              "lifecycle_revision": 1,
+              "working_revision": 1,
+              "attachment_revision": 0,
+              "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+              "attachments": [],
+              "working_note": {
+                "id": "note_9046c1c406ae",
+                "title": "Thought",
+                "body_markdown": "",
+                "tags": [],
+                "deleted": false,
+                "last_modified": "2026-09-28T19:21:38Z"
+              },
+              "filing_status": "filed",
+              "continuity": {
+                "state": "idle",
+                "code": ""
+              },
+              "directory_id": "hs-seed-inbox",
+              "directory_name": "Inbox"
+            },
+            "workspace_state": "idle",
+            "actions": {
+              "primary": {
+                "kind": "configure_ai"
+              },
+              "state": [
+                {
+                  "kind": "configure_ai"
+                }
+              ],
+              "ambient": [
+                "update_working",
+                "attach_context",
+                "complete"
+              ]
+            },
+            "review": null,
+            "context_status": {
+              "summary": "",
+              "state": "empty",
+              "repair_ref": null
+            },
+            "inference": {
+              "availability": "unavailable",
+              "continuation_admission": "unavailable",
+              "intended_placement": {
+                "target_id": "this_machine",
+                "target_name": "This device",
+                "target_kind": "this_device",
+                "boundary": "same_device",
+                "readiness": "unavailable"
+              }
+            },
+            "terminal_status": null
+          },
+          "body_sha256": "49cbf42662b87c9cbbb6c06845fca9b2e27955e0ef4bda1409ffcd1aacad00be"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "payload": {
+            "items": [
+              {
+                "id": "thought_e2f96dbdded0",
+                "working_note_id": "note_9046c1c406ae",
+                "source_kind": "note",
+                "title": "Thought",
+                "body_preview": "Graph walk J11 receipt time",
+                "updated_at": "2026-09-28T19:21:40Z",
+                "state": "working",
+                "aggregate_revision": 2,
+                "lifecycle_revision": 1,
+                "working_revision": 2,
+                "attachment_revision": 0,
+                "continuity_state": "idle",
+                "filing_status": "filed"
+              }
+            ],
+            "next_cursor": null
+          },
+          "body_sha256": "32e1960314094883151f3b8b3b55019ed29632bb6334a462259d47dee542a2f9"
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts/thought_e2f96dbdded0",
+          "status": 200,
+          "payload": {
+            "thought": {
+              "id": "thought_e2f96dbdded0",
+              "raw_id": "thought_e2f96dbdded0",
+              "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "source": {
+                "kind": "note"
+              },
+              "raw_captured_at": "2026-09-28T19:21:38Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+              "attachments": [],
+              "working_note": {
+                "id": "note_9046c1c406ae",
+                "title": "Thought",
+                "body_markdown": "Graph walk J11 receipt time",
+                "tags": [],
+                "deleted": false,
+                "last_modified": "2026-09-28T19:21:40Z"
+              },
+              "filing_status": "filed",
+              "continuity": {
+                "state": "idle",
+                "code": ""
+              },
+              "directory_id": "hs-seed-inbox",
+              "directory_name": "Inbox"
+            }
+          },
+          "body_sha256": "ae248b8d4daa82380ab740d8a6dc32e8cbd7d7af6132fddf966e861be740849c"
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts/thought_e2f96dbdded0/workbench",
+          "status": 200,
+          "payload": {
+            "schema_version": 1,
+            "process_scope": {
+              "kind": "hub_local",
+              "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+              "state": "unavailable"
+            },
+            "workspace_cursor": {
+              "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+              "thought_id": "thought_e2f96dbdded0",
+              "aggregate_revision": 2,
+              "continuity_revision": 1
+            },
+            "thought": {
+              "id": "thought_e2f96dbdded0",
+              "raw_id": "thought_e2f96dbdded0",
+              "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "source": {
+                "kind": "note"
+              },
+              "raw_captured_at": "2026-09-28T19:21:38Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+              "attachments": [],
+              "working_note": {
+                "id": "note_9046c1c406ae",
+                "title": "Thought",
+                "body_markdown": "Graph walk J11 receipt time",
+                "tags": [],
+                "deleted": false,
+                "last_modified": "2026-09-28T19:21:40Z"
+              },
+              "filing_status": "filed",
+              "continuity": {
+                "state": "idle",
+                "code": ""
+              },
+              "directory_id": "hs-seed-inbox",
+              "directory_name": "Inbox"
+            },
+            "workspace_state": "idle",
+            "actions": {
+              "primary": {
+                "kind": "configure_ai"
+              },
+              "state": [
+                {
+                  "kind": "configure_ai"
+                }
+              ],
+              "ambient": [
+                "update_working",
+                "attach_context",
+                "complete"
+              ]
+            },
+            "review": null,
+            "context_status": {
+              "summary": "",
+              "state": "empty",
+              "repair_ref": null
+            },
+            "inference": {
+              "availability": "unavailable",
+              "continuation_admission": "unavailable",
+              "intended_placement": {
+                "target_id": "this_machine",
+                "target_name": "This device",
+                "target_kind": "this_device",
+                "boundary": "same_device",
+                "readiness": "unavailable"
+              }
+            },
+            "terminal_status": null
+          },
+          "body_sha256": "b43157cd0e3b93f43e59b1099ec1b84b6cceefbf1466a34bc32a0f53afae80d5"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 1:21 PM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 12,
+      "y": 635,
+      "w": 111,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 635,
+        "w": 111,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:60097/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c2e17e25bb3ddb21ca30bd3e6927ba79b0070fbeb1bac58b2bd6abb9cb37605c",
+    "document_text_len": 427,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_e2f96dbdded0",
+              "working_note_id": "note_9046c1c406ae",
+              "source_kind": "note",
+              "title": "Thought",
+              "body_preview": "",
+              "updated_at": "2026-09-28T19:21:38Z",
+              "state": "working",
+              "aggregate_revision": 1,
+              "lifecycle_revision": 1,
+              "working_revision": 1,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "ff0a608d0d5c7d9b48cbf914afe4b94116f66cc541de8e28c14847f9924ed5ca"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0",
+        "status": 200,
+        "payload": {
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 1,
+            "lifecycle_revision": 1,
+            "working_revision": 1,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:38Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          }
+        },
+        "body_sha256": "06f0a47e9b6816fc5bf56aa19ce8bf49d60e781ba72373613acc4a3aa719bf70"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0/workbench",
+        "status": 200,
+        "payload": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "thought_id": "thought_e2f96dbdded0",
+            "aggregate_revision": 1,
+            "continuity_revision": 0
+          },
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 1,
+            "lifecycle_revision": 1,
+            "working_revision": 1,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:38Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        },
+        "body_sha256": "49cbf42662b87c9cbbb6c06845fca9b2e27955e0ef4bda1409ffcd1aacad00be"
+      }
+    ],
+    "at_utc": "2026-09-28T19:21:40.481372+00:00"
+  },
+  "after": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 1:21 PM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 12,
+      "y": 635,
+      "w": 111,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 635,
+        "w": 111,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:60097/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "13889acf52cca62aa34d49e41c39ae2bc2aaf12a5acba4ce799685dcc1146af3",
+    "document_text_len": 428,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_e2f96dbdded0",
+              "working_note_id": "note_9046c1c406ae",
+              "source_kind": "note",
+              "title": "Thought",
+              "body_preview": "Graph walk J11 receipt time",
+              "updated_at": "2026-09-28T19:21:40Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "32e1960314094883151f3b8b3b55019ed29632bb6334a462259d47dee542a2f9"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0",
+        "status": 200,
+        "payload": {
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          }
+        },
+        "body_sha256": "ae248b8d4daa82380ab740d8a6dc32e8cbd7d7af6132fddf966e861be740849c"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0/workbench",
+        "status": 200,
+        "payload": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "thought_id": "thought_e2f96dbdded0",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        },
+        "body_sha256": "b43157cd0e3b93f43e59b1099ec1b84b6cceefbf1466a34bc32a0f53afae80d5"
+      }
+    ],
+    "at_utc": "2026-09-28T19:21:41.578824+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e2f96dbdded0/working",
+      "status": 200,
+      "body_sha256": "6c2a0eeacd7dcf4a61e0c80fb3b1101271acdc46f54d35ed9342f89ce8da35f5",
+      "body": {
+        "thought": {
+          "id": "thought_e2f96dbdded0",
+          "raw_id": "thought_e2f96dbdded0",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-28T19:21:38Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+          "attachments": [],
+          "working_note": {
+            "id": "note_9046c1c406ae",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 receipt time",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-28T19:21:40Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "thought_id": "thought_e2f96dbdded0",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60097) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".thought-note-foot .surface-footer-receipt-line",
+    "target_present": true,
+    "text": "KEPT \u00b7 1:21 PM",
+    "attrs": {
+      "class": "surface-footer-receipt-line",
+      "role": "status"
+    },
+    "rect": {
+      "x": 12,
+      "y": 635,
+      "w": 111,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 12,
+        "y": 635,
+        "w": 111,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 14,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 14,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 67,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 637,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 644,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        },
+        {
+          "x": 121,
+          "y": 651,
+          "owned": true,
+          "owner": "div.thought-workspace-preserved > div.thought-note-window > footer.surface-footer > div.surface-footer-layout.thought-note-foot > div.surface-footer-receipt > span.surface-footer-receipt-line"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 523,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "277px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:60097/",
+    "windows": [
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 629
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "13889acf52cca62aa34d49e41c39ae2bc2aaf12a5acba4ce799685dcc1146af3",
+    "document_text_len": 428,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_e2f96dbdded0",
+              "working_note_id": "note_9046c1c406ae",
+              "source_kind": "note",
+              "title": "Thought",
+              "body_preview": "Graph walk J11 receipt time",
+              "updated_at": "2026-09-28T19:21:40Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "32e1960314094883151f3b8b3b55019ed29632bb6334a462259d47dee542a2f9"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0",
+        "status": 200,
+        "payload": {
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          }
+        },
+        "body_sha256": "ae248b8d4daa82380ab740d8a6dc32e8cbd7d7af6132fddf966e861be740849c"
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts/thought_e2f96dbdded0/workbench",
+        "status": 200,
+        "payload": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "thought_id": "thought_e2f96dbdded0",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        },
+        "body_sha256": "b43157cd0e3b93f43e59b1099ec1b84b6cceefbf1466a34bc32a0f53afae80d5"
+      }
+    ],
+    "at_utc": "2026-09-28T19:21:41.446565+00:00",
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e2f96dbdded0/working",
+      "status": 200,
+      "body_sha256": "6c2a0eeacd7dcf4a61e0c80fb3b1101271acdc46f54d35ed9342f89ce8da35f5",
+      "body": {
+        "thought": {
+          "id": "thought_e2f96dbdded0",
+          "raw_id": "thought_e2f96dbdded0",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-09-28T19:21:38Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+          "attachments": [],
+          "working_note": {
+            "id": "note_9046c1c406ae",
+            "title": "Thought",
+            "body_markdown": "Graph walk J11 receipt time",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-09-28T19:21:40Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_b573c09ff1ba8109001b1682cc110649",
+            "thought_id": "thought_e2f96dbdded0",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_e2f96dbdded0",
+            "raw_id": "thought_e2f96dbdded0",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-09-28T19:21:38Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ee8a188ada62e67000f1fb94984c1404d6b574b9ef7684bc73f75f44a66ddc86",
+            "attachments": [],
+            "working_note": {
+              "id": "note_9046c1c406ae",
+              "title": "Thought",
+              "body_markdown": "Graph walk J11 receipt time",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-09-28T19:21:40Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60097) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'KEPT \u00b7' in observe_at text",
+    "elapsed_s": 0.919
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'KEPT \u00b7' in observe_at text",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.05,
+    "first_satisfied_at_s": 0.919,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'KEPT \u00b7' in observe_at text"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:60097) non-GET response after the click",
+    "chosen": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_e2f96dbdded0/working",
+      "status": 200,
+      "body_sha256": "6c2a0eeacd7dcf4a61e0c80fb3b1101271acdc46f54d35ed9342f89ce8da35f5",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:60097) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:60097) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_e2f96dbdded0/working",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/base-merged/case.j11.thought_keep.receipt_time--393/20260928T192130Z-case.j11.thought_keep.receipt_time-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/base-merged/case.j11.thought_keep.receipt_time--393/20260928T192130Z-case.j11.thought_keep.receipt_time-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-23sie16p/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-23sie16p/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:60097"
+  ],
+  "duration_s": 11.457
+}

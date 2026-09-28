@@ -123,7 +123,9 @@ def test_the_pairs_read_the_same_values() -> None:
     cases = _all_cases()
     typed = next(s["value"] for s in cases["case.p9.update.delivered_row"]["setup"]
                  if s.get("selector") == "[data-testid=deliver-to]")
-    assert cases["case.p9.update.delivered_row"]["expected"]["predicate"]["value"] == typed
+    face_parts = {p["kind"]: p for p in cases["case.p9.update.delivered_row"]["expected"]["predicate"]["predicates"]}
+    assert face_parts["readable_text"]["value"] == typed
+    assert face_parts["protocol_status"]["body_fields"]["delivery.delivered_to"] == typed
     op = cases["case.p9.update.delivered_row.op"]
     assert op["trigger"]["args"]["delivered_to"] == typed
     assert {"source": "observe", "path": "updates.0.deliveries.0.delivered_to", "value": typed} \
@@ -132,8 +134,33 @@ def test_the_pairs_read_the_same_values() -> None:
                                                     "case.p9.grant_route.project_allowed"))
     for text in ('"LIVE"', "/api/settings/remote/delegations/{identity}/projects/{project_id}", '"sweep-runner"'):
         assert text in grant and text in route, text
-    connections = json.dumps(cases["case.p9.connections.never_checked_face"])
-    assert '"never_checked"' in connections and '"github"' in connections
+    # Codex Astra r1 finding 3: BOTH predicates, face and twin, name the same
+    # provider in the same state with no check time.
+    face_rows = [part["expect"][0]["row"]["match"]
+                 for part in cases["case.p9.connections.never_checked_face"]["expected"]["predicate"]["predicates"]
+                 if part["kind"] == "protocol_reads"]
+    twin_facts = [fact["contains"] for fact in cases["case.p9.connections.never_checked"]["expected"]["predicate"]["facts"]
+                  if isinstance(fact.get("contains"), dict) and fact["contains"].get("provider_id") == "github"]
+    assert face_rows == [{"provider_id": "github", "state": "never_checked", "last_checked_at": None}]
+    assert twin_facts and all(f["state"] == face_rows[0]["state"] for f in twin_facts), twin_facts
+    assert any(f.get("last_checked_at", "absent") is None for f in twin_facts), twin_facts
+
+
+def test_the_delivery_face_reads_its_own_clicks_durable_outcome() -> None:
+    """Codex Astra r1 finding 3: the browser case reads the click's own answer
+    (the delivery row and the owner's receipt) and the hub's stored row, not
+    only the words on the face."""
+    case = _all_cases()["case.p9.update.delivered_row"]
+    parts = {p["kind"]: p for p in case["expected"]["predicate"]["predicates"]}
+    assert case["trigger"]["trigger_route"] == {"method": "POST", "path": "/api/updates/{update_id}/delivered"}
+    status = parts["protocol_status"]
+    assert status["path"] == case["trigger"]["trigger_route"]["path"] and status["status"] == 200
+    assert status["body_fields"]["delivery.delivered_to"] == "Priya"
+    assert status["body_fields"]["receipt.state"] == "succeeded"
+    assert status["body_fields"]["receipt.actor_kind"] == "owner"
+    row = parts["protocol_reads"]["expect"][0]["row"]["match"]
+    assert row["id"] == "{update_id}" and row["deliveries.0.delivered_to"] == "Priya"
+    assert parts["readable_text"]["value"] == "Priya"
 
 
 def test_every_admitted_write_twin_reads_its_receipt_with_its_actor() -> None:
@@ -170,3 +197,33 @@ def test_every_new_face_case_is_new_or_red_on_main_in_its_words() -> None:
             continue
         words = cases[cid]["expected"]["words"]
         assert "Red on main" in words or "New (no red claimed)" in words, cid
+
+
+# ── Codex Astra r1 finding 1: every claimed run keeps its own record ──
+
+SHOTS = REPO / "pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-shots"
+RETAINED = ("p9-merged", "p78-merged")
+# The base atlas and Phase 3 (194 runs per product): the observation of every
+# run is kept; its shots are not (about 200 MB), which the evidence says.
+OBSERVATION_ONLY = ("base-294632c0", "base-merged")
+
+
+@pytest.mark.parametrize("label", RETAINED + OBSERVATION_ONLY)
+def test_every_claimed_run_keeps_its_own_observation(label) -> None:
+    """One runs.tsv row = one directory = one observation of THAT case at THAT
+    width with THAT verdict. A copier that lets one run overwrite another
+    (round one: 1 of 28 kept) fails here."""
+    rows = [line.split("\t") for line in (SHOTS / label / "runs.tsv").read_text().splitlines()[1:]]
+    assert rows
+    dirs = [row[7] for row in rows]
+    assert len(set(dirs)) == len(dirs), "two rows share one run directory"
+    for f, cid, width, verdict, *_rest, run_dir in rows:
+        obs = json.loads((SHOTS / label / run_dir / "observation.json").read_text())
+        assert obs["case_id"] == cid, (run_dir, obs["case_id"])
+        assert obs["verdict"] == verdict, (run_dir, obs["verdict"], verdict)
+        if width != "op" and label not in OBSERVATION_ONLY:
+            assert obs["viewport"] == int(width), (run_dir, obs["viewport"])
+            shots = [p for p in (SHOTS / label / run_dir).iterdir() if p.suffix in (".png", ".jpg")]
+            assert shots, f"{run_dir}: a face run kept no shot"
+    on_disk = {f"{p.parent.name}/{p.name}" for p in (SHOTS / label).glob("*/*") if p.is_dir()}
+    assert on_disk == set(dirs), sorted(on_disk ^ set(dirs))

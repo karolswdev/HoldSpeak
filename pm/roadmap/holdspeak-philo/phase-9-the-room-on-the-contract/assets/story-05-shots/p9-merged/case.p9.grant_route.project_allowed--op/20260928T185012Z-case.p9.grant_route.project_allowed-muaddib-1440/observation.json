@@ -1,0 +1,906 @@
+{
+  "id": "obs-20260928T185012Z-case.p9.grant_route.project_allowed-muaddib-1440",
+  "run_id": "20260928T185012Z-case.p9.grant_route.project_allowed-muaddib-1440",
+  "case_id": "case.p9.grant_route.project_allowed",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.route.project_delegation_grant"
+  ],
+  "state_id": "state.desk_presentation.p9_grant_face",
+  "provenance": {
+    "revision": "b2fd7e8ba9f9f90470e973fc36fe07d056825d85",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "da4cbc85330c60176e3987fac44e9e14f8d7e764f6142e84b26164837010b84a",
+      "assets": [
+        "index-BUmrnq_E.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53821",
+      "port": 53821,
+      "pid": 63887,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1jjare23",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1jjare23/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-28T18:50:12.595764+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "0f0c9a87012d0d9c1f00ae4ea5d38d7f28b3c35fb25e7800a5f8a64a547ff1ac",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/remote",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "enabled": true
+      },
+      "response_sha256": "5b1e3cf20eb79591a38a63d8d23b664b3498c02b5f47d6dca5df7bfdb6a66bef"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/remote/credentials",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "token": "oXPssVdH_g1fxjScP09pOHSZlOH2EGX2Mguz-TszUfE",
+        "id": "88e368af52464dc5",
+        "identity": "sweep-runner",
+        "palette": "PROJECT",
+        "expires_at": 628130.486888416
+      },
+      "response_sha256": "8b1dd7370f8dfaddfe7deeaefc9cdc115a451279e094d575c37c07b32164ecb1",
+      "captured": {
+        "name": "identity",
+        "path": "identity",
+        "value": "sweep-runner"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-07bd4f2523c4",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-28T12:50:14.154268",
+          "updated_at": "2026-09-28T12:50:14.154268",
+          "result_kind": "created",
+          "project_id": "proj-07bd4f2523c4",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-07bd4f2523c4"
+          ]
+        }
+      },
+      "response_sha256": "be58d0e4836323b518dddf07c68aac9e2c87de724b949ae1765632cc31625aa0",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-07bd4f2523c4"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. project.delegation.grant is HTTP only (in no MCP palette), so its non-face path is the route.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "identity": "sweep-runner",
+    "project_id": "proj-07bd4f2523c4",
+    "grant_op": "op_51d7218d9bc44c6db186799323c2cdbc"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "PUT",
+    "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-07bd4f2523c4",
+    "adapter": "http-route",
+    "status": 200,
+    "response": {
+      "success": true,
+      "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+      "receipt": {
+        "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+        "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+        "state": "succeeded",
+        "outcome": "succeeded",
+        "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+        "created_at": 1790621414.162137,
+        "actor_kind": "owner",
+        "actor_identity": "owner-session",
+        "delegator_kind": "",
+        "delegator_identity": "",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "target_ref": "project:proj-07bd4f2523c4"
+      },
+      "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+      "agent_identity": "sweep-runner",
+      "project_id": "proj-07bd4f2523c4"
+    },
+    "response_sha256": "f5b85bed7ff6704e9526237c14235fa10d886fda99c4ab92734146801eaaf4df",
+    "captured": {
+      "name": "grant_op",
+      "path": "operation_id",
+      "value": "op_51d7218d9bc44c6db186799323c2cdbc"
+    }
+  },
+  "diff": {
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "88e368af52464dc5",
+                "identity": "sweep-runner",
+                "palette": "PROJECT",
+                "expires_at": 1790664614.1524942,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": []
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "39166769b4599cd23476aeaa4e1316f3a565b7ba2da95df93251e12ca8fd538f"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/settings/remote",
+          "status": 200,
+          "payload": {
+            "enabled": true,
+            "bind_host": null,
+            "port": null,
+            "credentials": [
+              {
+                "id": "88e368af52464dc5",
+                "identity": "sweep-runner",
+                "palette": "PROJECT",
+                "expires_at": 1790664614.1524985,
+                "last_used_at": null,
+                "active": true,
+                "delegation": null,
+                "project_delegations": [
+                  {
+                    "project_id": "proj-07bd4f2523c4",
+                    "project_name": "Atlas ledger cutover",
+                    "project_archived": false,
+                    "state": "LIVE",
+                    "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+                    "expires_at": null
+                  }
+                ]
+              }
+            ],
+            "delegations": [],
+            "project_delegations": [],
+            "active_count": 1,
+            "total_count": 1
+          },
+          "body_sha256": "7610f002e2696157b0e4d3f17b6a26825a8958876f1ed00441e3db4677b9ac5e"
+        },
+        {
+          "method": "GET",
+          "path": "/api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt",
+          "status": 200,
+          "payload": {
+            "view": "receipt",
+            "consistency": "committed",
+            "objects": [
+              {
+                "ref": "operation:op_51d7218d9bc44c6db186799323c2cdbc",
+                "operation": {
+                  "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                  "request_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                  "idempotency_key": "project.delegation.grant:208e6799-0e12-4e2c-8551-9497d86aab63",
+                  "name": "project.delegation.grant",
+                  "version": 1,
+                  "principal_kind": "owner",
+                  "principal_identity": "owner-session",
+                  "target_ref": "project:proj-07bd4f2523c4",
+                  "placement": "node:hub-project-writer",
+                  "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                  "policy_version": "operation-policy/v2",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "delegator_kind": "",
+                  "delegator_identity": "",
+                  "state": "succeeded",
+                  "revision": 5,
+                  "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                  "parent_operation_id": "",
+                  "correlation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                  "decision": "approve",
+                  "warrant_revoked": 0,
+                  "claimed_by": "hub-project-writer",
+                  "created_at": 1790621414.1605608,
+                  "updated_at": 1790621414.162119,
+                  "warrant": {
+                    "continuation_identities": [],
+                    "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                    "execution_expires_at": 1790625014.161304,
+                    "expires_at": 1790621444.161304,
+                    "issued_at": 1790621414.161304,
+                    "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                    "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                    "parent_operation_id": "",
+                    "placement": "node:hub-project-writer",
+                    "policy_version": "operation-policy/v2",
+                    "principal_identity": "owner-session",
+                    "principal_kind": "owner",
+                    "signature": "29f6b3bc5e34399d1b5f3414fee4804b892e1b8cb21918a3258387fc42f4d885",
+                    "target_binding": "project:proj-07bd4f2523c4",
+                    "target_ref": "project:proj-07bd4f2523c4",
+                    "uses": 1,
+                    "warrant_id": "war_aa7eade14e554d44a0382d7f2c854db5"
+                  }
+                },
+                "receipt": {
+                  "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+                  "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                  "state": "succeeded",
+                  "outcome": "succeeded",
+                  "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+                  "created_at": 1790621414.162137,
+                  "actor_kind": "owner",
+                  "actor_identity": "owner-session",
+                  "delegator_kind": "",
+                  "delegator_identity": "",
+                  "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                  "target_ref": "project:proj-07bd4f2523c4"
+                },
+                "native_receipts": []
+              }
+            ]
+          },
+          "body_sha256": "7d2203944507264d075007cac16906945eeaa359c8233eeee2909b78f1d02f9a"
+        }
+      ]
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "84f470e102618a08ad5a0004ee8cd1d1871c3a3dbfefe0041c739188a53fea08"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "065120bc5c1a90ffb0c265a2ad52546ed63593e53760c104f4d57b9928e08fee"
+      }
+    }
+  },
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53821",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/settings/remote",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/settings/remote",
+      "status": 200,
+      "collection": "credentials",
+      "row_count": 1,
+      "payload_sha256": "84f470e102618a08ad5a0004ee8cd1d1871c3a3dbfefe0041c739188a53fea08",
+      "rows": [
+        {
+          "id": "88e368af52464dc5",
+          "identity": "sweep-runner",
+          "palette": "PROJECT",
+          "expires_at": 1790664614.1524951,
+          "last_used_at": null,
+          "active": true,
+          "delegation": null,
+          "project_delegations": []
+        }
+      ],
+      "payload": {
+        "enabled": true,
+        "bind_host": null,
+        "port": null,
+        "credentials": [
+          {
+            "id": "88e368af52464dc5",
+            "identity": "sweep-runner",
+            "palette": "PROJECT",
+            "expires_at": 1790664614.1524951,
+            "last_used_at": null,
+            "active": true,
+            "delegation": null,
+            "project_delegations": []
+          }
+        ],
+        "delegations": [],
+        "project_delegations": [],
+        "active_count": 1,
+        "total_count": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "84f470e102618a08ad5a0004ee8cd1d1871c3a3dbfefe0041c739188a53fea08"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "88e368af52464dc5",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790664614.1524942,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": []
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "39166769b4599cd23476aeaa4e1316f3a565b7ba2da95df93251e12ca8fd538f"
+      }
+    ],
+    "at_utc": "2026-09-28T18:50:14.159263+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53821",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/settings/remote",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/settings/remote",
+      "status": 200,
+      "collection": "credentials",
+      "row_count": 1,
+      "payload_sha256": "065120bc5c1a90ffb0c265a2ad52546ed63593e53760c104f4d57b9928e08fee",
+      "rows": [
+        {
+          "id": "88e368af52464dc5",
+          "identity": "sweep-runner",
+          "palette": "PROJECT",
+          "expires_at": 1790664614.152499,
+          "last_used_at": null,
+          "active": true,
+          "delegation": null,
+          "project_delegations": [
+            {
+              "project_id": "proj-07bd4f2523c4",
+              "project_name": "Atlas ledger cutover",
+              "project_archived": false,
+              "state": "LIVE",
+              "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+              "expires_at": null
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "enabled": true,
+        "bind_host": null,
+        "port": null,
+        "credentials": [
+          {
+            "id": "88e368af52464dc5",
+            "identity": "sweep-runner",
+            "palette": "PROJECT",
+            "expires_at": 1790664614.152499,
+            "last_used_at": null,
+            "active": true,
+            "delegation": null,
+            "project_delegations": [
+              {
+                "project_id": "proj-07bd4f2523c4",
+                "project_name": "Atlas ledger cutover",
+                "project_archived": false,
+                "state": "LIVE",
+                "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+                "expires_at": null
+              }
+            ]
+          }
+        ],
+        "delegations": [],
+        "project_delegations": [],
+        "active_count": 1,
+        "total_count": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "065120bc5c1a90ffb0c265a2ad52546ed63593e53760c104f4d57b9928e08fee"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "88e368af52464dc5",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790664614.1524985,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": [
+                {
+                  "project_id": "proj-07bd4f2523c4",
+                  "project_name": "Atlas ledger cutover",
+                  "project_archived": false,
+                  "state": "LIVE",
+                  "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+                  "expires_at": null
+                }
+              ]
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "7610f002e2696157b0e4d3f17b6a26825a8958876f1ed00441e3db4677b9ac5e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt",
+        "status": 200,
+        "payload": {
+          "view": "receipt",
+          "consistency": "committed",
+          "objects": [
+            {
+              "ref": "operation:op_51d7218d9bc44c6db186799323c2cdbc",
+              "operation": {
+                "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "request_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                "idempotency_key": "project.delegation.grant:208e6799-0e12-4e2c-8551-9497d86aab63",
+                "name": "project.delegation.grant",
+                "version": 1,
+                "principal_kind": "owner",
+                "principal_identity": "owner-session",
+                "target_ref": "project:proj-07bd4f2523c4",
+                "placement": "node:hub-project-writer",
+                "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                "policy_version": "operation-policy/v2",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "delegator_kind": "",
+                "delegator_identity": "",
+                "state": "succeeded",
+                "revision": 5,
+                "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                "parent_operation_id": "",
+                "correlation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "decision": "approve",
+                "warrant_revoked": 0,
+                "claimed_by": "hub-project-writer",
+                "created_at": 1790621414.1605608,
+                "updated_at": 1790621414.162119,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                  "execution_expires_at": 1790625014.161304,
+                  "expires_at": 1790621444.161304,
+                  "issued_at": 1790621414.161304,
+                  "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                  "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "29f6b3bc5e34399d1b5f3414fee4804b892e1b8cb21918a3258387fc42f4d885",
+                  "target_binding": "project:proj-07bd4f2523c4",
+                  "target_ref": "project:proj-07bd4f2523c4",
+                  "uses": 1,
+                  "warrant_id": "war_aa7eade14e554d44a0382d7f2c854db5"
+                }
+              },
+              "receipt": {
+                "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+                "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "state": "succeeded",
+                "outcome": "succeeded",
+                "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+                "created_at": 1790621414.162137,
+                "actor_kind": "owner",
+                "actor_identity": "owner-session",
+                "delegator_kind": "",
+                "delegator_identity": "",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "target_ref": "project:proj-07bd4f2523c4"
+              },
+              "native_receipts": []
+            }
+          ]
+        },
+        "body_sha256": "7d2203944507264d075007cac16906945eeaa359c8233eeee2909b78f1d02f9a"
+      }
+    ],
+    "at_utc": "2026-09-28T18:50:15.078572+00:00",
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-07bd4f2523c4",
+      "status": 200,
+      "body_sha256": "f5b85bed7ff6704e9526237c14235fa10d886fda99c4ab92734146801eaaf4df",
+      "body": {
+        "success": true,
+        "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+        "receipt": {
+          "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+          "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+          "created_at": 1790621414.162137,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-07bd4f2523c4"
+        },
+        "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+        "agent_identity": "sweep-runner",
+        "project_id": "proj-07bd4f2523c4"
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:53821",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/settings/remote",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/settings/remote",
+      "status": 200,
+      "collection": "credentials",
+      "row_count": 1,
+      "payload_sha256": "9d692323b38b70d94e7db1c22c4dc884261265ff3fc5f96a460f7e501123e8b3",
+      "rows": [
+        {
+          "id": "88e368af52464dc5",
+          "identity": "sweep-runner",
+          "palette": "PROJECT",
+          "expires_at": 1790664614.1524997,
+          "last_used_at": null,
+          "active": true,
+          "delegation": null,
+          "project_delegations": [
+            {
+              "project_id": "proj-07bd4f2523c4",
+              "project_name": "Atlas ledger cutover",
+              "project_archived": false,
+              "state": "LIVE",
+              "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+              "expires_at": null
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "enabled": true,
+        "bind_host": null,
+        "port": null,
+        "credentials": [
+          {
+            "id": "88e368af52464dc5",
+            "identity": "sweep-runner",
+            "palette": "PROJECT",
+            "expires_at": 1790664614.1524997,
+            "last_used_at": null,
+            "active": true,
+            "delegation": null,
+            "project_delegations": [
+              {
+                "project_id": "proj-07bd4f2523c4",
+                "project_name": "Atlas ledger cutover",
+                "project_archived": false,
+                "state": "LIVE",
+                "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+                "expires_at": null
+              }
+            ]
+          }
+        ],
+        "delegations": [],
+        "project_delegations": [],
+        "active_count": 1,
+        "total_count": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "9d692323b38b70d94e7db1c22c4dc884261265ff3fc5f96a460f7e501123e8b3"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "88e368af52464dc5",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790664614.152499,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null,
+              "project_delegations": [
+                {
+                  "project_id": "proj-07bd4f2523c4",
+                  "project_name": "Atlas ledger cutover",
+                  "project_archived": false,
+                  "state": "LIVE",
+                  "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+                  "expires_at": null
+                }
+              ]
+            }
+          ],
+          "delegations": [],
+          "project_delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "065120bc5c1a90ffb0c265a2ad52546ed63593e53760c104f4d57b9928e08fee"
+      },
+      {
+        "method": "GET",
+        "path": "/api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt",
+        "status": 200,
+        "payload": {
+          "view": "receipt",
+          "consistency": "committed",
+          "objects": [
+            {
+              "ref": "operation:op_51d7218d9bc44c6db186799323c2cdbc",
+              "operation": {
+                "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "request_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                "idempotency_key": "project.delegation.grant:208e6799-0e12-4e2c-8551-9497d86aab63",
+                "name": "project.delegation.grant",
+                "version": 1,
+                "principal_kind": "owner",
+                "principal_identity": "owner-session",
+                "target_ref": "project:proj-07bd4f2523c4",
+                "placement": "node:hub-project-writer",
+                "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                "policy_version": "operation-policy/v2",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "delegator_kind": "",
+                "delegator_identity": "",
+                "state": "succeeded",
+                "revision": 5,
+                "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                "parent_operation_id": "",
+                "correlation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "decision": "approve",
+                "warrant_revoked": 0,
+                "claimed_by": "hub-project-writer",
+                "created_at": 1790621414.1605608,
+                "updated_at": 1790621414.162119,
+                "warrant": {
+                  "continuation_identities": [],
+                  "envelope_sha256": "sha256:2d43573c578508b7d3e987a20fab2e3d88e54ede42db6c7bc7e231bfc56138b5",
+                  "execution_expires_at": 1790625014.161304,
+                  "expires_at": 1790621444.161304,
+                  "issued_at": 1790621414.161304,
+                  "native_id": "208e6799-0e12-4e2c-8551-9497d86aab63",
+                  "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                  "parent_operation_id": "",
+                  "placement": "node:hub-project-writer",
+                  "policy_version": "operation-policy/v2",
+                  "principal_identity": "owner-session",
+                  "principal_kind": "owner",
+                  "signature": "29f6b3bc5e34399d1b5f3414fee4804b892e1b8cb21918a3258387fc42f4d885",
+                  "target_binding": "project:proj-07bd4f2523c4",
+                  "target_ref": "project:proj-07bd4f2523c4",
+                  "uses": 1,
+                  "warrant_id": "war_aa7eade14e554d44a0382d7f2c854db5"
+                }
+              },
+              "receipt": {
+                "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+                "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+                "state": "succeeded",
+                "outcome": "succeeded",
+                "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+                "created_at": 1790621414.162137,
+                "actor_kind": "owner",
+                "actor_identity": "owner-session",
+                "delegator_kind": "",
+                "delegator_identity": "",
+                "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+                "target_ref": "project:proj-07bd4f2523c4"
+              },
+              "native_receipts": []
+            }
+          ]
+        },
+        "body_sha256": "7d2203944507264d075007cac16906945eeaa359c8233eeee2909b78f1d02f9a"
+      }
+    ],
+    "at_utc": "2026-09-28T18:50:15.073489+00:00",
+    "trigger_response": {
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/sweep-runner/projects/proj-07bd4f2523c4",
+      "status": 200,
+      "body_sha256": "f5b85bed7ff6704e9526237c14235fa10d886fda99c4ab92734146801eaaf4df",
+      "body": {
+        "success": true,
+        "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+        "receipt": {
+          "receipt_id": "rcpt_a99e53fffae64900847680d2fce33f85",
+          "operation_id": "op_51d7218d9bc44c6db186799323c2cdbc",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project-delegation:projdeleg_ca8acb07143e44a6951515ada313fbff",
+          "created_at": 1790621414.162137,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project:proj-07bd4f2523c4"
+        },
+        "grant_id": "projdeleg_ca8acb07143e44a6951515ada313fbff",
+        "agent_identity": "sweep-runner",
+        "project_id": "proj-07bd4f2523c4"
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "GET /api/settings/remote answered 200 with one row {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-07bd4f2523c4', 'project_delegations.0.state': 'LIVE'}; GET /api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt answered 200 with one row {'operation.name': 'project.delegation.grant', 'operation.operation_id': 'op_51d7218d9bc44c6db186799323c2cdbc', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'receipt.target_ref': 'project:proj-07bd4f2523c4'}",
+    "elapsed_s": 0.914
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "GET /api/settings/remote answered 200 with one row {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-07bd4f2523c4', 'project_delegations.0.state': 'LIVE'}; GET /api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt answered 200 with one row {'operation.name': 'project.delegation.grant', 'operation.operation_id': 'op_51d7218d9bc44c6db186799323c2cdbc', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'receipt.target_ref': 'project:proj-07bd4f2523c4'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.919,
+    "first_satisfied_at_s": 0.914,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "placeholder(s) ['grant_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "predicate: GET /api/settings/remote answered 200 with one row {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-07bd4f2523c4', 'project_delegations.0.state': 'LIVE'}; GET /api/kernel/read?refs=operation:op_51d7218d9bc44c6db186799323c2cdbc&view=receipt answered 200 with one row {'operation.name': 'project.delegation.grant', 'operation.operation_id': 'op_51d7218d9bc44c6db186799323c2cdbc', 'receipt.state': 'succeeded', 'receipt.actor_kind': 'owner', 'receipt.target_ref': 'project:proj-07bd4f2523c4'}"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "grant_op"
+  ],
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1jjare23/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1jjare23/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53821"
+  ],
+  "duration_s": 2.628
+}

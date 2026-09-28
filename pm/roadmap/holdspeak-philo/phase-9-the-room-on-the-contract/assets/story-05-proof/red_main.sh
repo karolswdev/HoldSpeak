@@ -17,9 +17,11 @@ echo "base = $(cd $WT && git rev-parse $BASE)"
 cp $WT/scripts/graph_walk.py $MAIN/scripts/graph_walk.py
 cp $WT/docs/internal/philo/graph/atlas-phase9.json $MAIN/docs/internal/philo/graph/atlas-phase9.json
 cases=("$@")
-[ ${#cases} -eq 0 ] && cases=(case.p9.grant.project_allowed case.p9.grant_route.project_allowed case.p9.grant.desk_reads_desk case.p9.connections.never_checked_face case.p9.update.delivered_row.op)
+[ ${#cases} -eq 0 ] && cases=(case.p9.update.delivered_row case.p9.grant.project_allowed case.p9.grant_route.project_allowed case.p9.grant.desk_reads_desk case.p9.connections.never_checked_face case.p9.update.delivered_row.op)
 OUT=$WT/.tmp/s05/red-$BASE
-mkdir -p $OUT
+rm -rf $OUT; mkdir -p $OUT
+KEEP=$WT/pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-shots/red-$BASE
+rm -rf $KEEP; mkdir -p $KEEP
 cd $MAIN
 for c in $cases; do
   if [[ $c == *.op || $c == case.p9.grant_route.* ]]; then widths=(op); else widths=(1440 393); fi
@@ -27,7 +29,9 @@ for c in $cases; do
     if [[ $w == op ]]; then extra=(--viewport 1440 --headless); else extra=(--viewport $w); fi
     HOME=$(mktemp -d) PYTHONPATH=$MAIN PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright \
       $WT/.venv/bin/python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase9.json \
-      --case $c --brain muaddib $extra --no-build --out $OUT > $OUT/$c-$w.log 2>&1
-    echo "$c $w exit=$? $(grep -h -E '^VERDICT' $OUT/$c-$w.log | head -1) | $(grep -h -E '^NOTE: (predicate|BLOCKED)' $OUT/$c-$w.log | tail -1 | cut -c1-330)"
+      --case $c --brain muaddib $extra --no-build --out $OUT/$c--$w > $OUT/$c--$w.log 2>&1
+    echo "$c $w exit=$? $(grep -h -E '^VERDICT' $OUT/$c--$w.log | head -1) | $(grep -h -E '^NOTE: (predicate|BLOCKED)' $OUT/$c--$w.log | tail -1 | cut -c1-330)"
+    # Codex Astra r1 finding 1: each run's own directory, every file, kept.
+    mkdir -p $KEEP/$c--$w && cp -R $OUT/$c--$w/. $KEEP/$c--$w/ && cp $OUT/$c--$w.log $KEEP/$c--$w/rig.log
   done
 done

@@ -6,7 +6,7 @@
 cd ${0:A:h}/../../../../../..
 echo "HEAD = $(git rev-parse HEAD)"
 HOME=$(mktemp -d) .venv/bin/python -m pytest -q -p no:cacheprovider -n 4 \
-  tests/unit/test_philo9_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo9_04_atlas.py \
+  tests/unit/test_philo9_atlas.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo9_04_atlas.py tests/unit/test_api_surface.py \
   tests/unit/test_philo8_atlas.py tests/unit/test_philo7_atlas.py \
   tests/unit/test_philo9_compat.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_mark_delivered.py \
   tests/unit/test_philo9_delivery_record.py tests/unit/test_philo9_project_grant.py \

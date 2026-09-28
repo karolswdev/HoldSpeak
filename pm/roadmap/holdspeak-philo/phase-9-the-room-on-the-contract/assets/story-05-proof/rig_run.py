@@ -47,6 +47,11 @@ def plan(files: list[str], only: set[str]) -> list[tuple[str, str, int, bool]]:
 
 def one(run: tuple[str, str, int, bool], out: Path) -> list[str]:
     f, cid, width, headless = run
+    # Codex Astra r1 finding 1: every run writes under its OWN directory
+    # (<label>/<case>--<width>/), so no run can overwrite another's record.
+    out = out / f"{cid}--{'op' if headless else width}"
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"{out} already holds a run: refusing to mix two runs in one directory")
     env = dict(os.environ)
     env.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(Path.home() / "Library/Caches/ms-playwright"))
     if ROOT != REPO:
@@ -64,7 +69,9 @@ def one(run: tuple[str, str, int, bool], out: Path) -> list[str]:
     notes = [line[6:] for line in text.splitlines() if line.startswith("NOTE: predicate") or line.startswith("NOTE: BLOCKED")
              or "BLOCKED" in line[:20]]
     reading = (notes[-1] if notes else text.strip().splitlines()[-1] if text.strip() else "").replace("\t", " ")[:300]
-    return [Path(f).name, cid, "op" if headless else str(width), verdict, str(secs), f"{load:.2f}", reading]
+    runs = sorted(p for p in out.iterdir() if p.is_dir()) if out.exists() else []
+    run_dir = f"{out.name}/{runs[0].name}" if len(runs) == 1 else f"ERROR: {len(runs)} run directories"
+    return [Path(f).name, cid, "op" if headless else str(width), verdict, str(secs), f"{load:.2f}", reading, run_dir]
 
 
 def main() -> int:
@@ -88,8 +95,12 @@ def main() -> int:
         for row in pool.map(lambda r: one(r, out), runs):
             rows.append(row)
             print("\t".join(row), flush=True)
-    header = ["file", "case", "width", "verdict", "seconds", "load1", "reading"]
+    header = ["file", "case", "width", "verdict", "seconds", "load1", "reading", "run_dir"]
     (out / "runs.tsv").write_text("\n".join("\t".join(r) for r in [header, *rows]) + "\n")
+    dirs = [r[7] for r in rows]
+    if len(set(dirs)) != len(dirs) or any(d.startswith("ERROR") for d in dirs):
+        print("RETENTION ERROR: a run has no own directory or two runs share one", flush=True)
+        return 2
     passed = sum(r[3] == "pass" for r in rows)
     print(f"TOTAL {len(rows)} runs: {passed} pass, {len(rows) - passed} not pass")
     return 0 if passed == len(rows) else 1

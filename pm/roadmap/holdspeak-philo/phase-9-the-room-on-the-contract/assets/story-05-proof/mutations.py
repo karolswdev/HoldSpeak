@@ -14,6 +14,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[6]
 ATLAS = REPO / "docs/internal/philo/graph/atlas-phase9.json"
+STEWARD = REPO / "docs/internal/philo/graph/atlas-phase9-steward.json"
 
 
 def _case(atlas, cid):
@@ -55,28 +56,51 @@ def m8(a):  # the route twin's api step names a route the OpenAPI export lacks
     _case(a, "case.p9.grant_route.project_allowed")["trigger"]["path"] = "/api/settings/remote/grants/{project_id}"
 
 
+def m9(a):  # the delivery face reads the words only (round one's shape)
+    face = _case(a, "case.p9.update.delivered_row")
+    face["expected"]["predicate"] = {"kind": "readable_text", "value": "Priya"}
+
+
+def m10(steward):  # the Connections twin expects another state (Codex Astra r1 finding 3), in atlas-phase9-steward.json
+    facts = _case(steward, "case.p9.connections.never_checked")["expected"]["predicate"]["facts"]
+    for fact in facts:
+        if isinstance(fact.get("contains"), dict) and fact["contains"].get("provider_id") == "github":
+            fact["contains"]["state"] = "ready"
+
+
 def main() -> int:
-    original = ATLAS.read_bytes()
+    originals = {ATLAS: ATLAS.read_bytes(), STEWARD: STEWARD.read_bytes()}
+    original = originals[ATLAS]
+    env0 = dict(os.environ, HOME=tempfile.mkdtemp())
+    base = subprocess.run([str(REPO / ".venv/bin/python"), "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                           "tests/unit/test_philo9_atlas.py"], cwd=REPO, env=env0, capture_output=True, text=True)
+    print(f"baseline (unmutated): {base.stdout.strip().splitlines()[-1]}")
+    if base.returncode != 0:
+        print("the unmutated fence is not green: no mutation reading counts")
+        return 1
     missed = 0
-    for mutate in (m1, m2, m3, m4, m5, m6, m7, m8):
-        atlas = json.loads(original)
+    mutations = (m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+    for mutate in mutations:
+        target = STEWARD if mutate is m10 else ATLAS
+        atlas = json.loads(originals[target])
         mutate(atlas)
-        ATLAS.write_text(json.dumps(atlas, indent=2) + "\n")
+        target.write_text(json.dumps(atlas, indent=2) + "\n")
         try:
             env = dict(os.environ, HOME=tempfile.mkdtemp())
             proc = subprocess.run([str(REPO / ".venv/bin/python"), "-m", "pytest", "-q", "-p", "no:cacheprovider",
                                    "tests/unit/test_philo9_atlas.py"], cwd=REPO, env=env,
                                   capture_output=True, text=True)
         finally:
-            ATLAS.write_bytes(original)
+            for path, data in originals.items():
+                path.write_bytes(data)
         tail = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else proc.stderr[-200:]
         failed = [line.split(" - ")[0] for line in proc.stdout.splitlines() if line.startswith("FAILED")]
         red = proc.returncode != 0
         missed += not red
         print(f"{mutate.__name__} ({mutate.__doc__ or mutate.__code__.co_firstlineno}): "
               f"{'RED' if red else 'MISSED'} - {tail}; {failed[:3]}")
-    assert ATLAS.read_bytes() == original
-    print(f"{8 - missed} red, {missed} missed")
+    assert all(path.read_bytes() == data for path, data in originals.items())
+    print(f"{len(mutations) - missed} red, {missed} missed")
     return 1 if missed else 0
 
 

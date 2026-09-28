@@ -264,8 +264,31 @@ EXCLUDED = [
 ]
 
 
+# Codex Astra r1 finding 3: the browser delivery case reads the durable outcome
+# of ITS OWN click (the route's answer: the delivery row and the owner's
+# receipt) and the hub's stored row, beside the face's words.
+DELIVERED_EXPECTED = {
+    "predicate": {"kind": "all_of", "predicates": [
+        {"kind": "protocol_status", "method": "POST", "path": "/api/updates/{update_id}/delivered", "status": 200,
+         "body_fields": {"delivery.update_id": "{update_id}", "delivery.delivered_to": "Priya",
+                         "delivery.operation_id": {"nonempty": True}, "receipt.state": "succeeded",
+                         "receipt.actor_kind": "owner", "receipt.target_ref": "project_update:{update_id}"}},
+        {"kind": "readable_text", "value": "Priya"},
+        {"kind": "protocol_reads", "expect": [
+            {"status": 200, "row": {"path": "updates", "match": {
+                "id": "{update_id}", "lifecycle": "published", "deliveries.0.delivered_to": "Priya"}}}]},
+    ]},
+    "observe_at": "[data-testid=delivery-row]",
+    "reads": [{"method": "GET", "path": "/api/projects/{project_id}/updates"}],
+    "words": "the owner marks the published update delivered to Priya: that click's POST answers 200 with the delivery row for this update and the owner's succeeded receipt, the hub's stored update lists the delivery To Priya, and the update's history shows the row, readable in the viewport. New (no red claimed): Mark delivered is a new capability. (Story 05 round two, Codex Astra r1 finding 3: the durable halves added; story 03's face half unchanged.)",
+}
+
+
 def main() -> None:
     atlas = json.loads(ATLAS.read_text())
+    face = next(c for c in atlas["cases"] if c["id"] == "case.p9.update.delivered_row")
+    face["expected"] = DELIVERED_EXPECTED
+    face["trigger"]["trigger_route"] = {"method": "POST", "path": "/api/updates/{update_id}/delivered"}
     for key, new in (("cases", CASES), ("states", STATES), ("excluded", EXCLUDED)):
         ids = {item["id"] for item in new}
         atlas[key] = [item for item in atlas[key] if item["id"] not in ids] + new
