@@ -330,6 +330,143 @@ def _p_project_item_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "project.item.list", {"project_id": made["id"]})
 
 
+
+# ── PHILO-9-02: the steward and connector rows declare their shapes too ──
+
+
+def _project(hub: Hub, name: str = "Shape") -> str:
+    return hub.client.post("/api/projects", json={"name": name}).json()["project"]["id"]
+
+
+def _nudge_step(hub: Hub, state: str = "proposed") -> str:
+    """A proposed github_comment step, as the steward's PROPOSE phase writes it."""
+    import uuid
+
+    pid = _project(hub, "Nudge shape")
+    run_id, step_id = f"pstrun_{uuid.uuid4().hex}", f"pststep_{uuid.uuid4().hex}"
+    hub.db.steward_runs.insert_run(run_id=run_id, project_id=pid, requested_by="owner")
+    hub.db.steward_runs.update_run_state(run_id, state="completed")
+    hub.db.steward_steps.insert_step(
+        step_id=step_id, run_id=run_id, phase="propose", state=state, effect_kind="github_comment",
+        idempotency_key=f"nudge:{pid}:example/payments:7:reviewer",
+        expected_state_json=json.dumps({"repo": "example/payments", "pr_number": 7, "reviewer_login": "reviewer"}))
+    hub.root.operations.invoke(OWNER, "project.configure_steward", {
+        "project_id": pid, "eligible_effect_kinds": ["github_comment"]})
+    return step_id
+
+
+def _started_run(hub: Hub) -> tuple[str, dict[str, Any]]:
+    pid = _project(hub, "Run shape")
+    return pid, hub.root.operations.invoke(OWNER, "project.run_steward", {"project_id": pid})
+
+
+def _p_configure_steward(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return hub.root.operations.invoke(OWNER, "project.configure_steward", {"project_id": _project(hub)})
+
+
+def _p_run_steward(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return _started_run(hub)[1]
+
+
+def _p_stop_steward(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    import threading
+
+    # Hold the run's worker so the stop reaches a run that is still working.
+    svc, release = hub.root.project_steward_service, threading.Event()
+    real = svc._work
+
+    def held(*args: Any, **kwargs: Any) -> Any:
+        release.wait(20)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(svc, "_work", held)
+    _pid, started = _started_run(hub)
+    try:
+        return hub.root.operations.invoke(OWNER, "project.stop_steward", {"run_id": started["run_id"]})
+    finally:
+        release.set()
+
+
+def _p_get_steward_run(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    _pid, started = _started_run(hub)
+    return hub.root.operations.invoke(OWNER, "project.get_steward_run", {"run_id": started["run_id"]})
+
+
+def _p_steward_trigger(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    import holdspeak.workbench_conductor as conductor
+
+    # The running hub wires the conductor's services (restored after the test).
+    monkeypatch.setattr(conductor, "_watch_service", hub.root.watch_service)
+    monkeypatch.setattr(conductor, "_steward_service", hub.root.project_steward_service)
+    return hub.root.operations.invoke(OWNER, "project.steward.trigger", {})
+
+
+def _p_nudge_send(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # The process edge only: a canned `gh pr comment` answer (no network).
+    import subprocess
+
+    def gh(argv: list[str], **_kwargs: Any) -> Any:
+        return subprocess.CompletedProcess(argv, 0, "https://github.com/example/payments/pull/7#c1\n", "")
+
+    monkeypatch.setattr(hub.root.project_steward_service, "_subprocess_runner", gh)
+    return hub.root.operations.invoke(OWNER, "nudge.send", {"step_id": _nudge_step(hub), "text": "A look, please."})
+
+
+def _p_nudge_dismiss(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return hub.root.operations.invoke(OWNER, "nudge.dismiss", {"step_id": _nudge_step(hub)})
+
+
+def _rig(monkeypatch: Any, tmp_path: Path) -> Hub:
+    """A hub whose `gh` and `acli` are canned runners (the process edge; no network)."""
+    from tests.unit.test_philo9_b1_connections import _boot
+    from tests.unit.test_philo9_steward_admission import Runner
+
+    folder = tmp_path / "rig"
+    folder.mkdir(exist_ok=True)
+    return _boot(folder, monkeypatch, Runner(), Runner())
+
+
+def _p_watch_evaluate(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    from tests.unit.test_philo9_steward_admission import _door_project
+
+    rig = _rig(monkeypatch, tmp_path)
+    _pid, watch_id = _door_project(rig)
+    return rig.root.operations.invoke(OWNER, "project.watch.evaluate", {"watch_id": watch_id},
+                                      held={"graduated_only": False})
+
+
+def _p_add_suggested_source(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    from tests.unit.test_philo9_steward_admission import _suggest
+
+    rig = _rig(monkeypatch, tmp_path)
+    pid = _project(rig, "Source shape")
+    _suggest(rig, pid)
+    return rig.root.operations.invoke(OWNER, "project.add_suggested_source", {
+        "project_id": pid, "reference": "example/payments"})
+
+
+def _p_dismiss_suggested_source(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    from tests.unit.test_philo9_steward_admission import _suggest
+
+    rig = _rig(monkeypatch, tmp_path)
+    pid = _project(rig, "Source shape")
+    _suggest(rig, pid)
+    return rig.root.operations.invoke(OWNER, "project.dismiss_suggested_source", {
+        "project_id": pid, "reference": "example/payments"})
+
+
+def _p_connection_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return hub.root.operations.invoke(OWNER, "connection.list", {})
+
+
+def _p_mark_update_delivered(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    pid = _project(hub, "Delivery shape")
+    uid = hub.client.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]
+    hub.client.post(f"/api/updates/{uid}/publish", json={})
+    return hub.root.operations.invoke(OWNER, "project.mark_update_delivered", {
+        "update_id": uid, "delivered_to": "the team"})
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -342,6 +479,18 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "zone.read": _p_zone_read,
     "kernel.receipt.read": _p_kernel_receipt_read,
     "project.item.list": _p_project_item_list,
+    "project.configure_steward": _p_configure_steward,
+    "project.run_steward": _p_run_steward,
+    "project.stop_steward": _p_stop_steward,
+    "project.get_steward_run": _p_get_steward_run,
+    "project.steward.trigger": _p_steward_trigger,
+    "nudge.send": _p_nudge_send,
+    "nudge.dismiss": _p_nudge_dismiss,
+    "project.watch.evaluate": _p_watch_evaluate,
+    "project.add_suggested_source": _p_add_suggested_source,
+    "project.dismiss_suggested_source": _p_dismiss_suggested_source,
+    "connection.list": _p_connection_list,
+    "project.mark_update_delivered": _p_mark_update_delivered,
 }
 
 

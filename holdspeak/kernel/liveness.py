@@ -11,10 +11,15 @@ def reap_expired(broker: Any) -> dict[str, Any]:
     """Refuse unclaimed work; mark claimed, silent work indeterminate."""
     now = broker._clock()
     reaped: list[dict[str, str]] = []
-    candidates = (
+    candidates = [
         *broker.store.operations_in_state("awaiting_execution"),
         *broker.store.operations_in_state("claimed"),
-    )
+    ]
+    # PHILO-9-02 (the steward beat, section 3): descendants settle before
+    # their parent -- deepest first, so a parent's receipt never precedes a
+    # child still claimed under it.
+    depth = {op["operation_id"]: _depth(broker.store, op) for op in candidates}
+    candidates.sort(key=lambda op: -depth[op["operation_id"]])
     for operation in candidates:
         warrant = operation.get("warrant") or {}
         state = str(operation.get("state") or "")
@@ -66,6 +71,16 @@ def reap_expired(broker: Any) -> dict[str, Any]:
             }
         )
     return {"reaped": reaped, "count": len(reaped)}
+
+
+def _depth(store: Any, operation: Any) -> int:
+    depth, parent_id, seen = 0, str(operation.get("parent_operation_id") or ""), set()
+    while parent_id and parent_id not in seen and depth < 32:
+        seen.add(parent_id)
+        depth += 1
+        parent = store.operation(parent_id)
+        parent_id = str((parent or {}).get("parent_operation_id") or "")
+    return depth
 
 
 def reap_and_recover_projections(broker: Any) -> dict[str, Any]:

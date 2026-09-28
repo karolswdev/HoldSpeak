@@ -351,7 +351,12 @@ def _make_service(
     project_service: Optional[Any] = None,
     door_service: Optional[Any] = None,
 ) -> tuple[ProjectStewardService, _FakeDB]:
-    db = _FakeDB(conn)
+    # PHILO-9-02: run_once is an admitted operation now (the steward beat,
+    # section 2): the REAL Database over the test's file, which carries the
+    # kernel journal the admission writes.
+    from holdspeak.db.core import Database
+
+    db = Database(Path(conn.execute("PRAGMA database_list").fetchone()[2]))
     svc = ProjectStewardService(
         db,
         collector or _FakeCollector(),

@@ -2820,7 +2820,8 @@ class ProjectService:
 
     @_serialized_command
     def _arm_source_watch_in_txn(self, conn: Any, project_id: str, spec: dict[str, Any],
-                                 now_iso: str) -> dict[str, Any]:
+                                 now_iso: str, *, test_state: str = "passed",
+                                 baseline_state: str = "established") -> dict[str, Any]:
         """One armed watch and its Room source binding, on THIS connection (ACT-004).
 
         Carved from ``create_from_setup`` (PHILO-9-02) so a suggested source
@@ -2882,8 +2883,8 @@ class ProjectService:
             mode=mode,
             state="active",
             revision=1,
-            baseline_state="established",  # ACT-005: baseline without events
-            test_state="passed",  # carried from proposal test
+            baseline_state=baseline_state,  # ACT-005: baseline without events
+            test_state=test_state,  # carried from proposal test (setup); "" when untested
             created_at=now_iso,
             updated_at=now_iso,
             # HS-200-43: ARM the row in the same transaction that
@@ -2991,7 +2992,11 @@ class ProjectService:
                      relationship='source', source='suggested', last_modified=excluded.last_modified, deleted=0""",
                 (project_id, ref_str, prior[0] if prior else now_iso, now_iso),
             )
-            watch = self._arm_source_watch_in_txn(conn, project_id, spec, now_iso)
+            # Codex Astra r1 finding 6: nothing tested or baselined this
+            # source; the watch says so ("" = untested, "pending" = the first
+            # scheduled read takes the baseline), never "passed"/"established".
+            watch = self._arm_source_watch_in_txn(conn, project_id, spec, now_iso,
+                                                  test_state="", baseline_state="pending")
             conn.execute(
                 """INSERT INTO project_changes (
                     id, project_id, project_revision, change_kind, target_ref, actor_ref,
