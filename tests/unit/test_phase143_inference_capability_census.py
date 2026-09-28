@@ -116,7 +116,7 @@ holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/executor.py:88|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
@@ -124,7 +124,7 @@ holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt
 holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
-holdspeak/meeting_import.py:329|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
 holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
@@ -232,6 +232,24 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/preparation_brief_service.py:1034|PreparationBriefService._draft_with_model|call": ProposedRoute(
         "project.brief_prepare", "services.preparation_brief_service", "InferenceRunner admitted child",
     ),
+}
+
+
+# ``OperationRegistry.invoke`` sites whose operation name is not a constant, so
+# ``_names_an_operation`` cannot tell them from a runner call by the AST alone.
+# Each row is read by hand: the receiver is the operation registry and the
+# name comes from the declared desk-operation table or is a pass-through of
+# ``invoke``'s own ``name``. Pinned per site, like every row above: a NEW
+# variable-name ``.invoke`` still fails the census until someone reads it.
+OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
+    # PHILO-7-01: primitive detail resource reads through DESK_OPERATIONS.
+    "holdspeak/mcp/resources.py:578|read_resource|call": "_ops().invoke(principal, DESK_OPERATIONS[(kind, 'get')], ...)",
+    # PHILO-7-01: MCP primitive list/get read through DESK_OPERATIONS.
+    "holdspeak/mcp/tools.py:662|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
+    "holdspeak/mcp/tools.py:668|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
+    # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
+    "holdspeak/operations.py:1403|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
+    "holdspeak/operations.py:1404|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
 }
 
 
@@ -391,8 +409,10 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
         "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
     # PHILO-5-01/02: re-anchored after the operation contract moved dispatch
-    # down; the recipe.run branch itself is unchanged.
-    "holdspeak/mcp/tools.py:852|dispatch|run": ProposedRoute(
+    # down; the recipe.run branch itself is unchanged. PHILO-7-01/02: moved
+    # down again (852 -> 1008) with the desk operations; re-anchored, same
+    # branch, same call.
+    "holdspeak/mcp/tools.py:1008|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
@@ -515,7 +535,7 @@ holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.executor", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/executor.py:88|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
@@ -599,7 +619,7 @@ holdspeak/target_profile.py:202|apply_model_assisted_target|rewrite|call
     _group(ProposedRoute("speech.transcribe", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
-holdspeak/meeting_import.py:329|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and_type|transcribe|call
 holdspeak/runtime/dictation_capture.py:395|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
@@ -650,7 +670,13 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:
-    live = set(_runner_entrances())
+    every = set(_runner_entrances())
+    pinned = set(OPERATION_CONTRACT_VARIABLE_SITES)
+    assert pinned <= every, (
+        "a pinned operation-contract site moved or is gone; re-read it and "
+        f"re-anchor: stale={sorted(pinned - every)}"
+    )
+    live = every - pinned
     expected = set(PRODUCT_RUNNER_ENTRANCES)
     assert live == expected, (
         "Phase 143 runner-entrance census changed; register the new public "

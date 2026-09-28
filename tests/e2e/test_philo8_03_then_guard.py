@@ -64,9 +64,18 @@ def test_a_follow_up_after_the_window_is_blocked(tmp_path: Path, monkeypatch: py
     path.write_text(json.dumps(atlas))
 
     real = gw._ui_step
-    state = {"delayed": False}
+    state = {"delayed": False, "still": False}
 
     def late(page, step, hub=None):
+        if page is not None and not state["still"]:
+            # A GPU-less runner (CI's macos-14 VM) draws the Floor's
+            # every-frame atmosphere in SwiftShader; at 1440 x dpr 2 a frame
+            # takes over a second and the 3 s wait for the pending receipt
+            # ends first. The product's still mode (reduced motion,
+            # gl/atmosphereRuntime.ts:71) stops that loop; the delete, the
+            # window and the guard run the same code.
+            state["still"] = True
+            page.emulate_media(reduced_motion="reduce")
         if (step.get("selector") == TOGGLE and not state["delayed"]
                 and page is not None and page.locator(".undo-receipt").count()):
             state["delayed"] = True

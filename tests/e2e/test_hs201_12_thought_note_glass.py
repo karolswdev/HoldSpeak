@@ -8,6 +8,7 @@ shots the story owes under assets/story-12-shots/.
 from __future__ import annotations
 
 import os
+import re
 import time
 import uuid
 from pathlib import Path
@@ -21,6 +22,12 @@ pytest.importorskip("fastapi.testclient", reason="Thought glass needs web depend
 
 TOKEN = "hs201-12-thought-glass"
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-12-shots")
+# PHILO-3-04 (canvas ratified 2026-09-23) split the foot's receipt in two:
+# line 1 is the write (`KEPT · <time>`, role=status), line 2 the filing
+# state (`data-line="filing"`). The kept state is the WRITE line.
+KEPT_LINE = '.thought-note-foot .surface-footer-receipt-line[role="status"]'
+FILING_LINE = '.thought-note-foot .surface-footer-receipt-line[data-line="filing"]'
+KEPT_WORDS = re.compile(r"^KEPT · \d{1,2}:\d{2}( [AP]M)?$")
 # The owner's own shot (2026-09-20): a dictated note, a mid-sentence title.
 OWNER_TITLE = "Well, there's just a little bit of misunderstanding here, I believe my team…"
 OWNER_BODY = "Yeah, I have it that way and what about you?"
@@ -228,8 +235,8 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             assert workspace.locator(".thought-note-reads").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             # …and the kept state keeps its own place beside it (the foot
             # stacks at 393 rather than pushing a fact off the glass).
-            kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
-            assert kept.inner_text().strip() == "KEPT"
+            kept = workspace.locator(KEPT_LINE)
+            assert KEPT_WORDS.match(kept.inner_text().strip()), kept.inner_text()
             kept_box = kept.bounding_box()
             assert kept_box and kept_box["width"] > 20, kept_box
             _in_frame(kept_box, workspace.bounding_box(), "kept receipt")
@@ -294,7 +301,10 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
             workspace = page.get_by_role("region", name="Thought", exact=True)
             workspace.wait_for(timeout=15000)
-            assert page.get_by_text("KEPT · FINISHED", exact=False).count() == 1
+            # PHILO-3-04's two lines: the write says KEPT · <time>, the
+            # filing line carries FINISHED.
+            assert KEPT_WORDS.match(workspace.locator(KEPT_LINE).inner_text().strip())
+            assert workspace.locator(FILING_LINE).inner_text().strip().endswith("· FINISHED")
             assert page.get_by_role("region", name="One question", exact=True).count() == 0
             workspace.get_by_role("region", name="Note", exact=True).get_by_text(
                 "Mina reads the plan differently.", exact=False
@@ -519,7 +529,7 @@ def test_thought_note_long_context_and_open_well_never_clip(
                 assert box["x"] + box["width"] <= window_box["x"] + window_box["width"] + 1, (name, box, window_box)
                 _in_frame(box, window_box, name)
             # …the kept state keeps its width…
-            kept = workspace.locator(".thought-note-foot .surface-footer-receipt-line")
+            kept = workspace.locator(KEPT_LINE)
             kept_box = kept.bounding_box()
             assert kept_box and kept_box["width"] > 20, kept_box
             # …the whole context NAME is readable, at both widths: it wraps
@@ -546,7 +556,7 @@ def test_thought_note_long_context_and_open_well_never_clip(
             assert window_box
             for name in ("Change", "Finish"):
                 _in_frame(workspace.get_by_role("button", name=name, exact=True).bounding_box(), window_box, name)
-            kept_box = workspace.locator(".thought-note-foot .surface-footer-receipt-line").bounding_box()
+            kept_box = workspace.locator(KEPT_LINE).bounding_box()
             assert kept_box and kept_box["width"] > 20, kept_box
             _no_horizontal_escape(page)
             page.screenshot(path=str(SHOTS / f"long-context-{width}.png"), full_page=False)

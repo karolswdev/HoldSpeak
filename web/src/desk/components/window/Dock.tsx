@@ -92,6 +92,15 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // phone width the dock wraps, so its height is not a constant any
   // stylesheet can guess; the sheets read this to stop above it instead
   // of burying the only persistent door the phone has.
+  //
+  // Publish ONCE per mount; the ResizeObserver follows every later size
+  // change. With no dependency list this effect re-ran on every Dock
+  // render (a tap in any window re-renders it through `focusPanel`), and
+  // its cleanup removed the property just before `publish` read
+  // `offsetHeight`. That forced a layout with the sheet taller than it is,
+  // which clamped a window scrolled to its end up by the difference —
+  // between pointerdown and click — so the tap landed on another element
+  // and did nothing (NOT INCLUDED in a kept brief at 393).
   const dockRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = dockRef.current;
@@ -108,7 +117,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       observer.disconnect();
       root.style.removeProperty("--desk-dock-h");
     };
-  });
+  }, []);
 
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
