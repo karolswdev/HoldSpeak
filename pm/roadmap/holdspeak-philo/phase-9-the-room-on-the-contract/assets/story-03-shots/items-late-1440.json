@@ -11,7 +11,7 @@
     "h_overflow": false,
     "head_chips": [
       "● AT RISK",
-      "1 OVERDUE"
+      "1 MILESTONE LATE"
     ],
     "headline": "1 needs you",
     "item_danger_tokens": [
@@ -51,7 +51,7 @@
     "items_section_present": true,
     "modal": false,
     "needs_you": [
-      "IT Cutover rehearsal OVERDUE · 7 DAYS"
+      "IT Cutover rehearsal MILESTONE · 7 DAYS LATE"
     ],
     "plan": [],
     "raw_buttons": [],
@@ -116,7 +116,7 @@
     "h_overflow": false,
     "head_chips": [
       "● AT RISK",
-      "1 OVERDUE"
+      "1 MILESTONE LATE"
     ],
     "headline": "1 needs you",
     "item_danger_tokens": [
@@ -156,7 +156,7 @@
     "items_section_present": true,
     "modal": false,
     "needs_you": [
-      "IT Cutover rehearsal OVERDUE · 7 DAYS"
+      "IT Cutover rehearsal MILESTONE · 7 DAYS LATE"
     ],
     "plan": [],
     "raw_buttons": [],

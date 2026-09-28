@@ -65,7 +65,7 @@ import type {
   NudgeCardState,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
+import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays, healthReasonWords, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget } from "../../desk/surface/gadgets";
 import { egressFor, egressForEvent, receiptLabel } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -319,7 +319,7 @@ function RoomHead({
           />
         ) : null}
         {health?.reason ? (
-          <span className="surface-token room-chip-faint">{health.reason}</span>
+          <span className="surface-token room-chip-faint" data-testid="room-health-reason">{healthReasonWords(health)}</span>
         ) : null}
         {target?.targetAt ? (
           <span
@@ -884,7 +884,7 @@ function NeedsYouSection({
                     data-tone={severityTone(item.severity)}
                     data-testid="needs-you-why"
                   >
-                    {item.why}
+                    {needsYouWhyWords(item)}
                   </span>
                 }
                 trailing={

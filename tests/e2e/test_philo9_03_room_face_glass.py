@@ -449,7 +449,9 @@ class TestRoomFaceGlass:
                 # Health and NEEDS YOU: the hub's, rendered (story 01's words).
                 assert room["health"]["assessment"] == "at_risk"
                 assert any("AT RISK" in c for c in first["head_chips"]), first["head_chips"]
-                assert any(room["health"]["reason"] in c for c in first["head_chips"]), first["head_chips"]
+                # Muad'Dib's ruling 3 (2026-09-28): the canvas words on the face,
+                # the hub's words unchanged (test_the_late_words_are_the_canvas_words).
+                assert "1 MILESTONE LATE" in first["head_chips"], first["head_chips"]
                 assert first["headline"] == "1 needs you", first["headline"]
                 assert any("Cutover rehearsal" in r for r in first["needs_you"]), first["needs_you"]
                 assert facts["small_text_count"] == 0, facts["small_text"]
@@ -476,6 +478,40 @@ class TestRoomFaceGlass:
                 page.locator("[data-testid=item-row]").first.wait_for(timeout=10_000)
                 assert len(self._facts(page)["item_rows"]) == 5
                 assert all(not p["not_owned"] for p in pointer), pointer
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_late_words_are_the_canvas_words(self, width: int) -> None:
+        """Muad'Dib's ruling 3 (2026-09-28), BUILD WHAT WAS RATIFIED: the face
+        says `1 MILESTONE LATE` (health) and `MILESTONE · 7 DAYS LATE` (the
+        NEEDS YOU why), mapped from the hub's fields; the hub keeps its own
+        words (`1 OVERDUE`, `OVERDUE · 7 DAYS`) for MCP, read in the same test."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = self._project(page)
+                _api(page, "POST", f"/api/projects/{pid}/items",
+                     {"item_type": "milestone", "title": "Cutover rehearsal",
+                      "due_at": (date.today() - timedelta(days=7)).isoformat()}, token=TOKEN)
+                self._room(page, pid)
+                room = _api(page, "GET", f"/api/projects/{pid}/room", token=TOKEN)
+                page.locator("[data-testid=needs-you-why]").first.wait_for(timeout=T)
+                # The head's tokens (the same locator on the base and the branch).
+                reason = [t.strip() for t in page.locator("[data-testid=room-head-chips] .surface-token").all_inner_texts()]
+                why = [w.strip() for w in page.locator("[data-testid=needs-you-why]").all_inner_texts()]
+                _record("late-words", width, {"hub_reason": room["health"]["reason"],
+                                              "hub_why": [i["why"] for i in room["needsYou"]["items"]],
+                                              "face_reason": reason, "face_why": why})
+                _shot(page, "late-words", width)
+                assert room["health"]["reason"] == "1 OVERDUE"
+                assert [i["why"] for i in room["needsYou"]["items"]] == ["OVERDUE · 7 DAYS"]
+                assert "1 MILESTONE LATE" in reason and "1 OVERDUE" not in reason, reason
+                assert why == ["MILESTONE · 7 DAYS LATE"], why
                 assert not errors, errors
             finally:
                 browser.close()

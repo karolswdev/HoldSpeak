@@ -37,7 +37,13 @@
 - **Generated docs:** `api-reference.json`, `boundary-candidates.json`, `graph.json` regenerated; every Documentation Navigation check rc=0 (capture 15:54:21Z).
 - **Shots (both widths, from the green capture):** `assets/story-03-shots/` — `items-late-first-view-*`, `items-late-section-*`, `items-empty-omitted-*`, `items-unavailable-*`, `deliver-1-after-copy-*` … `deliver-11-retried-one-row-*`, `steward-counts-*`, `receipts-writes-*`, `ask-well-first-view-*`, `update-list-words-*`, `f1-meeting-opens-room-*`, `f1-chair-opens-room-*`, `f1-shade-opens-room-*`, with the measurements beside them (`*.json`). Walked by eye at both widths.
 
-### Unpaid / decisions for Muad'Dib
+### Muad'Dib's rulings on PR #686 (2026-09-28), paid
+
+- (1) the `_read_room_receipts` edit stays; (2) the 1440 RECEIPTS overlap stays on the BACKLOG; (4) the scheduled `steward_policy_required` stays on the BACKLOG; (5) the four fence updates stand.
+- (3) BUILD WHAT WAS RATIFIED, built: `web/src/features/project-room/model.ts` `healthReasonWords` (`N OVERDUE` with every overdue input a milestone → `N MILESTONE(S) LATE`) and `needsYouWhyWords` (a `source: item`, `kind: milestone` row's `OVERDUE · 7 DAYS` → `MILESTONE · 7 DAYS LATE`); `ProjectRoomCore.tsx` renders both; the hub's words are unchanged (read back in the same fence). Fence `test_the_late_words_are_the_canvas_words[1440, 393]`: red on the PR's first head `5c7b8d06` (`['1 OVERDUE']`, capture below), green after; the items fence now asserts `1 MILESTONE LATE` too.
+- The walk of the Chair's proposal verbs (`assets/story-03-proof/walk_chair_proposals.py`, isolated hub, capture below): `arrival-proposal-open` opens the Room titled "Payments ledger cutover" and the Room lists the proposal, at 1440 and 393. `arrival-source-open` was not reached: it is drawn only inside a row whose SOURCES disclosure merges several projections, and the seed produced none.
+
+### Unpaid / decisions for Muad'Dib (as first filed; see the rulings above)
 
 1. **A ProjectService edit in this lane.** The story says a backend change goes to story 01's lane by patch; story 01 is merged and has no live lane, and "RECEIPTS lists the writes (create, publish, steward run)" cannot be green without it (story 01's evidence: "a publication or a delivery is not yet a Room receipt"). The edit is `_read_room_receipts` plus two module constants in `holdspeak/services/project_service.py`; the Room backend fences (`test_philo9_room_contract.py`, `test_philo9_mark_delivered.py`, `test_hs174_reach_wire.py`, `test_philo9_steward_lifecycle.py`) pass in the green capture. Rule it in or send it back.
 2. **The 1440 RECEIPTS overlap is NOT repaired.** The story note asks for it; the ratified items canvas draws it ("the body scrolls it clear; the round-two repair is the narrow-window one") and Condition 7 keeps the well sticky at the foot of a wide window. A repair needs a design ruling: the well out of the scroll body (the window foot) or no longer always in view. The 1440 fence asserts no VERB under the well (green); a head at the fold may lie under it (`items-late-section-1440.png`). BACKLOG row added.
@@ -573,4 +579,70 @@ rc=0
 E       AssertionError: HTTP 400: {'status': 400, 'payload': {'success': False, 'error': "Invalid arguments for project.create: Additional properties are not allowed ('title' was unexpected)"}}
 1 failed, 6 deselected in 9.11s
 ✓ built in 4.60s
+```
+
+### Captured run — 2026-09-28T16:09:24Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/red_late_words.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c1236f77bf61112cedb13b9fac9a6b3cd5303635
+
+```text
+✓ built in 4.60s
+E               AssertionError: ['1 OVERDUE']
+E               assert ('1 MILESTONE LATE' in ['1 OVERDUE'])
+E               AssertionError: ['1 OVERDUE']
+E               assert ('1 MILESTONE LATE' in ['1 OVERDUE'])
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[393]
+FAILED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[1440]
+2 failed in 8.81s
+✓ built in 4.34s
+```
+
+### Captured run — 2026-09-28T16:09:43Z
+
+- **Command:** `env HOLDSPEAK_EVIDENCE_WRITE=1 pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/glass.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c1236f77bf61112cedb13b9fac9a6b3cd5303635
+
+```text
+✓ built in 4.89s
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_chairs_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_late_words_are_the_canvas_words[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_meetings_project_button_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_shades_project_row_opens_the_room[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_steward_counts_equal_the_run[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_refusal_and_a_lost_answer_are_named_and_retry_stays_with_its_update[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_ask_well_covers_no_verb_or_head[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_receipts_list_the_writes_after_each_transition[1440]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_the_update_list_words_fit_each_lifecycle[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_a_late_milestone_and_a_risk_show_as_drawn[393]
+PASSED tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows[393]
+22 passed in 42.92s
+```
+
+### Captured run — 2026-09-28T16:10:32Z
+
+- **Command:** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-03-proof/walk.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c1236f77bf61112cedb13b9fac9a6b3cd5303635
+
+```text
+WALK {"width": 1440, "proposal_id": "prop-aab689b15948", "chair_rows": ["NO DUE DATE · PROPOSED · CUTOVER SYNC · CHANGED JUST NOW"], "arrival-proposal-open": {"present": 1, "opened": "Payments ledger cutover", "room_names_project": true, "proposal_in_room": true}, "arrival-source-open": {"present": 0}}
+WALK {"width": 393, "proposal_id": "prop-d32cf3381866", "chair_rows": ["NO DUE DATE · PROPOSED · CUTOVER SYNC · CHANGED JUST NOW"], "arrival-proposal-open": {"present": 1, "opened": "Payments ledger cutover", "room_names_project": true, "proposal_in_room": true}, "arrival-source-open": {"present": 0}}
+2 passed in 23.69s
 ```
