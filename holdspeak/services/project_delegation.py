@@ -149,6 +149,11 @@ def _project_names(database: Any) -> dict[str, str]:
         return {str(r["id"]): str(r["name"]) for r in conn.execute("SELECT id, name FROM projects").fetchall()}
 
 
+def _archived(database: Any) -> set[str]:
+    with database._connection() as conn:
+        return {str(r[0]) for r in conn.execute("SELECT id FROM projects WHERE lifecycle='archived'").fetchall()}
+
+
 def views(identities: list[str], *, database: Any = None, now: float | None = None) -> dict[str, Any]:
     """The Remote Access ledger's project-grant fields for ``GET /api/settings/remote``.
 
@@ -161,6 +166,9 @@ def views(identities: list[str], *, database: Any = None, now: float | None = No
     database = database or _database()
     now = _now(database) if now is None else now
     names = _project_names(database)
+    # Archive keeps a project's grants (its effect is fixed by the charter):
+    # the face must still show that authority, with its Stop.
+    archived = _archived(database)
     wanted = set(identities)
     by_identity: dict[str, list[dict[str, Any]]] = {identity: [] for identity in identities}
     orphans: list[dict[str, Any]] = []
@@ -173,7 +181,8 @@ def views(identities: list[str], *, database: Any = None, now: float | None = No
             view = rooms.grant_view(conn, identity, project_id, now)
             if view is None:
                 continue
-            entry = {"project_id": project_id, "project_name": names.get(project_id, project_id), **view}
+            entry = {"project_id": project_id, "project_name": names.get(project_id, project_id),
+                     "project_archived": project_id in archived, **view}
             if identity in wanted:
                 by_identity[identity].append(entry)
                 continue

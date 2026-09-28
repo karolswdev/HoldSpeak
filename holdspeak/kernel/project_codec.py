@@ -97,7 +97,7 @@ class ProjectCodec:
             run = self._database.steward_runs.get_run(str(payload.get("run_id") or ""))
             if run is None:
                 raise KernelRefused("not_found", provenance=target)
-            if str(run.get("requested_by") or "") != f"principal:{principal.identity}":
+            if not self._agent_started(run, principal):
                 raise KernelRefused(rooms.RUN_OWNER_REQUIRED, provenance=target)
         with self._database._connection() as conn:
             code, basis = rooms.grant_code(conn, principal, self.name, project_id, self._clock())
@@ -105,6 +105,22 @@ class ProjectCodec:
             raise KernelRefused(code, provenance={**target, **{k: v for k, v in dict(basis).items() if k != "target_ref"}})
         # Frozen at admission: the grant id and its terms hash.
         return replace(admission, **dict(basis))
+
+    def _agent_started(self, run: Mapping[str, Any], principal: Any) -> bool:
+        """The run is THIS agent's: its stored run operation's authenticated actor KIND and identity.
+
+        ``requested_by`` alone is a string (``principal:<identity>``): an agent
+        named ``owner-session`` would match the owner's run (Codex Astra r1
+        finding 1). The run operation records who was authenticated.
+        """
+        if str(run.get("requested_by") or "") != f"principal:{principal.identity}":
+            return False
+        with self._database._connection() as conn:
+            actor = conn.execute(
+                "SELECT principal_kind, principal_identity FROM kernel_operations WHERE operation_id=?",
+                (str(run.get("operation_id") or ""),)).fetchone()
+        return actor is not None and (str(actor["principal_kind"]), str(actor["principal_identity"])) == (
+            "agent", str(principal.identity))
 
     def _project_of(self, payload: Mapping[str, Any]) -> str:
         """The operation's project, from the STORED object it acts on (a spoofed project_id is ignored)."""

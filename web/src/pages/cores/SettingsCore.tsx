@@ -274,7 +274,7 @@ type OrphanDelegation = Delegation & { identity: string };
  * RATIFIED canvas, pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-
  * contract/assets/story-07-grant-canvas/README.md, set A). The same rule: the
  * server sends the EFFECTIVE state; the face reads `state` only. */
-type ProjectDelegation = Delegation & { project_id: string; project_name: string };
+type ProjectDelegation = Delegation & { project_id: string; project_name: string; project_archived?: boolean };
 type OrphanProjectDelegation = ProjectDelegation & { identity: string };
 type ProjectFact = { id: string; name: string; is_archived?: boolean | number | null };
 
@@ -322,6 +322,7 @@ export const PROJECT_GRANT_WORDS = {
   actStop: "STOP RUN AND PUBLISH",
   projects: "Projects",
   credentialRevoked: "CREDENTIAL REVOKED",
+  archived: "ARCHIVED",
 } as const;
 
 /** Palette compatibility (the canvas's settled rule): a grant's controls
@@ -1025,24 +1026,38 @@ export function RemoteAccessModule({
               >
                 {projectCapable ? (
                   <div id={bodyId} data-testid={`project-lines-${cred.identity}`}>
-                    {projects.map((p) => {
+                    {[
+                      ...projects.map((p) => ({ id: p.id, name: p.name, archived: false })),
+                      // Archive keeps a grant (the charter): a LIVE grant on an
+                      // archived project stays listed, Stop only, never Allow.
+                      ...projectGrants
+                        .filter((g) => g.project_archived && g.state === "LIVE")
+                        .map((g) => ({ id: g.project_id, name: g.project_name, archived: true })),
+                    ].map((p) => {
                       const grant = projectGrants.find((g) => g.project_id === p.id) ?? null;
                       const key = `${cred.identity}/${p.id}`;
+                      const live = grant?.state === "LIVE";
                       return (
                         <GadgetRow key={p.id} label={p.name}>
                           <span className="prefs-project-line" data-testid={`project-line-${p.id}`}>
+                            {p.archived ? (
+                              <span className="surface-token" data-chip data-testid="project-archived">
+                                {PROJECT_GRANT_WORDS.archived}
+                              </span>
+                            ) : null}
                             <ProjectGrantChip grant={grant} />
                             <GrantRefusalChip refusal={refusals[key]} />
-                            <Button
-                              variant="ghost"
-                              dense
-                              disabled={granting === key}
-                              onClick={() => void setProjectGrant(cred.identity, p.id, p.name,
-                                grant?.state === "LIVE" ? "stop" : "allow")}
-                              data-testid="project-grant-verb"
-                            >
-                              {grant?.state === "LIVE" ? PROJECT_GRANT_WORDS.stop : PROJECT_GRANT_WORDS.allow}
-                            </Button>
+                            {live || !p.archived ? (
+                              <Button
+                                variant="ghost"
+                                dense
+                                disabled={granting === key}
+                                onClick={() => void setProjectGrant(cred.identity, p.id, p.name, live ? "stop" : "allow")}
+                                data-testid="project-grant-verb"
+                              >
+                                {live ? PROJECT_GRANT_WORDS.stop : PROJECT_GRANT_WORDS.allow}
+                              </Button>
+                            ) : null}
                           </span>
                         </GadgetRow>
                       );
@@ -1092,6 +1107,9 @@ export function RemoteAccessModule({
                   <ProjectGrantChip grant={grant} />
                   <GrantRefusalChip refusal={refusals[key]} />
                   <span className="surface-token" data-chip>{grant.project_name.toUpperCase()}</span>
+                  {grant.project_archived ? (
+                    <span className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</span>
+                  ) : null}
                   <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
                 </>}
                 trailing={grant.state === "LIVE" ? (

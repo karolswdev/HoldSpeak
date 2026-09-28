@@ -59,10 +59,11 @@ def _constant(name: str) -> dict[str, str]:
 
 
 # The face as on main declares no project words: the fences fail on the rendered page.
-P = _constant("PROJECT_GRANT_WORDS") or {
+P = {
     "allow": "Allow run and publish", "stop": "Stop run and publish", "live": "RUN AND PUBLISH ALLOWED",
     "stopped": "RUN AND PUBLISH STOPPED", "actAllow": "ALLOW RUN AND PUBLISH", "actStop": "STOP RUN AND PUBLISH",
-    "projects": "Projects", "credentialRevoked": "CREDENTIAL REVOKED",
+    "projects": "Projects", "credentialRevoked": "CREDENTIAL REVOKED", "archived": "ARCHIVED",
+    **_constant("PROJECT_GRANT_WORDS"),
 }
 W = _constant("GRANT_WORDS")
 
@@ -501,5 +502,53 @@ class TestProjectGrantGlass(_Rig):
             # Canvas board 11's open: the window's top does not move after a credential revoke.
             assert facts["top"] == before, f"the Settings window moved: {before} -> {facts['top']}"
             self._shot(page, "11-credential-revoked", width)
+            assert errors == [], errors
+            browser.close()
+
+
+class TestArchivedProjectGrant(_Rig):
+    """Round three (Codex Astra r1 finding 2; Muad'Dib's ruling 2026-09-28): archive keeps a
+    project's grants (the charter fixes archive's effect), so a LIVE grant on an archived
+    project stays on the credential row, ARCHIVED, with its Stop and never an Allow."""
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_archive_keeps_the_stop_and_its_receipt_on_and_off(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            ids = self._world(page)
+            pay = ids[PAYMENTS]
+            _api(page, "PUT", f"/api/settings/remote/delegations/{AGENT}/projects/{pay}", {}, token=TOKEN)
+            _api(page, "DELETE", f"/api/projects/{pay}", token=TOKEN)  # the owner archives Payments
+            for enabled, shot in ((True, "12-archived-on"), (False, "12-archived-off")):
+                _api(page, "PUT", "/api/settings/remote", {"enabled": enabled}, token=TOKEN)
+                self._open(page)
+                _readable(_row(page, AGENT).locator('[data-testid="project-grant-summary"]'), PAYMENTS.upper())
+                self._open_projects(page)
+                line = _line(page, AGENT, pay)
+                _readable(line.locator('[data-testid="project-archived"]'), P["archived"])
+                _readable(line.locator('[data-testid="project-grant-chip"]'), P["live"])
+                _readable(line.locator('[data-testid="project-grant-verb"]'), P["stop"])
+                # Hiring (active, never granted) still offers Allow; the archived line never does.
+                _readable(_line(page, AGENT, ids[HIRING]).locator('[data-testid="project-grant-verb"]'), P["allow"])
+                _lawful(page, width)
+                self._shot(page, shot, width)
+            # Stop the archived project's grant: the line goes (no Allow on an archived
+            # project), the footer keeps its receipt.
+            _line(page, AGENT, pay).locator('[data-testid="project-grant-verb"]').click()
+            page.wait_for_function(f"() => !document.querySelector('[data-testid=\"project-line-{pay}\"]')")
+            assert _grant_rows(self.db_path) == [(pay, "REVOKED", "owner_revoked")]
+            foot = page.locator('[data-testid="foot-receipt"]')
+            _readable(foot, "STOPPED")
+            foot.click()
+            well = page.locator('[data-testid="grant-receipt"]')
+            for word in ("SUCCEEDED", P["stopped"], PAYMENTS, AGENT, "BY OWNER"):
+                _readable(well, word)
+            receipt = _kernel(page, well.get_attribute("data-operation-id"))
+            assert (receipt["operation"]["name"], receipt["receipt"]["state"]) == ("project.delegation.revoke", "succeeded")
+            _lawful(page, width)
+            self._shot(page, "12-archived-stopped", width)
             assert errors == [], errors
             browser.close()

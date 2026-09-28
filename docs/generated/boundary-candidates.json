@@ -8543,7 +8543,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 744,
+      "line": 745,
       "kinds": [
         "http_client"
       ],
@@ -8553,7 +8553,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 793,
+      "line": 794,
       "kinds": [
         "http_client"
       ],
@@ -8563,7 +8563,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 829,
+      "line": 830,
       "kinds": [
         "http_client"
       ],
@@ -8573,7 +8573,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1444,
+      "line": 1462,
       "kinds": [
         "http_client"
       ],
@@ -8583,7 +8583,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1449,
+      "line": 1467,
       "kinds": [
         "http_client"
       ],
@@ -8593,7 +8593,7 @@
     },
     {
       "path": "web/src/pages/cores/SettingsCore.tsx",
-      "line": 1453,
+      "line": 1471,
       "kinds": [
         "http_client"
       ],

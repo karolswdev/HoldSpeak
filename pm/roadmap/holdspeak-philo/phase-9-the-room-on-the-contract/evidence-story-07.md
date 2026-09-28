@@ -27,12 +27,24 @@
 | Grant and revoke owner-only, admitted, receipts; an agent refused | new capability | `test_the_grant_operations_are_owner_only_admitted_and_in_no_palette`, `test_a_malformed_grant_body_and_an_unknown_project_are_refused_with_receipts`, `test_a_revoke_with_no_live_grant_is_refused_with_its_receipt` |
 | The face as ratified at 1440 and 393, incl. a LIVE grant with no credential and Remote Access OFF, fenced after each change; DESK reads DESK | no `Projects` Disclosure (test 1 times out waiting for it at 1440 and 393); `desk-agent` reads ALL (`test_a_desk_credential_reads_back_desk`: `{'desk-agent': 'ALL'}`) | `tests/e2e/test_philo9_07_project_grant_glass.py` (5 × 2 widths), `test_a_desk_credential_reads_back_desk`, `test_philo9_project_grant_face_rule.py` |
 
+## Round three (Codex Astra r1 @7a432a29, DO-NOT-RATIFY; `checks/story-07-built-astra-r1.md`)
+
+| Finding | Red (export of 7a432a29, `assets/story-07-proof/red_r3.sh`) | Green |
+|---|---|---|
+| 1. Stop compared the requester string only: a PROJECT credential named `owner-session` stopped an OWNER run over MCP and HTTP | both regressions: the impostor's stop SUCCEEDED (`success: True`) for the owner's and for the scheduler's run | `test_an_agent_named_like_the_owner_cannot_stop_the_owners_run`, `test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run` (MCP + HTTP each; `steward_run_owner_required` with a receipt, no stop flag); own-agent stop still succeeds (`test_stop_of_its_own_run_…`); M14 |
+| 2. An archived project's LIVE grant lost its Stop row | the archived line absent at 1440 and 393 (the locator for `project-archived` times out) | `TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440,393]` (ON and OFF; Stop → the line goes, the receipt kept and read from the kernel); canvas board 12; M15 |
+| 5. The model limit | — | the beat and the BACKLOG name Codex's observed result |
+
+Under "Round three (after the two fixes)", the first `mutations.py` capture (exit 1) found M8's original text gone (the stop check moved into `_agent_started`); M8 is retired, subsumed by M14, and the rerun is 14 run, 0 missed. The first `docs_checks.sh` capture (exit 1) showed `api-reference.json` and `boundary-candidates.json` drift; both were regenerated and the rerun is `DOCS RC=0`.
+
+The first `red_r3.sh` capture below failed the glass case on a missing word in the fence's own fallback table (`KeyError: 'archived'`), not on the face; the fence was corrected and the second capture is the red.
+
 ## Not paid / notes
 
 - The grant lifecycle beat is written AS-BUILT by Muad'Dib's ruling (2026-09-28): `design/project-grant-beat.md`; Codex Astra checks it with the built PR.
 - Round two: story 02's round two (`7119cfd9`) merged in; the captures below the heading "Merged tree" are the re-runs on the merged tree.
 - Story 02's, routed to its lane by Muad'Dib (not fixed here): `tests/unit/test_philo5_the_loop_r2.py::test_every_braced_declaration_has_a_producer_here` fails on story 02's head `aeae7bd8` and passes on main `1f332bc3`.
-- An AGENT run's model draft: story 02's round two makes `inference.invoke` a child of the draft effect for the OWNER and the SCHEDULER; the agent's trusted child path (`kernel/project.agent_steward_child`) does not admit it, so an agent run's model draft would likely be refused and fall back. Not exercised (no model on an isolated HOME); BACKLOG.
+- An agent run drafts deterministically only (the named limit): Codex Astra r1 observed `inference.invoke` refused `parent_continuation_identity_required` under an AGENT run, no engine dispatched, the draft `deterministic:no_output`; BACKLOG.
 - A credential revoke ending both a desk grant and project grants shows one receipt in the footer (BACKLOG row).
 - The web-unit capture's standalone `npx vitest run` reported 1 failed of 2931 while the baseline run and `npm run check` in the same capture were 2931/2931 green; its name was not printed, and a rerun alone was 323 files / 2931 passed. Unknown flake, not identified.
 - A model draft's `inference.invoke` under an AGENT run was not exercised (no model on an isolated HOME; story 02's BACKLOG row stands).
@@ -436,4 +448,265 @@ token gate: clean (11 allow-listed exceptions, all in use)
 ✓ built in 4.29s
 bundle gate passed (Desk JS 1334649 B; Desk CSS 323919 B; source maps 0)
 baseline=0 vitest=0 check=0
+```
+
+### Captured run — 2026-09-28T15:58:18Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/red_r3.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+FAILED tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[393]
+4 failed in 19.46s
+FAIL  test_an_agent_named_like_the_owner_cannot_stop_the_owners_run :: AssertionError: {'operation_id': 'op_5d9f193621594aa2b49e3bc65a34e5a8', 'receipt': {'actor_identity': 'owner-session', 'actor_kind': '...d810e3b', 'created_at': 1790611107.8013282, ...}, 'run_id': 'pstrun_a33a6547b2e35fb
+FAIL  test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run :: AssertionError: {'operation_id': 'op_c3271d61c87444df85a75a51e017d7df', 'receipt': {'actor_identity': 'local-steward-conductor', 'acto...f69feaf', 'created_at': 1790611108.5167282, ...}, 'run_id': 'pstrun_ce83ac0521ec5b8
+FAIL  test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440] :: KeyError: 'archived'
+FAIL  test_archive_keeps_the_stop_and_its_receipt_on_and_off[393] :: KeyError: 'archived'
+```
+
+### Captured run — 2026-09-28T15:58:55Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/red_r3.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+FAILED tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[393]
+4 failed in 27.85s
+FAIL  test_an_agent_named_like_the_owner_cannot_stop_the_owners_run :: AssertionError: {'operation_id': 'op_a5f22ba19953488ab2a1392372b31a26', 'receipt': {'actor_identity': 'owner-session', 'actor_kind': '...99b8132d', 'created_at': 1790611137.094513, ...}, 'run_id': 'pstrun_81bcecc53c16505
+FAIL  test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run :: AssertionError: {'operation_id': 'op_fa3396466a70452eb331e7df2cd5dca7', 'receipt': {'actor_identity': 'local-steward-conductor', 'acto...39a7c30', 'created_at': 1790611137.7293901, ...}, 'run_id': 'pstrun_347e1afa3c1351e
+FAIL  test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440] :: playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded. | er(has_text="sweep-runner")).first.locator("[data-testid=\"project-line-proj-1e05eddab5ff\"]").locator("[data-testid=\"project-archived\"]").first to be visible
+FAIL  test_archive_keeps_the_stop_and_its_receipt_on_and_off[393] :: playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded. | er(has_text="sweep-runner")).first.locator("[data-testid=\"project-line-proj-d5220dd9b678\"]").locator("[data-testid=\"project-archived\"]").first to be visible
+```
+
+### Round three (after the two fixes)
+
+### Captured run — 2026-09-28T15:59:45Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+55 tests collected in 0.72s
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+.............................................                            [100%]
+981 passed in 96.05s (0:01:36)
+```
+
+### Captured run — 2026-09-28T16:01:23Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/glass.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+............                                                             [100%]
+12 passed in 108.16s (0:01:48)
+1-never-1440.png
+1-never-393.png
+10-last-orphan-stopped-1440.png
+10-last-orphan-stopped-393.png
+11-credential-revoked-1440.png
+11-credential-revoked-393.png
+12-archived-off-1440.png
+12-archived-off-393.png
+12-archived-on-1440.png
+12-archived-on-393.png
+12-archived-stopped-1440.png
+12-archived-stopped-393.png
+2-live-1440.png
+2-live-393.png
+3-live-open-1440.png
+3-live-open-393.png
+4-stopped-1440.png
+4-stopped-393.png
+5-expired-1440.png
+5-expired-393.png
+6-orphan-1440.png
+6-orphan-393.png
+7-orphan-off-1440.png
+7-orphan-off-393.png
+7b-off-credential-1440.png
+7b-off-credential-393.png
+8-refused-1440.png
+8-refused-393.png
+9-two-projects-1440.png
+9-two-projects-393.png
+```
+
+### Captured run — 2026-09-28T16:03:17Z
+
+- **Command:** `.venv/bin/python pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/mutations.py`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+RED (caught): M1 admission looks up any project's LIVE grant for the agent [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:293: AssertionError: {'code': 'project_delegation_required', 'error': 'The kernel refused project.publish_update: project_delegation_requir...-agent', 'actor_kind': 'agent', 'authority_basis': 'refused_at_admission', 'created_at': 1790611398.7067578, ...}, ...} | FAILED tests/unit/test_philo9_project_grant.py::test_grants_on_two_projects_each_authorise_their_own_project | 1 failed in 1.29s
+RED (caught): M2 approval and the claim read the latest LIVE row, not the frozen id (G2 for G1) [holdspeak/kernel/project.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[revoke-project_delegation_revoked] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[regrant-project_delegation_revoked] | 3 failed, 1 passed in 1.13s
+RED (caught): M3 no re-check at the claim [holdspeak/kernel/project_codec.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[expire-project_delegation_expired] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[regrant-project_delegation_revoked] | 3 failed in 0.75s
+RED (caught): M4 approval never re-checks the agent's grant [holdspeak/kernel/project.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_admission_and_approval_refuses_the_approval[revoke-project_delegation_revoked] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_admission_and_approval_refuses_the_approval[expire-project_delegation_expired] | 2 failed in 0.63s
+RED (caught): M5 the expiry is outside the hash [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant_lifecycle.py:125: AssertionError: assert 'sha256:70a9f...f44e92099a63a' == 'sha256:90bc2...546a954a051e6' | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_the_expiry_and_the_project_are_inside_the_hash | 1 failed in 0.55s
+RED (caught): M6 a running agent run never re-checks its frozen grant [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:485: AssertionError: {'authority_basis': 'project-delegation:projdeleg_1aa3be8ff93e486a89bc8a588e6ec370:sha256:29541a1fad49629cbaf41f1a0d76...7f1446bcd8af9c1', 'delegator_identity': 'owner-session', 'delegator_kind': 'owner', 'name': 'project.run_steward', ...} | FAILED tests/unit/test_philo9_project_grant.py::test_a_revoke_with_no_next_child_still_ends_the_run_refused_and_invents_no_child | 1 failed in 1.29s
+RED (caught): M7 a lost grant stops the run BEFORE the child is attempted (no child receipt) [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:465: AssertionError: [{'authority_basis': 'project-steward:pstrun_ce38f0c171d35a2f8cb4d8e1bb130232:sha256:0ae27a34bf88201f8ba9f0440af81fee4...c81e70bbf3', 'delegator_identity': 'owner-session', 'delegator_kind': 'owner', 'name': 'project.decide_proposal', ...}] | FAILED tests/unit/test_philo9_project_grant.py::test_a_revoke_mid_run_refuses_the_next_child_with_its_receipt_and_ends_the_run | 1 failed in 6.73s
+ERROR M8 stop is not bound to the run's requester: the original text occurs 0 times in holdspeak/kernel/project_codec.py
+RED (caught): M9 an agent may grant (not owner-only) [holdspeak/kernel/project_codec.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:578: AssertionError: {"error":"project_delegation_required","detail":"The kernel refused project.delegation.grant: project_delegation_required","status":403,"operation_id":"op_ed39022f098f46e9ad7e5b69343a8feb","receipt":{"receipt_id":"rcpt_0e1b49f9bdfe4dc68e3c018434a8996f","operation_id":"op_ed39022f098f46e9ad7e5b69343a8feb","state":"refused","outcome":"project_delegation_required","result_ref":"","created_at":179061141
+RED (caught): M10 the credential revoke leaves the project grants LIVE [holdspeak/web/routes/mcp_http.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:557: AssertionError: assert [] == ['Hiring loop...dger cutover'] | FAILED tests/unit/test_philo9_project_grant.py::test_the_owners_credential_revoke_ends_the_project_grants_first_and_a_reissue_keeps_a_live_grant | 1 failed in 1.22s
+RED (caught): M11 the palette is reverse-mapped (DESK = ALL) [holdspeak/web/routes/mcp_http.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:607: AssertionError: {'all-agent': 'ALL', 'desk-agent': 'ALL'} | FAILED tests/unit/test_philo9_project_grant.py::test_a_desk_credential_reads_back_desk | 1 failed in 1.23s
+RED (caught): M12 the projection reads the stored state (no expiry) [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant_lifecycle.py:248: AssertionError: assert ['LIVE'] == ['EXPIRED'] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_the_projection_says_what_the_kernel_would_answer | 1 failed in 0.48s
+RED (caught): M13 an agent's steward child is refused (no trusted child path) [holdspeak/kernel/causation.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:399: AssertionError: {'authority_json': '{"authority_sha256": "sha256:32488cb7a14f4d8cec01db73223b6b3e5b26e9159ee1ed6d4a3a2c0285592f8f", "a...09-28T16:03:44+00:00', 'created_at': '2026-09-28T16:03:44+00:00', 'id': 'pstrun_2cee30a2c8ae58df8c9c56b7a1b7a44b', ...} | FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_runs_children_each_naming_the_grant_and_the_policy | 1 failed in 1.29s
+RED (caught): M14 stop compares the requester string only (an agent named owner-session stops the owner's run) [holdspeak/kernel/project_codec.py] -> FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_named_like_the_owner_cannot_stop_the_owners_run | FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run | 2 failed in 1.90s
+RED (caught): M15 the face lists active projects only (an archived project's LIVE grant loses its Stop) [web/src/pages/cores/SettingsCore.tsx] -> /Users/karol/dev/tools/wt-philo-9-07/.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded. | FAILED tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440] | 1 failed in 18.22s
+MUTATIONS: 15 run, 1 missed
+```
+
+### Captured run — 2026-09-28T16:04:07Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+== gen_operations_json.py --check
+OK docs/generated/operations.json
+== gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  237 tools across 42 families
+== check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== philo_api_reference.py --check
+API reference drift: docs/generated/api-reference.json
+rc=1
+== philo_boundary_census.py --check
+boundary census drift
+rc=1
+== philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== philo_config_reference.py --check
+Configuration declaration reference is current
+== philo_graph_reference.py --check
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== check_doc_coverage.py --check
+Documentation coverage checked.
+== residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-07
+OK
+Documentation navigation: 2 files checked; local targets and Markdown headings resolve.
+DOCS RC=1
+```
+
+### Captured run — 2026-09-28T16:04:25Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/web_unit.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2931 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+ Test Files  323 passed (323)
+      Tests  2931 passed (2931)
+   Duration  37.06s (transform 16.93s, setup 34.92s, import 104.43s, tests 102.55s, environment 122.06s)
+token gate: clean (11 allow-listed exceptions, all in use)
+ Test Files  323 passed (323)
+      Tests  2931 passed (2931)
+✓ built in 4.48s
+bundle gate passed (Desk JS 1334649 B; Desk CSS 323919 B; source maps 0)
+baseline=0 vitest=0 check=0
+```
+
+### Captured run — 2026-09-28T16:08:02Z
+
+- **Command:** `.venv/bin/python pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/mutations.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+RED (caught): M1 admission looks up any project's LIVE grant for the agent [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:293: AssertionError: {'code': 'project_delegation_required', 'error': 'The kernel refused project.publish_update: project_delegation_requir...t-agent', 'actor_kind': 'agent', 'authority_basis': 'refused_at_admission', 'created_at': 1790611683.944627, ...}, ...} | FAILED tests/unit/test_philo9_project_grant.py::test_grants_on_two_projects_each_authorise_their_own_project | 1 failed in 1.41s
+RED (caught): M2 approval and the claim read the latest LIVE row, not the frozen id (G2 for G1) [holdspeak/kernel/project.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[revoke-project_delegation_revoked] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[regrant-project_delegation_revoked] | 3 failed, 1 passed in 0.95s
+RED (caught): M3 no re-check at the claim [holdspeak/kernel/project_codec.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[expire-project_delegation_expired] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_approval_and_the_claim_refuses_the_claim[regrant-project_delegation_revoked] | 3 failed in 0.77s
+RED (caught): M4 approval never re-checks the agent's grant [holdspeak/kernel/project.py] -> FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_admission_and_approval_refuses_the_approval[revoke-project_delegation_revoked] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_a_change_between_admission_and_approval_refuses_the_approval[expire-project_delegation_expired] | 2 failed in 0.63s
+RED (caught): M5 the expiry is outside the hash [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant_lifecycle.py:125: AssertionError: assert 'sha256:b70ab...a5d2cf77eb148' == 'sha256:1a00d...41c66462d827e' | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_the_expiry_and_the_project_are_inside_the_hash | 1 failed in 0.47s
+RED (caught): M6 a running agent run never re-checks its frozen grant [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:485: AssertionError: {'authority_basis': 'project-delegation:projdeleg_30bc58cd10db446596ace7016ee4831f:sha256:f62b6ce3121b54527438110d2cfc...45912ba7aa053f7', 'delegator_identity': 'owner-session', 'delegator_kind': 'owner', 'name': 'project.run_steward', ...} | FAILED tests/unit/test_philo9_project_grant.py::test_a_revoke_with_no_next_child_still_ends_the_run_refused_and_invents_no_child | 1 failed in 1.31s
+RED (caught): M7 a lost grant stops the run BEFORE the child is attempted (no child receipt) [holdspeak/services/steward_contract.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:465: AssertionError: [{'authority_basis': 'project-steward:pstrun_360fe82fa6195c549d337ceadbe7502b:sha256:eea3071b0199a24f4115462f19a12e0c5...35ff250558', 'delegator_identity': 'owner-session', 'delegator_kind': 'owner', 'name': 'project.decide_proposal', ...}] | FAILED tests/unit/test_philo9_project_grant.py::test_a_revoke_mid_run_refuses_the_next_child_with_its_receipt_and_ends_the_run | 1 failed in 6.76s
+RED (caught): M9 an agent may grant (not owner-only) [holdspeak/kernel/project_codec.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:578: AssertionError: {"error":"project_delegation_required","detail":"The kernel refused project.delegation.grant: project_delegation_required","status":403,"operation_id":"op_a57a0b3021c2418aba8fe0a366398d9d","receipt":{"receipt_id":"rcpt_4552197e2d6247c28b8833a345909170","operation_id":"op_a57a0b3021c2418aba8fe0a366398d9d","state":"refused","outcome":"project_delegation_required","result_ref":"","created_at":179061169
+RED (caught): M10 the credential revoke leaves the project grants LIVE [holdspeak/web/routes/mcp_http.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:557: AssertionError: assert [] == ['Hiring loop...dger cutover'] | FAILED tests/unit/test_philo9_project_grant.py::test_the_owners_credential_revoke_ends_the_project_grants_first_and_a_reissue_keeps_a_live_grant | 1 failed in 1.23s
+RED (caught): M11 the palette is reverse-mapped (DESK = ALL) [holdspeak/web/routes/mcp_http.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:607: AssertionError: {'all-agent': 'ALL', 'desk-agent': 'ALL'} | FAILED tests/unit/test_philo9_project_grant.py::test_a_desk_credential_reads_back_desk | 1 failed in 1.22s
+RED (caught): M12 the projection reads the stored state (no expiry) [holdspeak/kernel/project.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant_lifecycle.py:248: AssertionError: assert ['LIVE'] == ['EXPIRED'] | FAILED tests/unit/test_philo9_project_grant_lifecycle.py::test_the_projection_says_what_the_kernel_would_answer | 1 failed in 0.52s
+RED (caught): M13 an agent's steward child is refused (no trusted child path) [holdspeak/kernel/causation.py] -> /Users/karol/dev/tools/wt-philo-9-07/tests/unit/test_philo9_project_grant.py:399: AssertionError: {'authority_json': '{"authority_sha256": "sha256:1524eb481b43bad2318a1fcd86157c8e3ad3276ef95fac9fc56a8c5f90662f1e", "a...09-28T16:08:26+00:00', 'created_at': '2026-09-28T16:08:26+00:00', 'id': 'pstrun_4e5d0520e3bf5db59a84fcfa72caff76', ...} | FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_runs_children_each_naming_the_grant_and_the_policy | 1 failed in 1.41s
+RED (caught): M14 stop compares the requester string only (an agent named owner-session stops the owner's run) [holdspeak/kernel/project_codec.py] -> FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_named_like_the_owner_cannot_stop_the_owners_run | FAILED tests/unit/test_philo9_project_grant.py::test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run | 2 failed in 1.93s
+RED (caught): M15 the face lists active projects only (an archived project's LIVE grant loses its Stop) [web/src/pages/cores/SettingsCore.tsx] -> /Users/karol/dev/tools/wt-philo-9-07/.venv/lib/python3.13/site-packages/playwright/_impl/_connection.py:559: playwright._impl._errors.TimeoutError: Locator.wait_for: Timeout 8000ms exceeded. | FAILED tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440] | 1 failed in 20.06s
+MUTATIONS: 14 run, 0 missed
+```
+
+### Captured run — 2026-09-28T16:08:51Z
+
+- **Command:** `bash pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-07-proof/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5f7fc0817b38d04f6285da42c95dcf4b5fdd2184
+
+```text
+== gen_operations_json.py --check
+OK docs/generated/operations.json
+== gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  237 tools across 42 families
+== check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== philo_api_reference.py --check
+API reference checked
+== philo_boundary_census.py --check
+Boundary candidate census checked
+== philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== philo_config_reference.py --check
+Configuration declaration reference is current
+== philo_graph_reference.py --check
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== check_doc_coverage.py --check
+Documentation coverage checked.
+== residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-07
+OK
+Documentation navigation: 2 files checked; local targets and Markdown headings resolve.
+DOCS RC=0
 ```

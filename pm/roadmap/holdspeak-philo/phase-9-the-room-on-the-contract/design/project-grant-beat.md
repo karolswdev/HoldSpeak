@@ -30,8 +30,12 @@
 - An agent's `project.run_steward` freezes its grant beside the owner's policy in the run's `authority_json` (`grant: {id, terms_sha256}`, and `grant_id`/`grant_sha256` inside `authority_terms`, so `authority_sha256` covers them). `kernel.receipt` shows the grant and the policy in one answer. Fence: G `test_an_agent_runs_children_each_naming_the_grant_and_the_policy`.
 - Each child acts as the agent on the steward's trusted path: `kernel/causation.py` accepts an agent child only inside the hub's steward service, for the run's own actor, under the run's operation (`agent_steward_child`); generic agent children keep the kernel's refusal (M13).
 - Cutoff: a child's approval and its claim re-check the run's frozen grant. After a revoke or an expiry, the next attempted child is refused WITH its own receipt and the run ends `refused` with the code (G `test_a_revoke_mid_run_refuses_the_next_child_with_its_receipt_and_ends_the_run`, M7). When no child follows, the run's phase boundary or its completion callback ends it `refused`, and no child receipt is invented (G `test_a_revoke_with_no_next_child_still_ends_the_run_refused_and_invents_no_child`, M6).
-- Stop: only a run whose stored `requested_by` is the agent (`steward_run_owner_required` otherwise), under a LIVE grant naming stop (G `test_an_agent_cannot_stop_another_agents_run_in_the_same_project`, M8; G `test_stop_of_its_own_run_is_refused_without_the_grant_and_stops_with_it`).
+- Stop: only a run the agent started, bound to the stored authenticated actor KIND and identity of the run's own operation (`ProjectCodec._agent_started`: `kernel_operations.principal_kind == 'agent'` and the identity, plus `requested_by`), under a LIVE grant naming stop; otherwise `steward_run_owner_required`. A name is never an actor: an agent named `owner-session` or `local-steward-conductor` cannot stop the owner's or the scheduler's run (Codex Astra r1 finding 1). Fences: G `test_an_agent_named_like_the_owner_cannot_stop_the_owners_run`, G `test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run` (M14), G `test_an_agent_cannot_stop_another_agents_run_in_the_same_project`; G `test_stop_of_its_own_run_is_refused_without_the_grant_and_stops_with_it`.
 - No manufactured owner: the actor stays the AGENT; the policy's recorded owner is the delegator.
+
+## Archive keeps the grant; the owner keeps the Stop
+
+Archive's effect is fixed by the charter (it pauses watches and unattended runs; it does not touch grants), so a LIVE grant on an archived project stays in force. The owner must still see and stop it: the wire marks each grant `project_archived`, and the credential row lists a LIVE grant on an archived project with the `ARCHIVED` word chip and `Stop run and publish` only; no Allow is offered on an archived project, and a grant on one is refused (`not_found`). Canvas board 12 (added by Muad'Dib's ruling 2026-09-28). Fence: F `test_archive_keeps_the_stop_and_its_receipt_on_and_off` (archive → Stop → the receipt kept, ON and OFF, 1440 and 393; M15).
 
 ## No second engine
 
@@ -39,5 +43,5 @@ The grant reuses Phase 7's machinery: the one check (`desk.check_row`), the impo
 
 ## Known limits
 
-- An agent run's model draft: `inference.invoke` under the draft effect is wired for the OWNER and the SCHEDULER (story 02); an AGENT run's model child is not on the trusted path, so it would likely be refused and the draft falls back. Not exercised (no model on an isolated HOME); BACKLOG.
+- **An agent run drafts deterministically only (the named limit).** Observed by Codex Astra r1 (finding 5, `checks/story-07-built-astra-r1.md`) through a real deployment-revision producer, broker and inference runner: under an AGENT run the model child `inference.invoke` is refused `parent_continuation_identity_required`, no engine dispatches, and the draft becomes `deterministic:no_output`. Model drafting under an agent run needs its own admission and causal-chain proof before it is enabled; BACKLOG.
 - A credential revoke that ends both a desk grant and project grants shows one receipt in the Settings footer (BACKLOG).

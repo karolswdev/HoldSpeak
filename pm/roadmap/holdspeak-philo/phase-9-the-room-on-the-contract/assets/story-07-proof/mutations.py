@@ -17,6 +17,8 @@ PY = str(WT / ".venv" / "bin" / "python")
 G = "tests/unit/test_philo9_project_grant.py"
 L = "tests/unit/test_philo9_project_grant_lifecycle.py"
 
+# M8 (the requester string) is retired in round three: the stop check now binds
+# the run operation's actor kind and identity, and M14 mutates that one check.
 MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
     ("M1 admission looks up any project's LIVE grant for the agent",
      "holdspeak/kernel/project.py",
@@ -54,11 +56,6 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "        if code not in rooms.GRANT_CODES:\n",
      "        if True:\n",
      [f"{G}::test_a_revoke_mid_run_refuses_the_next_child_with_its_receipt_and_ends_the_run"]),
-    ("M8 stop is not bound to the run's requester",
-     "holdspeak/kernel/project_codec.py",
-     "            if str(run.get(\"requested_by\") or \"\") != f\"principal:{principal.identity}\":",
-     "            if False:",
-     [f"{G}::test_an_agent_cannot_stop_another_agents_run_in_the_same_project"]),
     ("M9 an agent may grant (not owner-only)",
      "holdspeak/kernel/project_codec.py",
      "        if self.name in rooms.PROJECT_DELEGATION_OPERATIONS:\n            # XI.4",
@@ -84,11 +81,25 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "        if not (direct_parent_principal and agent_steward_child(request.name, principal, parent_id)):",
      "        if True:",
      [f"{G}::test_an_agent_runs_children_each_naming_the_grant_and_the_policy"]),
+    ("M14 stop compares the requester string only (an agent named owner-session stops the owner's run)",
+     "holdspeak/kernel/project_codec.py",
+     "        return actor is not None and (str(actor[\"principal_kind\"]), str(actor[\"principal_identity\"])) == (\n            \"agent\", str(principal.identity))",
+     "        return True",
+     [f"{G}::test_an_agent_named_like_the_owner_cannot_stop_the_owners_run",
+      f"{G}::test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run"]),
+    ("M15 the face lists active projects only (an archived project's LIVE grant loses its Stop)",
+     "web/src/pages/cores/SettingsCore.tsx",
+     ".filter((g) => g.project_archived && g.state === \"LIVE\")",
+     ".filter((g) => false && g.project_archived && g.state === \"LIVE\")",
+     ["tests/e2e/test_philo9_07_project_grant_glass.py::TestArchivedProjectGrant::test_archive_keeps_the_stop_and_its_receipt_on_and_off[1440]"]),
 ]
 
 
 def run(tests: list[str]) -> tuple[int, str]:
-    env = dict(os.environ, HOME=tempfile.mkdtemp())
+    real_home = os.path.expanduser("~")
+    env = dict(os.environ, HOME=tempfile.mkdtemp(),
+               PLAYWRIGHT_BROWSERS_PATH=os.environ.get("PLAYWRIGHT_BROWSERS_PATH", f"{real_home}/Library/Caches/ms-playwright"),
+               npm_config_cache=os.environ.get("npm_config_cache", f"{real_home}/.npm"))
     env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
     proc = subprocess.run([PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", *tests],
                           cwd=str(WT), env=env, capture_output=True, text=True, timeout=900)

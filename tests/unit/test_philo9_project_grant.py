@@ -629,3 +629,53 @@ def test_the_wire_projects_each_grant_and_lists_project_orphans_beside_desk_orph
     assert hub.client.get("/api/settings/remote").json()["project_delegations"] == []
     assert _op(hub, stopped.json()["operation_id"])["outcome"] == "succeeded"
     del agent
+
+
+# ── round three (Codex Astra r1 finding 1): stop binds the stored actor KIND and identity ──
+
+
+def _stop_both(agent: Any, run_id: str) -> list[tuple[bool, dict[str, Any]]]:
+    return [_call(agent, "mcp", "project.stop_steward", {"run": run_id}),
+            _call(agent, "http", "project.stop_steward", {"run": run_id})]
+
+
+def test_an_agent_named_like_the_owner_cannot_stop_the_owners_run(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A PROJECT credential named ``owner-session`` with a real grant: the owner's run is not its run."""
+    pid = _project(hub)
+    _policy(hub, pid, eligible_effect_kinds=["draft_update"])
+    impostor = _agent(hub, identity="owner-session")
+    _grant(hub, pid, "owner-session")
+    hold = Hold(hub, monkeypatch)
+    started = hub.client.post(f"/api/projects/{pid}/steward/runs", json={}).json()
+    assert hold.entered.wait(10)
+    for refused, body in _stop_both(impostor, started["run_id"]):
+        assert refused and body["code"] == "steward_run_owner_required", body
+        assert _op(hub, body["operation_id"])["outcome"] == "steward_run_owner_required"
+    assert _run_row(hub, started["run_id"])["stop_requested_at"] is None, "an agent stopped the owner's run"
+    hold.release.set()
+    assert _ended(hub, started["run_id"])["state"] == "completed"
+
+
+def test_an_agent_named_like_the_scheduler_cannot_stop_the_schedulers_run(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.principals import Principal, PrincipalKind
+    from test_philo9_steward_lifecycle import _due_effect
+
+    pid = _project(hub)
+    _policy(hub, pid, unattended_enabled=True, eligible_effect_kinds=["draft_update"])
+    _due_effect(hub, pid)
+    impostor = _agent(hub, identity="local-steward-conductor")
+    _grant(hub, pid, "local-steward-conductor")
+    hold = Hold(hub, monkeypatch)
+    outcomes: list[Any] = []
+    runner = threading.Thread(target=lambda: outcomes.extend(hub.root.project_steward_service.run_due(
+        Principal(PrincipalKind.SCHEDULER, "local-steward-conductor"))), daemon=True)
+    runner.start()
+    assert hold.entered.wait(10)
+    [run] = hub.db.steward_runs.list_runs(pid, limit=5)
+    assert _op(hub, run["operation_id"])["principal_kind"] == "scheduler"
+    for refused, body in _stop_both(impostor, run["id"]):
+        assert refused and body["code"] == "steward_run_owner_required", body
+    assert _run_row(hub, run["id"])["stop_requested_at"] is None, "an agent stopped the scheduler's run"
+    hold.release.set()
+    runner.join(30)
+    assert _ended(hub, run["id"])["state"] == "completed"
