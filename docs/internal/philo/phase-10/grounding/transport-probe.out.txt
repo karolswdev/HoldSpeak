@@ -1,0 +1,46 @@
+## getconf ARG_MAX
+1048576
+## gh issue comment / pr comment: body sources
+  -F, --body-file file   Read body text from file (use "-" to read from standard input)
+  -F, --body-file file   Read body text from file (use "-" to read from standard input)
+## acli jira workitem comment create: body sources and --key
+$ acli jira workitem comment --key "KEY-1" --body "This is a comment"
+$ acli jira workitem comment --jql "project = TEAM" --body-file "comment.txt" --edit-last
+  -b, --body string        Comment body in plain text or Atlassian Document Format (ADF)
+  -F, --body-file string   Plain text file with text or Atlassian Document Format (ADF)
+  -k, --key string         A list of work item keys to comment
+## acli jira: does --body-file - read stdin? (no account: which error comes first)
+✗ Error: failed to read comment body from file
+## acli jira: a private file
+-rw-------
+✗ Failure: ABC-1 can't be edited: unauthorized: use 'acli [product] auth login' to authenticate
+## acli confluence blog create: body sources
+$ acli confluence blog create --space-id 12345 --title "Release Notes" --body "<p>Content here</p>"
+$ acli confluence blog create --space-id 12345 --title "Work in progress" --status draft --body "<p>Draft content</p>"
+$ acli confluence blog create --space-id 12345 --title "Private announcement" --private --body "<p>Private content</p>"
+$ acli confluence blog create --space-id 12345 --title "Backdated blog" --created-at "2026-01-16T10:20:30.000Z" --body "<p>Content</p>" --json
+$ acli confluence blog create --space-id 12345 --title "From file" --from-file ./blog_content.html
+$ acli confluence blog create --from-json ./blog_payload.json
+      --body string         Blog post content in Confluence storage format (XHTML)
+      --from-file string    Read blog post content from a file (plain text or HTML)
+      --from-json string    Read blog post payload from a JSON file
+      --generate-json       Generate example JSON structure for use with --from-json
+## osascript: a fixed script reads the document from a 0600 file given as an argument (no text in the script source)
+Line one "quoted" & end tell -- not code
+osascript rc=0
+## acli credential custody hint (strings of the binary; read-only)
+$ strings /opt/homebrew/bin/acli | grep -o 'github.com/zalando/go-keyring[.A-Za-z]*' | sort -u
+github.com/zalando/go-keyring
+github.com/zalando/go-keyring.
+github.com/zalando/go-keyring.Delete
+github.com/zalando/go-keyring.fallbackServiceProvider.Delete
+github.com/zalando/go-keyring.fallbackServiceProvider.DeleteAll
+github.com/zalando/go-keyring.fallbackServiceProvider.Get
+github.com/zalando/go-keyring.fallbackServiceProvider.Set
+github.com/zalando/go-keyring.Get
+github.com/zalando/go-keyring.init.
+github.com/zalando/go-keyring.macOSXKeychain.Delete
+github.com/zalando/go-keyring.macOSXKeychain.DeleteAll
+github.com/zalando/go-keyring.macOSXKeychain.Get
+github.com/zalando/go-keyring.macOSXKeychain.Set
+github.com/zalando/go-keyring.Set

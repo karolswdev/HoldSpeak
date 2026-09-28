@@ -15,7 +15,7 @@ The update's only outbound verbs are Copy and Mark delivered (`web/src/features/
 
 ## Scope
 
-- **In:** the Send well (in-world, no modal): the saved destinations as rows with their host chips and account states, one pick, the preview as the channel will get it, Send (library Button), the receipt rows for every state of the matrix, PREPARED rows with Send and Discard; the Copy and Mark delivered row kept. The destinations setup (the Connections face recommended; the canvas decides): add, check, remove, per-channel fields (folder; repository and issue or pull request number; Jira site account and work item key; Confluence account and space; email account and To list). Words from the ratified canvases (ASD-STE100; no prose; no counter of zero).
+- **In:** the Send well (in-world, no modal): the saved destinations as rows with their host chips and account states, one pick, the preview as the channel will get it, Send (library Button), the receipt rows for every state of the matrix, PREPARED rows with Send and Discard, HANDED TO MAIL, UNKNOWN after a restart, DESTINATION CHANGED on a prepared row; the Copy and Mark delivered row kept. The destinations setup (the Connections face recommended; the canvas decides): add, check, remove (park; history kept), per-channel fields (folder, with a "synced" mark the owner sets; repository and issue or pull request number; Jira site account and one work item key; Confluence account and space; email account and To list). Words from the ratified canvases (ASD-STE100; no prose; no counter of zero).
 - **Out:** a Send well on other documents (BACKLOG); Slack.
 
 ## Acceptance criteria
@@ -36,4 +36,5 @@ PROVISIONAL: 2–3 engineering days (canvases included).
 
 ## Notes
 
+- 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.
 - 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

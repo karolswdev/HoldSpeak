@@ -15,7 +15,7 @@ The atlas has no case for a send. A regression in a Send state would not be caug
 
 ## Scope
 
-- **In:** one atlas case per Send state at 1440 and 393 (the matrix), each with an `.op` sibling where the outcome is durable (SENT, UNKNOWN, a prepared send, a saved destination); the file channel's case runs a real write on the isolated HOME; the remote channels' cases use the recording runner (egress is not run in the atlas, as Phase 9's probe cases); the Phase 7, 8 and 9 cases rerun.
+- **In:** one atlas case per Send state at 1440 and 393 (the matrix), each with an `.op` sibling where the outcome is durable (SENT, UNKNOWN, a prepared send, a saved destination); the file channel's case runs a real write on the isolated HOME; the remote channels' cases use the recording runner (egress is not run in the atlas, as Phase 9's probe cases); transitions for a restart during `dispatching` (UNKNOWN, one dispatch), a replay of the same key, a destination changed after prepare (REFUSED, the row stays prepared), Send and Discard together (one wins), and receipts that survive the face's branch change (away and back); the Phase 7, 8 and 9 cases rerun.
 - **Out:** real remote sends (story 06).
 
 ## Acceptance criteria
@@ -33,4 +33,5 @@ PROVISIONAL: about 1 engineering day.
 
 ## Notes
 
+- 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.
 - 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

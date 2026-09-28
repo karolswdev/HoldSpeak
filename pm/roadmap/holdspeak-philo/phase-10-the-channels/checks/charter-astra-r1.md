@@ -1,0 +1,52 @@
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. **The outcome model needs a crash rule before implementation.** One key per press does not currently prevent a second effect after the terminal database write fails. The Room explicitly re-executes abandoned claimed operations: `holdspeak/services/project_kernel.py:398`, `holdspeak/services/project_kernel.py:528`. I reproduced this through the real Room kernel and GitHub connector plan, with a recording runner: **same key, two dispatches, one parent still claimed** after injected terminal-write failures. SQLite rollback also cannot undo the file write proposed “in its terminal transaction” at `pm/roadmap/holdspeak-philo/phase-10-the-channels/current-phase-status.md:94`. Require a durable dispatch boundary and recovery that returns proof or UNKNOWN without dispatching again. Cover nonzero CLI exits, missing/malformed proof, restart and receipt-write failure—not only a runner raising `TimeoutExpired`. FAILED must mean known non-delivery. **Tenets 3, 7; Articles V, VI.**
+
+2. **The 30-second value does not expire an awaiting-decision hold—but the proposed preparation still does not work as described.** A real-broker probe advanced the clock by one day: the operation remained `awaiting_decision`, survived reaping and could be approved and claimed. The claim deadline starts at approval (`holdspeak/kernel/broker.py:232`); the reaper considers only awaiting-execution and claimed operations (`holdspeak/kernel/liveness.py:14`). However, the Room rejects an agent’s send at admission, and its codec neither persists the payload nor supplies a native prepared object (`holdspeak/kernel/project_codec.py:93`, `holdspeak/kernel/project_codec.py:143`). The charter also simultaneously proposes holding an agent’s `channel.send` and refusing that operation (`pm/roadmap/holdspeak-philo/phase-10-the-channels/current-phase-status.md:66`, :91). Prefer the already-mentioned small prepared-send record: prepare completes under the preparer’s identity; the owner later creates the send operation. Preserve the preview across restart and settle Send-versus-Discard atomically. **Tenets 1, 3; Article XI.**
+
+3. **Body-in-argv is not an acceptable blanket transport rule.** Argument arrays avoid shell interpretation; adding shell quoting would corrupt values rather than improve them. Generated AppleScript still needs separate protection against interpreting document text as script. More directly, the existing subprocess receipt exposes full argv (`holdspeak/kernel/subprocess_exec.py:199`); my real-plan probe returned its fake private body there, and a separate own-process probe found a sentinel body through `ps`. The kernel’s durable hash does not make those other surfaces private. This host reported `ARG_MAX=1,048,576`; a payload-sized argument failed with `E2BIG`, consistent with [Apple’s execve contract](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/execve.2.html). Bind the exact transport bytes to admission, then use stdin or a private payload file where supported; verify those same bytes reach dispatch. Define channel size limits, named refusals and redacted errors/receipts. **Tenets 3, 7.**
+
+4. **Reuse the write seam, but state its actual boundaries.** F2 is correct about the read SDK and existing write connector. However, the write manifest supports only subprocess and outbound operations (`holdspeak/plugins/gated_connector.py:43`); a file channel cannot literally be “one manifest + plan + interpret” on that seam today. Make the direct admitted file writer an explicit exception instead of extending the framework for symmetry. Also, adding a parent ID alone is insufficient: subprocess dispatch defaults to `local-owner` (`holdspeak/connector_runtime.py:146`), while causal admission checks principal identity (`holdspeak/kernel/causation.py:31`). Thread the authenticated owner, parent and broker through the seam. The agent refusal protects calls that actually carry the agent principal. **Tenets 1, 3; Article XI.**
+
+5. **Saved destinations need exact-target binding, not just membership by ID.** Freeze the destination’s concrete target and account alongside the rendered payload; reject a changed or parked destination before dispatch, and preserve the historical target in the receipt. Otherwise an unchanged body and destination ID can conceal a different recipient. Jira also has another fan-out path: the captured help explicitly says `--key` accepts **a list** (`docs/internal/philo/phase-10/grounding/cli-probe.out.txt:58`; [official CLI reference](https://developer.atlassian.com/cloud/acli/reference/commands/jira-workitem-comment-create/)). Story 02’s ban on `--jql` and `--filter` therefore does not establish one-target delivery. Validate one canonical work-item key. “Remove destination” should park it and retain history. **Tenets 3, 7.**
+
+6. **HANDED TO MAIL is honest; Q1’s recommendation needs qualifications.** Recommend Mail only if the intended work account is already configured there, its use is permitted, and automation works from the actual hub launch context. “Whatever account he already uses at work” is not established by inspecting Mail’s dictionary (`docs/internal/philo/phase-10/grounding/README.md:78`). Display HANDED TO MAIL as the outcome’s principal label; do not promise immediate Sent-box presence or recipient delivery. Mail can retain messages in Outbox and retry later—[Apple documents that behavior](https://support.apple.com/guide/mail/change-general-settings-cpmlprefgen/mac). “No automatic re-send” must distinguish HoldSpeak submitting another message from Mail completing the first handoff. Probe the offline/false case before promising that false means nothing remains queued. If SMTP is selected, `pm/roadmap/holdspeak-philo/phase-10-the-channels/story-03-the-email-channel.md:24` is also incomplete: `sendmail` can accept some recipients and reject others ([Python documentation](https://docs.python.org/3/library/smtplib.html#smtplib.SMTP.sendmail)). Either stop before DATA unless every recipient is accepted, or represent partial acceptance honestly. **Tenets 3, 4, 7.**
+
+7. **The census is useful and the principal framing corrections are right, but two absolute claims are wrong.** F3’s argv-versus-stdin hash observation, F4’s unknown-to-failed nudge defect, F5’s missing parent, F7’s overwrite, F8’s pinned CLI limitation and F12’s naming collision are supported. I also reproduced F7: two writes left one file containing the second body. But “first real allow-list” overlooks the configured webhook manifest and its host scope (`holdspeak/plugins/builtin/webhook_post_actuator.py:164`). The four named direct egress callers self-allow; **every** caller does not. Likewise F1 should say “nothing sends a published project update”; C4 already documents sending meeting results. Keep C1–C8 as a scoped census, and correct the charter and BACKLOG wording together. **Tenets 1, 3.**
+
+8. **The verification plan contains two unsupported shortcuts.** A scratch HOME does not establish isolation of the logged-in Mail application addressed through Apple events. Q6’s copied CLI-login-file recipe does not cover Mail, and the grounding itself leaves acli credential custody unresolved (`docs/internal/philo/phase-10/grounding/README.md:87`). Separate isolated rehearsals from the explicitly authorized real-account send leg. Also, “the full suite is CI’s job” (`pm/roadmap/holdspeak-philo/phase-10-the-channels/current-phase-status.md:151`) contradicts the orchestrator’s verification duty (`docs/internal/ORCHESTRATION.md:66`). Restore that duty. Add actual atlas transitions for restart/replay, changed destinations and receipts surviving the face’s branch change. **Tenets 2, 3; Article IX.**
+
+CONDITIONS:
+
+Before implementation, settle and check one short design covering findings 1–5: prepared state, owner dispatch, exact preview binding, durable dispatch boundary, recovery and transport outcomes. This needs a small record and explicit rules, not a new framework. Amend the affected stories, grounding and BACKLOG together; qualify email and verification as above.
+
+The owner forks are mostly genuine:
+
+| Question | Recommendation |
+|---|---|
+| Q1 | Mail, conditionally as finding 6; establish his actual mail setup first. |
+| Q2 | Comment on a saved issue/PR. Park gist work. |
+| Q3 | Blog post if that is the desired artifact; otherwise defer Confluence. The installed-version evidence supports this fork. |
+| Q4 | New file per send. Add a collision-proof suffix and exclusive creation; date/project/revision alone can repeat. |
+| Q5 | Steward plus connected agents may prepare. This largely elaborates his existing ruling; do not add a grant interface without a demonstrated need. |
+| Q6 | Named scratch targets, with transport-specific credential setup and a separately identified Mail real-use leg. |
+
+The 9.5–13.5-day estimate should remain provisional until this design is checked.
+
+MISSED:
+
+Ranked by owner cost: duplicate delivery after successful dispatch but failed persistence; changed or multiple recipients; a prepared send that cannot resume under the correct identity; Mail acceptance presented as stronger proof; document content exposed through argv; verification delegated away.
+
+Lower cost: the two-path cloud-folder heuristic cannot prove other folders are local. Resolve symlinks and allow an explicit synced-folder designation rather than building a general sync detector (`pm/roadmap/holdspeak-philo/phase-10-the-channels/current-phase-status.md:66`).
+
+TUESDAY:
+
+The proposed pick–preview–Send flow serves his job; I would not yet trust it to avoid a duplicate post or tell him accurately what happened after an interrupted send.
+
+UNKNOWN:
+
+Reviewed `99e4f3b1` in a fresh, clean worktree; changed no tree files. No live sends, Mail automation, screenshots or atlas runs were performed because this is an unbuilt charter. Account compatibility, acli response shapes and launchd Automation behavior remain unverified.
+
+The isolated kernel probe retained [proof.sqlite](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo10-astra-check-v9_867xf/proof.sqlite): parent `op_8d603289540c4c548e58121abd221ed6` remained claimed after two recorded subprocess dispatches. The runner simulated external success; no GitHub request occurred.
