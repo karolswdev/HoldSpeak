@@ -1,6 +1,6 @@
 # The Send lifecycle (PHILO-10 design, round two)
 
-**Status:** round four — the owner RATIFIED the charter ("Ratify, build it") and ruled Q1: "Not mail.app since it wouldn’t work on non-Macs. Let’s have it declare an interface that would allow us to plug it into major providers like sendgrid and so on." Section 8 is the email provider interface; the Mail.app and SMTP-password material is removed from this design and parked (BACKLOG "Mail.app draft channel"; the history keeps it). Codex Astra checks this delta. Earlier: round three — Codex Astra r2 RATIFY-WITH-CONDITIONS (`../checks/charter-astra-r2.md`); its three corrections are recorded here (section 4a recovery across take-over and reaping; section 5 the GitHub identity; section 3 the Confluence title) and the readable preview (section 3). Earlier: DRAFT for the Codex Astra r2 check. Written 2026-09-28 by the Fedaykin docs lane (Opus 5.5) for Muad'Dib, on Codex Astra r1 DO-NOT-RATIFY (`../checks/charter-astra-r1.md`), findings 1–5. It settles the record and the rules before any build. It adds one small table and one reused table. It adds no framework.
+**Status:** round five — Codex Astra r3 RATIFY-WITH-CONDITIONS on the email delta (`../checks/charter-astra-r3.md`); recorded here: one byte contract for every channel (section 3), the network seam's owner (sections 6 and 8), key custody with redirects off and sanitized exceptions (section 8), ACCEPTED BY SENDGRID and the pinned failure mapping (sections 4 and 8), text-only email, the pre-boundary exception to the invariant (section 4a). Earlier: round four — the owner RATIFIED the charter ("Ratify, build it") and ruled Q1: "Not mail.app since it wouldn’t work on non-Macs. Let’s have it declare an interface that would allow us to plug it into major providers like sendgrid and so on." Section 8 is the email provider interface; the Mail.app and SMTP-password material is removed from this design and parked (BACKLOG "Mail.app draft channel"; the history keeps it). Codex Astra checks this delta. Earlier: round three — Codex Astra r2 RATIFY-WITH-CONDITIONS (`../checks/charter-astra-r2.md`); its three corrections are recorded here (section 4a recovery across take-over and reaping; section 5 the GitHub identity; section 3 the Confluence title) and the readable preview (section 3). Earlier: DRAFT for the Codex Astra r2 check. Written 2026-09-28 by the Fedaykin docs lane (Opus 5.5) for Muad'Dib, on Codex Astra r1 DO-NOT-RATIFY (`../checks/charter-astra-r1.md`), findings 1–5. It settles the record and the rules before any build. It adds one small table and one reused table. It adds no framework.
 
 ## 1. The records
 
@@ -23,8 +23,9 @@ States: `prepared` → `dispatching` → `sent` | `failed` | `unknown`; `prepare
 
 ## 3. The transport bytes (finding 3)
 
-- The **payload** is exactly what the channel reads: GitHub, the Markdown body; Jira, plain text; Confluence, a JSON object with the **title and the storage-format XHTML body together** (round three); email, the frozen message as a JSON object (from, to, cc, subject, text, optional html; section 8), from which the provider's request body is built byte for byte; file, the file bytes. The digest covers every byte of it, the title included.
-- **The preview is readable, and derived from the frozen payload** (round three): Markdown and plain text as rendered text; Confluence as its title and the body rendered as text; email as To, Subject and body fields. The face never shows raw XHTML or raw JSON. The preview is computed from the stored payload, so it cannot show other words than the ones sent.
+- **One byte contract for every channel** (round five, Codex Astra r3 condition 1): at prepare the channel serializes its **transport request** — the exact bytes the far side will receive — and freezes them with their sha256. The readable preview is derived from those bytes. Dispatch transmits those exact bytes and nothing re-renders them. Their digest reaches admission: for a CLI channel, through the send operation's payload hash and the payload file's digest check (section 3 below; the CLI seam, stories 01 and 02); for the email provider, as the `payload_digest` of the `external.egress` child with data class `email_message`, its parent, the authenticated principal and the broker (the network seam, story 03; section 6).
+- The **payload** is exactly what the channel reads: GitHub, the Markdown body; Jira, plain text; Confluence, a JSON object with the **title and the storage-format XHTML body together** (round three); email, **the provider's serialized request body itself** (for SendGrid, the exact JSON of `POST /v3/mail/send`: `personalizations`, `from`, `subject`, `content[text/plain]`; text only in this phase; section 8); file, the file bytes. The digest covers every byte of it, the title included.
+- **The preview is readable, and derived from the frozen payload** (round three): Markdown and plain text as rendered text; Confluence as its title and the body rendered as text; email as From, To, Cc, Subject and the text, parsed from the frozen request body. The face never shows raw XHTML or raw JSON. The preview is computed from the stored payload, so it cannot show other words than the ones sent.
 - **No document text in argv, and none in script source.** At dispatch the payload is written to a private file: a directory with mode 0700 that the hub makes, a file with mode 0600 opened with exclusive create. The sha256 of the file is compared with `payload_digest` just before the command runs; a mismatch refuses `payload_changed` and nothing runs. The file is deleted after the command ends.
 - What each CLI accepts (probed on an isolated HOME; `docs/internal/philo/phase-10/grounding/transport-probe.out.txt`):
   - `gh issue comment` and `gh pr comment`: `--body-file <path>`. `-` would read stdin, but a file is used for all channels.
@@ -55,7 +56,7 @@ This rule covers a crash, a restart, a lost caller and a settle transaction that
 | File | exclusive create, write, fsync, close; the bytes read back match the digest; proof = path + sha256 + size | create or write refused by the OS before any byte (`EACCES`, `ENOSPC` on create, `EEXIST` after the suffix, section 5) | a partial file; a crash after create |
 | GitHub | exit 0 and stdout has a URL of the form `https://github.com/<owner>/<repo>/(issues\|pull)/<n>#issuecomment-<id>` for the frozen target | exit 4 (auth), or an error on a pinned list (not found, no permission to the repository), both answered before a comment exists | exit 0 without a valid URL; any other nonzero exit; a timeout; a kill |
 | Jira, Confluence | exit 0 and a JSON answer with the created id (its shape is pinned by the first real send) | the switch or status step failed (create never ran); create answered an error on a pinned list (`unauthorized`, `can't be edited`, not found) | exit 0 without an id; any other nonzero exit; a timeout |
-| Email (SendGrid, section 8) | `202` with an `X-Message-Id` header; proof = that id | before the request left: connect refused, DNS or TLS failed; after: a 4xx on the pinned list (`400` invalid, `401` bad key, `403` sender not verified, `413` too large, `429` rate limited) | a timeout or a dropped connection after the request left; any 5xx; `202` without `X-Message-Id`; a 4xx not on the list |
+| Email (SendGrid, section 8) | `202` with an `X-Message-Id` header: internal state `sent`, face word **ACCEPTED BY SENDGRID**; proof = that id, and its scope is "SendGrid accepted the request for processing", not recipient delivery | a whole-request rejection proven by the response: before the request left (connect refused, DNS or TLS failed); after it, a 4xx on the pinned list with its discriminator (section 8) | a timeout or a dropped connection after the request left; any 5xx; `202` without `X-Message-Id`; a 3xx (redirects are not followed); a 4xx not on the list; any future provider's mixed or partial acceptance (`partial_acceptance`) |
 
 The pinned error lists live in each channel's `interpret`. An error not on a list is UNKNOWN, never FAILED.
 
@@ -81,7 +82,7 @@ Codex reproduced both with the real kernel (`../checks/charter-astra-r2.md` find
 - **The `send_id` form:** the row exists from prepare; the boundary sets `send_operation_id`.
 - **The owner's inline form:** the row is inserted by the boundary itself. If there is no row, nothing ran: take-over renders again, compares the digest he saw, and dispatches; reaping finds no row and writes only the kernel receipt.
 
-**Invariant:** per send key, **one dispatch, one terminal receipt, one history row**, whatever the order of take-over, reaping, restart and replay.
+**Invariant:** per send key, **one dispatch, one terminal receipt, one history row**, whatever the order of take-over, reaping, restart and replay — **except** a send that ends before the boundary (refused, or reaped while `prepared`, R6): **zero dispatches and no history row**, only its receipt.
 
 **The fences** (story 01). Each is red on the round-two design, where only the service reads the row, and green on this one:
 
@@ -115,7 +116,7 @@ Each fence is parametrized over the `send_id` form and the inline form. The muta
 
 - **CLI channels** use Phase 38's seam as it is: a `WriteConnectorManifest` with `shell:exec` and its argv prefixes, a `plan`, and an `interpret` (`holdspeak/plugins/gated_connector.py:127-288`). The change is plumbing, not framework: `build_gated_connector` → `_route` → `PermissionGate.execute_subprocess` → `run_subprocess_operation` pass on the **authenticated owner principal**, the **parent operation id** (the send) and the **broker**. Today `execute_subprocess` defaults to `local-owner` (`holdspeak/connector_runtime.py:141-146`), and causal admission compares the child's principal with the parent's (`holdspeak/kernel/causation.py:28-33`). This change also gives the nudge's `gh` op its parent (grounding F5).
 - **The file channel is the one direct writer.** The write manifest supports only `shell:exec` and `network:outbound` (`holdspeak/plugins/gated_connector.py:43-47`). The file write is the `channel.send` operation's own effect, done by the channel's code inside the boundary rules above. The framework is not extended for symmetry.
-- **The email provider** is an `outbound` `GatedOperation` → an `external.egress` child whose allowed host is the provider's declared host (`api.sendgrid.com`); the HTTPS opener follows the webhook actuator's precedent (`holdspeak/plugins/builtin/webhook_post_actuator.py:158-200`). Section 8.
+- **The network seam has an owner: story 03** (round five, Codex Astra r3 condition 1), as the CLI seam has stories 01 and 02. Today `PermissionGate.open_outbound_socket` hashes only the destination, declares `connector_request`, and forwards no parent, principal or broker (`holdspeak/connector_runtime.py:194-233`, `:215-223`): two different bodies get one digest (Codex probe). Story 03 passes `data_classes=("email_message",)`, `payload_material={"payload_digest": <frozen digest>}`, the parent (the send), the authenticated owner principal and the broker through `build_gated_connector` → `_route` → `open_outbound_socket` → `run_external_egress`. The email provider is an `outbound` `GatedOperation` → an `external.egress` child whose allowed host is `api.sendgrid.com`. Section 8.
 
 ## 7. What this design does not decide
 
@@ -126,30 +127,46 @@ Each fence is parametrized over the `send_id` form and the inline form. The muta
 
 ## 8. Email: a provider interface (round four, the owner's Q1 ruling)
 
-**The contract** (Tenet 1: one Protocol and one table, no discovery, no entry points):
+**The contract** (Tenet 1: one Protocol and one table, no discovery, no entry points; round five: one byte contract):
 
 ```text
 EmailProvider (Protocol)
   name            "sendgrid"
   host            "api.sendgrid.com"            the only allowed egress host
   limits          max_bytes, max_recipients     refused by name before dispatch
-  plan(message, key) -> GatedOperation.outbound  the HTTPS request, its body built from the frozen payload bytes
-  interpret(response) -> Sent(message_id) | Failed(code) | Unknown(reason)
+  serialize(message) -> bytes                   at PREPARE: the exact request body; frozen with its digest
+  preview(body_bytes) -> From/To/Cc/Subject/text   derived from the frozen bytes
+  plan(body_bytes) -> GatedOperation.outbound   no key in it; the frozen bytes unchanged
+  interpret(status, headers, error_excerpt) -> Sent(message_id) | Failed(code) | Unknown(reason)
 
 EMAIL_PROVIDERS = {"sendgrid": SendGridProvider()}   the registry TABLE
 ```
 
-- **The frozen message** is the channel's payload: `from` (email, name), `to[]`, `cc[]`, `subject`, `text`, optional `html`. It is frozen at prepare with its digest (section 3). The preview shows From, To, Cc, Subject and the text, never JSON. `plan` builds the provider's request body from exactly these bytes. A fence proves that the body re-derived from the frozen payload has the same digest.
+- **The message** he composes (from, to[], cc[], subject, text) is serialized once, at prepare, into the provider's request body. **That body is the frozen payload**, and its digest is the digest the egress admission binds. The preview parses it back into From, To, Cc, Subject and the text, never showing JSON. Dispatch sends those bytes. A fence asserts that the bytes on the wire (a recording opener) equal the frozen bytes.
+- **Text only in this phase** (round five, Codex Astra r3). The body carries one `text/plain` content. HTML waits until one source can produce both text and HTML (BACKLOG).
 - **Refusals before dispatch** (REFUSED, nothing leaves) are named: `email_provider_unknown`, `email_key_missing`, `email_key_store_not_native`, `payload_too_large:email`, `email_recipients_too_many`, `destination_changed`.
-- **Adding a provider** means one class and one table row. Postmark, Mailgun, SES and generic SMTP (an SMTP class that stops before DATA unless every recipient is accepted) are named for later in the BACKLOG. Callers do not change.
+- **Adding a provider** means one class and one table row. Postmark, Mailgun, SES and generic SMTP are named for later in the BACKLOG. Callers do not change. A future provider that can accept some recipients and reject others maps that answer to UNKNOWN `partial_acceptance`. It is never "nothing sent", and it builds no second lifecycle now.
 
 **SendGrid, the one implementation in this phase.**
 
-- `POST https://api.sendgrid.com/v3/mail/send` with `Authorization: Bearer <key>` and a JSON body: `personalizations[{to, cc}]`, `from`, `subject`, `content[text/plain, text/html?]`. It runs as an `external.egress` child of the send: destination `api.sendgrid.com:443`, data class `email_message`, the payload digest in the journal.
-- The key is joined into the header at call time, never into the payload material. This is the Telegram token precedent (`holdspeak/cadence_telegram.py:31-35`).
-- The badge is `cloud`, with the host on the chip.
-- Outcomes are as the section 4 table says. The proof is SendGrid's `X-Message-Id` on `202`, stored in `proof_json`. `202` means SendGrid accepted the message; the face says SENT with the provider's id and does not claim the recipient's inbox.
-- The exact limits and the pinned 4xx list are **not probed here**: no key exists on an isolated HOME, and a lane makes no call to SendGrid. Story 03 pins them from SendGrid's published reference and the real-account send (Q6). Until then, `max_bytes` is 1 MB and `max_recipients` is 20 (conservative, provisional).
+- `POST https://api.sendgrid.com/v3/mail/send` with the frozen JSON body. It runs as an `external.egress` child of the send: destination `api.sendgrid.com:443`, data class `email_message`, `payload_digest` the frozen digest, and the parent, principal and broker threaded (section 6).
+- **The key is never planning material** (round five, Codex Astra r3 condition 2). It is not in the payload, the `GatedOperation`, `payload_material`, `args` or `kwargs`. Only the dispatch opener reads it from the key store and sets `Authorization: Bearer …` on the request it opens.
+- **Redirects are disabled.** The opener uses a `urllib` opener whose redirect handler refuses. A 3xx is UNKNOWN (`redirect_refused`), and `Authorization` is never sent to another host.
+- **Transport exceptions are sanitized before the native result is recorded.** The opener catches every exception and re-raises a sanitized one: its type and a fixed code, never `str(exc)`, a header, the key or the body. Only that reaches `EGRESS_EXECUTIONS.record(… error=…)`.
+- **Two existing defects are named.** `external_egress.py:290` records `f"{type(exc).__name__}: {exc}"` today; Codex reproduced a synthetic key and body in the native result and the broker's full read. Story 03 makes that record sanitized for every caller. `webhook_post_actuator.py:125-133` follows redirects with its headers; Codex's offline probe forwarded a synthetic `Authorization` to another host. That defect is ledgered in the BACKLOG, because story 03 does not touch the webhook actuator.
+- **The response contract** kept for interpretation: the status, the `X-Message-Id` header, and a bounded, sanitized excerpt of the error JSON (`errors[].message`, `errors[].field`). This is enough to classify, and it never holds the key or the body.
+- **Outcomes** (section 4 table):
+  - `202` + `X-Message-Id` → internal `sent`. The **face word is ACCEPTED BY SENDGRID**, and the proof's scope is "accepted for processing", not delivered to the recipient. SendGrid documents that it accepts the request first and delivers later.
+  - A 4xx is FAILED only where SendGrid's contract makes it a whole-request rejection (the request is validated before any send) **and** the status plus its discriminator are on the pinned list:
+    - `400` → `invalid_request`
+    - `401` → `api_key_invalid`
+    - `403` with the sender-identity discriminator (the error names the from address not matching a verified Sender Identity) → `sender_not_verified`
+    - `403` with any other discriminator (for example a temporary sending block) → `sendgrid_forbidden`, with the provider's sanitized reason and no remediation claimed
+    - `413` → `payload_too_large`
+    - `429` → `rate_limited`
+  - Every other answer is UNKNOWN with a named reason.
+- The exact limits and discriminator strings are pinned by story 03 from SendGrid's published reference and the real-account send (Q6). Until then `max_bytes` is 1 MB and `max_recipients` is 20 (provisional).
+- **Fences through the real producer** (story 03), each with a recording opener, no network: success; an HTTP error (each pinned 4xx, an unpinned 4xx, a 5xx); an exception whose text carries a synthetic key and body, where neither may appear in the native result, the broker's read, a receipt or a log; and a redirect, which is not followed and sends no `Authorization` to the second host.
 
 **The key: custody on every platform.**
 
