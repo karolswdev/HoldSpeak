@@ -28,7 +28,16 @@ export const DELIVERY_WORDS = {
   verb: "Mark delivered",
   field: "To",
   chip: "DELIVERED",
+  retry: "Retry",
 } as const;
+
+/** PROPOSAL (Astra r1 F4): the hub's refusal codes and their plain tokens.
+ *  The code rides `data-code` for the fence. */
+const REFUSAL_TOKEN: Record<string, string> = {
+  update_not_published: "NOT PUBLISHED",
+  idempotency_conflict: "KEY USED WITH OTHER TO",
+  project_delegation_required: "OWNER ONLY",
+};
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 /** `SEP 27 14:05` -- the owner's confirmation time, exact. */
@@ -71,7 +80,7 @@ function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: Del
             value={ctrl.deliverTo}
             onChange={ctrl.setDeliverTo}
             placeholder={DELIVERY_WORDS.field}
-            disabled={ctrl.deliverBusy}
+            disabled={ctrl.deliverBusy || ctrl.deliverLocked}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -81,19 +90,30 @@ function DeliverySection({ ctrl, update }: { ctrl: UpdateController; update: Del
             inputProps={{ "data-testid": "deliver-to" } as never}
           />
         </span>
+        {/* PROPOSAL (Astra r1 F4): with the result unknown the verb is Retry —
+            the SAME command_id and the SAME To (the field is locked). */}
         <Button
           dense
           variant="primary"
           loading={ctrl.deliverBusy}
           onClick={() => void ctrl.markDelivered()}
-          data-testid="deliver-verb"
+          data-testid={ctrl.deliverOutcome.kind === "uncertain" ? "deliver-retry" : "deliver-verb"}
         >
-          {DELIVERY_WORDS.verb}
+          {ctrl.deliverOutcome.kind === "uncertain" ? DELIVERY_WORDS.retry : DELIVERY_WORDS.verb}
         </Button>
       </div>
-      {ctrl.deliverError ? (
-        <span className="p9-deliver-refused" data-testid="deliver-refused">
-          <StateChip state="failure" label="NOT MARKED" />
+      {ctrl.deliverOutcome.kind === "refused" ? (
+        // A named refusal: the result is known; nothing was recorded.
+        <span className="p9-deliver-outcome" data-testid="deliver-refused" data-code={ctrl.deliverOutcome.code}>
+          <StateChip state="failure" label="REFUSED" />
+          <span className="surface-token" data-chip>
+            {REFUSAL_TOKEN[ctrl.deliverOutcome.code] ?? ctrl.deliverOutcome.code.toUpperCase().replace(/_/g, " ")}
+          </span>
+        </span>
+      ) : ctrl.deliverOutcome.kind === "uncertain" ? (
+        // No answer: it may be recorded. Never "not marked".
+        <span className="p9-deliver-outcome" data-testid="deliver-uncertain">
+          <StateChip state="warning" label="NO ANSWER · RESULT UNKNOWN" />
         </span>
       ) : null}
       {rows.length > 0 ? (
@@ -215,8 +235,7 @@ function SectionSourceRow({
         const kind = refChipLabel(ref);
         return (
           <span key={ref} className="update-claim-chip-group">
-            <button
-              type="button"
+            <Button /* PROPOSAL (Astra r1 F5): the library Button (its 44 px halo at 393) */ variant="ghost" dense
               className="desk-chip quiet"
               data-testid="update-claim-ref"
               data-ref={ref}
@@ -226,7 +245,7 @@ function SectionSourceRow({
               onClick={() => onOpen(ref)}
             >
               {title}
-            </button>
+            </Button>
             {!verified ? (
               <span data-testid="update-claim-unverified">
                 <StateChip state="failure" label="UNVERIFIED" />
@@ -282,9 +301,8 @@ function InlineClaimsView({
           {claim.refs.map((ref) => {
             const label = refIdentityLabel(ref);
             return (
-              <button
+              <Button /* PROPOSAL (Astra r1 F5) */ variant="ghost" dense
                 key={ref}
-                type="button"
                 className="desk-chip quiet"
                 data-testid="update-claim-ref"
                 data-ref={ref}
@@ -294,7 +312,7 @@ function InlineClaimsView({
                 onClick={() => onOpen(ref)}
               >
                 {label}
-              </button>
+              </Button>
             );
           })}
           {!claim.verified && !claim.hasAxes ? (
@@ -497,6 +515,16 @@ function UpdateEditor({
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
+      {/* PROPOSAL (Astra r1 F5, the 393 Back defect): Back sits in the sticky
+          head verbs, the seat the SurfaceVerbs species is made for. At the
+          foot of the editor (393, measured) the button moved 36 px at
+          focusin on pointerdown (the body scrolled; the top-sticky bar), so
+          pointerup landed outside it and no click fired. */}
+      <SurfaceVerbs>
+        <Button dense variant="ghost" onClick={() => void ctrl.backToList()} data-testid="update-verb-back">
+          Back
+        </Button>
+      </SurfaceVerbs>
       {/* Provenance + lifecycle band */}
       <div className="update-editor-band" data-testid="update-editor-band">
         <StateChip
@@ -555,12 +583,6 @@ function UpdateEditor({
         <InlineClaimsView claims={update.claims} onOpen={onOpenRef} />
       ) : null}
 
-      {/* Back verb stays inside the editor (non-portalling, glass locator compat) */}
-      <SurfaceVerbs>
-        <Button dense variant="ghost" onClick={() => void ctrl.backToList()} data-testid="update-verb-back">
-          Back
-        </Button>
-      </SurfaceVerbs>
     </div>
   );
 }

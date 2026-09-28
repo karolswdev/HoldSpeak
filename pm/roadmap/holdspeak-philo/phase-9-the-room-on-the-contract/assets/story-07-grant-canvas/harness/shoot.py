@@ -34,7 +34,8 @@ WEB = REPO / "web"
 OUT = CANVAS / "shots"
 SETS = sys.argv[1:] or ["a", "b"]
 BOARDS = ("0-today", "1-never", "2-live", "3-live-open", "4-stopped", "5-expired",
-          "6-orphan", "7-orphan-off", "7b-off-credential", "8-refused", "9-two-projects")
+          "6-orphan", "7-orphan-off", "7b-off-credential", "8-refused", "9-two-projects",
+          "10-last-orphan-stopped", "11-credential-revoked")
 BASE = "http://127.0.0.1:4442"
 
 FACTS = """() => {
@@ -49,15 +50,19 @@ FACTS = """() => {
     refused_code: r.querySelector(':scope > .surface-ledger-line [data-testid=grant-refused]')?.dataset.code ?? null,
   }));
   const small = [];
-  const walker = document.createTreeWalker(win, NodeFilter.SHOW_TEXT);
+  const roots = [win, ...document.querySelectorAll('[role=menu], .surface-popover, .desk-menu')].filter(r => !win.contains(r) || r === win);
+  const open_menus = roots.length - 1;
+  for (const root of roots) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const t = n.textContent.trim();
-    if (!t || /^[●○✓✗⚠—↻ℹ«»·]$/.test(t)) continue;
+    if (!t || /^[●○✓✗⚠—↻ℹ«»·▸]$/.test(t)) continue;
     const el = n.parentElement;
     const r = el.getBoundingClientRect();
     if (!r.width || getComputedStyle(el).visibility === 'hidden') continue;
     const fs = parseFloat(getComputedStyle(el).fontSize);
     if (fs < 12) small.push({text: t.slice(0, 40), fs, cls: String(el.className)});
+  }
   }
   // WCAG contrast of every chip / token against its composited background.
   const parse = (c) => { const m = c.match(/[\\d.]+/g) || []; return {r:+m[0]||0, g:+m[1]||0, b:+m[2]||0, a: m[3] === undefined ? 1 : +m[3]}; };
@@ -75,7 +80,7 @@ FACTS = """() => {
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v/12.92 : ((v+0.055)/1.055)**2.4; }; return 0.2126*f(c.r)+0.7152*f(c.g)+0.0722*f(c.b); };
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return +((x + 0.05) / (y + 0.05)).toFixed(2); };
   const contrast = [];
-  for (const el of win.querySelectorAll('.surface-state-chip, .surface-token, .gadget-fact, .surface-receipt, .surface-ledger-count')) {
+  for (const el of win.querySelectorAll('.surface-state-chip, .surface-token, .gadget-fact, .surface-receipt, .surface-ledger-count, .surface-disclosure-label')) {
     const r = el.getBoundingClientRect();
     if (!r.width || !txt(el)) continue;
     // measure the element that paints the words (the deepest with text)
@@ -96,7 +101,9 @@ FACTS = """() => {
     receipt_well: well ? {text: txt(well), operation_id: well.dataset.operationId, outcome: well.dataset.outcome, code: well.dataset.code ?? null} : null,
     foot: txt(document.querySelector('.desk-surface-foot')) || null,
     small_text: small,
-    raw_buttons: [...win.querySelectorAll('button')].filter(b => !String(b.className).includes('btn')).map(b => txt(b) || b.getAttribute('aria-label')),
+    open_menus,
+    footer_scanned: !!win.querySelector('.desk-surface-foot'),
+    raw_buttons: [...roots.flatMap(r => [...r.querySelectorAll('button')])].filter(b => !String(b.className).includes('btn')).map(b => txt(b) || b.getAttribute('aria-label')),
     contrast,
     scroll_width: document.documentElement.scrollWidth,
     body_overflow_x: body ? body.scrollWidth > body.clientWidth : null,
@@ -105,7 +112,8 @@ FACTS = """() => {
 
 POINTS = """([width]) => {
   const win = document.querySelector('.grant-canvas-window');
-  const btns = [...win.querySelectorAll('.desk-surface-body .btn, .desk-surface-foot .btn')];
+  const menus = [...document.querySelectorAll('[role=menu], .surface-popover, .desk-menu')].filter(r => !win.contains(r));
+  const btns = [...win.querySelectorAll('.desk-surface-body .btn, .desk-surface-foot .btn'), ...menus.flatMap(m => [...m.querySelectorAll('.btn, [role=menuitem]')])];
   return btns.map((b, i) => {
     b.dataset.probe = String(i);
     b.scrollIntoView({block: 'center'});
@@ -184,7 +192,10 @@ def main() -> None:
                           g?.scrollIntoView({block:'start'});
                           const last = document.querySelector('[data-testid=grant-receipt]') || document.querySelector('.surface-ledger-open');
                           const body = document.querySelector('[data-testid=settings-body]');
-                          if (last && body && last.getBoundingClientRect().bottom > body.getBoundingClientRect().bottom) last.scrollIntoView({block:'end'});
+                          if (last && body && last.getBoundingClientRect().bottom > body.getBoundingClientRect().bottom)
+                            body.scrollTop += last.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8;
+                          window.scrollTo(0, 0);
+                          document.documentElement.scrollTop = 0;
                         }""")
                         page.wait_for_timeout(120)
                         target = OUT / ("today" if board == "0-today" else words)

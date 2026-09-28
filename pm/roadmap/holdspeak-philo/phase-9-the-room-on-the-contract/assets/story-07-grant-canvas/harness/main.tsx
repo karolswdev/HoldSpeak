@@ -36,6 +36,7 @@ import {
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceWell,
+  Disclosure,
 } from "@w/desk/surface";
 import { WingSlotContext } from "@w/desk/surface/wings";
 import { TitleSlotContext } from "@w/desk/surface/title";
@@ -90,8 +91,12 @@ type Wire = {
   bind_host: string | null;
   port: number | null;
   credentials: ProposedCredential[];
+  /** Phase 7's desk-grant orphans, kept as built (SettingsCore.tsx:279, :869). */
+  delegations: (Delegation & { identity: string })[];
   project_delegations: OrphanProjectDelegation[];
 };
+/** A kernel_desk_delegations row as STORED (Phase 7's table). */
+type StoredDeskGrant = { identity: string; state: GrantState; grant_id: string; expires_at: number | null };
 
 const REAL = wireJson as RealWire;
 const PROJECTS = (projectsJson as Project[]).filter((p) => !p.is_archived);
@@ -109,8 +114,14 @@ const PAST = NOW_S - 3600; // a real expires_at one hour before now
  *  says ALL for desk-agent; the issue route answered DESK
  *  (fixtures/produce-log.json). */
 const ISSUED_PALETTE: Record<string, string> = { "desk-agent": "DESK", "sweep-runner": "PROJECT" };
-/** Palettes that hold the project tools; only these rows offer project grants. */
-const PROJECT_CAPABLE = new Set(["PROJECT", "ALL"]);
+/** Palette compatibility (a correctness rule, settled): a grant's controls
+ *  show only where the credential's palette holds the tools the grant covers.
+ *  Measured on this tree with holdspeak.mcp.palettes.resolve_palette:
+ *  project.run_steward / stop_steward / publish_update are in PROJECT, SWEEP,
+ *  DESK and ALL; the desk family (desk.*, zone.*, decision.*, note.*, kb.*)
+ *  is in DESK and ALL only (PROJECT and SWEEP hold none of it). */
+const PROJECT_CAPABLE = new Set(["PROJECT", "SWEEP", "DESK", "ALL"]);
+const DESK_CAPABLE = new Set(["DESK", "ALL"]);
 
 /** The server's projection (Phase 7's rule, per (identity, project)): a stored
  *  LIVE row whose expires_at <= now is EXPIRED; REVOKED/EXPIRED pass through. */
@@ -121,7 +132,7 @@ function project(row: StoredProjectGrant | undefined, now: number): Delegation |
 }
 
 /** GET /api/settings/remote as story 07 would return it. */
-function serve(identities: string[], stored: StoredProjectGrant[], enabled = true): Wire {
+function serve(identities: string[], stored: StoredProjectGrant[], enabled = true, deskStored: StoredDeskGrant[] = []): Wire {
   const nameOf = (id: string) => PROJECTS.find((p) => p.id === id)?.name ?? id;
   const latest = (identity: string, projectId: string) =>
     stored.filter((g) => g.identity === identity && g.project_id === projectId).at(-1);
@@ -139,6 +150,14 @@ function serve(identities: string[], stored: StoredProjectGrant[], enabled = tru
         .filter(([identity]) => identity === c.identity)
         .map(([identity, pid]) => ({ project_id: pid, project_name: nameOf(pid), ...project(latest(identity, pid), NOW_S)! })),
     })),
+    // Phase 7's rule, unchanged: every desk grant LIVE in storage whose
+    // identity has no credential row, projected (a past expiry says EXPIRED).
+    delegations: deskStored
+      .filter((d) => d.state === "LIVE" && !withCred.has(d.identity))
+      .map((d) => {
+        const expired = d.expires_at != null && d.expires_at <= NOW_S;
+        return { identity: d.identity, state: expired ? "EXPIRED" as const : "LIVE" as const, grant_id: d.grant_id, expires_at: d.expires_at };
+      }),
     project_delegations: pairs
       .filter(([identity, pid]) => !withCred.has(identity) && latest(identity, pid)?.state === "LIVE")
       .map(([identity, pid]) => ({ identity, project_id: pid, project_name: nameOf(pid), ...project(latest(identity, pid), NOW_S)! })),
@@ -216,6 +235,8 @@ type ActReceipt = {
   code?: string;
   identity: string;
   project: string;
+  /** Set when the grant ended because the owner revoked the credential. */
+  reason?: string;
   time: string;
   date: string;
 };
@@ -270,6 +291,7 @@ function ReceiptWell({ act, words }: { act: ActReceipt; words: Words }) {
           {ok ? (act.verb === "stop" ? words.stopped : words.live) : act.verb === "stop" ? words.actStop : words.actAllow}
         </span>
         {!ok && act.code ? <span className="surface-token" data-chip>{REFUSAL_TOKEN[act.code]}</span> : null}
+        {act.reason ? <span className="surface-token" data-chip>{act.reason}</span> : null}
         <span className="gadget-fact">{act.project}</span>
         <span className="gadget-fact">{act.identity}</span>
         <span className="surface-token" data-chip>BY OWNER</span>
@@ -322,9 +344,11 @@ function ProposedRemoteAccess({
     ? wire.credentials
     : wire.credentials.filter((c) => c.delegation?.state === "LIVE" || c.project_delegations.some((g) => g.state === "LIVE"));
   const orphans = wire.project_delegations;
+  const deskOrphans = wire.delegations;
   const activeCount = credentials.filter((c) => c.active).length;
   const totalCount = wire.credentials.length;
-  const showLedger = credentials.length > 0 || orphans.length > 0;
+  // Phase 7's ledger condition, widened: any credential OR any grant row.
+  const showLedger = credentials.length > 0 || orphans.length > 0 || deskOrphans.length > 0;
   return (
     <GadgetGroup label="Remote access">
       <GadgetRow label="Streamable HTTP">
@@ -347,17 +371,19 @@ function ProposedRemoteAccess({
         >
           {credentials.map((cred) => {
             const capable = PROJECT_CAPABLE.has(cred.palette);
+            const deskCapable = DESK_CAPABLE.has(cred.palette);
+            const isOpen = capable && open.includes(cred.identity);
+            const bodyId = `project-lines-body-${cred.id}`;
             return (
               <SurfaceLedgerRow
                 key={cred.id}
                 lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
                 primary={cred.identity}
-                expands={capable}
-                open={capable && open.includes(cred.identity)}
-                lineLabel={capable ? `${cred.identity}: projects` : undefined}
+                expands={false}
+                open={isOpen}
                 data-testid={`credential-row-${cred.id}`}
                 cells={<>
-                  <DeskGrantChip grant={cred.delegation} />
+                  {deskCapable ? <DeskGrantChip grant={cred.delegation} /> : null}
                   <ProjectSummary grants={cred.project_delegations} words={words} />
                   <span className="surface-token" data-chip data-testid="palette-token">{cred.palette}</span>
                   {cred.active
@@ -368,16 +394,49 @@ function ProposedRemoteAccess({
                   </span>
                 </>}
                 trailing={<>
-                  <Button variant="ghost" dense data-testid="grant-verb">
-                    {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
-                  </Button>
+                  {capable ? (
+                    // The library Disclosure's trigger (HS-200-15: a body
+                    // rendered in the ledger row's own expansion slot).
+                    <Disclosure
+                      label="Projects"
+                      ariaLabel={`Projects: ${cred.identity}`}
+                      open={isOpen}
+                      onOpenChange={() => undefined}
+                      controlsId={bodyId}
+                      variant="default"
+                    >
+                      {null}
+                    </Disclosure>
+                  ) : null}
+                  {deskCapable ? (
+                    <Button variant="ghost" dense data-testid="grant-verb">
+                      {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
+                    </Button>
+                  ) : null}
                   <Button variant="ghost" dense data-testid="credential-revoke">{GRANT_WORDS.revokeCredential}</Button>
                 </>}
               >
-                {capable ? <ProjectLines cred={cred} words={words} refusals={refusals} /> : null}
+                {capable ? <div id={bodyId}><ProjectLines cred={cred} words={words} refusals={refusals} /></div> : null}
               </SurfaceLedgerRow>
             );
           })}
+          {deskOrphans.map((grant) => (
+            // Phase 7's desk-grant orphan row, as built (SettingsCore.tsx:869-892).
+            <SurfaceLedgerRow
+              key={grant.grant_id}
+              lead={<StateChip state="idle" label="" icon="●" />}
+              primary={grant.identity}
+              expands={false}
+              data-testid={`delegation-row-${grant.grant_id}`}
+              cells={<>
+                <DeskGrantChip grant={grant} />
+                <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
+              </>}
+              trailing={grant.state === "LIVE"
+                ? <Button variant="ghost" dense data-testid="grant-verb">{GRANT_WORDS.stop}</Button>
+                : undefined}
+            />
+          ))}
           {orphans.map((grant) => (
             <SurfaceLedgerRow
               key={grant.grant_id}
@@ -426,6 +485,11 @@ function Foot({ act, open }: { act: ActReceipt | null; open?: boolean }) {
 /* ── the boards ─────────────────────────────────────────────────────── */
 
 const BOTH = ["desk-agent", "sweep-runner"];
+/** desk-agent's real desk grant (the captured wire), as a stored row. */
+const DESK_LIVE: StoredDeskGrant = {
+  identity: "desk-agent", state: "LIVE", expires_at: null,
+  grant_id: REAL.credentials.find((c) => c.identity === "desk-agent")?.delegation?.grant_id ?? "deskdeleg",
+};
 const g = (state: GrantState, project_id = PAYMENTS.id, expires_at: number | null = null, identity = "sweep-runner", grant_id = "projdeleg_5b1c"): StoredProjectGrant =>
   ({ identity, project_id, state, grant_id, expires_at });
 const act = (over: Partial<ActReceipt>): ActReceipt => ({
@@ -451,11 +515,26 @@ function boardFor(name: string, words: Words): Board {
       // Stored LIVE with a real past expires_at; the projection says EXPIRED.
       return { body: P(serve(BOTH, [g("LIVE", PAYMENTS.id, PAST)]), { open: ["sweep-runner"] }), foot: <Foot act={null} /> };
     case "6-orphan":
-      // The credential is gone (revoked with a LIVE grant before this rule, or
-      // TTL cleanup); the grant row stays and can be stopped.
-      return { body: P(serve(["desk-agent"], [g("LIVE")])), foot: <Foot act={null} /> };
+      // Both credential rows are gone with their grants still LIVE (a restart
+      // or a lost credential; never an owner revoke, which revokes the grant
+      // first). Phase 7's desk orphan and the project orphan both stay, each
+      // with its Stop.
+      return { body: P(serve([], [g("LIVE")], true, [DESK_LIVE])), foot: <Foot act={null} /> };
     case "7-orphan-off":
-      return { body: P(serve(["desk-agent"], [g("LIVE")], false)), foot: <Foot act={null} /> };
+      return { body: P(serve([], [g("LIVE")], false, [DESK_LIVE])), foot: <Foot act={null} /> };
+    case "10-last-orphan-stopped": {
+      // Stop on the last orphan: the row goes; with nothing left the ledger
+      // goes; the receipt stays in the footer and its well (rendered open).
+      const stopped = act({ verb: "stop", time: "14:13", operation_id: "op_b310" });
+      return { body: P(serve([], [g("LIVE"), g("REVOKED")], false), { openReceipt: stopped }), foot: <Foot act={stopped} open /> };
+    }
+    case "11-credential-revoked": {
+      // The owner revokes sweep-runner's credential: its project grant is
+      // revoked first (reason credential_revoked), then the row is removed.
+      // No orphan remains; the receipt stays (rendered open).
+      const revoked = act({ verb: "stop", time: "14:15", operation_id: "op_c7a2", reason: "CREDENTIAL REVOKED" });
+      return { body: P(serve(["desk-agent"], [g("LIVE"), g("REVOKED")]), { openReceipt: revoked }), foot: <Foot act={revoked} open /> };
+    }
     case "7b-off-credential":
       return { body: P(serve(BOTH, [g("LIVE")], false), { open: ["sweep-runner"] }), foot: <Foot act={null} /> };
     case "8-refused": {

@@ -1,7 +1,16 @@
 {
   "0-today-list-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -38,7 +47,10 @@
     ],
     "menu_delete": null,
     "menu_last": null,
-    "min_text_ratio": 6.42,
+    "menu_rows": [],
+    "menu_scanned": 0,
+    "min_text_ratio": 3.92,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -46,11 +58,12 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 1440,
     "small_text": [
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 9 ZONES"
+        "text": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -148,7 +161,7 @@
         "text": "ZONE"
       }
     ],
-    "small_text_count": 41,
+    "small_text_count": 43,
     "sort_verbs": [
       {
         "library": false,
@@ -182,13 +195,22 @@
     "status": "24 SHOWNS OF 24",
     "text_styles": [
       {
+        "cls": "desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "sample": "ATTN"
+      },
+      {
         "cls": "",
         "count": 1,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -249,8 +271,17 @@
     "vw": 1440
   },
   "0-today-list-393": {
-    "cells_past_right_edge": 82,
-    "census": "24 ITEMS · 9 ZONES",
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 83,
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -287,7 +318,27 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:29 PM"
+      },
+      {
+        "cls": "desk-sortable-table",
+        "left": 19,
+        "position": "static",
+        "right": 922,
+        "tag": "table",
+        "text": "NAME ↑ KIND ZONE ATTENTION ZONES Archite"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -295,11 +346,12 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 393,
     "small_text": [
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 9 ZONES"
+        "text": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -437,7 +489,7 @@
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -498,8 +550,17 @@
     "vw": 393
   },
   "0-today-row-menu-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -553,7 +614,71 @@
     "menu_opened": true,
     "menu_row_bottom": 710,
     "menu_row_y": 668,
-    "min_text_ratio": 6.42,
+    "menu_rows": [
+      {
+        "bottom": 611,
+        "h": 28,
+        "text": "Open",
+        "top": 583
+      },
+      {
+        "bottom": 639,
+        "h": 28,
+        "text": "Get Info",
+        "top": 611
+      },
+      {
+        "bottom": 667,
+        "h": 28,
+        "text": "Ask this project · Select a Pr",
+        "top": 639
+      },
+      {
+        "bottom": 695,
+        "h": 28,
+        "text": "Ask AI",
+        "top": 667
+      },
+      {
+        "bottom": 723,
+        "h": 28,
+        "text": "Continue in thread",
+        "top": 695
+      },
+      {
+        "bottom": 751,
+        "h": 28,
+        "text": "Edit",
+        "top": 723
+      },
+      {
+        "bottom": 779,
+        "h": 28,
+        "text": "Rename F2",
+        "top": 751
+      },
+      {
+        "bottom": 807,
+        "h": 28,
+        "text": "Duplicate",
+        "top": 779
+      },
+      {
+        "bottom": 835,
+        "h": 28,
+        "text": "Move to Zone",
+        "top": 807
+      },
+      {
+        "bottom": 875,
+        "h": 28,
+        "text": "Delete Delete",
+        "top": 847
+      }
+    ],
+    "menu_scanned": 1,
+    "min_text_ratio": 3.92,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -561,11 +686,12 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 1440,
     "small_text": [
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 9 ZONES"
+        "text": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -663,7 +789,7 @@
         "text": "ZONE"
       }
     ],
-    "small_text_count": 41,
+    "small_text_count": 46,
     "sort_verbs": [
       {
         "library": false,
@@ -697,13 +823,40 @@
     "status": "24 SHOWNS OF 24",
     "text_styles": [
       {
+        "cls": "desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "sample": "ATTN"
+      },
+      {
+        "cls": "desk-menu-label",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Ask this project"
+      },
+      {
+        "cls": "quiet",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 5.74,
+        "sample": "Select a Project"
+      },
+      {
         "cls": "",
         "count": 1,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -742,6 +895,15 @@
         "sample": "ZONE"
       },
       {
+        "cls": "desk-menu-label",
+        "count": 9,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Open"
+      },
+      {
         "cls": "desk-sortable-table-sort is-current",
         "count": 1,
         "ground": "rgb(28,31,39)",
@@ -758,14 +920,32 @@
         "px": 13,
         "ratio": 14.84,
         "sample": "Architecture reviews"
+      },
+      {
+        "cls": "desk-menu-well",
+        "count": 2,
+        "ground": "rgb(26,29,37)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 15.21,
+        "sample": "F2"
       }
     ],
     "vh": 900,
     "vw": 1440
   },
   "0-today-row-menu-393": {
-    "cells_past_right_edge": 82,
-    "census": "24 ITEMS · 9 ZONES",
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 83,
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -819,7 +999,88 @@
     "menu_opened": true,
     "menu_row_bottom": 702,
     "menu_row_y": 636,
-    "min_text_ratio": 6.42,
+    "menu_rows": [
+      {
+        "bottom": 603,
+        "h": 28,
+        "text": "Open",
+        "top": 575
+      },
+      {
+        "bottom": 631,
+        "h": 28,
+        "text": "Get Info",
+        "top": 603
+      },
+      {
+        "bottom": 659,
+        "h": 28,
+        "text": "Ask this project · Select a Pr",
+        "top": 631
+      },
+      {
+        "bottom": 687,
+        "h": 28,
+        "text": "Ask AI",
+        "top": 659
+      },
+      {
+        "bottom": 715,
+        "h": 28,
+        "text": "Continue in thread",
+        "top": 687
+      },
+      {
+        "bottom": 743,
+        "h": 28,
+        "text": "Edit",
+        "top": 715
+      },
+      {
+        "bottom": 771,
+        "h": 28,
+        "text": "Rename F2",
+        "top": 743
+      },
+      {
+        "bottom": 799,
+        "h": 28,
+        "text": "Duplicate",
+        "top": 771
+      },
+      {
+        "bottom": 827,
+        "h": 28,
+        "text": "Move to Zone",
+        "top": 799
+      },
+      {
+        "bottom": 867,
+        "h": 28,
+        "text": "Delete Delete",
+        "top": 839
+      }
+    ],
+    "menu_scanned": 1,
+    "min_text_ratio": 5.74,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:29 PM"
+      },
+      {
+        "cls": "desk-sortable-table",
+        "left": 19,
+        "position": "static",
+        "right": 922,
+        "tag": "table",
+        "text": "NAME ↑ KIND ZONE ATTENTION ZONES Archite"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -827,6 +1088,7 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 393,
     "small_text": [
       {
         "cls": "",
@@ -929,7 +1191,7 @@
         "text": "NOTE"
       }
     ],
-    "small_text_count": 25,
+    "small_text_count": 28,
     "sort_verbs": [
       {
         "library": false,
@@ -963,6 +1225,24 @@
     "status": "24 SHOWNS OF 24",
     "text_styles": [
       {
+        "cls": "desk-menu-label",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Ask this project"
+      },
+      {
+        "cls": "quiet",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 5.74,
+        "sample": "Select a Project"
+      },
+      {
         "cls": "",
         "count": 24,
         "ground": "rgb(28,31,39)",
@@ -981,6 +1261,15 @@
         "sample": "NOTES"
       },
       {
+        "cls": "desk-menu-label",
+        "count": 9,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Open"
+      },
+      {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
         "count": 14,
         "ground": "rgb(28,31,39)",
@@ -988,14 +1277,32 @@
         "px": 13,
         "ratio": 14.84,
         "sample": "Hiring"
+      },
+      {
+        "cls": "desk-menu-well",
+        "count": 2,
+        "ground": "rgb(26,29,37)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 15.21,
+        "sample": "F2"
       }
     ],
     "vh": 852,
     "vw": 393
   },
   "0-today-selection-palette-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -1032,7 +1339,10 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -1040,6 +1350,7 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 1440,
     "selection": {
       "end": 14,
       "field_bg": "rgb(21,23,29)",
@@ -1058,7 +1369,7 @@
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 10 ZONES"
+        "text": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1196,7 +1507,7 @@
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1257,8 +1568,17 @@
     "vw": 1440
   },
   "0-today-selection-palette-393": {
-    "cells_past_right_edge": 85,
-    "census": "24 ITEMS · 10 ZONES",
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 86,
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -1295,7 +1615,27 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:29 PM"
+      },
+      {
+        "cls": "desk-sortable-table",
+        "left": -39,
+        "position": "static",
+        "right": 864,
+        "tag": "table",
+        "text": "NAME ↑ KIND ZONE ATTENTION ZONES Archite"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -1303,6 +1643,7 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 393,
     "selection": {
       "end": 14,
       "field_bg": "rgb(21,23,29)",
@@ -1321,7 +1662,7 @@
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 10 ZONES"
+        "text": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1459,7 +1800,7 @@
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1520,8 +1861,17 @@
     "vw": 393
   },
   "0-today-selection-zone-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -1558,7 +1908,10 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -1566,6 +1919,7 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 1440,
     "selection": {
       "end": 8,
       "field_bg": "rgb(21,23,29)",
@@ -1584,7 +1938,7 @@
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 10 ZONES"
+        "text": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1722,7 +2076,7 @@
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1783,8 +2137,17 @@
     "vw": 1440
   },
   "0-today-selection-zone-393": {
-    "cells_past_right_edge": 84,
-    "census": "24 ITEMS · 10 ZONES",
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(168,110,74)",
+        "px": 10,
+        "ratio": 3.92,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 85,
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -1821,7 +2184,27 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:29 PM"
+      },
+      {
+        "cls": "desk-sortable-table",
+        "left": -39,
+        "position": "static",
+        "right": 864,
+        "tag": "table",
+        "text": "NAME ↑ KIND ZONE ATTENTION ZONES Archite"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [
       "desk-sortable-table-sort is-current",
@@ -1829,6 +2212,7 @@
       "desk-sortable-table-sort",
       "desk-sortable-table-sort"
     ],
+    "scroll_width": 393,
     "selection": {
       "end": 8,
       "field_bg": "rgb(21,23,29)",
@@ -1847,7 +2231,7 @@
       {
         "cls": "",
         "px": 10,
-        "text": "24 ITEMS · 10 ZONES"
+        "text": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -1985,7 +2369,7 @@
         "ink": "rgb(155,162,176)",
         "px": 10,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2046,8 +2430,17 @@
     "vw": 393
   },
   "1-list-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -2084,9 +2477,203 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 252.8,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 275.6,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 275.6,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 47.6
+        },
+        "text": "NAME ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 969.7,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 954.8,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 984.5,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 954.8,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 984.5,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1075.4,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1060.6,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1090.3,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1060.6,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1090.3,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "ZONE"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1201.0,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1166.3,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1235.6,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1166.3,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1235.6,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2149,7 +2736,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2201,8 +2788,17 @@
     "vw": 1440
   },
   "1-list-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 33,
     "h_overflow": false,
     "headers": [
@@ -2221,9 +2817,212 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 100.8,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 123.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 123.6,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 47.6
+        },
+        "text": "NAME ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 150.6,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 129.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 171.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 129.6,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 171.6,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 198.6,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 177.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 177.6,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "ZONE"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 260.2,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2286,7 +3085,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2326,7 +3125,7 @@
       },
       {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
-        "count": 10,
+        "count": 9,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(242,243,245)",
         "px": 12,
@@ -2338,8 +3137,17 @@
     "vw": 393
   },
   "2-sorted-by-zone-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -2376,9 +3184,203 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 244.8,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 259.7,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 259.7,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "NAME"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 969.7,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 954.8,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 984.5,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 954.8,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 984.5,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1083.4,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1060.6,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1106.2,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1060.6,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1106.2,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 47.6
+        },
+        "text": "ZONE ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1201.0,
+            "y": 116
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1166.3,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1235.6,
+            "y": 105
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1166.3,
+            "y": 127
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1235.6,
+            "y": 127
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2441,7 +3443,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2502,8 +3504,17 @@
     "vw": 1440
   },
   "2-sorted-by-zone-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 33,
     "h_overflow": false,
     "headers": [
@@ -2522,9 +3533,212 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 99,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 120,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 120,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "NAME"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 147,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 126,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 168,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 126,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 168,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 196.8,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 174,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 174,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 47.6
+        },
+        "text": "ZONE ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 260.2,
+            "y": 149
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 128
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 170
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 170
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2587,7 +3801,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2636,7 +3850,7 @@
       },
       {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
-        "count": 9,
+        "count": 8,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(242,243,245)",
         "px": 13,
@@ -2648,8 +3862,17 @@
     "vw": 393
   },
   "3-row-menu-bottom-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -2687,7 +3910,7 @@
     "menu_delete": {
       "bottom": 875,
       "cut_px": 0,
-      "right": 491,
+      "right": 514,
       "text": "Delete Delete",
       "top": 847,
       "vh": 900
@@ -2695,7 +3918,7 @@
     "menu_last": {
       "bottom": 875,
       "cut_px": 0,
-      "right": 491,
+      "right": 514,
       "text": "Delete Delete",
       "top": 847,
       "vh": 900
@@ -2703,9 +3926,546 @@
     "menu_opened": true,
     "menu_row_bottom": 730,
     "menu_row_y": 688,
-    "min_text_ratio": 6.42,
+    "menu_rows": [
+      {
+        "bottom": 611,
+        "h": 28,
+        "text": "Open",
+        "top": 583
+      },
+      {
+        "bottom": 639,
+        "h": 28,
+        "text": "Get Info",
+        "top": 611
+      },
+      {
+        "bottom": 667,
+        "h": 28,
+        "text": "Ask this project · Select a Pr",
+        "top": 639
+      },
+      {
+        "bottom": 695,
+        "h": 28,
+        "text": "Ask AI",
+        "top": 667
+      },
+      {
+        "bottom": 723,
+        "h": 28,
+        "text": "Continue in thread",
+        "top": 695
+      },
+      {
+        "bottom": 751,
+        "h": 28,
+        "text": "Edit",
+        "top": 723
+      },
+      {
+        "bottom": 779,
+        "h": 28,
+        "text": "Rename F2",
+        "top": 751
+      },
+      {
+        "bottom": 807,
+        "h": 28,
+        "text": "Duplicate",
+        "top": 779
+      },
+      {
+        "bottom": 835,
+        "h": 28,
+        "text": "Move to Zone",
+        "top": 807
+      },
+      {
+        "bottom": 875,
+        "h": 28,
+        "text": "Delete Delete",
+        "top": 847
+      }
+    ],
+    "menu_scanned": 1,
+    "min_text_ratio": 5.74,
+    "overflow_elements": [],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 597
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 584
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 584
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 610
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 610
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Open"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 625
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 612
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 612
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 638
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 638
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Get Info"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "quiet",
+            "ok": true,
+            "x": 378.0,
+            "y": 653
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 640
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 640
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 666
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 666
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Ask this project · Select a Pr"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 681
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 668
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 668
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 694
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 694
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Ask AI"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 709
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 696
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 696
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 722
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 722
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Continue in thread"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 737
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 724
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 724
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 750
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 750
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Edit"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 765
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 752
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 752
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 778
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 778
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Rename F2"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 793
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 780
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 780
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 806
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 806
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Duplicate"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 821
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 808
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 808
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 834
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 834
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Move to Zone"
+      },
+      {
+        "face": {
+          "h": 28,
+          "w": 272
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 378.0,
+            "y": 861
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 848
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 848
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 243,
+            "y": 874
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 513.0,
+            "y": 874
+          }
+        ],
+        "target": {
+          "h": 28,
+          "w": 272
+        },
+        "text": "Delete Delete"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2762,13 +4522,31 @@
     "status": "24 SHOWN OF 24",
     "text_styles": [
       {
+        "cls": "desk-menu-label",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Ask this project"
+      },
+      {
+        "cls": "quiet",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Select a Project"
+      },
+      {
         "cls": "",
         "count": 1,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 9 ZONES"
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -2807,6 +4585,15 @@
         "sample": "ZONE"
       },
       {
+        "cls": "desk-menu-label",
+        "count": 9,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Open"
+      },
+      {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
         "count": 18,
         "ground": "rgb(28,31,39)",
@@ -2814,14 +4601,32 @@
         "px": 12,
         "ratio": 14.84,
         "sample": "Name"
+      },
+      {
+        "cls": "desk-menu-well",
+        "count": 2,
+        "ground": "rgb(26,29,37)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 15.21,
+        "sample": "F2"
       }
     ],
     "vh": 900,
     "vw": 1440
   },
   "3-row-menu-bottom-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 9 ZONES",
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
     "fold_lines_visible": 33,
     "h_overflow": false,
     "headers": [
@@ -2843,7 +4648,7 @@
       "cut_px": 0,
       "right": 382,
       "text": "Delete Delete",
-      "top": 813,
+      "top": 797,
       "vh": 852
     },
     "menu_last": {
@@ -2851,15 +4656,561 @@
       "cut_px": 0,
       "right": 382,
       "text": "Delete Delete",
-      "top": 813,
+      "top": 797,
       "vh": 852
     },
     "menu_opened": true,
     "menu_row_bottom": 702,
     "menu_row_y": 624,
-    "min_text_ratio": 6.42,
+    "menu_rows": [
+      {
+        "bottom": 433,
+        "h": 44,
+        "text": "Open",
+        "top": 389
+      },
+      {
+        "bottom": 477,
+        "h": 44,
+        "text": "Get Info",
+        "top": 433
+      },
+      {
+        "bottom": 521,
+        "h": 44,
+        "text": "Ask this project · Select a Pr",
+        "top": 477
+      },
+      {
+        "bottom": 565,
+        "h": 44,
+        "text": "Ask AI",
+        "top": 521
+      },
+      {
+        "bottom": 609,
+        "h": 44,
+        "text": "Continue in thread",
+        "top": 565
+      },
+      {
+        "bottom": 653,
+        "h": 44,
+        "text": "Edit",
+        "top": 609
+      },
+      {
+        "bottom": 697,
+        "h": 44,
+        "text": "Rename F2",
+        "top": 653
+      },
+      {
+        "bottom": 741,
+        "h": 44,
+        "text": "Duplicate",
+        "top": 697
+      },
+      {
+        "bottom": 785,
+        "h": 44,
+        "text": "Move to Zone",
+        "top": 741
+      },
+      {
+        "bottom": 841,
+        "h": 44,
+        "text": "Delete Delete",
+        "top": 797
+      }
+    ],
+    "menu_scanned": 1,
+    "min_text_ratio": 5.74,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 411
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 390
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 390
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 432
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 432
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Open"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 455
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 434
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 434
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 476
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 476
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Get Info"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "quiet",
+            "ok": true,
+            "x": 196.5,
+            "y": 499
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 478
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 478
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 520
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 520
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Ask this project · Select a Pr"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 543
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 522
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 522
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 564
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 564
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Ask AI"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 587
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 566
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 566
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 608
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 608
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Continue in thread"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 631
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 610
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 610
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 652
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 652
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Edit"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 675
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 654
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 654
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 696
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 696
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Rename F2"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 719
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 698
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 698
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 740
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 740
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Duplicate"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 763
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 742
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 742
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 784
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 784
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Move to Zone"
+      },
+      {
+        "face": {
+          "h": 44,
+          "w": 371
+        },
+        "in_view": true,
+        "kind": "menu-row",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "desk-menu-label",
+            "ok": true,
+            "x": 196.5,
+            "y": 819
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 798
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 798
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 12,
+            "y": 840
+          },
+          {
+            "hit": "btn--chrome",
+            "ok": true,
+            "x": 381,
+            "y": 840
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 371
+        },
+        "text": "Delete Delete"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -2916,6 +5267,24 @@
     "status": "24 SHOWN OF 24",
     "text_styles": [
       {
+        "cls": "desk-menu-label",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Ask this project"
+      },
+      {
+        "cls": "quiet",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Select a Project"
+      },
+      {
         "cls": "desk-list-fold-token",
         "count": 16,
         "ground": "rgb(28,31,39)",
@@ -2934,6 +5303,15 @@
         "sample": "NOTES"
       },
       {
+        "cls": "desk-menu-label",
+        "count": 9,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Open"
+      },
+      {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
         "count": 10,
         "ground": "rgb(28,31,39)",
@@ -2941,14 +5319,32 @@
         "px": 13,
         "ratio": 14.84,
         "sample": "Payments"
+      },
+      {
+        "cls": "desk-menu-well",
+        "count": 2,
+        "ground": "rgb(26,29,37)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 15.21,
+        "sample": "F2"
       }
     ],
     "vh": 852,
     "vw": 393
   },
   "4-one-shown-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "ALL1 ITEM",
+    "census": "ALL1 ITEM · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -2985,9 +5381,250 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 4.99,
+    "overflow_elements": [],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 252.8,
+            "y": 124
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 275.6,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 230,
+            "y": 135
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 275.6,
+            "y": 135
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 47.6
+        },
+        "text": "NAME ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 708.8,
+            "y": 124
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 694.0,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 723.6,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 694.0,
+            "y": 135
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 723.6,
+            "y": 135
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 31.7
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 843.4,
+            "y": 124
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 828.5,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 858.2,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 828.5,
+            "y": 135
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 858.2,
+            "y": 135
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 31.7
+        },
+        "text": "ZONE"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1079.7,
+            "y": 124
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1045.1,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1114.4,
+            "y": 113
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1045.1,
+            "y": 135
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 1114.4,
+            "y": 135
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 21.6
+        },
+        "in_view": true,
+        "kind": "census",
+        "margin_block": "0px 0px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 199.8,
+            "y": 84
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 190,
+            "y": 73
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 209.6,
+            "y": 73
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 190,
+            "y": 95
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 209.6,
+            "y": 95
+          }
+        ],
+        "target": {
+          "h": 24,
+          "w": 21.6
+        },
+        "text": "ALL"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -3053,13 +5690,22 @@
         "sample": "ALL"
       },
       {
+        "cls": "desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ATTN"
+      },
+      {
         "cls": "",
         "count": 1,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "1 ITEM"
+        "sample": "1 ITEM · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3111,10 +5757,19 @@
     "vw": 1440
   },
   "4-one-shown-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "ALL1 ITEM",
+    "census": "ALL1 ITEM · 1 ATTN",
     "fold_lines_visible": 1,
-    "h_overflow": true,
+    "h_overflow": false,
     "headers": [
       {
         "in_view": true,
@@ -3131,9 +5786,259 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 4.99,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
+    "pointer": [
+      {
+        "face": {
+          "h": 24,
+          "w": 47.6
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 100.8,
+            "y": 185
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 123.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 78,
+            "y": 206
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 123.6,
+            "y": 206
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 47.6
+        },
+        "text": "NAME ↑"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 150.6,
+            "y": 185
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 129.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 171.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 129.6,
+            "y": 206
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 171.6,
+            "y": 206
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "KIND"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 198.6,
+            "y": 185
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 177.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 177.6,
+            "y": 206
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 219.6,
+            "y": 206
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "ZONE"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 71.3
+        },
+        "in_view": true,
+        "kind": "sort",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 260.2,
+            "y": 185
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 164
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 225.6,
+            "y": 206
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 294.9,
+            "y": 206
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 71.3
+        },
+        "text": "ATTENTION"
+      },
+      {
+        "face": {
+          "h": 24,
+          "w": 44
+        },
+        "in_view": true,
+        "kind": "census",
+        "margin_block": "14px 14px",
+        "owned": true,
+        "points": [
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 51,
+            "y": 98
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 30,
+            "y": 77
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 72,
+            "y": 77
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 30,
+            "y": 119
+          },
+          {
+            "hit": "btn",
+            "ok": true,
+            "x": 72,
+            "y": 119
+          }
+        ],
+        "target": {
+          "h": 44,
+          "w": 44
+        },
+        "text": "ALL"
+      }
+    ],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "small_text": [],
     "small_text_count": 0,
     "sort_verbs": [
@@ -3199,13 +6104,22 @@
         "sample": "ALL"
       },
       {
+        "cls": "desk-list-fold-token desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ATTN"
+      },
+      {
         "cls": "",
         "count": 1,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "1 ITEM"
+        "sample": "1 ITEM · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3257,8 +6171,17 @@
     "vw": 393
   },
   "5-selection-zone-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -3295,9 +6218,13 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 5.74,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "selection": {
       "end": 8,
       "field_bg": "rgb(21,23,29)",
@@ -3383,7 +6310,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3435,8 +6362,17 @@
     "vw": 1440
   },
   "5-selection-zone-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 33,
     "h_overflow": false,
     "headers": [
@@ -3455,9 +6391,22 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "selection": {
       "end": 8,
       "field_bg": "rgb(21,23,29)",
@@ -3534,7 +6483,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3565,7 +6514,7 @@
       },
       {
         "cls": "desk-list-fold-token",
-        "count": 16,
+        "count": 14,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(155,162,176)",
         "px": 12,
@@ -3586,8 +6535,17 @@
     "vw": 393
   },
   "6-selection-palette-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 0,
     "h_overflow": false,
     "headers": [
@@ -3624,9 +6582,13 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [],
     "page_errors": [],
     "raw_buttons_in_list": [],
+    "scroll_width": 1440,
     "selection": {
       "end": 14,
       "field_bg": "rgb(21,23,29)",
@@ -3703,7 +6665,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3755,8 +6717,17 @@
     "vw": 1440
   },
   "6-selection-palette-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
     "cells_past_right_edge": 0,
-    "census": "24 ITEMS · 10 ZONES",
+    "census": "24 ITEMS · 10 ZONES · 1 ATTN",
     "fold_lines_visible": 34,
     "h_overflow": false,
     "headers": [
@@ -3775,9 +6746,22 @@
     ],
     "menu_delete": null,
     "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
     "min_text_ratio": 6.42,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
     "page_errors": [],
     "raw_buttons_in_list": [],
+    "scroll_width": 393,
     "selection": {
       "end": 14,
       "field_bg": "rgb(21,23,29)",
@@ -3854,7 +6838,7 @@
         "ink": "rgb(155,162,176)",
         "px": 12,
         "ratio": 6.42,
-        "sample": "24 ITEMS · 10 ZONES"
+        "sample": "24 ITEMS · 10 ZONES · 1 ATTN"
       },
       {
         "cls": "desk-list-status",
@@ -3894,7 +6878,7 @@
       },
       {
         "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
-        "count": 10,
+        "count": 9,
         "ground": "rgb(28,31,39)",
         "ink": "rgb(242,243,245)",
         "px": 12,
@@ -3905,9 +6889,314 @@
     "vh": 852,
     "vw": 393
   },
-  "_home_is_isolated": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-04-canvas-i0h2phkn",
+  "7-attention-1440": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
+    "min_text_ratio": 4.99,
+    "overflow_elements": [],
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "scroll_width": 1440,
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1091,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ATTN"
+      },
+      {
+        "cls": "is-fold",
+        "count": 30,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "NOTES"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 21,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Reference"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "7-attention-393": {
+    "attention_tokens": [
+      {
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES · 1 ATTN",
+    "fold_lines_visible": 33,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "menu_rows": [],
+    "menu_scanned": 0,
+    "min_text_ratio": 4.99,
+    "overflow_elements": [
+      {
+        "cls": "desk-chrome desk-chrome-tr",
+        "left": 308,
+        "position": "static",
+        "right": 396,
+        "tag": "div",
+        "text": "1 Search 09:31 PM"
+      }
+    ],
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "scroll_width": 393,
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "desk-list-fold-token desk-list-attention",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ATTN"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "NOTE"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 1,
+        "ground": "rgb(21,23,29)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.99,
+        "sample": "NOTE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open desk-list-na",
+        "count": 10,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Current priorities"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open desk-list-na",
+        "count": 1,
+        "ground": "rgb(21,23,29)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 16.14,
+        "sample": "Effect guard"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "_home_is_isolated": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-04-canvas-0qmd5kts",
   "_seed": {
-    "filed": "note:note_3dc14ed02df8 -> Payments",
+    "attention_proposal_status": "proposed",
+    "attention_subject_counts": {
+      "needs_attention": 1,
+      "receipts": 0
+    },
+    "filed": "note:note_b38c1b7af949 -> Payments",
     "notes": 7,
     "zones": 3
   }

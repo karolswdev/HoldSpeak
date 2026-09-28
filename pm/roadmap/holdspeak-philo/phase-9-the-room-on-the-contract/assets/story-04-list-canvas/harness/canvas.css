@@ -41,6 +41,17 @@
 :root body .desk-next .desk-list-face .desk-surface {
   font-size: var(--desk-surface-label-size);
   color: var(--accent-hover);
+  /* The dived board's 1 px page overflow at 393 (Astra r1 finding 6):
+   * list-view.css sets this Button `position: static` (so it flows in the
+   * census), which drops the Button's own positioning. Its 44 px halo
+   * (`.btn::after`, global.css:185-198, left/right -1px) then resolves
+   * against `.desk-listmode` and spans the whole list plus 1 px each side:
+   * right edge 394 on a 393 viewport. `relative` keeps it in flow and gives
+   * the halo back its own Button. The spatial dive's offsets
+   * (pullout.css:268-273, top 60px, left 18px) must not carry into the
+   * relative position, so the insets are reset. */
+  position: relative;
+  inset: auto;
 }
 
 /* 3. The sort headers are the library Button (ghost, dense); the th keeps
@@ -65,13 +76,47 @@
   display: none;
 }
 
-/* 4. The fold at <= 720 px: Kind, Zone and Attention leave the grid and
- * ride a second line inside the name Button (one 44 px target holds both
- * lines); their sort Buttons join the Name header. */
+/* 4. The list face is a `surface` container (list-view.css). The Floor's list
+ * is in no window body, so today every `@container surface` rule in
+ * list-view.css never applies on it (that is why its columns run off at 393).
+ * The container is the face section, not `.desk-listmode`: layout
+ * containment would capture the fixed foot inside `.desk-listmode`. */
+:root body .desk-next .desk-list-face {
+  container-type: inline-size;
+  container-name: surface;
+}
+
+/* 5. Attention in the ember's lighter step (list-view.css .desk-list-attention
+ * and the census ALL verb above): --accent on --surface-2 is under 4.5:1. */
+:root body .desk-next .desk-list-attention {
+  color: var(--accent-hover);
+}
+
+/* 6. The menu species at the narrow desk (chrome-menus.css, which keeps its
+ * viewport block: the menu is portalled outside every `surface` container).
+ * Each row owns the 44 px the canon asks of a control at 393 (UX-CANON C,
+ * --desk-button-hit-size). The keep-in-view rule (ProposedDeskMenu.tsx)
+ * measures the panel after these rows are laid out. */
+@media (max-width: 420px) {
+  :root body .desk-next .desk-work-menu [role="menuitem"] {
+    min-height: var(--desk-button-hit-size);
+  }
+}
+/* The menu's quiet reason ("Select a Project") and its keycap wells ("F2",
+ * "Delete") are 10 px in chrome-menus.css; the 12 px floor holds in the
+ * menu as in the list. */
+:root body .desk-next .desk-work-menu .quiet,
+:root body .desk-next .desk-work-menu .desk-menu-well {
+  font-size: var(--desk-surface-label-size);
+}
+
+/* 7. The fold at a surface of 720 px or less: Kind, Zone and Attention leave
+ * the grid and ride a second line inside the name Button (one target holds
+ * both lines); their sort Buttons join the Name header. */
 :root body .desk-list-fold {
   display: none;
 }
-@media (max-width: 720px) {
+@container surface (max-width: 720px) {
   :root body .desk-sortable-table th.is-fold,
   :root body .desk-sortable-table td.is-fold {
     display: none;

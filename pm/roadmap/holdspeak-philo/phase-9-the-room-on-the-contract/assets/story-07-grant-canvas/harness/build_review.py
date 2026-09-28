@@ -10,16 +10,18 @@ OUT = CANVAS / "index.html"
 SUMMARY = json.loads((CANVAS / "shots/facts.json").read_text())["summary"]
 
 BOARDS = [
-    ("1-never", "1 · No project grant", "sweep-runner open: one line per project, each with the Allow verb; no chip. desk-agent reads DESK and has no project lines (a DESK credential holds no project tool)."),
+    ("1-never", "1 · No project grant", "sweep-runner open (▸ Projects): one line per project, each with the Allow verb; no chip. desk-agent reads DESK. sweep-runner (PROJECT) has no desk verb: its palette holds no desk tool."),
     ("2-live", "2 · Granted on one project (the row closed)", "The row names what is allowed and where: the ALLOWED chip + PAYMENTS LEDGER CUTOVER. Footer receipt ALLOWED."),
     ("3-live-open", "3 · Granted on one project (the row open)", "Payments ledger cutover: ALLOWED + Stop. Hiring loop: no chip + Allow. Each project is its own grant."),
     ("4-stopped", "4 · Stopped", "Stored REVOKED: the STOPPED chip and the Allow verb. Footer receipt STOPPED."),
     ("5-expired", "5 · Expired", "Stored LIVE with expires_at one hour ago; the projection gives EXPIRED: the STOPPED chip, the Allow verb, no receipt (expiry is not an owner act)."),
-    ("6-orphan", "6 · Grant live, no credential (Remote Access ON)", "sweep-runner's credential is gone; its grant row stays: ALLOWED, the project, NO CREDENTIAL, the Stop verb."),
-    ("7-orphan-off", "7 · Grant live, no credential (Remote Access OFF)", "The ledger still shows the grant and its Stop verb, whatever the switch says."),
+    ("6-orphan", "6 · Grant live, no credential (Remote Access ON)", "A restart or a lost credential with the grants still LIVE: Phase 7's desk orphan (Stop filing) and the project orphan (Stop run and publish) side by side."),
+    ("7-orphan-off", "7 · Grant live, no credential (Remote Access OFF)", "Both orphan rows and their Stop verbs stay, whatever the switch says."),
     ("7b-off-credential", "7b · Remote Access OFF, credential kept, grant live", "The credential row stays because it carries live authority; its project lines keep Stop."),
     ("8-refused", "8 · Stop refused", "Another owner request stopped the grant first: CANNOT STOP · NO GRANT on the project line; the reread shows STOPPED; the footer receipt REFUSED and its well (rendered open)."),
     ("9-two-projects", "9 · Granted on two projects", "The closed row counts the live projects: ALLOWED + 2 PROJECTS."),
+    ("10-last-orphan-stopped", "10 · The last orphan stopped", "The row goes; nothing is left, so the ledger goes; the receipt stays in the footer and its well (rendered open)."),
+    ("11-credential-revoked", "11 · The owner revokes a credential", "The grant is revoked first (CREDENTIAL REVOKED), then the credential; the row goes, no orphan remains; the receipt stays (rendered open)."),
 ]
 
 
@@ -94,16 +96,17 @@ body:has(#words-b:checked) .set-b {{ display:block; }}
 <tr><td>Chip, stopped or expired</td><td><code>RUN AND PUBLISH STOPPED</code></td><td><code>PROJECT WORK STOPPED</code></td></tr>
 <tr><td>Closed row</td><td colspan="2">the live chip + the project name (one) or <code>N PROJECTS</code> (more); nothing when no project grant is live</td></tr>
 <tr><td>Refusal</td><td colspan="2"><code>CANNOT ALLOW</code> / <code>CANNOT STOP</code> + <code>NO GRANT</code>, <code>GRANT STOPPED</code>, <code>GRANT EXPIRED</code>, <code>OWNER ONLY</code>, <code>BAD REQUEST</code></td></tr>
+<tr><td>Opening</td><td colspan="2">the library Disclosure <code>▸ Projects</code> on the credential row</td></tr>
+<tr><td>Palette rule (settled)</td><td colspan="2">project lines where the palette holds the three project tools (PROJECT, SWEEP, DESK, ALL); the desk grant only where it holds the desk tools (DESK, ALL)</td></tr>
 <tr><td>Palette</td><td colspan="2">the issued name: desk-agent reads <code>DESK</code> (today <code>ALL</code>)</td></tr>
 </table>
 <p class="sub">Measured on {m['renders']} renders: text under 12 px {len(m['small_text'])}; raw buttons {len(m['raw_buttons'])}; horizontal overflow {len(m['overflow'])}; chips and tokens {m['chips_measured']}, lowest contrast {m['contrast_min']}:1; Buttons {m['buttons_probed']}, points {m['points_probed']}, not owned {len(m['not_owned'])}.</p>
 {''.join(sections)}
 <section class="board">
-<h2>Three questions</h2>
+<h2>Two questions</h2>
 <ol>
 <li>Words: set A (<code>Allow run and publish</code>) or set B (<code>Allow project work</code>)? Recommended: A. It names your ruling ("Run, stop, publish") and what the agent can do.</li>
-<li>The pick: the PROJECT credential's row opens in place with one line per project, each with its own verb (no popover, no modal)? Recommended: yes.</li>
-<li>Project lines only on credentials whose palette holds the project tools (PROJECT, ALL); a DESK credential gets none? Recommended: yes.</li>
+<li>The pick: a ▸ Projects Disclosure opens the credential row in place, one line per project, each with its own verb (no popover, no modal)? Recommended: yes.</li>
 </ol>
 </section>
 <section class="board">
@@ -111,7 +114,7 @@ body:has(#words-b:checked) .set-b {{ display:block; }}
 <ul>
 <li>The project grant producer does not exist. Credential rows are the real <code>GET /api/settings/remote</code> of a real hub on an isolated HOME; project grant rows are stored rows plus a clock, projected by the canvas's rule (README, "The wire contract").</li>
 <li>The DESK palette name is the canvas's statement of the repair: the real wire says ALL (board 0).</li>
-<li>Refusals, operation ids and receipt times are fixture values. The boards are static states; the receipt well on board 8 is rendered open.</li>
+<li>Refusals, operation ids and receipt times are fixture values. The boards are static states; the receipt wells on boards 8, 10 and 11 are rendered open.</li>
 </ul>
 </section>
 </main>

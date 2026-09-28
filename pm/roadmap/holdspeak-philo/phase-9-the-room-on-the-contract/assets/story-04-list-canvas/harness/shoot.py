@@ -108,8 +108,11 @@ FACTS = r"""() => {
   const list = document.querySelector('.desk-listmode');
   const vw = innerWidth, vh = innerHeight;
   const small = [], styles = {};
-  if (list) {
-    const walker = document.createTreeWalker(list, NodeFilter.SHOW_TEXT);
+  // The scan roots: the list and every open menu (the WorkMenu portals to
+  // #desk-next, outside the list, so a list-only scan misses it).
+  const roots = [list, ...document.querySelectorAll('[role=menu]')].filter(Boolean);
+  for (const root of roots) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const t = n.textContent.trim();
       if (!t || /^[●○✓✗⚠—↻ℹ«»·↑↓\[\]x ]+$/.test(t)) continue;
@@ -145,6 +148,23 @@ FACTS = r"""() => {
     census: document.querySelector('.desk-list-census span')?.innerText.trim() ?? null,
     status: document.querySelector('.desk-list-status')?.innerText.trim() ?? null,
     small_text_count: small.length, small_text: small.slice(0, 20),
+    menu_scanned: document.querySelectorAll('[role=menu]').length,
+    menu_rows: [...document.querySelectorAll('[role=menu] [role=menuitem]')].filter(e => e.getBoundingClientRect().height > 0)
+      .map(e => { const r = e.getBoundingClientRect(); return {text: e.innerText.replace(/\s+/g, ' ').trim().slice(0, 30), h: +r.height.toFixed(1), top: Math.round(r.top), bottom: Math.round(r.bottom)}; }),
+    overflow_elements: (() => {
+      // Outermost elements whose box passes the right edge of the viewport.
+      const out = [...document.querySelectorAll('body *')].filter(e => {
+        const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.right > vw + 0.5; });
+      return out.filter(e => !out.includes(e.parentElement)).slice(0, 8).map(e => {
+        const r = e.getBoundingClientRect();
+        return {tag: e.tagName.toLowerCase(), cls: String(e.className).slice(0, 80), text: (e.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 40),
+          left: Math.round(r.left), right: Math.round(r.right), position: getComputedStyle(e).position};
+      });
+    })(),
+    scroll_width: document.documentElement.scrollWidth,
+    attention_tokens: [...document.querySelectorAll('.desk-list-attention')].filter(e => e.getBoundingClientRect().width > 0)
+      .map(e => { const cs = getComputedStyle(e); const bg = C.ground(e); const ink = C.over(C.parse(cs.color), bg);
+        return {text: e.innerText.trim(), px: parseFloat(cs.fontSize), ink: C.hex(ink), ground: C.hex(bg), ratio: C.ratio(ink, bg)}; }),
     raw_buttons_in_list: list ? [...list.querySelectorAll('button')].filter(b => !b.classList.contains('btn') && !b.classList.contains('btn--chrome')).map(b => String(b.className).slice(0, 50)) : null,
     text_styles: Object.values(styles).sort((a, b) => a.ratio - b.ratio),
     min_text_ratio: Object.values(styles).reduce((m, s) => Math.min(m, s.ratio), 99),
@@ -153,6 +173,37 @@ FACTS = r"""() => {
     menu_last: rect(last), menu_delete: rect(del),
     h_overflow: document.documentElement.scrollWidth > vw,
   };
+}"""
+
+POINTS = r"""([width, kinds]) => {
+  // The controls this canvas touches: the visible sort Buttons and the open
+  // menu's rows. 1440: the painted face, centre + four corners inset 1 px.
+  // 393: the 44 x 44 target (the face's width, 44 px tall, on its centre).
+  // An earlier board's probe marks stay on nodes React kept; clear them so
+  // an index names one control only.
+  document.querySelectorAll('[data-probe]').forEach(e => e.removeAttribute('data-probe'));
+  const pick = {sort: '.desk-listmode thead .btn', menu: '[role=menu] [role=menuitem]', census: '.desk-list-census .btn'};
+  const els = kinds.flatMap(k => [...document.querySelectorAll(pick[k])])
+    .filter(b => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+  return els.map((b, i) => {
+    b.dataset.probe = String(i);
+    const r = b.getBoundingClientRect();
+    const cy = r.top + r.height / 2;
+    const narrow = width <= 420;
+    const box = narrow ? {l: r.left, r: r.right, t: cy - Math.max(22, r.height / 2), b: cy + Math.max(22, r.height / 2)}
+                       : {l: r.left, r: r.right, t: r.top, b: r.bottom};
+    return {i, text: b.innerText.replace(/\s+/g, ' ').trim().slice(0, 30), kind: b.closest('[role=menu]') ? 'menu-row' : b.closest('thead') ? 'sort' : 'census',
+      face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, target: {w: +(box.r - box.l).toFixed(1), h: +(box.b - box.t).toFixed(1)},
+      margin_block: getComputedStyle(b).marginTop + ' ' + getComputedStyle(b).marginBottom,
+      in_view: box.t >= 0 && box.b <= innerHeight && box.l >= 0 && box.r <= innerWidth,
+      points: [[(box.l + box.r) / 2, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1]]};
+  });
+}"""
+
+HIT = r"""([i, x, y]) => {
+  const b = document.querySelector(`[data-probe="${i}"]`);
+  const el = document.elementFromPoint(x, y);
+  return {ok: !!el && b.contains(el), hit: el ? String(el.className || el.tagName).split(' ')[0] : null};
 }"""
 
 SELECTION = r"""(sel) => {
@@ -193,7 +244,22 @@ def main() -> None:
         zid = (zones[0].get("directory") or zones[0])["id"]
         nid = (notes[0].get("note") or notes[0])["id"]
         api(hub_url, "PUT", f"/api/directories/{zid}/members/note:{nid}", {})
-        facts["_seed"] = {"zones": 3, "notes": len(notes), "filed": f"note:{nid} -> Payments"}
+        # A real Attention through the real routes: a GitHub issue PROPOSAL bound
+        # to the filed note, made under the NEUTRAL control mode. Neutral asks
+        # for a per-action decision (operation_policy.py, external_write:
+        # `authorization_required`), so the proposal waits `proposed` and is
+        # never executed; the Desk projection counts it as needs_attention on
+        # note:<id> (db/projections.py _actuators). Under YOLO the same
+        # unregistered repo is refused and becomes a receipt, not attention.
+        # Nothing leaves the machine.
+        api(hub_url, "PUT", "/api/authority/control-mode", {"control_mode": "neutral"})
+        proposed = api(hub_url, "POST", "/api/desk/actuators/github/propose",
+                       {"text": "Check the ledger cutover plan", "repo": "example/payments", "source_ref": f"note:{nid}"})
+        counts = api(hub_url, "GET", "/api/desk/projections?limit=50").get("subject_counts", {})
+        facts["_seed"] = {"zones": 3, "notes": len(notes), "filed": f"note:{nid} -> Payments",
+                          "attention_proposal_status": (proposed.get("proposal") or {}).get("status"),
+                          "attention_subject_counts": counts.get(f"note:{nid}")}
+        print("seed", facts["_seed"], flush=True)
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -246,13 +312,41 @@ def main() -> None:
                         page.locator(".desk-listmode").wait_for(timeout=20_000)
                         page.wait_for_timeout(1200)
 
+                    def pointer(kinds: list[str]) -> list[dict]:
+                        # elementFromPoint at each point, without scrolling (the
+                        # probe measures the board as shot; points off screen are
+                        # reported, not moved into view).
+                        result = []
+                        for probe in page.evaluate(POINTS, [width, kinds]):
+                            pts = []
+                            for x, y in probe["points"]:
+                                if not (0 <= x < width and 0 <= y < height):
+                                    pts.append({"x": round(x, 1), "y": round(y, 1), "ok": None, "hit": "off-screen"})
+                                    continue
+                                h = page.evaluate(HIT, [probe["i"], x, y])
+                                pts.append({"x": round(x, 1), "y": round(y, 1), "ok": h["ok"], "hit": h["hit"]})
+                            on = [q for q in pts if q["ok"] is not None]
+                            result.append({k: probe[k] for k in ("text", "kind", "face", "target", "in_view", "margin_block")} | {
+                                "owned": (all(q["ok"] for q in on) if len(on) == len(pts) else None), "points": pts})
+                        return result
+
+                    # Pointer ownership where the board shows the touched controls
+                    # unobscured: the sort Buttons at the top of the list, the
+                    # census ALL verb when dived, the menu rows when the menu is open.
+                    PROBE = {"1-list": ["sort"], "2-sorted-by-zone": ["sort"], "4-one-shown": ["sort", "census"],
+                             "3-row-menu-bottom": ["menu"]}
+
                     def shoot(board: str, extra: dict | None = None) -> None:
                         key = f"{board}-{width}"
                         page.screenshot(path=str(SHOTS / f"{key}.png"))
                         facts[key] = {**page.evaluate(FACTS), **(extra or {}), "page_errors": errors[:]}
+                        if proposal and board in PROBE:
+                            facts[key]["pointer"] = pointer(PROBE[board])
                         f = facts[key]
                         print(key, f["status"], "small", f["small_text_count"], "raw", len(f["raw_buttons_in_list"] or []),
-                              "cells_out", f["cells_past_right_edge"], "min", f["min_text_ratio"], "menu", f["menu_last"])
+                              "cells_out", f["cells_past_right_edge"], "min", f["min_text_ratio"], "menu", f["menu_last"],
+                              "ovf", f["scroll_width"], f["overflow_elements"][:2], "attn", f["attention_tokens"],
+                              "notowned", [p["text"] for p in f.get("pointer", []) if p["owned"] is not True], flush=True)
 
                     def row_menu(board: str) -> None:
                         # An OBJECT row (zone rows have no menu) scrolled to sit just
@@ -318,6 +412,13 @@ def main() -> None:
                         shoot("4-one-shown")
                         page.locator(".desk-list-census button", has_text="ALL").first.click()
                         page.wait_for_timeout(1200)
+                        # Attention: the ATTN token on "Ledger cutover plan", in view.
+                        page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first.evaluate(
+                            "e => e.scrollIntoView({block: 'center'})")
+                        page.wait_for_timeout(400)
+                        shoot("7-attention")
+                        page.evaluate("window.scrollTo(0, 0)")
+                        page.wait_for_timeout(300)
                         zone_field("5-selection-zone")
                         palette_field("6-selection-palette")
                     ctx.close()

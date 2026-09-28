@@ -3,7 +3,7 @@
  * A copy of web/src/desk/components/DeskListView.tsx at this branch, with the
  * imports moved to the "@w" alias and four marked PROPOSAL changes:
  *   1. the status says SHOWN for any count ("27 SHOWN OF 27", "1 SHOWN OF 1");
- *   2. at <= 720 px the Kind, Zone and Attention columns fold into a second
+ *   2. in a `surface` of 720 px or less the Kind, Zone and Attention columns fold into a second
  *      line under the name (the same tokens), and their sort Buttons join the
  *      Name header (ProposedDeskSortableTable `foldColumns`);
  *   3. the sort headers are the library Button (ProposedDeskSortableTable);
@@ -45,7 +45,7 @@ import { DeskDeleteSeat } from "@w/desk/deleteReceipt";
 import { useDeskWriteReceipt } from "@w/desk/hooks/useWriteReceipt";
 import { ZoneRenameRow } from "@w/desk/components/ZoneRenameRow";
 
-/* PROPOSAL 2 — the second line under the name at <= 720 px (hidden wider):
+/* PROPOSAL 2 — the second line under the name in a surface of 720 px or less (hidden wider):
  * the row's Kind, Zone and Attention, the same words as the columns. The
  * separator dot is drawn by CSS, so no empty token is ever printed. */
 function FoldLine({ tokens, attention }: { tokens: string[]; attention?: number }) {

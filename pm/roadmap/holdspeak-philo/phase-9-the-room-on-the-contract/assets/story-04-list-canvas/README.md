@@ -1,6 +1,6 @@
 # PHILO-9-04 canvas: the desk debts (the selection and the list face)
 
-**Status: DRAFT, for the owner's ratification** (UX-CANON §A.2). Nothing is built in product code. The story is `../../story-04-the-desk-debts.md`; the debts are measured in `docs/internal/philo/phase-9/grounding/README.md` "The D2 debts".
+**Status: DRAFT round two, for the owner's ratification** (UX-CANON §A.2). Round two pays Codex Astra r1 finding 6 (`../../checks/canvases-astra-r1.md`); the ledger is at the end. Nothing is built in product code. The story is `../../story-04-the-desk-debts.md`; the debts are measured in `docs/internal/philo/phase-9/grounding/README.md` "The D2 debts".
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<n>-<board>-<width>.png`; rendered facts: `shots/facts.json`.
@@ -9,12 +9,13 @@
 
 - **Everything is live.** `harness/shoot.py` starts a REAL hub (`scripts/graph_walk.py serve`, an isolated HOME from `tempfile.mkdtemp`, its own database) and serves the PRODUCT app (`web/index.html`, `web/src/main.tsx`) with vite.
 - **Board 0 (today)** is vite with `PROPOSAL=0`: nothing is swapped. It is the product at this branch.
-- **Boards 1-6 (the proposal)** are vite with `PROPOSAL=1`. `harness/vite.config.mjs` swaps three species for copies with marked `PROPOSAL` blocks:
+- **Boards 1-7 (the proposal)** are vite with `PROPOSAL=1`. `harness/vite.config.mjs` swaps three species for copies with marked `PROPOSAL` blocks:
   - `DeskListView` → `harness/ProposedDeskListView.tsx` (the SHOWN word; the fold line under the name);
   - `DeskSortableTable` → `harness/ProposedDeskSortableTable.tsx` (the sort headers as the library `Button`; `foldColumns`);
   - `WorkMenu` (`DeskMenu.tsx`) → `harness/ProposedDeskMenu.tsx` (keep the measured panel inside the viewport). Every WorkMenu consumer gets it, not the list only.
-- **The proposed library CSS** is `harness/canvas.css`: the selection token and the 12 px floor. In the build these are edits of the named product rules (`web/src/styles/tokens.css`, `global.css:68-71`, `web/src/desk/components/list-view.css`), not overrides. The `:root body` prefix exists only to win in the dev server's style order.
+- **The proposed library CSS** is `harness/canvas.css`: the selection token, the 12 px floor (list and menu), the list face as a `surface` container, the ember's lighter step for ATTN and ALL, the menu rows at 44 px at the narrow desk, and the ALL verb's position. In the build these are edits of the named product rules (`web/src/styles/tokens.css`, `global.css:68-71`, `web/src/desk/components/list-view.css`), not overrides. The `:root body` prefix exists only to win in the dev server's style order.
 - **Seed:** the grounding probe's objects (`docs/internal/philo/phase-9/grounding/probes/d2_probe.py.txt`): zones Payments, Hiring, Architecture reviews; seven notes; "Ledger cutover plan" filed in Payments. The fresh hub adds its own objects. This run has **24** objects (the grounding run had 27), so the counts below are for 24.
+- **A real Attention** (round two): `PUT /api/authority/control-mode {"control_mode": "neutral"}`, then `POST /api/desk/actuators/github/propose` with `source_ref: note:<Ledger cutover plan>` and the repo `example/payments`. Under the neutral mode the proposal asks for a per-action decision (`holdspeak/operation_policy.py`, `external_write`), so it waits `proposed` and never executes; the Desk projection counts it as `needs_attention` on that note (`holdspeak/db/projections.py` `_actuators`). Read back before the shots: `subject_counts` = `{needs_attention: 1}` (`facts.json` `_seed`). Nothing leaves the machine. (Under YOLO the same unregistered repo is refused and is a receipt, not attention.)
 
 ## Boards
 
@@ -26,8 +27,9 @@
 | 0 | `0-today-selection-palette` | Today. The palette field with "Ledger cutover" selected: the same 1.14:1. |
 | 1 | `1-list` | The proposal. "24 SHOWN OF 24". All text 12 px. At 1440 the four columns stay. At 393 KIND, ZONE and ATTENTION fold into a second line in the name Button (`ZONE · EMPTY`, `NOTE · PAYMENTS`), and their sort Buttons join the NAME header (`NAME ↑ KIND ZONE ATTENTION`, right edge 374 of 393). |
 | 2 | `2-sorted-by-zone` | The Zone sort Button pressed: `ZONE ↑`, `aria-pressed="true"`, the rows in zone order. At 393 the same Button sits in the NAME header. |
-| 3 | `3-row-menu-bottom` | The same row menu near the bottom edge. At 393 the panel measures itself and moves up: Delete top 813, bottom 841, viewport 852 (in view). At 1440 no change (bottom 875 of 900). |
-| 4 | `4-one-shown` | Dive into Payments: "1 SHOWN OF 1" (singular), the census `ALL · 1 ITEM`. |
+| 3 | `3-row-menu-bottom` | The same row menu near the bottom edge. At 393 every row is 44 px (10 rows), and the panel measures itself after layout and moves up: Delete top 797, bottom 841, viewport 852 (in view). At 1440 the rows stay 28 px and nothing moves (Delete bottom 875 of 900). |
+| 4 | `4-one-shown` | Dive into Payments: "1 SHOWN OF 1" (singular), the census `ALL · 1 ITEM · 1 ATTN`, the row `NOTE · PAYMENTS · ATTN 1` at 393. No horizontal overflow (page width 393). |
+| 7 | `7-attention` | The row with Attention in view: `ATTN 1` in the ATTENTION column at 1440, on the fold line at 393; 12 px, `--accent-hover`, 4.99:1. |
 | 5 | `5-selection-zone`, `-field` | The proposed selection on the zone name field: the accent ground, the page ink. |
 | 6 | `6-selection-palette` | The proposed selection on the palette field. |
 
@@ -56,33 +58,38 @@ Both proposed ratios pass: the story needs 3:1 for the selection against the fie
 
 ## Measurements (`facts.json`)
 
+The text scan and the contrast scan cover the list AND every open menu (the WorkMenu portals to `#desk-next`, outside the list).
+
 | Measure | Today 1440 | Today 393 | Proposal 1440 | Proposal 393 |
 |---|---|---|---|---|
-| Visible text nodes under 12 px in the list | 41 | 30 | **0** (every board) | **0** (every board) |
+| Visible text nodes under 12 px (list + open menu) | 41-46 | 28-31 | **0** (every board) | **0** (every board) |
 | Raw (non-library) buttons in the list | 4 | 4 | **0** | **0** |
-| Body cells past the right edge | 0 | 82 | 0 | **0** |
-| Row menu's Delete (bottom / viewport) | 875 / 900 | 867 / 852, **cut 15** | 875 / 900 | **841 / 852** |
-| Lowest text contrast in the list | 6.42:1 | 6.42:1 | 5.74:1 | 6.42:1 |
-| The census `ALL` verb (dived) | not measured | not measured | 4.99:1 (`--accent-hover`) | 4.99:1 |
-| Horizontal page overflow | no | no | no | **yes on board 4 only** (see Limits) |
+| Body cells past the right edge | 0 | 83-86 | 0 | **0** |
+| Page width (`scrollWidth`) | 1440 | 393 | 1440 | **393** on every board (board 4 was 394 in round one) |
+| Menu rows (height) | 28 | 28 | 28 | **44** |
+| Row menu's Delete (top-bottom / viewport) | 847-875 / 900 | 839-867 / 852, **cut 15** | 847-875 / 900 | **797-841 / 852** |
+| `ATTN 1` (12 px on `--surface-2`) | **3.92:1** (`--accent`, 10 px) | **3.92:1** | **4.99:1** (`--accent-hover`) | **4.99:1** |
+| The census `ALL` verb (dived) | not measured | not measured | 4.99:1 | 4.99:1 |
+| Lowest text contrast (list + menu) | **3.92:1** (ATTN) | 5.74:1 | 4.99:1 | 4.99:1 |
+| Pointer ownership | not probed | not probed | **23 controls, 115 points, all owned** | **23 controls, 115 points, all owned** |
 | Page errors | 0 | 0 | 0 | 0 |
 
-The `ALL` verb in the census is `--accent` on `--surface-2`: **3.92:1** (measured in an earlier proposal run of this harness, before this change), under 4.5. The canvas moves it to `--accent-hover` (4.99:1). `ATTN <n>` uses the same `--accent`; no seeded object had attention, so it was not rendered or measured (computed: 3.96:1 on `--surface-2`). The build should give it `--accent-hover` too.
+**Pointer ownership** (`facts.json` `pointer`): the sort Buttons (boards 1, 2, 4), the census ALL verb (board 4) and the ten menu rows (board 3). Each control: its centre and four corners inset 1 px, `elementFromPoint` must land inside that control. At 1440 the points are on the painted face; at 393 on the 44 × 44 target (the face's width, 44 px tall on its centre; the sort Buttons are 44-71 px wide by the library's `min-inline-size`). Every point on every probed control is owned, at both widths.
 
-## Three questions for the owner
+## Two questions for the owner
 
 1. **The selection token: the accent ground with the page ink** (`--selection-bg: var(--accent)`, `--selection-ink: var(--bg)`), desk-wide? It is 4.26:1 against the field and 4.56:1 for the selected text. The alternative, `--accent-ink` with light text, is 2.86:1 on the lighter ground. Note: in the palette the selected text and the active option are the same colour (board 6). **Recommended: yes, the accent ground with the page ink.**
-2. **At 393, fold Kind, Zone and Attention into a second line under the name**, with their sort Buttons in the Name header (boards 1, 2)? Other options: (b) keep the columns and scroll the table sideways with the name column held; (c) keep only Name and Kind at 393 and drop Zone and Attention. (a) keeps every value and every sort on screen without a sideways scroll; its cost is rows about twice as tall at 393. **Recommended: (a), the fold line.**
-3. **The menu keeps itself in the viewport** (the WorkMenu species measures its panel after layout and moves up when it would pass the bottom edge), for every menu on the desk, not only the list's row menu? **Recommended: yes, in the species.**
+2. **At 393, fold Kind, Zone and Attention into a second line under the name**, with their sort Buttons in the Name header (boards 1, 2, 7)? Other options: (b) keep the columns and scroll the table sideways with the name column held; (c) keep only Name and Kind at 393 and drop Zone and Attention. (a) keeps every value and every sort on screen without a sideways scroll; its cost is rows about twice as tall at 393. **Recommended: (a), the fold line.**
+
+**Settled, not asked:** every desk menu keeps its whole panel inside the viewport. It is the WorkMenu species' rule (`harness/ProposedDeskMenu.tsx`, the `useLayoutEffect` at :486: after layout the panel measures itself and moves up or left), mandatory for every menu, not only the list's row menu; at the narrow desk each row is 44 px.
 
 ## Limits (what the boards are not)
 
 - The CSS in `harness/canvas.css` is a statement of the library edit. It is not built; the product files are unchanged.
-- Board 4 at 393 shows a horizontal page overflow (`document.scrollWidth > 393`). The list's headers and cells are inside 374 px on that board; the overflowing element was not found. Unknown whether today's product overflows in the same dived state (not shot).
-- `ATTN <n>` was not rendered (no seeded attention).
-- The fold at 393 uses a viewport media query (`max-width: 720px`). The product's list rules use `@container surface`; the build picks one.
 - The seed gave 24 objects, not the grounding's 27; the debts reproduce the same (SHOWNS, the three columns off screen, Delete cut 15 px, 1.14:1).
-- Pointer ownership of each Button was not probed.
+- Today's product was not shot in the dived state, so whether today's board 4 overflows is unknown; the cause found (below) is in today's CSS as well.
+- The menu at 393 covers the dock while it is open (board 3); the keep-in-view rule keeps it inside the viewport, not above the dock.
+- Pointer ownership was probed on the controls this canvas changes, not on every control on the desk.
 
 ## Fence sketch for story 04 (not built)
 
@@ -95,7 +102,10 @@ Real hub, isolated HOME, rendered at 1440 and 393; each red on main first:
 | The list loads; dive into a one-item zone | the status reads `N SHOWN OF M` for N = 24 and N = 1 | `24 SHOWNS` |
 | The list at 393 | every visible header and cell ends at or before 393 px; each row's Kind and Zone text is readable in the row | three columns off screen |
 | Any render | every `thead button` has class `btn` (a mutation back to a raw `<button>` turns it red) | 4 raw buttons |
-| The row menu on a row near the bottom at 393 | the last menu item's bottom is at or above the viewport's bottom | cut 15 px |
+| The row menu on a row near the bottom at 393 | every menu row is at least 44 px; the last menu item's bottom is at or above the viewport's bottom | 28 px rows; cut 15 px |
+| The list and an open menu | no visible text under 12 px; every text at least 4.5:1 on its composited ground | ATTN 3.92:1 |
+| Dive into a zone at 393 | `document.documentElement.scrollWidth` equals 393 | (unknown on main; 394 in round one) |
+| Any board at 393 | `elementFromPoint` at the centre and corners of each sort Button, the ALL verb and each menu row lands in that control | not probed |
 
 ## Reproduce
 
@@ -105,3 +115,18 @@ uv run --extra test python pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-co
 ```
 
 The script refuses to start if port 4443 is already served (a stale server would answer with the wrong face).
+
+## Round two: Codex Astra r1 finding 6 → where paid
+
+| Part | Change (file:line) | Proof |
+|---|---|---|
+| Menu rows at least 44 px at 393 (UX-CANON C, `docs/internal/UX-CANON.md:100`) | `harness/canvas.css:100-104` (`.desk-work-menu [role=menuitem]` `min-height: var(--desk-button-hit-size)` at the narrow desk, in the menu species' own file `chrome-menus.css`, which keeps its viewport block: the menu is portalled outside every `surface` container) | board 3 at 393: 10 rows × 44 px; the keep-in-view rule re-measured with those rows: Delete 797-841 of 852 |
+| The portalled menu in the text and contrast scans | `harness/shoot.py` FACTS: the scan roots are the list and every `[role=menu]`; the menu's 10 px `.quiet` reason and `.desk-menu-well` keycaps go to 12 px (`harness/canvas.css:105-111`; product `chrome-menus.css:141`) | 0 text nodes under 12 px on every proposal board with the menu open; lowest ratio 5.74:1 there |
+| Board 4's horizontal overflow at 393 | **The element: the census ALL verb's 44 px halo (`.btn::after`, `web/src/styles/global.css:185-198`).** `list-view.css:68` sets that Button `position: static`, so the halo resolves against `.desk-listmode` and spans the whole list plus 1 px each side (right edge 394). Fix: `harness/canvas.css:41-55` (`position: relative; inset: auto` — the insets reset because `pullout.css:268-273` gives `.desk-surface` `top: 60px; left: 18px`, which a bare `relative` shifted 60 px down onto the Name header, where its halo met the sort Buttons') | page width 393 on board 4 (was 394); ALL owned at all five points |
+| A real nonzero Attention | `harness/shoot.py:247-262` (neutral mode + a GitHub proposal bound to the note, through the real routes; never executed) | `_seed.attention_subject_counts` = `{needs_attention: 1}`; ATTN 1 rendered on boards 4 and 7 |
+| ATTN contrast | today 3.92:1 (`--accent`, 10 px); `harness/canvas.css:89-93` gives `.desk-list-attention` `--accent-hover`, as the ALL verb | 4.99:1 at 12 px, both widths |
+| Container queries per canon | `harness/canvas.css:79-87` makes `.desk-list-face` the `surface` container (not `.desk-listmode`: layout containment would capture its fixed foot); the fold is `@container surface (max-width: 720px)` (`:119`), as `list-view.css` does. "The build picks one" is removed | the fold renders at 393 on every board; 1440 keeps the four columns |
+| Pointer ownership | `harness/shoot.py` `POINTS` / `HIT` / `pointer()`: centre + four corners, 44 × 44 at 393 | 23 controls, 115 points per width, all owned |
+| Questions | two kept (selection, fold); the menu rule stated as settled | this README |
+
+Found on the way: the Floor's list is in no window body, so no ancestor is a `surface` container and the two `@container surface (max-width: 720px)` blocks in `list-view.css` never apply to it today. That is why its columns run off the right edge at 393. The container above repairs it.

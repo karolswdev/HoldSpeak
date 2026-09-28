@@ -142,25 +142,46 @@ FACTS = r"""() => {
     raw_buttons: raw.map((b) => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30)),
     h_overflow: document.documentElement.scrollWidth > window.innerWidth,
     body_overflow_x: body ? body.scrollWidth > body.clientWidth + 1 : null,
+    footer_in_scan: !!win.querySelector('.desk-surface-foot, .surface-footer'),
+    overflow_culprits: body ? [...body.querySelectorAll('*')].filter((e) => { const r = e.getBoundingClientRect(), b = body.getBoundingClientRect(); return r.width && r.right > b.right + 1; }).slice(0, 6).map((e) => String(e.className || e.tagName).slice(0, 40)) : [],
+    // F10: a visible verb or section head whose centre is under the Ask well.
+    under_ask_well: [...win.querySelectorAll('.btn, .btn--chrome, .surface-section-head, h3')].filter((e) => {
+      if (e.closest('.room-ask-container')) return false;
+      const r = e.getBoundingClientRect();
+      if (!r.width || r.bottom < 0 || r.top > window.innerHeight) return false;
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!hit && !!hit.closest('.room-ask-container');
+    }).map((e) => e.innerText.trim().slice(0, 30)),
+    ask_well_position: (() => { const c = win.querySelector('.room-ask-container'); return c ? getComputedStyle(c).position : null; })(),
   };
 }"""
 
-# Pointer ownership of each PROPOSED Button (centre + four corners inset 1 px;
-# at 393 the 44 x 44 target, UX-CANON C).
+# Pointer ownership of EVERY Button in the Room window, body and footer
+# (centre + four corners inset 1 px; at 393 the 44 x 44 target, UX-CANON C).
+# Each is scrolled into view to probe; every scroll position is restored.
 POINTS = r"""([width]) => {
-  const btns = [...document.querySelectorAll('[data-p9] .btn')].filter((b) => b.getBoundingClientRect().width);
-  return btns.map((b, i) => {
+  const anchor = document.querySelector('[data-testid=room-body], [data-testid=update-posture]');
+  const win = anchor ? anchor.closest('.desk-window') : null;
+  if (!win) return [];
+  const scrolled = [...win.querySelectorAll('*')].filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]);
+  const btns = [...win.querySelectorAll('.btn, .btn--chrome')].filter((b) => b.getBoundingClientRect().width);
+  const out = btns.map((b, i) => {
     b.dataset.probe = String(i);
+    b.scrollIntoView({block: 'center', inline: 'nearest'});
     const r = b.getBoundingClientRect();
     const cy = r.top + r.height / 2, cx = r.left + r.width / 2;
     const w = width <= 420 ? Math.max(44, r.width) : r.width, h = width <= 420 ? Math.max(44, r.height) : r.height;
     const box = {l: cx - w / 2, r: cx + w / 2, t: cy - h / 2, b: cy + h / 2};
     const pts = [[cx, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1]];
-    return {text: b.innerText.trim(), face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, points: pts.map(([x, y]) => {
+    return {text: (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30), in_foot: !!b.closest('.desk-surface-foot, .surface-footer'),
+      proposal: !!b.closest('[data-p9]'), touched: !!(b.closest('[data-p9]') || b.closest('.desk-editor-toolbar') || b.closest('.update-body-editor-mic') || b.matches('[data-testid=update-claim-ref], [data-testid=update-verb-back]')), face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, points: pts.map(([x, y]) => {
       const el = document.elementFromPoint(x, y);
       return {x: Math.round(x), y: Math.round(y), owned: !!el && b.contains(el), hit: el ? String(el.className || el.tagName).split(' ')[0] : null};
     })};
   }).map((p) => ({...p, owned: p.points.every((q) => q.owned)}));
+  for (const [e, t, l] of scrolled.reverse()) { e.scrollTop = t; e.scrollLeft = l; }
+  for (const e of win.querySelectorAll('*')) { if (!scrolled.some(([s]) => s === e) && e.scrollTop) e.scrollTop = 0; }
+  return out;
 }"""
 
 
@@ -209,6 +230,15 @@ def main() -> None:
             seed["items"].append({"status": s, "id": (r or {}).get("item", {}).get("id") if isinstance(r, dict) else r,
                                   "title": it["title"], "due_at": it.get("due_at")})
         rehearsal_id = seed["items"][0]["id"]
+        # Astra r1 F7: a missed and a dropped milestone, by the real transition route.
+        for title, due, verb in (("Parallel run", TODAY - dt.timedelta(days=10), "missed"),
+                                 ("Vendor shadow run", TODAY + dt.timedelta(days=5), "dropped")):
+            s, r = hub_api(hub_url, "POST", f"/api/projects/{pid}/items",
+                           {"item_type": "milestone", "title": title, "due_at": due.isoformat()})
+            iid = (r or {}).get("item", {}).get("id") if isinstance(r, dict) else None
+            s2, r2 = hub_api(hub_url, "POST", f"/api/projects/{pid}/items/{iid}/transition", {"verb": verb})
+            seed["items"].append({"status": s, "id": iid, "title": title, "due_at": due.isoformat(),
+                                  "transition": [s2, (r2 or {}).get("item", {}).get("lifecycle") if isinstance(r2, dict) else r2]})
         s, d = hub_api(hub_url, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})
         upd = d["update"]["id"]
         s2, pub = hub_api(hub_url, "POST", f"/api/updates/{upd}/publish", {})
@@ -298,13 +328,20 @@ def main() -> None:
                 shoot(page, IS, facts_items, "1a-late-first-view", width)
                 scroll_to(page, "[data-p9=items]")
                 shoot(page, IS, facts_items, "1b-late-items", width)
+                # F10: SOURCES and its Steward verb in view; the Ask well covers nothing.
+                page.evaluate("[...document.querySelectorAll('.btn')].find(b => b.innerText.trim() === 'Steward')?.scrollIntoView({block: 'center'})")
+                page.wait_for_timeout(300)
+                shoot(page, IS, facts_items, "1c-sources-in-view", width)
                 close_windows(page)
                 open_room(page, EMPTY)
-                shoot(page, IS, facts_items, "3a-empty-absent", width)
+                shoot(page, IS, facts_items, "3-empty-omitted", width)
                 ctx.close()
-                ctx, page = open_page(canvas_origin, width, height, "&items_empty=head")
-                open_room(page, EMPTY)
-                shoot(page, IS, facts_items, "3b-empty-bare-head", width)
+                # Astra r1 F7: the face's items read fails -> UNAVAILABLE, not empty.
+                ctx, page = open_page(canvas_origin, width, height, "&items_fail=1")
+                open_room(page, NAME)
+                page.locator("[data-testid=items-unavailable]").wait_for(timeout=15_000)
+                scroll_to(page, "[data-p9=items]")
+                shoot(page, IS, facts_items, "4-items-unavailable", width)
                 ctx.close()
             # Board 2: the rehearsal reached (a real transition) -> health back.
             s, r = hub_api(hub_url, "POST", f"/api/projects/{pid}/items/{rehearsal_id}/transition", {"verb": "reached"})
@@ -361,17 +398,60 @@ def main() -> None:
                 page.wait_for_function("document.querySelectorAll('[data-testid=delivery-row]').length >= 2", timeout=10_000)
                 page.wait_for_timeout(400)
                 shoot(page, DS, facts_delivery, "6-mistake-kept", width, {"calls": page.evaluate("window.__philoDeliveryCalls")})
+                # Astra r1 F4: a named refusal (fixture code from the hub's set).
+                page.locator("[data-testid=deliver-to]").fill("Priya")
+                page.evaluate("window.__philoRefuseNext = 'update_not_published'")
+                page.locator("[data-testid=deliver-verb]").click()
+                page.locator("[data-testid=deliver-refused]").wait_for(timeout=10_000)
+                page.wait_for_timeout(300)
+                shoot(page, DS, facts_delivery, "6b-refused", width, {
+                    "refused_code": page.locator("[data-testid=deliver-refused]").get_attribute("data-code")})
+                # Astra r1 F4: the answer is lost after the row committed -> result unknown.
+                page.locator("[data-testid=deliver-to]").fill("Lena")
+                page.evaluate("window.__philoLoseNext = true")
+                page.locator("[data-testid=deliver-verb]").click()
+                page.locator("[data-testid=deliver-uncertain]").wait_for(timeout=10_000)
+                page.wait_for_timeout(300)
+                # The field is locked to this confirmation's payload.
+                locked_try = page.evaluate("""() => { const i = document.querySelector('[data-testid=deliver-to]');
+                  return {disabled: i.disabled, value: i.value}; }""")
+                shoot(page, DS, facts_delivery, "6c-result-unknown", width, {"to_field_during_unknown": locked_try,
+                      "calls": page.evaluate("window.__philoDeliveryCalls")})
+                page.locator("[data-testid=deliver-retry]").click()
+                page.wait_for_function("document.querySelectorAll('[data-testid=delivery-row]').length >= 3", timeout=10_000)
+                page.wait_for_timeout(400)
+                calls = page.evaluate("window.__philoDeliveryCalls")
+                shoot(page, DS, facts_delivery, "6d-retried-one-row", width, {"calls": calls,
+                      "retry_same_key": len(calls) >= 2 and calls[-1]["command_id"] == calls[-2]["command_id"],
+                      "retry_same_to": len(calls) >= 2 and calls[-1]["delivered_to"] == calls[-2]["delivered_to"]})
+                # Back to the list (the 393 defect of round one: diagnosed here).
                 back = page.locator("[data-testid=update-verb-back]")
                 back.scroll_into_view_if_needed()
+                page.wait_for_timeout(300)
+                diag = page.evaluate("""() => { const b = document.querySelector('[data-testid=update-verb-back]');
+                  const r = b.getBoundingClientRect(); const el = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2);
+                  window.__backClicks = 0; b.addEventListener('click', () => { window.__backClicks++; });
+                  window.__evlog = [];
+                  for (const t of ['pointerdown', 'pointerup', 'click', 'focusin', 'scroll']) document.addEventListener(t, (e) => {
+                    const bb = document.querySelector('[data-testid=update-verb-back]')?.getBoundingClientRect();
+                    window.__evlog.push([t, String(e.target && (e.target.className || e.target.tagName)).slice(0, 50), bb ? Math.round(bb.top) : null]); }, true);
+                  return {rect: [r.left, r.top, r.width, r.height], hit: el ? String(el.className || el.tagName) : null, owned: !!el && b.contains(el)}; }""")
                 back.click()
+                back_ok = True
                 try:
                     page.locator("[data-testid=update-list]").wait_for(timeout=10_000)
                 except Exception:
+                    back_ok = False
                     page.screenshot(path=os.environ.get("DEBUG_SHOT", "/tmp/philo9-back-fail.png"))
-                    errors.append(f"{width}: Back did not return to the list; Escape used")
+                    diag["after"] = page.evaluate("""() => ({clicks: window.__backClicks, evlog: window.__evlog.slice(0, 30),
+                      phase: document.querySelector('[data-testid=update-posture]')?.dataset.phase ?? null,
+                      editor: !!document.querySelector('[data-testid=update-editor]')})""")
+                    errors.append(f"{width}: Back did not return to the list; Escape used; {diag}")
                     page.locator("[data-testid=update-editor]").press("Escape")
                     page.locator("[data-testid=update-list]").wait_for(timeout=10_000)
+                diag["clicks"] = page.evaluate("window.__backClicks")
                 page.wait_for_timeout(500)
+                facts_delivery.setdefault("_back", {})[str(width)] = {"worked": back_ok, **diag}
                 shoot(page, DS, facts_delivery, "7a-list-chip-count", width)
                 # The other chip form (same stored rows: sessionStorage survives the reload).
                 page.goto(f"{canvas_origin}/?chip=latest", wait_until="load")

@@ -30,6 +30,13 @@
  *      `window.__philoHold = true` holds the answer until
  *      `window.__philoRelease()` (the pending face). Each call is logged in
  *      `window.__philoDeliveryCalls` for the facts.
+ *
+ * 3. Fixture faults (round two, Astra r1 F4/F7), each stated on its board:
+ *    - `window.__philoRefuseNext = "<code>"`: the next mark answers 409 with
+ *      that hub code (a named refusal; the code is from the route's set);
+ *    - `window.__philoLoseNext = true`: the next mark COMMITS its row, then the
+ *      answer is lost (a network error): the face cannot know the result;
+ *    - `?items_fail=1`: the face's items read answers 503.
  */
 
 type Row = {
@@ -47,6 +54,8 @@ declare global {
     __philoHold?: boolean;
     __philoRelease?: () => void;
     __philoDeliveryCalls?: { command_id: string; delivered_to: string | null; status: number }[];
+    __philoRefuseNext?: string;
+    __philoLoseNext?: boolean;
   }
 }
 
@@ -109,6 +118,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     return json(body);
   }
 
+  // 1b. Fixture failure (Astra r1 F7): `?items_fail=1` makes the FACE's items
+  //     read fail (503). The shim's own health read above uses realFetch.
+  if (/^\/api\/projects\/[^/]+\/items$/.test(path) && method === "GET"
+      && new URLSearchParams(window.location.search).get("items_fail") === "1") {
+    return json({ error: "items_read_failed" }, 503);
+  }
+
   // 2a. The updates read carries its deliveries.
   const list = path.match(/^\/api\/projects\/([^/]+)\/updates$/);
   if (list && method === "GET") {
@@ -139,6 +155,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
     const upd = known.get(mark[1]);
     const log = (status: number) => window.__philoDeliveryCalls!.push({ command_id: cmd, delivered_to: to, status });
+    // Fixture refusal (Astra r1 F4): the hub's named refusal, injected once.
+    if (window.__philoRefuseNext) {
+      const code = window.__philoRefuseNext;
+      window.__philoRefuseNext = undefined;
+      log(409);
+      return json({ success: false, error_code: code, error: code }, 409);
+    }
     if (!upd || upd.lifecycle !== "published") {
       log(409);
       return json({ success: false, error_code: "update_not_published" }, 409);
@@ -159,6 +182,13 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       delivered_at: new Date().toISOString(), delivered_to: to, operation_id: rid("op"), command_id: cmd,
     };
     save([...rows, row]);
+    // Lost answer (Astra r1 F4): the row IS committed, then the response is
+    // lost. The face cannot know; Retry with the same key replays the row.
+    if (window.__philoLoseNext) {
+      window.__philoLoseNext = false;
+      log(0);
+      throw new TypeError("Failed to fetch");
+    }
     log(200);
     const { command_id: _c, ...out } = row;
     return json({ success: true, delivery: out, operation_id: out.operation_id });

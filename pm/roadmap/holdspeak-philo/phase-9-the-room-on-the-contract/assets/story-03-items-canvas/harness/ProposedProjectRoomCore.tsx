@@ -957,7 +957,8 @@ const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2
 function itemRank(item: ItemRow): [number, number] {
   const late = daysLate(item);
   if (late > 0) return [0, -late];
-  if (CLOSED.has(item.lifecycle)) return [3, 0];
+  if (item.lifecycle === "missed") return [3, 0]; // PROPOSAL (Astra r1 F7)
+  if (CLOSED.has(item.lifecycle)) return [4, 0];
   if (item.item_type === "risk") return [1, SEVERITY_ORDER[item.severity ?? ""] ?? 9];
   return [2, item.due_at ? dayNumber(item.due_at) : Number.MAX_SAFE_INTEGER];
 }
@@ -973,7 +974,7 @@ function ItemCells({ item }: { item: ItemRow }) {
   }
   if (item.due_at) tokens.push({ text: dueWord(item.due_at) });
   if (late > 0) tokens.push({ text: `${pluralize(late, "DAY", "DAYS")} LATE`, tone: "danger" });
-  else if (item.lifecycle !== "planned" && item.lifecycle !== "open") tokens.push({ text: item.lifecycle.toUpperCase() });
+  else if (item.lifecycle !== "planned" && item.lifecycle !== "open") tokens.push({ text: item.lifecycle.toUpperCase(), tone: item.lifecycle === "missed" ? "danger" : undefined });
   return (
     <>
       {tokens.map((t, i) => (
@@ -987,6 +988,10 @@ function ItemCells({ item }: { item: ItemRow }) {
 
 function itemLead(item: ItemRow) {
   if (daysLate(item) > 0) return <StateChip state="failure" label="" icon="●" />;
+  // PROPOSAL (Astra r1 F7): missed is a failure, dropped is idle; only a
+  // reached or resolved item earns the success check.
+  if (item.lifecycle === "missed") return <StateChip state="failure" label="" icon="✗" />;
+  if (item.lifecycle === "dropped") return <StateChip state="idle" label="" icon="—" />;
   if (CLOSED.has(item.lifecycle)) return <StateChip state="success" label="" icon="✓" />;
   if (item.item_type === "risk") return <StateChip state="warning" label="" icon="⚠" />;
   return <StateChip state="idle" label="" icon="○" />;
@@ -994,13 +999,32 @@ function itemLead(item: ItemRow) {
 
 function ItemsSection({ projectId, revision }: { projectId: string; revision: number }) {
   const [items, setItems] = useState<ItemRow[] | null>(null);
+  // PROPOSAL (Astra r1 F7): a failed read is UNAVAILABLE, never empty.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     apiFetch<{ items: ItemRow[] }>(`/api/projects/${encodeURIComponent(projectId)}/items?limit=200`)
-      .then((r) => { if (live) setItems(r.items ?? []); })
-      .catch(() => { if (live) setItems([]); });
+      .then((r) => { if (live) { setFailed(false); setItems(r.items ?? []); } })
+      .catch(() => { if (live) { setFailed(true); setItems(null); } });
     return () => { live = false; };
-  }, [projectId, revision]);
+  }, [projectId, revision, attempt]);
+  if (failed) {
+    return (
+      <SurfaceSection
+        label="ITEMS"
+        actions={
+          <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)} data-testid="items-retry">
+            Retry
+          </Button>
+        }
+      >
+        <span data-testid="items-unavailable">
+          <StateChip state="unreachable" label="ITEMS UNAVAILABLE" />
+        </span>
+      </SurfaceSection>
+    );
+  }
   if (items === null) return null;
   if (items.length === 0) {
     const head = new URLSearchParams(window.location.search).get("items_empty") === "head";

@@ -12,7 +12,7 @@
 // Generator provenance visible on every draft.
 
 import { useCallback, useRef, useState } from "react";
-import { apiFetch, readableError } from "@w/lib/api";
+import { ApiError, apiFetch, readableError } from "@w/lib/api";
 import type { ProjectUpdate as BaseUpdate, UpdateLifecycle } from "@w/features/project-room/update/model";
 import { decodeUpdate } from "@w/features/project-room/update/model";
 import * as baseApi from "@w/features/project-room/update/api";
@@ -92,11 +92,29 @@ export function useUpdateController(
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   // PROPOSAL: the confirm verb. The To field is free text, optional.
-  const [deliverTo, setDeliverTo] = useState("");
+  const [deliverToDraft, setDeliverToDraft] = useState("");
   const [deliverBusy, setDeliverBusy] = useState(false);
-  const [deliverError, setDeliverError] = useState("");
-  // One press = one command_id, kept across its retries until it succeeds.
-  const pressKey = useRef<string | null>(null);
+  // PROPOSAL (Astra r1 F4) — the settled retry rule. One confirmation = one
+  // {command_id, delivered_to}. While it is PENDING or UNCERTAIN the To field
+  // is LOCKED to that confirmation's payload, so a retry can never reuse the
+  // key with a different payload. A new key is minted only after the result
+  // is KNOWN (a row came back, or a named refusal).
+  //   refused   -> the hub named the reason (4xx + error_code); the key is
+  //                spent, the field unlocks.
+  //   uncertain -> no answer (network lost, 5xx, timeout): the confirmation
+  //                may or may not be recorded. Retry sends the SAME key and
+  //                payload; the hub's replay returns the original row if it was.
+  const [deliverOutcome, setDeliverOutcome] = useState<
+    { kind: "none" } | { kind: "refused"; code: string } | { kind: "uncertain" }
+  >({ kind: "none" });
+  const confirmation = useRef<{ key: string; to: string } | null>(null);
+  const [lockedTo, setLockedTo] = useState<string | null>(null);
+  const deliverTo = lockedTo ?? deliverToDraft;
+  const setDeliverTo = useCallback((v: string) => {
+    if (confirmation.current) return; // locked while pending or uncertain
+    setDeliverToDraft(v);
+  }, []);
+  const deliverError = deliverOutcome.kind === "none" ? "" : deliverOutcome.kind;
 
   // ── Enter update posture (fetch list) ──
   const enterUpdates = useCallback(async () => {
@@ -245,26 +263,45 @@ export function useUpdateController(
   // ── PROPOSAL: Mark delivered ──
   const markDelivered = useCallback(async () => {
     if (!current || current.lifecycle !== "published" || deliverBusy) return;
-    if (!pressKey.current) pressKey.current = crypto.randomUUID();
+    // A new confirmation only when none is pending or uncertain; a retry
+    // reuses the held key AND the held payload.
+    if (!confirmation.current) {
+      confirmation.current = { key: crypto.randomUUID(), to: deliverToDraft };
+      setLockedTo(deliverToDraft);
+    }
+    const { key, to } = confirmation.current;
     setDeliverBusy(true);
-    setDeliverError("");
+    setDeliverOutcome({ kind: "none" });
     try {
-      const row = await updateApi.markDelivered(current.id, deliverTo, pressKey.current);
-      pressKey.current = null;
+      const row = await updateApi.markDelivered(current.id, to, key);
+      confirmation.current = null;
+      setLockedTo(null);
       const add = (u: ProjectUpdate) =>
         u.id === row.updateId && !u.deliveries.some((d) => d.id === row.id)
           ? { ...u, deliveries: [...u.deliveries, row] } : u;
       setCurrent((u) => (u ? add(u) : u));
       setUpdates((list) => list.map(add));
-      setDeliverTo("");
+      setDeliverToDraft("");
       onRoomRefresh();
     } catch (reason) {
-      // The key stays: the retry of this press returns the same row.
-      setDeliverError(readableError(reason));
+      const code =
+        reason instanceof ApiError && reason.status >= 400 && reason.status < 500
+          ? String((reason.payload as Record<string, unknown> | null)?.error_code ?? "")
+          : "";
+      if (code) {
+        // Known result: a named refusal. The key is spent; the field unlocks
+        // with his words still in it.
+        confirmation.current = null;
+        setLockedTo(null);
+        setDeliverOutcome({ kind: "refused", code });
+      } else {
+        // Unknown result: keep the key AND the payload for Retry.
+        setDeliverOutcome({ kind: "uncertain" });
+      }
     } finally {
       setDeliverBusy(false);
     }
-  }, [current, deliverBusy, deliverTo, onRoomRefresh]);
+  }, [current, deliverBusy, deliverToDraft, onRoomRefresh]);
 
   // ── Edit body handler ──
   const handleEditBody = useCallback((value: string) => {
@@ -315,6 +352,8 @@ export function useUpdateController(
     setDeliverTo,
     deliverBusy,
     deliverError,
+    deliverOutcome,
+    deliverLocked: lockedTo !== null,
 
     // Busy states
     draftBusy,

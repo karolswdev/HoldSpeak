@@ -2,7 +2,7 @@
 // web/src/desk/components/DeskSortableTable.tsx with two marked changes:
 //   1. every sort header is the library Button (UX-CANON A.1); the sorted
 //      column keeps its arrow and reads `aria-pressed`;
-//   2. `foldColumns`: at a narrow width (<= 720 px) the named columns leave
+//   2. `foldColumns`: in a `surface` container of 720 px or less the named columns leave
 //      the grid; their values ride a second line in the first column's cell
 //      (the consumer draws it), and their sort Buttons join the first
 //      sortable header, so every sort stays reachable at 393.
@@ -38,7 +38,7 @@ export interface DeskSortableTableProps<T> {
   /** Lets a consumer retain a row-specific keyboard verb without a second table. */
   onRowKeyDown?: (event: KeyboardEvent<HTMLTableRowElement>, item: T) => void;
   onRowContextMenu?: (event: React.MouseEvent<HTMLTableRowElement>, item: T) => void;
-  /** PROPOSAL 2: column keys that fold into the first column at <= 720 px. */
+  /** PROPOSAL 2: column keys that fold into the first column in a surface of 720 px or less. */
   foldColumns?: string[];
 }
 
