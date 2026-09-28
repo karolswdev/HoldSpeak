@@ -33,7 +33,9 @@ SHOTS = STORY / "assets/story-06-shots"
 #: Codex ``status: failed`` defect) and it found the two catalogue gaps.
 FIRST = SHOTS / "attempts/20260928T164015Z-room-job"
 #: Rehearsal two, after the gaps were paid: completed, no blocker.
-RUN = SHOTS / "attempts/20260928T165409Z-room-job"
+SECOND = SHOTS / "attempts/20260928T165409Z-room-job"
+#: The FINAL closing run on merged main (PHILO-9-03's face): four sessions and the face.
+RUN = SHOTS / "final/20260928T172621Z-room-job"
 
 
 def _events(stage_dir: Path) -> list[dict[str, Any]]:
@@ -278,8 +280,68 @@ def test_the_agent_heard_owner_only_for_mark_delivered_after_the_repair() -> Non
             if r["operation"]["name"] == "project.mark_update_delivered"] == ["project_delegation_required"]
 
 
-def test_the_run_status_is_labelled_rehearsed_and_the_face_pending() -> None:
+def test_the_final_run_is_complete_and_labelled_for_the_owners_review() -> None:
     status = _json(RUN / "run-status.json")
     assert status["outcome"] == "completed" and status["blocked"] == []
     assert status["label"] == "REHEARSED; OWNER REVIEW PENDING"
-    assert "FACE LEG PENDING" in str(status["face"])
+    assert status["face"]["room_shots"] and status["face"]["grant_shots"]
+    assert "FACE LEG PENDING" in str(_json(SECOND / "run-status.json")["face"])
+
+
+# ── the face: the Room and the grant row after the job, as rendered ──────
+
+
+def _room_face() -> dict[str, Any]:
+    return _json(RUN / "observations" / "room.json")
+
+
+@pytest.mark.parametrize("width", ["1440", "393"])
+def test_the_room_face_shows_every_fixture_value_at_both_widths(width: str) -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    face = _room_face()["widths"][width]
+    assert face["findings"] == []
+    assert driver.face_findings(fixture, face["facts"], {"receipts": face["hub_room_receipts"]}) == []
+    receipts = face["facts"]["receipts"]["receipts"]
+    assert any("STEWARD RUN" in r and "REFUSED NO GRANT" in r for r in receipts), receipts
+    assert any("MARK DELIVERED" in r and "REFUSED OWNER ONLY" in r for r in receipts), receipts
+    assert [p for run in face["facts"]["steward_runs"] for p in run["plan"] if "Act" in p] == ["✓ Act 1 effect"] * 2
+
+
+@pytest.mark.parametrize("mutation", ["late_words", "one_delivery", "no_refusal", "risk_impact", "small_text"])
+def test_each_face_mutation_is_red(mutation: str) -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    face = copy.deepcopy(_room_face()["widths"]["393"])
+    facts = face["facts"]
+    if mutation == "late_words":
+        facts["room"]["needs_you_why"] = ["OVERDUE · 3 DAYS"]
+    elif mutation == "one_delivery":
+        facts["update"]["delivery_rows"] = facts["update"]["delivery_rows"][:1]
+    elif mutation == "no_refusal":
+        facts["receipts"]["receipts"] = [r for r in facts["receipts"]["receipts"] if "REFUSED" not in r]
+    elif mutation == "risk_impact":
+        facts["items"]["item_rows"] = [r.replace("IMPACT HIGH", "IMPACT LOW") for r in facts["items"]["item_rows"]]
+    else:
+        facts["room"]["small_text"] = ["10 px"]
+    assert driver.face_findings(fixture, facts, {"receipts": face["hub_room_receipts"]})
+
+
+def test_the_grant_row_keeps_stop_on_the_archived_project_and_its_receipt() -> None:
+    grant = _json(RUN / "observations" / "grant.json")
+    assert grant["findings"] == [] and grant["archive"]["status"] == 200
+    for width in ("1440", "393"):
+        archived = grant["widths"][width]["archived"]
+        assert archived["archived_token"] == "ARCHIVED" and "ALLOWED" in archived["chip"]
+        assert archived["verb"] == "Stop run and publish"
+    assert "SUCCEEDED" in grant["widths"]["1440"]["stopped"]["well"]
+    assert grant["widths"]["393"]["stopped"]["line_present"] is False
+    receipt = grant["stop_receipt"]["objects"][0]
+    assert (receipt["operation"]["name"], receipt["receipt"]["state"]) == ("project.delegation.revoke", "succeeded")
+
+
+def test_every_face_shot_is_retained() -> None:
+    names = {p.name for p in (RUN / "shots").glob("*.png")}
+    for stem in ("room-head", "room-items", "room-receipts-1", "updates-list", "update-delivered", "steward-run-1",
+                 "steward-run-2", "grant-archived-live"):
+        for width in (1440, 393):
+            assert f"{stem}-{width}.png" in names, (stem, width)
+    assert {"grant-stopped-receipt-1440.png", "grant-stopped-after-393.png"} <= names

@@ -660,7 +660,14 @@ def _run(args: argparse.Namespace) -> int:
 
         # 4. The face: after PHILO-9-03 merges.
         if args.face:
-            out["face"] = _shoot_room(run_dir, hub, pid, fixture, update)
+            room_face = _shoot_room(run_dir, hub, pid, fixture, update)
+            grant_face = _shoot_grant(run_dir, hub, pid, fixture)
+            out["face"] = {"room_shots": room_face["shots"], "grant_shots": grant_face["shots"]}
+            face_f = [f"room {w}: {x}" for w, v in room_face["widths"].items() for x in v["findings"]]
+            face_f += [f"grant: {x}" for x in grant_face["findings"]]
+            face_f += [f"page error: {e}" for e in room_face.get("page_errors", []) + grant_face.get("page_errors", [])]
+            out["checks"]["face"] = face_f
+            blocked += [f"face: {x}" for x in face_f]
         else:
             p7._write_text(run_dir / "face-pending.txt", FACE_PENDING + "\n")
             out["face"] = FACE_PENDING
@@ -712,21 +719,326 @@ def _run(args: argparse.Namespace) -> int:
     return 0 if not blocked else 3
 
 
+# ── the face (PHILO-9-03's merged Room and PHILO-9-07's grant row) ──────
+
+SIZES = {1440: 900, 393: 852}
+
+#: Rendered facts of the Room window (the story 03 glass's own selectors).
+ROOM_FACTS = r"""() => {
+  const anchor = document.querySelector('[data-testid=room-body], [data-testid=update-posture], [data-testid=steward-posture]');
+  const win = anchor ? anchor.closest('.desk-window') : null;
+  if (!win) return {window: false};
+  const text = (sel) => [...win.querySelectorAll(sel)].filter((e) => e.getBoundingClientRect().height > 0)
+    .map((e) => e.innerText.replace(/\s+/g, ' ').trim());
+  const small = [];
+  const GLYPH = /^[●○✓✗⚠—↻ℹ«»·▤›×\s>]+$/;
+  const walker = document.createTreeWalker(win, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n.textContent.trim();
+    if (!t || GLYPH.test(t)) continue;
+    const el = n.parentElement; const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    if (!r.width || !r.height || cs.visibility === 'hidden' || cs.display === 'none' || el.closest('.sr-only')) continue;
+    if (parseFloat(cs.fontSize) < 12) small.push(t.slice(0, 40));
+  }
+  return {
+    window: true,
+    headline: text('[data-testid=room-headline]')[0] ?? null,
+    head_tokens: text('[data-testid=room-head-chips] .surface-state-chip, [data-testid=room-head-chips] .surface-token'),
+    needs_you: text('[data-testid=needs-you-row]'),
+    needs_you_why: text('[data-testid=needs-you-why]'),
+    item_rows: text('[data-testid=item-row]'),
+    update_rows: text('[data-testid=update-list-item]'),
+    delivered_chips: text('[data-testid=update-delivered-chip]'),
+    delivery_rows: text('[data-testid=delivery-row]'),
+    receipts: text('[data-testid=receipt-row]'),
+    plan: text('[data-testid=steward-run-plan] .surface-plan-step'),
+    steward_outcome: text('[data-testid=steward-run-outcome]')[0] ?? null,
+    steward_state: text('[data-testid=steward-run-state]')[0] ?? null,
+    small_text: small.slice(0, 12),
+    raw_buttons: [...win.querySelectorAll('button')].filter((b) => !String(b.className).includes('btn') && b.getBoundingClientRect().width)
+      .map((b) => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30)),
+    h_overflow: document.documentElement.scrollWidth > window.innerWidth,
+    modal: !!document.querySelector('[role=dialog][aria-modal=true], .modal, dialog[open]'),
+  };
+}"""
+
+
+def _glass() -> Any:
+    """The e2e glass helpers (the bundle build, the settle, the browser fetch): reused, not forked."""
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tests.e2e import glass_infra
+
+    return glass_infra
+
+
+def _pages(play: Any, hub: Any) -> tuple[Any, dict[int, Any], list[str]]:
+    glass = _glass()
+    browser = play.chromium.launch(headless=True)
+    pages: dict[int, Any] = {}
+    errors: list[str] = []
+    for width, height in SIZES.items():
+        page = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=1).new_page()
+        page.set_default_timeout(45_000)
+        page.emulate_media(reduced_motion="reduce")
+        page.on("pageerror", lambda e, w=width: errors.append(f"{w}: {str(e)[:200]}"))
+        page.goto(f"{hub.url}/?token={hub.token}", wait_until="load")
+        glass._api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=hub.token)
+        pages[width] = page
+    return browser, pages, errors
+
+
+def _stage(page: Any, hub: Any, key: str, scope: str | None = None) -> None:
+    """Open one surface the way the desk's own callers stage it (the story 03 glass)."""
+    page.evaluate("""([key, scope]) => sessionStorage.setItem('hs.desk.staged-surface-open',
+        JSON.stringify(scope ? {key, scope} : {key}))""", [key, scope])
+    page.goto(f"{hub.url}/?token={hub.token}", wait_until="networkidle")
+
+
+def _snap(run_dir: Path, page: Any, name: str, width: int) -> str:
+    glass = _glass()
+    page.mouse.move(1, 1)
+    glass._settle(page)
+    shots = run_dir / "shots"
+    shots.mkdir(parents=True, exist_ok=True)
+    path = shots / f"{name}-{width}.png"
+    page.screenshot(path=str(path))
+    return str(path.relative_to(run_dir))
+
+
+def _scroll_to(page: Any, selector: str) -> None:
+    loc = page.locator(selector).first
+    loc.wait_for(timeout=20_000)
+    loc.scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
+
+
+def face_findings(fixture: dict[str, Any], facts: dict[str, Any], hub_room: dict[str, Any]) -> list[str]:
+    """The Room's face against the fixture and the hub's own read, per width."""
+    f: list[str] = []
+    title = fixture["milestone"]["title"]
+    days = int(fixture["milestone"]["due_days_before_run"])
+    room = facts.get("room") or {}
+    if "1 MILESTONE LATE" not in room.get("head_tokens", []):
+        f.append(f"the head does not say 1 MILESTONE LATE: {room.get('head_tokens')}")
+    if f"MILESTONE · {days} DAYS LATE" not in room.get("needs_you_why", []):
+        f.append(f"NEEDS YOU does not say MILESTONE · {days} DAYS LATE: {room.get('needs_you_why')}")
+    if not any(title in r for r in room.get("needs_you", [])):
+        f.append(f"NEEDS YOU does not list {title!r}")
+    items = (facts.get("items") or {}).get("item_rows", [])
+    if not any(title in r and f"{days} DAYS LATE" in r for r in items):
+        f.append(f"ITEMS does not show {title!r} {days} DAYS LATE: {items}")
+    risk = fixture["risk"]
+    if not any(risk["title"] in r and f"LIKELIHOOD {risk['likelihood'].upper()}" in r
+               and f"IMPACT {risk['impact'].upper()}" in r for r in items):
+        f.append(f"ITEMS does not show the risk with its likelihood and impact: {items}")
+    delivered = (facts.get("updates") or {}).get("delivered_chips", [])
+    if not any("DELIVERED ×2" in chip for chip in delivered):
+        f.append(f"the update list does not show DELIVERED ×2: {delivered}")
+    rows = (facts.get("update") or {}).get("delivery_rows", [])
+    names = fixture["delivery"]["delivered_to"]
+    if len(rows) < 2 or not all(any(n in r for r in rows) for n in names):
+        f.append(f"the delivery rows do not show {names}: {rows}")
+    receipts = (facts.get("receipts") or {}).get("receipts", [])
+    joined = " | ".join(receipts)
+    for word in ("STEWARD RUN", "PUBLISH UPDATE", "MARKED DELIVERED", "REFUSED"):
+        if word not in joined:
+            f.append(f"RECEIPTS do not show {word}: {receipts}")
+    hub_receipts = ((hub_room.get("receipts") or {}).get("items") or [])
+    refused_hub = [i for i in hub_receipts if i.get("outcome") == "refused"]
+    refused_face = [r for r in receipts if "REFUSED" in r]
+    if refused_hub and not refused_face:
+        f.append("the hub holds refused receipts the face does not show")
+    for part in ("room", "items", "updates", "update", "receipts", "steward"):
+        data = facts.get(part) or {}
+        if data.get("small_text"):
+            f.append(f"{part}: text under 12 px {data['small_text']}")
+        if data.get("raw_buttons"):
+            f.append(f"{part}: raw buttons {data['raw_buttons']}")
+        if data.get("h_overflow"):
+            f.append(f"{part}: horizontal overflow")
+        if data.get("modal"):
+            f.append(f"{part}: a modal")
+    return f
+
+
 def _shoot_room(run_dir: Path, hub: Any, pid: str, fixture: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
-    """The Room's face at 1440 and 393 after the job (wired; runs after PHILO-9-03)."""
+    """The Room after the job at 1440x900 and 393x852, through the merged face:
+    NEEDS YOU and the late milestone, ITEMS, the update list and the delivered
+    update, RECEIPTS (the agent's refusals included), the steward's run."""
     from playwright.sync_api import sync_playwright
 
+    glass = _glass()
+    glass._ensure_build()
+    out: dict[str, Any] = {"shots": [], "widths": {}}
     with sync_playwright() as play:
-        browser, pages = p7._open_desk(play, hub)
+        browser, pages, errors = _pages(play, hub)
         try:
-            shots = {"room": p5._reopen_stage(pages, hub, run_dir, "room", f"project:{pid}",
-                                              expected_text=fixture["milestone"]["title"])}
-            for must in (fixture["milestone"]["title"], *fixture["delivery"]["delivered_to"]):
-                shots.setdefault("pullouts", []).append(p7._pullout_proof(pages, must))
-            p7._json_dump(run_dir / "observations" / "room.json", shots)
-            return shots
+            for width, page in pages.items():
+                facts: dict[str, Any] = {}
+                hub_room = glass._api(page, "GET", f"/api/projects/{pid}/room", token=hub.token)
+                _stage(page, hub, "open-project-memory", f"project:{pid}")
+                glass._normal_chair(page)
+                page.locator("[data-testid=room-body]").wait_for(timeout=20_000)
+                page.locator("[data-testid=needs-you-why]").first.wait_for(timeout=20_000)
+                page.wait_for_timeout(900)
+                facts["room"] = page.evaluate(ROOM_FACTS)
+                out["shots"].append(_snap(run_dir, page, "room-head", width))
+                _scroll_to(page, "[data-testid=item-row]")
+                facts["items"] = page.evaluate(ROOM_FACTS)
+                out["shots"].append(_snap(run_dir, page, "room-items", width))
+                _scroll_to(page, "[data-testid=receipt-row]")
+                facts["receipts"] = page.evaluate(ROOM_FACTS)
+                # Every receipt row on a shot: page the rows from the top (the
+                # Ask well floats over the window's foot).
+                count = page.locator("[data-testid=receipt-row]").count()
+                step = 3 if width < 1000 else 4
+                for shot_index, first in enumerate(range(0, count, step)):
+                    page.evaluate("""(i) => { const rows = document.querySelectorAll('[data-testid=receipt-row]');
+                        rows[i].scrollIntoView({block: 'start'}); }""", first)
+                    page.wait_for_timeout(250)
+                    out["shots"].append(_snap(run_dir, page, f"room-receipts-{shot_index + 1}", width))
+                page.locator("[data-testid=updates-verb]").click()
+                page.locator("[data-testid=update-list]").wait_for(timeout=20_000)
+                page.wait_for_timeout(400)
+                facts["updates"] = page.evaluate(ROOM_FACTS)
+                out["shots"].append(_snap(run_dir, page, "updates-list", width))
+                page.locator(f"[data-testid=update-list-item]:has([data-update-id='{update['id']}'])").first.click()
+                page.locator("[data-testid=update-editor]").wait_for(timeout=20_000)
+                page.wait_for_timeout(400)
+                if page.locator("[data-testid=delivery-row]").count():
+                    _scroll_to(page, "[data-testid=delivery-row]")
+                facts["update"] = page.evaluate(ROOM_FACTS)
+                out["shots"].append(_snap(run_dir, page, "update-delivered", width))
+                _stage(page, hub, "open-project-memory", f"project:{pid}")
+                glass._normal_chair(page)
+                page.locator("[data-testid=room-body]").wait_for(timeout=20_000)
+                page.locator("[data-testid=steward-verb]").click()
+                page.locator("[data-testid=steward-list-item]").first.wait_for(timeout=20_000)
+                facts["steward_list"] = page.evaluate(ROOM_FACTS)
+                steward_items = page.locator("[data-testid=steward-list-item]")
+                facts["steward_runs"] = []
+                for index in range(steward_items.count()):
+                    if index:
+                        _stage(page, hub, "open-project-memory", f"project:{pid}")
+                        glass._normal_chair(page)
+                        page.locator("[data-testid=steward-verb]").click()
+                        steward_items.first.wait_for(timeout=20_000)
+                    steward_items.nth(index).click()
+                    page.locator("[data-testid=steward-run-state]").wait_for(timeout=20_000)
+                    page.wait_for_timeout(500)
+                    facts["steward_runs"].append(page.evaluate(ROOM_FACTS))
+                    out["shots"].append(_snap(run_dir, page, f"steward-run-{index + 1}", width))
+                facts["steward"] = facts["steward_runs"][0] if facts["steward_runs"] else {}
+                findings = face_findings(fixture, facts, hub_room)
+                out["widths"][width] = {"facts": facts, "hub_room_receipts": (hub_room.get("receipts") or {}),
+                                        "findings": findings}
+            out["page_errors"] = errors
         finally:
             browser.close()
+    p7._json_dump(run_dir / "observations" / "room.json", out)
+    return out
+
+
+def _shoot_grant(run_dir: Path, hub: Any, pid: str, fixture: dict[str, Any]) -> dict[str, Any]:
+    """The Settings grant row after the job (canvas board 12): the owner
+    archives the project; the LIVE grant stays, ARCHIVED, with its Stop, at
+    both widths; Stop is pressed once; the line goes, the receipt stays."""
+    from playwright.sync_api import sync_playwright
+
+    glass = _glass()
+    identity = fixture["agent"]["identity"]
+    out: dict[str, Any] = {"shots": [], "widths": {}}
+    status, archived = hub.api("DELETE", f"/api/projects/{pid}")
+    out["archive"] = {"route": f"DELETE /api/projects/{pid} (owner token)", "status": status, "answer": archived}
+
+    def remote(page: Any) -> Any:
+        return page.locator(".gadget-group", has=page.locator(".gadget-group-label", has_text="Remote access")).last
+
+    def row(page: Any) -> Any:
+        return remote(page).locator(".surface-ledger-row",
+                                    has=page.locator(".surface-ledger-primary", has_text=identity)).first
+
+    def line(page: Any) -> Any:
+        return row(page).locator(f'[data-testid="project-line-{pid}"]')
+
+    def settings(page: Any) -> None:
+        _stage(page, hub, "configure-settings")
+        page.locator(".prefs-hub-headline").wait_for(timeout=20_000)
+        system = page.locator(".surface-ledger-row", has=page.locator(".surface-ledger-primary", has_text="System"))
+        system.locator(".btn", has_text="Open").click()
+        page.locator(".gadget-group-label", has_text="Remote access").wait_for(timeout=20_000)
+        glass._settle(page)
+        trigger = row(page).locator("button", has_text="Projects")
+        if trigger.count() and trigger.get_attribute("aria-expanded") != "true":
+            trigger.click()
+        page.wait_for_timeout(400)
+
+    def text(loc: Any) -> str:
+        return (loc.first.inner_text() if loc.count() else "").replace("\n", " ").strip()
+
+    def reveal(page: Any, selector: str) -> None:
+        page.evaluate("""(sel) => { const e = document.querySelector(sel); if (e) e.scrollIntoView({block: 'center'}); }""",
+                      selector)
+        page.wait_for_timeout(200)
+
+    with sync_playwright() as play:
+        browser, pages, errors = _pages(play, hub)
+        try:
+            for width, page in pages.items():
+                settings(page)
+                reveal(page, f'[data-testid="project-line-{pid}"]')
+                out["widths"][width] = {"archived": {
+                    "line": text(line(page)),
+                    "archived_token": text(line(page).locator('[data-testid="project-archived"]')),
+                    "chip": text(line(page).locator('[data-testid="project-grant-chip"]')),
+                    "verb": text(line(page).locator('[data-testid="project-grant-verb"]')),
+                }}
+                out["shots"].append(_snap(run_dir, page, "grant-archived-live", width))
+            # Stop, pressed once (at 1440); the 393 page is reloaded after it.
+            page = pages[1440]
+            line(page).locator('[data-testid="project-grant-verb"]').click()
+            page.wait_for_function(f"() => !document.querySelector('[data-testid=\"project-line-{pid}\"]')",
+                                   timeout=20_000)
+            foot = page.locator('[data-testid="foot-receipt"]')
+            foot.wait_for(timeout=20_000)
+            stopped = {"foot": text(foot)}
+            foot.click()
+            well = page.locator('[data-testid="grant-receipt"]')
+            well.wait_for(timeout=20_000)
+            stopped["well"] = text(well)
+            stopped["operation_id"] = well.get_attribute("data-operation-id")
+            reveal(page, '[data-testid="grant-receipt"]')
+            out["widths"][1440]["stopped"] = stopped
+            out["shots"].append(_snap(run_dir, page, "grant-stopped-receipt", 1440))
+            page = pages[393]
+            settings(page)
+            out["widths"][393]["stopped"] = {"line_present": line(page).count() > 0, "row": text(row(page))}
+            out["shots"].append(_snap(run_dir, page, "grant-stopped-after", 393))
+            if stopped.get("operation_id"):
+                out["stop_receipt"] = glass._api(
+                    pages[1440], "GET", f"/api/kernel/read?refs=operation:{stopped['operation_id']}&view=receipt",
+                    token=hub.token)
+            out["page_errors"] = errors
+        finally:
+            browser.close()
+    findings: list[str] = []
+    for width in SIZES:
+        a = out["widths"][width]["archived"]
+        if "ARCHIVED" not in a["archived_token"] or "Stop" not in a["verb"] or "ALLOWED" not in a["chip"]:
+            findings.append(f"{width}: the archived LIVE grant line is not ARCHIVED + ALLOWED + Stop: {a}")
+    stopped = out["widths"][1440].get("stopped") or {}
+    if "STOPPED" not in stopped.get("foot", "") or "SUCCEEDED" not in stopped.get("well", ""):
+        findings.append(f"1440: Stop left no STOPPED receipt: {stopped}")
+    if out["widths"][393].get("stopped", {}).get("line_present"):
+        findings.append("393: the stopped grant's line is still on the row")
+    receipt = ((out.get("stop_receipt") or {}).get("objects") or [{}])[0]
+    if ((receipt.get("operation") or {}).get("name"), (receipt.get("receipt") or {}).get("state")) != (
+            "project.delegation.revoke", "succeeded"):
+        findings.append(f"the Stop's kernel receipt does not read back: {receipt}")
+    out["findings"] = findings
+    p7._json_dump(run_dir / "observations" / "grant.json", out)
+    return out
 
 
 class _Transcript:
@@ -793,15 +1105,117 @@ def _parser() -> argparse.ArgumentParser:
                      help="the Codex auth file copied (alone) into each scratch CODEX_HOME")
     run.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
     run.add_argument("--face", action="store_true", help="shoot the Room at 1440 and 393 (after PHILO-9-03)")
+    pr = sub.add_parser("probe", help="confirm every expectation reachable on a rig hub, no client")
+    pr.add_argument("--out", required=True)
+    pr.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
+    pr.add_argument("--face", action="store_true")
     fence = sub.add_parser("fence", help="run the fences over a retained run (no new session)")
     fence.add_argument("run_dir", type=Path)
     return parser
+
+
+def _agent_call(hub: Any, bearer: str, name: str, args: dict[str, Any]) -> tuple[bool, Any]:
+    """One agent tools/call over /api/mcp with the PROJECT bearer (the probe only)."""
+    import urllib.request
+
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                       "params": {"name": name, "arguments": args}}).encode()
+    req = urllib.request.Request(f"{hub.url}/api/mcp", data=body, method="POST",
+                                 headers={"Authorization": f"Bearer {bearer}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        answer = json.loads(resp.read().decode())
+    if "error" in answer:
+        return True, answer["error"]
+    result = answer.get("result") or {}
+    text = "".join(str(p.get("text", "")) for p in result.get("content") or [] if isinstance(p, dict))
+    try:
+        return bool(result.get("isError")), json.loads(text)
+    except ValueError:
+        return bool(result.get("isError")), text
+
+
+def probe(args: argparse.Namespace) -> int:
+    """Each fixture expectation confirmed reachable on a rig hub BEFORE the
+    Codex run, through the same contract, with no client (the charter:
+    "confirmed reachable on the rig before the run"); ``--face`` also shoots
+    the Room and the grant row, to prove the face leg's wiring."""
+    run_dir = Path(args.out).resolve() / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-probe")
+    run_dir.mkdir(parents=True)
+    fixture = write_run_fixture(run_dir, Path(args.fixture).resolve(), date.today())["fixture"]
+    temp_root = Path(tempfile.mkdtemp(prefix="philo9-06-probe-"))
+    (temp_root / "hub-home").mkdir()
+    gw = p7._gw()
+    hub = gw.Hub(temp_root / "hub-home", token=TOKEN).start()
+    steps: list[dict[str, Any]] = []
+
+    def step(label: str, value: tuple[bool, Any]) -> Any:
+        steps.append({"step": label, "is_error": value[0], "answer": value[1]})
+        return value[1]
+
+    try:
+        m, r = fixture["milestone"], fixture["risk"]
+        pid = step("create", _owner_call(hub, "project.create", {"name": fixture["project"]}))["project"]["id"]
+        step("milestone", _owner_call(hub, "project.item.create", {"project_id": pid, "item_type": "milestone",
+                                                                    "title": m["title"], "due_at": m["due_at"]}))
+        step("risk", _owner_call(hub, "project.item.create", {"project_id": pid, "item_type": "risk", "title": r["title"],
+                                                               "details": {k: r[k] for k in ("likelihood", "impact", "mitigation")}}))
+        step("policy", _owner_call(hub, "project.configure_steward",
+                                   {"project_id": pid, "eligible_effect_kinds": fixture["steward"]["eligible_effect_kinds"]}))
+        run = step("run", _owner_call(hub, "project.run_steward", {"project_id": pid}))
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            _e, read = _owner_call(hub, "project.get_steward_run", {"run_id": run["run_id"]})
+            if ((read or {}).get("run") or {}).get("state") in TERMINAL_RUN:
+                break
+            time.sleep(0.5)
+        uid = step("drafts", _owner_call(hub, "project.list_updates", {"project_id": pid}))["updates"][0]["id"]
+        step("publish", _owner_call(hub, "project.publish_update", {"update_id": uid}))
+        for to in fixture["delivery"]["delivered_to"]:
+            step(f"deliver {to}", _owner_call(hub, "project.mark_update_delivered", {"update_id": uid, "delivered_to": to}))
+        identity = fixture["agent"]["identity"]
+        hub.api("PUT", "/api/settings/remote", {"enabled": True})
+        _s, issued = hub.api("POST", "/api/settings/remote/credentials",
+                             {"identity": identity, "palette": fixture["agent"]["palette"]})
+        bearer = str(issued["token"])
+        _s, seeded = hub.api("POST", f"/api/projects/{pid}/updates/draft", {})
+        waiting = seeded["update"]["id"]
+        step("agent run (no grant)", _agent_call(hub, bearer, "project.run_steward", {"project_id": pid}))
+        step("agent publish (no grant)", _agent_call(hub, bearer, "project.publish_update", {"update_id": waiting}))
+        step("agent mark (no grant)", _agent_call(hub, bearer, "project.mark_update_delivered", {"update_id": waiting}))
+        steps.append({"step": "grant", "answer": hub.api("PUT", f"/api/settings/remote/delegations/{identity}/projects/{pid}", {})})
+        arun = step("agent run (grant)", _agent_call(hub, bearer, "project.run_steward", {"project_id": pid}))
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            _e, read = _owner_call(hub, "project.get_steward_run", {"run_id": arun["run_id"]})
+            if ((read or {}).get("run") or {}).get("state") in TERMINAL_RUN:
+                break
+            time.sleep(0.5)
+        drafted = [e for e in _effects(read) if e.get("effect_kind") == "draft_update"][0]["result"]["update_id"]
+        step("agent publish (grant)", _agent_call(hub, bearer, "project.publish_update", {"update_id": drafted}))
+        step("agent mark (grant)", _agent_call(hub, bearer, "project.mark_update_delivered", {"update_id": drafted}))
+        step("owner marks the agent's update", _owner_call(hub, "project.mark_update_delivered",
+                                                            {"update_id": drafted, "delivered_to": fixture["agent"]["owner_marks_delivered_to"]}))
+        result: dict[str, Any] = {"steps": steps}
+        if args.face:
+            room = _shoot_room(run_dir, hub, pid, fixture, {"id": uid})
+            grant = _shoot_grant(run_dir, hub, pid, fixture)
+            result["face_findings"] = {**{f"room {w}": v["findings"] for w, v in room["widths"].items()},
+                                       "grant": grant["findings"],
+                                       "page_errors": room.get("page_errors", []) + grant.get("page_errors", [])}
+        p7._json_dump(run_dir / "probe.json", result)
+    finally:
+        hub.stop()
+    print(f"RUN_DIR {run_dir}")
+    print(json.dumps(result.get("face_findings"), indent=1))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.mode == "fence":
         return fence_run(args.run_dir.resolve())
+    if args.mode == "probe":
+        return probe(args)
     try:
         return _run(args)
     except Exception as exc:  # noqa: BLE001

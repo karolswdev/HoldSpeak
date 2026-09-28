@@ -36,3 +36,25 @@ describe("PHILO-9-03: every receipt outcome is drawn as what happened", () => {
     expect(refusalWord("brand_new_code")).toBe("BRAND NEW CODE");
   });
 });
+
+// PHILO-9-06 (the closing use; Muad'Dib's ruling on catalogue gap 1): the
+// agent's refusals name what would change them. Outside the grant's bound no
+// grant can admit it: OWNER ONLY. Inside the bound without a grant: NO GRANT,
+// the Settings grant row's own word (SettingsCore GRANT_REFUSAL_TOKEN).
+describe("PHILO-9-06: the Room's refusal words match the grant row's", () => {
+  it("names the owner for an owner-only code and the grant for a grant code", () => {
+    expect(refusalWord("owner_principal_required")).toBe("OWNER ONLY");
+    expect(refusalWord("project_delegation_required")).toBe("NO GRANT");
+    expect(refusalWord("project_delegation_revoked")).toBe("GRANT STOPPED");
+    expect(refusalWord("project_delegation_expired")).toBe("GRANT EXPIRED");
+  });
+});
+
+// PHILO-9-06: the owner's project grant in RECEIPTS reads as the grant row's
+// act words, never the kernel's dotted name.
+describe("PHILO-9-06: the project grant's receipts use the grant row's words", () => {
+  it("draws delegation.grant and delegation.revoke as ALLOW and STOP RUN AND PUBLISH", () => {
+    expect(receiptLabel({ op: "delegation.grant", outcome: "ok" })).toBe("ALLOW RUN AND PUBLISH");
+    expect(receiptLabel({ op: "delegation.revoke", outcome: "ok" })).toBe("STOP RUN AND PUBLISH");
+  });
+});

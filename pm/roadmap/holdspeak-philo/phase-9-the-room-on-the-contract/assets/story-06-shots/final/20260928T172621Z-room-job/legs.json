@@ -1,0 +1,828 @@
+{
+  "checks": {
+    "agent_granted": [],
+    "agent_ungranted": [],
+    "face": [],
+    "owner_find": [],
+    "owner_job": {
+      "content": [],
+      "read_for_delivery": [],
+      "receipts": []
+    }
+  },
+  "face": {
+    "grant_shots": [
+      "shots/grant-archived-live-1440.png",
+      "shots/grant-archived-live-393.png",
+      "shots/grant-stopped-receipt-1440.png",
+      "shots/grant-stopped-after-393.png"
+    ],
+    "room_shots": [
+      "shots/room-head-1440.png",
+      "shots/room-items-1440.png",
+      "shots/room-receipts-1-1440.png",
+      "shots/room-receipts-2-1440.png",
+      "shots/room-receipts-3-1440.png",
+      "shots/updates-list-1440.png",
+      "shots/update-delivered-1440.png",
+      "shots/steward-run-1-1440.png",
+      "shots/steward-run-2-1440.png",
+      "shots/room-head-393.png",
+      "shots/room-items-393.png",
+      "shots/room-receipts-1-393.png",
+      "shots/room-receipts-2-393.png",
+      "shots/room-receipts-3-393.png",
+      "shots/room-receipts-4-393.png",
+      "shots/updates-list-393.png",
+      "shots/update-delivered-393.png",
+      "shots/steward-run-1-393.png",
+      "shots/steward-run-2-393.png"
+    ]
+  },
+  "owner_find_tools": [
+    "project.list",
+    "project.list_updates"
+  ],
+  "sessions": {
+    "agent_granted": {
+      "audit": {
+        "auth_file_changed": false,
+        "chosen_tools": [
+          "project.list",
+          "project.run_steward",
+          "project.get_steward_run",
+          "project.publish_update",
+          "project.mark_update_delivered"
+        ],
+        "exchange_end": 60,
+        "initial_context_findings": [],
+        "leg": "agent",
+        "mcp_other_methods": [],
+        "mcp_statuses": [
+          {
+            "method": "initialize",
+            "status": 200
+          },
+          {
+            "method": "notifications/initialized",
+            "status": 204
+          },
+          {
+            "method": "tools/list",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          }
+        ],
+        "non_mcp_http_writes": [],
+        "reconciliation": {
+          "codex_calls": 5,
+          "matched": 5,
+          "turn_exchange_start": 52,
+          "turn_exchanges": 8
+        },
+        "reconciliation_error": null,
+        "resumed": false,
+        "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/home/.codex/sessions/2026/09/28/rollout-2026-09-28T11-28-05-01a0e90f-3cf4-7712-8cc2-07002e8564ab.jsonl",
+        "session_id": "01a0e90f-3cf4-7712-8cc2-07002e8564ab",
+        "stage": "agent_granted",
+        "timing": {
+          "elapsed_s": 28.768,
+          "exit_code": 0,
+          "finished_at": "2026-09-28T17:28:33.037882+00:00",
+          "outcome": "process_completed",
+          "started_at": "2026-09-28T17:28:04.270189+00:00"
+        },
+        "tools_listed": 66,
+        "unlisted_tools": [],
+        "usage_limit": null,
+        "zero_read_findings": []
+      },
+      "launch_setup": {
+        "findings": [],
+        "record": {
+          "codex_home": {
+            "files": [
+              "auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/home/.codex"
+          },
+          "codex_process_home": {
+            "files": [
+              ".codex/auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/home"
+          },
+          "findings": [],
+          "git_rev_parse": {
+            "exit_code": 128,
+            "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+            "stdout": ""
+          },
+          "parents_checked": [
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/work",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/var/folders",
+              "present": []
+            },
+            {
+              "path": "/var",
+              "present": []
+            },
+            {
+              "path": "/",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/work",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders",
+              "present": []
+            },
+            {
+              "path": "/private/var",
+              "present": []
+            },
+            {
+              "path": "/private",
+              "present": []
+            }
+          ],
+          "servers": [
+            {
+              "auth_status": "bearer_token",
+              "disabled_reason": null,
+              "enabled": true,
+              "name": "holdspeak",
+              "startup_timeout_sec": 60.0,
+              "tool_timeout_sec": 900.0,
+              "transport": {
+                "bearer_token_env_var": "HOLDSPEAK_DESK_BEARER",
+                "env_http_headers": null,
+                "http_headers": null,
+                "http_headers_helper": null,
+                "type": "streamable_http",
+                "url": "http://127.0.0.1:49230/api/mcp"
+              }
+            }
+          ],
+          "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_granted/work"
+        }
+      }
+    },
+    "agent_ungranted": {
+      "audit": {
+        "auth_file_changed": false,
+        "chosen_tools": [
+          "project.list",
+          "project.get_room",
+          "project.run_steward",
+          "project.list_updates",
+          "project.publish_update",
+          "project.mark_update_delivered"
+        ],
+        "exchange_end": 45,
+        "initial_context_findings": [],
+        "leg": "agent",
+        "mcp_other_methods": [],
+        "mcp_statuses": [
+          {
+            "method": "initialize",
+            "status": 200
+          },
+          {
+            "method": "notifications/initialized",
+            "status": 204
+          },
+          {
+            "method": "tools/list",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          }
+        ],
+        "non_mcp_http_writes": [],
+        "reconciliation": {
+          "codex_calls": 6,
+          "matched": 6,
+          "turn_exchange_start": 36,
+          "turn_exchanges": 9
+        },
+        "reconciliation_error": null,
+        "resumed": false,
+        "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/home/.codex/sessions/2026/09/28/rollout-2026-09-28T11-27-36-01a0e90e-cce6-7150-accc-0c55e45d8d8b.jsonl",
+        "session_id": "01a0e90e-cce6-7150-accc-0c55e45d8d8b",
+        "stage": "agent_ungranted",
+        "timing": {
+          "elapsed_s": 28.402,
+          "exit_code": 0,
+          "finished_at": "2026-09-28T17:28:04.132856+00:00",
+          "outcome": "process_completed",
+          "started_at": "2026-09-28T17:27:35.730876+00:00"
+        },
+        "tools_listed": 66,
+        "unlisted_tools": [],
+        "usage_limit": null,
+        "zero_read_findings": []
+      },
+      "launch_setup": {
+        "findings": [],
+        "record": {
+          "codex_home": {
+            "files": [
+              "auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/home/.codex"
+          },
+          "codex_process_home": {
+            "files": [
+              ".codex/auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/home"
+          },
+          "findings": [],
+          "git_rev_parse": {
+            "exit_code": 128,
+            "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+            "stdout": ""
+          },
+          "parents_checked": [
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/work",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/var/folders",
+              "present": []
+            },
+            {
+              "path": "/var",
+              "present": []
+            },
+            {
+              "path": "/",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/work",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders",
+              "present": []
+            },
+            {
+              "path": "/private/var",
+              "present": []
+            },
+            {
+              "path": "/private",
+              "present": []
+            }
+          ],
+          "servers": [
+            {
+              "auth_status": "bearer_token",
+              "disabled_reason": null,
+              "enabled": true,
+              "name": "holdspeak",
+              "startup_timeout_sec": 60.0,
+              "tool_timeout_sec": 900.0,
+              "transport": {
+                "bearer_token_env_var": "HOLDSPEAK_DESK_BEARER",
+                "env_http_headers": null,
+                "http_headers": null,
+                "http_headers_helper": null,
+                "type": "streamable_http",
+                "url": "http://127.0.0.1:49230/api/mcp"
+              }
+            }
+          ],
+          "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-agent_ungranted/work"
+        }
+      }
+    },
+    "owner_find": {
+      "audit": {
+        "auth_file_changed": false,
+        "chosen_tools": [
+          "project.list",
+          "project.list_updates"
+        ],
+        "exchange_end": 33,
+        "initial_context_findings": [],
+        "leg": "owner",
+        "mcp_other_methods": [],
+        "mcp_statuses": [
+          {
+            "method": "initialize",
+            "status": 200
+          },
+          {
+            "method": "notifications/initialized",
+            "status": 204
+          },
+          {
+            "method": "tools/list",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          }
+        ],
+        "non_mcp_http_writes": [],
+        "reconciliation": {
+          "codex_calls": 2,
+          "matched": 2,
+          "turn_exchange_start": 28,
+          "turn_exchanges": 5
+        },
+        "reconciliation_error": null,
+        "resumed": false,
+        "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/home/.codex/sessions/2026/09/28/rollout-2026-09-28T11-27-14-01a0e90e-77e5-7712-9cf1-78cbc6ee2e24.jsonl",
+        "session_id": "01a0e90e-77e5-7712-9cf1-78cbc6ee2e24",
+        "stage": "owner_find",
+        "timing": {
+          "elapsed_s": 21.763,
+          "exit_code": 0,
+          "finished_at": "2026-09-28T17:27:35.619989+00:00",
+          "outcome": "process_completed",
+          "started_at": "2026-09-28T17:27:13.857272+00:00"
+        },
+        "tools_listed": 237,
+        "unlisted_tools": [],
+        "usage_limit": null,
+        "zero_read_findings": []
+      },
+      "launch_setup": {
+        "findings": [],
+        "record": {
+          "codex_home": {
+            "files": [
+              "auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/home/.codex"
+          },
+          "codex_process_home": {
+            "files": [
+              ".codex/auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/home"
+          },
+          "findings": [],
+          "git_rev_parse": {
+            "exit_code": 128,
+            "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+            "stdout": ""
+          },
+          "parents_checked": [
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/work",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/var/folders",
+              "present": []
+            },
+            {
+              "path": "/var",
+              "present": []
+            },
+            {
+              "path": "/",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/work",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders",
+              "present": []
+            },
+            {
+              "path": "/private/var",
+              "present": []
+            },
+            {
+              "path": "/private",
+              "present": []
+            }
+          ],
+          "servers": [
+            {
+              "auth_status": "unsupported",
+              "disabled_reason": null,
+              "enabled": true,
+              "name": "holdspeak",
+              "startup_timeout_sec": 60.0,
+              "tool_timeout_sec": 900.0,
+              "transport": {
+                "args": [],
+                "command": "/Users/karol/dev/tools/wt-philo-9-06/.venv/bin/holdspeak-mcp",
+                "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/hub-home",
+                "env": {
+                  "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/hub-home"
+                },
+                "env_vars": [],
+                "type": "stdio"
+              }
+            }
+          ],
+          "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_find/work"
+        }
+      }
+    },
+    "owner_job": {
+      "audit": {
+        "auth_file_changed": false,
+        "chosen_tools": [
+          "project.create",
+          "project.item.create",
+          "project.item.create",
+          "project.get_room",
+          "project.configure_steward",
+          "project.run_steward",
+          "project.get_steward_run",
+          "project.publish_update",
+          "project.mark_update_delivered",
+          "project.mark_update_delivered",
+          "project.list_updates"
+        ],
+        "exchange_end": 15,
+        "initial_context_findings": [],
+        "leg": "owner",
+        "mcp_other_methods": [],
+        "mcp_statuses": [
+          {
+            "method": "initialize",
+            "status": 200
+          },
+          {
+            "method": "notifications/initialized",
+            "status": 204
+          },
+          {
+            "method": "tools/list",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          },
+          {
+            "method": "tools/call",
+            "status": 200
+          }
+        ],
+        "non_mcp_http_writes": [],
+        "reconciliation": {
+          "codex_calls": 11,
+          "matched": 11,
+          "turn_exchange_start": 1,
+          "turn_exchanges": 14
+        },
+        "reconciliation_error": null,
+        "resumed": false,
+        "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/home/.codex/sessions/2026/09/28/rollout-2026-09-28T11-26-25-01a0e90d-b86f-7c12-b19d-d221366b3dbf.jsonl",
+        "session_id": "01a0e90d-b86f-7c12-b19d-d221366b3dbf",
+        "stage": "owner_job",
+        "timing": {
+          "elapsed_s": 48.766,
+          "exit_code": 0,
+          "finished_at": "2026-09-28T17:27:13.668888+00:00",
+          "outcome": "process_completed",
+          "started_at": "2026-09-28T17:26:24.903022+00:00"
+        },
+        "tools_listed": 237,
+        "unlisted_tools": [],
+        "usage_limit": null,
+        "zero_read_findings": []
+      },
+      "launch_setup": {
+        "findings": [],
+        "record": {
+          "codex_home": {
+            "files": [
+              "auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/home/.codex"
+          },
+          "codex_process_home": {
+            "files": [
+              ".codex/auth.json"
+            ],
+            "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/home"
+          },
+          "findings": [],
+          "git_rev_parse": {
+            "exit_code": 128,
+            "stderr": "fatal: not a git repository (or any of the parent directories): .git",
+            "stdout": ""
+          },
+          "parents_checked": [
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/work",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/var/folders",
+              "present": []
+            },
+            {
+              "path": "/var",
+              "present": []
+            },
+            {
+              "path": "/",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/work",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders/q7",
+              "present": []
+            },
+            {
+              "path": "/private/var/folders",
+              "present": []
+            },
+            {
+              "path": "/private/var",
+              "present": []
+            },
+            {
+              "path": "/private",
+              "present": []
+            }
+          ],
+          "servers": [
+            {
+              "auth_status": "unsupported",
+              "disabled_reason": null,
+              "enabled": true,
+              "name": "holdspeak",
+              "startup_timeout_sec": 60.0,
+              "tool_timeout_sec": 900.0,
+              "transport": {
+                "args": [],
+                "command": "/Users/karol/dev/tools/wt-philo-9-06/.venv/bin/holdspeak-mcp",
+                "cwd": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/hub-home",
+                "env": {
+                  "HOME": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/hub-home"
+                },
+                "env_vars": [],
+                "type": "stdio"
+              }
+            }
+          ],
+          "work": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-e4qf397z/cold-owner_job/work"
+        }
+      }
+    }
+  }
+}
