@@ -149,6 +149,8 @@ class WebContext:
     # HS-162-02: the update factory composes ProjectService + Delta into
     # deterministic (and later model) drafts. Routes come in 04.
     project_update_service: Optional[Any] = None
+    # PHILO-10-01: the Send (composed by runtime.composition).
+    channel_service: Optional[Any] = None
     # HS-200-11: the preparation brief -- one manual path over the Room's read
     # sources, carried decisions and open commitments, its manifest frozen.
     project_brief_service: Optional[Any] = None

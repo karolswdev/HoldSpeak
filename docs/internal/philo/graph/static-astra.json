@@ -83932,7 +83932,7 @@
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
           "path": "holdspeak/runtime/composition.py",
-          "line": 187,
+          "line": 188,
           "symbol": "source_census",
           "claim": "Source emits frame desk_changed; RuntimeBus.tsx routes listeners by frame.type. Dynamic payload content and subscriber outcome not traced by this census."
         },

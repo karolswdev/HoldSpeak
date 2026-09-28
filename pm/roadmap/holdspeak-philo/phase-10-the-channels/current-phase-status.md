@@ -139,7 +139,7 @@ The journal carries the destination's id (`destination:<id>`) and the payload di
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-10-01 | The Send contract, saved destinations and the file channel | backlog | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | — |
+| PHILO-10-01 | The Send contract, saved destinations and the file channel | done | [story-01-the-send-contract-and-the-file-channel](./story-01-the-send-contract-and-the-file-channel.md) | [evidence-story-01](./evidence-story-01.md) |
 | PHILO-10-02 | The GitHub and Atlassian channels (and the nudge) | backlog | [story-02-the-github-and-atlassian-channels](./story-02-the-github-and-atlassian-channels.md) | — |
 | PHILO-10-03 | The email channel — a provider interface | backlog | [story-03-the-email-channel](./story-03-the-email-channel.md) | — |
 | PHILO-10-04 | The Send face and the destinations setup (canvas first) | backlog | [story-04-the-send-face-and-the-destinations](./story-04-the-send-face-and-the-destinations.md) | — |
@@ -160,6 +160,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 01 lands first: the operation table, the record columns and the destinations table have one shipping owner. 02 and 03 each add one channel module and its manifest; they touch the send service only through the channel registry 01 defines. The story 04 canvases can be drawn while 01 is built. A lane runs its scoped fences and rig cases only. The orchestrator runs the full suite before the done call (`docs/internal/ORCHESTRATION.md:64-67`). CI does not gate a merge (the owner, 2026-09-28; `../phase-9-the-room-on-the-contract/final-summary.md:146`).
 
 ## Where we are
+
+2026-09-28, story 01 BUILT (branch `feat/philo-10-01`): the Send contract on the one declared contract (nine `channel.*` operations over HTTP, MCP and the rig), `channel_destinations` + `channel_sends` + the additive history columns, prepare and press, the durable dispatch boundary with recovery across take-over, the reaper and a restart (R1–R6, both forms), and the file channel; 16/16 mutations caught. Owed: the Codex Astra check of the built PR; stories 02–06. The CLI seam's plumbing (principal, parent, broker) moves to story 02 with its first user.
 
 2026-09-28, round four: **RATIFIED by the owner ("Ratify, build it")**, with Q1 ruled against Mail.app ("it wouldn’t work on non-Macs") for a declared email provider interface, SendGrid first; Q3 "Blog post"; Q6 "Scratch targets you name". Story 03 is redrawn, the design gains section 8, the Mail.app material is parked (BACKLOG "Mail.app draft channel"). Owed: the Codex Astra check of the email delta; the story 04 canvases before the face build. Nothing is built.
 

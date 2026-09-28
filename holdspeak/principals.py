@@ -313,6 +313,13 @@ _ROOM_AGENT_SUBMIT: tuple[tuple[str, Any], ...] = tuple(
         ("POST", "/api/projects/{id}/reviews/{id}/accept"),
         ("POST", "/api/updates/{id}/publish"),
         ("POST", "/api/updates/{id}/delivered"),
+        # PHILO-10-01: the Send's admitted routes (an agent prepares; its send,
+        # discard and destination writes are refused with a receipt).
+        ("POST", "/api/channels/destinations"),
+        ("DELETE", "/api/channels/destinations/{id}"),
+        ("POST", "/api/channels/sends"),
+        ("POST", "/api/channels/sends/{id}/discard"),
+        ("POST", "/api/channels/send"),
         ("POST", "/api/projects/door/count"),
         ("PUT", "/api/projects/{id}/steward/policy"),
         ("POST", "/api/projects/{id}/steward/runs"),

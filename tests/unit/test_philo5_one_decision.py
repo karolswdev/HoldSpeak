@@ -247,6 +247,10 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "project.watch.baseline", "project.suggested_sources", "project.add_suggested_source",
         "project.dismiss_suggested_source", "connection.list", "connection.recheck", "project.door.count",
         "project.mark_update_delivered",
+        # PHILO-10-01: the Send.
+        "channel.destinations", "channel.save_destination", "channel.remove_destination",
+        "channel.check_destination", "channel.preview", "channel.prepare", "channel.discard",
+        "channel.send", "channel.sends",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

@@ -635,6 +635,51 @@
       "story": "PHILO-9-02",
       "tool": "project.mark_update_delivered",
       "operation": "project.mark_update_delivered"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.destinations",
+      "operation": "channel.destinations"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.save_destination",
+      "operation": "channel.save_destination"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.remove_destination",
+      "operation": "channel.remove_destination"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.check_destination",
+      "operation": "channel.check_destination"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.preview",
+      "operation": "channel.preview"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.prepare",
+      "operation": "channel.prepare"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.discard",
+      "operation": "channel.discard"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.send",
+      "operation": "channel.send"
+    },
+    {
+      "story": "PHILO-10-01",
+      "tool": "channel.sends",
+      "operation": "channel.sends"
     }
   ],
   "moved": [
@@ -652,7 +697,7 @@
     "residual_mcp": 185,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 237
+    "public_tools": 246
   },
   "entries": [
     {

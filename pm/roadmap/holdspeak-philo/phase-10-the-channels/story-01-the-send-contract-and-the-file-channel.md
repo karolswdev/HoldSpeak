@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 10
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification; his answers to Q4 and Q5
 - **Unblocks:** PHILO-10-02, PHILO-10-03, PHILO-10-04 (build), PHILO-10-05, PHILO-10-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -21,15 +21,15 @@ Nothing sends a published project update: it is copy and confirm (`holdspeak/db/
 
 ## Acceptance criteria
 
-- [ ] The operations are declared once and reachable by HTTP, MCP and the rig's `op` step, over one service.
-- [ ] Each admitted row is one kernel operation with one terminal receipt; each refusal class (destination not saved, owner only, not published, preview changed) leaves its receipt; reads and previews leave none. Fences with an authenticated principal; a mutation of each turns it red.
-- [ ] The file channel: two sends of one update to one folder make two files; the record holds path, sha256 and size, and the sha256 equals the bytes on disk; a name that tries to leave the folder is refused.
-- [ ] The crash rule: through the Room's real take-over (`holdspeak/services/project_kernel.py:398-400`, `:528-531`), a settle write that fails after the effect, a restart during `dispatching`, a kill and a timeout each end with **one** dispatch and UNKNOWN (or the file's read-back proof) — red on main (Codex reproduced two dispatches for one key); a nonzero exit off the pinned list and a missing or malformed proof are UNKNOWN, never FAILED; the same key again makes no second effect.
-- [ ] Fences R1–R6 (design section 4a), parametrized over the `send_id` form and the inline form, each red on the round-two design and green here: one dispatch, one terminal receipt, one history row per key across take-over, the real reaper, a restart and replay; the three mutations turn them red.
-- [ ] No body in argv, a subprocess receipt, a log or an error (a sentinel fence); the payload file is 0600 in a 0700 directory and its digest is checked before dispatch; an oversize payload is refused by name.
-- [ ] A destination changed or parked after prepare is refused before dispatch; the row keeps the historical target; Remove parks.
-- [ ] An agent's send is refused `owner_principal_required` with a receipt; an agent's prepare completes under its own identity (as Q5 rules), survives a restart with its preview, and Send and Discard pressed together settle once (one wins, the other refused with a receipt).
-- [ ] Existing manual rows read `channel: manual`; `project.mark_update_delivered` is unchanged (its Phase 9 fences stay green).
+- [x] The operations are declared once and reachable by HTTP, MCP and the rig's `op` step, over one service.
+- [x] Each admitted row is one kernel operation with one terminal receipt; each refusal class (destination not saved, owner only, not published, preview changed) leaves its receipt; reads and previews leave none. Fences with an authenticated principal; a mutation of each turns it red.
+- [x] The file channel: two sends of one update to one folder make two files; the record holds path, sha256 and size, and the sha256 equals the bytes on disk; a name that tries to leave the folder is refused.
+- [x] The crash rule: through the Room's real take-over (`holdspeak/services/project_kernel.py:398-400`, `:528-531`), a settle write that fails after the effect, a restart during `dispatching`, a kill and a timeout each end with **one** dispatch and UNKNOWN (or the file's read-back proof) — red on main (Codex reproduced two dispatches for one key); a nonzero exit off the pinned list and a missing or malformed proof are UNKNOWN, never FAILED; the same key again makes no second effect.
+- [x] Fences R1–R6 (design section 4a), parametrized over the `send_id` form and the inline form, each red on the round-two design and green here: one dispatch, one terminal receipt, one history row per key across take-over, the real reaper, a restart and replay; the three mutations turn them red.
+- [x] No body in argv, a subprocess receipt, a log or an error (a sentinel fence); the payload file is 0600 in a 0700 directory and its digest is checked before dispatch; an oversize payload is refused by name.
+- [x] A destination changed or parked after prepare is refused before dispatch; the row keeps the historical target; Remove parks.
+- [x] An agent's send is refused `owner_principal_required` with a receipt; an agent's prepare completes under its own identity (as Q5 rules), survives a restart with its preview, and Send and Discard pressed together settle once (one wins, the other refused with a receipt).
+- [x] Existing manual rows read `channel: manual`; `project.mark_update_delivered` is unchanged (its Phase 9 fences stay green).
 
 ## Effort (not a promise)
 
@@ -42,6 +42,7 @@ PROVISIONAL: 3.5–4.5 engineering days (until the design is checked).
 
 ## Notes
 
+- 2026-09-28 — BUILT by the Fedaykin lane (Opus 5.5): the nine `channel.*` operations, the two records and the four additive columns, the dispatch boundary and its recovery (seams 1–3; R1–R6 over both forms, R3 through a real SIGKILL), the file channel; 16/16 mutations caught. Unpaid and deviations: `evidence-story-01.md` (the CLI seam's plumbing moves to story 02 with its first user; the steward's prepare is not built).
 - 2026-09-28 — round three: Codex Astra r2 condition 1 (section 4a) added.
 - 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.
 - 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

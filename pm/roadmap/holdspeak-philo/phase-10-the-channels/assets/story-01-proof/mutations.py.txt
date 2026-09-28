@@ -1,0 +1,124 @@
+"""PHILO-10-01: each deliberate mutation must turn its fence RED (run from the worktree root).
+
+Each row: (name, file, exact original text, mutated text, the fences it must redden).
+The file is restored from its in-memory original after every run, whatever happens.
+Usage: HOME=<an isolated HOME> .venv/bin/python mutations.py.txt  (exit 0 only when every mutation is caught)
+"""
+import subprocess
+import sys
+from pathlib import Path
+
+T = "tests/unit/"
+R = T + "test_philo10_send_recovery.py::"
+C = T + "test_philo10_send_contract.py::"
+MUTATIONS = [
+    ("M0 recovery dispatches again (no durable boundary read)", "holdspeak/services/channel_service.py",
+     """        if mine is not None:
+            # This operation already crossed its boundary""",
+     """        if False:
+            # This operation already crossed its boundary""",
+     [R + "test_r1_a_failed_settle_is_taken_over_without_a_second_dispatch_and_the_replay_answers_it"]),
+    ("M0b the naive design: a take-over dispatches from a dispatching row as from a prepared one",
+     "holdspeak/services/channel_service.py",
+     [("""        if mine is not None:
+            # This operation already crossed its boundary""",
+       """        if False:
+            # This operation already crossed its boundary"""),
+      ('''            if row["state"] != "prepared":
+                raise ChannelRefused("send_already_settled"''',
+       '''            if row["state"] not in ("prepared", "dispatching"):
+                raise ChannelRefused("send_already_settled"'''),
+      ('''f" file_path=? WHERE id=? AND state='prepared' AND {claimed}"''',
+       '''f" file_path=? WHERE id=? AND state IN ('prepared','dispatching') AND {claimed}"''')],
+     None,
+     [R + "test_r1_a_failed_settle_is_taken_over_without_a_second_dispatch_and_the_replay_answers_it[intact-send_id]"]),
+    ("M1a drop the reaper's settle effect", "holdspeak/kernel/desk_broker.py",
+     "effect = steward_run_ended_effect(operation, reason) or channel_send_ended_effect(store, operation, reason)",
+     "effect = steward_run_ended_effect(operation, reason)",
+     [R + "test_r2_r5_the_reaper_settles_a_silent_send_and_the_replay_answers_it"]),
+    ("M1b drop the restart's settle effect", "holdspeak/services/steward_contract.py",
+     """                if send_effect is not None:
+                    return send_effect(conn)""",
+     """                if send_effect is not None:
+                    return None""",
+     [T + "test_philo10_send_restart.py"]),
+    ("M2 drop the replay hook", "holdspeak/services/project_kernel.py",
+     "if (name in rooms.SETTLED_ROW_REPLAY", "if (False and name in rooms.SETTLED_ROW_REPLAY",
+     [R + "test_r1_a_failed_settle_is_taken_over_without_a_second_dispatch_and_the_replay_answers_it"]),
+    ("M3 the settle commits outside the strict terminal transaction", "holdspeak/services/channel_service.py",
+     """            handle.terminal(state, receipt_outcome, f"channel_send:{row['id']}", effect=effect)""",
+     """            with self._db._connection() as own:  # the settle commits on its own, before the terminal
+                own.execute("BEGIN IMMEDIATE")
+                effect(own)
+            handle.terminal(state, receipt_outcome, f"channel_send:{row['id']}")""",
+     [R + "test_r4_the_reaper_and_a_take_over_race_and_one_wins"]),
+    ("M4 drop the boundary's claimed-operation guard", "holdspeak/services/channel_service.py",
+     """claimed = "EXISTS (SELECT 1 FROM kernel_operations WHERE operation_id=? AND state='claimed')\"""",
+     """claimed = "(? IS NOT NULL)\"""",
+     [R + "test_r6_a_send_reaped_before_its_boundary_dispatches_nothing_and_writes_no_history"]),
+    ("M5 an agent's send admitted", "holdspeak/kernel/channel_send.py",
+     """AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare"})""",
+     """AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare", "channel.send"})""",
+     [C + "test_an_agents_send_discard_and_destination_writes_are_refused_owner_principal_required"]),
+    ("M6 an agent's prepare refused", "holdspeak/kernel/channel_send.py",
+     """AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare"})""",
+     """AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset()""",
+     [C + "test_an_agents_prepare_completes_under_its_own_identity_and_waits_for_the_owner"]),
+    ("M7 discard without its conditional write", "holdspeak/services/channel_service.py",
+     """WHERE id=? AND state='prepared'",
+                                 (now_iso(), send_id))""",
+     """WHERE id=?",
+                                 (now_iso(), send_id))""",
+     [C + "test_send_and_discard_pressed_together_settle_once"]),
+    ("M8a the parked destination not re-read before dispatch", "holdspeak/services/channel_service.py",
+     """        if destination["state"] != "active":
+            raise ChannelRefused("destination_parked", f"Destination {destination['id']} is parked")
+        if destination["target_digest"]""",
+     """        if False:
+            raise ChannelRefused("destination_parked", f"Destination {destination['id']} is parked")
+        if destination["target_digest"]""",
+     [C + "test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_historical_target"]),
+    ("M8b the changed target digest not compared", "holdspeak/services/channel_service.py",
+     """        if destination["target_digest"] != frozen_digest:""", """        if False:""",
+     [C + "test_a_destination_whose_target_changed_after_prepare_is_refused"]),
+    ("M9 the preview digest not compared", "holdspeak/services/channel_service.py",
+     """            if contract.sha256(payload) != str(preview_digest):""", """            if False:""",
+     [C + "test_each_refusal_class_leaves_its_receipt_and_sends_nothing"]),
+    ("M10 the folder guard dropped", "holdspeak/services/channel_contract.py",
+     """        if os.path.dirname(path) != os.path.normpath(folder) or os.path.basename(path) != name:""",
+     """        if False:""",
+     [C + "test_a_name_that_leaves_the_folder_is_refused"]),
+    ("M11 the frozen payload digest not re-checked", "holdspeak/services/channel_service.py",
+     """        if row is not None and contract.sha256(payload) != row["payload_digest"]:""",
+     """        if False:""",
+     [C + "test_a_changed_payload_is_refused_before_any_effect"]),
+    ("M12 FAILED for any OS error (not only the pinned list)", "holdspeak/services/channel_contract.py",
+     """            return Outcome("unknown", f"write_{errno.errorcode.get(exc.errno or 0, 'error').lower()}")""",
+     """            return Outcome("failed", f"write_{errno.errorcode.get(exc.errno or 0, 'error').lower()}")""",
+     [C + "test_an_error_off_the_pinned_list_and_bytes_that_do_not_read_back_are_unknown"]),
+]
+
+caught = 0
+for name, path, old, new, fences in MUTATIONS:
+    file = Path(path)
+    original = file.read_text()
+    pairs = old if isinstance(old, list) else [(old, new)]
+    mutated = original
+    for before, after in pairs:
+        assert mutated.count(before) == 1, (name, "the original text is not unique", before[:60])
+        mutated = mutated.replace(before, after)
+    try:
+        file.write_text(mutated)
+        run = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *fences],
+                             capture_output=True, text=True)
+    finally:
+        file.write_text(original)
+    tail = [line for line in run.stdout.splitlines() if line.strip()][-1:]
+    why = [line.strip()[:160] for line in run.stdout.splitlines() if line.startswith("E  ")][:1]
+    red = run.returncode != 0
+    caught += red
+    print(f"{'CAUGHT' if red else 'MISSED'} {name}: rc={run.returncode} {tail[0] if tail else ''}")
+    if why:
+        print(f"    first assertion: {why[0]}")
+print(f"{caught}/{len(MUTATIONS)} mutations caught")
+sys.exit(0 if caught == len(MUTATIONS) else 1)

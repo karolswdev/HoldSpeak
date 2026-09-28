@@ -110,6 +110,7 @@ class RuntimeServices:
     watch_service: Optional[Any] = None            # gh watch kwargs
     connections_service: Optional[Any] = None
     suggested_source_service: Optional[Any] = None  # PHILO-9-02: project_service=
+    channel_service: Optional[Any] = None           # PHILO-10-01: the Send
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
@@ -378,6 +379,7 @@ def services_from_web_context(
         "watch_service",
         "connections_service",
         "suggested_source_service",
+        "channel_service",
         "inference_setup_service",
         "inference_acquisition_service",
         "model_library_service",
@@ -479,10 +481,17 @@ def _compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> N
         from holdspeak.services.suggested_source_service import SuggestedSourceService
 
         suggested = SuggestedSourceService(db, project_service=project)
+    channels = _held("channel_service")
+    if channels is None:
+        # PHILO-10-01: the Send's one service (every channel.* operation).
+        from holdspeak.services.channel_service import ChannelService
+
+        channels = ChannelService(db)
     for name, instance in (("project_service", project), ("project_delta_service", delta),
                            ("project_update_service", update), ("project_door_service", door),
                            ("watch_service", watch), ("project_steward_service", steward),
-                           ("connections_service", connections), ("suggested_source_service", suggested)):
+                           ("connections_service", connections), ("suggested_source_service", suggested),
+                           ("channel_service", channels)):
         setattr(services, name, instance)
         try:
             setattr(ctx, name, instance)
