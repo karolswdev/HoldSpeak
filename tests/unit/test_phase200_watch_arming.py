@@ -23,6 +23,8 @@ R5 manual effects     -> TestManualEvaluationRecordsEffects
 """
 from __future__ import annotations
 
+import json
+
 import hashlib
 import re
 import uuid
@@ -1070,6 +1072,20 @@ class TestRemoteRunnerHoldsTheSweep:
 # ── F2 rider: the bound is for the UNATTENDED sweep only ────────────
 
 
+def _await_receipt(db: Any, operation_id: str, timeout: float = 20.0) -> dict[str, Any]:
+    """PHILO-9-02: the admitted trigger's terminal receipt, once its work ends."""
+    import time as _time
+
+    deadline = _time.monotonic() + timeout
+    while _time.monotonic() < deadline:
+        with db._connection() as conn:
+            row = conn.execute("SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)).fetchone()
+        if row is not None:
+            return dict(row)
+        _time.sleep(0.05)
+    raise AssertionError(f"no terminal receipt for {operation_id}")
+
+
 class TestTheOwnersHandIsUnbounded:
     """`Run now` and the explicit trigger evaluate EVERYTHING.
 
@@ -1105,7 +1121,16 @@ class TestTheOwnersHandIsUnbounded:
             wc.set_scheduler_services(None, None)
 
         assert result["success"] is True
-        assert len(result["evaluate_outcomes"]) == 25, (
+        # PHILO-9-02 (the steward beat, section 4): the trigger is admitted
+        # and returns its pending handle; its ONE terminal receipt carries
+        # the watch and run outcomes when its work ends.
+        from holdspeak.runtime.composition import db_or
+        from holdspeak.db import get_database
+
+        # The bare MCP composition's steward service writes the kernel journal
+        # of the process database (``db_or(get_database)``), not the test's.
+        outcome = json.loads(_await_receipt(db_or(get_database), result["operation_id"])["outcome"])
+        assert outcome["evaluated"] == 25, (
             "the owner's explicit trigger was bounded like the "
             "unattended sweep"
         )
@@ -1317,10 +1342,15 @@ class TestOwnersHandOverHttp:
         # The settings router composes its secret routes at build time and
         # refuses without a real CredentialService -- supply one on this
         # test's own DB rather than weakening the composition check.
+        from holdspeak.services.project_steward_service import ProjectStewardService
+
         ctx = WebContext(
             get_state=lambda: {},
             watch_service=ws,
             credential_service=CredentialService(db),
+            # PHILO-9-02: the trigger route reaches its declared operation,
+            # bound to the steward service.
+            project_steward_service=ProjectStewardService(db, None, None),
         )
 
         class _OwnerMiddleware(BaseHTTPMiddleware):
@@ -1361,7 +1391,9 @@ class TestOwnersHandOverHttp:
         assert resp.status_code == 200, resp.text
         body = resp.json()
         assert body["success"] is True
-        assert len(body["evaluate_outcomes"]) == 25, (
+        # PHILO-9-02: the pending handle; the receipt carries the outcomes.
+        outcome = json.loads(_await_receipt(db, body["operation_id"])["outcome"])
+        assert outcome["evaluated"] == 25, (
             "the owner's explicit trigger was bounded on the wire"
         )
 

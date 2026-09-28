@@ -345,6 +345,8 @@ def test_connections_real_readiness(
             _api(page, "PUT", "/api/setup/onboarding",
                  {"disposition": "completed"}, token=TOKEN)
             _prime_jira(page)
+            # PHILO-9-02 B1: the list is a cached read; the probe is the Recheck.
+            _api(page, "POST", "/api/connections/github/recheck", token=TOKEN)
 
             # Navigate to Connections
             page.evaluate("""() => {
@@ -372,7 +374,8 @@ def test_connections_real_readiness(
             # Assert the GitHub card shows Connected
             gh_card = page.locator('[data-testid="connections-github"]')
             # The card should have a "Connected" chip (real gh auth)
-            connected_chip = gh_card.locator('text="Connected"')
+            # PHILO-9-02 B1: the chip reads "Connected · Checked now".
+            connected_chip = gh_card.locator('.surface-state-chip:has-text("Connected")')
             assert connected_chip.count() > 0, "GitHub card does not show Connected state"
 
             browser.close()

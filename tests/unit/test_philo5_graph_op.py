@@ -38,8 +38,10 @@ def _resource_result(value):
 def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_target():
     # PHILO-5's seventeen, PHILO-7-01's fifteen desk-slice rows, then
     # PHILO-7-02's nine (decision.status is HTTP only: OP_HTTP_ONLY), then
-    # PHILO-9-01's twenty-five Room rows (the Door's create is HTTP only).
-    assert len(gw.OP_MCP_PROJECTIONS) == 66
+    # PHILO-9-01's twenty-five Room rows (the Door's create is HTTP only),
+    # then PHILO-9-02's twenty-one (the Door's count, a watch's update and
+    # its baseline are HTTP only).
+    assert len(gw.OP_MCP_PROJECTIONS) == 87
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
@@ -58,8 +60,15 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "project.list_updates", "project.draft_update", "project.update_draft", "project.publish_update",
         "desk.needs_you", "project.item.list", "project.item.create", "project.item.update",
         "project.item.transition", "project.resource.list", "project.resource.add", "project.resource.remove",
+        "project.configure_steward", "project.run_steward", "project.stop_steward", "project.get_steward_run",
+        "project.steward.trigger", "steward.nudges", "nudge.send", "nudge.dismiss",
+        "project.watch.inspect", "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
+        "project.watch.pause", "project.watch.resume", "project.watch.retire",
+        "project.suggested_sources", "project.add_suggested_source", "project.dismiss_suggested_source",
+        "connection.list", "connection.recheck", "project.mark_update_delivered",
     }
-    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create"}
+    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
+                               "project.door.count", "project.watch.update", "project.watch.baseline"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

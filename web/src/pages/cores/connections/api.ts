@@ -10,7 +10,9 @@ export type ConnectionState =
   | "owner_action_required"
   | "unavailable"
   | "degraded"
-  | "not_configured";
+  | "not_configured"
+  /** PHILO-9-02 B1: a remote row no probe has checked yet. */
+  | "never_checked";
 
 export interface ConnectionAccount {
   login?: string;
@@ -33,7 +35,10 @@ export interface ConnectionTool {
   next_action?: ConnectionNextAction;
   recovery_hint?: string;
   error_detail?: string;
+  /** The stored time of the last real probe (null: never checked). */
   last_checked_at?: string;
+  /** Seconds since that probe, computed by the hub at read time. */
+  checked_age_seconds?: number;
   egress_host?: string;
   /** Jira: per-(site,email) connection rows. */
   connections?: JiraSubConnection[];
@@ -46,6 +51,9 @@ export interface JiraSubConnection {
   recovery_hint?: string;
   error_detail?: string;
   egress_host?: string;
+  /** This row's own stored check time (PHILO-9-02 B1). */
+  last_checked_at?: string;
+  checked_age_seconds?: number;
 }
 
 export interface ConnectionsResponse {
@@ -60,9 +68,10 @@ const VALID_STATES = new Set<ConnectionState>([
   "unavailable",
   "degraded",
   "not_configured",
+  "never_checked",
 ]);
 
-function decodeState(raw: unknown): ConnectionState {
+export function decodeState(raw: unknown): ConnectionState {
   if (typeof raw === "string" && VALID_STATES.has(raw as ConnectionState)) {
     return raw as ConnectionState;
   }
@@ -101,6 +110,8 @@ function decodeSubConnection(raw: unknown): JiraSubConnection | undefined {
     recovery_hint: typeof obj.recovery_hint === "string" ? obj.recovery_hint : undefined,
     error_detail: typeof obj.error_detail === "string" ? obj.error_detail : undefined,
     egress_host: typeof obj.egress_host === "string" ? obj.egress_host : undefined,
+    last_checked_at: typeof obj.last_checked_at === "string" ? obj.last_checked_at : undefined,
+    checked_age_seconds: typeof obj.checked_age_seconds === "number" ? obj.checked_age_seconds : undefined,
   };
 }
 
@@ -116,6 +127,7 @@ function decodeTool(raw: unknown): ConnectionTool | undefined {
     recovery_hint: typeof obj.recovery_hint === "string" ? obj.recovery_hint : undefined,
     error_detail: typeof obj.error_detail === "string" ? obj.error_detail : undefined,
     last_checked_at: typeof obj.last_checked_at === "string" ? obj.last_checked_at : undefined,
+    checked_age_seconds: typeof obj.checked_age_seconds === "number" ? obj.checked_age_seconds : undefined,
     egress_host: typeof obj.egress_host === "string" ? obj.egress_host : undefined,
     connections: Array.isArray(obj.connections)
       ? (obj.connections.map(decodeSubConnection).filter(Boolean) as JiraSubConnection[])

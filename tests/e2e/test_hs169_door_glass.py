@@ -268,6 +268,9 @@ def test_door_connected(tmp_path, monkeypatch, width):
             _api(page, "PUT", "/api/setup/onboarding",
                  {"disposition": "completed"}, token=TOKEN)
 
+            # PHILO-9-02 (B1): the Connections list is a cached read; the
+            # GitHub row reads connected after a check stored it.
+            _api(page, "POST", "/api/connections/github/recheck", token=TOKEN)
             # Prime Jira connection
             _api(page, "POST", "/api/providers/jira/connections",
                  {"site": "alpha.atlassian.net", "email": "user@example.com"},

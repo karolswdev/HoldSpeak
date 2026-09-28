@@ -29,11 +29,35 @@ OWNER = Principal(PrincipalKind.OWNER, "test-conn-owner")
 # ── Fake adapters ───────────────────────────────────────────────────
 
 
-def _gh_adapter(state: str, **extra: Any) -> MagicMock:
-    """Build a fake GitHub adapter that returns a fixed connection_status."""
-    adapter = MagicMock()
-    result: dict[str, Any] = {"state": state, "display": {}, **extra}
-    adapter.connection_status.return_value = result
+_GH_PROBE_OUTPUT: dict[str, tuple[int, str]] = {
+    # PHILO-9-02 B1: each state is produced by the REAL adapter's probe of a
+    # canned ``gh auth status`` answer (the runner seam), then read back from
+    # the row the probe stored.  ``list_tools`` itself never probes.
+    "connected": (0, "Logged in to github.com account karolswdev (keyring)"),
+    "owner_action_required": (1, "You are not logged in to any GitHub hosts."),
+    "degraded": (1, "timeout"),
+}
+
+
+def _gh_adapter(state: str, **extra: Any) -> Any:
+    """A real GitHubProviderAdapter on a scratch DB, probed once into ``state``."""
+    import subprocess
+    import tempfile
+
+    from holdspeak.db.core import Database
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    rc, out = _GH_PROBE_OUTPUT[state]
+    calls: list[list[str]] = []
+
+    def runner(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(list(argv))
+        return subprocess.CompletedProcess(argv, rc, stdout=out, stderr="")
+
+    db = Database(Path(tempfile.mkdtemp()) / "gh.db")
+    adapter = GitHubProviderAdapter(db=db, runner=runner)
+    adapter.connection_status(OWNER)  # the real probe stores the row
+    adapter.calls = calls  # type: ignore[attr-defined]
     return adapter
 
 
@@ -60,31 +84,41 @@ def _jira_adapter(
 
 class TestGitHubStates:
     def test_connected(self) -> None:
-        gh = _gh_adapter("connected", display={"account": "karolswdev"})
+        gh = _gh_adapter("connected")
         svc = ConnectionsService(github_adapter=gh)
         result = svc.list_tools(OWNER)
         gh_tool = next(t for t in result["tools"] if t["provider_id"] == "github")
         assert gh_tool["state"] == DISPLAY_CONNECTED
+        # PHILO-9-02 B1: the cached read names the login the probe stored
+        # (``external_connection_ref``) and the stored check time.
         assert gh_tool["account"] == {"login": "karolswdev"}
+        assert gh_tool["last_checked_at"]
         assert gh_tool["egress_host"] == "github.com"
 
     def test_disconnected_maps_to_owner_action_required(self) -> None:
-        gh = _gh_adapter("disconnected", display={"recovery_hint": "gh auth login"})
+        """The stored wire ``disconnected`` maps like ``owner_action_required``."""
+        from holdspeak.services.connections_service import _map_github_state
+
+        assert _map_github_state("disconnected") == DISPLAY_OWNER_ACTION_REQUIRED
+
+    def test_owner_action_required_maps_directly(self) -> None:
+        gh = _gh_adapter("owner_action_required")
         svc = ConnectionsService(github_adapter=gh)
         result = svc.list_tools(OWNER)
         gh_tool = next(t for t in result["tools"] if t["provider_id"] == "github")
         assert gh_tool["state"] == DISPLAY_OWNER_ACTION_REQUIRED
         assert gh_tool["recovery_hint"] == "gh auth login"
 
-    def test_owner_action_required_maps_directly(self) -> None:
-        gh = _gh_adapter("owner_action_required", display={"recovery_hint": "gh auth login"})
-        svc = ConnectionsService(github_adapter=gh)
-        result = svc.list_tools(OWNER)
-        gh_tool = next(t for t in result["tools"] if t["provider_id"] == "github")
-        assert gh_tool["state"] == DISPLAY_OWNER_ACTION_REQUIRED
+    def test_unavailable(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import shutil
+        import tempfile
 
-    def test_unavailable(self) -> None:
-        gh = _gh_adapter("unavailable", error_detail="GitHub CLI (gh) is not installed")
+        from holdspeak.db.core import Database
+        from holdspeak.services.github_provider import GitHubProviderAdapter
+
+        # No runner and no gh on PATH: the local ``which`` check, no subprocess.
+        monkeypatch.setattr(shutil, "which", lambda _name: None)
+        gh = GitHubProviderAdapter(db=Database(Path(tempfile.mkdtemp()) / "gh.db"))
         svc = ConnectionsService(github_adapter=gh)
         result = svc.list_tools(OWNER)
         gh_tool = next(t for t in result["tools"] if t["provider_id"] == "github")
@@ -94,7 +128,7 @@ class TestGitHubStates:
         assert "not installed" in (gh_tool["recovery_hint"] or "")
 
     def test_degraded(self) -> None:
-        gh = _gh_adapter("degraded", error_detail="timeout")
+        gh = _gh_adapter("degraded")
         svc = ConnectionsService(github_adapter=gh)
         result = svc.list_tools(OWNER)
         gh_tool = next(t for t in result["tools"] if t["provider_id"] == "github")
@@ -128,6 +162,7 @@ class TestJiraLedger:
             {
                 "state": "connected",
                 "external_connection_ref": "example.atlassian.net|user@example.com",
+                "last_checked_at": "2026-09-28T10:00:00+00:00",
             },
         ])
         svc = ConnectionsService(jira_adapter=ja)
@@ -144,10 +179,12 @@ class TestJiraLedger:
             {
                 "state": "connected",
                 "external_connection_ref": "a.atlassian.net|a@a.com",
+                "last_checked_at": "2026-09-28T10:00:00+00:00",
             },
             {
                 "state": "disconnected",
                 "external_connection_ref": "b.atlassian.net|b@b.com",
+                "last_checked_at": "2026-09-28T10:05:00+00:00",
             },
         ])
         svc = ConnectionsService(jira_adapter=ja)
@@ -172,6 +209,7 @@ class TestJiraLedger:
             {
                 "state": "owner_action_required",
                 "external_connection_ref": "x.atlassian.net|x@x.com",
+                "last_checked_at": "2026-09-28T10:00:00+00:00",
             },
         ])
         svc = ConnectionsService(jira_adapter=ja)
@@ -250,12 +288,15 @@ class TestModels:
 
 class TestRecheck:
     def test_github_recheck_delegates(self) -> None:
-        gh = _gh_adapter("connected", display={"account": "test"})
+        gh = _gh_adapter("connected")
+        gh.calls.clear()
         svc = ConnectionsService(github_adapter=gh)
+        svc.list_tools(OWNER)
+        assert gh.calls == []  # PHILO-9-02 B1: the list never probes
         result = svc.recheck(OWNER, "github")
         assert result["state"] == DISPLAY_CONNECTED
-        # connection_status was called (by list_tools -> _github_entry)
-        assert gh.connection_status.called
+        # the recheck ran the real probe once at the runner seam
+        assert gh.calls == [["gh", "auth", "status"]]
 
     def test_jira_recheck_all_connections(self) -> None:
         ja = _jira_adapter([

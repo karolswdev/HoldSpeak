@@ -8,6 +8,7 @@ Owner-scoped; typed errors → correct statuses.
 """
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -20,6 +21,9 @@ from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._room_kernel import (
+    body_or_refusal, exempt_form_right, kernel_fields, kernel_refusal, refuse_identifiable, refusal_fields,
+)
 
 log = get_logger("web.routes.project_door")
 
@@ -33,50 +37,77 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
     def _svc_error(exc: ServiceError) -> JSONResponse:
         status = int((exc.context or {}).get("status", 400))
         return JSONResponse(
-            {"code": exc.code, "message": exc.detail},
+            {"code": exc.code, "message": exc.detail, **refusal_fields(exc)},
             status_code=status,
         )
 
+    def ops() -> Any:
+        return operations.for_context(ctx)
+
     @router.post("/count")
     async def door_count(request: Request) -> Any:
+        # PHILO-9-02: admitted on its route (egress: it reads GitHub/Jira, F21).
+        p = principal(request)
+        body, refused = await body_or_refusal(request, ops(), p, "project.door.count")
+        if refused is not None:
+            return refused
         try:
-            body = await request.json()
-            provider = body.get("provider", "")
-            scope = body.get("scope")
-            watches = body.get("watches", [])
-            adjust = body.get("adjust")
-            if not provider or not scope:
+            if not body.get("provider") or not body.get("scope"):
+                kernel = refuse_identifiable(ops(), p, "project.door.count", "invalid_arguments")
                 return JSONResponse(
-                    {"code": "validation", "message": "provider and scope are required"},
+                    {"code": "validation", "message": "provider and scope are required", **kernel_fields(kernel)},
                     status_code=400,
                 )
-            svc = ctx.project_door_service
-            if svc is None:
+            if ctx.project_door_service is None:
                 return JSONResponse(
                     {"code": "service_unavailable", "message": "Door service not configured"},
                     status_code=503,
                 )
-            result = svc.count(principal(request), provider, scope, watches, adjust)
-            return JSONResponse(result)
+            result, kernel = ops().invoke_receipted(p, "project.door.count", {
+                "provider": body.get("provider", ""), "scope": body.get("scope"),
+                "watches": body.get("watches", []), "adjust": body.get("adjust"),
+            })
+            return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "validation", "message": exc.detail, **refusal_fields(exc)}, status_code=400)
         except ValidationError as exc:
             return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
+                {"code": exc.code, "message": exc.detail, **refusal_fields(exc)},
                 status_code=400,
             )
         except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
             return _svc_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to count door sources")
 
     @router.post("")
     async def door_create(request: Request) -> Any:
+        # PHILO-9-02: conditional. With sources: admitted (armed watches read
+        # GitHub/Jira: egress). Bare: exempt, and its previous edge right
+        # (OWNER) is re-applied HERE, before any service call.
+        p = principal(request)
+        raw_bytes = await request.body()
         try:
-            body = await request.json()
+            body = json.loads(raw_bytes) if raw_bytes.strip() else None
+        except ValueError:
+            body = None
+        if not isinstance(body, dict):
+            # Identifiable, but the exempt form cannot be proved: invalid_arguments, with its receipt.
+            kernel = refuse_identifiable(ops(), p, "project.door.create", "invalid_arguments")
+            return JSONResponse({"code": "validation", "message": "the body must be a JSON object",
+                                 **kernel_fields(kernel)}, status_code=400)
+        sources = body.get("sources", [])
+        if not sources and (refused := exempt_form_right(p)) is not None:
+            return refused
+        try:
             outcome = body.get("outcome", "")
-            sources = body.get("sources", [])
             if not outcome or not isinstance(outcome, str):
+                kernel = (refuse_identifiable(ops(), p, "project.door.create", "invalid_arguments")
+                          if sources else None)
                 return JSONResponse(
-                    {"code": "validation", "message": "outcome is required"},
+                    {"code": "validation", "message": "outcome is required", **kernel_fields(kernel)},
                     status_code=400,
                 )
             svc = ctx.project_door_service
@@ -86,18 +117,20 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
                     status_code=503,
                 )
             # PHILO-9-01: the declared project.door.create, beside project.create.
-            result = operations.for_context(ctx).invoke(principal(request), "project.door.create", {
+            result, kernel = ops().invoke_receipted(p, "project.door.create", {
                 "outcome": outcome, "sources": sources,
             })
-            return JSONResponse(result)
+            return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
         except OperationRefused as exc:
-            return JSONResponse({"code": "validation", "message": exc.detail}, status_code=400)
+            return JSONResponse({"code": "validation", "message": exc.detail, **refusal_fields(exc)}, status_code=400)
         except ValidationError as exc:
             return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
+                {"code": exc.code, "message": exc.detail, **refusal_fields(exc)},
                 status_code=400,
             )
         except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
             return _svc_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to create project via door")

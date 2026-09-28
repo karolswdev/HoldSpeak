@@ -829,10 +829,23 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "project.resource.list": {"kind": "tool", "name": "project.resource.list"},
     "project.resource.add": {"kind": "tool", "name": "project.resource.add"},
     "project.resource.remove": {"kind": "tool", "name": "project.resource.remove"},
+    # PHILO-9-02: the steward, the nudges, the watches, the suggested sources,
+    # the connections and mark delivered (each tool carries the canonical
+    # arguments by the same names; the watch tools reach graduated rows).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "project.configure_steward", "project.run_steward", "project.stop_steward", "project.get_steward_run",
+        "project.steward.trigger", "steward.nudges", "nudge.send", "nudge.dismiss",
+        "project.watch.inspect", "project.watch.test", "project.watch.evaluate", "project.watch.set_rules",
+        "project.watch.pause", "project.watch.resume", "project.watch.retire",
+        "project.suggested_sources", "project.add_suggested_source", "project.dismiss_suggested_source",
+        "connection.list", "connection.recheck", "project.mark_update_delivered",
+    )},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
-OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create"})
+OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
+                          # PHILO-9-02: the charter's HTTP capability exceptions.
+                          "project.door.count", "project.watch.update", "project.watch.baseline"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
@@ -854,6 +867,9 @@ OP_READ_OBSERVATIONS = frozenset({
     # PHILO-9-01: the Room's reads.
     "project.list", "project.get", "project.get_room", "project.get_delta", "project.list_updates",
     "desk.needs_you", "project.item.list", "project.resource.list",
+    # PHILO-9-02: the steward's and the connectors' reads.
+    "project.get_steward_run", "steward.nudges", "project.watch.inspect", "project.suggested_sources",
+    "connection.list",
 })
 
 

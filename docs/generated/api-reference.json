@@ -3021,7 +3021,7 @@
             "GET"
           ],
           "symbol": "api_list_ask_tasks",
-          "line": 139,
+          "line": 140,
           "parameters": [
             {
               "name": "request",
@@ -3099,7 +3099,7 @@
             "POST"
           ],
           "symbol": "api_discard_ask_task",
-          "line": 213,
+          "line": 214,
           "parameters": [
             {
               "name": "task_id",
@@ -3164,7 +3164,7 @@
             "POST"
           ],
           "symbol": "api_resume_ask_task",
-          "line": 164,
+          "line": 165,
           "parameters": [
             {
               "name": "task_id",
@@ -3233,7 +3233,7 @@
             "POST"
           ],
           "symbol": "api_record_ask_stop",
-          "line": 191,
+          "line": 192,
           "parameters": [
             {
               "name": "task_id",
@@ -7531,7 +7531,7 @@
             "GET"
           ],
           "symbol": "list_connections",
-          "line": 33,
+          "line": 44,
           "parameters": [
             {
               "name": "request",
@@ -7547,9 +7547,10 @@
           "calls": [
             "JSONResponse",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "svc.list_tools"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -7557,7 +7558,12 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs168_connections_glass.py",
+        "tests/e2e/test_hs169_door_glass.py",
+        "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/mcp/test_hs168_connection_tools.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -7590,7 +7596,7 @@
             "POST"
           ],
           "symbol": "recheck_connection",
-          "line": 51,
+          "line": 63,
           "parameters": [
             {
               "name": "provider",
@@ -7605,16 +7611,28 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            400,
             503
           ],
           "calls": [
             "JSONResponse",
             "body.get",
             "error_500",
+            "exc.context.get",
+            "exempt_form_right",
+            "int",
+            "isinstance",
+            "json.loads",
+            "kernel_fields",
+            "kernel_refusal",
+            "ops",
+            "ops().invoke_receipted",
             "principal",
-            "request.json",
-            "router.post",
-            "svc.recheck"
+            "raw_bytes.strip",
+            "refusal_fields",
+            "refuse_identifiable",
+            "request.body",
+            "router.post"
           ],
           "body_access_keys": [
             "ref"
@@ -7624,6 +7642,11 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_hs168_connections_glass.py",
+        "tests/e2e/test_hs169_door_glass.py",
+        "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/web/test_hs168_connections_routes.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -11190,7 +11213,7 @@
             "GET"
           ],
           "symbol": "api_desk_needs_you",
-          "line": 598,
+          "line": 614,
           "parameters": [
             {
               "name": "request",
@@ -11318,7 +11341,7 @@
             "GET"
           ],
           "symbol": "api_resource_relationships",
-          "line": 382,
+          "line": 394,
           "parameters": [
             {
               "name": "resource_ref",
@@ -19334,7 +19357,8 @@
       ],
       "test_candidates": [
         "tests/integration/test_actuator_kernel_real_hub.py",
-        "tests/integration/test_kernel_real_hub.py"
+        "tests/integration/test_kernel_real_hub.py",
+        "tests/unit/test_philo9_steward_lifecycle.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -21897,7 +21921,7 @@
             "GET"
           ],
           "symbol": "api_meeting_projects",
-          "line": 419,
+          "line": 435,
           "parameters": [
             {
               "name": "meeting_id",
@@ -24112,6 +24136,7 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24205,6 +24230,7 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24483,7 +24509,7 @@
             "POST"
           ],
           "symbol": "api_dismiss_nudge",
-          "line": 481,
+          "line": 241,
           "parameters": [
             {
               "name": "step_id",
@@ -24501,16 +24527,19 @@
           "calls": [
             "JSONResponse",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.post",
-            "svc.dismiss_nudge"
+            "router.post"
           ],
           "body_access_keys": [],
           "raw_request": true,
           "docstring": null
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_steward_admission.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -24541,7 +24570,7 @@
             "POST"
           ],
           "symbol": "api_send_nudge",
-          "line": 455,
+          "line": 218,
           "parameters": [
             {
               "name": "step_id",
@@ -24550,10 +24579,6 @@
             {
               "name": "request",
               "annotation": "Request"
-            },
-            {
-              "name": "payload",
-              "annotation": "dict[str, Any] | None"
             }
           ],
           "return_annotation": "Any",
@@ -24563,13 +24588,21 @@
             400
           ],
           "calls": [
-            "(text or '').strip",
             "JSONResponse",
             "body.get",
+            "body_or_refusal",
             "error_500",
+            "exc.context.get",
+            "exc.context.items",
+            "int",
+            "kernel_fields",
+            "kernel_refusal",
+            "ops",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.post",
-            "svc.send_nudge"
+            "str"
           ],
           "body_access_keys": [
             "text"
@@ -24578,7 +24611,9 @@
           "docstring": null
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_steward_admission.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -26449,7 +26484,7 @@
             "GET"
           ],
           "symbol": "api_list_projects",
-          "line": 227,
+          "line": 228,
           "parameters": [
             {
               "name": "request",
@@ -26518,7 +26553,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26555,7 +26594,7 @@
             "POST"
           ],
           "symbol": "api_create_project",
-          "line": 234,
+          "line": 235,
           "parameters": [
             {
               "name": "payload",
@@ -26629,7 +26668,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26660,7 +26703,9 @@
       ],
       "source": "holdspeak/web/routes/project_door.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_steward_admission.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -26685,7 +26730,9 @@
       ],
       "source": "holdspeak/web/routes/project_door.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_steward_admission.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -26716,7 +26763,7 @@
             "DELETE"
           ],
           "symbol": "api_archive_project",
-          "line": 282,
+          "line": 283,
           "parameters": [
             {
               "name": "project_id",
@@ -26731,16 +26778,20 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            404,
             409,
             500
           ],
           "calls": [
             "JSONResponse",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
             "log.error",
-            "not_found",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.delete",
             "str"
           ],
@@ -26783,7 +26834,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26820,7 +26875,7 @@
             "GET"
           ],
           "symbol": "api_get_project",
-          "line": 251,
+          "line": 252,
           "parameters": [
             {
               "name": "project_id",
@@ -26883,7 +26938,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26920,7 +26979,7 @@
             "PATCH"
           ],
           "symbol": "api_update_project",
-          "line": 260,
+          "line": 261,
           "parameters": [
             {
               "name": "project_id",
@@ -26993,7 +27052,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27028,7 +27091,7 @@
             "GET"
           ],
           "symbol": "api_project_action_items",
-          "line": 446,
+          "line": 462,
           "parameters": [
             {
               "name": "project_id",
@@ -27090,7 +27153,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27127,7 +27194,7 @@
             "GET"
           ],
           "symbol": "api_project_artifacts",
-          "line": 455,
+          "line": 471,
           "parameters": [
             {
               "name": "project_id",
@@ -27189,7 +27256,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27226,7 +27297,7 @@
             "POST"
           ],
           "symbol": "api_save_ask_task",
-          "line": 121,
+          "line": 122,
           "parameters": [
             {
               "name": "project_id",
@@ -27294,7 +27365,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27329,7 +27404,7 @@
             "GET"
           ],
           "symbol": "api_list_project_briefings",
-          "line": 66,
+          "line": 67,
           "parameters": [
             {
               "name": "project_id",
@@ -27396,7 +27471,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27502,7 +27581,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27600,7 +27683,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27716,7 +27803,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27814,7 +27905,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27919,7 +28014,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27984,7 +28083,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28019,7 +28122,7 @@
             "GET"
           ],
           "symbol": "api_list_items",
-          "line": 466,
+          "line": 482,
           "parameters": [
             {
               "name": "project_id",
@@ -28096,7 +28199,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28131,7 +28238,7 @@
             "POST"
           ],
           "symbol": "api_create_item",
-          "line": 483,
+          "line": 499,
           "parameters": [
             {
               "name": "project_id",
@@ -28204,7 +28311,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28239,7 +28350,7 @@
             "PATCH"
           ],
           "symbol": "api_update_item",
-          "line": 504,
+          "line": 520,
           "parameters": [
             {
               "name": "project_id",
@@ -28316,7 +28427,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28351,7 +28466,7 @@
             "POST"
           ],
           "symbol": "api_transition_item",
-          "line": 530,
+          "line": 546,
           "parameters": [
             {
               "name": "project_id",
@@ -28430,7 +28545,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28467,7 +28586,7 @@
             "GET"
           ],
           "symbol": "api_project_meetings",
-          "line": 318,
+          "line": 322,
           "parameters": [
             {
               "name": "project_id",
@@ -28537,7 +28656,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28572,7 +28695,7 @@
             "DELETE"
           ],
           "symbol": "api_disassociate_meeting",
-          "line": 405,
+          "line": 419,
           "parameters": [
             {
               "name": "project_id",
@@ -28597,10 +28720,14 @@
           ],
           "calls": [
             "JSONResponse",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
             "log.error",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.delete",
             "str"
           ],
@@ -28643,7 +28770,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28678,7 +28809,7 @@
             "POST"
           ],
           "symbol": "api_associate_meeting",
-          "line": 391,
+          "line": 403,
           "parameters": [
             {
               "name": "project_id",
@@ -28703,10 +28834,14 @@
           ],
           "calls": [
             "JSONResponse",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
             "log.error",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.post",
             "str"
           ],
@@ -28749,7 +28884,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28786,7 +28925,7 @@
             "GET"
           ],
           "symbol": "api_list_nudges",
-          "line": 442,
+          "line": 208,
           "parameters": [
             {
               "name": "project_id",
@@ -28804,12 +28943,16 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [],
+          "literal_error_statuses": [
+            400
+          ],
           "calls": [
             "JSONResponse",
             "error_500",
-            "router.get",
-            "svc.list_nudges"
+            "ops",
+            "ops().invoke",
+            "principal",
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28850,7 +28993,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28887,7 +29034,7 @@
             "GET"
           ],
           "symbol": "api_project_people",
-          "line": 694,
+          "line": 687,
           "parameters": [
             {
               "name": "project_id",
@@ -28949,7 +29096,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29051,7 +29202,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29088,7 +29243,7 @@
             "GET"
           ],
           "symbol": "api_project_resources",
-          "line": 327,
+          "line": 331,
           "parameters": [
             {
               "name": "project_id",
@@ -29152,7 +29307,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29187,7 +29346,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_project_resource",
-          "line": 358,
+          "line": 369,
           "parameters": [
             {
               "name": "project_id",
@@ -29207,18 +29366,20 @@
           "declared_responses": {},
           "literal_error_statuses": [
             400,
+            404,
             409
           ],
           "calls": [
             "JSONResponse",
+            "body_or_refusal",
             "error_500",
             "isinstance",
-            "not_found",
+            "kernel_fields",
+            "kernel_refusal",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
-            "request.body",
-            "request.json",
+            "refusal_fields",
             "router.delete",
             "str",
             "url_owns"
@@ -29262,7 +29423,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29297,7 +29462,7 @@
             "PUT"
           ],
           "symbol": "api_add_project_resource",
-          "line": 336,
+          "line": 340,
           "parameters": [
             {
               "name": "project_id",
@@ -29310,10 +29475,6 @@
             {
               "name": "request",
               "annotation": "Request"
-            },
-            {
-              "name": "payload",
-              "annotation": "dict[str, Any] | None"
             }
           ],
           "return_annotation": "Any",
@@ -29321,16 +29482,20 @@
           "declared_responses": {},
           "literal_error_statuses": [
             400,
+            404,
             409
           ],
           "calls": [
             "JSONResponse",
-            "dict",
+            "body_or_refusal",
             "error_500",
-            "not_found",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.put",
             "str",
             "url_owns"
@@ -29374,7 +29539,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29409,7 +29578,7 @@
             "POST"
           ],
           "symbol": "api_restore_project",
-          "line": 296,
+          "line": 300,
           "parameters": [
             {
               "name": "project_id",
@@ -29485,7 +29654,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29550,7 +29723,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29613,7 +29790,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29678,7 +29859,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29743,7 +29928,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29780,7 +29969,7 @@
             "GET"
           ],
           "symbol": "api_project_room",
-          "line": 75,
+          "line": 76,
           "parameters": [
             {
               "name": "project_id",
@@ -29843,7 +30032,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29880,7 +30073,7 @@
             "POST"
           ],
           "symbol": "api_mark_room_read",
-          "line": 84,
+          "line": 85,
           "parameters": [
             {
               "name": "project_id",
@@ -29942,7 +30135,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29979,7 +30176,7 @@
             "GET"
           ],
           "symbol": "api_project_since_last_meeting",
-          "line": 428,
+          "line": 444,
           "parameters": [
             {
               "name": "project_id",
@@ -30041,7 +30238,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30078,7 +30279,7 @@
             "GET"
           ],
           "symbol": "api_get_steward_policy",
-          "line": 208,
+          "line": 149,
           "parameters": [
             {
               "name": "project_id",
@@ -30095,10 +30296,11 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
-            "_serialize_policy",
             "error_500",
-            "router.get",
-            "svc._db.steward_policies.get_policy_for_project"
+            "ops",
+            "ops().invoke",
+            "principal",
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -30139,7 +30341,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30176,15 +30382,11 @@
             "PUT"
           ],
           "symbol": "api_put_steward_policy",
-          "line": 225,
+          "line": 163,
           "parameters": [
             {
               "name": "project_id",
               "annotation": "str"
-            },
-            {
-              "name": "payload",
-              "annotation": "dict[str, Any]"
             },
             {
               "name": "request",
@@ -30199,37 +30401,18 @@
           ],
           "calls": [
             "JSONResponse",
-            "ServiceEventLedger",
-            "_serialize_policy",
-            "bool",
+            "body.get",
+            "body_or_refusal",
             "error_500",
-            "generate_pstpol_id",
-            "isinstance",
-            "json.dumps",
-            "ledger.append_in_transaction",
-            "list",
-            "payload.get",
-            "policy.get",
+            "kernel_fields",
+            "ops",
+            "ops().invoke_receipted",
             "principal",
-            "router.put",
-            "svc._db._connection",
-            "svc._db.automations.list_project_watches",
-            "svc._db.automations.update_watch_spec",
-            "svc._db.steward_policies.get_policy",
-            "svc._db.steward_policies.get_policy_for_project",
-            "svc._db.steward_policies.insert_policy",
-            "svc._db.steward_policies.update_policy"
+            "refusal_fields",
+            "refused_by",
+            "router.put"
           ],
-          "body_access_keys": [
-            "bounds",
-            "cooldown_seconds",
-            "eligible_effect_kinds",
-            "enabled",
-            "evaluation_cadence_minutes",
-            "max_actions_per_run",
-            "max_retries",
-            "unattended_enabled"
-          ],
+          "body_access_keys": [],
           "raw_request": true,
           "docstring": null
         }
@@ -30268,7 +30451,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30305,7 +30492,7 @@
             "GET"
           ],
           "symbol": "api_list_steward_runs",
-          "line": 152,
+          "line": 93,
           "parameters": [
             {
               "name": "project_id",
@@ -30374,7 +30561,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30411,7 +30602,7 @@
             "POST"
           ],
           "symbol": "api_start_steward_run",
-          "line": 63,
+          "line": 71,
           "parameters": [
             {
               "name": "project_id",
@@ -30420,35 +30611,25 @@
             {
               "name": "request",
               "annotation": "Request"
-            },
-            {
-              "name": "payload",
-              "annotation": "dict[str, Any] | None"
             }
           ],
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
-            404,
-            409
+            400
           ],
           "calls": [
             "JSONResponse",
-            "_record_steward_command",
-            "_request_hash",
             "body.get",
-            "ctx.project_steward_service._db.projects.get_project_command",
+            "body_or_refusal",
             "error_500",
-            "generate_pcmd_id",
-            "json.loads",
+            "ops",
+            "ops().invoke_receipted",
             "principal",
-            "router.post",
-            "str",
-            "svc.execute_phases",
-            "svc.insert_run",
-            "t.start",
-            "threading.Thread"
+            "refusal_fields",
+            "refused_by",
+            "router.post"
           ],
           "body_access_keys": [
             "command_id",
@@ -30492,7 +30673,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30529,7 +30714,7 @@
             "GET"
           ],
           "symbol": "api_suggested_sources",
-          "line": 616,
+          "line": 632,
           "parameters": [
             {
               "name": "project_id",
@@ -30546,17 +30731,16 @@
           "literal_error_statuses": [],
           "calls": [
             "JSONResponse",
-            "SuggestedSourceService",
             "error_500",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.get_project",
-            "sug.list_suggestions"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
-          "docstring": "List pending suggested sources for a Room."
+          "docstring": "List pending suggested sources for a Room (PHILO-9-02: the declared read)."
         }
       ],
       "test_candidates": [
@@ -30593,7 +30777,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30623,54 +30811,7 @@
         "web"
       ],
       "source": "holdspeak/web/routes/projects.py",
-      "handler_evidence": [
-        {
-          "path": "/api/projects/{project_id}/suggested-sources/{ref}/add",
-          "methods": [
-            "POST"
-          ],
-          "symbol": "api_add_suggested_source",
-          "line": 630,
-          "parameters": [
-            {
-              "name": "project_id",
-              "annotation": "str"
-            },
-            {
-              "name": "ref",
-              "annotation": "str"
-            },
-            {
-              "name": "request",
-              "annotation": "Request"
-            }
-          ],
-          "return_annotation": "Any",
-          "declared_response_model": null,
-          "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
-          "calls": [
-            "JSONResponse",
-            "SuggestedSourceService",
-            "conn.execute",
-            "conn.execute(\"SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'\", (project_id, ref)).fetchone",
-            "dict",
-            "error_500",
-            "not_found",
-            "principal",
-            "router.post",
-            "service._db._connection",
-            "service.add_resource",
-            "service.get_project",
-            "sug.accept_suggestion"
-          ],
-          "body_access_keys": [],
-          "raw_request": true,
-          "docstring": "Accept a suggested source -- creates a Watch source via the existing path."
-        }
-      ],
+      "handler_evidence": [],
       "test_candidates": [
         "tests/critical/test_journey_project_first_result.py",
         "tests/e2e/test_hs158_room_glass.py",
@@ -30705,7 +30846,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30735,53 +30880,7 @@
         "web"
       ],
       "source": "holdspeak/web/routes/projects.py",
-      "handler_evidence": [
-        {
-          "path": "/api/projects/{project_id}/suggested-sources/{ref}/dismiss",
-          "methods": [
-            "POST"
-          ],
-          "symbol": "api_dismiss_suggested_source",
-          "line": 669,
-          "parameters": [
-            {
-              "name": "project_id",
-              "annotation": "str"
-            },
-            {
-              "name": "ref",
-              "annotation": "str"
-            },
-            {
-              "name": "request",
-              "annotation": "Request"
-            }
-          ],
-          "return_annotation": "Any",
-          "declared_response_model": null,
-          "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
-          "calls": [
-            "JSONResponse",
-            "SuggestedSourceService",
-            "conn.execute",
-            "conn.execute(\"SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'\", (project_id, ref)).fetchone",
-            "dict",
-            "error_500",
-            "not_found",
-            "principal",
-            "router.post",
-            "service._db._connection",
-            "service.get_project",
-            "sug.dismiss_suggestion"
-          ],
-          "body_access_keys": [],
-          "raw_request": true,
-          "docstring": "Dismiss a suggested source -- never suggest again for this Room."
-        }
-      ],
+      "handler_evidence": [],
       "test_candidates": [
         "tests/critical/test_journey_project_first_result.py",
         "tests/e2e/test_hs158_room_glass.py",
@@ -30816,7 +30915,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30851,7 +30954,7 @@
             "GET"
           ],
           "symbol": "api_project_summary",
-          "line": 437,
+          "line": 453,
           "parameters": [
             {
               "name": "project_id",
@@ -30913,7 +31016,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30950,7 +31057,7 @@
             "GET"
           ],
           "symbol": "api_list_updates",
-          "line": 61,
+          "line": 62,
           "parameters": [
             {
               "name": "project_id",
@@ -31019,7 +31126,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -31056,7 +31167,7 @@
             "POST"
           ],
           "symbol": "api_draft_update",
-          "line": 81,
+          "line": 82,
           "parameters": [
             {
               "name": "project_id",
@@ -31132,7 +31243,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -31169,7 +31284,7 @@
             "GET"
           ],
           "symbol": "list_project_watches",
-          "line": 57,
+          "line": 60,
           "parameters": [
             {
               "name": "project_id",
@@ -31234,7 +31349,11 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_mark_delivered.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -31516,7 +31635,10 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs168_sources_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
+        "tests/e2e/test_philo9_b1_connections_glass.py",
         "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_ux_canon_scan.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -31573,7 +31695,9 @@
           "docstring": "List all Confluence connections."
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_b1_connections.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -31632,7 +31756,9 @@
           "docstring": "Recheck one Confluence connection (switch + status probe)."
         }
       ],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/unit/test_philo9_b1_connections.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
@@ -32074,7 +32200,10 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs168_sources_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -32143,7 +32272,10 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs168_sources_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -32209,7 +32341,10 @@
         "tests/e2e/test_hs168_connections_glass.py",
         "tests/e2e/test_hs168_sources_glass.py",
         "tests/e2e/test_hs169_door_glass.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/e2e/test_philo9_b1_connections_glass.py",
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_b1_connections.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34320,6 +34455,7 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34438,6 +34574,7 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34793,7 +34930,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34867,7 +35005,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34948,7 +35087,8 @@
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo9_contract.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36488,7 +36628,7 @@
             "GET"
           ],
           "symbol": "api_get_steward_run",
-          "line": 170,
+          "line": 111,
           "parameters": [
             {
               "name": "run_id",
@@ -36507,12 +36647,11 @@
           ],
           "calls": [
             "JSONResponse",
-            "_serialize_run",
-            "_serialize_steps",
             "error_500",
-            "router.get",
-            "svc._db.steward_runs.get_run",
-            "svc._db.steward_steps.list_steps"
+            "ops",
+            "ops().invoke",
+            "principal",
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -36524,7 +36663,9 @@
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/integration/test_steward_routes.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36556,7 +36697,7 @@
             "POST"
           ],
           "symbol": "api_stop_steward_run",
-          "line": 191,
+          "line": 126,
           "parameters": [
             {
               "name": "run_id",
@@ -36571,16 +36712,27 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            400,
             404
           ],
           "calls": [
             "JSONResponse",
+            "body.get",
+            "body_or_refusal",
             "error_500",
-            "router.post",
-            "svc._db.steward_runs.get_run",
-            "svc.stop"
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
+            "ops",
+            "ops().invoke_receipted",
+            "principal",
+            "refusal_fields",
+            "refused_by",
+            "router.post"
           ],
-          "body_access_keys": [],
+          "body_access_keys": [
+            "command_id"
+          ],
           "raw_request": true,
           "docstring": null
         }
@@ -36590,7 +36742,9 @@
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/integration/test_steward_routes.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_lifecycle.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36622,7 +36776,7 @@
             "POST"
           ],
           "symbol": "api_trigger_steward",
-          "line": 404,
+          "line": 188,
           "parameters": [
             {
               "name": "request",
@@ -36633,25 +36787,32 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
-            503
+            400
           ],
           "calls": [
             "JSONResponse",
+            "body.get",
+            "body_or_refusal",
             "error_500",
-            "get_scheduler_services",
+            "ops",
+            "ops().invoke_receipted",
             "principal",
-            "router.post",
-            "wired_steward.run_due",
-            "wired_watch.evaluate_due"
+            "refusal_fields",
+            "refused_by",
+            "router.post"
           ],
-          "body_access_keys": [],
+          "body_access_keys": [
+            "command_id"
+          ],
           "raw_request": true,
           "docstring": null
         }
       ],
       "test_candidates": [
         "tests/unit/test_hs167_debts.py",
-        "tests/unit/test_phase200_watch_arming.py"
+        "tests/unit/test_phase200_watch_arming.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_lifecycle.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40038,7 +40199,7 @@
             "PUT"
           ],
           "symbol": "api_save_update",
-          "line": 109,
+          "line": 110,
           "parameters": [
             {
               "name": "update_id",
@@ -40088,7 +40249,10 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40120,7 +40284,7 @@
             "GET"
           ],
           "symbol": "api_update_markdown",
-          "line": 206,
+          "line": 244,
           "parameters": [
             {
               "name": "update_id",
@@ -40159,7 +40323,10 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40191,7 +40358,7 @@
             "POST"
           ],
           "symbol": "api_publish_update",
-          "line": 176,
+          "line": 177,
           "parameters": [
             {
               "name": "update_id",
@@ -40200,10 +40367,6 @@
             {
               "name": "request",
               "annotation": "Request"
-            },
-            {
-              "name": "payload",
-              "annotation": "dict[str, Any] | None"
             }
           ],
           "return_annotation": "Any",
@@ -40211,17 +40374,23 @@
           "declared_responses": {},
           "literal_error_statuses": [
             400,
-            404,
             409
           ],
           "calls": [
             "JSONResponse",
             "_enrich_update",
             "body.get",
+            "body_or_refusal",
             "error_500",
+            "exc.context.get",
+            "int",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
             "ops",
-            "ops().invoke",
+            "ops().invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.post",
             "str"
           ],
@@ -40240,7 +40409,10 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40272,7 +40444,7 @@
             "POST"
           ],
           "symbol": "api_regenerate_update",
-          "line": 143,
+          "line": 144,
           "parameters": [
             {
               "name": "update_id",
@@ -40322,7 +40494,10 @@
         "tests/unit/test_philo9_compat.py",
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
-        "tests/unit/test_philo9_room_contract.py"
+        "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_room_contract.py",
+        "tests/unit/test_philo9_steward_admission.py",
+        "tests/unit/test_philo9_steward_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40352,7 +40527,7 @@
             "GET"
           ],
           "symbol": "list_watches",
-          "line": 41,
+          "line": 44,
           "parameters": [
             {
               "name": "request",
@@ -40388,7 +40563,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40420,7 +40596,7 @@
             "GET"
           ],
           "symbol": "get_watch",
-          "line": 74,
+          "line": 113,
           "parameters": [
             {
               "name": "watch_id",
@@ -40439,8 +40615,9 @@
           ],
           "calls": [
             "JSONResponse",
-            "ctx.watch_service.get_watch",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.get"
           ],
@@ -40454,7 +40631,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40486,7 +40664,7 @@
             "PATCH"
           ],
           "symbol": "update_watch",
-          "line": 90,
+          "line": 128,
           "parameters": [
             {
               "name": "watch_id",
@@ -40500,27 +40678,16 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            400,
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "JSONResponse",
+            "_admitted",
             "body.get",
-            "ctx.watch_service.update_watch",
-            "error_500",
+            "body_or_refusal",
+            "ops",
             "principal",
-            "request.json",
             "router.patch"
           ],
-          "body_access_keys": [
-            "intent",
-            "name",
-            "query",
-            "subject_kind",
-            "trigger",
-            "trigger_kind"
-          ],
+          "body_access_keys": [],
           "raw_request": true,
           "docstring": null
         }
@@ -40530,7 +40697,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40560,7 +40728,7 @@
             "POST"
           ],
           "symbol": "baseline_watch",
-          "line": 142,
+          "line": 145,
           "parameters": [
             {
               "name": "watch_id",
@@ -40574,16 +40742,9 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
-            "ctx.watch_service.baseline_watch",
-            "error_500",
-            "int",
-            "principal",
+            "_admitted",
             "router.post"
           ],
           "body_access_keys": [],
@@ -40596,7 +40757,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40640,16 +40802,19 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
             "(exc.context or {}).get",
             "JSONResponse",
-            "ctx.watch_service.evaluate_once",
             "error_500",
             "int",
+            "isinstance",
+            "kernel_fields",
+            "kernel_refusal",
+            "operations.for_context",
+            "operations.for_context(ctx).invoke_receipted",
             "principal",
+            "refusal_fields",
             "router.post"
           ],
           "body_access_keys": [],
@@ -40662,7 +40827,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40694,7 +40860,7 @@
             "POST"
           ],
           "symbol": "pause_watch",
-          "line": 164,
+          "line": 151,
           "parameters": [
             {
               "name": "watch_id",
@@ -40708,16 +40874,9 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
-            "ctx.watch_service.pause_watch",
-            "error_500",
-            "int",
-            "principal",
+            "_admitted",
             "router.post"
           ],
           "body_access_keys": [],
@@ -40730,7 +40889,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40762,7 +40922,7 @@
             "POST"
           ],
           "symbol": "resume_watch",
-          "line": 186,
+          "line": 157,
           "parameters": [
             {
               "name": "watch_id",
@@ -40776,16 +40936,9 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
-            "ctx.watch_service.resume_watch",
-            "error_500",
-            "int",
-            "principal",
+            "_admitted",
             "router.post"
           ],
           "body_access_keys": [],
@@ -40798,7 +40951,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40830,7 +40984,7 @@
             "POST"
           ],
           "symbol": "retire_watch",
-          "line": 208,
+          "line": 163,
           "parameters": [
             {
               "name": "watch_id",
@@ -40844,16 +40998,9 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
-            "ctx.watch_service.retire_watch",
-            "error_500",
-            "int",
-            "principal",
+            "_admitted",
             "router.post"
           ],
           "body_access_keys": [],
@@ -40866,7 +41013,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40896,7 +41044,7 @@
             "PUT"
           ],
           "symbol": "set_rules",
-          "line": 230,
+          "line": 169,
           "parameters": [
             {
               "name": "watch_id",
@@ -40910,19 +41058,13 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            400,
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
+            "_admitted",
             "body.get",
-            "ctx.watch_service.set_rules",
-            "error_500",
-            "int",
+            "body_or_refusal",
+            "ops",
             "principal",
-            "request.json",
             "router.put"
           ],
           "body_access_keys": [
@@ -40937,7 +41079,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40967,7 +41110,7 @@
             "POST"
           ],
           "symbol": "test_watch",
-          "line": 120,
+          "line": 139,
           "parameters": [
             {
               "name": "watch_id",
@@ -40981,16 +41124,9 @@
           "return_annotation": "Any",
           "declared_response_model": null,
           "declared_responses": {},
-          "literal_error_statuses": [
-            404
-          ],
+          "literal_error_statuses": [],
           "calls": [
-            "(exc.context or {}).get",
-            "JSONResponse",
-            "ctx.watch_service.test_watch",
-            "error_500",
-            "int",
-            "principal",
+            "_admitted",
             "router.post"
           ],
           "body_access_keys": [],
@@ -41003,7 +41139,8 @@
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/e2e/test_hs175_room_glass.py",
         "tests/integration/test_project_setup_routes.py",
-        "tests/integration/test_provider_routes.py"
+        "tests/integration/test_provider_routes.py",
+        "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

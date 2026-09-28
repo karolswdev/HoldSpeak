@@ -620,7 +620,11 @@ class WorkbenchConductor:
                 raise _SchedulerNotWired()
             owner = Principal(PrincipalKind.OWNER, "local-steward-conductor")
             steward_svc = _steward_service
-            run_outcomes = steward_svc.run_due(owner)
+            # PHILO-9-02 (the steward beat, section 4): an unattended run acts
+            # as SCHEDULER under the owner's RECORDED policy -- never as a
+            # manufactured OWNER. The cadence projections below stay reads.
+            scheduler = Principal(PrincipalKind.SCHEDULER, "local-steward-conductor")
+            run_outcomes = steward_svc.run_due(scheduler)
             for outcome in run_outcomes:
                 if outcome.get("outcome") in {"failed", "error"}:
                     log.warning("Steward scheduler: %s", outcome)

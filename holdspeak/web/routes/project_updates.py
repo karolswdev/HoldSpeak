@@ -24,9 +24,10 @@ from ... import operations
 from ...logging_config import get_logger
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
-from ...services.errors import ConflictError, NotFound, ValidationError
+from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
 
 log = get_logger("web.routes.project_updates")
 
@@ -173,32 +174,69 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     # ── POST /api/updates/{update_id}/publish ──────────────────────
 
     @router.post("/api/updates/{update_id}/publish")
-    async def api_publish_update(
-        update_id: str, request: Request,
-        payload: dict[str, Any] | None = None,
-    ) -> Any:
+    async def api_publish_update(update_id: str, request: Request) -> Any:
+        # PHILO-9-02: admitted (story 01's row, enforced): one operation, one
+        # receipt; an agent is refused project_delegation_required with one.
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.publish_update",
+                                              optional=True)
+        if refused is not None:
+            return refused
         try:
-            body = payload or {}
-            cmd_id = body.get("command_id")
-            result = ops().invoke(principal(request), "project.publish_update", {
-                "update_id": update_id, "command_id": cmd_id,
+            result, kernel = ops().invoke_receipted(principal(request), "project.publish_update", {
+                "update_id": update_id, "command_id": body.get("command_id"),
             })
-            return JSONResponse({"success": True, "update": _enrich_update(result)})
+            return JSONResponse({"success": True, "update": _enrich_update(result), **kernel_fields(kernel)})
         except OperationRefused as exc:
-            return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
+            return JSONResponse({"success": False, "code": "validation", "message": exc.detail,
+                                 **refusal_fields(exc)}, status_code=400)
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",
-                 "error": str(exc)},
+                 "error": str(exc), **refusal_fields(exc)},
                 status_code=409,
             )
-        except NotFound as exc:
-            return JSONResponse(
-                {"success": False, "code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            status = 404 if isinstance(exc, NotFound) else int(exc.context.get("status") or 409)
+            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail,
+                                 **refusal_fields(exc)}, status_code=status)
         except Exception as exc:
             return error_500(exc, log, "Failed to publish update")
+
+    # ── POST /api/updates/{update_id}/delivered (PHILO-9-02; the Q0 ruling) ─
+
+    @router.post("/api/updates/{update_id}/delivered")
+    async def api_mark_update_delivered(update_id: str, request: Request) -> Any:
+        """Mark it delivered: one admitted record per confirmation (R4-2).
+
+        Body (optional): ``{delivered_to, command_id}``. The face mints ONE
+        ``command_id`` per press of Mark delivered and keeps it across its
+        retries; a repeat of that key answers the original record.
+        """
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.mark_update_delivered",
+                                              optional=True)
+        if refused is not None:
+            return refused
+        try:
+            args = {"update_id": update_id, **{k: v for k, v in body.items()}}
+            if "update_id" in body:
+                raise OperationRefused("invalid_arguments", "project.mark_update_delivered",
+                                       "Invalid arguments for project.mark_update_delivered: "
+                                       "update_id comes from the path, not the body")
+            result, kernel = ops().invoke_receipted(principal(request), "project.mark_update_delivered", args)
+            return JSONResponse({**result, **kernel_fields(kernel)})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "code": "invalid_arguments", "message": exc.detail,
+                                 **refusal_fields(exc)}, status_code=400)
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            status = 404 if isinstance(exc, NotFound) else 400 if isinstance(exc, ValidationError) else 409
+            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail,
+                                 **refusal_fields(exc)}, status_code=status)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to mark the update delivered")
 
     # ── GET /api/updates/{update_id}/markdown ──────────────────────
 

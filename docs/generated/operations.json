@@ -1986,7 +1986,7 @@
         "rule": "exempt",
         "condition": "A bare project: a project row, revision, change and event; no watch (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2030,7 +2030,7 @@
         "arguments": [
           "sources"
         ],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2092,7 +2092,7 @@
         "rule": "exempt",
         "condition": "A plain edit of the project's own fields (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2148,7 +2148,7 @@
         "rule": "admitted",
         "condition": "Pauses the watches and turns unattended steward runs off: changes authority, stops scheduled egress (Q1; F18).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2204,7 +2204,7 @@
         "rule": "exempt",
         "condition": "Lifecycle active; resumes no watch and no unattended run (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2266,7 +2266,7 @@
         "rule": "admitted",
         "condition": "Files a meeting in the Room; the meeting watch it ensures (watch.create) is its child, not a second top-level admission (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2328,7 +2328,7 @@
         "rule": "admitted",
         "condition": "Unfiles the meeting (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2368,7 +2368,7 @@
         "rule": "exempt",
         "condition": "Freezes a local review window (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2486,7 +2486,7 @@
         "rule": "admitted",
         "condition": "Each of the four verbs decides (Q1; Codex Astra r2 F2).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2539,7 +2539,7 @@
         "rule": "admitted",
         "condition": "Accepts the window: bumps the revision, supersedes undecided proposals (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2641,7 +2641,7 @@
         "rule": "exempt",
         "condition": "A draft; a model draft's call keeps its own inference.invoke admission (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2692,7 +2692,7 @@
         "rule": "exempt",
         "condition": "The draft's text (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2740,7 +2740,7 @@
         "rule": "admitted",
         "condition": "A published update is read-only: may be irreversible; sends nothing (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -2927,7 +2927,7 @@
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -3011,7 +3011,7 @@
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -3079,7 +3079,7 @@
         "rule": "exempt",
         "condition": "The owner's own record in the Room (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -3188,7 +3188,7 @@
         "rule": "admitted",
         "condition": "Files a thing in the Room (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
       }
     },
     {
@@ -3250,7 +3250,1230 @@
         "rule": "admitted",
         "condition": "Unfiles a thing from the Room (Q1).",
         "arguments": [],
-        "enforced": false
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.configure_steward",
+      "version": 1,
+      "description": "Read or set the steward's policy for a project: what it may do (eligible_effect_kinds), its bounds, and whether it may run on its own (unattended_enabled). Give only project_id to read it.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Optional. Turn the steward on or off."
+          },
+          "unattended_enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Optional. Let the steward run on a schedule without you."
+          },
+          "eligible_effect_kinds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional. What the steward may do: refresh_sources, create_proposals, apply_proposal_effects, draft_update, create_door_item, github_comment."
+          },
+          "max_retries": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional, 0 to 100."
+          },
+          "max_actions_per_run": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional, 0 to 1000."
+          },
+          "cooldown_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional, 0 to 86400."
+          },
+          "bounds": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional bounds object."
+          },
+          "evaluation_cadence_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional, 1 to 10080: how often the project's watches read."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{policy} for a read (null when none is set); {success: true, policy} for a write",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ValidationError validation_error: a value outside its range or an unknown effect kind"
+      ],
+      "completion": "synchronous; a read returns the stored policy",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/steward/policy",
+        "http:PUT /api/projects/{project_id}/steward/policy",
+        "mcp:project.configure_steward"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "Any policy field given: it sets what the steward may do and whether it runs on its own (a delegation; changes authority, Q1). Only project_id: a read.",
+        "arguments": [
+          "enabled",
+          "unattended_enabled",
+          "eligible_effect_kinds",
+          "max_retries",
+          "max_actions_per_run",
+          "cooldown_seconds",
+          "bounds",
+          "evaluation_cadence_minutes"
+        ],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.run_steward",
+      "version": 1,
+      "description": "Let the steward run on a project now: it reads the sources, opens a review, and does what its policy allows. Returns run_id and operation_id at once; the run works in the background. Read it with project.get_steward_run.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "watermark": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional text to find this run again."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{success: true, run_id, operation_id, state, receipt} (receipt null while the run works)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "not_found: unknown project",
+        "active_run_exists",
+        "steward_disabled",
+        "cooldown_active",
+        "project_delegation_required"
+      ],
+      "completion": "asynchronous; project.get_steward_run returns the run's state, its steps and its one terminal receipt",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/steward/runs",
+        "mcp:project.run_steward"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A run acts under the policy; each executed effect is a child operation (XI.2); github_comment crosses egress (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.stop_steward",
+      "version": 1,
+      "description": "Stop a steward run. The run stops at its next safe point and ends with its own receipt.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "description": "The steward run id: run_id from project.run_steward, or steward.latest_run.id from project.get_room."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{success: true, run_id, operation_id, receipt}: the stop request is recorded (not: the run has stopped)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "not_found: unknown run",
+        "steward_run_already_terminal",
+        "steward_run_owner_required",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous for the request; project.get_steward_run shows the run end interrupted",
+      "exposure": [
+        "http:POST /api/steward/runs/{run_id}/stop",
+        "mcp:project.stop_steward"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A durable stop on a run: controls a process (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.get_steward_run",
+      "version": 1,
+      "description": "Read a steward run: its state, phase, steps, its operation_id and its terminal receipt.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "description": "The steward run id: run_id from project.run_steward, or steward.latest_run.id from project.get_room."
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "{run, steps, operation_id, receipt} (receipt null while the run works)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown run"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/steward/runs/{run_id}",
+        "mcp:project.get_steward_run"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.steward.trigger",
+      "version": 1,
+      "description": "Do the scheduled work now: read the watches that are due and start the steward runs they ask for. Returns operation_id at once; project.get_steward_run reads each run.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{success: true, operation_id, state, receipt} (receipt null until its runs end); the terminal receipt's result names the watch and run outcomes",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "scheduler_not_wired",
+        "project_delegation_required"
+      ],
+      "completion": "asynchronous; kernel.receipt reads the trigger's receipt when its runs end",
+      "exposure": [
+        "http:POST /api/steward/trigger",
+        "mcp:project.steward.trigger"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Evaluates due watches and starts due steward work: controls a process; its runs are children (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "steward.nudges",
+      "version": 1,
+      "description": "List the steward's reviewer nudges for a project (proposed, sent or dismissed).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "proposed",
+              "sent",
+              "dismissed",
+              null
+            ],
+            "description": "Optional filter."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "a list of nudges (step_id, state, repo, pr_number, reviewer_login, days, comment_text, host, receipt ...)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/nudges",
+        "mcp:steward.nudges"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "nudge.send",
+      "version": 1,
+      "description": "Send a reviewer nudge you reviewed: it posts your text as a comment on the GitHub pull request.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "description": "The nudge id: nudges[].step_id from steward.nudges."
+          },
+          "text": {
+            "type": "string",
+            "description": "The comment text (not empty); it is posted as you write it."
+          }
+        },
+        "required": [
+          "step_id",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{step_id, state: sent, receipt ...} and the kernel operation_id and receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "nudge_not_found",
+        "nudge_not_proposed",
+        "empty_text",
+        "the policy or gh refusals",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous; steward.nudges shows it sent",
+      "exposure": [
+        "http:POST /api/nudges/{step_id}/send",
+        "mcp:nudge.send"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A GitHub comment: egress (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "nudge.dismiss",
+      "version": 1,
+      "description": "Dismiss a reviewer nudge without posting it. It does not come back for 7 days.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "description": "The nudge id: nudges[].step_id from steward.nudges."
+          }
+        },
+        "required": [
+          "step_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{step_id, state: dismissed ...}, or {error} (nudge_not_found, nudge_not_proposed)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous; steward.nudges shows it dismissed",
+      "exposure": [
+        "http:POST /api/nudges/{step_id}/dismiss",
+        "mcp:nudge.dismiss"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The nudge's own state only (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.inspect",
+      "version": 1,
+      "description": "Read one watch of a project: its query, rules, state and last reads.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "read",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:GET /api/watches/{watch_id}",
+        "mcp:project.watch.inspect"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.test",
+      "version": 1,
+      "description": "Test a watch: one bounded read of its source (GitHub, Jira or Confluence) that changes nothing.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the test result (test_state, entities ...)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/test",
+        "mcp:project.watch.test"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Fetches the source (egress) and stores the test result (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.evaluate",
+      "version": 1,
+      "description": "Read a watch's source now and record what changed since its last read.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "{success: true, ...the evaluation}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/evaluate",
+        "mcp:project.watch.evaluate"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Snapshot, diff, transitions; records effects the steward can act on: egress (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.set_rules",
+      "version": 1,
+      "description": "Set what a watch does when its source changes (its rules), and optionally how often it reads.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "The rule list (condition and actions)."
+          },
+          "evaluation_cadence_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional, 1 to 10080."
+          }
+        },
+        "required": [
+          "watch_id",
+          "rules"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:PUT /api/watches/{watch_id}/rules",
+        "mcp:project.watch.set_rules"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "What the watch does and how often: changes what may act (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.pause",
+      "version": 1,
+      "description": "Pause a watch: it stops reading its source.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/pause",
+        "mcp:project.watch.pause"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Stops scheduled source reads: controls a process (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.resume",
+      "version": 1,
+      "description": "Resume a paused watch: it reads its source on its schedule again.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/resume",
+        "mcp:project.watch.resume"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Starts scheduled source reads: controls a process (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.retire",
+      "version": 1,
+      "description": "Retire a watch: it stops for good and keeps its history.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/retire",
+        "mcp:project.watch.retire"
+      ],
+      "held": [
+        "graduated_only"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Stops scheduled source reads for good: controls a process (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.update",
+      "version": 1,
+      "description": "Change a watch's name, intent, query or trigger. A change to what it reads makes its test and baseline stale.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject_kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "query": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "trigger_kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trigger": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the watch with its rules",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:PATCH /api/watches/{watch_id}"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Changes what the watch reads and when: changes what may act (the charter's HTTP capability exceptions).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.watch.baseline",
+      "version": 1,
+      "description": "Take a watch's baseline: one read of its source that later changes compare to.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "watch_id": {
+            "type": "string",
+            "description": "The watch id: sources.items[].watchIds[] from project.get_room."
+          }
+        },
+        "required": [
+          "watch_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged; the MCP tool reaches graduated watches only (legacy rows: legacy_watch_boundary)",
+      "effect": "write",
+      "result": "the baseline result",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown watch",
+        "ServiceError owner_principal_required",
+        "ServiceError legacy_watch_boundary"
+      ],
+      "completion": "synchronous; project.watch.inspect returns the new state",
+      "exposure": [
+        "http:POST /api/watches/{watch_id}/baseline"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A baseline read of the source: egress (the charter's HTTP capability exceptions).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.suggested_sources",
+      "version": 1,
+      "description": "List the sources a project's meetings mention that the Room does not watch yet (GitHub owner/repo, Jira PROJ-123).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "a list of pending suggestions (id, provider, reference, meeting_id, status, created_at)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/suggested-sources",
+        "mcp:project.suggested_sources"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.add_suggested_source",
+      "version": 1,
+      "description": "Watch a suggested source in the Room: it files the source in the Room and arms a watch that reads it on a schedule. When it cannot, it says why and the suggestion stays pending.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "reference": {
+            "type": "string",
+            "description": "The suggested source: suggestions[].reference from project.suggested_sources (owner/repo or PROJ-123)."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "reference"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{suggestion (status accepted), resource (the filed source), watch (the armed watch)}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project, or no pending suggestion",
+        "ServiceError jira_connection_required: no connected Jira account",
+        "ServiceError source_unsupported",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous; project.resource.list and project.get_room (sources) read it back",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/suggested-sources/{ref}/add",
+        "mcp:project.add_suggested_source"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Files the source in the Room and arms a watch that reads the provider (filing; arms egress, Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.dismiss_suggested_source",
+      "version": 1,
+      "description": "Dismiss a suggested source: the Room does not suggest it again.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "reference": {
+            "type": "string",
+            "description": "The suggested source: suggestions[].reference from project.suggested_sources (owner/repo or PROJ-123)."
+          }
+        },
+        "required": [
+          "project_id",
+          "reference"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{suggestion (status dismissed)}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project, or no pending suggestion"
+      ],
+      "completion": "synchronous; project.suggested_sources no longer lists it",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/suggested-sources/{ref}/dismiss",
+        "mcp:project.dismiss_suggested_source"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The suggestion never shows again (Q1).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "connection.list",
+      "version": 1,
+      "description": "See your connections: GitHub, Jira and Confluence as last checked (each with its own check time, or never_checked), and Calendar and Models as they are now. It checks nothing.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "{tools: [{provider_id, state, account, next_action, last_checked_at, checked_age_seconds, connections ...}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous; a cached read (B1): no provider call",
+      "exposure": [
+        "http:GET /api/connections",
+        "mcp:connection.list"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "connection.recheck",
+      "version": 1,
+      "description": "Check a connection again now: github, jira or confluence asks the provider and stores what it says; calendar and models read local state.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "description": "github, jira, confluence, calendar or models: tools[].provider_id from connection.list."
+          },
+          "ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional, Jira or Confluence: one connection (site|email): connections[].connection_ref from connection.list."
+          }
+        },
+        "required": [
+          "provider_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the provider's tool entry, as connection.list gives it",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous; connection.list shows the new check time",
+      "exposure": [
+        "http:POST /api/connections/{provider}/recheck",
+        "mcp:connection.recheck"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "github, jira, confluence: asks the provider and stores its state (egress, Q1; B1). calendar, models: local readiness, no egress.",
+        "arguments": [
+          "provider_id"
+        ],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.door.count",
+      "version": 1,
+      "description": "Count what a GitHub or Jira source has now, for the Door's source rows: it reads the provider.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "github or jira."
+          },
+          "scope": {
+            "description": "owner/repo for GitHub; {connection_ref, projects} for Jira."
+          },
+          "watches": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Optional watch keys to count."
+          },
+          "adjust": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional adjustments."
+          }
+        },
+        "required": [
+          "provider",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the counts per watch key (count, label, host, counted_at)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError validation",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:POST /api/projects/door/count"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Fetches GitHub/Jira snapshots to count: egress (Q1; F21).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.mark_update_delivered",
+      "version": 1,
+      "description": "Mark it delivered: record that you delivered a published update yourself (to your boss, then to a peer ...). Each mark is its own record with its time and optional To. HoldSpeak delivers nothing. A mark without command_id is a new record every time; repeat a command_id to retry one mark.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "update_id": {
+            "type": "string",
+            "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."
+          },
+          "delivered_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "Optional: who you delivered it to, in your words (200 characters at most)."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "update_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "{success: true, delivery: {id, update_id, project_id, delivered_at, delivered_to, operation_id}} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown update",
+        "ValidationError update_not_published",
+        "idempotency_conflict",
+        "project_delegation_required"
+      ],
+      "completion": "synchronous; project.list_updates lists the delivery (deliveries, oldest first)",
+      "exposure": [
+        "http:POST /api/updates/{update_id}/delivered",
+        "mcp:project.mark_update_delivered"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Each mark is final: its receipt proves he recorded that confirmation, not that anyone received anything. Owner-only: never in the grant (Q0; R4-2).",
+        "arguments": [],
+        "enforced": true
       }
     }
   ]

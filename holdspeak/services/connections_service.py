@@ -38,6 +38,8 @@ DISPLAY_OWNER_ACTION_REQUIRED = "owner_action_required"
 DISPLAY_UNAVAILABLE = "unavailable"
 DISPLAY_DEGRADED = "degraded"
 DISPLAY_NOT_CONFIGURED = "not_configured"
+# PHILO-9-02 B1: a remote row no probe has checked yet (no stored time).
+DISPLAY_NEVER_CHECKED = "never_checked"
 
 # Map from adapter wire states to the display states (D6).
 # disconnected AND owner_action_required both carry a recovery hint;
@@ -67,6 +69,54 @@ def _map_jira_state(wire_state: str) -> str:
     return _JIRA_STATE_MAP.get(wire_state, DISPLAY_DEGRADED)
 
 
+def _age_seconds(checked_at: str | None) -> int | None:
+    """Whole seconds since a stored ISO check time (``None`` when unknown)."""
+    if not checked_at:
+        return None
+    try:
+        then = datetime.fromisoformat(str(checked_at))
+    except ValueError:
+        return None
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
+    return max(0, int((datetime.now(timezone.utc) - then).total_seconds()))
+
+
+def _split_ref(ref: str) -> tuple[str, str]:
+    if "|" in ref:
+        site, email = ref.split("|", 1)
+        return site, email
+    return "", ""
+
+
+# Aggregate order for a provider with several rows: the best row names the card.
+_SUMMARY_ORDER = (
+    DISPLAY_CONNECTED,
+    DISPLAY_OWNER_ACTION_REQUIRED,
+    DISPLAY_DEGRADED,
+    DISPLAY_UNAVAILABLE,
+    DISPLAY_NEVER_CHECKED,
+)
+
+
+def _summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """One provider summary from its per-row entries (all stored reads)."""
+    best = min(
+        rows,
+        key=lambda r: _SUMMARY_ORDER.index(r["state"]) if r["state"] in _SUMMARY_ORDER else len(_SUMMARY_ORDER),
+    )
+    times = [r["last_checked_at"] for r in rows if r.get("last_checked_at")]
+    connected = [r for r in rows if r["state"] == DISPLAY_CONNECTED]
+    return {
+        "state": best["state"],
+        "account": (connected[0] if connected else rows[0])["account"],
+        "recovery_hint": None if connected else best.get("recovery_hint"),
+        "error_detail": best.get("error_detail") if best["state"] == DISPLAY_DEGRADED else None,
+        "last_checked_at": max(times) if times else None,
+        "egress_host": connected[0]["egress_host"] if connected else None,
+    }
+
+
 def _next_action_for_state(
     state: str, provider_id: str,
 ) -> dict[str, str]:
@@ -81,7 +131,7 @@ def _next_action_for_state(
         return {"kind": "sign_in", "label": "Sign in"}
     if state == DISPLAY_UNAVAILABLE:
         return {"kind": "install", "label": "Install"}
-    if state == DISPLAY_NOT_CONFIGURED:
+    if state in (DISPLAY_NOT_CONFIGURED, DISPLAY_NEVER_CHECKED):
         return {"kind": "recheck", "label": "Recheck"}
     # degraded
     return {"kind": "recheck", "label": "Recheck"}
@@ -111,7 +161,15 @@ class ConnectionsService:
     # ── Public API ────────────────────────────────────────────────────
 
     def list_tools(self, principal: Principal) -> dict[str, Any]:
-        """Return ``{"tools": [...]}``: one entry per known tool."""
+        """Return ``{"tools": [...]}``: one entry per known tool.
+
+        PHILO-9-02 B1: a cached read.  GitHub, Jira and Confluence return the
+        state the last real probe stored, each row with its own
+        ``last_checked_at`` and ``checked_age_seconds``; a row with no stored
+        check is ``never_checked``.  No ``gh``/``acli``/network call happens
+        here: the probe lives only in :meth:`recheck`.  Calendar and Models
+        are live local reads with no check time.
+        """
         tools: list[dict[str, Any]] = []
         tools.append(self._github_entry(principal))
         tools.append(self._jira_entry(principal))
@@ -127,13 +185,13 @@ class ConnectionsService:
         *,
         ref: str | None = None,
     ) -> dict[str, Any]:
-        """Recheck a provider and return its refreshed tool entry."""
+        """Probe a provider (egress), store the result, return its cached entry."""
         if provider_id == "github":
             return self._recheck_github(principal)
         if provider_id == "jira":
             return self._recheck_jira(principal, ref=ref)
         if provider_id == "confluence":
-            return self._confluence_entry(principal)
+            return self._recheck_confluence(principal, ref=ref)
         if provider_id == "calendar":
             return self._calendar_entry()
         if provider_id == "models":
@@ -146,19 +204,34 @@ class ConnectionsService:
             "recovery_hint": None,
             "error_detail": f"Unknown provider: {provider_id}",
             "last_checked_at": None,
+            "checked_age_seconds": None,
             "egress_host": None,
         }
 
     # ── GitHub ────────────────────────────────────────────────────────
 
     def _github_entry(self, principal: Principal) -> dict[str, Any]:
+        """The stored GitHub state (no ``gh`` call)."""
         if self._github is None:
             return self._not_configured_entry("github")
 
-        status = self._github.connection_status(principal)
-        wire_state = status.get("state", "")
-        display_state = _map_github_state(wire_state)
+        status = self._github.stored_status(principal)
+        if status is None:
+            return {
+                "provider_id": "github",
+                "state": DISPLAY_NEVER_CHECKED,
+                "account": None,
+                "next_action": _next_action_for_state(DISPLAY_NEVER_CHECKED, "github"),
+                "recovery_hint": None,
+                "error_detail": None,
+                "last_checked_at": None,
+                "checked_age_seconds": None,
+                "egress_host": "github.com",
+            }
 
+        display_state = _map_github_state(status.get("state", ""))
+        # The stored row keeps no login (the probe's account name is not a
+        # column), so the cached read names no account.
         login = status.get("display", {}).get("account")
         account: dict[str, Any] | None = {"login": login} if login else None
 
@@ -166,6 +239,7 @@ class ConnectionsService:
         if not recovery_hint and display_state == DISPLAY_UNAVAILABLE:
             recovery_hint = status.get("error_detail")
 
+        checked_at = status.get("last_checked_at")
         return {
             "provider_id": "github",
             "state": display_state,
@@ -173,24 +247,29 @@ class ConnectionsService:
             "next_action": _next_action_for_state(display_state, "github"),
             "recovery_hint": recovery_hint,
             "error_detail": status.get("error_detail") if display_state not in (DISPLAY_CONNECTED,) else None,
-            "last_checked_at": datetime.now(timezone.utc).isoformat(),
+            "last_checked_at": checked_at,
+            "checked_age_seconds": _age_seconds(checked_at),
             "egress_host": "github.com",
         }
 
     def _recheck_github(self, principal: Principal) -> dict[str, Any]:
-        """Re-probe GitHub and return the refreshed entry."""
+        """Probe GitHub (``gh auth status``, stored), return the cached entry."""
+        if self._github is not None:
+            self._github.connection_status(principal)
         return self._github_entry(principal)
 
     # ── Jira ──────────────────────────────────────────────────────────
 
     def _jira_entry(self, principal: Principal) -> dict[str, Any]:
+        """The stored Jira rows (no ``acli`` call)."""
         if self._jira is None:
             return self._not_configured_entry("jira")
 
         connections = self._jira.list_connections(principal)
 
         if not connections:
-            # Zero connections: check if acli is installed
+            # Zero connections.  ``shutil.which`` is a local PATH lookup
+            # (no subprocess): the binary-missing hint stays.
             import shutil
 
             if shutil.which("acli") is None:
@@ -201,81 +280,55 @@ class ConnectionsService:
                     "next_action": {"kind": "install", "label": "Install"},
                     "recovery_hint": "pip install acli",
                     "error_detail": "Atlassian CLI (acli) is not installed",
-                    "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                    "last_checked_at": None,
+                    "checked_age_seconds": None,
                     "egress_host": None,
                     "connections": [],
                 }
             return {
                 "provider_id": "jira",
-                "state": DISPLAY_OWNER_ACTION_REQUIRED,
+                "state": DISPLAY_NEVER_CHECKED,
                 "account": None,
                 "next_action": {"kind": "add_account", "label": "Add account"},
                 "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
                 "error_detail": None,
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                "last_checked_at": None,
+                "checked_age_seconds": None,
                 "egress_host": None,
                 "connections": [],
             }
 
-        # Build per-connection entries
         conn_entries: list[dict[str, Any]] = []
-        best_state = DISPLAY_OWNER_ACTION_REQUIRED
-        best_account: dict[str, Any] | None = None
-        best_recovery: str | None = None
-        best_error: str | None = None
-        best_egress: str | None = None
-
         for c in connections:
-            wire_state = c.get("state", "")
-            display = _map_jira_state(wire_state)
             ref = c.get("external_connection_ref", c.get("connection_ref", ""))
-            site, email = "", ""
-            if "|" in ref:
-                parts = ref.split("|", 1)
-                site, email = parts[0], parts[1]
-
-            # Normalize recovery_hint from Jira's recovery.command
+            site, email = _split_ref(ref)
+            checked_at = c.get("last_checked_at") or None
+            display = _map_jira_state(c.get("state", "")) if checked_at else DISPLAY_NEVER_CHECKED
             recovery = None
             if display == DISPLAY_OWNER_ACTION_REQUIRED:
                 recovery = f"acli jira auth login --site {site} --email {email} --token"
-
-            conn_entry = {
+            conn_entries.append({
                 "connection_ref": ref,
                 "state": display,
                 "account": {"site": site, "email": email},
                 "recovery_hint": recovery,
-            }
-            conn_entries.append(conn_entry)
+                "error_detail": (c.get("last_error_detail") or None) if display == DISPLAY_DEGRADED else None,
+                "last_checked_at": checked_at,
+                "checked_age_seconds": _age_seconds(checked_at),
+                "egress_host": site,
+            })
 
-            # Track the best (most-connected) state for the aggregate
-            if display == DISPLAY_CONNECTED:
-                best_state = DISPLAY_CONNECTED
-                if best_account is None:
-                    best_account = {"site": site, "email": email}
-                best_egress = site
-            elif display == DISPLAY_OWNER_ACTION_REQUIRED and best_state != DISPLAY_CONNECTED:
-                best_state = DISPLAY_OWNER_ACTION_REQUIRED
-                if best_recovery is None:
-                    best_recovery = recovery
-            elif display == DISPLAY_DEGRADED and best_state not in (DISPLAY_CONNECTED, DISPLAY_OWNER_ACTION_REQUIRED):
-                best_state = DISPLAY_DEGRADED
-                best_error = c.get("last_error_detail", c.get("error_detail"))
-
-        # Summary: use first connected, else first with recovery
-        if best_account is None and conn_entries:
-            first = conn_entries[0]
-            best_account = first["account"]
-            best_recovery = first.get("recovery_hint")
-
+        summary = _summarize(conn_entries)
         return {
             "provider_id": "jira",
-            "state": best_state,
-            "account": best_account,
-            "next_action": _next_action_for_state(best_state, "jira"),
-            "recovery_hint": best_recovery,
-            "error_detail": best_error,
-            "last_checked_at": datetime.now(timezone.utc).isoformat(),
-            "egress_host": best_egress,
+            "state": summary["state"],
+            "account": summary["account"],
+            "next_action": _next_action_for_state(summary["state"], "jira"),
+            "recovery_hint": summary["recovery_hint"],
+            "error_detail": summary["error_detail"],
+            "last_checked_at": summary["last_checked_at"],
+            "checked_age_seconds": _age_seconds(summary["last_checked_at"]),
+            "egress_host": summary["egress_host"],
             "connections": conn_entries,
         }
 
@@ -285,107 +338,102 @@ class ConnectionsService:
         *,
         ref: str | None = None,
     ) -> dict[str, Any]:
-        """Recheck Jira connections and return the refreshed entry.
-
-        If ``ref`` is given, recheck THAT specific connection only.
-        Otherwise recheck ALL connections.
-        """
+        """Probe Jira (one ref, or every stored row), return the cached entry."""
         if self._jira is None:
             return self._not_configured_entry("jira")
-
-        if ref:
-            # Recheck one specific connection
-            self._jira.connection_status(principal, ref)
-        else:
-            # Recheck every connection
-            connections = self._jira.list_connections(principal)
-            for c in connections:
-                c_ref = c.get("external_connection_ref", c.get("connection_ref", ""))
-                if c_ref:
-                    try:
-                        self._jira.connection_status(principal, c_ref)
-                    except Exception:
-                        pass  # degraded: continue checking others
-
+        self._probe_rows(self._jira, principal, ref)
         return self._jira_entry(principal)
 
     # ── Confluence (HS-174-07) ──────────────────────────────────────────
 
     def _confluence_entry(self, principal: Principal) -> dict[str, Any]:
-        """Build the Confluence tool entry from the adapter, mirroring Jira."""
+        """The stored Confluence rows (no ``acli`` call), same grammar as Jira."""
         if self._confluence is None:
             return self._not_configured_entry("confluence")
 
         try:
-            readiness = self._confluence.readiness(principal) if hasattr(self._confluence, "readiness") else {}
-        except Exception:
-            readiness = {}
-
-        # readiness.connections is an int count; get the actual rows.
-        try:
-            connections = self._confluence.list_connections(principal) if hasattr(self._confluence, "list_connections") else []
+            connections = self._confluence.list_connections(principal)
         except Exception:
             connections = []
         if not connections:
             return {
                 "provider_id": "confluence",
-                "state": DISPLAY_NOT_CONFIGURED,
+                "state": DISPLAY_NEVER_CHECKED,
                 "account": None,
                 "next_action": {"kind": "setup", "label": "Set up"},
                 "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
                 "error_detail": None,
-                "last_checked_at": readiness.get("checked_at"),
+                "last_checked_at": None,
+                "checked_age_seconds": None,
                 "egress_host": None,
                 "connections": [],
             }
 
-        # Map each connection to a sub-row (same grammar as Jira)
         sub_rows: list[dict[str, Any]] = []
-        overall_state = DISPLAY_NOT_CONFIGURED
-        overall_egress = None
         for conn in connections:
-            state = conn.get("state", "not_configured")
-            display = _map_jira_state(state)  # reuse the Jira state mapper
-            # Parse site|email from external_connection_ref (the confluence identity).
             ext_ref = str(conn.get("external_connection_ref", ""))
             if "|" in ext_ref:
-                site, email = ext_ref.split("|", 1)
+                site, email = _split_ref(ext_ref)
             else:
                 site = conn.get("site", "")
                 email = conn.get("email", "")
             ref = ext_ref or f"{site}|{email}"
+            checked_at = conn.get("last_checked_at") or None
+            display = _map_jira_state(conn.get("state", "")) if checked_at else DISPLAY_NEVER_CHECKED
             sub_rows.append({
                 "connection_ref": ref,
                 "state": display,
                 "account": {"site": site, "email": email},
-                "recovery_hint": conn.get("recovery_hint", f"acli confluence auth login --site {site} --email {email} --token"),
-                "error_detail": conn.get("error_detail"),
+                "recovery_hint": f"acli confluence auth login --site {site} --email {email} --token",
+                "error_detail": (conn.get("last_error_detail") or None) if display == DISPLAY_DEGRADED else None,
+                "last_checked_at": checked_at,
+                "checked_age_seconds": _age_seconds(checked_at),
                 "egress_host": site,
             })
-            if display == "connected":
-                overall_state = "connected"
-                overall_egress = site
-                first_site = site
-                first_email = email
 
-        first = connections[0] if connections else {}
-        first_ext = str(first.get("external_connection_ref", ""))
-        if "|" in first_ext:
-            f_site, f_email = first_ext.split("|", 1)
-        else:
-            f_site = first.get("site", "")
-            f_email = first.get("email", "")
+        summary = _summarize(sub_rows)
         return {
             "provider_id": "confluence",
-            "state": overall_state,
-            "account": {"site": f_site, "email": f_email},
+            "state": summary["state"],
+            "account": summary["account"],
             "next_action": None,
             "recovery_hint": None,
             "error_detail": None,
-            "last_checked_at": readiness.get("checked_at"),
-            "egress_host": overall_egress,
+            "last_checked_at": summary["last_checked_at"],
+            "checked_age_seconds": _age_seconds(summary["last_checked_at"]),
+            "egress_host": summary["egress_host"],
             "connections": sub_rows,
         }
+
+    def _recheck_confluence(
+        self,
+        principal: Principal,
+        *,
+        ref: str | None = None,
+    ) -> dict[str, Any]:
+        """Probe Confluence (one ref, or every stored row), return the cached entry.
+
+        ``connection_status`` runs ``acli confluence auth switch`` + ``status``
+        under the shared acli lock and stores the state and time.
+        """
+        if self._confluence is None:
+            return self._not_configured_entry("confluence")
+        self._probe_rows(self._confluence, principal, ref)
+        return self._confluence_entry(principal)
+
+    @staticmethod
+    def _probe_rows(adapter: Any, principal: Principal, ref: str | None) -> None:
+        """Probe one ref, or every stored row (a failure degrades, the rest run)."""
+        if ref:
+            adapter.connection_status(principal, ref)
+            return
+        for c in adapter.list_connections(principal):
+            c_ref = c.get("external_connection_ref", c.get("connection_ref", ""))
+            if c_ref:
+                try:
+                    adapter.connection_status(principal, c_ref)
+                except Exception:
+                    pass  # degraded: continue checking others
 
     # ── Calendar ──────────────────────────────────────────────────────
 
@@ -413,6 +461,7 @@ class ConnectionsService:
                 "recovery_hint": None,
                 "error_detail": None,
                 "last_checked_at": None,
+                "checked_age_seconds": None,
                 "egress_host": None,
             }
         return {
@@ -423,6 +472,7 @@ class ConnectionsService:
             "recovery_hint": None,
             "error_detail": None,
             "last_checked_at": None,
+            "checked_age_seconds": None,
             "egress_host": None,
         }
 
@@ -451,6 +501,7 @@ class ConnectionsService:
             "recovery_hint": None,
             "error_detail": None,
             "last_checked_at": None,
+            "checked_age_seconds": None,
             "egress_host": None,
         }
 
@@ -466,5 +517,6 @@ class ConnectionsService:
             "recovery_hint": None,
             "error_detail": None,
             "last_checked_at": None,
+            "checked_age_seconds": None,
             "egress_host": None,
         }

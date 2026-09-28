@@ -286,7 +286,9 @@ def test_the_seven_tools_are_listed_with_the_charters_schemas(hub: Hub) -> None:
 def _strip(value: Any) -> Any:
     """Drop what differs between two equal outcomes: ids, times, revisions, command ids."""
     volatile = {"id", "item_id", "project_id", "created_at", "updated_at", "last_modified", "command_id",
-                "project_revision", "revision", "created_by_ref", "changed_refs"}
+                "project_revision", "revision", "created_by_ref", "changed_refs",
+                # PHILO-9-02: an admitted write's own operation and receipt (one per call).
+                "operation_id", "receipt"}
     if isinstance(value, dict):
         return {k: _strip(v) for k, v in value.items() if k not in volatile}
     if isinstance(value, list):

@@ -718,6 +718,12 @@ _PALETTE_REFUSED = "mcp_palette_refused"
 
 def _tool_operation(name: str, args: Any) -> tuple[str | None, Any]:
     """The operation an MCP call names, and its raw operation payload, when identifiable."""
+    from holdspeak.mcp.families.project import TOOL_OPERATIONS as _ROOM_TOOL_OPERATIONS
+
+    if name in _ROOM_TOOL_OPERATIONS:
+        # PHILO-9-02: the Room's tools name their declared operation too (a
+        # palette refusal of an ADMITTED one leaves its refusal receipt).
+        return _ROOM_TOOL_OPERATIONS[name], (dict(args) if isinstance(args, dict) else None)
     if name in _TOOL_OPERATIONS:
         if not isinstance(args, dict):
             return _TOOL_OPERATIONS[name], None
@@ -1178,22 +1184,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS3
         pbs = _PBS3(db)
         return pbs.dismiss_proposal(principal, str(args.get("proposal_id") or ""))
-    # HS-173-04: reviewer nudge MCP twins
-    if name == "steward.nudges":
-        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS
-        from unittest.mock import MagicMock
-        svc = _PSS(db, MagicMock(), MagicMock())
-        return {"nudges": svc.list_nudges(str(args.get("project_id") or ""), state=args.get("state"))}
-    if name == "nudge.send":
-        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS2
-        from unittest.mock import MagicMock
-        svc = _PSS2(db, MagicMock(), MagicMock())
-        return svc.send_nudge(principal, str(args.get("step_id") or ""), str(args.get("text") or ""))
-    if name == "nudge.dismiss":
-        from holdspeak.services.project_steward_service import ProjectStewardService as _PSS3
-        from unittest.mock import MagicMock
-        svc = _PSS3(db, MagicMock(), MagicMock())
-        return svc.dismiss_nudge(principal, str(args.get("step_id") or ""))
+    # HS-173-04: reviewer nudge MCP twins. PHILO-9-02 (F9): the declared
+    # steward.nudges / nudge.send / nudge.dismiss, bound to the HUB's steward
+    # service with its real collaborators (they built one over MagicMock
+    # collaborators here); nudge.send is admitted (egress) with its receipt.
+    if name in {"steward.nudges", "nudge.send", "nudge.dismiss"}:
+        from holdspeak.mcp.families.project import _room_tool
+
+        return _room_tool(name, args, principal)
     if name == "decision_record.list":
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})

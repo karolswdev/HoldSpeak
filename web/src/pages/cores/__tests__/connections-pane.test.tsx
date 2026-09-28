@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionsPane, type ConnectionsFoot } from "../connections";
 import type { ConnectionsResponse, ConnectionTool } from "../connections/api";
+import { decodeConnectionsResponse, decodeState } from "../connections/api";
+import { checkedAgo, stateWords } from "../connections/ConnectionsPane";
 
 /* ── Mock the API module ── */
 vi.mock("../connections/api", async (importOriginal) => {
@@ -190,7 +192,8 @@ describe("ConnectionsPane", () => {
       const card = await screen.findByTestId("connections-github");
       expect(within(card).getByText("GitHub")).toBeInTheDocument();
       expect(within(card).getByText("karolswdev")).toBeInTheDocument();
-      expect(within(card).getByText("Connected")).toBeInTheDocument();
+      // PHILO-9-02 B1: the chip carries the row's own check age.
+      expect(within(card).getByText(/^Connected · Checked /)).toBeInTheDocument();
       expect(within(card).getByText("Recheck")).toBeInTheDocument();
     });
   });
@@ -233,7 +236,8 @@ describe("ConnectionsPane", () => {
       };
       renderPane(response);
       const card = await screen.findByTestId("connections-github");
-      expect(within(card).getByText("Unreachable")).toBeInTheDocument();
+      // PHILO-9-02 B1: the chip carries the row's own check age.
+      expect(within(card).getByText(/^Unreachable · Checked /)).toBeInTheDocument();
       // Quiet Recheck verb (no fold)
       expect(within(card).getByText("Recheck")).toBeInTheDocument();
     });
@@ -431,6 +435,103 @@ describe("ConnectionsPane", () => {
       const { PREF_MODULES } = await import("../settingsPrefs");
       const ids = PREF_MODULES.map((m) => m.id);
       expect(ids).toContain("integrations");
+    });
+  });
+
+  /* ── PHILO-9-02 B1: each row's own age, and never checked ── */
+
+  describe("B1 the connection read contract", () => {
+    it("decodes never_checked as its own state", () => {
+      expect(decodeState("never_checked")).toBe("never_checked");
+      expect(decodeState("bogus")).toBe("not_configured");
+    });
+
+    it("decodes each row's own check time and age", () => {
+      const decoded = decodeConnectionsResponse({
+        tools: [{
+          provider_id: "jira",
+          state: "connected",
+          last_checked_at: "2026-09-28T10:05:00+00:00",
+          checked_age_seconds: 60,
+          connections: [
+            {
+              connection_ref: "a|a@x.com", state: "connected",
+              account: { site: "a.atlassian.net", email: "a@x.com" },
+              last_checked_at: "2026-09-28T10:00:00+00:00", checked_age_seconds: 360,
+            },
+            {
+              connection_ref: "b|b@x.com", state: "never_checked",
+              account: { site: "b.atlassian.net", email: "b@x.com" },
+              last_checked_at: null, checked_age_seconds: null,
+            },
+          ],
+        }],
+      });
+      const [a, b] = decoded.tools[0].connections ?? [];
+      expect(decoded.tools[0].checked_age_seconds).toBe(60);
+      expect(a.last_checked_at).toBe("2026-09-28T10:00:00+00:00");
+      expect(a.checked_age_seconds).toBe(360);
+      expect(b.state).toBe("never_checked");
+      expect(b.last_checked_at).toBeUndefined();
+    });
+
+    it("words the age of one stored check", () => {
+      const now = Date.parse("2026-09-28T12:00:00Z");
+      expect(checkedAgo("2026-09-28T11:59:30Z", undefined, now)).toBe("Checked now");
+      expect(checkedAgo("2026-09-28T11:55:00Z", undefined, now)).toBe("Checked 5 min ago");
+      expect(checkedAgo("2026-09-28T09:00:00Z", undefined, now)).toBe("Checked 3 h ago");
+      expect(checkedAgo("2026-09-26T12:00:00Z", undefined, now)).toBe("Checked 2 d ago");
+      expect(checkedAgo(undefined, 125, now)).toBe("Checked 2 min ago");
+      expect(checkedAgo(undefined, undefined, now)).toBeUndefined();
+      expect(stateWords("never_checked", "github", {})).toBe("Never checked");
+      expect(stateWords("connected", "jira", {})).toBe("Connected");
+    });
+
+    it("each card shows its own age, and Never checked", async () => {
+      const recent = new Date(Date.now() - 5 * 60_000).toISOString();
+      const older = new Date(Date.now() - 3 * 3_600_000).toISOString();
+      const response: ConnectionsResponse = {
+        tools: [
+          { provider_id: "github", state: "never_checked", account: {} },
+          {
+            provider_id: "jira", state: "connected", last_checked_at: recent,
+            connections: [
+              {
+                connection_ref: "alpha-user", state: "connected",
+                account: { site: "alpha.atlassian.net", email: "user@example.com" },
+                last_checked_at: recent,
+              },
+              {
+                connection_ref: "beta-user", state: "never_checked",
+                account: { site: "beta.atlassian.net", email: "user@example.com" },
+              },
+            ],
+          },
+          {
+            provider_id: "confluence", state: "connected", last_checked_at: older,
+            connections: [{
+              connection_ref: "gamma-user", state: "connected",
+              account: { site: "gamma.atlassian.net", email: "user@example.com" },
+              last_checked_at: older,
+            }],
+          },
+          connectedCalendar(),
+          connectedModels(),
+        ],
+      };
+      renderPane(response);
+      const gh = await screen.findByTestId("connections-github");
+      expect(within(gh).getByText("Never checked")).toBeInTheDocument();
+      expect(within(gh).getByText("Recheck")).toBeInTheDocument();
+      const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
+      expect(within(alpha).getByText("Connected · Checked 5 min ago")).toBeInTheDocument();
+      const beta = await screen.findByTestId("connections-jira-conn-beta-user");
+      expect(within(beta).getByText("Never checked")).toBeInTheDocument();
+      const gamma = await screen.findByTestId("connections-confluence-conn-gamma-user");
+      expect(within(gamma).getByText("Connected · Checked 3 h ago")).toBeInTheDocument();
+      // Calendar and Models are local reads: no age.
+      const cal = await screen.findByTestId("connections-calendar");
+      expect(within(cal).getByText("Connected")).toBeInTheDocument();
     });
   });
 });

@@ -1914,6 +1914,74 @@ class ProjectUpdateService:
 
         return result
 
+    def mark_update_delivered(
+        self,
+        principal: Principal,
+        update_id: str,
+        delivered_to: str | None = None,
+        command_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Mark it delivered (the Q0 ruling; PHILO-9-02, R4-2): one row per confirmation.
+
+        Admitted only: the delivery row, the operation's terminal state and
+        its receipt commit in ONE transaction (``journal_atomic``, through the
+        operation's handle), so no row exists without its receipt and no
+        receipt without its row. ``operation_id`` comes from the execution
+        context, ``project_id`` from the stored update, ``delivered_at`` is
+        the confirmation time (the admission of this operation, the same on a
+        retry). A replay of the same key answers the original row by its
+        operation. A draft or superseded update: ``update_not_published``.
+        """
+        from holdspeak.db.updates import UpdateNotPublishedError
+        from holdspeak.services import project_kernel
+
+        handle = project_kernel.current()
+        if handle is None:
+            # A replay of a SUCCEEDED mark (the kernel answers from its record).
+            raise RuntimeError("project.mark_update_delivered runs only as an admitted operation")
+        operation = handle.operation()
+        existing = self._delivery_for(handle.operation_id)
+        if existing is not None:
+            return {"success": True, "delivery": existing}
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+        if str(row.get("lifecycle") or "") != "published":
+            raise ValidationError(
+                f"Update {update_id} is {row.get('lifecycle')}; only a published update can be marked delivered",
+                code="update_not_published",
+            )
+        confirmed_at = datetime.fromtimestamp(float(operation.get("created_at") or 0), tz=timezone.utc)
+        written: dict[str, Any] = {}
+
+        def effect(conn: Any) -> None:
+            try:
+                written.update(self._db.project_update_deliveries.insert_delivery_in_transaction(
+                    conn, update_id=update_id, operation_id=handle.operation_id, delivered_to=delivered_to,
+                    delivered_at=confirmed_at.isoformat(timespec="seconds"),
+                    delivery_id="pdel_" + hashlib.sha256(handle.operation_id.encode()).hexdigest()[:16],
+                ))
+            except UpdateNotPublishedError as exc:
+                raise ValidationError(str(exc), code="update_not_published") from exc
+
+        handle.terminal("succeeded", "succeeded", f"project_update:{update_id}", effect=effect)
+        return {"success": True, "delivery": written}
+
+    def _delivery_for(self, operation_id: str) -> dict[str, Any] | None:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT id, update_id, project_id, delivered_at, delivered_to, operation_id "
+                "FROM project_update_deliveries WHERE operation_id=?", (operation_id,),
+            ).fetchone()
+        return dict(row) if row is not None else None
+
+    def delivery_by_operation(self, operation_id: str) -> dict[str, Any]:
+        """The replay answer: the original delivery, found by its operation."""
+        existing = self._delivery_for(operation_id)
+        if existing is None:
+            raise NotFound("delivery", operation_id)
+        return {"success": True, "delivery": existing}
+
     def publish_update(
         self,
         principal: Principal,

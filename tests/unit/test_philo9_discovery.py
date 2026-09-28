@@ -13,9 +13,9 @@ What this proves: the words are in the catalogue a client receives. What it
 does not prove: that a model finds them (story 06's cold-context Codex run).
 
 "mark it delivered" is story 02's criterion (Muad'Dib's ruling on PR #680,
-2026-09-27, R4-2); it is pinned here as a strict expected failure, so
-PHILO-9-02 turns it red-to-green when it lands
-``project.mark_update_delivered`` and removes the mark.
+2026-09-27, R4-2); it was pinned here as a strict expected failure, and
+PHILO-9-02 turned it red-to-green when it landed
+``project.mark_update_delivered`` and removed the mark.
 
 This file imports no symbol the story adds, so it runs unchanged on an export
 of main (red there: the catalogue has none of the job words, and no item tool).
@@ -107,8 +107,8 @@ def test_each_job_phrase_maps_to_one_tool_and_its_argument_path(catalogue, phras
         assert value in words or value in (properties[argument].get("enum") or []), (phrase, argument, value)
 
 
-@pytest.mark.xfail(strict=True, reason="PHILO-9-02 lands project.mark_update_delivered (R4-2)")
 def test_mark_it_delivered_maps_to_its_tool(catalogue) -> None:
+    """PHILO-9-02 landed project.mark_update_delivered (R4-2): the strict expected failure is removed."""
     naming = [t["name"] for t in catalogue if "mark it delivered" in t.get("description", "").lower()]
     assert naming == ["project.mark_update_delivered"]
 

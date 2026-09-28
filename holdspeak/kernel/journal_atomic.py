@@ -55,6 +55,29 @@ def insert_operation(conn: Any, values: Mapping[str, Any], now: float) -> None:
     )
 
 
+def create_operation(store: Any, values: Mapping[str, Any]) -> Any:
+    """``JournalStore.create_operation``: the replay lookup and the INSERT under ONE write lock.
+
+    PHILO-9-02 (law 9, the same-key race closed as a class): ``BEGIN
+    IMMEDIATE`` is taken BEFORE the ``(principal_identity, idempotency_key)``
+    lookup, so two callers with one key cannot both find it absent: the loser
+    waits, then finds the winner's row (a replay, or
+    ``idempotency_payload_mismatch``), never a raw UNIQUE failure.
+    """
+    with store._connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        existing = conn.execute(
+            "SELECT * FROM kernel_operations WHERE principal_identity=? AND idempotency_key=?",
+            (values["principal_identity"], values["idempotency_key"]),
+        ).fetchone()
+        if existing is not None:
+            if str(existing["envelope_sha256"]) != values["envelope_sha256"]:
+                raise KernelRefused("idempotency_payload_mismatch", operation_id=str(existing["operation_id"]))
+            return existing
+        insert_operation(conn, values, store._clock())
+        return conn.execute(_OPERATION_SQL, (values["operation_id"],)).fetchone()
+
+
 def create_refused_with_receipt(store: Any, values: Mapping[str, Any], outcome: str) -> tuple[Any, Any]:
     """T1: the refused row and its receipt in ONE transaction.
 

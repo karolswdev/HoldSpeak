@@ -28,7 +28,16 @@ STRICT_CONFLICTS = frozenset({"operation_already_terminal", "operation_revision_
 
 
 def is_desk(name: Any) -> bool:
-    return str(name) in DESK_KERNEL_OPERATIONS
+    """The operations whose terminal writes are atomic (``journal_atomic``).
+
+    PHILO-9-02: the Room's admitted operations join the desk's (the steward
+    beat, section 3: "Scope the Phase 7 atomic broker hooks to this phase's
+    admitted project operations and internal steward effects"). A scope for
+    the atomic closures only, never an authority set.
+    """
+    from .project import is_project
+
+    return str(name) in DESK_KERNEL_OPERATIONS or is_project(name)
 
 
 def journal_receipt(store: Any, operation: Mapping[str, Any], outcome: str, result_ref: str = "") -> None:
@@ -66,6 +75,12 @@ def approval(broker: Any, operation: Mapping[str, Any], principal: Any, expected
     conflict, with no receipt and no event). Any other caller: False, and the
     broker refuses as today, writing nothing.
     """
+    from .project import scheduler_approves
+
+    if scheduler_approves(operation, principal):
+        # PHILO-9-02: the scheduler approves ONLY its own steward operation,
+        # inside the hub's steward path (the steward beat, section 4).
+        return True
     if not (
         principal.kind is PrincipalKind.AGENT
         and operation["name"] in DESK_GRANT_OPERATIONS
@@ -85,6 +100,13 @@ def approval(broker: Any, operation: Mapping[str, Any], principal: Any, expected
     broker.store.append("operation.refused", ended["operation_id"], head=code)
     journal_receipt(broker.store, ended, code)
     raise KernelRefused(code, operation_id=str(operation["operation_id"]), receipt=receipt)
+
+
+def trusted_scheduler(broker: Any, name: str, principal: Any) -> bool:
+    """The broker's scheduler exceptions: a trusted child, or (PHILO-9-02) the steward's own path."""
+    from .project import scheduler_may_submit
+
+    return bool(getattr(broker, "_trusted_scheduler_child", False)) or scheduler_may_submit(name, principal)
 
 
 def reject(broker: Any, operation_id: str, expected_revision: int) -> dict[str, Any]:
@@ -110,9 +132,12 @@ def claim_refusal(store: Any, operation: Mapping[str, Any], reason: str) -> dict
 
 def reap(store: Any, operation: Mapping[str, Any], state: str, reason: str) -> bool:
     """T7: False when a winner already moved it (today's ``continue``)."""
+    from .project import steward_run_ended_effect
+
     try:
         ended, _receipt = store.transition_and_receipt(
             operation["operation_id"], int(operation["revision"]), state, reason, strict=True, warrant_revoked=1,
+            effect=steward_run_ended_effect(operation, reason),
         )
     except KernelRefused as exc:
         if exc.reason in STRICT_CONFLICTS:

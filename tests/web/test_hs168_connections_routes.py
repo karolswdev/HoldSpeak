@@ -46,6 +46,15 @@ def _connected_gh() -> MagicMock:
         "error_code": None,
         "error_detail": None,
     }
+    # PHILO-9-02 B1: the list reads the stored probe (the shape the real
+    # ``GitHubProviderAdapter.stored_status`` returns: no login is stored).
+    gh.stored_status.return_value = {
+        "state": "connected",
+        "error_code": None,
+        "error_detail": None,
+        "display": {},
+        "last_checked_at": "2026-09-28T10:00:00+00:00",
+    }
     gh.discover.return_value = {"state": "ready", "items": []}
     return gh
 
@@ -217,7 +226,8 @@ class TestSuggestAnnotation:
             assert "connection" in p, f"Proposal {p['id']} missing connection annotation"
             conn = p["connection"]
             assert conn["state"] == DISPLAY_CONNECTED
-            assert conn["account"] is not None
+            # PHILO-9-02 B1: a cached GitHub read names no login (not stored).
+            assert "account" in conn
 
 
 # ── Known scopes on session ──────────────────────────────────────────

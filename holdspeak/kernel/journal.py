@@ -121,17 +121,7 @@ class JournalStore:
         return None
 
     def create_operation(self, values: Mapping[str, Any]) -> dict[str, Any]:
-        with self._connection() as conn:
-            existing = conn.execute(
-                "SELECT * FROM kernel_operations WHERE principal_identity=? AND idempotency_key=?",
-                (values["principal_identity"], values["idempotency_key"]),
-            ).fetchone()
-            if existing is not None:
-                if str(existing["envelope_sha256"]) != values["envelope_sha256"]:
-                    raise KernelRefused("idempotency_payload_mismatch", operation_id=str(existing["operation_id"]))
-                return self._operation(existing)
-            _atomic.insert_operation(conn, values, self._clock())
-        return self.operation(str(values["operation_id"]))
+        return self._operation(_atomic.create_operation(self, values))
 
     def create_refused_with_receipt(self, values: Mapping[str, Any], outcome: str) -> tuple[dict[str, Any], dict[str, Any]]:
         """T1 (PHILO-7-02): the refused row and its receipt in ONE transaction (``journal_atomic``)."""

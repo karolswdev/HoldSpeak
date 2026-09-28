@@ -295,6 +295,30 @@ def _format_age(iso_str: str, now: datetime) -> str:
         return ""
 
 
+class _CommandRaced(Exception):
+    """PHILO-9-02 (law 9): another caller recorded this command_id first.
+
+    Raised inside the write transaction, under the write lock, before any
+    write: the transaction rolls back with nothing written, and the call is
+    answered again through the replay path (the winner's recorded response,
+    or ``idempotency_conflict`` for a different request).
+    """
+
+
+def _serialized_command(method: Any) -> Any:
+    """Answer a lost same-key race through the replay path (PHILO-9-02, law 9)."""
+    import functools
+
+    @functools.wraps(method)
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return method(self, *args, **kwargs)
+        except _CommandRaced:
+            return method(self, *args, **kwargs)
+
+    return wrapper
+
+
 def _request_hash(payload: dict[str, Any]) -> str:
     """Deterministic hash of a command's request payload (API-002)."""
     material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -2510,6 +2534,7 @@ class ProjectService:
 
     # ── writes (graduated to revision law) ───────────────────────────
 
+    @_serialized_command
     def create_project(
         self, principal: Principal, payload: dict[str, Any] | None = None,
         *, command_id: Optional[str] = None, **fields: Any,
@@ -2533,7 +2558,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         new_revision = 1  # first revision for a new project
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             conn.execute(
                 """
                 INSERT INTO projects (
@@ -2605,6 +2630,7 @@ class ProjectService:
         result.update(_envelope_to_dict(envelope))
         return result
 
+    @_serialized_command
     def create_from_setup(
         self, principal: Principal, setup_payload: dict[str, Any],
         *, command_id: Optional[str] = None,
@@ -2639,7 +2665,7 @@ class ProjectService:
         new_revision = 1
         proposals = setup_payload.get("proposals") or []
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             # 1. Create the Project row
             conn.execute(
                 """
@@ -2666,135 +2692,13 @@ class ProjectService:
             )
 
             # 2. Activate selected+passed proposals as Watch rows
-            # HS-200-43: function-local import -- watch_service imports the
-            # reaction/diff stack, and project_service is imported by it in
-            # turn through the setup service; a module-level import here
-            # closes a cycle.
-            from .watch_service import compute_arm_time as _compute_arm_time
-
+            # (``_arm_source_watch_in_txn``: the watch, its rules, the binding).
             activated_watches: list[dict[str, Any]] = []
             for proposal in proposals:
                 spec = proposal.get("spec") or {}
                 if isinstance(spec, str):
                     spec = json.loads(spec)
-
-                watch_id = f"watch_{uuid.uuid4().hex[:12]}"
-                watch_name = spec.get("name", "Untitled watch")
-                # Map provider spec IDs to connector_pack IDs
-                # (the watch table's connector_id is "gh", not "github")
-                raw_provider = spec.get("provider", {}).get("id", "native")
-                connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
-                # M-1 counsel: map singular subject kind to the plural
-                # wire form GitHubWatchSource.snapshot demands.
-                raw_kind = spec.get("subject", {}).get("kind", "")
-                query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
-                # M-1 counsel: build the stored query in the shape
-                # GitHubWatchSource expects: repository (singular string)
-                # + query filters (state/base/search).  Mirror the shape
-                # project_setup_service._native_test_read already uses.
-                subject = spec.get("subject", {})
-                scope = subject.get("scope", {})
-                query_filters = dict(subject.get("query", {}))
-                repos = scope.get("repositories", [])
-                if repos:
-                    query_filters["repository"] = repos[0]
-                # HS-166-03: flatten jira scope into the stored query
-                # the way repos[0] is flattened for gh.
-                jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
-                if jira_connection_ref:
-                    query_filters["connection_ref"] = jira_connection_ref
-                jira_projects = scope.get("projects", [])
-                if jira_projects:
-                    query_filters["projects"] = list(jira_projects)
-                jira_issue_types = scope.get("issue_types", [])
-                if jira_issue_types:
-                    query_filters["issue_types"] = list(jira_issue_types)
-                query: dict[str, Any] = query_filters
-                trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
-                mode = spec.get("mode", "yolo")
-
-                # Insert via sanctioned repo helper (M-1: no third door)
-                self._db.automations.create_watch_in_transaction(
-                    conn,
-                    watch_id=watch_id,
-                    connector_id=connector_id,
-                    query_kind=query_kind,
-                    name=watch_name,
-                    query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
-                    enabled=True,
-                    schema_version="WatchSpec@1",
-                    project_id=project_id,
-                    intent=spec.get("intent", ""),
-                    subject_kind=query_kind,
-                    trigger_kind=trigger.get("kind", "poll"),
-                    trigger_json=json.dumps(trigger, sort_keys=True, separators=(",", ":")),
-                    mode=mode,
-                    state="active",
-                    revision=1,
-                    baseline_state="established",  # ACT-005: baseline without events
-                    test_state="passed",  # carried from proposal test
-                    created_at=now_iso,
-                    updated_at=now_iso,
-                    # HS-200-43: ARM the row in the same transaction that
-                    # creates it, due now. Without this the watch is
-                    # unschedulable forever -- `list_due_watches` refuses a
-                    # NULL. `baseline_state='established'` above is written
-                    # before any snapshot exists, so it is not evidence of a
-                    # baseline; if the caller's `baseline_watch` raises, the
-                    # first scheduled run establishes the baseline silently
-                    # (F1) rather than discovering the whole source.
-                    next_evaluation_at=_compute_arm_time(),
-                )
-
-                # 3. Create watch_rules via sanctioned repo helper
-                rules = spec.get("rules", [])
-                for ordinal, rule in enumerate(rules):
-                    rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
-                    self._db.automations.create_rule_in_transaction(
-                        conn,
-                        rule_id=rule_id,
-                        watch_id=watch_id,
-                        ordinal=ordinal,
-                        condition_schema="WatchCondition@1",
-                        condition_json=json.dumps(
-                            rule.get("condition", {}),
-                            sort_keys=True, separators=(",", ":"),
-                        ),
-                        action_schema="WatchAction@1",
-                        action_json=json.dumps(
-                            rule.get("actions", []),
-                            sort_keys=True, separators=(",", ":"),
-                        ),
-                        enabled=True,
-                        revision=0,
-                        created_at=now_iso,
-                        updated_at=now_iso,
-                    )
-
-                # 4. Create project_sources binding
-                source_id = generate_psrc_id()
-                semantic_role = spec.get("subject", {}).get("kind", "general")
-                conn.execute(
-                    """
-                    INSERT INTO project_sources (
-                        id, project_id, source_ref, label, semantic_role,
-                        enabled, revision, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        source_id, project_id,
-                        format_ref("watch", watch_id),
-                        watch_name,
-                        semantic_role,
-                        1, 0, now_iso, now_iso,
-                    ),
-                )
-
-                activated_watches.append({
-                    "watch_id": watch_id,
-                    "name": watch_name,
-                    "source_id": source_id,
-                })
+                activated_watches.append(self._arm_source_watch_in_txn(conn, project_id, spec, now_iso))
 
             # 5. Change log (DOM-003)
             project_ref = format_ref("project", project_id)
@@ -2865,6 +2769,213 @@ class ProjectService:
         result = self._project_payload(self._require_project(project_id))
         result.update(_envelope_to_dict(envelope))
         result["activated_watches"] = activated_watches
+        return result
+
+    @_serialized_command
+    def _arm_source_watch_in_txn(self, conn: Any, project_id: str, spec: dict[str, Any],
+                                 now_iso: str) -> dict[str, Any]:
+        """One armed watch and its Room source binding, on THIS connection (ACT-004).
+
+        Carved from ``create_from_setup`` (PHILO-9-02) so a suggested source
+        arms its watch through the same rows: the watch, its rules and the
+        ``project_sources`` binding.
+        """
+        from .watch_service import compute_arm_time as _compute_arm_time
+
+        watch_id = f"watch_{uuid.uuid4().hex[:12]}"
+        watch_name = spec.get("name", "Untitled watch")
+        # Map provider spec IDs to connector_pack IDs
+        # (the watch table's connector_id is "gh", not "github")
+        raw_provider = spec.get("provider", {}).get("id", "native")
+        connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
+        # M-1 counsel: map singular subject kind to the plural
+        # wire form GitHubWatchSource.snapshot demands.
+        raw_kind = spec.get("subject", {}).get("kind", "")
+        query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
+        # M-1 counsel: build the stored query in the shape
+        # GitHubWatchSource expects: repository (singular string)
+        # + query filters (state/base/search).  Mirror the shape
+        # project_setup_service._native_test_read already uses.
+        subject = spec.get("subject", {})
+        scope = subject.get("scope", {})
+        query_filters = dict(subject.get("query", {}))
+        repos = scope.get("repositories", [])
+        if repos:
+            query_filters["repository"] = repos[0]
+        # HS-166-03: flatten jira scope into the stored query
+        # the way repos[0] is flattened for gh.
+        jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
+        if jira_connection_ref:
+            query_filters["connection_ref"] = jira_connection_ref
+        jira_projects = scope.get("projects", [])
+        if jira_projects:
+            query_filters["projects"] = list(jira_projects)
+        jira_issue_types = scope.get("issue_types", [])
+        if jira_issue_types:
+            query_filters["issue_types"] = list(jira_issue_types)
+        query: dict[str, Any] = query_filters
+        trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
+        mode = spec.get("mode", "yolo")
+
+        # Insert via sanctioned repo helper (M-1: no third door)
+        self._db.automations.create_watch_in_transaction(
+            conn,
+            watch_id=watch_id,
+            connector_id=connector_id,
+            query_kind=query_kind,
+            name=watch_name,
+            query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+            enabled=True,
+            schema_version="WatchSpec@1",
+            project_id=project_id,
+            intent=spec.get("intent", ""),
+            subject_kind=query_kind,
+            trigger_kind=trigger.get("kind", "poll"),
+            trigger_json=json.dumps(trigger, sort_keys=True, separators=(",", ":")),
+            mode=mode,
+            state="active",
+            revision=1,
+            baseline_state="established",  # ACT-005: baseline without events
+            test_state="passed",  # carried from proposal test
+            created_at=now_iso,
+            updated_at=now_iso,
+            # HS-200-43: ARM the row in the same transaction that
+            # creates it, due now. Without this the watch is
+            # unschedulable forever -- `list_due_watches` refuses a
+            # NULL. `baseline_state='established'` above is written
+            # before any snapshot exists, so it is not evidence of a
+            # baseline; if the caller's `baseline_watch` raises, the
+            # first scheduled run establishes the baseline silently
+            # (F1) rather than discovering the whole source.
+            next_evaluation_at=_compute_arm_time(),
+        )
+
+        # 3. Create watch_rules via sanctioned repo helper
+        rules = spec.get("rules", [])
+        for ordinal, rule in enumerate(rules):
+            rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
+            self._db.automations.create_rule_in_transaction(
+                conn,
+                rule_id=rule_id,
+                watch_id=watch_id,
+                ordinal=ordinal,
+                condition_schema="WatchCondition@1",
+                condition_json=json.dumps(
+                    rule.get("condition", {}),
+                    sort_keys=True, separators=(",", ":"),
+                ),
+                action_schema="WatchAction@1",
+                action_json=json.dumps(
+                    rule.get("actions", []),
+                    sort_keys=True, separators=(",", ":"),
+                ),
+                enabled=True,
+                revision=0,
+                created_at=now_iso,
+                updated_at=now_iso,
+            )
+
+        # 4. Create project_sources binding
+        source_id = generate_psrc_id()
+        semantic_role = spec.get("subject", {}).get("kind", "general")
+        conn.execute(
+            """
+            INSERT INTO project_sources (
+                id, project_id, source_ref, label, semantic_role,
+                enabled, revision, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                source_id, project_id,
+                format_ref("watch", watch_id),
+                watch_name,
+                semantic_role,
+                1, 0, now_iso, now_iso,
+            ),
+        )
+
+        return {"watch_id": watch_id, "name": watch_name, "source_id": source_id}
+
+    @_serialized_command
+    def add_source_watch(
+        self, principal: Principal, project_id: str, *, suggestion_id: str,
+        resource_ref: str, spec: dict[str, Any], command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """A suggested source becomes a watched source: ONE transaction (PHILO-9-02; F17).
+
+        The Room files the source (a ``project_resources`` row, relationship
+        ``source``), arms its watch (the watch, its rules and its
+        ``project_sources`` binding, the rows ``create_from_setup`` writes),
+        and the suggestion turns ``accepted`` -- all together or none: a
+        suggestion is never ``accepted`` with nothing added. A suggestion that
+        is no longer pending refuses ``suggestion_not_pending``.
+        """
+        self._require_project(project_id)
+        ref_str = str(resource_ref).strip()
+        req_hash = _request_hash({"project_id": project_id, "suggestion_id": suggestion_id,
+                                  "resource_ref": ref_str, "action": "add_source_watch"})
+        replay = self._check_idempotency(command_id, req_hash, "add_source_watch")
+        if replay is not None:
+            return replay
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+        with self._command_txn(command_id) as conn:
+            accepted = conn.execute(
+                "UPDATE source_suggestions SET status='accepted' WHERE id=? AND project_id=? AND status='pending'",
+                (suggestion_id, project_id),
+            ).rowcount
+            if accepted != 1:
+                raise ConflictError("The suggestion is not pending", code="suggestion_not_pending",
+                                    context={"status": 409})
+            new_revision = self._get_revision(conn, project_id) + 1
+            conn.execute("UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                         (new_revision, now_iso, project_id))
+            prior = conn.execute(
+                "SELECT created_at FROM project_resources WHERE project_id=? AND resource_ref=?",
+                (project_id, ref_str),
+            ).fetchone()
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id, resource_ref, relationship, source, confidence,
+                    created_at, last_modified, deleted)
+                   VALUES (?, ?, 'source', 'suggested', 1.0, ?, ?, 0)
+                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                     relationship='source', source='suggested', last_modified=excluded.last_modified, deleted=0""",
+                (project_id, ref_str, prior[0] if prior else now_iso, now_iso),
+            )
+            watch = self._arm_source_watch_in_txn(conn, project_id, spec, now_iso)
+            conn.execute(
+                """INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind, target_ref, actor_ref,
+                    command_id, before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (generate_pchg_id(project_id=project_id, project_revision=new_revision, ordinal=0),
+                 project_id, new_revision, "project.resource.linked", ref_str,
+                 f"principal:{principal.identity}", cmd_id, None, None,
+                 json.dumps({"resource_ref": ref_str, "watch_id": watch["watch_id"],
+                             "suggestion_id": suggestion_id}), now_iso),
+            )
+            self._ledger.append_in_transaction(
+                conn, principal, event_type="project.resource.linked", producer="ProjectService",
+                subject_ref=project_ref, source_revision=str(new_revision),
+                facts={"project_id": project_id, "resource_ref": ref_str, "watch_id": watch["watch_id"]},
+                refs=[project_ref, ref_str],
+            )
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.LINKED, project_id=project_id, project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            filed = conn.execute(
+                "SELECT * FROM project_resources WHERE project_id=? AND resource_ref=?", (project_id, ref_str),
+            ).fetchone()
+            suggestion = dict(conn.execute("SELECT * FROM source_suggestions WHERE id=?", (suggestion_id,)).fetchone())
+            result = {
+                "suggestion": suggestion,
+                "resource": {**self._db.project_relationships._row(filed).to_dict(), **_envelope_to_dict(envelope)},
+                "watch": watch,
+            }
+            self._record_command(conn, cmd_id, project_id, "add_source_watch", req_hash, envelope, result=result)
         return result
 
     def update_project(
@@ -3018,7 +3129,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             # Revision check (API-001)
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
@@ -3135,6 +3246,7 @@ class ProjectService:
         result.update(_envelope_to_dict(envelope))
         return result
 
+    @_serialized_command
     def archive_project(
         self, principal: Principal, project_id: str,
         *, expected_revision: Optional[int] = None,
@@ -3152,7 +3264,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3207,6 +3319,17 @@ class ProjectService:
                 self._db.steward_policies.update_policy_in_transaction(
                     conn, policy["id"], unattended_enabled=0,
                 )
+            # PHILO-9-02 (the steward beat, section 4; Muad'Dib r1 C1): archive
+            # WRITES the policy's terms (unattended off), so its admitted
+            # operation becomes the policy's recorded owner operation, in this
+            # same transaction: a snapshot never pairs these terms with an
+            # older operation.
+            from holdspeak.services import project_kernel as _project_kernel
+
+            running = _project_kernel.current()
+            if policy and running is not None and running.name == "project.archive" and not running.replay:
+                conn.execute("UPDATE steward_policies SET configure_operation_id=? WHERE id=?",
+                             (running.operation_id, policy["id"]))
 
             self._ledger.append_in_transaction(
                 conn, principal,
@@ -3231,6 +3354,7 @@ class ProjectService:
 
         return True
 
+    @_serialized_command
     def restore_project(
         self, principal: Principal, project_id: str,
         *, expected_revision: Optional[int] = None,
@@ -3258,7 +3382,7 @@ class ProjectService:
 
         if not project.is_archived:
             # Not archived -- no-op per API-002
-            with self._db._connection() as conn:
+            with self._command_txn(command_id) as conn:
                 current_rev = self._get_revision(conn, project_id)
                 envelope = CommandResultEnvelope(
                     result_kind=ResultKind.NO_CHANGE,
@@ -3273,7 +3397,7 @@ class ProjectService:
             result.update(_envelope_to_dict(envelope))
             return result
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3340,6 +3464,7 @@ class ProjectService:
         result.update(_envelope_to_dict(envelope))
         return result
 
+    @_serialized_command
     def add_resource(
         self, principal: Principal, project_id: str,
         resource_ref: str, payload: dict[str, Any] | None = None,
@@ -3378,7 +3503,7 @@ class ProjectService:
         if relation not in {"member", "source", "output", "related"}:
             raise ValueError(f"unknown project relationship: {relation}")
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3471,6 +3596,7 @@ class ProjectService:
 
         return result
 
+    @_serialized_command
     def remove_resource(
         self, principal: Principal, project_id: str, resource_ref: str,
         *, expected_revision: Optional[int] = None,
@@ -3495,7 +3621,7 @@ class ProjectService:
 
         # HS-173-08 / 158 S-1: single transaction for revision bump +
         # resource soft-delete + change row + event + command.
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3569,6 +3695,7 @@ class ProjectService:
 
         return deleted
 
+    @_serialized_command
     def associate_meeting(
         self, principal: Principal, project_id: str, meeting_id: str,
         *, expected_revision: Optional[int] = None,
@@ -3603,7 +3730,7 @@ class ProjectService:
         mid = str(meeting_id).strip()
         pid = str(project_id).strip()
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3703,6 +3830,7 @@ class ProjectService:
 
         return True
 
+    @_serialized_command
     def disassociate_meeting(
         self, principal: Principal, project_id: str, meeting_id: str,
         *, expected_revision: Optional[int] = None,
@@ -3733,7 +3861,7 @@ class ProjectService:
         mid = str(meeting_id).strip()
         pid = str(project_id).strip()
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3817,6 +3945,7 @@ class ProjectService:
 
     # ── item commands (HS-158-03) ──────────────────────────────────────
 
+    @_serialized_command
     def create_item(
         self, principal: Principal, project_id: str,
         payload: dict[str, Any] | None = None,
@@ -3889,7 +4018,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -4139,6 +4268,7 @@ class ProjectService:
         result["item_id"] = item_id
         return result
 
+    @_serialized_command
     def update_item(
         self, principal: Principal, project_id: str, item_id: str,
         patch: dict[str, Any],
@@ -4204,7 +4334,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -4298,6 +4428,7 @@ class ProjectService:
         result["item_id"] = item_id
         return result
 
+    @_serialized_command
     def transition_item(
         self, principal: Principal, project_id: str, item_id: str,
         verb: str, payload: dict[str, Any] | None = None,
@@ -4349,7 +4480,7 @@ class ProjectService:
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
 
-        with self._db._connection() as conn:
+        with self._command_txn(command_id) as conn:
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -4627,6 +4758,32 @@ class ProjectService:
         if row is None:
             raise NotFound("project", project_id)
         return int(row["revision"])
+
+    def _command_txn(self, command_id: Optional[str]) -> Any:
+        """The write transaction of an idempotent command (PHILO-9-02, law 9).
+
+        ``_check_idempotency`` reads the command BEFORE the write; two callers
+        with one ``command_id`` could both find it absent and both write (two
+        revisions and change rows; Codex Astra r3 on PR #680, finding 3). The
+        write transaction therefore takes the write lock first (``BEGIN
+        IMMEDIATE``) and looks again: a command another caller recorded
+        meanwhile raises :class:`_CommandRaced` before anything is written,
+        and :func:`_serialized_command` answers through the replay path.
+        """
+        from contextlib import contextmanager
+
+        @contextmanager
+        def txn() -> Any:
+            with self._db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                row = None if command_id is None else conn.execute(
+                    "SELECT status FROM project_commands WHERE id=?", (command_id,),
+                ).fetchone()
+                if row is not None and row[0] == "completed":
+                    raise _CommandRaced(command_id)
+                yield conn
+
+        return txn()
 
     def _check_idempotency(
         self, command_id: Optional[str], req_hash: str, command_kind: str,

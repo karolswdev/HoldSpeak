@@ -1307,9 +1307,10 @@ KERNEL_RECEIPT_READ = OperationDescriptor(
 # ProjectDoorService, its closed argument NAMES (the service's own keyword
 # names), and its Article XI admission by EFFECT, as the owner ruled it (Q1:
 # the phase status's admission table). The admission of these rows is
-# DECLARED here and ENFORCED by PHILO-9-02 (``Admission.enforced`` is false
-# until then: story 02 owns the kernel path, the steward beat and the
-# refusal receipts).
+# DECLARED here (story 01) and ENFORCED by PHILO-9-02
+# (``services/project_kernel.py``: one kernel operation with one terminal
+# receipt per admitted call; an agent refused ``project_delegation_required``
+# with a receipt until story 07's grant names the operation).
 #
 # Discovery words (F12): each description names the owner's job and where
 # every id comes from. The product sends nothing: an update is published in
@@ -1446,7 +1447,7 @@ PROJECT_CREATE = OperationDescriptor(
     exposure=("http:POST /api/projects", "mcp:project.create"),
     service="project_service",
     method="create_project",
-    admission=Admission("exempt", "A bare project: a project row, revision, change and event; no watch (Q1).", enforced=False),
+    admission=Admission("exempt", "A bare project: a project row, revision, change and event; no watch (Q1)."),
 )
 
 PROJECT_DOOR_CREATE = OperationDescriptor(
@@ -1476,7 +1477,6 @@ PROJECT_DOOR_CREATE = OperationDescriptor(
         "Any source given: armed watches read GitHub/Jira on a schedule (egress, Q1). Without sources: exempt.",
         ("sources",),
         holds=lambda args: bool(args.get("sources")),
-        enforced=False,
     ),
 )
 
@@ -1504,7 +1504,7 @@ PROJECT_UPDATE = OperationDescriptor(
     exposure=("http:PATCH /api/projects/{project_id}", "mcp:project.update"),
     service="project_service",
     method="update_project",
-    admission=Admission("exempt", "A plain edit of the project's own fields (Q1).", enforced=False),
+    admission=Admission("exempt", "A plain edit of the project's own fields (Q1)."),
 )
 
 PROJECT_ARCHIVE = OperationDescriptor(
@@ -1527,7 +1527,7 @@ PROJECT_ARCHIVE = OperationDescriptor(
     service="project_service",
     method="archive_project",
     admission=Admission("admitted", "Pauses the watches and turns unattended steward runs off: changes authority, "
-                        "stops scheduled egress (Q1; F18).", enforced=False),
+                        "stops scheduled egress (Q1; F18)."),
 )
 
 PROJECT_RESTORE = OperationDescriptor(
@@ -1548,7 +1548,7 @@ PROJECT_RESTORE = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/restore", "mcp:project.restore"),
     service="project_service",
     method="restore_project",
-    admission=Admission("exempt", "Lifecycle active; resumes no watch and no unattended run (Q1).", enforced=False),
+    admission=Admission("exempt", "Lifecycle active; resumes no watch and no unattended run (Q1)."),
 )
 
 PROJECT_LINK = OperationDescriptor(
@@ -1575,7 +1575,7 @@ PROJECT_LINK = OperationDescriptor(
     service="project_service",
     method="associate_meeting",
     admission=Admission("admitted", "Files a meeting in the Room; the meeting watch it ensures (watch.create) is its "
-                        "child, not a second top-level admission (Q1).", enforced=False),
+                        "child, not a second top-level admission (Q1)."),
 )
 
 PROJECT_UNLINK = OperationDescriptor(
@@ -1601,7 +1601,7 @@ PROJECT_UNLINK = OperationDescriptor(
     exposure=("http:DELETE /api/projects/{project_id}/meetings/{meeting_id}", "mcp:project.unlink"),
     service="project_service",
     method="disassociate_meeting",
-    admission=Admission("admitted", "Unfiles the meeting (Q1).", enforced=False),
+    admission=Admission("admitted", "Unfiles the meeting (Q1)."),
 )
 
 _REVIEW_ID = {"type": "string", "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."}
@@ -1620,7 +1620,7 @@ PROJECT_OPEN_REVIEW = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/reviews", "mcp:project.open_review"),
     service="project_delta_service",
     method="open_review",
-    admission=Admission("exempt", "Freezes a local review window (Q1).", enforced=False),
+    admission=Admission("exempt", "Freezes a local review window (Q1)."),
 )
 
 PROJECT_GET_DELTA = OperationDescriptor(
@@ -1670,7 +1670,7 @@ PROJECT_DECIDE_PROPOSAL = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide", "mcp:project.decide_proposal"),
     service="project_delta_service",
     method="decide_proposal",
-    admission=Admission("admitted", "Each of the four verbs decides (Q1; Codex Astra r2 F2).", enforced=False),
+    admission=Admission("admitted", "Each of the four verbs decides (Q1; Codex Astra r2 F2)."),
 )
 
 PROJECT_ACCEPT_REVIEW = OperationDescriptor(
@@ -1692,7 +1692,7 @@ PROJECT_ACCEPT_REVIEW = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/reviews/{review_id}/accept", "mcp:project.accept_review"),
     service="project_delta_service",
     method="accept_review",
-    admission=Admission("admitted", "Accepts the window: bumps the revision, supersedes undecided proposals (Q1).", enforced=False),
+    admission=Admission("admitted", "Accepts the window: bumps the revision, supersedes undecided proposals (Q1)."),
 )
 
 PROJECT_LIST_UPDATES = OperationDescriptor(
@@ -1744,7 +1744,7 @@ PROJECT_DRAFT_UPDATE = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/updates/draft", "mcp:project.draft_update"),
     service="project_update_service",
     method="draft_update_command",
-    admission=Admission("exempt", "A draft; a model draft's call keeps its own inference.invoke admission (Q1).", enforced=False),
+    admission=Admission("exempt", "A draft; a model draft's call keeps its own inference.invoke admission (Q1)."),
 )
 
 PROJECT_UPDATE_DRAFT = OperationDescriptor(
@@ -1770,7 +1770,7 @@ PROJECT_UPDATE_DRAFT = OperationDescriptor(
     exposure=("http:PUT /api/updates/{update_id}", "mcp:project.update_draft"),
     service="project_update_service",
     method="save_update",
-    admission=Admission("exempt", "The draft's text (Q1).", enforced=False),
+    admission=Admission("exempt", "The draft's text (Q1)."),
 )
 
 PROJECT_PUBLISH_UPDATE = OperationDescriptor(
@@ -1792,7 +1792,7 @@ PROJECT_PUBLISH_UPDATE = OperationDescriptor(
     exposure=("http:POST /api/updates/{update_id}/publish", "mcp:project.publish_update"),
     service="project_update_service",
     method="publish_update",
-    admission=Admission("admitted", "A published update is read-only: may be irreversible; sends nothing (Q1).", enforced=False),
+    admission=Admission("admitted", "A published update is read-only: may be irreversible; sends nothing (Q1)."),
 )
 
 DESK_NEEDS_YOU = OperationDescriptor(
@@ -1879,7 +1879,7 @@ PROJECT_ITEM_CREATE = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/items", "mcp:project.item.create"),
     service="project_service",
     method="create_item",
-    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+    admission=Admission("exempt", "The owner's own record in the Room (Q1)."),
 )
 
 PROJECT_ITEM_UPDATE = OperationDescriptor(
@@ -1918,7 +1918,7 @@ PROJECT_ITEM_UPDATE = OperationDescriptor(
     exposure=("http:PATCH /api/projects/{project_id}/items/{item_id}", "mcp:project.item.update"),
     service="project_service",
     method="update_item",
-    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+    admission=Admission("exempt", "The owner's own record in the Room (Q1)."),
 )
 
 PROJECT_ITEM_TRANSITION = OperationDescriptor(
@@ -1947,7 +1947,7 @@ PROJECT_ITEM_TRANSITION = OperationDescriptor(
     exposure=("http:POST /api/projects/{project_id}/items/{item_id}/transition", "mcp:project.item.transition"),
     service="project_service",
     method="transition_item",
-    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+    admission=Admission("exempt", "The owner's own record in the Room (Q1)."),
 )
 
 PROJECT_RESOURCE_LIST = OperationDescriptor(
@@ -1991,7 +1991,7 @@ PROJECT_RESOURCE_ADD = OperationDescriptor(
     exposure=("http:PUT /api/projects/{project_id}/resources/{resource_ref}", "mcp:project.resource.add"),
     service="project_service",
     method="add_resource",
-    admission=Admission("admitted", "Files a thing in the Room (Q1).", enforced=False),
+    admission=Admission("admitted", "Files a thing in the Room (Q1)."),
 )
 
 PROJECT_RESOURCE_REMOVE = OperationDescriptor(
@@ -2017,7 +2017,7 @@ PROJECT_RESOURCE_REMOVE = OperationDescriptor(
     exposure=("http:DELETE /api/projects/{project_id}/resources/{resource_ref}", "mcp:project.resource.remove"),
     service="project_service",
     method="remove_resource",
-    admission=Admission("admitted", "Unfiles a thing from the Room (Q1).", enforced=False),
+    admission=Admission("admitted", "Unfiles a thing from the Room (Q1)."),
 )
 
 #: PHILO-9-01: the Room's rows, in export order.
@@ -2063,6 +2063,10 @@ DESK_ID_ARGUMENT: Mapping[str, str] = MappingProxyType({
     "decision": "decision_id", "note": "note_id", "directory": "directory_id", "kb": "kb_id",
 })
 
+# PHILO-9-02: the steward and the connectors (carved beside this module; it
+# imports the shared pieces above, so the import sits after them).
+from holdspeak.room_operations import STEWARD_CONNECTOR_OPERATIONS  # noqa: E402
+
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_CREATE, DECISION_UPDATE, DECISION_READ, DECISION_LIST,
@@ -2075,7 +2079,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ,
-) + ROOM_OPERATIONS
+) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2202,6 +2206,19 @@ class OperationRegistry:
                     f"{name} is admitted under Article XI and needs the transport's authenticated principal",
                 )
 
+            from holdspeak.kernel.project import is_project
+
+            if is_project(name):
+                # PHILO-9-02: the Room's kernel path (replay by command key,
+                # the service's handle, the steward's detached receipt).
+                from holdspeak.services import project_kernel
+
+                result, kernel = project_kernel.run(
+                    _database_of(bound.target), principal, name, payload,
+                    lambda minted: bound.call(principal, **minted, **given_held),
+                )
+                _LAST_KERNEL.set(kernel)
+                return result
             result, kernel = desk_kernel.run(
                 _database_of(bound.target), principal, name, payload,
                 lambda minted: bound.call(principal, **minted, **given_held),
@@ -2263,9 +2280,11 @@ class OperationRegistry:
         """
         if not self.consequential(name, raw):
             return None
-        from holdspeak.services import desk_kernel
+        from holdspeak.kernel.project import is_project
+        from holdspeak.services import desk_kernel, project_kernel
 
-        return desk_kernel.refuse(_database_of(self.operations[name].target), principal, name, code, raw)
+        refuse = project_kernel.refuse if is_project(name) else desk_kernel.refuse
+        return refuse(_database_of(self.operations[name].target), principal, name, code, raw)
 
     def _refusal_receipt(self, exc: OperationRefused, principal: Any, name: str, raw: Any) -> None:
         kernel = self.refuse(principal, name, exc.code, raw)

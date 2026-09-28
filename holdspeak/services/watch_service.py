@@ -296,6 +296,28 @@ class WatchService:
                 context={"status": 403},
             )
 
+    def _graduated(self, watch_id: str, graduated_only: bool) -> None:
+        """PHILO-9-02: the MCP tools reach graduated watches only (HS-165-03's boundary).
+
+        Moved from the MCP family (``_require_graduated_watch``) into the one
+        service, so the declared operation refuses a legacy (reactions-family)
+        row by name wherever the MCP tool reaches it. HTTP passes
+        ``graduated_only=False`` (its routes always reached every row).
+        """
+        if not graduated_only:
+            return
+        watch = self._repo.get_watch(watch_id)
+        if not watch:
+            raise NotFound("watch", watch_id)
+        state = watch.get("state") or ""
+        if state not in {"active", "tested", "paused", "retired"}:
+            raise ServiceError(
+                "legacy_watch_boundary",
+                f"Watch {watch_id!r} is a legacy row (state={state!r}). "
+                "Use the reactions family tools (watch.list / watch.refresh) instead.",
+                context={"watch_id": watch_id, "state": state, "status": 409},
+            )
+
     def _arm_watch(self, watch_id: str) -> str | None:
         """HS-200-43: make this watch selectable by the scheduler.
 
@@ -328,8 +350,10 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Get a watch with its full spec including rules."""
+        self._graduated(watch_id, graduated_only)
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
@@ -420,8 +444,10 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Pause a watch (state='paused')."""
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
@@ -433,8 +459,10 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Resume a paused watch (state='active')."""
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
@@ -450,12 +478,14 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Retire a watch (ACT-009).
 
         Stops future evaluation while retaining all rows, observations,
         evaluations, effects, and resulting history.
         """
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
@@ -469,6 +499,7 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Bounded, non-mutating read through the snapshot machinery (ACT-002).
 
@@ -485,6 +516,7 @@ class WatchService:
         supported transitions, observation time, duration, and typed
         error/partial state (PROV-009).
         """
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
@@ -923,6 +955,7 @@ class WatchService:
         self,
         principal: Principal,
         watch_id: str,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Manual evaluation: snapshot -> diff -> transitions -> observations.
 
@@ -949,6 +982,7 @@ class WatchService:
         ``effects`` key.  Before this the owner's own hand could evaluate
         a watch all day and the steward would never see a thing.
         """
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -1381,6 +1415,8 @@ class WatchService:
         principal: Principal,
         watch_id: str,
         rules: list[dict[str, Any]],
+        evaluation_cadence_minutes: int | None = None,
+        graduated_only: bool = False,
     ) -> dict[str, Any]:
         """Replace rules for a watch (replace-by-ordinal).
 
@@ -1388,10 +1424,16 @@ class WatchService:
         Rules are material -- changing them increments revision and
         stales test_state + baseline_state (ACT-008).
         """
+        self._graduated(watch_id, graduated_only)
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
+        # PHILO-9-02: the optional cadence the MCP tool wrote by hand (HS-167-02).
+        if evaluation_cadence_minutes is not None and not (
+            isinstance(evaluation_cadence_minutes, int) and 1 <= evaluation_cadence_minutes <= 10080
+        ):
+            raise ValidationError("evaluation_cadence_minutes must be 1..10080")
 
         # Validate all rules before any mutation.
         errors = validate_rules(rules)
@@ -1433,11 +1475,15 @@ class WatchService:
             baseline_state="stale",
         )
 
-        return {
+        result = {
             "watch_id": watch_id,
             "rules": created_rules,
             "revision": current_revision + 1,
         }
+        if evaluation_cadence_minutes is not None:
+            self._repo.update_watch_spec(watch_id, evaluation_cadence_minutes=evaluation_cadence_minutes)
+            result["evaluation_cadence_minutes"] = evaluation_cadence_minutes
+        return result
 
     # ── Fetch seam ──────────────────────────────────────────────────
 
@@ -1636,6 +1682,18 @@ def _write_watch_created_receipt(
         },
         separators=(",", ":"),
     )
+    # PHILO-9-02 (Q1): a meeting watch ensured by an admitted project.link
+    # is that operation's CHILD (never a second top-level admission): the
+    # link's operation is the running Room operation of this thread.
+    parent_operation_id = ""
+    try:
+        from holdspeak.services import project_kernel
+
+        running = project_kernel.current()
+        if running is not None and running.name == "project.link":
+            parent_operation_id = running.operation_id
+    except Exception:  # pragma: no cover - a receipt never blocks the watch
+        parent_operation_id = ""
     try:
         with db._connection() as conn:
             conn.execute(
@@ -1643,14 +1701,16 @@ def _write_watch_created_receipt(
                    (operation_id, request_id, idempotency_key, name, version,
                     principal_kind, principal_identity, target_ref, placement,
                     envelope_sha256, policy_version, authority_basis,
-                    state, revision, native_id, created_at, updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?)""",
+                    state, revision, native_id, parent_operation_id, correlation_id,
+                    created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?)""",
                 (
                     operation_id, idem_key, idem_key, "watch.create", 1,
                     "owner", "ensure-meeting-watch",
                     f"watch:{watch_id}", "local", "", "",
                     "meeting-link" if why == "meeting linked" else "heartbeat-conductor",
-                    "succeeded", operation_id, now, now,
+                    "succeeded", operation_id, parent_operation_id, parent_operation_id,
+                    now, now,
                 ),
             )
             conn.execute(

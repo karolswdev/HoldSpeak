@@ -575,20 +575,23 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
         Manual only; scheduling is P5's.
         """
+        # PHILO-9-02: the declared project.watch.evaluate, admitted (egress):
+        # one kernel operation and its receipt.
+        from ... import operations
+        from ._room_kernel import kernel_fields, kernel_refusal, refusal_fields
+
         try:
-            result = ctx.watch_service.evaluate_once(
-                principal(request), watch_id,
+            result, kernel = operations.for_context(ctx).invoke_receipted(
+                principal(request), "project.watch.evaluate", {"watch_id": watch_id},
+                held={"graduated_only": False},
             )
-            return JSONResponse({"success": True, **result})
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
+            return JSONResponse({"success": True, **result, **kernel_fields(kernel)})
         except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            status = 404 if isinstance(exc, NotFound) else int((exc.context or {}).get("status", 400))
             return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
+                {"code": exc.code, "message": exc.detail, **refusal_fields(exc)},
                 status_code=status,
             )
         except Exception as exc:

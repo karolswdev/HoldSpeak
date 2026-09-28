@@ -22,9 +22,12 @@ from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
-from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from ... import operations
+from ...operations import OperationRefused
+from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
 
 log = get_logger("web.routes.watches")
 
@@ -68,14 +71,49 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list project watches")
 
+    def ops() -> Any:
+        return operations.for_context(ctx)
+
+    def _refused(exc: ServiceError) -> JSONResponse:
+        if (refused := kernel_refusal(exc)) is not None:
+            return refused
+        if isinstance(exc, NotFound):
+            return JSONResponse({"code": exc.code, "message": exc.detail, **refusal_fields(exc)}, status_code=404)
+        if isinstance(exc, ValidationError):
+            return JSONResponse({"code": exc.code, "message": exc.detail,
+                                 **({"errors": exc.context["errors"]} if "errors" in exc.context else {}),
+                                 **refusal_fields(exc)}, status_code=400)
+        status = int((exc.context or {}).get("status", 400))
+        return JSONResponse({"code": exc.code, "message": exc.detail, **refusal_fields(exc)}, status_code=status)
+
+    #: HTTP reaches every watch row (the MCP tools, graduated rows only).
+    _ALL_ROWS = {"graduated_only": False}
+
+    async def _admitted(request: Request, watch_id: str, name: str, args: dict[str, Any] | None = None,
+                        *, held: bool = True, wrap: Any = None, what: str) -> Any:
+        """PHILO-9-02: one admitted watch operation -- one kernel operation and its receipt."""
+        p = principal(request)
+        try:
+            payload = {"watch_id": watch_id, **(args or {})}
+            result, kernel = (ops().invoke_receipted(p, name, payload, held=_ALL_ROWS) if held
+                              else ops().invoke_receipted(p, name, payload))
+            body = wrap(result) if wrap is not None else result
+            return JSONResponse({**body, **kernel_fields(kernel)} if isinstance(body, dict) else body)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "invalid_arguments", "message": exc.detail, **refusal_fields(exc)},
+                                status_code=400)
+        except ServiceError as exc:
+            return _refused(exc)
+        except Exception as exc:
+            return error_500(exc, log, f"Failed to {what}")
+
     # ── GET /api/watches/{watch_id} ──────────────────────────────
 
     @router.get("/api/watches/{watch_id}")
     async def get_watch(watch_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(
-                ctx.watch_service.get_watch(principal(request), watch_id),
-            )
+            return JSONResponse(ops().invoke(principal(request), "project.watch.inspect",
+                                             {"watch_id": watch_id}, held=_ALL_ROWS))
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},
@@ -84,176 +122,55 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to get watch")
 
-    # ── PATCH /api/watches/{watch_id} ────────────────────────────
+    # ── PATCH /api/watches/{watch_id} (admitted: the charter's HTTP capability exceptions) ─
 
     @router.patch("/api/watches/{watch_id}")
     async def update_watch(watch_id: str, request: Request) -> Any:
-        try:
-            body = await request.json()
-            result = ctx.watch_service.update_watch(
-                principal(request),
-                watch_id,
-                name=body.get("name"),
-                intent=body.get("intent"),
-                subject_kind=body.get("subject_kind"),
-                query=body.get("query"),
-                trigger_kind=body.get("trigger_kind"),
-                trigger=body.get("trigger"),
-            )
-            return JSONResponse(result)
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ValidationError as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=400,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update watch")
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.watch.update")
+        if refused is not None:
+            return refused
+        fields = ("name", "intent", "subject_kind", "query", "trigger_kind", "trigger")
+        return await _admitted(request, watch_id, "project.watch.update",
+                               {key: body.get(key) for key in fields}, held=False, what="update watch")
 
     # ── POST /api/watches/{watch_id}/test ────────────────────────
 
     @router.post("/api/watches/{watch_id}/test")
     async def test_watch(watch_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                ctx.watch_service.test_watch(principal(request), watch_id),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to test watch")
+        return await _admitted(request, watch_id, "project.watch.test", what="test watch")
 
-    # ── POST /api/watches/{watch_id}/baseline ────────────────────
+    # ── POST /api/watches/{watch_id}/baseline (admitted: egress) ─
 
     @router.post("/api/watches/{watch_id}/baseline")
     async def baseline_watch(watch_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                ctx.watch_service.baseline_watch(principal(request), watch_id),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to baseline watch")
+        return await _admitted(request, watch_id, "project.watch.baseline", held=False, what="baseline watch")
 
     # ── POST /api/watches/{watch_id}/pause ───────────────────────
 
     @router.post("/api/watches/{watch_id}/pause")
     async def pause_watch(watch_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                ctx.watch_service.pause_watch(principal(request), watch_id),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to pause watch")
+        return await _admitted(request, watch_id, "project.watch.pause", what="pause watch")
 
     # ── POST /api/watches/{watch_id}/resume ──────────────────────
 
     @router.post("/api/watches/{watch_id}/resume")
     async def resume_watch(watch_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                ctx.watch_service.resume_watch(principal(request), watch_id),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to resume watch")
+        return await _admitted(request, watch_id, "project.watch.resume", what="resume watch")
 
     # ── POST /api/watches/{watch_id}/retire ──────────────────────
 
     @router.post("/api/watches/{watch_id}/retire")
     async def retire_watch(watch_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                ctx.watch_service.retire_watch(principal(request), watch_id),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to retire watch")
+        return await _admitted(request, watch_id, "project.watch.retire", what="retire watch")
 
     # ── PUT /api/watches/{watch_id}/rules ────────────────────────
 
     @router.put("/api/watches/{watch_id}/rules")
     async def set_rules(watch_id: str, request: Request) -> Any:
-        try:
-            body = await request.json()
-            rules = body.get("rules", [])
-            return JSONResponse(
-                ctx.watch_service.set_rules(
-                    principal(request), watch_id, rules,
-                ),
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ValidationError as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail,
-                 "errors": (exc.context or {}).get("errors", [])},
-                status_code=400,
-            )
-        except ServiceError as exc:
-            status = int((exc.context or {}).get("status", 400))
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=status,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to set watch rules")
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.watch.set_rules")
+        if refused is not None:
+            return refused
+        return await _admitted(request, watch_id, "project.watch.set_rules",
+                               {"rules": body.get("rules", [])}, what="set watch rules")
 
     return router

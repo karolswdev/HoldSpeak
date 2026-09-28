@@ -1015,7 +1015,15 @@ class MeetingWebServer:
                 jira_adapter=JiraProviderAdapter(
                     db=get_database(), runner=self._acli_runner,
                 ),
-                confluence_adapter=self._build_confluence_adapter(),
+                # PHILO-9-02 (B1): the Confluence row and its real Recheck
+                # probe need the adapter; the bare builder returns None
+                # unless a test injects a runner, so fall back as :1004 does.
+                confluence_adapter=(
+                    self._build_confluence_adapter()
+                    or __import__(
+                        "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
+                    ).ConfluenceProviderAdapter(db=get_database(), runner=self._acli_runner)
+                ),
                 config_loader=Config.load,
                 inference_assignment_service=inference_assignment_service,
             ),
@@ -1055,6 +1063,10 @@ class MeetingWebServer:
                 ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
+            # PHILO-9-02: one suggested-source service over the hub's ProjectService.
+            suggested_source_service=__import__(
+                "holdspeak.services.suggested_source_service", fromlist=["SuggestedSourceService"]
+            ).SuggestedSourceService(get_database(), project_service=_project_service),
             project_delta_service=_project_delta_service,
             project_update_service=(_project_update_service := ProjectUpdateService(
                 get_database(),
@@ -1307,21 +1319,16 @@ class MeetingWebServer:
                     log.info(f"Seeded {seeded} built-in skills")
             except Exception as e:
                 log.debug(f"skill seeding skipped: {e}")
-            # HS-163-02 STW-009: mark abandoned steward runs interrupted.
+            # HS-163-02 STW-009 + PHILO-9-02 (the steward beat, section 3):
+            # settle abandoned steward work on the hub's COMPOSED service,
+            # before the conductor starts: every Room operation left
+            # non-terminal ends indeterminate with its receipt (children
+            # first) and its run row interrupted in the same transaction; a
+            # legacy run with no operation is interrupted as before.
             try:
-                from .db import get_database as _get_db
-                from .services.project_evidence_collector import ProjectEvidenceCollector
-                from .services.project_delta_service import ProjectDeltaService
-                from .services.project_steward_service import ProjectStewardService
-                _sdb = _get_db()
-                _steward = ProjectStewardService(
-                    _sdb,
-                    ProjectEvidenceCollector(_sdb),
-                    ProjectDeltaService(_sdb, ProjectEvidenceCollector(_sdb)),
-                )
-                recovered = _steward.recover_on_startup()
-                if recovered:
-                    log.info(f"Steward recovery: {len(recovered)} run(s) marked interrupted")
+                recovered = web_ctx.project_steward_service.recover_admitted_on_startup()
+                if any(recovered.values()):
+                    log.info(f"Steward recovery: {recovered}")
             except Exception as e:
                 log.error(f"steward startup recovery failed: {e}")
             try:

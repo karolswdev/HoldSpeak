@@ -5082,6 +5082,16 @@
       "review": "candidate_only"
     },
     {
+      "path": "holdspeak/services/connections_service.py",
+      "line": 272,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "# (no subprocess): the binary-missing hint stays.",
+      "line_sha256": "82f29e470bf1f45b1fc2498a1ac000501bc6fbb437d6ee3d963b656a39e20e7a",
+      "review": "candidate_only"
+    },
+    {
       "path": "holdspeak/services/door_service.py",
       "line": 356,
       "kinds": [
@@ -5249,6 +5259,16 @@
       ],
       "excerpt": "stdin=subprocess.DEVNULL,",
       "line_sha256": "8bb95cb9f42daa8764ce44d2d2d5383298b6954ab85e4f076643ba90581ca237",
+      "review": "candidate_only"
+    },
+    {
+      "path": "holdspeak/services/github_provider.py",
+      "line": 184,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "subprocess), the same fast path ``connection_status`` takes.",
+      "line_sha256": "a15fb41cc950fc296861003044bbb5a2e48d4d5409f98f89607155160e53bf56",
       "review": "candidate_only"
     },
     {
@@ -5663,7 +5683,7 @@
     },
     {
       "path": "holdspeak/services/watch_service.py",
-      "line": 1034,
+      "line": 1068,
       "kinds": [
         "process_or_shell"
       ],
@@ -6013,7 +6033,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 198,
+      "line": 200,
       "kinds": [
         "websocket"
       ],
@@ -6023,7 +6043,7 @@
     },
     {
       "path": "holdspeak/web/context.py",
-      "line": 248,
+      "line": 250,
       "kinds": [
         "websocket"
       ],
@@ -8623,7 +8643,7 @@
     },
     {
       "path": "web/src/pages/cores/connections/api.ts",
-      "line": 139,
+      "line": 151,
       "kinds": [
         "http_client"
       ],
@@ -8633,7 +8653,7 @@
     },
     {
       "path": "web/src/pages/cores/connections/api.ts",
-      "line": 148,
+      "line": 160,
       "kinds": [
         "http_client"
       ],
