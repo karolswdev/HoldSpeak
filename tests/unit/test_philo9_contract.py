@@ -231,3 +231,53 @@ def test_the_named_difference_http_bodies_close_their_argument_names(hub: Hub) -
     # The fields HTTP accepted before are still accepted (created_by_ref, provenance_kind).
     kept = c.post(f"/api/projects/{pid}/items", json={"item_type": "milestone", "title": "M", "provenance_kind": "owner"})
     assert kept.status_code == 200, kept.text
+
+
+#: Codex Astra r1 (P5): each newly CLOSED descriptor whose HTTP body used to be
+#: passed whole to the service, and the service method that consumed it.
+_CLOSED_BODIES = {
+    "project.create": ("create_project", "payload"),
+    "project.item.create": ("create_item", "payload"),
+    "project.item.update": ("update_item", "patch"),
+    "project.resource.add": ("add_resource", "body"),
+}
+
+
+def _consumed_keys(method: str, variable: str) -> set[str]:
+    """Every ``<variable>.get("k")`` / ``"k" in <variable>`` / ``<variable>["k"]`` the method reads (AST census)."""
+    import ast
+    import inspect
+    import textwrap
+
+    from holdspeak.services.project_service import ProjectService
+
+    tree = ast.parse(textwrap.dedent(inspect.getsource(getattr(ProjectService, method))))
+    keys: set[str] = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "get"
+                and isinstance(node.func.value, ast.Name) and node.func.value.id == variable
+                and node.args and isinstance(node.args[0], ast.Constant)):
+            keys.add(node.args[0].value)
+        elif (isinstance(node, ast.Compare) and isinstance(node.left, ast.Constant) and isinstance(node.left.value, str)
+              and any(isinstance(op, ast.In) for op in node.ops)
+              and any(isinstance(c, ast.Name) and c.id == variable for c in node.comparators)):
+            keys.add(node.left.value)
+        elif (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name) and node.value.id == variable
+              and isinstance(node.slice, ast.Constant)):
+            keys.add(node.slice.value)
+    return keys
+
+
+@pytest.mark.parametrize("name", sorted(_CLOSED_BODIES))
+def test_every_field_the_service_consumed_is_still_accepted(name: str) -> None:
+    """Codex Astra r1 (P5): closing the argument names keeps every field the
+    service CONSUMED before; only fields it never read are refused."""
+    method, variable = _CLOSED_BODIES[name]
+    consumed = _consumed_keys(method, variable)
+    assert consumed, (name, method)
+    schema = _row(name).args_schema
+    accepted = set(schema["properties"])
+    if name == "project.item.update":
+        accepted = set(schema["properties"]["patch"]["properties"])
+    missing = sorted(consumed - accepted)
+    assert missing == [], f"{name} refuses fields {method} consumed: {missing}"

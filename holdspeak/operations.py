@@ -1320,7 +1320,7 @@ _ROOM_PRINCIPAL = (
     "derived by the transport (HTTP auth middleware; MCP auth resolver) and "
     "passed to the project service unchanged"
 )
-_PROJECT_ID = {"type": "string", "description": "The project id: the id field of a project from project.list, or the id project.create returned."}
+_PROJECT_ID = {"type": "string", "description": "The project id: projects[].id from project.list, or project.id from project.create."}
 _EXPECTED_REVISION = {
     "type": ["integer", "null"],
     "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). "
@@ -1339,7 +1339,7 @@ _WRITE_REFUSALS = _ROOM_REFUSALS + (
     "ConflictError stale_revision: expected_revision is not the current revision",
     "ConflictError idempotency_conflict: the command_id was used with different arguments",
 )
-_UPDATE_ID = {"type": "string", "description": "The update id: the id of an update from project.list_updates, or the id project.draft_update returned."}
+_UPDATE_ID = {"type": "string", "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."}
 _ITEM_TYPES = ["milestone", "risk", "dependency", "signal", "workstream"]
 _ITEM_LIFECYCLES = sorted({"planned", "reached", "missed", "dropped", "open", "mitigated", "accepted", "closed",
                            "healthy", "at_risk", "broken", "resolved", "active", "retired", "paused", "done"})
@@ -1352,7 +1352,7 @@ _ITEM_DETAILS = {
                    "dependency {direction: upstream|downstream, counterpart_ref, required_by, confidence}; "
                    "signal {metric, unit, latest_value, source_ref, observed_at}; workstream {}.",
 }
-_ITEM_ID = {"type": "string", "description": "The item id: the id of an item from project.item.list, or the id project.item.create returned."}
+_ITEM_ID = {"type": "string", "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."}
 _RESOURCE_REF = {
     "type": "string",
     "description": "The thing to file, as kind:id -- for example meeting:<id>, note:<id>, decision_record:<id>. "
@@ -1559,7 +1559,7 @@ PROJECT_LINK = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
-            "meeting_id": {"type": "string", "description": "The meeting id, from meeting.list."},
+            "meeting_id": {"type": "string", "description": "The meeting id: meetings[].id from meeting.list."},
             "expected_revision": _EXPECTED_REVISION,
             "command_id": _COMMAND_ID,
         },
@@ -1586,7 +1586,7 @@ PROJECT_UNLINK = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
-            "meeting_id": {"type": "string", "description": "The meeting id, from meeting.list or project.get_room."},
+            "meeting_id": {"type": "string", "description": "The meeting id: meetings[].id from meeting.list."},
             "expected_revision": _EXPECTED_REVISION,
             "command_id": _COMMAND_ID,
         },
@@ -1604,7 +1604,7 @@ PROJECT_UNLINK = OperationDescriptor(
     admission=Admission("admitted", "Unfiles the meeting (Q1).", enforced=False),
 )
 
-_REVIEW_ID = {"type": "string", "description": "The review id: open_review.id from project.get_delta, or the id project.open_review returned."}
+_REVIEW_ID = {"type": "string", "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."}
 
 PROJECT_OPEN_REVIEW = OperationDescriptor(
     name="project.open_review",
@@ -1649,7 +1649,7 @@ PROJECT_DECIDE_PROPOSAL = OperationDescriptor(
         "properties": {
             "project_id": _PROJECT_ID,
             "review_id": _REVIEW_ID,
-            "proposal_id": {"type": "string", "description": "The proposal id, from project.get_delta (proposals[].id)."},
+            "proposal_id": {"type": "string", "description": "The proposal id: proposals[].id from project.get_delta."},
             "verb": {"type": "string", "description": "accept, edit_accept, defer or dismiss."},
             "patch": {"type": ["object", "null"], "description": "Optional, for edit_accept: the fields to change."},
             "deferred_until": {"type": ["string", "null"], "description": "Optional, for defer: an ISO-8601 date."},
@@ -1863,6 +1863,8 @@ PROJECT_ITEM_CREATE = OperationDescriptor(
             # table): the creator is the principal, provenance is owner only.
             "created_by_ref": {"description": "HTTP only. Optional creator reference; default the principal."},
             "provenance_kind": {"description": "HTTP only. Optional; only owner is accepted."},
+            # PHILO-9-01 round two (Codex Astra r1, P5): HTTP read and stored it before.
+            "source_observation_id": {"description": "HTTP only. Optional: the observation the item came from."},
             "expected_revision": _EXPECTED_REVISION,
             "command_id": _COMMAND_ID,
         },
@@ -2000,7 +2002,7 @@ PROJECT_RESOURCE_REMOVE = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
-            "resource_ref": {"type": "string", "description": "The filed reference, as kind:id, from project.resource.list."},
+            "resource_ref": {"type": "string", "description": "The filed reference, as kind:id: resources[].resource_ref from project.resource.list."},
             "expected_revision": _EXPECTED_REVISION,
             "command_id": _COMMAND_ID,
         },

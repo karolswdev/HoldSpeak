@@ -669,7 +669,17 @@ class ProjectService:
             {key: row.get(key) for key in fields}
             for row in rows[: self._ROOM_UPDATES_CAP]
         ])
-        latest_published = next((u for u in recent if u.get("lifecycle") == "published"), None)
+        # PHILO-9-01 round two (Codex Astra r1, P4): the newest PUBLISHED
+        # update, read on its own -- newer drafts must not push it out of view.
+        latest_published = None
+        with self._db._connection() as conn:
+            pub = conn.execute(
+                "SELECT * FROM project_updates WHERE project_id = ? AND lifecycle = 'published' "
+                "ORDER BY published_at DESC, created_at DESC, id DESC LIMIT 1",
+                (project_id,),
+            ).fetchone()
+        if pub is not None:
+            latest_published = attach_deliveries(self._db, [{key: dict(pub).get(key) for key in fields}])[0]
         return {
             "count": len(rows),
             "counts": counts,
@@ -3348,7 +3358,11 @@ class ProjectService:
                                   "resource_ref": ref_str, **body})
         replay = self._check_idempotency(command_id, req_hash, "add_resource")
         if replay is not None:
-            return replay
+            # PHILO-9-01 round two (Codex Astra r1, P2): the replay answers the
+            # first response whole -- the filed row and the recorded envelope --
+            # not only the command envelope.
+            row = self._db.project_relationships.get(project_id, ref_str, include_deleted=True)
+            return {**row.to_dict(), **replay} if row is not None else replay
 
         cmd_id = command_id or generate_pcmd_id()
         now_iso = datetime.now().isoformat()

@@ -44,6 +44,22 @@
 
 On PR #680: the discovery phrase "mark it delivered" moves to story 02's acceptance, consistent with R4-2 (the tool, its route and its admission land together in 02). Story 01's criterion is amended; story 02's file gains the row. The strict expected failure stays in `tests/unit/test_philo9_discovery.py`, reason "PHILO-9-02 lands project.mark_update_delivered (R4-2)", so 02 turns it red-to-green.
 
+## Round two: Codex Astra r1 (DO-NOT-RATIFY at `74a9bdd5`), paid
+
+The check is committed verbatim: `checks/story-01-built-astra-r1.md`. Its reproductions (`test_pr680_review.py`) are ported into the fences below. Each new fence is red on an export of the PR head `74a9bdd5` (the capture "run_head.sh … -k 'r1 or consumed'": 8 failed; the 3 passes are preservation cases) and green after the repair.
+
+| r1 | Finding | Repair | Fence |
+|---|---|---|---|
+| 1 (P1) | PUT/DELETE resource merged the body after the URL ids: a request to Room A with `project_id=B` wrote B | **Chosen: refused, not ignored.** A body that names `project_id`, `resource_ref` or `item_id` is refused 400 `invalid_arguments` even when it agrees with the URL (`projects.py` `url_owns`); the same rule on item create and transition. The URL names the target. (Astra's own reproduction expected 200 with the body ignored; with this choice its two `test_resource_url_owns_target` cases answer 400 and nothing changes in either Room, which is the property it fenced.) | `test_r1_p1_the_url_owns_the_target_room[PUT/DELETE]` (three body shapes; both Rooms and both revisions unchanged), `test_r1_p1_the_url_owns_the_item_routes_too` |
+| 2 (P2) | A replayed resource PUT answered only the command envelope | `ProjectService.add_resource`: a replay answers the filed row and the recorded envelope (the row as stored now; for an immediate replay, the first answer) | `test_r1_p2_a_resource_replay_returns_the_first_response_whole` (whole body, HTTP and MCP) |
+| 3 (P2) | The catalogue taught `open_review.id` | Every Room id argument advertises its real response path: `projects[].id from project.list`, `project.id from project.create`, `review_id from project.get_delta / project.open_review`, `proposals[].id from project.get_delta`, `updates[].id`, `update.id`, `items[].id`, `item.id`, `meetings[].id from meeting.list`, `resources[].resource_ref from project.resource.list` | `test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer` parses every advertised path from the real `tools/list`, calls its producer tool on the real hub and resolves it (≥ 20 paths); the review id equals the one `open_review` returned |
+| 4 (P2) | `latest_published` looked only in the ten newest rows | `_read_room_updates` reads the newest published update on its own query, with its deliveries | `test_r1_p4_latest_published_survives_eleven_newer_drafts` (publish, a delivery, eleven drafts) |
+| 5 (P2) | HTTP item create refused the consumed `source_observation_id` | Added to `project.item.create` (HTTP only, as `created_by_ref` and `provenance_kind`) | `test_r1_p5_http_item_create_keeps_source_observation_id`; the census `test_every_field_the_service_consumed_is_still_accepted[…]`: an AST read of every body key the service consumed (`create_project`, `create_item`, `update_item`, `add_resource`) is in its closed descriptor |
+
+## CI (the full suite on the PR)
+
+Recorded after the push of the round-two commit; see "CI result" at the end of this file.
+
 ## Open, unpaid or unknown
 
 - **RECEIPTS** lists pipeline events of the observed services only (ProjectService and WatchService are `@observe_service`; the delta, update and steward services are not), so a publication or a delivery is not yet a Room receipt. The kernel receipts of story 02 are the planned source; not changed here.
@@ -695,4 +711,188 @@ bringing up nodes...
 =========================== short test summary info ============================
 XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
 114 passed, 1 xfailed in 13.14s
+```
+
+### Captured run — 2026-09-28T03:11:28Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider tests/unit/test_philo9_room_contract.py -k r1 -rf --tb=line`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 5ebb5f96949aa37d7a639f51e56fefef98a24373
+
+```text
+FFFFFFF                                                                  [100%]
+=================================== FAILURES ===================================
+E   AssertionError: ({'project_id': 'proj-208a7772136e'}, '{"resource":{"id":"proj-208a7772136e|note:note_40209713ff57","project_id":"proj...29.829141","deleted":false,"result_kind":"linked","project_revision":2,"changed_refs":["project:proj-208a7772136e"]}}')
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:490: AssertionError: ({'project_id': 'proj-208a7772136e'}, '{"resource":{"id":"proj-208a7772136e|note:note_40209713ff57","project_id":"proj...29.829141","deleted":false,"result_kind":"linked","project_revision":2,"changed_refs":["project:proj-208a7772136e"]}}')
+E   AssertionError: ({'project_id': 'proj-98876667cafa'}, '{"success":true,"removed":false}')
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:490: AssertionError: ({'project_id': 'proj-98876667cafa'}, '{"success":true,"removed":false}')
+E   AssertionError: {"success":true,"item":{"id":"pitem_378d99b30d184842a9cf6b2638b9e61c","project_id":"proj-b023c89dea70","item_type":"milestone","title":"M","summary":null,"lifecycle":"planned","severity":null,"owner_ref":null,"due_at":null,"sort_key":null,"details_json":"{}","provenance_kind":"owner","source_observation_id":null,"created_by_ref":"principal:owner-session","revision":0,"created_at":"2026-09-27T21:11:31.370089","updated_at":"2026-09-27T21:11:31.370089","result_kind":"updated","project_revision":2,"changed_refs":["project:proj-b023c89dea70"],"item_id":"pitem_378d99b30d184842a9cf6b2638b9e61c"}}
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:497: AssertionError: {"success":true,"item":{"id":"pitem_378d99b30d184842a9cf6b2638b9e61c","project_id":"proj-b023c89dea70","item_type":"milestone","title":"M","summary":null,"lifecycle":"planned","severity":null,"owner_ref":null,"due_at":null,"sort_key":null,"details_json":"{}","provenance_kind":"owner","source_observation_id":null,"created_by_ref":"principal:owner-session","revision":0,"created_at":"2026-09-27T21:11:31.370089","updated_at":"2026-09-27T21:11:31.370089","result_kind":"updated","project_revision":2,"changed_refs":["project:proj-b023c89dea70"],"item_id":"pitem_378d99b30d184842a9cf6b2638b9e61c"}}
+E   AssertionError: assert {'resource': ...d': 'linked'}} == {'resource': ...: False, ...}}
+      
+      Differing items:
+      {'resource': {'changed_refs': ['project:proj-848bbb31f948'], 'project_id': 'proj-848bbb31f948', 'project_revision': 2, 'result_kind': 'linked'}} != {'resource': {'changed_refs': ['project:proj-848bbb31f948'], 'confidence': 1.0, 'created_at': '2026-09-27T21:11:32.004240', 'deleted': False, ...}}
+      Use -v to get more diff
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:511: AssertionError: assert {'resource': ...d': 'linked'}} == {'resource': ...: False, ...}}
+E   AssertionError: None
+    assert None == 'pupd_105b6e78d3d648e1b506ccb7b846a28b'
+     +  where None = <built-in method get of dict object at 0x1127f91c0>('id')
+     +    where <built-in method get of dict object at 0x1127f91c0> = (None or {}).get
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:527: AssertionError: None
+E   AssertionError: {"success":false,"error":"Invalid arguments for project.item.create: Additional properties are not allowed ('source_observation_id' was unexpected)"}
+    assert 400 == 200
+     +  where 400 = <Response [400 Bad Request]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:539: AssertionError: {"success":false,"error":"Invalid arguments for project.item.create: Additional properties are not allowed ('source_observation_id' was unexpected)"}
+E   AssertionError: ('project', 'project', ['projects'])
+    assert (True and 'project' in {'projects': [{'context': {}, 'created_at': '2026-09-27T21:11:34.246109', 'description': '', 'detection_threshold': 0.4, ...}]})
+     +  where True = isinstance({'projects': [{'context': {}, 'created_at': '2026-09-27T21:11:34.246109', 'description': '', 'detection_threshold': 0.4, ...}]}, dict)
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/tests/unit/test_philo9_room_contract.py:555: AssertionError: ('project', 'project', ['projects'])
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_target_room[PUT]
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_target_room[DELETE]
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_item_routes_too
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p2_a_resource_replay_returns_the_first_response_whole
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p4_latest_published_survives_eleven_newer_drafts
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p5_http_item_create_keeps_source_observation_id
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer
+7 failed, 16 deselected in 5.83s
+```
+
+### Captured run — 2026-09-28T03:13:37Z
+
+- **Command:** `bash .tmp/run_head.sh tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py -k r1 or consumed -rf --tb=line`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 5ebb5f96949aa37d7a639f51e56fefef98a24373
+
+```text
+holdspeak from /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/holdspeak/__init__.py
+FFFFFFF.F..                                                              [100%]
+=================================== FAILURES ===================================
+E   AssertionError: ({'project_id': 'proj-a879585796d1'}, '{"resource":{"id":"proj-a879585796d1|note:note_6753c562cb6a","project_id":"proj...41.422150","deleted":false,"result_kind":"linked","project_revision":2,"changed_refs":["project:proj-a879585796d1"]}}')
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:490: AssertionError: ({'project_id': 'proj-a879585796d1'}, '{"resource":{"id":"proj-a879585796d1|note:note_6753c562cb6a","project_id":"proj...41.422150","deleted":false,"result_kind":"linked","project_revision":2,"changed_refs":["project:proj-a879585796d1"]}}')
+E   AssertionError: ({'project_id': 'proj-1eeb24d6fe7e'}, '{"success":true,"removed":false}')
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:490: AssertionError: ({'project_id': 'proj-1eeb24d6fe7e'}, '{"success":true,"removed":false}')
+E   AssertionError: {"success":true,"item":{"id":"pitem_175a2fced5864215b6168e08289c3a94","project_id":"proj-0031c5e675a2","item_type":"milestone","title":"M","summary":null,"lifecycle":"planned","severity":null,"owner_ref":null,"due_at":null,"sort_key":null,"details_json":"{}","provenance_kind":"owner","source_observation_id":null,"created_by_ref":"principal:owner-session","revision":0,"created_at":"2026-09-27T21:13:43.579153","updated_at":"2026-09-27T21:13:43.579153","result_kind":"updated","project_revision":2,"changed_refs":["project:proj-0031c5e675a2"],"item_id":"pitem_175a2fced5864215b6168e08289c3a94"}}
+    assert 200 == 400
+     +  where 200 = <Response [200 OK]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:497: AssertionError: {"success":true,"item":{"id":"pitem_175a2fced5864215b6168e08289c3a94","project_id":"proj-0031c5e675a2","item_type":"milestone","title":"M","summary":null,"lifecycle":"planned","severity":null,"owner_ref":null,"due_at":null,"sort_key":null,"details_json":"{}","provenance_kind":"owner","source_observation_id":null,"created_by_ref":"principal:owner-session","revision":0,"created_at":"2026-09-27T21:13:43.579153","updated_at":"2026-09-27T21:13:43.579153","result_kind":"updated","project_revision":2,"changed_refs":["project:proj-0031c5e675a2"],"item_id":"pitem_175a2fced5864215b6168e08289c3a94"}}
+E   AssertionError: assert {'resource': ...d': 'linked'}} == {'resource': ...: False, ...}}
+      
+      Differing items:
+      {'resource': {'changed_refs': ['project:proj-989ecf424d76'], 'project_id': 'proj-989ecf424d76', 'project_revision': 2, 'result_kind': 'linked'}} != {'resource': {'changed_refs': ['project:proj-989ecf424d76'], 'confidence': 1.0, 'created_at': '2026-09-27T21:13:44.744472', 'deleted': False, ...}}
+      Use -v to get more diff
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:511: AssertionError: assert {'resource': ...d': 'linked'}} == {'resource': ...: False, ...}}
+E   AssertionError: None
+    assert None == 'pupd_0fee7705b3fe4a90bb0611c5dd32b947'
+     +  where None = <built-in method get of dict object at 0x115f81340>('id')
+     +    where <built-in method get of dict object at 0x115f81340> = (None or {}).get
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:527: AssertionError: None
+E   AssertionError: {"success":false,"error":"Invalid arguments for project.item.create: Additional properties are not allowed ('source_observation_id' was unexpected)"}
+    assert 400 == 200
+     +  where 400 = <Response [400 Bad Request]>.status_code
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:539: AssertionError: {"success":false,"error":"Invalid arguments for project.item.create: Additional properties are not allowed ('source_observation_id' was unexpected)"}
+E   AssertionError: ('project', 'project', ['projects'])
+    assert (True and 'project' in {'projects': [{'context': {}, 'created_at': '2026-09-27T21:13:48.866626', 'description': '', 'detection_threshold': 0.4, ...}]})
+     +  where True = isinstance({'projects': [{'context': {}, 'created_at': '2026-09-27T21:13:48.866626', 'description': '', 'detection_threshold': 0.4, ...}]}, dict)
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_room_contract.py:555: AssertionError: ('project', 'project', ['projects'])
+E   AssertionError: project.item.create refuses fields create_item consumed: ['source_observation_id']
+    assert ['source_observation_id'] == []
+      
+      Left contains one more item: 'source_observation_id'
+      Use -v to get more diff
+/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/agent-a9cee30c09ab6adde/.tmp/head-copy/tests/unit/test_philo9_contract.py:283: AssertionError: project.item.create refuses fields create_item consumed: ['source_observation_id']
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_target_room[PUT]
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_target_room[DELETE]
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p1_the_url_owns_the_item_routes_too
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p2_a_resource_replay_returns_the_first_response_whole
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p4_latest_published_survives_eleven_newer_drafts
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p5_http_item_create_keeps_source_observation_id
+FAILED tests/unit/test_philo9_room_contract.py::test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer
+FAILED tests/unit/test_philo9_contract.py::test_every_field_the_service_consumed_is_still_accepted[project.item.create]
+8 failed, 3 passed, 74 deselected in 11.10s
+```
+
+### Captured run — 2026-09-28T03:14:42Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider -n 8 tests/unit/test_philo9_base_install_imports_catalogue.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py tests/unit/test_philo9_delivery_record.py tests/unit/test_philo9_discovery.py tests/unit/test_philo9_compat.py -rxX`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ed6ba3cc805a291aa9c2ede2d7742044c9279583
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 57%]
+......................................x...............                   [100%]
+=========================== short test summary info ============================
+XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
+125 passed, 1 xfailed in 20.63s
+```
+
+### Captured run — 2026-09-28T03:15:03Z
+
+- **Command:** `bash .tmp/run_scoped.sh -rxX`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** ed6ba3cc805a291aa9c2ede2d7742044c9279583
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+................................s....................................... [ 34%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+..............................................x......................... [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+............................................s........................... [ 82%]
+........................................................................ [ 85%]
+...............................................................s........ [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+.........................................                                [100%]
+=========================== short test summary info ============================
+XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
+2701 passed, 3 skipped, 1 xfailed in 179.10s (0:02:59)
 ```

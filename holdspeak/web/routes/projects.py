@@ -30,6 +30,23 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
+    def url_owns(body: dict[str, Any], operation: str, **ids: str) -> dict[str, Any]:
+        """PHILO-9-01 round two (Codex Astra r1, P1): the URL names the target.
+
+        A body that names a target identifier (``project_id``, ``resource_ref``,
+        ``item_id``) is refused 400 -- also when it agrees with the URL -- so a
+        request to one Room can never write another. The URL's identifiers are
+        the operation's.
+        """
+        named = sorted(set(ids) & set(body))
+        if named:
+            raise OperationRefused(
+                "invalid_arguments", operation,
+                f"Invalid arguments for {operation}: {', '.join(named)} "
+                f"{'comes' if len(named) == 1 else 'come'} from the path, not the body",
+            )
+        return {**body, **ids}
+
     def ops() -> Any:
         """PHILO-9-01: the Room's declared operations (``holdspeak.operations``).
 
@@ -322,9 +339,9 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         # command id both wrote).
         try:
             body = dict(payload or {})
-            return JSONResponse({"resource": ops().invoke(principal(request), "project.resource.add", {
-                "project_id": project_id, "resource_ref": resource_ref, **body,
-            })})
+            return JSONResponse({"resource": ops().invoke(principal(request), "project.resource.add", url_owns(
+                body, "project.resource.add", project_id=project_id, resource_ref=resource_ref,
+            ))})
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -348,9 +365,9 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
             if not isinstance(body, dict):
                 return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
-            return JSONResponse({"success": True, "removed": ops().invoke(principal(request), "project.resource.remove", {
-                "project_id": project_id, "resource_ref": resource_ref, **body,
-            })})
+            return JSONResponse({"success": True, "removed": ops().invoke(principal(request), "project.resource.remove", url_owns(
+                body, "project.resource.remove", project_id=project_id, resource_ref=resource_ref,
+            ))})
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -467,7 +484,8 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         project_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         try:
-            result = ops().invoke(principal(request), "project.item.create", {**payload, "project_id": project_id})
+            result = ops().invoke(principal(request), "project.item.create",
+                                  url_owns(payload, "project.item.create", project_id=project_id))
             return JSONResponse({"success": True, "item": result})
         except OperationRefused as exc:
             return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
@@ -526,7 +544,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
             result = ops().invoke(principal(request), "project.item.transition", {
-                **payload, "project_id": project_id, "item_id": item_id, "verb": verb,
+                **url_owns(payload, "project.item.transition", project_id=project_id, item_id=item_id), "verb": verb,
             })
             return JSONResponse({"success": True, "item": result})
         except OperationRefused as exc:

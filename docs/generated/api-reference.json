@@ -3021,7 +3021,7 @@
             "GET"
           ],
           "symbol": "api_list_ask_tasks",
-          "line": 122,
+          "line": 139,
           "parameters": [
             {
               "name": "request",
@@ -3099,7 +3099,7 @@
             "POST"
           ],
           "symbol": "api_discard_ask_task",
-          "line": 196,
+          "line": 213,
           "parameters": [
             {
               "name": "task_id",
@@ -3164,7 +3164,7 @@
             "POST"
           ],
           "symbol": "api_resume_ask_task",
-          "line": 147,
+          "line": 164,
           "parameters": [
             {
               "name": "task_id",
@@ -3233,7 +3233,7 @@
             "POST"
           ],
           "symbol": "api_record_ask_stop",
-          "line": 174,
+          "line": 191,
           "parameters": [
             {
               "name": "task_id",
@@ -11190,7 +11190,7 @@
             "GET"
           ],
           "symbol": "api_desk_needs_you",
-          "line": 580,
+          "line": 598,
           "parameters": [
             {
               "name": "request",
@@ -11318,7 +11318,7 @@
             "GET"
           ],
           "symbol": "api_resource_relationships",
-          "line": 365,
+          "line": 382,
           "parameters": [
             {
               "name": "resource_ref",
@@ -21897,7 +21897,7 @@
             "GET"
           ],
           "symbol": "api_meeting_projects",
-          "line": 402,
+          "line": 419,
           "parameters": [
             {
               "name": "meeting_id",
@@ -26449,7 +26449,7 @@
             "GET"
           ],
           "symbol": "api_list_projects",
-          "line": 210,
+          "line": 227,
           "parameters": [
             {
               "name": "request",
@@ -26555,7 +26555,7 @@
             "POST"
           ],
           "symbol": "api_create_project",
-          "line": 217,
+          "line": 234,
           "parameters": [
             {
               "name": "payload",
@@ -26716,7 +26716,7 @@
             "DELETE"
           ],
           "symbol": "api_archive_project",
-          "line": 265,
+          "line": 282,
           "parameters": [
             {
               "name": "project_id",
@@ -26820,7 +26820,7 @@
             "GET"
           ],
           "symbol": "api_get_project",
-          "line": 234,
+          "line": 251,
           "parameters": [
             {
               "name": "project_id",
@@ -26920,7 +26920,7 @@
             "PATCH"
           ],
           "symbol": "api_update_project",
-          "line": 243,
+          "line": 260,
           "parameters": [
             {
               "name": "project_id",
@@ -27028,7 +27028,7 @@
             "GET"
           ],
           "symbol": "api_project_action_items",
-          "line": 429,
+          "line": 446,
           "parameters": [
             {
               "name": "project_id",
@@ -27127,7 +27127,7 @@
             "GET"
           ],
           "symbol": "api_project_artifacts",
-          "line": 438,
+          "line": 455,
           "parameters": [
             {
               "name": "project_id",
@@ -27226,7 +27226,7 @@
             "POST"
           ],
           "symbol": "api_save_ask_task",
-          "line": 104,
+          "line": 121,
           "parameters": [
             {
               "name": "project_id",
@@ -27329,7 +27329,7 @@
             "GET"
           ],
           "symbol": "api_list_project_briefings",
-          "line": 49,
+          "line": 66,
           "parameters": [
             {
               "name": "project_id",
@@ -28019,7 +28019,7 @@
             "GET"
           ],
           "symbol": "api_list_items",
-          "line": 449,
+          "line": 466,
           "parameters": [
             {
               "name": "project_id",
@@ -28131,7 +28131,7 @@
             "POST"
           ],
           "symbol": "api_create_item",
-          "line": 466,
+          "line": 483,
           "parameters": [
             {
               "name": "project_id",
@@ -28162,7 +28162,8 @@
             "ops().invoke",
             "principal",
             "router.post",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28238,7 +28239,7 @@
             "PATCH"
           ],
           "symbol": "api_update_item",
-          "line": 486,
+          "line": 504,
           "parameters": [
             {
               "name": "project_id",
@@ -28350,7 +28351,7 @@
             "POST"
           ],
           "symbol": "api_transition_item",
-          "line": 512,
+          "line": 530,
           "parameters": [
             {
               "name": "project_id",
@@ -28387,7 +28388,8 @@
             "principal",
             "router.post",
             "str",
-            "str(payload.pop('verb', '')).strip"
+            "str(payload.pop('verb', '')).strip",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28465,7 +28467,7 @@
             "GET"
           ],
           "symbol": "api_project_meetings",
-          "line": 301,
+          "line": 318,
           "parameters": [
             {
               "name": "project_id",
@@ -28570,7 +28572,7 @@
             "DELETE"
           ],
           "symbol": "api_disassociate_meeting",
-          "line": 388,
+          "line": 405,
           "parameters": [
             {
               "name": "project_id",
@@ -28676,7 +28678,7 @@
             "POST"
           ],
           "symbol": "api_associate_meeting",
-          "line": 374,
+          "line": 391,
           "parameters": [
             {
               "name": "project_id",
@@ -28885,7 +28887,7 @@
             "GET"
           ],
           "symbol": "api_project_people",
-          "line": 676,
+          "line": 694,
           "parameters": [
             {
               "name": "project_id",
@@ -29086,7 +29088,7 @@
             "GET"
           ],
           "symbol": "api_project_resources",
-          "line": 310,
+          "line": 327,
           "parameters": [
             {
               "name": "project_id",
@@ -29185,7 +29187,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_project_resource",
-          "line": 341,
+          "line": 358,
           "parameters": [
             {
               "name": "project_id",
@@ -29218,7 +29220,8 @@
             "request.body",
             "request.json",
             "router.delete",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29294,7 +29297,7 @@
             "PUT"
           ],
           "symbol": "api_add_project_resource",
-          "line": 319,
+          "line": 336,
           "parameters": [
             {
               "name": "project_id",
@@ -29329,7 +29332,8 @@
             "ops().invoke",
             "principal",
             "router.put",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29405,7 +29409,7 @@
             "POST"
           ],
           "symbol": "api_restore_project",
-          "line": 279,
+          "line": 296,
           "parameters": [
             {
               "name": "project_id",
@@ -29776,7 +29780,7 @@
             "GET"
           ],
           "symbol": "api_project_room",
-          "line": 58,
+          "line": 75,
           "parameters": [
             {
               "name": "project_id",
@@ -29876,7 +29880,7 @@
             "POST"
           ],
           "symbol": "api_mark_room_read",
-          "line": 67,
+          "line": 84,
           "parameters": [
             {
               "name": "project_id",
@@ -29975,7 +29979,7 @@
             "GET"
           ],
           "symbol": "api_project_since_last_meeting",
-          "line": 411,
+          "line": 428,
           "parameters": [
             {
               "name": "project_id",
@@ -30525,7 +30529,7 @@
             "GET"
           ],
           "symbol": "api_suggested_sources",
-          "line": 598,
+          "line": 616,
           "parameters": [
             {
               "name": "project_id",
@@ -30626,7 +30630,7 @@
             "POST"
           ],
           "symbol": "api_add_suggested_source",
-          "line": 612,
+          "line": 630,
           "parameters": [
             {
               "name": "project_id",
@@ -30738,7 +30742,7 @@
             "POST"
           ],
           "symbol": "api_dismiss_suggested_source",
-          "line": 651,
+          "line": 669,
           "parameters": [
             {
               "name": "project_id",
@@ -30847,7 +30851,7 @@
             "GET"
           ],
           "symbol": "api_project_summary",
-          "line": 420,
+          "line": 437,
           "parameters": [
             {
               "name": "project_id",

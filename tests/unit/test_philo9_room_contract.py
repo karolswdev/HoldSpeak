@@ -12,6 +12,7 @@ compatibility mapping is the only difference; message text is never compared).
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -458,3 +459,154 @@ def test_kernel_receipt_on_the_palette_reads_its_own_and_refuses_a_foreign_opera
     is_error, answer = _tool(agent, "kernel.receipt", {"operation_id": foreign})
     # The kernel's read scope (holdspeak/kernel/broker.py) names its rule.
     assert is_error and (answer.get("code") or answer.get("error")) == "principal_read_scope_required", answer
+
+
+# ── Round two: Codex Astra r1 on PR #680 (checks/story-01-built-astra-r1.md) ─
+#
+# Ported from Astra's executable reproductions (test_pr680_review.py); each
+# was red at 74a9bdd5 and is green after the repair.
+
+
+def _note(hub: Hub, title: str) -> str:
+    return hub.client.post("/api/notes", json={"title": title}).json()["note"]["id"]
+
+
+def _refs(hub: Hub, pid: str) -> list[str]:
+    return [r["resource_ref"] for r in hub.client.get(f"/api/projects/{pid}/resources").json()["resources"]]
+
+
+@pytest.mark.parametrize("method", ["PUT", "DELETE"])
+def test_r1_p1_the_url_owns_the_target_room(hub: Hub, method: str) -> None:
+    """Finding 1 (P1): a body that names another Room or reference is refused 400;
+    neither Room changes. The URL identifies the target; the body cannot."""
+    a, b = _project(hub, "URL room"), _project(hub, "Body room")
+    n1, n2 = _note(hub, "URL"), _note(hub, "Body")
+    if method == "DELETE":
+        for pid, nid in ((a, n1), (b, n2)):
+            assert hub.client.put(f"/api/projects/{pid}/resources/note:{nid}", json={}).status_code == 200
+    before = (_refs(hub, a), _refs(hub, b), _revision(hub, a), _revision(hub, b))
+    for body in ({"project_id": b}, {"resource_ref": f"note:{n2}"}, {"project_id": b, "resource_ref": f"note:{n2}"}):
+        resp = hub.client.request(method, f"/api/projects/{a}/resources/note:{n1}", json=body)
+        assert resp.status_code == 400, (body, resp.text)
+    assert (_refs(hub, a), _refs(hub, b), _revision(hub, a), _revision(hub, b)) == before
+
+
+def test_r1_p1_the_url_owns_the_item_routes_too(hub: Hub) -> None:
+    a, b = _project(hub, "URL room"), _project(hub, "Body room")
+    made = hub.client.post(f"/api/projects/{a}/items", json={"item_type": "milestone", "title": "M", "project_id": b})
+    assert made.status_code == 400, made.text
+    item = hub.client.post(f"/api/projects/{a}/items", json={"item_type": "milestone", "title": "M"}).json()["item"]["id"]
+    moved = hub.client.post(f"/api/projects/{a}/items/{item}/transition", json={"verb": "missed", "item_id": "pitem-other"})
+    assert moved.status_code == 400, moved.text
+    assert hub.client.get(f"/api/projects/{b}/items").json()["items"] == []
+
+
+def test_r1_p2_a_resource_replay_returns_the_first_response_whole(hub: Hub) -> None:
+    pid, n = _project(hub), _note(hub, "Replay")
+    url = f"/api/projects/{pid}/resources/note:{n}"
+    payload = {"relationship": "member", "command_id": "pcmd_r1_replay"}
+    first = hub.client.put(url, json=payload)
+    second = hub.client.put(url, json=payload)
+    assert first.status_code == second.status_code == 200, (first.text, second.text)
+    assert second.json() == first.json()
+    _, over_mcp = _tool(hub.client, "project.resource.add", {"project_id": pid, "resource_ref": f"note:{n}",
+                                                             "relationship": "member", "command_id": "pcmd_r1_replay"})
+    assert over_mcp == first.json()
+
+
+def test_r1_p4_latest_published_survives_eleven_newer_drafts(hub: Hub) -> None:
+    pid = _project(hub)
+    update_id = _published_update(hub, pid)
+    hub.db.project_update_deliveries.insert_delivery(
+        update_id=update_id, operation_id=hub.client.post("/api/decisions", json={"title": "op"}).json()["operation_id"],
+        delivered_to="Priya")
+    for i in range(11):
+        assert hub.client.post(f"/api/projects/{pid}/updates/draft", json={"command_id": f"pcmd_r1_draft_{i}"}).status_code == 200
+    updates = hub.client.get(f"/api/projects/{pid}/room").json()["updates"]
+    assert updates["counts"]["published"] == 1
+    assert (updates["latest_published"] or {}).get("id") == update_id, updates["latest_published"]
+    assert [d["delivered_to"] for d in updates["latest_published"]["deliveries"]] == ["Priya"]
+
+
+def test_r1_p5_http_item_create_keeps_source_observation_id(hub: Hub) -> None:
+    pid = _project(hub)
+    obs = "pobs_r1_source"
+    hub.db.project_observations.insert_observation(
+        observation_id=obs, project_id=pid, source_id="decision_records", observation_kind="decision.review_due",
+        subject_ref="decision_record:dr-r1", observed_at="2026-09-20T09:00:00", fact_json=json.dumps({"title": "Freeze"}))
+    resp = hub.client.post(f"/api/projects/{pid}/items", json={"item_type": "milestone", "title": "Source",
+                                                                "source_observation_id": obs})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["item"]["source_observation_id"] == obs
+
+
+# ── Finding 3: every advertised id path resolves on a REAL producer ─────
+
+_PATH_FROM = re.compile(r"([a-z_]+(?:\[\])?(?:\.[a-z_]+(?:\[\])?)*) from ([a-z_]+(?:\.[a-z_]+)+)")
+
+
+def _resolve(value: Any, path: str) -> list[Any]:
+    found = [value]
+    for part in path.split("."):
+        many = part.endswith("[]")
+        key = part[:-2] if many else part
+        nxt: list[Any] = []
+        for v in found:
+            assert isinstance(v, dict) and key in v, (path, key, v if not isinstance(v, dict) else sorted(v))
+            nxt.extend(v[key] if many else [v[key]])
+        found = nxt
+    return found
+
+
+def test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer(hub: Hub) -> None:
+    c = hub.client
+    pid = _project(hub)
+    note = _note(hub, "Filed")
+    meeting = "m-r1-paths"
+    with hub.db._connection() as conn:
+        conn.execute("INSERT INTO meetings (id, started_at, title) VALUES (?, datetime('now'), 'Paths')", (meeting,))
+    assert c.put(f"/api/projects/{pid}/resources/note:{note}", json={}).status_code == 200
+    assert hub.db.project_observations.insert_observation(
+        observation_id="pobs_r1_paths", project_id=pid, source_id="decision_records",
+        observation_kind="decision.review_due", subject_ref="decision_record:dr-paths",
+        observed_at="2026-09-20T09:00:00", fact_json=json.dumps({"title": "Freeze"}))
+    # An open review with a proposal, an item and an update, so every list has one to point at.
+    assert not _tool(c, "project.open_review", {"project_id": pid})[0]
+    assert c.post(f"/api/projects/{pid}/items", json={"item_type": "milestone", "title": "Seed"}).status_code == 200
+    assert c.post(f"/api/projects/{pid}/updates/draft", json={}).status_code == 200
+    producers: dict[str, dict[str, Any]] = {
+        "project.list": {}, "project.create": {"name": "Paths two"},
+        "project.list_updates": {"project_id": pid}, "project.draft_update": {"project_id": pid},
+        "project.open_review": {"project_id": pid}, "project.get_delta": {"project_id": pid},
+        "project.item.create": {"project_id": pid, "item_type": "milestone", "title": "M"},
+        "project.item.list": {"project_id": pid}, "project.resource.list": {"project_id": pid},
+        "meeting.list": {},
+    }
+    tools = {t["name"]: t for t in c.post("/api/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list",
+                                                             "params": {}}).json()["result"]["tools"]}
+    checked = 0
+    for name, tool in sorted(tools.items()):
+        if not (name.startswith("project.") and name.split(".")[1] in {
+                "get", "get_room", "update", "archive", "restore", "link", "unlink", "open_review", "get_delta",
+                "decide_proposal", "accept_review", "list_updates", "draft_update", "update_draft",
+                "publish_update", "item", "resource"}):
+            continue
+        for argument, spec in tool["inputSchema"]["properties"].items():
+            if not (argument.endswith("_id") or argument == "resource_ref") or argument == "command_id":
+                continue
+            pairs = _PATH_FROM.findall(spec.get("description", ""))
+            if argument == "resource_ref" and name != "project.resource.remove":
+                continue
+            assert pairs, (name, argument, spec.get("description"))
+            for path, producer in pairs:
+                assert producer in producers, (name, argument, producer)
+                is_error, answer = _tool(c, producer, producers[producer])
+                assert not is_error, (producer, answer)
+                values = [v for v in _resolve(answer, path) if v]
+                assert values, (name, argument, path, producer)
+                checked += 1
+    assert checked >= 20, checked
+    # The review id both producers advertise is the one open_review returned.
+    _, opened = _tool(c, "project.open_review", {"project_id": pid})
+    _, delta = _tool(c, "project.get_delta", {"project_id": pid})
+    assert _resolve(delta, "review_id") == [opened["review_id"]]

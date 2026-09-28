@@ -1859,7 +1859,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           }
         },
         "required": [
@@ -1899,7 +1899,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           }
         },
         "required": [
@@ -2042,7 +2042,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "patch": {
             "type": "object",
@@ -2104,7 +2104,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "expected_revision": {
             "type": [
@@ -2160,7 +2160,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "expected_revision": {
             "type": [
@@ -2216,11 +2216,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "meeting_id": {
             "type": "string",
-            "description": "The meeting id, from meeting.list."
+            "description": "The meeting id: meetings[].id from meeting.list."
           },
           "expected_revision": {
             "type": [
@@ -2278,11 +2278,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "meeting_id": {
             "type": "string",
-            "description": "The meeting id, from meeting.list or project.get_room."
+            "description": "The meeting id: meetings[].id from meeting.list."
           },
           "expected_revision": {
             "type": [
@@ -2340,7 +2340,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           }
         },
         "required": [
@@ -2380,7 +2380,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           }
         },
         "required": [
@@ -2420,15 +2420,15 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "review_id": {
             "type": "string",
-            "description": "The review id: open_review.id from project.get_delta, or the id project.open_review returned."
+            "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."
           },
           "proposal_id": {
             "type": "string",
-            "description": "The proposal id, from project.get_delta (proposals[].id)."
+            "description": "The proposal id: proposals[].id from project.get_delta."
           },
           "verb": {
             "type": "string",
@@ -2498,11 +2498,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "review_id": {
             "type": "string",
-            "description": "The review id: open_review.id from project.get_delta, or the id project.open_review returned."
+            "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."
           },
           "command_id": {
             "type": [
@@ -2551,7 +2551,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "lifecycle": {
             "type": [
@@ -2598,7 +2598,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "generator": {
             "type": [
@@ -2653,7 +2653,7 @@
         "properties": {
           "update_id": {
             "type": "string",
-            "description": "The update id: the id of an update from project.list_updates, or the id project.draft_update returned."
+            "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."
           },
           "body_md": {
             "description": "The new Markdown text of the draft."
@@ -2704,7 +2704,7 @@
         "properties": {
           "update_id": {
             "type": "string",
-            "description": "The update id: the id of an update from project.list_updates, or the id project.draft_update returned."
+            "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."
           },
           "command_id": {
             "type": [
@@ -2785,7 +2785,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "item_type": {
             "type": [
@@ -2841,7 +2841,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "item_type": {
             "type": "string",
@@ -2880,6 +2880,9 @@
           },
           "provenance_kind": {
             "description": "HTTP only. Optional; only owner is accepted."
+          },
+          "source_observation_id": {
+            "description": "HTTP only. Optional: the observation the item came from."
           },
           "expected_revision": {
             "type": [
@@ -2936,11 +2939,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "item_id": {
             "type": "string",
-            "description": "The item id: the id of an item from project.item.list, or the id project.item.create returned."
+            "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."
           },
           "patch": {
             "type": "object",
@@ -3020,11 +3023,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "item_id": {
             "type": "string",
-            "description": "The item id: the id of an item from project.item.list, or the id project.item.create returned."
+            "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."
           },
           "verb": {
             "type": "string",
@@ -3088,7 +3091,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           }
         },
         "required": [
@@ -3128,7 +3131,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "resource_ref": {
             "type": "string",
@@ -3197,11 +3200,11 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "The project id: the id field of a project from project.list, or the id project.create returned."
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
           },
           "resource_ref": {
             "type": "string",
-            "description": "The filed reference, as kind:id, from project.resource.list."
+            "description": "The filed reference, as kind:id: resources[].resource_ref from project.resource.list."
           },
           "expected_revision": {
             "type": [
