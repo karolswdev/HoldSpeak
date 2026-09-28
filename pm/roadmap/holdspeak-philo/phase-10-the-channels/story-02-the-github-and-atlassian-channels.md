@@ -21,6 +21,11 @@
 
 ## Acceptance criteria
 
+**Gates from story 01 (Codex Astra r2 on #692, `checks/story-01-built-astra-r2.md`). The first CLI consumer implements both before any CLI channel sends:**
+
+- [ ] **GATE 1 — redaction cost bounded, diagnostics kept.** Story 01's `redact` scans every 10-character window of the error against the whole payload: Codex measured 8.68 s for a 2,000-character error against a 10 MiB payload, and 26.99 s for a repetitive payload; and `gh: permission denied` became `gh:[redacted]` when that phrase occurs in the document. Bound the work (for example hash-based shingling of the payload once, or a cap on the payload scanned) with a fence that times the worst case; and emit fixed, named error codes (`Outcome.reason`, the refusal code) that are never passed through the redactor, so the diagnosis survives when the text is redacted (a fence: a document that contains the CLI's error phrase still leaves its named code in the receipt).
+- [ ] **GATE 2 — the hub answers during a slow dispatch.** The channel routes are `async def` and call the service synchronously (`holdspeak/web/routes/channels.py:44-47`, `:113-116`): Codex measured a 1.5 s dispatch delay a concurrent read by 1.514 s (3 ms without it). Run the dispatch off the event loop (the threadpool), with a fence that measures a concurrent read during a slow send.
+
 - [ ] Each channel's send is one `channel.send` with its CLI children parented; red on main for the nudge's child (F5).
 - [ ] A nudge whose `gh` call times out is UNKNOWN in its record and its receipt and is not offered for Send again (red on main, F4).
 - [ ] The argv of each channel starts with its manifest prefix and carries no body; the payload file's bytes equal the preview's digest; a plan that would add `--jql`, `--filter`, `--edit-last` or a second key cannot be built.
@@ -43,6 +48,7 @@ PROVISIONAL: 2–3 engineering days.
 
 ## Notes
 
+- 2026-09-28 — two gates added from Codex Astra r2 on story 01 (#692): the redactor's cost and named codes; the dispatch off the event loop.
 - 2026-09-28 — the CLI seam, its outcome clauses and the steward's prepare moved here from story 01 (round two of story 01, Codex Astra r1 finding 5).
 - 2026-09-28 — round three: Codex Astra r2 conditions 2 and 3 added.
 - 2026-09-28 — round two: amended on Codex Astra r1 DO-NOT-RATIFY (`checks/charter-astra-r1.md`); bound by `design/send-lifecycle.md`.

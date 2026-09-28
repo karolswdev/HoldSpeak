@@ -161,6 +161,8 @@ The owner ratified the charter on 2026-09-28. The stories stay `backlog` until t
 
 ## Where we are
 
+2026-09-28, story 01: Codex Astra r2 on #692 RATIFY-WITH-CONDITIONS (`checks/story-01-built-astra-r2.md`); its two conditions are story 02's GATES 1 (the redactor's cost and named codes) and 2 (the dispatch off the event loop). Owed: Muad'Dib's full suite, then merge.
+
 2026-09-28, story 01 ROUND TWO (PR #692): Codex Astra r1 DO-NOT-RATIFY paid — the Room's face no longer shows an UNKNOWN send as delivered (fenced as rendered at 1440 and 393, red on the old face); the destination is re-checked inside the boundary transaction (Remove-vs-Send fenced both ways); the redactor removes payload excerpts and secrets; the CLI seam, its outcome clauses and the steward's prepare moved to story 02. 18/18 mutations caught. Owed: Codex Astra r2 on the PR; Muad'Dib's full suite before merge.
 
 2026-09-28, story 01 BUILT (branch `feat/philo-10-01`): the Send contract on the one declared contract (nine `channel.*` operations over HTTP, MCP and the rig), `channel_destinations` + `channel_sends` + the additive history columns, prepare and press, the durable dispatch boundary with recovery across take-over, the reaper and a restart (R1–R6, both forms), and the file channel; 16/16 mutations caught. Owed: the Codex Astra check of the built PR; stories 02–06. The CLI seam's plumbing (principal, parent, broker) moves to story 02 with its first user.
