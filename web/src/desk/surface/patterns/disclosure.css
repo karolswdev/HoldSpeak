@@ -121,3 +121,26 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+/* ── PHILO-9-07: the default trigger's 44 px target at the narrow desk ──
+   The trigger is the library Button's `chrome` variant, which carries no
+   `.btn` base class, so the HS-202-05 halo (global.css, `:where(.btn)`)
+   never reached it: at 393 its target was its 26 px face and the row above
+   took its corners. The same halo, the same reserved block margin, scoped
+   to the default variant (the raw and dense variants keep their geometry).
+   A container query (HS-129-06 law): the trigger lives in a window body. */
+@container surface (max-width: 420px) {
+  .desk-next .surface-disclosure:not([data-variant]) .surface-disclosure-trigger {
+    position: relative;
+    margin-block: calc((var(--desk-button-hit-size) - 26px) / 2 + var(--space-2) / 2);
+  }
+  .desk-next .surface-disclosure:not([data-variant]) .surface-disclosure-trigger::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    left: -1px;
+    height: var(--desk-button-hit-size);
+    transform: translateY(-50%);
+  }
+}

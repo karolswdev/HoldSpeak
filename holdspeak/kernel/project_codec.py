@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 import uuid
 from dataclasses import replace
 from typing import Any, Mapping
@@ -28,11 +29,12 @@ class ProjectCodec:
 
     version = 1
 
-    def __init__(self, name: str, database: Any) -> None:
+    def __init__(self, name: str, database: Any, *, clock: Any = time.time) -> None:
         if name not in rooms.PROJECT_KERNEL_OPERATIONS:
             raise ValueError(f"not a Room kernel operation: {name}")
         self.name = name
         self._database = database
+        self._clock = clock
 
     # -- admission -------------------------------------------------------
 
@@ -78,21 +80,44 @@ class ProjectCodec:
             raise KernelRefused("declared_capability_required", provenance=target)
         if principal.kind is not PrincipalKind.AGENT:
             raise KernelRefused("declared_capability_required", provenance=target)
-        # An AGENT. R4-1: stop is bound to the stored run's requester, the
-        # project resolved from the stored run (never from the request).
-        project_id = str(payload.get("project_id") or "")
+        # An AGENT.
+        if self.name in rooms.PROJECT_DELEGATION_OPERATIONS:
+            # XI.4: only the owner delegates; an agent can never grant itself.
+            raise KernelRefused(rooms.OWNER_REQUIRED, provenance=target)
+        if rooms.agent_steward_child(self.name, principal, request.parent_operation_id):
+            # PHILO-9-07 (R4-1): a child of the agent's own run acts under the
+            # run's FROZEN grant (G1, never a newer G2) and the owner's policy.
+            # Admitted as the run's child; its approval and its claim re-check
+            # the frozen grant, so a refused child keeps its parent and receipt.
+            return _steward_basis(admission, context or {})
+        # R4-1: the project is resolved from the stored run or update, never
+        # from the request; stop is bound to the stored run's requester.
+        project_id = self._project_of(payload)
         if self.name == "project.stop_steward":
             run = self._database.steward_runs.get_run(str(payload.get("run_id") or ""))
             if run is None:
                 raise KernelRefused("not_found", provenance=target)
             if str(run.get("requested_by") or "") != f"principal:{principal.identity}":
                 raise KernelRefused(rooms.RUN_OWNER_REQUIRED, provenance=target)
-            project_id = str(run.get("project_id") or "")
         with self._database._connection() as conn:
-            code, basis = rooms.grant_code(conn, principal, self.name, project_id)
+            code, basis = rooms.grant_code(conn, principal, self.name, project_id, self._clock())
         if code:
-            raise KernelRefused(code, provenance={**target, **dict(basis)})
-        return replace(admission, **dict(basis))  # pragma: no cover - story 07
+            raise KernelRefused(code, provenance={**target, **{k: v for k, v in dict(basis).items() if k != "target_ref"}})
+        # Frozen at admission: the grant id and its terms hash.
+        return replace(admission, **dict(basis))
+
+    def _project_of(self, payload: Mapping[str, Any]) -> str:
+        """The operation's project, from the STORED object it acts on (a spoofed project_id is ignored)."""
+        with self._database._connection() as conn:
+            if self.name == "project.stop_steward":
+                row = conn.execute("SELECT project_id FROM steward_runs WHERE id=?",
+                                   (str(payload.get("run_id") or ""),)).fetchone()
+                return str(row["project_id"]) if row is not None else ""
+            if payload.get("update_id"):
+                row = conn.execute("SELECT project_id FROM project_updates WHERE id=?",
+                                   (str(payload.get("update_id") or ""),)).fetchone()
+                return str(row["project_id"]) if row is not None else ""
+        return str(payload.get("project_id") or "")
 
     def admit(self, request: OperationRequest, admission: Admission, principal: Any, operation_id: str) -> None:
         return None
@@ -103,12 +128,25 @@ class ProjectCodec:
     # -- the execution cutoff (the beat, section 3) -----------------------
 
     def validate_claim(self, operation: Mapping[str, Any]) -> None:
-        """A steward child is re-checked AT THE CLAIM: a durable stop or a changed policy refuses it."""
+        """The execution cutoff, AT THE CLAIM (the beat, section 3; Phase 7's invariant 3).
+
+        A steward child: a durable stop, a changed policy or a lost frozen
+        grant refuses it. An agent's own granted operation: the grant its
+        frozen basis names must still be LIVE and unexpired.
+        """
         context = rooms.current_steward_context()
-        if not context or str(operation.get("parent_operation_id") or "") != str(context.get("operation_id") or ""):
+        if context and str(operation.get("parent_operation_id") or "") == str(context.get("operation_id") or ""):
+            cutoff = context.get("cutoff")
+            code = cutoff() if callable(cutoff) else ""
+            if code:
+                raise KernelRefused(code)
             return
-        cutoff = context.get("cutoff")
-        code = cutoff() if callable(cutoff) else ""
+        if self.name not in rooms.PROJECT_GRANT_OPERATIONS or str(operation.get("principal_kind")) != "agent":
+            return
+        # The project was bound to the stored object at admission and a run's
+        # or an update's project never changes: the frozen row's own project.
+        with self._database._connection() as conn:
+            code = rooms.by_basis(conn, operation, None, self._clock(), authoritative=True)
         if code:
             raise KernelRefused(code)
 
@@ -179,11 +217,12 @@ def _steward_basis(admission: Admission, context: Mapping[str, Any]) -> Admissio
     )
 
 
-def specs(database: Any) -> tuple[Any, ...]:
+def specs(database: Any, *, clock: Any = None) -> tuple[Any, ...]:
     """One ``OperationSpec`` per Room kernel operation (``kernel/runtime.py`` composes them)."""
     from .model import OperationSpec
 
+    kwargs = {"clock": clock} if clock else {}
     return tuple(
-        OperationSpec(name, 1, ProjectCodec(name, database), "agent.submit", "propose")
+        OperationSpec(name, 1, ProjectCodec(name, database, **kwargs), "agent.submit", "propose")
         for name in sorted(rooms.PROJECT_KERNEL_OPERATIONS)
     )

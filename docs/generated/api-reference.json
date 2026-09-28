@@ -15612,7 +15612,7 @@
             "GET"
           ],
           "symbol": "api_gate_audit",
-          "line": 157,
+          "line": 160,
           "parameters": [
             {
               "name": "request",
@@ -15673,7 +15673,7 @@
             "GET"
           ],
           "symbol": "api_gate_config",
-          "line": 166,
+          "line": 169,
           "parameters": [],
           "return_annotation": "Any",
           "declared_response_model": null,
@@ -15721,7 +15721,7 @@
             "GET"
           ],
           "symbol": "api_gate_list",
-          "line": 101,
+          "line": 104,
           "parameters": [
             {
               "name": "request",
@@ -15783,7 +15783,7 @@
             "POST"
           ],
           "symbol": "api_gate_propose",
-          "line": 79,
+          "line": 82,
           "parameters": [
             {
               "name": "request",
@@ -15844,7 +15844,7 @@
             "GET"
           ],
           "symbol": "api_gate_read",
-          "line": 92,
+          "line": 95,
           "parameters": [
             {
               "name": "proposal_id",
@@ -15906,7 +15906,7 @@
             "POST"
           ],
           "symbol": "api_gate_decide",
-          "line": 110,
+          "line": 113,
           "parameters": [
             {
               "name": "proposal_id",
@@ -15971,7 +15971,7 @@
             "POST"
           ],
           "symbol": "api_gate_receipt",
-          "line": 123,
+          "line": 126,
           "parameters": [
             {
               "name": "proposal_id",
@@ -16037,7 +16037,7 @@
             "POST"
           ],
           "symbol": "api_gate_usage",
-          "line": 135,
+          "line": 138,
           "parameters": [
             {
               "name": "request",
@@ -19307,11 +19307,13 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_actuator_kernel_real_hub.py",
         "tests/integration/test_kernel_real_hub.py",
         "tests/integration/test_process_input_real_hub.py",
         "tests/unit/test_philo7_article_xi.py",
-        "tests/unit/test_philo7_round_two.py"
+        "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_project_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -19400,7 +19402,7 @@
             "POST"
           ],
           "symbol": "mcp_http_endpoint",
-          "line": 97,
+          "line": 99,
           "parameters": [
             {
               "name": "request",
@@ -24148,6 +24150,7 @@
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py",
@@ -24243,6 +24246,7 @@
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py",
@@ -25867,6 +25871,7 @@
             "desk_delegation.revoke_for_credential",
             "exc.context.get",
             "int",
+            "project_delegation.revoke_for_credential",
             "request.app.state.agent_credentials.revoke",
             "router.delete"
           ],
@@ -25908,7 +25913,7 @@
             "DELETE"
           ],
           "symbol": "api_revoke_self",
-          "line": 74,
+          "line": 77,
           "parameters": [
             {
               "name": "request",
@@ -25931,6 +25936,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_principal_separation.py",
         "tests/unit/test_philo7_article_xi.py"
       ],
@@ -26550,6 +26556,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_phase200_task_resume.py",
@@ -26568,6 +26575,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -26665,6 +26674,7 @@
         "tests/e2e/test_hs200_preparation_brief_glass.py",
         "tests/e2e/test_hs200_task_resume_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/integration/test_phase200_claim_support.py",
         "tests/integration/test_phase200_task_resume.py",
@@ -26683,6 +26693,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -26849,6 +26861,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -26953,6 +26967,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27067,6 +27083,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27168,6 +27186,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27271,6 +27291,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27380,6 +27402,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27486,6 +27510,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27596,6 +27622,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27698,6 +27726,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27818,6 +27848,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -27920,6 +27952,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28029,6 +28063,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28098,6 +28134,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28214,6 +28252,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28326,6 +28366,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28442,6 +28484,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28560,6 +28604,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28671,6 +28717,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28785,6 +28833,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -28899,6 +28949,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29008,6 +29060,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29111,6 +29165,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29217,6 +29273,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29322,6 +29380,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29438,6 +29498,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29554,6 +29616,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29669,6 +29733,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29738,6 +29804,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29805,6 +29873,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29874,6 +29944,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -29943,6 +30015,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30047,6 +30121,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30150,6 +30226,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30253,6 +30331,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30356,6 +30436,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30466,6 +30548,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30576,6 +30660,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30688,6 +30774,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30792,6 +30880,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30861,6 +30951,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -30930,6 +31022,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -31031,6 +31125,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -31141,6 +31237,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -31258,6 +31356,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -31364,6 +31464,8 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
@@ -34337,7 +34439,7 @@
             "GET"
           ],
           "symbol": "api_session_receipt",
-          "line": 148,
+          "line": 151,
           "parameters": [
             {
               "name": "session_key",
@@ -34438,6 +34540,7 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -34468,6 +34571,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -34557,6 +34662,7 @@
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_hs174_rhythm_runs_on_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_calendar_settings.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_hs174_runner_loopback.py",
@@ -34587,6 +34693,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo_graph_atlas.py"
@@ -34896,7 +35004,7 @@
             "GET"
           ],
           "symbol": "get_remote_settings",
-          "line": 211,
+          "line": 213,
           "parameters": [
             {
               "name": "request",
@@ -34921,6 +35029,8 @@
             "getattr",
             "grants['by_identity'].get",
             "len",
+            "project_delegation.views",
+            "project_grants['by_identity'].get",
             "resolve_palette",
             "router.get",
             "sorted",
@@ -34936,6 +35046,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -34944,6 +35055,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py"
       ],
@@ -34977,7 +35090,7 @@
             "PUT"
           ],
           "symbol": "update_remote_settings",
-          "line": 268,
+          "line": 277,
           "parameters": [
             {
               "name": "request",
@@ -35011,6 +35124,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -35019,6 +35133,8 @@
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py"
       ],
@@ -35052,7 +35168,7 @@
             "POST"
           ],
           "symbol": "issue_credential",
-          "line": 290,
+          "line": 299,
           "parameters": [
             {
               "name": "request",
@@ -35094,6 +35210,7 @@
       "test_candidates": [
         "tests/e2e/test_hs174_remote_settings_glass.py",
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_hs174_runner_loopback.py",
         "tests/unit/test_hs174_reach_wire.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -35101,6 +35218,8 @@
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py"
       ],
@@ -35134,7 +35253,7 @@
             "DELETE"
           ],
           "symbol": "revoke_credential",
-          "line": 335,
+          "line": 345,
           "parameters": [
             {
               "name": "request",
@@ -35161,6 +35280,7 @@
             "exc.context.get",
             "getattr",
             "int",
+            "project_delegation.revoke_for_credential",
             "router.delete"
           ],
           "body_access_keys": [],
@@ -35170,7 +35290,8 @@
       ],
       "test_candidates": [
         "tests/unit/test_hs174_reach_wire.py",
-        "tests/unit/test_philo7_article_xi.py"
+        "tests/unit/test_philo7_article_xi.py",
+        "tests/unit/test_philo9_project_grant.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -35202,7 +35323,7 @@
             "DELETE"
           ],
           "symbol": "revoke_delegation",
-          "line": 401,
+          "line": 416,
           "parameters": [
             {
               "name": "request",
@@ -35234,10 +35355,13 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
-        "tests/unit/test_philo7_round_two.py"
+        "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -35269,7 +35393,7 @@
             "PUT"
           ],
           "symbol": "grant_delegation",
-          "line": 388,
+          "line": 403,
           "parameters": [
             {
               "name": "request",
@@ -35301,10 +35425,13 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo7_02_grant_glass.py",
+        "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
-        "tests/unit/test_philo7_round_two.py"
+        "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_project_grant.py",
+        "tests/unit/test_philo9_project_grant_restart.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36677,6 +36804,7 @@
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/integration/test_steward_routes.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
         "tests/unit/test_philo9_steward_restart.py"
@@ -36756,6 +36884,7 @@
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
         "tests/integration/test_steward_routes.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_lifecycle.py",
         "tests/unit/test_philo9_steward_restart.py"
@@ -40264,6 +40393,7 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_restart.py"
@@ -40338,6 +40468,7 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_restart.py"
@@ -40424,6 +40555,7 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_restart.py"
@@ -40509,6 +40641,7 @@
         "tests/unit/test_philo9_contract.py",
         "tests/unit/test_philo9_delivery_record.py",
         "tests/unit/test_philo9_mark_delivered.py",
+        "tests/unit/test_philo9_project_grant.py",
         "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo9_steward_admission.py",
         "tests/unit/test_philo9_steward_restart.py"

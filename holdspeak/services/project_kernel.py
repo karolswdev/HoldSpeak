@@ -46,7 +46,7 @@ from .errors import ServiceError
 _NODE = Principal(PrincipalKind.NODE, rooms.PROJECT_EXECUTOR)
 #: The namespace the command-keyed native ids are derived in.
 _NAMESPACE = uuid.UUID("4f8a3d2e-9c61-4b7e-a0d5-2c1f9e7b6a43")
-_FORBIDDEN_STATUS = ("project_delegation", "principal", "declared_capability", rooms.RUN_OWNER_REQUIRED)
+_FORBIDDEN_STATUS = ("project_delegation", "principal", "owner_principal", "declared_capability", rooms.RUN_OWNER_REQUIRED)
 
 _CURRENT: ContextVar["KernelHandle | None"] = ContextVar("project_kernel_current", default=None)
 _IN_FLIGHT: set[str] = set()

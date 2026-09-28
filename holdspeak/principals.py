@@ -13,7 +13,7 @@ import secrets
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Iterable, Optional
 
@@ -90,6 +90,9 @@ class AgentCredential:
     palette: Optional[frozenset[str]] = None
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
     last_used_at: Optional[float] = None
+    #: PHILO-9-07 (the DESK = ALL repair): the palette NAME the owner issued,
+    #: stored at issue. Never reverse-mapped from the resolved tool set.
+    palette_name: Optional[str] = None
 
 
 # HS-174 max TTL cap (counsel H2: 30 days).
@@ -140,6 +143,7 @@ class AgentCredentialStore:
         *,
         ttl_seconds: float = 43_200.0,
         palette: Optional[frozenset[str]] = None,
+        palette_name: Optional[str] = None,
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
         token; the store keeps only the hash (C4)."""
@@ -159,6 +163,7 @@ class AgentCredentialStore:
                 palette=palette,
                 id=cred_id,
                 last_used_at=None,
+                palette_name=palette_name,
             )
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
@@ -171,6 +176,7 @@ class AgentCredentialStore:
                 palette=credential.palette,
                 id=credential.id,
                 last_used_at=credential.last_used_at,
+                palette_name=credential.palette_name,
             )
 
     def derive(self, token: Optional[str]) -> Optional[Principal]:
@@ -197,14 +203,7 @@ class AgentCredentialStore:
                     continue
                 if hmac.compare_digest(provided_hash.encode(), stored_hash.encode()):
                     # Touch last_used_at (frozen dataclass -> replace).
-                    updated = AgentCredential(
-                        token=credential.token,
-                        principal=credential.principal,
-                        expires_at=credential.expires_at,
-                        palette=credential.palette,
-                        id=credential.id,
-                        last_used_at=self._clock(),
-                    )
+                    updated = replace(credential, last_used_at=self._clock())
                     self._by_hash[stored_hash] = updated
                     return updated
         return None

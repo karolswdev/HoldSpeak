@@ -99,6 +99,7 @@ def parse_basis(value: str) -> tuple[str, str] | None:
 def check_row(
     row: Any, *, agent_identity: str, operation_name: str | None, now: float,
     frozen_sha256: str | None = None, conn: Any = None, authoritative: bool = False,
+    table: str = "kernel_desk_delegations",
 ) -> str:
     """"" when *row* authorises this agent's operation now, else the refusal code.
 
@@ -114,8 +115,9 @@ def check_row(
     expires_at = row["expires_at"]
     if state == "EXPIRED" or (state == "LIVE" and expires_at is not None and float(expires_at) <= now):
         if authoritative and state == "LIVE" and conn is not None:
+            # ``table``: PHILO-9-07's project grant rows share this one check.
             conn.execute(
-                "UPDATE kernel_desk_delegations SET state='EXPIRED',updated_at=? WHERE id=? AND state='LIVE'",
+                f"UPDATE {table} SET state='EXPIRED',updated_at=? WHERE id=? AND state='LIVE'",
                 (now, str(row["id"])),
             )
         return EXPIRED

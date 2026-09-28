@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-9-02 (the admission path and the HTTP edge repair, B2); the owner's word on the grant's bound; **the grant lifecycle beat** (`design/project-grant-beat.md`, checked by Codex Astra before build); the grant-face canvas ratified by the owner before the face build
 - **Unblocks:** PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -52,6 +52,10 @@ PROVISIONAL: 2.5–3.5 engineering days (the beat and the canvas included).
 - **Manual / device:** the owner's review of the canvas and the shots.
 
 ## Notes
+
+- 2026-09-28 — BUILT on `feat/philo-9-07` (the Fedaykin lane, on story 02's head `aeae7bd8`). The grant: `kernel_project_delegations` (additive; one LIVE per agent and project), `holdspeak/kernel/project.py` (the one check reuses Phase 7's `desk.check_row` and its imported terms hash; the codes `project_delegation_required` → `_expired` → `_revoked`), `holdspeak/services/project_delegation.py` (grant, revoke, the credential revoke durable first, the wire's projection), the routes `PUT`/`DELETE /api/settings/remote/delegations/{identity}/projects/{project_id}` (owner-only, admitted, HTTP only). The agent: admission by identity AND project (the project from the stored run or update), approval and the claim by the frozen basis (G1, never G2); an agent's run freezes its grant beside the policy (`authority_json.grant`); each child is admitted on the steward's trusted path (`kernel/causation.py`) and re-checked at approval and the claim, so a revoke mid-run refuses the next child with its receipt and ends the run refused; with no next child the run's own boundary or its completion ends it refused. The face as the ratified canvas draws it (set A words, `▸ Projects`, project orphans beside the desk orphans, the credential revoke's receipt); the DESK = ALL repair stores the issued palette name. The Disclosure species gets the 44 px halo at a narrow window (it is the Button's `chrome` variant, which has no `.btn` base). Evidence: [evidence-story-07](evidence-story-07.md).
+- 2026-09-28 — board 11's offset (canvas r2 finding 5): in the product the Settings window's top does not move after a credential revoke at 1440 or 393 (fenced: `test_the_owner_revokes_a_credential_the_grant_ends_first_and_the_window_stays_put`). The canvas's 58 px was the canvas harness's own; its cause in the harness was not traced.
+- 2026-09-28 — the separate grant lifecycle beat (`design/project-grant-beat.md`, "Depends on") was not written: the build follows the steward beat's A1–A7 and Phase 7's grant beat, which this story's A-row fences carry. Muad'Dib decides whether Codex Astra's check of the built PR stands in for it.
 
 - 2026-09-27 — the grant canvas RATIFIED by the owner ("Ratify as drawn"), after Codex Astra canvases r1 DNR → r2 DNR → r3 RATIFY: set A words `Allow run and publish` / `RUN AND PUBLISH ALLOWED` (Q4); the per-project list behind a visible `▸ Projects` (Q5). Canvas: `assets/story-07-grant-canvas/`.
 - 2026-09-27 — canvases round three (Codex Astra canvases r2 finding 5): the build diagnoses one open the canvas accepted: on grant canvas board 11 at 393 the Settings window sits about 58 px lower than on the other boards (cause unknown; nothing is cut off). Find the cause during integration and fence the window's position after a credential revoke.
