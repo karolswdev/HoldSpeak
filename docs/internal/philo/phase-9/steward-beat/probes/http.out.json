@@ -1,0 +1,103 @@
+{
+  "after": {
+    "kernel_operations": 0,
+    "kernel_receipts": 0,
+    "operation_names": []
+  },
+  "agent_calls": {
+    "door_count": {
+      "counts_after": {
+        "kernel_operations": 0,
+        "kernel_receipts": 0,
+        "operation_names": []
+      },
+      "method": "POST",
+      "path": "/api/projects/door/count",
+      "request": {
+        "adjust": {},
+        "provider": "github",
+        "scope": "example/payments",
+        "watches": [
+          "open_prs"
+        ]
+      },
+      "response": {
+        "body": {
+          "error": "principal_right_required",
+          "missing_right": "owner",
+          "principal": "agent",
+          "principal_identity": "http-edge-probe-agent",
+          "success": false
+        },
+        "status": 403
+      }
+    },
+    "door_create_with_sources": {
+      "counts_after": {
+        "kernel_operations": 0,
+        "kernel_receipts": 0,
+        "operation_names": []
+      },
+      "method": "POST",
+      "path": "/api/projects/door",
+      "request": {
+        "outcome": "HTTP edge refusal probe",
+        "sources": [
+          {
+            "adjust": {},
+            "provider": "github",
+            "scope": "example/payments",
+            "watches": [
+              "open_prs"
+            ]
+          }
+        ]
+      },
+      "response": {
+        "body": {
+          "error": "principal_right_required",
+          "missing_right": "owner",
+          "principal": "agent",
+          "principal_identity": "http-edge-probe-agent",
+          "success": false
+        },
+        "status": 403
+      }
+    },
+    "github_recheck": {
+      "counts_after": {
+        "kernel_operations": 0,
+        "kernel_receipts": 0,
+        "operation_names": []
+      },
+      "method": "POST",
+      "path": "/api/providers/github/connection/recheck",
+      "request": {},
+      "response": {
+        "body": {
+          "error": "principal_right_required",
+          "missing_right": "owner",
+          "principal": "agent",
+          "principal_identity": "http-edge-probe-agent",
+          "success": false
+        },
+        "status": 403
+      }
+    }
+  },
+  "before": {
+    "kernel_operations": 0,
+    "kernel_receipts": 0,
+    "operation_names": []
+  },
+  "db_path": "/Users/karol/dev/tools/wt-astra-p9-02-beat/.tmp/steward-beat/http-probe-home-v03yc1nq/.local/share/holdspeak/holdspeak.db",
+  "home": "/Users/karol/dev/tools/wt-astra-p9-02-beat/.tmp/steward-beat/http-probe-home-v03yc1nq",
+  "kernel_unchanged": true,
+  "settings_issue": {
+    "id": "3e4553f671344d83",
+    "identity": "http-edge-probe-agent",
+    "palette": "PROJECT",
+    "status": 200,
+    "token_returned": true
+  }
+}
