@@ -1,7 +1,7 @@
 # Evidence - PHILO-9-01
 
 - **Story:** PHILO-9-01 - The Room's operations on the contract (and discovery)
-- **Status:** in-progress
+- **Status:** done
 - **Date:** 2026-09-27
 - **Branch:** `feat/philo-9-01-room-operations` from main `ffbeb04b`.
 
@@ -35,11 +35,19 @@
 | Named difference 2 — A1, the resource routes' `expected_revision` / `command_id` | dropped (red below) | honoured |
 | `desk.needs_you` over MCP with a muted project (F13) | counts the muted | one count (a superset: `mutedCount`, `muted` per item) |
 
+## Stated plainly
+
+- **Admission is declared, NOT enforced.** Every admitted Room row (`project.archive`, `link`, `unlink`, `decide_proposal`, `accept_review`, `publish_update`, `resource.add`, `resource.remove`, and `project.door.create` with sources) carries `Admission(..., enforced=False)`. `invoke` runs them exactly as main did: no kernel operation, no terminal receipt, no refusal receipt, and an agent is not refused by admission. PHILO-9-02 flips the flag and builds the kernel path (fenced: `test_an_admitted_row_makes_no_kernel_operation_until_story_02`).
+- **HTTP behaviour change.** `POST /api/projects`, `POST /api/projects/{id}/items`, `PATCH /api/projects/{id}/items/{item_id}` and the transition route used to ignore an unknown body field; they now answer **400** (`{success: false, error}`), because the declared operation closes its argument names. The fields HTTP read before are kept, `created_by_ref` and `provenance_kind` included (fenced: `test_the_named_difference_http_bodies_close_their_argument_names`).
+
+## Muad'Dib's ruling (2026-09-27)
+
+On PR #680: the discovery phrase "mark it delivered" moves to story 02's acceptance, consistent with R4-2 (the tool, its route and its admission land together in 02). Story 01's criterion is amended; story 02's file gains the row. The strict expected failure stays in `tests/unit/test_philo9_discovery.py`, reason "PHILO-9-02 lands project.mark_update_delivered (R4-2)", so 02 turns it red-to-green.
+
 ## Open, unpaid or unknown
 
-- **"mark it delivered"** (a discovery phrase of this story's criteria): its tool `project.mark_update_delivered` lands in PHILO-9-02 (R4-2). Pinned by a strict expected failure in `tests/unit/test_philo9_discovery.py`; the story stays in progress.
 - **RECEIPTS** lists pipeline events of the observed services only (ProjectService and WatchService are `@observe_service`; the delta, update and steward services are not), so a publication or a delivery is not yet a Room receipt. The kernel receipts of story 02 are the planned source; not changed here.
-- **Pre-existing reds, not this story's:** `tests/unit/test_phase143_inference_capability_census.py` (4) and `test_phase143_routing_authority_census.py` (1) fail identically on the main export (line anchors in `kernel/executor.py` and `meeting_import.py`, files this story does not touch).
+- **Pre-existing reds, not this story's:** `tests/unit/test_phase143_inference_capability_census.py` (4) and `test_phase143_routing_authority_census.py` (1) fail identically on the main export (line anchors in `kernel/executor.py` and `meeting_import.py`, files this story does not touch). BACKLOG row added ("PHILO-9 charter follow-ups").
 - The per-row lower-level admission decision (link's `watch.create` as a child) is declared in words only; PHILO-9-02 implements it.
 
 ## Proof
@@ -669,4 +677,22 @@ Architecture documentation checked (10 outputs).
 == python3 scripts/check_doc_coverage.py --check
 Documentation coverage checked.
 DOCS RC=0
+```
+
+### Captured run — 2026-09-28T02:57:21Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider -n 8 tests/unit/test_philo9_base_install_imports_catalogue.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py tests/unit/test_philo9_delivery_record.py tests/unit/test_philo9_discovery.py tests/unit/test_philo9_compat.py -rxX`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** d6cc76f4dd9ea73d8997f49e5d5bf898f8750e9a
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 62%]
+...........................x...............                              [100%]
+=========================== short test summary info ============================
+XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
+114 passed, 1 xfailed in 13.14s
 ```
