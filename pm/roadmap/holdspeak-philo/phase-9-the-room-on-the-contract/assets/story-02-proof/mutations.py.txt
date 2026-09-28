@@ -250,6 +250,11 @@ MUTATIONS: list[tuple[str, str, str, str, list[str]]] = [
      "        with rooms.project_path():\n            result = call(payload)\n    except KernelRefused as lost:",
      "        if True:\n            result = call(payload)\n    except KernelRefused as lost:",
      [f"{U}::test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child"]),
+    ("M45 r3: a sent nudge answers the raw service result (the kernel receipt overwrites the comment's)",
+     "holdspeak/services/steward_contract.py",
+     "        return {\"success\": True, \"comment_receipt\": result.get(\"receipt\")}\n",
+     "        return result\n",
+     [f"{U}::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt"]),
 ]
 
 
