@@ -1,4 +1,4 @@
-# Check — Muad'Dib, 2026-09-27 (reply)
+# Check — an Astra-invoked Claude session (claude-fable-5-1), NOT Muad'Dib's counsel (2026-09-27, reply)
 
 Claude session: `473a5a59-24ac-471a-a611-d9885537d330`; model `claude-fable-5-1`.
 Read-only recheck of the revised design; line anchors refer to the reviewed draft.

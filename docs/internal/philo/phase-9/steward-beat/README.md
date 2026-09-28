@@ -1,8 +1,11 @@
 # PHILO-9-02 — The steward's lifecycle and child authority
 
-**Status:** RATIFIED design, 2026-09-27. Astra owns the lane; Muad'Dib's
-[reply is RATIFY](checks/steward-beat-muaddib-r2.md), after the
-[first check and response](checks/steward-beat-muaddib-r1.md). No open dissent.
+**Status:** RATIFIED design 2026-09-27: authored by Astra; Muad'Dib's
+[check r1](checks/steward-beat-muaddib-r1.md) RATIFY-WITH-CONDITIONS, paid.
+The two earlier rounds were an Astra-invoked Claude session
+(`claude-fable-5-1`), not Muad'Dib's counsel:
+[round 1](checks/steward-beat-astra-invoked-claude-r1.md) and
+[reply](checks/steward-beat-astra-invoked-claude-r2.md).
 **Source pin:** `ffbeb04be5681f6e972800dae04599dba38176e0`. Line anchors below
 refer to that tree; verify them after story 01 lands.
 **Scope:** design and diagnostic evidence only. Story 02 remains backlog.
@@ -209,7 +212,13 @@ supplied `authority_basis` pays this requirement.
 admitted. Add `steward_policies.configure_operation_id`, referencing the
 owner's successful configure operation; update the policy and that
 operation's receipt atomically. Its operation supplies the delegator
-identity. Snapshot the policy id, configure operation id, project,
+identity. `project.archive` also writes the policy: it sets
+`unattended_enabled=0` in its own transaction
+(`services/project_service.py:3029-3035`). Its atomic callback sets
+`configure_operation_id` to the archive operation in that same
+transaction. The column thus names the latest owner operation that wrote
+the terms, and a snapshot never pairs new terms with an older operation
+(Muad'Dib r1 C1). Snapshot the policy id, configure operation id, project,
 enabled/unattended flags, eligible kinds, bounds, retry/action limits,
 cooldown, YOLO flags and nudge template into the run's `authority_json`.
 Canonicalise JSON-valued fields; hash terms with the **imported** Phase 7
@@ -228,7 +237,12 @@ Agent/scheduler starts without recorded policy refuse
 that named refusal (story 02 API, story 03 face); never silently skip
 unattended work until an unexplained re-save. An owner manual run without a policy may use
 the existing empty-effects default; that gesture does not create future
-scheduler or agent authority.
+scheduler or agent authority. Such a run freezes `policy_id=null`,
+`configure_operation_id=null` and `policy_sha256=""`, and its
+`authority_terms` carry that empty string. The policy checks at each
+boundary apply only to a run that froze a policy id. A policy first
+saved during a no-policy owner run does not stop that run: the run has no
+eligible effect, and a policy cannot enlarge a running run (Muad'Dib r1 C2).
 
 For an agent root, freeze story 07's grant id/hash alongside this policy
 snapshot; root authority remains the project grant. Every child carries
@@ -395,7 +409,7 @@ a fake grant or make a test double lie about a producer's field.
 | A1 / 02+07 | All executed effects have the correct causal chain, actor and policy provenance; agent children also name frozen G1. Generic/forged/foreign parent children remain refused. | Red: no steward parentage; same-actor AGENT child hits continuation guard. In 07 mint G1 through owner grant operation. Mutate internal-context, actor or project bind. |
 | A2 / 07 | Direct agent proposal accept/edit_accept/defer/dismiss refuses despite G1; the real run accepts only eligible proposals, same actor, and never sends a proposed nudge. | New grant behavior: mutate effect allowlist, eligibility or owner-only send check. No fabricated grants in 02. |
 | A3 / 07 | Revoke/expiry/re-grant between admission→approval, approval→claim, and after child claim. Pre-check refusal has receipt; post-check child may finish once; next refuses with G1, never G2. | Mutate each recheck; lookup latest LIVE instead of frozen id; omit expiry from hash; wrong historical-code precedence. |
-| A4 / 02+07 | Changed/disabled policy cuts off next child/phase or final completion; identical policy re-save does not. No further child still ends the revoked parent refused. OWNER OBSERVE keeps CI refresh; AGENT/SCHEDULER OBSERVE requires eligibility and reports skipped/stale truthfully. | Red: OBSERVE fetch precedes agent/scheduler policy check. Mutate digest/phase/inner-loop/final callback checks, catch propagation or owner-gesture distinction. |
+| A4 / 02+07 | Changed/disabled policy cuts off next child/phase or final completion; identical policy re-save does not; a first policy save does not stop a no-policy owner run; archive stamps its operation as the policy's provenance. No further child still ends the revoked parent refused. OWNER OBSERVE keeps CI refresh; AGENT/SCHEDULER OBSERVE requires eligibility and reports skipped/stale truthfully. | Red: OBSERVE fetch precedes agent/scheduler policy check. Mutate digest/phase/inner-loop/final callback checks, catch propagation or owner-gesture distinction. |
 | A5 / 07 | Agent stops own run only, even with two actors in same project; grant A cannot stop/publish stored object B under a spoofed project A argument. | Current unbound stop is defective; full grant case is new. Mutate requested_by/stored-project checks. |
 | A6 / 02 | Scheduled run actor is SCHEDULER with recorded enabled/unattended policy; trigger returns pending op handle, reads child outcomes, closes after them, replays/restarts correctly; no caller-crafted scheduler authority. | Red: conductor uses OWNER and trigger has no operation. Mutate policy/provenance check, trigger recovery or scoped capability/approval path. |
 | A7 / 07 | Grant, policy and expiry hashing; credential revoke durable-first; reissue/restart preserve grant; orphan grant still visible/stoppable. | Reuse Phase 7 interleaving matrix with project dimension; mutate each check. Grant canvas/glass remain 07's prerequisite. |
@@ -489,10 +503,12 @@ corrects the grounding distinction between proposed nudges and sending.
 It records the minimal run/policy links needed for authority provenance.
 Story 07 still needs its checked grant beat and owner-ratified canvas.
 Story 02 must also settle B1 in its brief; this beat does not pay that
-separate condition. Muad'Dib checks this artifact before story 02 is briefed.
+separate condition. Muad'Dib checked this artifact in check r1 before story 02 is briefed.
 
-### Notes for the story 02 implementation brief (Muad'Dib r2 F12)
+### Notes for the story 02 implementation brief (Astra-invoked Claude r2 F12; Muad'Dib r1)
 
-- Define the owner/no-policy snapshot with a fixed empty-terms digest and explicitly choose whether a first policy saved mid-run cuts off that run; do not leave absent-policy hashing to a worker's guess. This affects only the owner default: agents/schedulers already require recorded policy.
+- The owner/no-policy snapshot is settled in §4 (Muad'Dib r1 C2): `policy_sha256 = ""`, and a policy first saved mid-run does not cut off that run.
+- The policy's recorded owner operation is also written by `project.archive` (§4, Muad'Dib r1 C1).
+- A run refused `steward_policy_required` must show that refusal where the run result shows. The story 03 brief carries the face half (Muad'Dib r1 F7).
 - Enumerate every admitted/conditional HTTP method and route pattern from the charter admission table and actual route declarations in the brief. §6 settles the two-stage boundary; no broad prefix or guessed route may enter the edge map.
 - The check-pending status and repeated completion-check sentence are now corrected. These are nonblocking briefing notes, not an implementation or story-closure claim.

@@ -1,127 +1,132 @@
 # Check — Muad'Dib, 2026-09-27 (round 1)
 
-Claude session: `473a5a59-24ac-471a-a611-d9885537d330`; model `claude-fable-5-1`.
-Read-only check of the initial draft; line anchors refer to that draft.
-The two link repairs and retained evidence arrived while the check ran.
+Checker: Muad'Dib's Fedaykin worker (Claude Opus 5.5), acting for Muad'Dib
+on PR #678, branch `design/philo-9-02-steward-beat` @ `470b3b43`. This is
+Muad'Dib's first check of the beat. The two earlier files were an
+Astra-invoked Claude session; they are relabelled
+`steward-beat-astra-invoked-claude-r1.md` / `-r2.md` (handover XXIX law 8).
+Code anchors are read at the source pin `ffbeb04b` (product code is the
+same on this branch).
 
-Verification is complete; I read only and changed nothing. Here is the check.
-
-```
-VERDICT: RATIFY-WITH-CONDITIONS
-```
+VERDICT: RATIFY-WITH-CONDITIONS (both conditions docs-only; paid in the beat
+in this round)
 
 ## FINDINGS
 
-**1. The state table names kernel states that do not exist.** (Tenet 1; Article XI)
-- `docs/internal/philo/phase-9/steward-beat/README.md:96-105` maps runs to kernel `stopping`, `completed` and `interrupted`.
-- `holdspeak/db/schema.py:2157-2160` allows only `admitting, awaiting_decision, awaiting_execution, claimed, succeeded, failed, refused, cancelled, indeterminate`; receipts the same five terminals (`:2178`).
-- As written, a worker either builds a CHECK-constraint change (not additive; against "migrations stay minimal") or guesses the mapping. This contradicts the beat's own "keep the existing kernel states" (`README.md:17-18`).
-
-**2. The stop-versus-complete race has no stated mechanism.** (Tenet 3)
-- Stop and the run are two operations (`README.md:132-145`). A committed stop does not move the run operation's revision, so the strict CAS at `holdspeak/kernel/journal_atomic.py:96-99` cannot see it.
-- "Check again before the final completed write" (`README.md:154-155`) reads as check-then-write outside the transaction.
-- `transition_and_receipt` takes `state` and `outcome` before `BEGIN IMMEDIATE` (`journal_atomic.py:83-91`), so the callback cannot change the outcome. The same gap applies to stop on a run that turns terminal under it (`README.md:142-143`).
-- L4 (`README.md:333`) fences the result, but the design does not say how it is produced.
-
-**3. A child's receipt does not name the grant or the policy.** (Tenet 3; charter)
-- The child basis is `project-steward:<run_id>:<authority_sha256>` (`README.md:204-207`); the grant and policy are only in the run's `authority_json`.
-- The charter requires "that child names the grant and the policy as its authority basis" (`current-phase-status.md:420`) and "each receipt names the delegation" (`:282`); story 07 repeats it (`story-07-the-project-delegation-grant.md:37`).
-- A cold client on `kernel.receipt` cannot see the grant without a second lookup that the beat does not define.
-
-**4. The digest's inputs are not defined.** (Tenet 1)
-- `_hash(terms, expires_at)` takes an expiry (`holdspeak/services/schedule_delegation.py:37-39`); the beat does not say what a policy passes, nor what `authority_sha256` covers (`README.md:193-195`, `:205`).
-- The snapshot includes `configure_operation_id` (`README.md:192`). If that is hashed, an identical re-save by the owner ends a live run with `steward_policy_changed` (`README.md:242-243`).
-
-**5. Gating the OBSERVE CI read on `refresh_sources` regresses the Room's health.** (Tenets 3, 7)
-- `README.md:269` skips the CI fetch when the policy does not make `refresh_sources` eligible.
-- The Room reads CI health from that OBSERVE step (`holdspeak/services/project_service.py:1453-1455`, `:1520-1542`).
-- The closing fixture's policy is `["draft_update"]` only (`current-phase-status.md:279`), and an owner run with no policy has no eligible effects (`README.md:199-201`). In both, CI health goes stale silently.
-- Q1 requires the egress to be admitted; it does not require that the owner's own gesture cannot authorise it.
-
-**6. The `draft_update` choice leaves the fallback undefined.** (Article XI.2)
-- The internal `project.steward.effect` spec with a closed enum is lawful under Q1 and proportionate (`README.md:262-264`). I ratify that choice.
-- For a model draft the beat makes `inference.invoke` the sole effect admission (`README.md:272`). That receipt proves the model call, not the draft row.
-- Today a model failure falls back to a deterministic draft (`holdspeak/services/project_steward_service.py:1368-1374`). The beat does not say which child covers that write, so "each executed effect a child operation" (`current-phase-status.md:159`) is unmet in that path.
-
-**7. B2 puts argument classification in the middleware; the precedent does not.** (Tenet 1)
-- `README.md:289-292` classifies validated body arguments between authentication and the right check.
-- Phase 7 gave its path `AGENT_SUBMIT` by path alone in `required_right` (`grant-lifecycle-beat.md:165`), and the codec refused.
-- Reading the body at `holdspeak/web_server.py:655` adds a body-preservation risk the beat itself names (`README.md:311`). The table at `README.md:302-309` can be met by method and path at the edge, with the conditional form decided in the adapter.
-
-**8. Authority loss with no further child is unspecified.** (Tenet 3)
-- The cutoff is per child claim (`README.md:238-242`); the phase-boundary check covers stop and terminal state only (`README.md:147-148`).
-- After a revoke, an agent's run continues local COMPARE/PROPOSE writes and can end `succeeded` under a revoked grant.
-
-**9. `project.steward.trigger` has no handle or recovery rule.** (Tenet 3)
-- It "stays live until its child runs settle" (`README.md:232-233`), which can be up to the 3600 s execution TTL (`holdspeak/kernel/model.py:76`). Its return shape and its place in the restart sweep are not stated.
-
-**10. The author and checker swap is not recorded as an amendment.** (TWO-BRAINS §3, §7)
-- The story diff now says "authored by Astra and checked by Muad'Dib" and moves the beat's path.
-- The charter still says `design/steward-lifecycle-beat.md`, "checked by Codex Astra" (`current-phase-status.md:88`, `:211`, lanes `:305`); the story's own header still says "Codex Astra checks" (`story-02-…:8`).
-- `README.md:376` claims no amendment.
-
-**11. Two links in the beat are broken.**
-- `README.md:10` and `:31` use six `../`; five reach the repository root. I confirmed with `ls`: six fails, five resolves. The story's link to the beat resolves.
-
-**12. Anchor drift, minor.**
-- `README.md:250` cites a broad catch at `project_steward_service.py:1086`; the catches are at `:1123` and `:1173`.
-- `README.md:27` puts Q1/Q2 at `:23`; they are at `:24-25`.
-- All other anchors I checked hold at the pin.
-
-**13. Evidence is probe, not red fence, and is not yet in the tree.**
-- `.tmp/steward-beat/http-probe-b2.json` records today's 403 with zero operations. It asserts the defect, so it is diagnostic. The beat says the same (`README.md:320-323`), correctly.
-- `README.md:362` says results are "recorded beside this file"; the folder holds only the README, and `source-probe-output.json` is empty.
+1. **Labelling defect, fixed.** Astra recorded its own `claude -p` session
+   (`claude-fable-5-1`, `473a5a59…`) as "Check — Muad'Dib", and the README
+   Status and `current-phase-status.md` "Where we are" said "Muad'Dib's reply
+   is RATIFY". Muad'Dib had not checked the beat. Files moved and retitled;
+   README:3-8, README "Notes for the story 02 brief" heading and
+   `current-phase-status.md` "Where we are" corrected. The commit message of
+   `470b3b43` still says "Muad'Dib RATIFY"; history is not rewritten.
+2. **(1) Async lifecycle: settled.** The pending handle, the run-to-operation
+   link, one terminal winner, stop and restart are specified (README §2-§3).
+   The seam is real: `transition_and_receipt` runs `BEGIN IMMEDIATE`, the
+   receipt check, the strict revision CAS and then `effect(conn)` in one
+   transaction (`holdspeak/kernel/journal_atomic.py:83-120`). The beat
+   correctly rereads the run's stop flag inside the callback, because a separate
+   stop operation does not move the run operation's revision (README §3).
+   Today's gap is confirmed: insert-then-daemon, `run_id` only
+   (`holdspeak/web/routes/steward.py:100-119`,
+   `holdspeak/mcp/families/project.py:1594-1628`). Recovery runs on an
+   under-composed service (`holdspeak/web_server.py:1310-1322`).
+3. **(2) Child authority: settled, no owner manufactured.** Confirmed: a
+   same-identity AGENT child fails `parent_continuation_identity_required`
+   (`holdspeak/kernel/causation.py:35-42`). The beat adds one validated
+   steward predicate as an alternative at four named seams, and leaves
+   generic agent children refused. Seams checked: `broker.py:195-209`,
+   `:298-310`; `executor.py:61-66`. Effects outside the grant
+   (`apply_proposal_effects` → `decide_proposal`) run only when the policy
+   is eligible, as R4-1 requires (`current-phase-status.md:423`). Children
+   name both authorities through `authority_details`. Revoke/expiry cutoff
+   is Phase 7's claim-check boundary (`phase-7…/design/grant-lifecycle-beat.md:76-87`).
+   Stop is bound to `requested_by` (`project_steward_service.py:467`) and
+   to the operation's actor.
+4. **A deliberate difference from Phase 7, stated correctly.** Phase 7 F9c
+   lets the next desk write succeed under a re-grant G2
+   (`grant-lifecycle-beat.md:87`). The beat refuses the next child inside a
+   running parent ("G1 is never replaced by G2"). This is right: each desk
+   write is its own root, but the run froze G1. A3 fences it.
+5. **(3) B2 placement: settled and lawful.** The exact method+path patterns
+   get AGENT_SUBMIT in `required_right` before the OWNER default
+   (`holdspeak/principals.py:296-355`; the PHILO-7-02 precedent at `:328-331`).
+   The gate fires before the route (`holdspeak/web_server.py:654-657`).
+   AGENT holds AGENT_SUBMIT (`principals.py:47-53`). The adapter reapplies
+   the old right to a valid exempt form, so reads and exempt edits keep
+   their protocol refusal. This agrees with Phase 7's four refusal classes
+   (`holdspeak/services/desk_kernel.py:10-24`).
+6. **(4) Fences per rule: present.** L1-L7, A1-A7, H1-H3 and D1-D2 cover
+   each rule (README §7). Each row names a behavioral red or a mutation, and
+   the beat does not claim any fence as present.
+7. **Tenet 1: passes.** Reuses `transition_and_receipt`, the imported
+   `_hash` (`holdspeak/services/schedule_delegation.py:37-39`), the desk
+   startup-recovery precedent (`holdspeak/kernel/desk_broker.py:125-140`)
+   and the executor's claim hook. It adds no kernel state and no second
+   engine. Storage is two additive columns plus one on policies. Small
+   redundancy: `authority_sha256` wraps `policy_sha256`. This is acceptable
+   and not a condition.
+8. **Policy provenance hole (C1).** `project.archive` also writes the policy
+   (`unattended_enabled=0`, `holdspeak/services/project_service.py:3029-3035`).
+   As drafted, only configure stamped `configure_operation_id`. A later
+   snapshot would pair archive-changed terms with an older configure
+   operation.
+9. **No-policy owner digest left to a worker (C2).** Before this round, the
+   brief notes delegated "fixed empty-terms digest" and the mid-run
+   first-save rule to the story 02 brief. That is a design decision, so it
+   belongs in the beat.
+10. **Cross-story face obligation.** README §4 requires the face to show
+    `steward_policy_required` ("story 03 face"), but story 03's file does not
+    name it. This is a brief item for Muad'Dib's lane and not Astra's.
+11. **Owner rulings unchanged.** The Q2 bound is intact; delivery and
+    project-grant operations are kept out of the grant set (README §3).
+    Mark delivered, `nudge.send`, configure and trigger stay owner-only.
+    `github_comment` only prepares a nudge; this is verified at
+    `project_steward_service.py:1528-1540`, and the charter row
+    "`github_comment` crosses egress" (`current-phase-status.md:159`) is
+    corrected as grounding, not as a ruling.
+12. **Anchors verified at the pin:** `steward.py:99-119`; `project.py:1594-1628`;
+    `project_steward_service.py:467`, `:804`, `:852`, `:871`, `:1263`,
+    `:1313-1330`, `:1528`; `project_delta_service.py:1848`; `causation.py:28-42`;
+    `broker.py:201`, `:304`; `executor.py:46-66`; `journal_atomic.py:58`, `:83`;
+    `desk_broker.py:125`; `workbench_conductor.py:621`; `schema.py:4194-4196`,
+    `:4211`; `principals.py:354`; `web_server.py:655`, `:1317`;
+    `kernel/model.py:76`; `schedule_delegation.py:37`; `kernel/desk.py:56`, `:77`.
+    All match.
 
 ## CONDITIONS
 
-1. Rewrite the table at `README.md:96-105` with real kernel states: domain `stopping` = kernel `claimed`; terminals `succeeded`, `failed`, `cancelled`, `refused`, `indeterminate`. State that no kernel state is added.
-2. State the race protocol: the stop and terminal checks run inside the effect callback on the supplied connection; a conflict raises a typed error, the transaction rolls back, and the caller writes the other outcome once.
-3. Define the receipt read for a child: the grant id, the policy's configure operation and the run are visible from `kernel.receipt` without a second call.
-4. Define the digest: its exact fields, `expires_at=None` for a policy, and provenance ids kept out of the hashed terms.
-5. Authorise the OBSERVE CI read by the owner's gesture on an owner-root run. Keep the policy gate for agent and scheduler roots.
-6. For `draft_update`, name the child that covers the deterministic fallback write.
-7. Move B2's edge decision to method and path in `required_right`; classify arguments in the adapter.
-8. Add the authority check to the phase boundary and name the run's outcome when no child is attempted.
-9. State the trigger's handle and its recovery.
-10. Record the author/checker and path amendment in `current-phase-status.md` and the story header; fix the two links and the anchors; commit the probe files and this check under a `checks/` sibling.
+- **C1 (paid, docs):** `project.archive`'s atomic callback sets
+  `configure_operation_id` to the archive operation. The column names the
+  latest owner operation that wrote the terms. README §4 and A4.
+- **C2 (paid, docs):** a no-policy owner run freezes `policy_id=null`,
+  `configure_operation_id=null` and `policy_sha256=""`. Policy boundary
+  checks apply only to a run that froze a policy id. A first policy saved
+  mid-run does not stop it. README §4, A4 and the brief notes.
 
-## MISSED (ranked by owner cost)
+No condition is owed by Astra.
 
-1. Stale CI health in the Room after the gate (finding 5).
-2. A receipt that cannot explain who allowed the effect (finding 3).
-3. A stop that a late success can overwrite (finding 2).
-4. His unattended runs stop after upgrade until he saves the policy again (`README.md:196-199`); no face says why. Story 03 must show `steward_policy_required`.
-5. Unbuildable state names (finding 1).
+## MISSED
+
+- The archive write to the policy (finding 8).
+- The story 03 face half of `steward_policy_required` (finding 10). It goes
+  into the story 03 brief.
 
 ## TUESDAY
 
-Yes for run, stop and find the result after a restart, once conditions 1, 2 and 5 are paid; today the design lets a stop lose to a late success and lets his Room health go stale.
+Yes. He starts the steward, and it returns a handle at once. He stops it and
+sees two receipts. After a restart he finds one named result. His agent,
+under the three-operation grant, drafts and publishes within his policy,
+and each receipt names both the grant and the policy.
 
 ## UNKNOWN
 
-- I ran no probe or test; read-only was ordered. The probe results are Astra's claims, read but not reproduced.
-- The Phase 7 `checks/lifecycle-beat-astra-r1..r3.md` and the Phase 9 `charter-astra-r1..r5.md` files were not opened; I relied on the charter's paid tables.
-- Whether `steward_runs` writes can join the kernel transaction on one connection (`README.md:65-66`) is unverified; I did not read `holdspeak/db/steward.py`.
-- The `holdspeak` MCP server was still connecting; not needed for this check. The Gmail, Calendar and Drive connectors need authorisation in claude.ai connector settings; they were not used.
-
-## Astra response — 2026-09-27
-
-All conditions are addressed for the second-round check:
-
-| Finding | Change in the beat |
-|---|---|
-| 1 | §2 separates domain and kernel columns; no new kernel state. |
-| 2 | §3 names both stop/completion transaction callbacks, typed rollback and reclassification; L4 injects the competing commit. |
-| 3 | §4 defines frozen authority_details in the existing receipt response, naming grant/policy/run in one call; A1/H3. |
-| 4 | §4 defines both digests, expiry input and semantic fields; identical policy re-save stays live. |
-| 5 | §5 keeps OWNER gesture authority for OBSERVE CI; AGENT/SCHEDULER remain policy-bound with truthful skipped/aged data. |
-| 6 | §5 assigns every draft write to the internal slot child; inference is a separate lower-level child, including failure/fallback. The current steward catch itself reports skipped, not a fallback write; the design distinguishes those outcomes. |
-| 7 | §6 uses exact method/path at the central edge; the adapter classifies arguments and reapplies the old right for valid exempt forms. H2 fences that check. |
-| 8 | §3 adds phase and final-transaction authority checks; authority loss with no further child refuses the parent without inventing a child. |
-| 9 | §4 gives trigger its pending operation handle, child read projection, replay and child-first startup/liveness recovery. |
-| 10 | Charter lane/decision entry and story header record the owner-assigned design author/checker/path; implementation ownership stays unchanged. |
-| 11–12 | Links validated by check_docs; source anchors corrected. |
-| 13 | §8 links retained sources, independent raw results, 160-test collection/run; diagnostics remain explicitly distinct from future red/mutation fences. |
-| MISSED 4 | §4 requires visible steward_policy_required through story 02 API and story 03 result face; no silent scheduler skip. |
-
-No unresolved dissent at this response. The final reply is recorded separately.
+- The owner's assignment of this beat's lane to Astra (the lane table now
+  says the checker is Muad'Dib, not Codex Astra) is recorded only by Astra,
+  who quotes its own task prompt. I did not see the owner's words.
+- I did not rerun the two probes or the 160 focused tests. No claim looked
+  wrong against the code I read.
+- `steward_policies` has no unique key on `project_id`. The read takes the
+  newest row (`holdspeak/db/steward.py:171-174`). The frozen `policy_id`
+  binds the exact row, so I judge this harmless. It is not verified by a
+  run.
