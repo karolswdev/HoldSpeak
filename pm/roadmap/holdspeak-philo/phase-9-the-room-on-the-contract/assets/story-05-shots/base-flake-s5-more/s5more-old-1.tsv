@@ -1,0 +1,3 @@
+file	case	width	verdict	seconds	load1	reading
+atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	1440	blocked	324	4.20	BLOCKED: ui step wait_for on '[data-testid=meeting-summary-text]' failed: TimeoutError: Locator.wait_for: Timeout 300000ms exceeded.
+atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	393	pass	37	4.20	predicate: 'Keep summary retrieval on the local desk' in observe_at text

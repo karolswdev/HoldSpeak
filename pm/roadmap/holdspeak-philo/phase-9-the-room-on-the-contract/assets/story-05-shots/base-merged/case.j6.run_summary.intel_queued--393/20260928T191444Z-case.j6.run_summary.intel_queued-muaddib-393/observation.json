@@ -1,0 +1,1085 @@
+{
+  "id": "obs-20260928T191444Z-case.j6.run_summary.intel_queued-muaddib-393",
+  "run_id": "20260928T191444Z-case.j6.run_summary.intel_queued-muaddib-393",
+  "case_id": "case.j6.run_summary.intel_queued",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.face.arrival_run_intel"
+  ],
+  "state_id": "state.meetings.intel.queued",
+  "provenance": {
+    "revision": "b2fd7e8ba9f9f90470e973fc36fe07d056825d85",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "da4cbc85330c60176e3987fac44e9e14f8d7e764f6142e84b26164837010b84a",
+      "assets": [
+        "index-BUmrnq_E.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:57296",
+      "port": 57296,
+      "pid": 82496,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x93hts1z",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x93hts1z/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo3_architect_meeting.wav": "165ea9755d028ff3dc2b9fa85dd4c48f4db3220855906e0ffeed4a35919d47b2"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-28T19:14:44.402149+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas.json",
+      "sha256": "3de39523ea840ad021df11bf7266c7c5455ab29a26b0b2797ba02d5b92e29f48",
+      "version": null
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for locator(\"[data-testid=arrival-blocker-verb-engines]\").first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-blocker-verb-summary]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-engine]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-pointer",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-check]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=concierge-add-submit]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "#surface-concierge .desk-window-title",
+      "done": true
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo3_architect_meeting.wav",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "aacb045a",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "aacb045a"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/aacb045a",
+        "fields": {
+          "/transcription_status": "complete",
+          "/duration": {
+            "positive": true
+          },
+          "/segments": {
+            "min_items": 1
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 21,
+        "elapsed_s": 10.266,
+        "payload": {
+          "id": "aacb045a",
+          "started_at": "2026-09-28T13:14:53.924592",
+          "ended_at": "2026-09-28T13:15:28.599842",
+          "duration": 34.67525,
+          "formatted_duration": "00:34",
+          "title": "Architecture boundary review",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Hold Speaksynthetic Architect Meeting. Decision 1. Use SQ like for the local meeting ledger. Owner, Mayyachan. Action. Mayyachan will write the Migration Plan by Friday. Decision 2. Keep summary retrieval on the local desk after a hub restart. Owner, Leo Martinez. Action. Leo Martinez will test restart retrieval on Tuesday. Decision 3. Use a recorded provider reply for isolated rig tests. Owner, Priya Shah. Action. cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult cult",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 30.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "named failure offense before ship, Marker, hold speaks synthetic arquitect 3.",
+              "speaker": "Recording",
+              "speaker_id": null,
+              "start_time": 30.0,
+              "end_time": 34.67525,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 299,
+          "sync_modified_at": "2026-09-28T13:15:04.075197",
+          "devices": [],
+          "planned_route": {
+            "status": "ready",
+            "reason_code": null,
+            "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+            "legs": [
+              {
+                "ordinal": 1,
+                "host": "192.168.1.43",
+                "boundary": "lan",
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1,
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81"
+              }
+            ]
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/duration": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "done": false,
+      "error": "TimeoutError('Locator.click: Timeout 1000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Continue later\", exact=True).first\\n')"
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=arrival-meetings]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "case.j5.meeting_open.route_disclosed reached -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=arrival-run-intel]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "arrival-run-intel"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='arrival-run-intel', wanted 'arrival-run-intel'"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "aacb045a"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    }
+  ],
+  "variables": {
+    "meeting_id": "aacb045a"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "selector": "[data-testid=arrival-run-intel]",
+    "done": true
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "f7c57514a32898d6bf3409ca9a4cf18dcdfc505e2fba0d95ff1639255f8af710",
+      "after": "032f05ba5f32fcca9abb8c8641438a43b889c82e9a0f5fcd0419e203be4a0bbb"
+    },
+    "document_text_len": {
+      "before": 339,
+      "after": 321
+    },
+    "protocol_digest": {
+      "before": {
+        "status": 200,
+        "row_count": 0,
+        "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+      },
+      "after": {
+        "status": 200,
+        "row_count": 1,
+        "payload_sha256": "b3b11682d38470f8d973d84f1f85a54e83ee88b66b01e43017ef190ce6db95a3"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n01:15 PM\nNothin",
+    "url": "http://127.0.0.1:57296/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5",
+      "rows": [],
+      "payload": {
+        "jobs": []
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "921e8f3293fce9361134d3b09cc4cf53f832e92dd9bc5c98bd865d2fadaf51e5"
+    },
+    "document_text_sha256": "f7c57514a32898d6bf3409ca9a4cf18dcdfc505e2fba0d95ff1639255f8af710",
+    "document_text_len": 339,
+    "replay_identity": null,
+    "at_utc": "2026-09-28T19:15:06.257836+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n01:15 PM\nNothin",
+    "url": "http://127.0.0.1:57296/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 1,
+      "payload_sha256": "b3b11682d38470f8d973d84f1f85a54e83ee88b66b01e43017ef190ce6db95a3",
+      "rows": [
+        {
+          "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+          "origin_job_id": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+          "work_descriptor_sha256": "sha256:739dd5e6634565c4a7357fb0e54a2768a631e0e0a270d6e520bd64278470b8d8",
+          "claim_id": "ic_2448534c1f326c7117181bf683004d9d8b7f38d11a0d33a07e82cce460a7fd6b",
+          "parent_operation_id": "op_e06e27daad324bb99a40d7436005388a",
+          "bundle_id": "iprb_4848be52a55a78aeb0306d3896f2d066fd975966de6112c6f1d9f2fe8c368744",
+          "bundle_sha256": "sha256:76f418becf11f39a59ac28a46d37954ffb80247870e22b9db9767a0faee67f70",
+          "lifecycle_posture": "claimed",
+          "meeting_id": "aacb045a",
+          "status": "claimed",
+          "transcript_hash": "285b1deb27c1a8ea022faa5e76c87a2581cf014f919fc143e9d51eaa2bcb2a35",
+          "requested_at": "2026-09-28T13:15:06.333140",
+          "updated_at": "2026-09-28T13:15:06.445486",
+          "attempts": 1,
+          "last_error": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                "host": "192.168.1.43",
+                "ordinal": 1,
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+            "status": "ready"
+          },
+          "run_receipt": null,
+          "meeting_title": "Architecture boundary review",
+          "started_at": "2026-09-28T13:14:53.924592",
+          "intel_status_detail": "Claimed deferred meeting intelligence.",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "retries_remaining": 5,
+          "retry_max_attempts": 6,
+          "retry_history": [
+            {
+              "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+              "event_kind": "claim",
+              "attempt": 1,
+              "outcome": "claimed",
+              "error": null,
+              "retry_at": null,
+              "created_at": "2026-09-28T13:15:06.333140"
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "jobs": [
+          {
+            "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+            "origin_job_id": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+            "work_descriptor_sha256": "sha256:739dd5e6634565c4a7357fb0e54a2768a631e0e0a270d6e520bd64278470b8d8",
+            "claim_id": "ic_2448534c1f326c7117181bf683004d9d8b7f38d11a0d33a07e82cce460a7fd6b",
+            "parent_operation_id": "op_e06e27daad324bb99a40d7436005388a",
+            "bundle_id": "iprb_4848be52a55a78aeb0306d3896f2d066fd975966de6112c6f1d9f2fe8c368744",
+            "bundle_sha256": "sha256:76f418becf11f39a59ac28a46d37954ffb80247870e22b9db9767a0faee67f70",
+            "lifecycle_posture": "claimed",
+            "meeting_id": "aacb045a",
+            "status": "claimed",
+            "transcript_hash": "285b1deb27c1a8ea022faa5e76c87a2581cf014f919fc143e9d51eaa2bcb2a35",
+            "requested_at": "2026-09-28T13:15:06.333140",
+            "updated_at": "2026-09-28T13:15:06.445486",
+            "attempts": 1,
+            "last_error": null,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                  "host": "192.168.1.43",
+                  "ordinal": 1,
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+              "status": "ready"
+            },
+            "run_receipt": null,
+            "meeting_title": "Architecture boundary review",
+            "started_at": "2026-09-28T13:14:53.924592",
+            "intel_status_detail": "Claimed deferred meeting intelligence.",
+            "retry_scheduled": false,
+            "next_retry_at": null,
+            "retries_remaining": 5,
+            "retry_max_attempts": 6,
+            "retry_history": [
+              {
+                "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+                "event_kind": "claim",
+                "attempt": 1,
+                "outcome": "claimed",
+                "error": null,
+                "retry_at": null,
+                "created_at": "2026-09-28T13:15:06.333140"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "b3b11682d38470f8d973d84f1f85a54e83ee88b66b01e43017ef190ce6db95a3"
+    },
+    "document_text_sha256": "032f05ba5f32fcca9abb8c8641438a43b889c82e9a0f5fcd0419e203be4a0bbb",
+    "document_text_len": 321,
+    "replay_identity": null,
+    "at_utc": "2026-09-28T19:15:07.378276+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/aacb045a/intelligence/run",
+      "status": 200,
+      "body_sha256": "2bfd53051ddb429a4e5a297b85881edc42a4ed7a44e7029c28014edb1b0f0465",
+      "body": {
+        "jobId": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+        "state": "queued",
+        "host": "192.168.1.43",
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+              "host": "192.168.1.43",
+              "ordinal": 1,
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+          "status": "ready"
+        },
+        "run_receipt": null
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/meetings/aacb045a/intelligence/run"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/intel/jobs",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 573,
+        "w": 369,
+        "h": 138
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "227px",
+      "end_margin_bottom": "138px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\n\u2192 EXTERNAL REACH ENABLED\nSearch\n01:15 PM\nNothin",
+    "url": "http://127.0.0.1:57296/",
+    "windows": [],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/intel/jobs",
+      "status": 200,
+      "collection": "jobs",
+      "row_count": 1,
+      "payload_sha256": "b3b11682d38470f8d973d84f1f85a54e83ee88b66b01e43017ef190ce6db95a3",
+      "rows": [
+        {
+          "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+          "origin_job_id": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+          "work_descriptor_sha256": "sha256:739dd5e6634565c4a7357fb0e54a2768a631e0e0a270d6e520bd64278470b8d8",
+          "claim_id": "ic_2448534c1f326c7117181bf683004d9d8b7f38d11a0d33a07e82cce460a7fd6b",
+          "parent_operation_id": "op_e06e27daad324bb99a40d7436005388a",
+          "bundle_id": "iprb_4848be52a55a78aeb0306d3896f2d066fd975966de6112c6f1d9f2fe8c368744",
+          "bundle_sha256": "sha256:76f418becf11f39a59ac28a46d37954ffb80247870e22b9db9767a0faee67f70",
+          "lifecycle_posture": "claimed",
+          "meeting_id": "aacb045a",
+          "status": "claimed",
+          "transcript_hash": "285b1deb27c1a8ea022faa5e76c87a2581cf014f919fc143e9d51eaa2bcb2a35",
+          "requested_at": "2026-09-28T13:15:06.333140",
+          "updated_at": "2026-09-28T13:15:06.445486",
+          "attempts": 1,
+          "last_error": null,
+          "planned_route": {
+            "legs": [
+              {
+                "boundary": "lan",
+                "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                "host": "192.168.1.43",
+                "ordinal": 1,
+                "profile_id": "engine-192-168-1-43-8080",
+                "profile_revision": 1
+              }
+            ],
+            "reason_code": null,
+            "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+            "status": "ready"
+          },
+          "run_receipt": null,
+          "meeting_title": "Architecture boundary review",
+          "started_at": "2026-09-28T13:14:53.924592",
+          "intel_status_detail": "Claimed deferred meeting intelligence.",
+          "retry_scheduled": false,
+          "next_retry_at": null,
+          "retries_remaining": 5,
+          "retry_max_attempts": 6,
+          "retry_history": [
+            {
+              "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+              "event_kind": "claim",
+              "attempt": 1,
+              "outcome": "claimed",
+              "error": null,
+              "retry_at": null,
+              "created_at": "2026-09-28T13:15:06.333140"
+            }
+          ]
+        }
+      ],
+      "payload": {
+        "jobs": [
+          {
+            "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+            "origin_job_id": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+            "work_descriptor_sha256": "sha256:739dd5e6634565c4a7357fb0e54a2768a631e0e0a270d6e520bd64278470b8d8",
+            "claim_id": "ic_2448534c1f326c7117181bf683004d9d8b7f38d11a0d33a07e82cce460a7fd6b",
+            "parent_operation_id": "op_e06e27daad324bb99a40d7436005388a",
+            "bundle_id": "iprb_4848be52a55a78aeb0306d3896f2d066fd975966de6112c6f1d9f2fe8c368744",
+            "bundle_sha256": "sha256:76f418becf11f39a59ac28a46d37954ffb80247870e22b9db9767a0faee67f70",
+            "lifecycle_posture": "claimed",
+            "meeting_id": "aacb045a",
+            "status": "claimed",
+            "transcript_hash": "285b1deb27c1a8ea022faa5e76c87a2581cf014f919fc143e9d51eaa2bcb2a35",
+            "requested_at": "2026-09-28T13:15:06.333140",
+            "updated_at": "2026-09-28T13:15:06.445486",
+            "attempts": 1,
+            "last_error": null,
+            "planned_route": {
+              "legs": [
+                {
+                  "boundary": "lan",
+                  "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+                  "host": "192.168.1.43",
+                  "ordinal": 1,
+                  "profile_id": "engine-192-168-1-43-8080",
+                  "profile_revision": 1
+                }
+              ],
+              "reason_code": null,
+              "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+              "status": "ready"
+            },
+            "run_receipt": null,
+            "meeting_title": "Architecture boundary review",
+            "started_at": "2026-09-28T13:14:53.924592",
+            "intel_status_detail": "Claimed deferred meeting intelligence.",
+            "retry_scheduled": false,
+            "next_retry_at": null,
+            "retries_remaining": 5,
+            "retry_max_attempts": 6,
+            "retry_history": [
+              {
+                "job_id": "ij_9a4656fc974dbea5e471c144bdc9e334b432a4710bca51553aa749555785763b",
+                "event_kind": "claim",
+                "attempt": 1,
+                "outcome": "claimed",
+                "error": null,
+                "retry_at": null,
+                "created_at": "2026-09-28T13:15:06.333140"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "b3b11682d38470f8d973d84f1f85a54e83ee88b66b01e43017ef190ce6db95a3"
+    },
+    "document_text_sha256": "032f05ba5f32fcca9abb8c8641438a43b889c82e9a0f5fcd0419e203be4a0bbb",
+    "document_text_len": 321,
+    "replay_identity": null,
+    "at_utc": "2026-09-28T19:15:07.239221+00:00",
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/meetings/aacb045a/intelligence/run",
+      "status": 200,
+      "body_sha256": "2bfd53051ddb429a4e5a297b85881edc42a4ed7a44e7029c28014edb1b0f0465",
+      "body": {
+        "jobId": "ij_b3eeb1ad26234231bdf73705ff07ce8803a878fb0d63e726039e1c102c52d2ea",
+        "state": "queued",
+        "host": "192.168.1.43",
+        "drainer": "running",
+        "expectedWithinSeconds": 0,
+        "planned_route": {
+          "legs": [
+            {
+              "boundary": "lan",
+              "deployment_revision_id": "dep_2f835a4cd095b446d1232919e15874d9708340311c493f69e0e883564142fd81",
+              "host": "192.168.1.43",
+              "ordinal": 1,
+              "profile_id": "engine-192-168-1-43-8080",
+              "profile_revision": 1
+            }
+          ],
+          "reason_code": null,
+          "selection_hash": "sha256:33aa648c959f1ed73bcba77e98023285e6f0241dcc247f4ee3ecee9534b921c8",
+          "status": "ready"
+        },
+        "run_receipt": null
+      },
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/meetings/aacb045a/intelligence/run"
+    },
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/aacb045a/intelligence/run answered 200, wanted 200 (body sha256 2bfd53051ddb); response body contains the declared admission facts",
+    "elapsed_s": 0.931
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "POST /api/meetings/aacb045a/intelligence/run answered 200, wanted 200 (body sha256 2bfd53051ddb); response body contains the declared admission facts",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.068,
+    "first_satisfied_at_s": 0.931,
+    "completion_bound_s": 60.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: POST /api/meetings/aacb045a/intelligence/run answered 200, wanted 200 (body sha256 2bfd53051ddb); response body contains the declared admission facts"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the declared trigger_route POST /api/meetings/aacb045a/intelligence/run",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/meetings/aacb045a/intelligence/run",
+      "status": 200,
+      "body_sha256": "2bfd53051ddb429a4e5a297b85881edc42a4ed7a44e7029c28014edb1b0f0465",
+      "source": "ui-network",
+      "chosen_by": "the declared trigger_route POST /api/meetings/aacb045a/intelligence/run"
+    },
+    "why": "chosen by the declared trigger_route POST /api/meetings/aacb045a/intelligence/run",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/meetings/aacb045a/intelligence/run",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/base-merged/case.j6.run_summary.intel_queued--393/20260928T191444Z-case.j6.run_summary.intel_queued-muaddib-393/before.png",
+    "/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/base-merged/case.j6.run_summary.intel_queued--393/20260928T191444Z-case.j6.run_summary.intel_queued-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x93hts1z/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-x93hts1z/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:57296",
+    "",
+    "Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.",
+    "",
+    "Fetching 4 files:  25%|\u2588\u2588\u258c       | 1/4 [00:00<00:00,  6.35it/s]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:08<00:00,  2.15s/it]",
+    "Fetching 4 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 4/4 [00:08<00:00,  2.00s/it]"
+  ],
+  "duration_s": 23.288
+}

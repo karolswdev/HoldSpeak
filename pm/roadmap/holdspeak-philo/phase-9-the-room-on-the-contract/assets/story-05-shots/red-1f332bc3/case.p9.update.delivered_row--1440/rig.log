@@ -1,0 +1,12 @@
+PASS: live
+BRAIN: muaddib
+SOURCE: b2fd7e8ba9f9f90470e973fc36fe07d056825d85 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
+RUNTIME: build=['index-1hPsy_Mx.js'] hub=http://127.0.0.1:55879 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-t4vyv2wo/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: blocked terminal=None
+EVIDENCE: ['/Users/karol/dev/tools/wt-philo-9-05/.tmp/s05/red-1f332bc3/case.p9.update.delivered_row--1440/20260928T190729Z-case.p9.update.delivered_row-muaddib-1440/blocked.png']
+NOTE: BLOCKED: ui step click on "[data-update-id='pupd_75643bae2453411ab09d303f962f5b1f']" failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("[data-update-id='pupd_75643bae2453411ab09d303f962f5b1f']").first
+

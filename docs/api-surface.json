@@ -4526,7 +4526,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/items",
@@ -4534,7 +4536,9 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/items/{item_id}",
@@ -4658,7 +4662,9 @@
         "GET"
       ],
       "module": "web.routes.project_reviews",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/reviews/{review_id}/accept",
@@ -4761,7 +4767,7 @@
       ]
     },
     {
-      "path": "/api/projects/{project_id}/suggested-sources/{ref}/add",
+      "path": "/api/projects/{project_id}/suggested-sources/{ref:path}/add",
       "methods": [
         "POST"
       ],
@@ -4771,7 +4777,7 @@
       ]
     },
     {
-      "path": "/api/projects/{project_id}/suggested-sources/{ref}/dismiss",
+      "path": "/api/projects/{project_id}/suggested-sources/{ref:path}/dismiss",
       "methods": [
         "POST"
       ],
@@ -5380,6 +5386,26 @@
     },
     {
       "path": "/api/settings/remote/delegations/{identity}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/delegations/{identity}/projects/{project_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/delegations/{identity}/projects/{project_id}",
       "methods": [
         "PUT"
       ],
@@ -6071,6 +6097,16 @@
       "path": "/api/updates/{update_id}",
       "methods": [
         "PUT"
+      ],
+      "module": "web.routes.project_updates",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/updates/{update_id}/delivered",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.project_updates",
       "consumers": [

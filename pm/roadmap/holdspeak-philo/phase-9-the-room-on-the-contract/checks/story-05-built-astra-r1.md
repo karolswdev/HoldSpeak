@@ -1,0 +1,28 @@
+VERDICT: DO-NOT-RATIFY
+
+FINDINGS:
+
+1. **Blocking: the evidence copier overwrites the runs.** In `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-proof/rig_phase.sh:17`, `${run:h:t}` resolves to the batch label because `run` ends with `/`. I reproduced this. The commit retains **1/28 Phase 9 observations and 1/69 Phase 7/8 observations**. Its surviving Phase 9 observation describes a headless Connections case, while the adjacent screenshots show the Connections face. The base comparisons retain TSV summaries only. These are insufficient to verify the claimed runs’ provenance and outcomes. **Tenet 3; Article IX.**
+
+2. **The census is not criterion-complete.** `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-05.md:18` omits several criterion dispositions: story 02’s suggestion→resource/watch and checked-age/Recheck behavior; story 03’s risk, return-after-Copy and repeated-delivery states; story 07’s owner revoke, orphan and Remote Access OFF states. Existing glass/backend tests cover substantial parts, but the census must name those tests and distinguish them from atlas coverage. The rig’s owner-token limitation does not exclude owner revoke or orphan-face cases. **Tenets 3 and 7; Article IX.**
+
+3. **The equivalence proof is narrower than claimed.** The delivery browser case asserts only readable `Priya`; it does not read that click’s durable delivery or receipt (`docs/internal/philo/graph/atlas-phase9.json:1228`). The new MCP twin checks those stronger facts in a separate run. Also, `tests/unit/test_philo9_atlas.py:135` checks only the Connections **face** values. Changing the twin’s expected state from `never_checked` to `ready` in memory passed every story-05 fence. The eight supplied mutations do fail, but they miss this advertised invariant. **Tenet 3; Article IX.**
+
+4. **s5 is demonstrably sensitive to its input count; “timing flake” is an incorrect blanket classification.** My actual run passed with four brief items. A second run blocked with exactly three items—including the required decision—correctly showing no “N more” button. See the [blocked shot](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-pr688-s5-j6m3lkep/20260928T183845Z-case.closure.chain.s5_next_day_brief_more_opened-astra-393/blocked.png). `web/src/desk/chair/ChairHome.tsx:2130` renders that button only when the count exceeds three. The case never establishes that precondition. This supports inherited **case instability**, not a Phase 9 product regression. The separate 300-second summary timeout remains unexplained. The retained additional attempts also total **2/6 passes on each revision**, not 2/6 versus 3/6. **Tenets 2 and 3; Article IX.**
+
+5. **OpenAPI drift already has a fence; verification missed it.** Stories 02 (`24576f25`) and 07 (`cfe26467`) introduced the routes without regenerating this export. `tests/unit/test_api_surface.py:101` predates Phase 9 and compares the export against the assembled app. The story’s focused command omitted it; `.github/workflows/test.yml:25` also omits the standalone OpenAPI check. The regenerated export now passes. Additionally, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-proof/docs_nav.sh:6` ends each check with `echo`, so the script can exit successfully after failures. The recorded individual checks are green; the wrapper’s exit status is unreliable. **Tenet 3; Article IX.**
+
+6. **The five new cases themselves are lawful and pass.** I ran all eight required executions serially at `11a89a12`, with isolated HOMEs and clean provenance, and inspected all six face shots. All passed, with no console errors. Setup uses real producers; optional steps do not supply the outcomes; no new case contains a timed multi-action window. Keeping the steward atlas separate and accepting Muad’Dib’s explicit scope ruling are sound. [Independent observations and shots](/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/astra-pr688-review-tulhf19v).
+
+CONDITIONS:
+
+- Repair retention and preserve each claimed run’s observation and corresponding shots in a unique directory. Recover originals where available; rerun missing evidence. Fence the copier against collisions.
+- Complete the criterion census with exact atlas, glass/backend, or excluded dispositions. Strengthen delivery’s browser readback and compare both Connections predicates; demonstrate the wrong-state mutation fails.
+- Correct and ledger s5 as an inherited input-precondition defect; keep the summary timeout separate. Preserve `base_diff.py`’s honest nonzero result.
+- Make verification scripts propagate failures and include the existing OpenAPI drift check in local route verification. Recheck generated artifacts after incorporating #687. This does not require CI to gate merging.
+
+MISSED: Ranked by owner cost: lost proof requiring repeat runs; overstated coverage/equivalence; treating a correctly absent button as a timing failure; verification wrappers that can report success after failure.
+
+TUESDAY: The owner can allow a project grant and read DESK/NEVER CHECKED at both widths; these runs do not establish the complete Room workflow.
+
+UNKNOWN: I could not verify the discarded original observations or diagnose the historical summary timeout. I did not rerun the full suite. Independently verified: **44 focused tests passed**, all eight supplied mutations failed in memory, and the named equivalence suite collects **177 tests**. Reviewed `11a89a12`; the tree remains unchanged.

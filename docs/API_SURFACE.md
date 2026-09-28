@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
+Routes: 699 (plus static mounts). iOS-consumed: 89. Web-consumed: 534.
 
 ## device_audio_ws
 
@@ -442,6 +442,8 @@ Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
 | DELETE | `/api/settings/remote/credentials/{credential_id}` | web |
 | DELETE | `/api/settings/remote/delegations/{identity}` | web |
 | PUT | `/api/settings/remote/delegations/{identity}` | web |
+| DELETE | `/api/settings/remote/delegations/{identity}/projects/{project_id}` | web |
+| PUT | `/api/settings/remote/delegations/{identity}/projects/{project_id}` | web |
 
 ## web.routes.meeting_import
 
@@ -844,7 +846,7 @@ Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
 |---|---|---|
 | GET | `/api/projects/{project_id}/delta` | web |
 | POST | `/api/projects/{project_id}/reviews` | web |
-| GET | `/api/projects/{project_id}/reviews/{review_id}` | server only |
+| GET | `/api/projects/{project_id}/reviews/{review_id}` | web |
 | POST | `/api/projects/{project_id}/reviews/{review_id}/accept` | web |
 | POST | `/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide` | web |
 
@@ -872,6 +874,7 @@ Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
 | GET | `/api/projects/{project_id}/updates` | web |
 | POST | `/api/projects/{project_id}/updates/draft` | web |
 | PUT | `/api/updates/{update_id}` | web |
+| POST | `/api/updates/{update_id}/delivered` | web |
 | GET | `/api/updates/{update_id}/markdown` | web |
 | POST | `/api/updates/{update_id}/publish` | web |
 | POST | `/api/updates/{update_id}/regenerate` | web |
@@ -903,8 +906,8 @@ Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
 | GET | `/api/projects/{project_id}/artifacts` | web |
 | POST | `/api/projects/{project_id}/ask-tasks` | web |
 | GET | `/api/projects/{project_id}/briefings` | server only |
-| GET | `/api/projects/{project_id}/items` | server only |
-| POST | `/api/projects/{project_id}/items` | server only |
+| GET | `/api/projects/{project_id}/items` | web |
+| POST | `/api/projects/{project_id}/items` | web |
 | PATCH | `/api/projects/{project_id}/items/{item_id}` | server only |
 | POST | `/api/projects/{project_id}/items/{item_id}/transition` | server only |
 | GET | `/api/projects/{project_id}/meetings` | web |
@@ -919,8 +922,8 @@ Routes: 696 (plus static mounts). iOS-consumed: 89. Web-consumed: 528.
 | POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/suggested-sources` | web |
-| POST | `/api/projects/{project_id}/suggested-sources/{ref}/add` | web |
-| POST | `/api/projects/{project_id}/suggested-sources/{ref}/dismiss` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref:path}/add` | web |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref:path}/dismiss` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.proposals
