@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-9-05, PHILO-9-07; the owner's rulings on Q0–Q3 (they fix the job)
 - **Unblocks:** the phase close
 - **Owner:** Astra (Luna) drives Codex; Muad'Dib checks
@@ -28,13 +28,13 @@ D1's closing test: a cold-context client runs a real project job from the MCP ca
 
 ## Acceptance criteria
 
-- [ ] The launch matches the pinned contract (client, legs, homes, session ids, flags); the retained initial contexts prove it.
-- [ ] The job completes from the catalogue alone: every tool choice comes from `tools/list`; zero repository reads; the zero-read fence fails on the Phase 5 logs; client events reconcile with hub exchanges.
-- [ ] Every fixture value is read back and matches: the milestone and risk facts; the overdue milestone in NEEDS YOU; the steward run (review id, one drafted update, counts); the publication lifecycle and body content; both delivery rows (times, "Priya" and "Tomas", two receipts, both shown); each admitted write's receipt.
-- [ ] The AGENT leg: refused with receipts before the grant; executing with receipts naming the delegation after it; marking delivered refused throughout.
-- [ ] "Find it cold": the fresh session finds the project from its name alone and reads its published, delivered update.
-- [ ] The Room's face at 1440 and 393 shows each result; the retained sessions carry no account data (the leak fence).
-- [ ] The owner reviews the shots before merge; the evidence reads "REHEARSED; OWNER REVIEW PENDING" until he does.
+- [x] The launch matches the pinned contract (client, legs, homes, session ids, flags); the retained initial contexts prove it.
+- [x] The job completes from the catalogue alone: every tool choice comes from `tools/list`; zero repository reads; the zero-read fence fails on the Phase 5 logs; client events reconcile with hub exchanges.
+- [x] Every fixture value is read back and matches: the milestone and risk facts; the overdue milestone in NEEDS YOU; the steward run (review id, one drafted update, counts); the publication lifecycle and body content; both delivery rows (times, "Priya" and "Tomas", two receipts, both shown); each admitted write's receipt.
+- [x] The AGENT leg: refused with receipts before the grant; executing with receipts naming the delegation after it; marking delivered refused throughout.
+- [x] "Find it cold": the fresh session finds the project from its name alone and reads its published, delivered update.
+- [x] The Room's face at 1440 and 393 shows each result; the retained sessions carry no account data (the leak fence).
+- [x] The owner reviews the shots before merge; the evidence reads "REHEARSED; OWNER REVIEW PENDING" until he does. — REVIEWED 2026-09-28 (AskUserQuestion, verbatim: "Reviewed — close after story 05 (Recommended)"; https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD); the evidence reads REHEARSED; OWNER-REVIEWED.
 
 ## Effort (not a promise)
 
@@ -47,6 +47,11 @@ PROVISIONAL: about 1.5 engineering days (two legs), plus the owner's review.
 
 ## Notes
 
+- 2026-09-28 — the owner reviewed the closing shots (https://claude.ai/artifact/C66EYhCAcDBbPdkeZJFFYD), verbatim: "Reviewed — close after story 05 (Recommended)". Box 7 closed; the evidence reads REHEARSED; OWNER-REVIEWED (never a sitting). The phase closes after story 05.
+- 2026-09-28 — round four (Codex Astra r1 on #687, RATIFY-WITH-CONDITIONS, `checks/story-06-built-astra-r1.md`): the face collector counts only rows seen in the unobscured viewport; ITEMS recaptured at 1440 and 393 against a copy of the retained hub state (the 393 shot now shows the complete risk row); three face-word follow-ups ledgered in BACKLOG; historical owner-only refusals still render NO GRANT (not overclaimed).
+- 2026-09-28 — DONE on the final closing run (`assets/story-06-shots/final/20260928T172621Z-room-job`, merged main `79fdee3c` + this branch): four fresh Codex sessions and the face at 1440 and 393, every fixture value read back and shown; the grant row's board 12 state after the owner archived the project. The face's refusal and grant words aligned with the grant row's (round three). The evidence reads REHEARSED; OWNER REVIEW PENDING: the owner reviews the shots before merge. The milestone is 3 days late (the fixture), so the face says MILESTONE · 3 DAYS LATE (the ratified words with the fixture's count).
+- 2026-09-28 — round two (Muad'Dib's ruling on rehearsal one): the two catalogue gaps paid red → green (an owner-only operation refuses an agent `owner_principal_required`; `project.list` names "find a project by its name", `memory.search` no longer reads as a project search); the grant pointer to BACKLOG. Rehearsal two completed with no blocker; find it cold took `project.list`.
+- 2026-09-28 — the driver `scripts/philo9_room_job.py` (the Phase 7 machinery reused) and its fences (`tests/unit/test_philo9_room_job.py`); the fixture `story-06-fixture.json`; one rehearsal of the three MCP legs, every fixture value read back (now `evidence-story-06.md`). The AGENT leg runs as two fresh sessions (before and after the grant; the owner grants between them), the Phase 7 precedent. The face leg waits for PHILO-9-03. Status stays in-progress — Fedaykin lane (Opus 5.5).
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
 - 2026-09-27 — round seven (the owner's "Several per update"): the fixture marks delivered twice and reads both back.
 - 2026-09-27 — round six (Codex Astra r4, R4-4): three sessions; MCP-contract proof kept apart from clipboard and external-delivery claims.

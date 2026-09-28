@@ -1,0 +1,66 @@
+{
+  "auth_file_changed": false,
+  "chosen_tools": [
+    "project.list",
+    "project.get_room",
+    "project.run_steward",
+    "project.publish_update",
+    "project.mark_update_delivered"
+  ],
+  "exchange_end": 45,
+  "initial_context_findings": [],
+  "leg": "agent",
+  "mcp_other_methods": [],
+  "mcp_statuses": [
+    {
+      "method": "initialize",
+      "status": 200
+    },
+    {
+      "method": "notifications/initialized",
+      "status": 204
+    },
+    {
+      "method": "tools/list",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    },
+    {
+      "method": "tools/call",
+      "status": 200
+    }
+  ],
+  "non_mcp_http_writes": [],
+  "reconciliation": null,
+  "reconciliation_error": "MCP exchange reconciliation for 'project.run_steward' found no unused matching /api/mcp row",
+  "resumed": false,
+  "rollout": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-mzrzhks9/cold-agent_ungranted/home/.codex/sessions/2026/09/28/rollout-2026-09-28T10-41-24-01a0e8e4-7fa0-7691-9561-4f117ee2d0a0.jsonl",
+  "session_id": "01a0e8e4-7fa0-7691-9561-4f117ee2d0a0",
+  "stage": "agent_ungranted",
+  "timing": {
+    "elapsed_s": 25.243,
+    "exit_code": 0,
+    "finished_at": "2026-09-28T16:41:48.647395+00:00",
+    "outcome": "process_completed",
+    "started_at": "2026-09-28T16:41:23.404225+00:00"
+  },
+  "tools_listed": 66,
+  "unlisted_tools": [],
+  "usage_limit": null,
+  "zero_read_findings": []
+}

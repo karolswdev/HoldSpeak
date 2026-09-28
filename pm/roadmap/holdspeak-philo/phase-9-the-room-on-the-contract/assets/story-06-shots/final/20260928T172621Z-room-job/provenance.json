@@ -1,0 +1,20 @@
+{
+  "boundary_substitutions": [],
+  "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+  "clock": {
+    "mechanism": "none \u2014 the real clock; no case may claim an advance",
+    "started_utc": "2026-09-28T17:26:22.094522+00:00",
+    "tz": null
+  },
+  "db_path": null,
+  "dirty": true,
+  "engine_identity": null,
+  "engine_mode": "none",
+  "engine_mode_reason": "the job calls no model: the steward drafts with the deterministic generator (holdspeak/services/project_update_service.py draft_update, generator deterministic)",
+  "fixture_hashes": {},
+  "frontend_build": null,
+  "hub": null,
+  "restarts": [],
+  "revision": "44ee792404ee2f711efede5b326fd2d4d598f781",
+  "rig_version": "1.5.2"
+}

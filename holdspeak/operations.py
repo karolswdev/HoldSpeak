@@ -1365,8 +1365,8 @@ _RESOURCE_REF = {
 PROJECT_LIST = OperationDescriptor(
     name="project.list",
     version=1,
-    description="Find your projects: every project, newest first. Archived projects only with include_archived. "
-                "Each project's id is what the other project tools take as project_id.",
+    description="Find a project by its name: every project with its name and id, newest first. Archived projects "
+                "only with include_archived. Each project's id is what the other project tools take as project_id.",
     args_schema={
         "type": "object",
         "properties": {"include_archived": {"type": ["boolean", "null"], "description": "Optional. Also list archived projects (default false)."}},

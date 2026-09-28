@@ -36,6 +36,9 @@ TOKEN = "philo9-01-discovery"
 #: job phrase -> (tool, argument path: (argument, a word the path must name, or None)).
 JOBS: dict[str, tuple[str, tuple[tuple[str, str | None], ...]]] = {
     "make a project": ("project.create", (("name", None),)),
+    # PHILO-9-06 (the closing use): a cold Codex session asked to find a
+    # project by name took memory.search, which never returns a project.
+    "find a project by its name": ("project.list", ()),
     "add a milestone or a risk to a project": (
         "project.item.create", (("project_id", None), ("item_type", "milestone"), ("title", None), ("due_at", None)),
     ),
@@ -124,6 +127,15 @@ def test_every_id_argument_names_where_its_value_comes_from(catalogue, tool_name
         sources = [s.rstrip(".") for s in _FROM_TOOL.findall(description)]
         assert sources, f"{tool_name}.{argument} does not say where its value comes from: {description!r}"
         assert all(source in tools for source in sources), (tool_name, argument, sources)
+
+
+def test_memory_search_does_not_offer_to_find_a_project(catalogue) -> None:
+    """PHILO-9-06: memory.search returns items, notes and meetings, never a
+    project; its words send a project search to project.list."""
+    description = _by_name(catalogue)["memory.search"]["description"].lower()
+    assert "project.list" in description, description
+    for phrase in ("find a project", "find your project", "search projects", "projects by"):
+        assert phrase not in description, (phrase, description)
 
 
 def test_no_project_tool_says_the_product_sends_the_update(catalogue) -> None:

@@ -1,0 +1,110 @@
+{
+  "drafts": {
+    "updates": [
+      {
+        "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+        "created_at": "2026-09-28T16:55:29+00:00",
+        "deliveries": [],
+        "draft_revision": 1,
+        "fallback_reason": null,
+        "fallback_receipt": null,
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "id": "pupd_088e13e63f44484f9ccaeba58c76a30c",
+        "lifecycle": "draft",
+        "project_id": "proj-f0413aa05d63",
+        "project_revision": 4,
+        "published_at": null,
+        "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+        "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":4,\"review_id\":\"prev_7f64e43df57340538953574b5c6c8651\"}",
+        "updated_at": "2026-09-28T16:55:29+00:00"
+      }
+    ]
+  },
+  "latest_run": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+  "receipts": [
+    {
+      "operation": {
+        "authority_basis": "refused_at_admission",
+        "delegator_kind": "",
+        "name": "project.run_steward",
+        "operation_id": "op_dbbfa318cbf141a38e77ef518c521666",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 7,
+        "state": "refused"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "refused_at_admission",
+        "created_at": 1790614547.4622002,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_dbbfa318cbf141a38e77ef518c521666",
+        "outcome": "project_delegation_required",
+        "receipt_id": "rcpt_9d5e1504dcf9409eb98a2ec59d099924",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "project:proj-f0413aa05d63"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "refused_at_admission",
+        "delegator_kind": "",
+        "name": "project.publish_update",
+        "operation_id": "op_c7a4b03a648e444f9a63e57a5ce2dbe5",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 8,
+        "state": "refused"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "refused_at_admission",
+        "created_at": 1790614551.3263118,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_c7a4b03a648e444f9a63e57a5ce2dbe5",
+        "outcome": "project_delegation_required",
+        "receipt_id": "rcpt_4f2b1bb51bca4660a8de2e27daa8c781",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "project_update:pupd_088e13e63f44484f9ccaeba58c76a30c"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "refused_at_admission",
+        "delegator_kind": "",
+        "name": "project.mark_update_delivered",
+        "operation_id": "op_6804c584fa0445d6ba4d0924cb797007",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 9,
+        "state": "refused"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "refused_at_admission",
+        "created_at": 1790614554.517023,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_6804c584fa0445d6ba4d0924cb797007",
+        "outcome": "owner_principal_required",
+        "receipt_id": "rcpt_f8bb535ab1c0455491193875ce99f410",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "project_update:pupd_088e13e63f44484f9ccaeba58c76a30c"
+      }
+    }
+  ]
+}

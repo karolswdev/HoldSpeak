@@ -1,0 +1,15 @@
+{
+  "credential": {
+    "expires_at": 621245.526415666,
+    "id": "990384c141f14227",
+    "identity": "codex-project-agent",
+    "palette": "PROJECT",
+    "route": "POST /api/settings/remote/credentials",
+    "token_sha256_12": "c7c767e3e1fe"
+  },
+  "waiting_draft": {
+    "route": "POST /api/projects/proj-f0413aa05d63/updates/draft (owner token)",
+    "status": 200,
+    "update_id": "pupd_088e13e63f44484f9ccaeba58c76a30c"
+  }
+}
