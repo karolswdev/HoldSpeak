@@ -5,6 +5,14 @@
 - **Date:** 2026-09-28
 - **Branch:** `feat/philo-9-05` from main `79fdee3c` (stories 01, 02, 03, 04, 07 merged); round two merges origin/main `b2fd7e8b` (#687, story 06). The product under test is main: this story changes no product file.
 
+## Round three — Codex Astra r2 on PR #688 @ `67ce9256` (RATIFY-WITH-CONDITIONS), paid
+
+`checks/story-05-built-astra-r2.md` (verbatim). Codex verified 28/28, 69/69, 194 observations per base comparison, 10/10 mutations and the 435 fences. Three narrow conditions; no atlas rerun.
+
+1. **`fences.sh` read `cut`'s status for the mutations** (`mrc=$?` after a pipe). Now `mrc=${pipestatus[1]}`. `assets/story-05-proof/exit_combos.sh` runs the script's own text with the two commands replaced by `(exit A)` / `(exit B)` (their pipes kept), for all four combinations, on the `67ce9256` script and on this one. Before: fences pass + mutations FAIL exits 0 (WRONG); after: exit 0 only when both pass (capture below).
+2. **Export provenance (recorded; the historical observations are not edited).** The observations of the runs on an export (`base-294632c0/`, `red-1f332bc3/`) carry `provenance.revision` `b2fd7e8b` (or the branch head of that capture). The export is a `git archive` extracted under `.tmp/` inside this worktree, so the rig's `git rev-parse` found the ENCLOSING worktree, not the export's commit. The product that ran was the export's: `PYTHONPATH` = the export, its own web build. Codex Astra reconciled it independently: the 1,554 product source files of each export match its claimed commit (`294632c0`, `1f332bc3`), and both built-index hashes (`frontend_build`) match their observations. The `revision` field of those observations is misleading alone. Read it together with this note and the capture's command line (`ROOT=.tmp/main-294632c0`, `red_main.sh`'s `BASE`).
+3. **PR #688's description** refreshed: the current counts, and s5 as an inherited input-precondition defect (not a timing flake).
+
 ## Round two — Codex Astra r1 on PR #688 @ `11a89a12` (DO-NOT-RATIFY), paid
 
 `checks/story-05-built-astra-r1.md` (verbatim). Codex ran the five new cases serially at `11a89a12` and found them lawful and passing. Each finding and what paid it:
@@ -951,4 +959,49 @@ rc=0  python3 scripts/check_doc_coverage.py --check
 OpenAPI: 572 paths
 rc=0  .venv/bin/python scripts/philo_openapi_reference.py --check
 checks failed: 0
+```
+
+### Captured run — 2026-09-28T19:55:03Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-proof/exit_combos.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 3e160baa6e77b60cf88f525c07683bf55560f92d
+
+```text
+before fences=0 mutations=0 -> exit 0 (wanted 0): ok
+before fences=0 mutations=1 -> exit 0 (wanted nonzero): WRONG
+before fences=1 mutations=0 -> exit 1 (wanted nonzero): ok
+before fences=1 mutations=1 -> exit 1 (wanted nonzero): ok
+after fences=0 mutations=0 -> exit 0 (wanted 0): ok
+after fences=0 mutations=1 -> exit 1 (wanted nonzero): ok
+after fences=1 mutations=0 -> exit 1 (wanted nonzero): ok
+after fences=1 mutations=1 -> exit 1 (wanted nonzero): ok
+after: 0 wrong
+```
+
+### Captured run — 2026-09-28T19:55:10Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-proof/fences.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** e1d27dee931f8d3a0e0b8a1832024b9bf52a8397
+
+```text
+HEAD = 67ce9256daebd9180b5f0c4594ec86215f5b920d
+........................................................................ [ 99%]
+...                                                                      [100%]
+435 passed in 44.70s
+baseline (unmutated): 48 passed in 0.47s
+m1 (24): RED - 7 failed, 41 passed in 0.56s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_case_reference_inside_the_atlas_resolves-atlas-phase9.json]', 'FAILED te
+m2 (28): RED - 2 failed, 46 passed in 0.52s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_face_cases_carry_both_ruled_viewports-atlas-phase9.json]', 'FAILED tests/unit/
+m3 (32): RED - 1 failed, 47 passed in 0.51s; ['FAILED tests/unit/test_philo9_atlas.py::test_every_admitted_write_twin_reads_its_receipt_with_its_actor']
+m4 (37): RED - 1 failed, 47 passed in 0.50s; ['FAILED tests/unit/test_philo9_atlas.py::test_no_trigger_is_optional_and_no_optional_step_is_the_outcome']
+m5 (41): RED - 1 failed, 47 passed in 0.52s; ['FAILED tests/unit/test_philo9_atlas.py::test_every_face_case_without_a_twin_is_excluded_with_a_reason']
+m6 (45): RED - 1 failed, 47 passed in 0.55s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_pairs_read_the_same_values']
+m7 (51): RED - 1 failed, 47 passed in 0.53s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_general_fences_hold_for_each_phase9_file[test_every_desk_face_case_crosses_the_gate_first-atlas-phase9.json]']
+m8 (55): RED - 2 failed, 46 passed in 0.53s; ['FAILED tests/unit/test_philo9_atlas.py::test_every_api_step_exists_in_the_generated_openapi[atlas-phase9.json]', 'FAILED tests/unit/test_philo9_atlas.py::test_the_pairs_read
+m9 (59): RED - 2 failed, 46 passed in 0.51s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_pairs_read_the_same_values', 'FAILED tests/unit/test_philo9_atlas.py::test_the_delivery_face_reads_its_own_clicks_durable_ou
+m10 (64): RED - 1 failed, 47 passed in 0.51s; ['FAILED tests/unit/test_philo9_atlas.py::test_the_pairs_read_the_same_values']
+10 red, 0 missed
 ```

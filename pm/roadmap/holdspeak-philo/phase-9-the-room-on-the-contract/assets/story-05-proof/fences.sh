@@ -13,5 +13,6 @@ HOME=$(mktemp -d) .venv/bin/python -m pytest -q -p no:cacheprovider -n 4 \
   tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_rig_op.py tests/unit/test_philo9_02_rig_op.py 2>&1 | tail -3
 rc=${pipestatus[1]}
 .venv/bin/python pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-05-proof/mutations.py | cut -c1-220
-mrc=$?
+# Codex Astra r2 condition 1: the mutation run's own status, not cut's.
+mrc=${pipestatus[1]}
 exit $(( rc != 0 || mrc != 0 ))
