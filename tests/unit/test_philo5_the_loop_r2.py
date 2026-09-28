@@ -324,6 +324,12 @@ def _p_kernel_receipt_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "kernel.receipt.read", {"operation_id": str(made.get("operation_id") or "op_none")})
 
 
+def _p_project_item_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # PHILO-9-01: project.item.list declares {items, limit, offset} (no total).
+    made = hub.client.post("/api/projects", json={"name": "Shape"}).json()["project"]
+    return hub.root.operations.invoke(OWNER, "project.item.list", {"project_id": made["id"]})
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -335,6 +341,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "thought.list": _p_thought_list,
     "zone.read": _p_zone_read,
     "kernel.receipt.read": _p_kernel_receipt_read,
+    "project.item.list": _p_project_item_list,
 }
 
 

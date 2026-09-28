@@ -45,7 +45,7 @@ from holdspeak.project_contracts import (
     generate_prev_id,
 )
 from holdspeak.refs import format as format_ref, parse as parse_ref
-from holdspeak.services.errors import ConflictError, ValidationError
+from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 from holdspeak.services.service_event_ledger import ServiceEventLedger
 
 
@@ -754,8 +754,14 @@ class ProjectDeltaService:
         patch: Optional[dict[str, Any]] = None,
         deferred_until: Optional[str] = None,
         command_id: Optional[str] = None,
+        review_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Apply a durable decision verb to a proposal (DEL-002).
+
+        PHILO-9-01: ``review_id`` (both transports pass it; the route's path
+        and the MCP tool's argument) is checked FIRST: the proposal must exist
+        and belong to that review, else ``not_found`` -- the check each
+        transport used to copy for itself.
 
         Verbs: accept | edit_accept | defer | dismiss.
 
@@ -789,6 +795,15 @@ class ProjectDeltaService:
         atomic semantics: decisions accumulate, the aggregate mutation
         is accept_review.
         """
+        if review_id is not None:
+            proposal = self._db.project_observations.get_proposal(proposal_id)
+            if proposal is None:
+                raise NotFound("proposal", proposal_id)
+            if proposal.get("review_window_key") != review_id:
+                mismatch = NotFound("proposal", proposal_id)
+                mismatch.detail = f"Proposal {proposal_id!r} does not belong to review {review_id!r}"
+                mismatch.context.update({"proposal_id": proposal_id, "review_id": review_id})
+                raise mismatch
         verb = str(verb).strip()
         if verb not in DECISION_VERBS:
             raise ValidationError(
@@ -1785,6 +1800,43 @@ class ProjectDeltaService:
                     producer_kind=p.get("provenance_class"),
                     lifecycle="open",
                 )
+
+    def get_delta(self, principal: Any, project_id: str) -> dict[str, Any]:
+        """The open review window, or the honest empty state (WEB-STA-004).
+
+        PHILO-9-01: the one read both transports reach through the declared
+        ``project.get_delta`` operation (the HTTP route and the MCP tool each
+        carried a copy of this glue before).
+        """
+        if self._db.projects.get_project(project_id) is None:
+            raise NotFound("project", project_id)
+        open_review = self._find_open_review(project_id)
+        if open_review is not None:
+            return self._load_frozen_window(open_review)
+        room_fields = self._db.projects.get_project_room_fields(project_id)
+        last_accepted_at = (room_fields or {}).get("last_review_at")
+        source_coverage = None
+        try:
+            reviews = self._db.project_observations.list_reviews(
+                project_id, status="accepted", limit=1,
+            )
+            if reviews:
+                manifest_json = reviews[0].get("source_manifest_json", "{}")
+                manifest = (
+                    json.loads(manifest_json)
+                    if isinstance(manifest_json, str) else manifest_json
+                )
+                source_coverage = {
+                    k: v.get("state", "unknown")
+                    for k, v in manifest.items()
+                }
+        except Exception:
+            pass
+        return {
+            "open_review": None,
+            "last_accepted_at": last_accepted_at,
+            "source_coverage": source_coverage,
+        }
 
     # ── Read-back helpers ─────────────────────────────────────────────
 

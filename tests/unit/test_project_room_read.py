@@ -263,24 +263,27 @@ class TestAbsentMarkers:
         result = svc.room(OWNER, proj["id"])
         assert result["sources"]["state"] == "ok"
 
-    def test_updates_absent(self, rig) -> None:
+    def test_updates_read_what_exists(self, rig) -> None:
+        """PHILO-9-01 (F6): the updates section is live; zero is zero, not absent."""
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        assert result["updates"] == self.EXPECTED_SHAPE
+        assert result["updates"] == {"state": "ok", "count": 0, "counts": {}, "recent": [], "latest_published": None}
 
-    def test_steward_absent(self, rig) -> None:
+    def test_steward_reads_what_exists(self, rig) -> None:
+        """PHILO-9-01 (F6): the steward section is live; no run yet is said as such."""
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        assert result["steward"] == self.EXPECTED_SHAPE
+        assert result["steward"] == {"state": "ok", "latest_run": None, "enabled": False, "unattended_enabled": False}
 
     def test_absent_markers_grep_proof(self, rig) -> None:
-        """Remaining absent sections (Art VI). sources graduated HS-169-04."""
+        """Remaining absent sections (Art VI). sources graduated HS-169-04;
+        updates and steward graduated PHILO-9-01 (F6)."""
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        for section_name in ("review", "updates", "steward"):
+        for section_name in ("review",):
             section = result[section_name]
             assert section["state"] == "absent"
             assert "reason" in section
@@ -531,9 +534,11 @@ class TestRouteIntegration:
         proj = client.post("/api/projects", json={"name": "Absent Test"}).json()["project"]
         resp = client.get(f"/api/projects/{proj['id']}/room")
         body = resp.json()
-        # HS-169-04: sources graduated to live; only these remain absent
-        for section_name in ("review", "updates", "steward"):
-            assert body[section_name] == {"state": "absent", "reason": "not_yet_built"}
+        # HS-169-04: sources graduated to live; PHILO-9-01 (F6): updates and
+        # steward too. Only the review stays absent here (no delta service).
+        assert body["review"] == {"state": "absent", "reason": "not_yet_built"}
+        assert body["updates"]["state"] == "ok" and body["updates"]["count"] == 0
+        assert body["steward"]["state"] == "ok" and body["steward"]["latest_run"] is None
 
     def test_room_route_has_revision(self, rig, client) -> None:
         proj = client.post("/api/projects", json={"name": "Rev Route"}).json()["project"]

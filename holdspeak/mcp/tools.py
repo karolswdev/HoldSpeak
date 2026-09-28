@@ -412,7 +412,7 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
-    _mcp_tool("desk.needs_you", "Aggregate needs-you items across all active project rooms. Returns {count, projects, items, next, coverage, complete} -- coverage names every expected source that was not observed.", {}),
+    _mcp_tool("desk.needs_you", "What needs me: every project room's attention items in one list (overdue milestones, reviews and proposals waiting, commitments ...), with one count. Muted projects are marked and not counted. Returns {count, projects, items, next, coverage, complete} -- coverage names every expected source that was not observed.", {}),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List durable decision records, newest first.",
@@ -744,6 +744,12 @@ def _tool_operation(name: str, args: Any) -> tuple[str | None, Any]:
     return operation, raw
 
 
+def _bare_project_service(db: Any, obs: Any) -> Any:
+    from holdspeak.services.project_service import ProjectService
+
+    return ProjectService(db, observer=obs)
+
+
 def _registry() -> operations.OperationRegistry:
     db = db_or(get_database)
     return operations.for_runtime(lambda: runtime_service(
@@ -956,6 +962,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             kernel_read_service=lambda: runtime_service(
                 "kernel_read_service", lambda: KernelReadService(db)
             ),
+            # PHILO-9-01: desk.needs_you is the declared operation on the
+            # hub's ProjectService (a bare one off-hub, as before).
+            project_service=lambda: runtime_service(
+                "project_service", lambda: _bare_project_service(db, obs)
+            ),
         )
 
     if name == "desk.list":
@@ -1075,19 +1086,13 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "desk.snapshot":
         return desk.snapshot(principal)
     if name == "desk.needs_you":
-        # HS-200-07 (C4): ONE owner of the aggregate shape.  The inline
-        # copy that lived here skipped a failed Room silently, so an
-        # unobserved source read as an all-clear on this surface.
-        from holdspeak.services.needs_you_aggregate import build_aggregate, shared_last_known
-        from holdspeak.services.project_service import ProjectService
-        project_service = ProjectService(db, observer=obs)
-        return build_aggregate(
-            list_projects=project_service.list_projects,
-            room=project_service.room,
-            principal=principal,
-            # HS-200-13 (counsel P1-4): ONE last-known store with the hub.
-            last_known=shared_last_known(lambda: db),
-        )
+        # PHILO-9-01 (F13): the declared operation, the same one the HTTP
+        # route reaches: one aggregate, the heartbeat's muted projects applied,
+        # one count. The hub's calendar read (the Door's upcoming meetings) is
+        # held by the transport, as the route holds it.
+        door = runtime_service("door_service", lambda: None)
+        return ops().invoke(principal, "desk.needs_you", {},
+                            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE
         from holdspeak.services.inference_assignment_service import InferenceAssignmentService

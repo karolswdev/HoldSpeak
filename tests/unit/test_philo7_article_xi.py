@@ -591,15 +591,20 @@ def test_an_agent_reads_its_own_receipts_and_not_anothers(hub: Hub) -> None:
     assert is_error is True and "principal_read_scope_required" in denied["error"]
 
 
-def test_the_receipt_tool_is_declared_in_the_desk_palette_and_refused_outside_it(hub: Hub) -> None:
-    from holdspeak.mcp.palettes import resolve_palette
+def test_the_receipt_tool_is_declared_in_the_desk_palette_and_every_palette_holds_it(hub: Hub) -> None:
+    """PHILO-9-01 (the Phase 9 charter, "The new public tools"): ``kernel.receipt``
+    joins PROJECT and SWEEP (palettes only gain tools); the read scope, not the
+    palette, keeps an agent to its own operations -- fenced in
+    tests/unit/test_philo9_room_contract.py (own read answered, foreign refused)."""
+    from holdspeak.mcp.palettes import PALETTE_NAMES, resolve_palette
 
-    assert "kernel.receipt" in resolve_palette("DESK") and "kernel.receipt" not in resolve_palette("PROJECT")
+    assert all("kernel.receipt" in resolve_palette(name) for name in PALETTE_NAMES)
     project = _agent(hub, palette="PROJECT", identity="project-agent")
     count = Count(hub)
-    refused = _rpc(project, "kernel.receipt", {"operation_id": "op_x"})
-    assert refused["error"]["data"] == {"code": "MCP-005", "tool": "kernel.receipt"}
-    _none(count)  # a read tool's palette refusal: the protocol boundary
+    answered = _rpc(project, "kernel.receipt", {"operation_id": "op_x"})
+    assert "error" not in answered, answered  # reached the tool: no palette refusal
+    assert "result" in answered, answered
+    _none(count)  # a read: no kernel operation of its own
 
 
 # ── the ledger fields the face binds to ──────────────────────────────────

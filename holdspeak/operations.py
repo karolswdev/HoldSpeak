@@ -104,6 +104,11 @@ class Admission:
     #: a mapping ``member_ids`` read as exempt). ``None`` for a stored-state
     #: condition, which the arguments cannot decide.
     holds: Optional[Callable[[Mapping[str, Any]], bool]] = field(default=None, compare=False)
+    #: PHILO-9-01: ``False`` = DECLARED, not yet enforced. The Room's rows are
+    #: declared by story 01 and enforced by PHILO-9-02 (its kernel path, the
+    #: steward beat and the refusal receipts); until then ``invoke`` runs them
+    #: as today, with no kernel operation and no refusal receipt.
+    enforced: bool = True
 
     def __post_init__(self) -> None:
         if self.rule not in {"exempt", "admitted", "admitted_if"}:
@@ -120,7 +125,8 @@ class Admission:
         return None if self.holds is None else bool(self.holds(args))
 
     def export(self) -> dict[str, Any]:
-        return {"rule": self.rule, "condition": self.condition, "arguments": list(self.arguments)}
+        return {"rule": self.rule, "condition": self.condition, "arguments": list(self.arguments),
+                "enforced": self.enforced}
 
 
 @dataclass(frozen=True)
@@ -1291,6 +1297,740 @@ KERNEL_RECEIPT_READ = OperationDescriptor(
     admission=_EXEMPT_READ,
 )
 
+# ── PHILO-9-01: the Room on the contract ──────────────────────────────────
+#
+# One explicit row per Room operation (the Phase 7 settled method): the
+# eighteen MCP identities of the charter's enumeration, the seven new public
+# tools (items and resources, over MCP for the first time), and the Door's
+# create beside ``project.create``. Each row names the real method on the
+# hub's ProjectService, ProjectDeltaService, ProjectUpdateService or
+# ProjectDoorService, its closed argument NAMES (the service's own keyword
+# names), and its Article XI admission by EFFECT, as the owner ruled it (Q1:
+# the phase status's admission table). The admission of these rows is
+# DECLARED here and ENFORCED by PHILO-9-02 (``Admission.enforced`` is false
+# until then: story 02 owns the kernel path, the steward beat and the
+# refusal receipts).
+#
+# Discovery words (F12): each description names the owner's job and where
+# every id comes from. The product sends nothing: an update is published in
+# the Room, copied for delivery and marked delivered by the owner; no row
+# says or implies that the product sends, emails or posts it.
+
+_ROOM_PRINCIPAL = (
+    "derived by the transport (HTTP auth middleware; MCP auth resolver) and "
+    "passed to the project service unchanged"
+)
+_PROJECT_ID = {"type": "string", "description": "The project id: projects[].id from project.list, or project.id from project.create."}
+_EXPECTED_REVISION = {
+    "type": ["integer", "null"],
+    "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). "
+                   "When the current revision differs, the call is refused with stale_revision and nothing changes.",
+}
+_COMMAND_ID = {
+    "type": ["string", "null"],
+    "description": "Optional idempotency key. The same key with the same arguments returns the first result again; "
+                   "the same key with different arguments is refused with idempotency_conflict.",
+}
+_ROOM_READ = Admission("exempt", "A read: computation without effect (Article XI.5).")
+_PROJECT_RECORD = "the project record (id, name, description, keywords, team_members, lifecycle, revision, created_at, updated_at ...)"
+_ITEM_RECORD = "the item record (id, project_id, item_type, title, summary, lifecycle, severity, owner_ref, due_at, sort_key, details_json, created_at, updated_at) and the command envelope (result_kind, project_revision, command_id)"
+_ROOM_REFUSALS = ("NotFound not_found: unknown project",)
+_WRITE_REFUSALS = _ROOM_REFUSALS + (
+    "ConflictError stale_revision: expected_revision is not the current revision",
+    "ConflictError idempotency_conflict: the command_id was used with different arguments",
+)
+_UPDATE_ID = {"type": "string", "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."}
+_ITEM_TYPES = ["milestone", "risk", "dependency", "signal", "workstream"]
+_ITEM_LIFECYCLES = sorted({"planned", "reached", "missed", "dropped", "open", "mitigated", "accepted", "closed",
+                           "healthy", "at_risk", "broken", "resolved", "active", "retired", "paused", "done"})
+_SEVERITY = {"type": ["string", "null"], "enum": ["critical", "high", "medium", "low", None],
+             "description": "Optional: critical, high, medium or low."}
+_ITEM_DETAILS = {
+    "type": ["object", "null"],
+    "description": "Optional, closed per item type (unknown fields are refused): "
+                   "milestone {completion_evidence_refs}; risk {likelihood, impact, mitigation} (likelihood and impact required); "
+                   "dependency {direction: upstream|downstream, counterpart_ref, required_by, confidence}; "
+                   "signal {metric, unit, latest_value, source_ref, observed_at}; workstream {}.",
+}
+_ITEM_ID = {"type": "string", "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."}
+_RESOURCE_REF = {
+    "type": "string",
+    "description": "The thing to file, as kind:id -- for example meeting:<id>, note:<id>, decision_record:<id>. "
+                   "Kinds: meeting, transcript, artifact, decision, note, knowledge, zone, project, thread, persona, "
+                   "workflow, sequence, integration, decision_record, desk_decision, action, project_item, workbench, "
+                   "workbench_item, cadence. A GitHub or Jira reference is not a resource: it is a watched source.",
+}
+
+PROJECT_LIST = OperationDescriptor(
+    name="project.list",
+    version=1,
+    description="Find your projects: every project, newest first. Archived projects only with include_archived. "
+                "Each project's id is what the other project tools take as project_id.",
+    args_schema={
+        "type": "object",
+        "properties": {"include_archived": {"type": ["boolean", "null"], "description": "Optional. Also list archived projects (default false)."}},
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="a list of project records",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/projects", "mcp:project.list"),
+    service="project_service",
+    method="list_projects",
+    admission=_ROOM_READ,
+)
+
+PROJECT_GET = OperationDescriptor(
+    name="project.get",
+    version=1,
+    description="Read one project: its name, description, lifecycle and revision.",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID}, "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result=_PROJECT_RECORD,
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/projects/{project_id}", "mcp:project.get"),
+    service="project_service",
+    method="get_project",
+    admission=_ROOM_READ,
+)
+
+PROJECT_ROOM = OperationDescriptor(
+    name="project.get_room",
+    version=1,
+    description="See a project room whole: what needs you (needsYou), where it stands (health), its milestones and "
+                "risks (items), meetings, filed resources, sources, the review, the updates with their deliveries, "
+                "the steward's latest run and the Room's write receipts.",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID}, "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="the room projection (project_id, revision, observed_at, project, items, meetings, resources, changes, review, "
+           "needsYou, sources, health, sinceRead, decisions, commitments, target, updates, steward, receipts); "
+           "each section carries state ok, degraded or absent",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous; two reads with no write between are identical",
+    exposure=("http:GET /api/projects/{project_id}/room", "mcp:project.get_room"),
+    service="project_service",
+    method="room",
+    admission=_ROOM_READ,
+)
+
+PROJECT_CREATE = OperationDescriptor(
+    name="project.create",
+    version=1,
+    description="Make a project: a room for one piece of work. Only the name is required. The project's id is in the "
+                "result (project.id); the other project tools take it as project_id. It watches no source (the Room's "
+                "face makes a project with GitHub or Jira sources through its Door).",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "name": {"description": "The project's name (text, required)."},
+            "description": {"description": "Optional text."},
+            "keywords": {"description": "Optional list of words that tie meetings to this project."},
+            "team_members": {"description": "Optional list of names."},
+            "context": {"description": "Optional object."},
+            "detection_threshold": {"description": "Optional number, 0.0 to 1.0 (default 0.4)."},
+            "command_id": _COMMAND_ID,
+        },
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_PROJECT_RECORD + " and the command envelope (result_kind, project_revision, command_id)",
+    refusals=_CONTRACT_REFUSALS + ("ValidationError: Project name is required",
+                                   "ConflictError idempotency_conflict: the command_id was used with different arguments"),
+    completion="synchronous; project.get returns it",
+    exposure=("http:POST /api/projects", "mcp:project.create"),
+    service="project_service",
+    method="create_project",
+    admission=Admission("exempt", "A bare project: a project row, revision, change and event; no watch (Q1).", enforced=False),
+)
+
+PROJECT_DOOR_CREATE = OperationDescriptor(
+    name="project.door.create",
+    version=1,
+    description="Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source "
+                "arms watches that read that provider on a schedule, then takes a baseline read.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "outcome": {"type": "string", "description": "The outcome you want, in your words; it names the project."},
+            "sources": {"description": "Optional list of {provider: github|jira, scope, watches, adjust}."},
+        },
+        "required": ["outcome"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the new project's id as projectId",
+    refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing",),
+    completion="synchronous; project.get returns it; each armed watch took its baseline read (or is marked pending)",
+    exposure=("http:POST /api/projects/door",),
+    service="project_door_service",
+    method="create",
+    admission=Admission(
+        "admitted_if",
+        "Any source given: armed watches read GitHub/Jira on a schedule (egress, Q1). Without sources: exempt.",
+        ("sources",),
+        holds=lambda args: bool(args.get("sources")),
+        enforced=False,
+    ),
+)
+
+PROJECT_UPDATE = OperationDescriptor(
+    name="project.update",
+    version=1,
+    description="Change a project's fields (name, description, keywords, purpose, target date ...). Archiving is not "
+                "a field change: use project.archive.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "patch": {"type": "object", "description": "The fields to change; lifecycle archived is refused."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "patch"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_PROJECT_RECORD + " and the command envelope",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("ValidationError: an unknown or invalid field",),
+    completion="synchronous; project.get returns the new state",
+    exposure=("http:PATCH /api/projects/{project_id}", "mcp:project.update"),
+    service="project_service",
+    method="update_project",
+    admission=Admission("exempt", "A plain edit of the project's own fields (Q1).", enforced=False),
+)
+
+PROJECT_ARCHIVE = OperationDescriptor(
+    name="project.archive",
+    version=1,
+    description="Archive a project. This also pauses its watches and turns its unattended steward runs off. "
+                "project.restore brings it back (its watches and unattended runs stay off).",
+    args_schema={
+        "type": "object",
+        "properties": {"project_id": _PROJECT_ID, "expected_revision": _EXPECTED_REVISION, "command_id": _COMMAND_ID},
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="nothing (the transports answer success)",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS,
+    completion="synchronous; project.list with include_archived shows it archived",
+    exposure=("http:DELETE /api/projects/{project_id}", "mcp:project.archive"),
+    service="project_service",
+    method="archive_project",
+    admission=Admission("admitted", "Pauses the watches and turns unattended steward runs off: changes authority, "
+                        "stops scheduled egress (Q1; F18).", enforced=False),
+)
+
+PROJECT_RESTORE = OperationDescriptor(
+    name="project.restore",
+    version=1,
+    description="Bring an archived project back to active. Its watches and unattended steward runs stay off.",
+    args_schema={
+        "type": "object",
+        "properties": {"project_id": _PROJECT_ID, "expected_revision": _EXPECTED_REVISION, "command_id": _COMMAND_ID},
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_PROJECT_RECORD + " and the command envelope",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS,
+    completion="synchronous; project.get returns lifecycle active",
+    exposure=("http:POST /api/projects/{project_id}/restore", "mcp:project.restore"),
+    service="project_service",
+    method="restore_project",
+    admission=Admission("exempt", "Lifecycle active; resumes no watch and no unattended run (Q1).", enforced=False),
+)
+
+PROJECT_LINK = OperationDescriptor(
+    name="project.link",
+    version=1,
+    description="File a meeting in a project room. meeting_id comes from meeting.list.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "meeting_id": {"type": "string", "description": "The meeting id: meetings[].id from meeting.list."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "meeting_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="nothing (the transports answer success)",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("NotFound not_found: unknown meeting",),
+    completion="synchronous; project.get_room lists the meeting",
+    exposure=("http:POST /api/projects/{project_id}/meetings/{meeting_id}", "mcp:project.link"),
+    service="project_service",
+    method="associate_meeting",
+    admission=Admission("admitted", "Files a meeting in the Room; the meeting watch it ensures (watch.create) is its "
+                        "child, not a second top-level admission (Q1).", enforced=False),
+)
+
+PROJECT_UNLINK = OperationDescriptor(
+    name="project.unlink",
+    version=1,
+    description="Take a meeting out of a project room. meeting_id comes from meeting.list or project.get_room.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "meeting_id": {"type": "string", "description": "The meeting id: meetings[].id from meeting.list."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "meeting_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="nothing (the transports answer success)",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("NotFound not_found: unknown meeting",),
+    completion="synchronous; project.get_room no longer lists the meeting",
+    exposure=("http:DELETE /api/projects/{project_id}/meetings/{meeting_id}", "mcp:project.unlink"),
+    service="project_service",
+    method="disassociate_meeting",
+    admission=Admission("admitted", "Unfiles the meeting (Q1).", enforced=False),
+)
+
+_REVIEW_ID = {"type": "string", "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."}
+
+PROJECT_OPEN_REVIEW = OperationDescriptor(
+    name="project.open_review",
+    version=1,
+    description="See what changed in a project since the last review: opens (or returns the one open) review window, "
+                "with its proposals.",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID}, "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the review window (review, proposals, source manifest)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous; project.get_delta returns the same window",
+    exposure=("http:POST /api/projects/{project_id}/reviews", "mcp:project.open_review"),
+    service="project_delta_service",
+    method="open_review",
+    admission=Admission("exempt", "Freezes a local review window (Q1).", enforced=False),
+)
+
+PROJECT_GET_DELTA = OperationDescriptor(
+    name="project.get_delta",
+    version=1,
+    description="Read the open review of a project and its proposals, or that none is open (with the last accepted time).",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID}, "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="the open review window, or the empty state (open_review null, last_accepted_at, source_coverage)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/projects/{project_id}/delta", "mcp:project.get_delta"),
+    service="project_delta_service",
+    method="get_delta",
+    admission=_ROOM_READ,
+)
+
+PROJECT_DECIDE_PROPOSAL = OperationDescriptor(
+    name="project.decide_proposal",
+    version=1,
+    description="Decide one proposal of the open review: accept, edit_accept (with patch), defer (until a date) or "
+                "dismiss. review_id and proposal_id come from project.get_delta.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "review_id": _REVIEW_ID,
+            "proposal_id": {"type": "string", "description": "The proposal id: proposals[].id from project.get_delta."},
+            "verb": {"type": "string", "description": "accept, edit_accept, defer or dismiss."},
+            "patch": {"type": ["object", "null"], "description": "Optional, for edit_accept: the fields to change."},
+            "deferred_until": {"type": ["string", "null"], "description": "Optional, for defer: an ISO-8601 date."},
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "review_id", "proposal_id", "verb"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the decided proposal and its command envelope",
+    refusals=_CONTRACT_REFUSALS + (
+        "NotFound not_found: unknown proposal, or the proposal is not in that review",
+        "ValidationError validation: unknown verb",
+        "ConflictError: the proposal is already decided, or idempotency_conflict",
+    ),
+    completion="synchronous; project.get_delta shows the decision",
+    exposure=("http:POST /api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide", "mcp:project.decide_proposal"),
+    service="project_delta_service",
+    method="decide_proposal",
+    admission=Admission("admitted", "Each of the four verbs decides (Q1; Codex Astra r2 F2).", enforced=False),
+)
+
+PROJECT_ACCEPT_REVIEW = OperationDescriptor(
+    name="project.accept_review",
+    version=1,
+    description="Accept the open review of a project: its decided proposals take effect and the undecided ones are "
+                "superseded. review_id comes from project.get_delta.",
+    args_schema={
+        "type": "object",
+        "properties": {"project_id": _PROJECT_ID, "review_id": _REVIEW_ID, "command_id": _COMMAND_ID},
+        "required": ["project_id", "review_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the accepted review and its command envelope",
+    refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown review", "ConflictError: not open, or idempotency_conflict"),
+    completion="synchronous; project.get_delta shows no open review and the new last_accepted_at",
+    exposure=("http:POST /api/projects/{project_id}/reviews/{review_id}/accept", "mcp:project.accept_review"),
+    service="project_delta_service",
+    method="accept_review",
+    admission=Admission("admitted", "Accepts the window: bumps the revision, supersedes undecided proposals (Q1).", enforced=False),
+)
+
+PROJECT_LIST_UPDATES = OperationDescriptor(
+    name="project.list_updates",
+    version=1,
+    description="List a project's updates, newest first: drafts, published and superseded. Copy my update for "
+                "delivery: a published update's body_md is the finished text you deliver yourself. Each update's "
+                "deliveries list every time you marked it delivered (oldest first).",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "lifecycle": {"type": ["string", "null"], "description": "Optional filter: draft, published or superseded."},
+        },
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="a list of update records (id, lifecycle, draft_revision, body_md, claims_json, generator, created_at, published_at, deliveries ...)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/projects/{project_id}/updates", "mcp:project.list_updates"),
+    service="project_update_service",
+    method="list_updates",
+    admission=_ROOM_READ,
+)
+
+PROJECT_DRAFT_UPDATE = OperationDescriptor(
+    name="project.draft_update",
+    version=1,
+    description="Draft my update: writes a draft of the project's update from the Room (its milestones, risks, "
+                "meetings and review). generator deterministic (default) or model. Read it back with project.list_updates.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "generator": {"type": ["string", "null"], "description": "Optional: deterministic (default) or model."},
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the draft update record (generator, fallback_reason when the model was asked for and not used)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS + ("ConflictError idempotency_conflict",),
+    completion="synchronous; project.list_updates lists the draft",
+    exposure=("http:POST /api/projects/{project_id}/updates/draft", "mcp:project.draft_update"),
+    service="project_update_service",
+    method="draft_update_command",
+    admission=Admission("exempt", "A draft; a model draft's call keeps its own inference.invoke admission (Q1).", enforced=False),
+)
+
+PROJECT_UPDATE_DRAFT = OperationDescriptor(
+    name="project.update_draft",
+    version=1,
+    description="Edit the text of a draft update (body_md). A published update cannot change. update_id comes from "
+                "project.list_updates.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "update_id": _UPDATE_ID,
+            "body_md": {"description": "The new Markdown text of the draft."},
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["update_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the saved draft update record",
+    refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "PublishedUpdateError published_update: the update is published"),
+    completion="synchronous; project.list_updates returns the new text",
+    exposure=("http:PUT /api/updates/{update_id}", "mcp:project.update_draft"),
+    service="project_update_service",
+    method="save_update",
+    admission=Admission("exempt", "The draft's text (Q1).", enforced=False),
+)
+
+PROJECT_PUBLISH_UPDATE = OperationDescriptor(
+    name="project.publish_update",
+    version=1,
+    description="Publish my update in the Room: the draft becomes the read-only published update of the project. "
+                "Nothing leaves HoldSpeak: copy the published body_md (project.list_updates) and deliver it yourself.",
+    args_schema={
+        "type": "object",
+        "properties": {"update_id": _UPDATE_ID, "command_id": _COMMAND_ID},
+        "required": ["update_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the published update record (lifecycle published, published_at)",
+    refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "PublishedUpdateError published_update: not a draft"),
+    completion="synchronous; project.list_updates returns lifecycle published",
+    exposure=("http:POST /api/updates/{update_id}/publish", "mcp:project.publish_update"),
+    service="project_update_service",
+    method="publish_update",
+    admission=Admission("admitted", "A published update is read-only: may be irreversible; sends nothing (Q1).", enforced=False),
+)
+
+DESK_NEEDS_YOU = OperationDescriptor(
+    name="desk.needs_you",
+    version=1,
+    description="What needs me: every Room's attention items in one list (overdue milestones, reviews waiting, "
+                "proposals, commitments ...), with one count. Muted projects are marked and not counted.",
+    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="the needs-you aggregate (items, count, projects, mutedCount when a project is muted, computedAt, coverage, complete)",
+    refusals=_CONTRACT_REFUSALS,
+    completion="synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
+    exposure=("http:GET /api/desk/needs-you", "mcp:desk.needs_you"),
+    service="project_service",
+    method="needs_you",
+    held=("door_upcoming",),
+    admission=_ROOM_READ,
+)
+
+PROJECT_ITEM_LIST = OperationDescriptor(
+    name="project.item.list",
+    version=1,
+    description="List a project's milestones, risks, dependencies, signals and workstreams. Optional item_type filter; "
+                "limit 1 to 1000 (default 200) and offset.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "item_type": {"type": ["string", "null"], "description": "Optional filter: milestone, risk, dependency, signal or workstream."},
+            "limit": {"type": "integer", "description": "Optional; clamped to 1..1000; default 200."},
+            "offset": {"type": "integer", "description": "Optional; 0 or more; default 0."},
+        },
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="{items, limit, offset} (no total)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS + ("ValidationError validation: unknown item_type",),
+    completion="synchronous",
+    exposure=("http:GET /api/projects/{project_id}/items", "mcp:project.item.list"),
+    service="project_service",
+    method="list_items",
+    admission=_ROOM_READ,
+)
+
+PROJECT_ITEM_CREATE = OperationDescriptor(
+    name="project.item.create",
+    version=1,
+    description="Add a milestone or a risk to a project (also a dependency, signal or workstream). A milestone takes a "
+                "due_at date; a risk takes details likelihood and impact. project_id comes from project.list.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "item_type": {"type": "string", "description": "milestone, risk, dependency, signal or workstream."},
+            "title": {"description": "The item's title (required, not empty)."},
+            "summary": {"description": "Optional text."},
+            "severity": {"description": "Optional: critical, high, medium or low."},
+            "owner_ref": {"description": "Optional owner, as kind:id (for example person:<id>)."},
+            "due_at": {"description": "Optional date, ISO 8601 (for a milestone: when it is due)."},
+            "sort_key": {"description": "Optional number for ordering."},
+            "lifecycle": {"description": "Optional start state in the type's set; default planned (milestone), open (risk), healthy, active, active."},
+            "details": _ITEM_DETAILS,
+            # HTTP accepted these two before PHILO-9-01 (the route passed its
+            # whole body); the MCP tool does not offer them (the charter's
+            # table): the creator is the principal, provenance is owner only.
+            "created_by_ref": {"description": "HTTP only. Optional creator reference; default the principal."},
+            "provenance_kind": {"description": "HTTP only. Optional; only owner is accepted."},
+            # PHILO-9-01 round two (Codex Astra r1, P5): HTTP read and stored it before.
+            "source_observation_id": {"description": "HTTP only. Optional: the observation the item came from."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_ITEM_RECORD,
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("ValidationError validation: unknown item_type, empty title, a value outside its closed set, an unknown details field",),
+    completion="synchronous; project.item.list and project.get_room (items) list it",
+    exposure=("http:POST /api/projects/{project_id}/items", "mcp:project.item.create"),
+    service="project_service",
+    method="create_item",
+    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+)
+
+PROJECT_ITEM_UPDATE = OperationDescriptor(
+    name="project.item.update",
+    version=1,
+    description="Change a milestone's or risk's fields: title, summary, severity, owner, due date, order, details or "
+                "lifecycle. A milestone is marked reached with project.item.transition, not here. item_id comes from "
+                "project.item.list.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "item_id": _ITEM_ID,
+            "patch": {
+                "type": "object",
+                "description": "The fields to change; at least one.",
+                "properties": {
+                    "title": {"description": "Not empty."},
+                    "summary": {}, "severity": {}, "owner_ref": {}, "due_at": {}, "sort_key": {},
+                    "details": {}, "lifecycle": {"description": "In the type's set; not reached for a milestone."},
+                },
+                "additionalProperties": False,
+                "minProperties": 1,
+            },
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "item_id", "patch"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_ITEM_RECORD,
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("NotFound not_found: unknown item", "ValidationError validation: No updatable fields supplied, or an invalid value"),
+    completion="synchronous; project.item.list returns the new state",
+    exposure=("http:PATCH /api/projects/{project_id}/items/{item_id}", "mcp:project.item.update"),
+    service="project_service",
+    method="update_item",
+    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+)
+
+PROJECT_ITEM_TRANSITION = OperationDescriptor(
+    name="project.item.transition",
+    version=1,
+    description="Move a milestone or risk to a new state: verb is the target state (a milestone: reached, missed, "
+                "dropped; a risk: mitigated, accepted, closed ...). Already there: nothing changes. item_id comes from "
+                "project.item.list.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "item_id": _ITEM_ID,
+            "verb": {"type": "string", "description": "The target state, in the item type's set."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "item_id", "verb"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result=_ITEM_RECORD + " (result_kind no_change when it was already there)",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("NotFound not_found: unknown item", "ValidationError validation: a state outside the type's set"),
+    completion="synchronous; project.item.list returns the new lifecycle",
+    exposure=("http:POST /api/projects/{project_id}/items/{item_id}/transition", "mcp:project.item.transition"),
+    service="project_service",
+    method="transition_item",
+    admission=Admission("exempt", "The owner's own record in the Room (Q1).", enforced=False),
+)
+
+PROJECT_RESOURCE_LIST = OperationDescriptor(
+    name="project.resource.list",
+    version=1,
+    description="List what is filed in a project room (meetings, notes, decisions ... as kind:id references).",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID}, "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="a list of resource records (project_id, resource_ref, relationship, source, confidence, created_at, last_modified, deleted)",
+    refusals=_CONTRACT_REFUSALS + _ROOM_REFUSALS,
+    completion="synchronous",
+    exposure=("http:GET /api/projects/{project_id}/resources", "mcp:project.resource.list"),
+    service="project_service",
+    method="list_resources",
+    admission=_ROOM_READ,
+)
+
+PROJECT_RESOURCE_ADD = OperationDescriptor(
+    name="project.resource.add",
+    version=1,
+    description="File a thing in a project room: a meeting, note, decision or other desk object, as kind:id. "
+                "relationship member (default), source, output or related.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "resource_ref": _RESOURCE_REF,
+            "relationship": {"type": ["string", "null"], "description": "Optional: member (default), source, output or related."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "resource_ref"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="the resource record and the command envelope",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("ValueError (validation): a reference that is not kind:id, an unknown kind or relationship",),
+    completion="synchronous; project.resource.list lists it",
+    exposure=("http:PUT /api/projects/{project_id}/resources/{resource_ref}", "mcp:project.resource.add"),
+    service="project_service",
+    method="add_resource",
+    admission=Admission("admitted", "Files a thing in the Room (Q1).", enforced=False),
+)
+
+PROJECT_RESOURCE_REMOVE = OperationDescriptor(
+    name="project.resource.remove",
+    version=1,
+    description="Take a filed thing out of a project room. resource_ref comes from project.resource.list.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": _PROJECT_ID,
+            "resource_ref": {"type": "string", "description": "The filed reference, as kind:id: resources[].resource_ref from project.resource.list."},
+            "expected_revision": _EXPECTED_REVISION,
+            "command_id": _COMMAND_ID,
+        },
+        "required": ["project_id", "resource_ref"],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="write",
+    result="true when a filed reference was removed",
+    refusals=_CONTRACT_REFUSALS + _WRITE_REFUSALS + ("ValueError (validation): a reference that is not kind:id",),
+    completion="synchronous; project.resource.list no longer lists it",
+    exposure=("http:DELETE /api/projects/{project_id}/resources/{resource_ref}", "mcp:project.resource.remove"),
+    service="project_service",
+    method="remove_resource",
+    admission=Admission("admitted", "Unfiles a thing from the Room (Q1).", enforced=False),
+)
+
+#: PHILO-9-01: the Room's rows, in export order.
+ROOM_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    PROJECT_LIST, PROJECT_GET, PROJECT_ROOM, PROJECT_CREATE, PROJECT_DOOR_CREATE, PROJECT_UPDATE,
+    PROJECT_ARCHIVE, PROJECT_RESTORE, PROJECT_LINK, PROJECT_UNLINK,
+    PROJECT_OPEN_REVIEW, PROJECT_GET_DELTA, PROJECT_DECIDE_PROPOSAL, PROJECT_ACCEPT_REVIEW,
+    PROJECT_LIST_UPDATES, PROJECT_DRAFT_UPDATE, PROJECT_UPDATE_DRAFT, PROJECT_PUBLISH_UPDATE,
+    DESK_NEEDS_YOU,
+    PROJECT_ITEM_LIST, PROJECT_ITEM_CREATE, PROJECT_ITEM_UPDATE, PROJECT_ITEM_TRANSITION,
+    PROJECT_RESOURCE_LIST, PROJECT_RESOURCE_ADD, PROJECT_RESOURCE_REMOVE,
+)
+
 #: The Phase 7 slice table: (desk kind, verb) -> operation. The MCP ``desk.*``
 #: tools, the ``desk.verb`` aliases and the primitive resource read it; every
 #: row names a descriptor above. Workflows and chains are not in it (their
@@ -1335,7 +2075,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ,
-)
+) + ROOM_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -1474,7 +2214,7 @@ class OperationRegistry:
     def _admits(bound: BoundOperation, payload: Mapping[str, Any]) -> bool:
         """The descriptor's admission over the validated arguments (stored state where it says so)."""
         admission = bound.descriptor.admission
-        if admission is None:
+        if admission is None or not admission.enforced:
             return False
         admits = admission.admits(payload)
         if admits is None:
@@ -1494,7 +2234,7 @@ class OperationRegistry:
         """
         bound = self.operations.get(name)
         admission = None if bound is None else bound.descriptor.admission
-        if admission is None or admission.rule == "exempt":
+        if admission is None or admission.rule == "exempt" or not admission.enforced:
             return False
         if admission.rule == "admitted":
             return True
@@ -1609,22 +2349,36 @@ def bind_available(services: Mapping[str, Any]) -> OperationRegistry:
     return bind(present, tuple(d for d in DESCRIPTORS if d.service in present))
 
 
-def _bare_primitives(ctx: Any) -> Any:
+def _bare_primitives(ctx: Any, db: Any = None) -> Any:
     from holdspeak.db import get_database, get_observer
     from holdspeak.services.primitive_service import PrimitiveService
 
-    return PrimitiveService(get_database(), observer=get_observer())
+    return PrimitiveService(db if db is not None else get_database(), observer=get_observer())
 
 
 #: The bare builds a partially wired context may fall back to, by field name.
 #: Only services whose bare build is behaviourally identical off-hub (no
 #: callbacks, no runners) are here.
+def _bare_projects(ctx: Any, db: Any = None) -> Any:
+    """PHILO-9-01: the bare ProjectService a partially wired route context reads.
+
+    The hub always composes its own (``runtime.composition``); a route test
+    that builds a ``WebContext`` without one gets this plain (db, observer)
+    build, the one the People and automations routes built for themselves.
+    """
+    from holdspeak.db import get_database, get_observer
+    from holdspeak.services.project_service import ProjectService
+
+    return ProjectService(db if db is not None else get_database(), observer=get_observer())
+
+
 _BARE: dict[str, Callable[[Any], Any]] = {
     "primitive_service": _bare_primitives,
+    "project_service": _bare_projects,
 }
 
 
-def for_context(ctx: Any, *bare: str, **fallbacks: Callable[[], Any]) -> OperationRegistry:
+def for_context(ctx: Any, *bare: str, bare_db: Any = None, **fallbacks: Callable[[], Any]) -> OperationRegistry:
     """The registry a route reaches through its ``WebContext``.
 
     In the hub this is ``ctx.operations``, bound at composition, and nothing
@@ -1643,7 +2397,7 @@ def for_context(ctx: Any, *bare: str, **fallbacks: Callable[[], Any]) -> Operati
         if target is None and name in fallbacks:
             target = fallbacks[name]()
         if target is None and name in bare:
-            target = _BARE[name](ctx)
+            target = _BARE[name](ctx, bare_db)
         services[name] = target
     return bind_available(services)
 

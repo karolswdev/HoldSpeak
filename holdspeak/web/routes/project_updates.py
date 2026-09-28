@@ -20,7 +20,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from ...db.updates import PublishedUpdateError
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ConflictError, NotFound, ValidationError
 from ..context import WebContext
@@ -49,6 +51,10 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
+    def ops() -> Any:
+        """PHILO-9-01: the Room's declared operations, bound to the hub's services."""
+        return operations.for_context(ctx)
+
     # ── GET /api/projects/{project_id}/updates ─────────────────────
 
     @router.get("/api/projects/{project_id}/updates")
@@ -57,9 +63,9 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         lifecycle: str | None = None,
     ) -> Any:
         try:
-            updates = ctx.project_update_service.list_updates(
-                principal(request), project_id, lifecycle=lifecycle,
-            )
+            updates = ops().invoke(principal(request), "project.list_updates", {
+                "project_id": project_id, "lifecycle": lifecycle,
+            })
             return JSONResponse({"updates": [_enrich_update(u) for u in updates]})
         except NotFound as exc:
             return JSONResponse(
@@ -78,11 +84,12 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             generator = str(payload.get("generator") or "deterministic").strip()
             cmd_id = payload.get("command_id")
-            result = ctx.project_update_service.draft_update_command(
-                principal(request), project_id,
-                generator=generator, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.draft_update", {
+                "project_id": project_id, "generator": generator, "command_id": cmd_id,
+            })
             return JSONResponse({"success": True, "update": _enrich_update(result)})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
         except NotFound as exc:
             return JSONResponse(
                 {"success": False, "code": exc.code, "message": exc.detail},
@@ -105,11 +112,12 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             body_md = payload.get("body_md")
             cmd_id = payload.get("command_id")
-            result = ctx.project_update_service.save_update(
-                principal(request), update_id,
-                body_md=body_md, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.update_draft", {
+                "update_id": update_id, "body_md": body_md, "command_id": cmd_id,
+            })
             return JSONResponse({"success": True, "update": _enrich_update(result)})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",
@@ -172,10 +180,12 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             body = payload or {}
             cmd_id = body.get("command_id")
-            result = ctx.project_update_service.publish_update(
-                principal(request), update_id, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.publish_update", {
+                "update_id": update_id, "command_id": cmd_id,
+            })
             return JSONResponse({"success": True, "update": _enrich_update(result)})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
         except PublishedUpdateError as exc:
             return JSONResponse(
                 {"success": False, "error_code": "published_update",

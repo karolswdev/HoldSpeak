@@ -107,7 +107,8 @@ def test_project_tools_are_discoverable_with_versioned_schemas() -> None:
     # HS-172-06: + 3 suggested_source tools (35 -> 38)
     # HS-200-03: + 4 Project-setup proposal tools (38 -> 42), regenerated from
     # the authoritative source below rather than from a remembered number.
-    assert len(project_tools) == 42
+    # PHILO-9-01: + the seven item and resource tools (42 -> 49).
+    assert len(project_tools) == 49
     from holdspeak.mcp.families import project as project_family
 
     assert len(project_tools) == len(

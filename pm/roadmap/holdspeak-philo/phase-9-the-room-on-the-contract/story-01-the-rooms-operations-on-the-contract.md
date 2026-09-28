@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of the charter (his Q0, Q1 and Q3 rulings shape this story)
 - **Unblocks:** PHILO-9-02, PHILO-9-03's backend, PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
@@ -28,17 +28,17 @@ A client that knows only the catalogue cannot put a thing in a project: the only
 
 Per the charter's red-first law: behavioural red through the real hub where the defect lives; new exposure proved by equivalence; missing-symbol or unknown-tool failures are never counted.
 
-- [ ] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
-- [ ] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
-- [ ] The seven new tools this story exposes match the charter's table, which follows the service (`project.item.list` → `{items, limit, offset}`, limit clamped 1–1000; refusal codes `validation`, `not_found`, `stale_revision`, `idempotency_conflict`; the closed patch fields and vocabularies); each one's durable outcome, result body and code↔status mapping equal the HTTP route's in one hub and across a restart — the charter's compatibility mapping is the only difference, and message text is never compared.
-- [ ] `kernel.receipt` is in the `PROJECT` and `SWEEP` palettes; an agent on each reads its own operation's receipt and is refused another principal's (fenced through dispatch).
-- [ ] NEEDS YOU's review row says "1 proposal waiting" for one (F22; red on main: "1 proposals waiting").
-- [ ] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project", "what needs me", "draft my update", "publish my update in the Room", "copy my update for delivery" and "mark it delivered" to a tool and an argument path; no project tool's description says the product sends, emails or posts the update.
-- [ ] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
-- [ ] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
-- [ ] The reconcile creates `project_update_deliveries` on an existing database; the repository inserts delivery rows and has no update or delete path for them; `project_updates` is not written by a delivery (the published-update guard untouched, fenced by a mutation that writes it); two rows for one update read back in order through `list_updates` and the Room read.
-- [ ] A past-due milestone turns the Room's health and appears in its NEEDS YOU read (red on main). RECEIPTS in the Room read are the Room's writes (red on main: reads).
-- [ ] Existing names, arguments, envelopes and refusals are kept (the compatibility tables); palette refusal tested through dispatch.
+- [x] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
+- [x] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
+- [x] The seven new tools this story exposes match the charter's table, which follows the service (`project.item.list` → `{items, limit, offset}`, limit clamped 1–1000; refusal codes `validation`, `not_found`, `stale_revision`, `idempotency_conflict`; the closed patch fields and vocabularies); each one's durable outcome, result body and code↔status mapping equal the HTTP route's in one hub and across a restart — the charter's compatibility mapping is the only difference, and message text is never compared.
+- [x] `kernel.receipt` is in the `PROJECT` and `SWEEP` palettes; an agent on each reads its own operation's receipt and is refused another principal's (fenced through dispatch).
+- [x] NEEDS YOU's review row says "1 proposal waiting" for one (F22; red on main: "1 proposals waiting").
+- [x] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project", "what needs me", "draft my update", "publish my update in the Room" and "copy my update for delivery" to a tool and an argument path ("mark it delivered" moved to story 02 by Muad'Dib's ruling, 2026-09-27; a strict expected failure pins it here); no project tool's description says the product sends, emails or posts the update.
+- [x] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
+- [x] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
+- [x] The reconcile creates `project_update_deliveries` on an existing database; the repository inserts delivery rows and has no update or delete path for them; `project_updates` is not written by a delivery (the published-update guard untouched, fenced by a mutation that writes it); two rows for one update read back in order through `list_updates` and the Room read.
+- [x] A past-due milestone turns the Room's health and appears in its NEEDS YOU read (red on main). RECEIPTS in the Room read are the Room's writes (red on main: reads).
+- [x] Existing names, arguments, envelopes and refusals are kept (the compatibility tables); palette refusal tested through dispatch.
 
 ## Effort (not a promise)
 
@@ -52,6 +52,8 @@ PROVISIONAL: 3–4 engineering days (the delivery record included).
 
 ## Notes
 
+- 2026-09-27 — Muad'Dib's ruling on PR #680 (2026-09-27): the discovery phrase "mark it delivered" moves to story 02's acceptance, consistent with the charter's R4-2 (the tool, its route and its admission land together in 02); story 01's criterion is amended accordingly. Story 02's file gains the row; the strict expected failure in `tests/unit/test_philo9_discovery.py` stays, reason "PHILO-9-02 lands project.mark_update_delivered (R4-2)". Story 01 DONE with every amended criterion proved (`evidence-story-01.md`).
+- 2026-09-27 — BUILT by the Fedaykin lane on `feat/philo-9-01-room-operations` (from main `ffbeb04b`). Every criterion above is proved in `evidence-story-01.md`. Named differences, recorded in the evidence's compatibility table: the HTTP item and project-create bodies now close their argument NAMES (an unknown field is refused 400, the Phase 5 rule); the HTTP resource routes now honour `expected_revision` and `command_id` (A1).
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 - 2026-09-27 — round seven (the owner's "Several per update"): the two columns replaced by the `project_update_deliveries` table.
 - 2026-09-27 — round six (Codex Astra r4, R4-2): the delivery tool and its admission moved to story 02; this story keeps the storage, the metadata-only write and the read-backs.

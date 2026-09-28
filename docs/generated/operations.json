@@ -62,7 +62,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A decision made (D3).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -132,7 +133,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A decision changed (D3).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -171,7 +173,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -206,7 +209,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -776,7 +780,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A plain edit: no placement field (D3).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -815,7 +820,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -871,7 +877,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A plain edit (title, body, tags) or a Thought save (D3).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -918,7 +925,8 @@
       "admission": {
         "rule": "admitted_if",
         "condition": "The note belongs to a Thought: its tombstone unfiles the note from its zone (db/refinement_thoughts.py:236). A plain note's delete is exempt: its zone membership row stays.",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -956,7 +964,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1001,7 +1010,8 @@
         "condition": "directory_id is given and not empty: over an existing zone the create sets its parent_id (to parent_id or null), so it can move that zone with its contents. Without directory_id: exempt.",
         "arguments": [
           "directory_id"
-        ]
+        ],
+        "enforced": true
       }
     },
     {
@@ -1040,7 +1050,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1089,7 +1100,8 @@
         "condition": "parent_id is present (null included): the zone moves with its contents. A rename alone (no parent_id) is exempt and writes the name only (PHILO-7-01 rename repair).",
         "arguments": [
           "parent_id"
-        ]
+        ],
+        "enforced": true
       }
     },
     {
@@ -1128,7 +1140,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "Every member unfiled and every child zone moved to the root, in the same transaction (db/primitives.py:1182-1204).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1158,7 +1171,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1203,7 +1217,8 @@
         "arguments": [
           "member_ids",
           "kb_id"
-        ]
+        ],
+        "enforced": true
       }
     },
     {
@@ -1242,7 +1257,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1289,7 +1305,8 @@
         "condition": "member_ids is present and not null, in any accepted form (a list; a mapping, whose keys the repository files as references; an empty value removes every member): knowledge memberships are added and removed to match it. A rename alone is exempt and writes the name only (PHILO-7-01 rename repair).",
         "arguments": [
           "member_ids"
-        ]
+        ],
+        "enforced": true
       }
     },
     {
@@ -1328,7 +1345,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "The knowledge base row is tombstoned; its membership rows are not touched (R4).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1358,7 +1376,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1403,7 +1422,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A primitive filed; a re-file moves it (D3).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1448,7 +1468,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "The filing relationship removed (R4).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1488,7 +1509,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1532,7 +1554,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A durable reference filed into a knowledge base (R4).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1576,7 +1599,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A durable reference removed from a knowledge base (R4).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1615,7 +1639,8 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1655,7 +1680,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A decision withdrawn: a lifecycle change (R4; in the delegation grant by R5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1697,7 +1723,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "The same status mutation as the admitted decision.update (R4).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1740,7 +1767,8 @@
       "admission": {
         "rule": "admitted",
         "condition": "A decision replaced: two rows, ONE admission (D3); the successor id is minted before submission.",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
       }
     },
     {
@@ -1779,7 +1807,1450 @@
       "admission": {
         "rule": "exempt",
         "condition": "A read: computation without effect (Article XI.5).",
-        "arguments": []
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.list",
+      "version": 1,
+      "description": "Find your projects: every project, newest first. Archived projects only with include_archived. Each project's id is what the other project tools take as project_id.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "include_archived": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Optional. Also list archived projects (default false)."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "a list of project records",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects",
+        "mcp:project.list"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.get",
+      "version": 1,
+      "description": "Read one project: its name, description, lifecycle and revision.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "the project record (id, name, description, keywords, team_members, lifecycle, revision, created_at, updated_at ...)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}",
+        "mcp:project.get"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.get_room",
+      "version": 1,
+      "description": "See a project room whole: what needs you (needsYou), where it stands (health), its milestones and risks (items), meetings, filed resources, sources, the review, the updates with their deliveries, the steward's latest run and the Room's write receipts.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "the room projection (project_id, revision, observed_at, project, items, meetings, resources, changes, review, needsYou, sources, health, sinceRead, decisions, commitments, target, updates, steward, receipts); each section carries state ok, degraded or absent",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous; two reads with no write between are identical",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/room",
+        "mcp:project.get_room"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.create",
+      "version": 1,
+      "description": "Make a project: a room for one piece of work. Only the name is required. The project's id is in the result (project.id); the other project tools take it as project_id. It watches no source (the Room's face makes a project with GitHub or Jira sources through its Door).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "The project's name (text, required)."
+          },
+          "description": {
+            "description": "Optional text."
+          },
+          "keywords": {
+            "description": "Optional list of words that tie meetings to this project."
+          },
+          "team_members": {
+            "description": "Optional list of names."
+          },
+          "context": {
+            "description": "Optional object."
+          },
+          "detection_threshold": {
+            "description": "Optional number, 0.0 to 1.0 (default 0.4)."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the project record (id, name, description, keywords, team_members, lifecycle, revision, created_at, updated_at ...) and the command envelope (result_kind, project_revision, command_id)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ValidationError: Project name is required",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments"
+      ],
+      "completion": "synchronous; project.get returns it",
+      "exposure": [
+        "http:POST /api/projects",
+        "mcp:project.create"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A bare project: a project row, revision, change and event; no watch (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.door.create",
+      "version": 1,
+      "description": "Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source arms watches that read that provider on a schedule, then takes a baseline read.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "description": "The outcome you want, in your words; it names the project."
+          },
+          "sources": {
+            "description": "Optional list of {provider: github|jira, scope, watches, adjust}."
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the new project's id as projectId",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ServiceError project_service_missing"
+      ],
+      "completion": "synchronous; project.get returns it; each armed watch took its baseline read (or is marked pending)",
+      "exposure": [
+        "http:POST /api/projects/door"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted_if",
+        "condition": "Any source given: armed watches read GitHub/Jira on a schedule (egress, Q1). Without sources: exempt.",
+        "arguments": [
+          "sources"
+        ],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.update",
+      "version": 1,
+      "description": "Change a project's fields (name, description, keywords, purpose, target date ...). Archiving is not a field change: use project.archive.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "patch": {
+            "type": "object",
+            "description": "The fields to change; lifecycle archived is refused."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the project record (id, name, description, keywords, team_members, lifecycle, revision, created_at, updated_at ...) and the command envelope",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "ValidationError: an unknown or invalid field"
+      ],
+      "completion": "synchronous; project.get returns the new state",
+      "exposure": [
+        "http:PATCH /api/projects/{project_id}",
+        "mcp:project.update"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A plain edit of the project's own fields (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.archive",
+      "version": 1,
+      "description": "Archive a project. This also pauses its watches and turns its unattended steward runs off. project.restore brings it back (its watches and unattended runs stay off).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "nothing (the transports answer success)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments"
+      ],
+      "completion": "synchronous; project.list with include_archived shows it archived",
+      "exposure": [
+        "http:DELETE /api/projects/{project_id}",
+        "mcp:project.archive"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Pauses the watches and turns unattended steward runs off: changes authority, stops scheduled egress (Q1; F18).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.restore",
+      "version": 1,
+      "description": "Bring an archived project back to active. Its watches and unattended steward runs stay off.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the project record (id, name, description, keywords, team_members, lifecycle, revision, created_at, updated_at ...) and the command envelope",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments"
+      ],
+      "completion": "synchronous; project.get returns lifecycle active",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/restore",
+        "mcp:project.restore"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "Lifecycle active; resumes no watch and no unattended run (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.link",
+      "version": 1,
+      "description": "File a meeting in a project room. meeting_id comes from meeting.list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "meeting_id": {
+            "type": "string",
+            "description": "The meeting id: meetings[].id from meeting.list."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "meeting_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "nothing (the transports answer success)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "NotFound not_found: unknown meeting"
+      ],
+      "completion": "synchronous; project.get_room lists the meeting",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/meetings/{meeting_id}",
+        "mcp:project.link"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Files a meeting in the Room; the meeting watch it ensures (watch.create) is its child, not a second top-level admission (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.unlink",
+      "version": 1,
+      "description": "Take a meeting out of a project room. meeting_id comes from meeting.list or project.get_room.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "meeting_id": {
+            "type": "string",
+            "description": "The meeting id: meetings[].id from meeting.list."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "meeting_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "nothing (the transports answer success)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "NotFound not_found: unknown meeting"
+      ],
+      "completion": "synchronous; project.get_room no longer lists the meeting",
+      "exposure": [
+        "http:DELETE /api/projects/{project_id}/meetings/{meeting_id}",
+        "mcp:project.unlink"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Unfiles the meeting (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.open_review",
+      "version": 1,
+      "description": "See what changed in a project since the last review: opens (or returns the one open) review window, with its proposals.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the review window (review, proposals, source manifest)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous; project.get_delta returns the same window",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/reviews",
+        "mcp:project.open_review"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "Freezes a local review window (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.get_delta",
+      "version": 1,
+      "description": "Read the open review of a project and its proposals, or that none is open (with the last accepted time).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "the open review window, or the empty state (open_review null, last_accepted_at, source_coverage)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/delta",
+        "mcp:project.get_delta"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.decide_proposal",
+      "version": 1,
+      "description": "Decide one proposal of the open review: accept, edit_accept (with patch), defer (until a date) or dismiss. review_id and proposal_id come from project.get_delta.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "review_id": {
+            "type": "string",
+            "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."
+          },
+          "proposal_id": {
+            "type": "string",
+            "description": "The proposal id: proposals[].id from project.get_delta."
+          },
+          "verb": {
+            "type": "string",
+            "description": "accept, edit_accept, defer or dismiss."
+          },
+          "patch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional, for edit_accept: the fields to change."
+          },
+          "deferred_until": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional, for defer: an ISO-8601 date."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "review_id",
+          "proposal_id",
+          "verb"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the decided proposal and its command envelope",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown proposal, or the proposal is not in that review",
+        "ValidationError validation: unknown verb",
+        "ConflictError: the proposal is already decided, or idempotency_conflict"
+      ],
+      "completion": "synchronous; project.get_delta shows the decision",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide",
+        "mcp:project.decide_proposal"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Each of the four verbs decides (Q1; Codex Astra r2 F2).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.accept_review",
+      "version": 1,
+      "description": "Accept the open review of a project: its decided proposals take effect and the undecided ones are superseded. review_id comes from project.get_delta.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "review_id": {
+            "type": "string",
+            "description": "The review id: review_id from project.get_delta, or review_id from project.open_review."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "review_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the accepted review and its command envelope",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown review",
+        "ConflictError: not open, or idempotency_conflict"
+      ],
+      "completion": "synchronous; project.get_delta shows no open review and the new last_accepted_at",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/reviews/{review_id}/accept",
+        "mcp:project.accept_review"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Accepts the window: bumps the revision, supersedes undecided proposals (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.list_updates",
+      "version": 1,
+      "description": "List a project's updates, newest first: drafts, published and superseded. Copy my update for delivery: a published update's body_md is the finished text you deliver yourself. Each update's deliveries list every time you marked it delivered (oldest first).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "lifecycle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional filter: draft, published or superseded."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "a list of update records (id, lifecycle, draft_revision, body_md, claims_json, generator, created_at, published_at, deliveries ...)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/updates",
+        "mcp:project.list_updates"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.draft_update",
+      "version": 1,
+      "description": "Draft my update: writes a draft of the project's update from the Room (its milestones, risks, meetings and review). generator deterministic (default) or model. Read it back with project.list_updates.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "generator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional: deterministic (default) or model."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the draft update record (generator, fallback_reason when the model was asked for and not used)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError idempotency_conflict"
+      ],
+      "completion": "synchronous; project.list_updates lists the draft",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/updates/draft",
+        "mcp:project.draft_update"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A draft; a model draft's call keeps its own inference.invoke admission (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.update_draft",
+      "version": 1,
+      "description": "Edit the text of a draft update (body_md). A published update cannot change. update_id comes from project.list_updates.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "update_id": {
+            "type": "string",
+            "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."
+          },
+          "body_md": {
+            "description": "The new Markdown text of the draft."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "update_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the saved draft update record",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown update",
+        "PublishedUpdateError published_update: the update is published"
+      ],
+      "completion": "synchronous; project.list_updates returns the new text",
+      "exposure": [
+        "http:PUT /api/updates/{update_id}",
+        "mcp:project.update_draft"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The draft's text (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.publish_update",
+      "version": 1,
+      "description": "Publish my update in the Room: the draft becomes the read-only published update of the project. Nothing leaves HoldSpeak: copy the published body_md (project.list_updates) and deliver it yourself.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "update_id": {
+            "type": "string",
+            "description": "The update id: updates[].id from project.list_updates, or update.id from project.draft_update."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "update_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the published update record (lifecycle published, published_at)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown update",
+        "PublishedUpdateError published_update: not a draft"
+      ],
+      "completion": "synchronous; project.list_updates returns lifecycle published",
+      "exposure": [
+        "http:POST /api/updates/{update_id}/publish",
+        "mcp:project.publish_update"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A published update is read-only: may be irreversible; sends nothing (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "desk.needs_you",
+      "version": 1,
+      "description": "What needs me: every Room's attention items in one list (overdue milestones, reviews waiting, proposals, commitments ...), with one count. Muted projects are marked and not counted.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "the needs-you aggregate (items, count, projects, mutedCount when a project is muted, computedAt, coverage, complete)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments"
+      ],
+      "completion": "synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
+      "exposure": [
+        "http:GET /api/desk/needs-you",
+        "mcp:desk.needs_you"
+      ],
+      "held": [
+        "door_upcoming"
+      ],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.item.list",
+      "version": 1,
+      "description": "List a project's milestones, risks, dependencies, signals and workstreams. Optional item_type filter; limit 1 to 1000 (default 200) and offset.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "item_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional filter: milestone, risk, dependency, signal or workstream."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Optional; clamped to 1..1000; default 200."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Optional; 0 or more; default 0."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "{items, limit, offset} (no total)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ValidationError validation: unknown item_type"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/items",
+        "mcp:project.item.list"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.item.create",
+      "version": 1,
+      "description": "Add a milestone or a risk to a project (also a dependency, signal or workstream). A milestone takes a due_at date; a risk takes details likelihood and impact. project_id comes from project.list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "item_type": {
+            "type": "string",
+            "description": "milestone, risk, dependency, signal or workstream."
+          },
+          "title": {
+            "description": "The item's title (required, not empty)."
+          },
+          "summary": {
+            "description": "Optional text."
+          },
+          "severity": {
+            "description": "Optional: critical, high, medium or low."
+          },
+          "owner_ref": {
+            "description": "Optional owner, as kind:id (for example person:<id>)."
+          },
+          "due_at": {
+            "description": "Optional date, ISO 8601 (for a milestone: when it is due)."
+          },
+          "sort_key": {
+            "description": "Optional number for ordering."
+          },
+          "lifecycle": {
+            "description": "Optional start state in the type's set; default planned (milestone), open (risk), healthy, active, active."
+          },
+          "details": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional, closed per item type (unknown fields are refused): milestone {completion_evidence_refs}; risk {likelihood, impact, mitigation} (likelihood and impact required); dependency {direction: upstream|downstream, counterpart_ref, required_by, confidence}; signal {metric, unit, latest_value, source_ref, observed_at}; workstream {}."
+          },
+          "created_by_ref": {
+            "description": "HTTP only. Optional creator reference; default the principal."
+          },
+          "provenance_kind": {
+            "description": "HTTP only. Optional; only owner is accepted."
+          },
+          "source_observation_id": {
+            "description": "HTTP only. Optional: the observation the item came from."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the item record (id, project_id, item_type, title, summary, lifecycle, severity, owner_ref, due_at, sort_key, details_json, created_at, updated_at) and the command envelope (result_kind, project_revision, command_id)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "ValidationError validation: unknown item_type, empty title, a value outside its closed set, an unknown details field"
+      ],
+      "completion": "synchronous; project.item.list and project.get_room (items) list it",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/items",
+        "mcp:project.item.create"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The owner's own record in the Room (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.item.update",
+      "version": 1,
+      "description": "Change a milestone's or risk's fields: title, summary, severity, owner, due date, order, details or lifecycle. A milestone is marked reached with project.item.transition, not here. item_id comes from project.item.list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "item_id": {
+            "type": "string",
+            "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."
+          },
+          "patch": {
+            "type": "object",
+            "description": "The fields to change; at least one.",
+            "properties": {
+              "title": {
+                "description": "Not empty."
+              },
+              "summary": {},
+              "severity": {},
+              "owner_ref": {},
+              "due_at": {},
+              "sort_key": {},
+              "details": {},
+              "lifecycle": {
+                "description": "In the type's set; not reached for a milestone."
+              }
+            },
+            "additionalProperties": false,
+            "minProperties": 1
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "item_id",
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the item record (id, project_id, item_type, title, summary, lifecycle, severity, owner_ref, due_at, sort_key, details_json, created_at, updated_at) and the command envelope (result_kind, project_revision, command_id)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "NotFound not_found: unknown item",
+        "ValidationError validation: No updatable fields supplied, or an invalid value"
+      ],
+      "completion": "synchronous; project.item.list returns the new state",
+      "exposure": [
+        "http:PATCH /api/projects/{project_id}/items/{item_id}",
+        "mcp:project.item.update"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The owner's own record in the Room (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.item.transition",
+      "version": 1,
+      "description": "Move a milestone or risk to a new state: verb is the target state (a milestone: reached, missed, dropped; a risk: mitigated, accepted, closed ...). Already there: nothing changes. item_id comes from project.item.list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "item_id": {
+            "type": "string",
+            "description": "The item id: items[].id from project.item.list, or item.id from project.item.create."
+          },
+          "verb": {
+            "type": "string",
+            "description": "The target state, in the item type's set."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "item_id",
+          "verb"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the item record (id, project_id, item_type, title, summary, lifecycle, severity, owner_ref, due_at, sort_key, details_json, created_at, updated_at) and the command envelope (result_kind, project_revision, command_id) (result_kind no_change when it was already there)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "NotFound not_found: unknown item",
+        "ValidationError validation: a state outside the type's set"
+      ],
+      "completion": "synchronous; project.item.list returns the new lifecycle",
+      "exposure": [
+        "http:POST /api/projects/{project_id}/items/{item_id}/transition",
+        "mcp:project.item.transition"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "The owner's own record in the Room (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.resource.list",
+      "version": 1,
+      "description": "List what is filed in a project room (meetings, notes, decisions ... as kind:id references).",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "a list of resource records (project_id, resource_ref, relationship, source, confidence, created_at, last_modified, deleted)",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/projects/{project_id}/resources",
+        "mcp:project.resource.list"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "project.resource.add",
+      "version": 1,
+      "description": "File a thing in a project room: a meeting, note, decision or other desk object, as kind:id. relationship member (default), source, output or related.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "resource_ref": {
+            "type": "string",
+            "description": "The thing to file, as kind:id -- for example meeting:<id>, note:<id>, decision_record:<id>. Kinds: meeting, transcript, artifact, decision, note, knowledge, zone, project, thread, persona, workflow, sequence, integration, decision_record, desk_decision, action, project_item, workbench, workbench_item, cadence. A GitHub or Jira reference is not a resource: it is a watched source."
+          },
+          "relationship": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional: member (default), source, output or related."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "resource_ref"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "the resource record and the command envelope",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "ValueError (validation): a reference that is not kind:id, an unknown kind or relationship"
+      ],
+      "completion": "synchronous; project.resource.list lists it",
+      "exposure": [
+        "http:PUT /api/projects/{project_id}/resources/{resource_ref}",
+        "mcp:project.resource.add"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Files a thing in the Room (Q1).",
+        "arguments": [],
+        "enforced": false
+      }
+    },
+    {
+      "name": "project.resource.remove",
+      "version": 1,
+      "description": "Take a filed thing out of a project room. resource_ref comes from project.resource.list.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project id: projects[].id from project.list, or project.id from project.create."
+          },
+          "resource_ref": {
+            "type": "string",
+            "description": "The filed reference, as kind:id: resources[].resource_ref from project.resource.list."
+          },
+          "expected_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Optional. The project revision from your last read (project.get or project.get_room, field revision). When the current revision differs, the call is refused with stale_revision and nothing changes."
+          },
+          "command_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict."
+          }
+        },
+        "required": [
+          "project_id",
+          "resource_ref"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "write",
+      "result": "true when a filed reference was removed",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound not_found: unknown project",
+        "ConflictError stale_revision: expected_revision is not the current revision",
+        "ConflictError idempotency_conflict: the command_id was used with different arguments",
+        "ValueError (validation): a reference that is not kind:id"
+      ],
+      "completion": "synchronous; project.resource.list no longer lists it",
+      "exposure": [
+        "http:DELETE /api/projects/{project_id}/resources/{resource_ref}",
+        "mcp:project.resource.remove"
+      ],
+      "held": [],
+      "owner_only": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Unfiles a thing from the Room (Q1).",
+        "arguments": [],
+        "enforced": false
       }
     }
   ]

@@ -116,19 +116,12 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
     # sidecar, not a screen.
 
     def _project_service() -> Any:
-        """The hub's ProjectService when it has one, else a bare read."""
-        from ...runtime import composition
-        from ...services.project_service import ProjectService
+        """PHILO-9-01: the ProjectService the Room's declared operations are bound to."""
+        from ... import operations
 
-        existing = getattr(ctx, "project_service", None)
-        if existing is not None:
-            return existing
-        try:
-            return composition.service(
-                "project_service", lambda: ProjectService(service._db)
-            )
-        except composition.NoRuntimeError:
-            return ProjectService(service._db)
+        # A partially wired context (a route test) reads its Room through the
+        # automations service's own database, as the route did before.
+        return operations.for_context(ctx, "project_service", bare_db=service._db).target("project.get")
 
     @router.get("/automations/practice-recipes")
     async def list_practice_recipes() -> Any:

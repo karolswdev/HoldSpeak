@@ -9,7 +9,7 @@ from ...principals import UNAUTHENTICATED
 from ...services.people_service import OwnerAliasTaken, PeopleServiceError, SeriesAlreadyLinked
 from ...services.errors import NotFound
 from ...services.workbench_service import WorkbenchService
-from ...services.project_service import ProjectService
+from ... import operations
 from ..context import WebContext
 
 
@@ -57,9 +57,9 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         from ...db import get_database, get_observer
         return WorkbenchService(get_database(), observer=get_observer())
 
-    def projects() -> ProjectService:
-        from ...db import get_database, get_observer
-        return ProjectService(get_database(), observer=get_observer())
+    def projects() -> Any:
+        """PHILO-9-01: the Room's declared operations on the hub's ProjectService."""
+        return operations.for_context(ctx, "project_service")
 
     @router.get("/readiness")
     async def readiness(request: Request) -> dict[str, str]:
@@ -124,7 +124,7 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     async def link_project(request: Request, relationship_id: str, project_id: str) -> dict[str, Any]:
         try:
             owner = principal(request)
-            projects().get_project(owner, project_id)
+            projects().invoke(owner, "project.get", {"project_id": project_id})
             return {"relationship": service.link_project(owner, relationship_id, project_id)}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
@@ -289,11 +289,11 @@ def build_people_router(ctx: WebContext) -> APIRouter:
             text = str(commitment.get("body") or "").strip()
             relationship = service.get_relationship(owner, str(commitment.get("relationship_id") or ""))
             project_grounding: list[dict[str, Any]] = []
-            project_service = projects()
+            rooms = projects()
             for project_id in relationship.get("project_refs") or []:
                 try:
-                    project = project_service.get_project(owner, str(project_id))
-                    resources = project_service.list_resources(owner, str(project_id))
+                    project = rooms.invoke(owner, "project.get", {"project_id": str(project_id)})
+                    resources = rooms.invoke(owner, "project.resource.list", {"project_id": str(project_id)})
                 except NotFound:
                     continue
                 project_grounding.append({

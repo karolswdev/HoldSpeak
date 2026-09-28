@@ -16,7 +16,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ..context import WebContext
@@ -31,14 +33,16 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
+    def ops() -> Any:
+        """PHILO-9-01: the Room's declared operations, bound to the hub's services."""
+        return operations.for_context(ctx)
+
     # ── POST /api/projects/{project_id}/reviews ─────────────────────
 
     @router.post("/{project_id}/reviews")
     async def open_review(project_id: str, request: Request) -> Any:
         try:
-            result = ctx.project_delta_service.open_review(
-                principal(request), project_id,
-            )
+            result = ops().invoke(principal(request), "project.open_review", {"project_id": project_id})
             return JSONResponse(result)
         except NotFound as exc:
             return JSONResponse(
@@ -89,48 +93,9 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
     @router.get("/{project_id}/delta")
     async def get_delta(project_id: str, request: Request) -> Any:
         try:
-            # Verify project exists
-            project = ctx.project_service._require_project(project_id)
-
-            delta_svc = ctx.project_delta_service
-
-            # Check for an open review
-            open_review = delta_svc._find_open_review(project_id)
-            if open_review is not None:
-                window = delta_svc._load_frozen_window(open_review)
-                return JSONResponse(window)
-
-            # No open review: the honest empty state (WEB-STA-004).
-            room_fields = ctx.project_service._db.projects.get_project_room_fields(
-                project_id,
-            )
-            last_accepted_at = (room_fields or {}).get("last_review_at")
-
-            # Source coverage: summarize configured sources
-            source_coverage = None
-            try:
-                reviews = delta_svc._db.project_observations.list_reviews(
-                    project_id, status="accepted", limit=1,
-                )
-                if reviews:
-                    import json as _json
-                    manifest_json = reviews[0].get("source_manifest_json", "{}")
-                    if isinstance(manifest_json, str):
-                        manifest = _json.loads(manifest_json)
-                    else:
-                        manifest = manifest_json
-                    source_coverage = {
-                        k: v.get("state", "unknown")
-                        for k, v in manifest.items()
-                    }
-            except Exception:
-                pass
-
-            return JSONResponse({
-                "open_review": None,
-                "last_accepted_at": last_accepted_at,
-                "source_coverage": source_coverage,
-            })
+            # PHILO-9-01: the declared project.get_delta (the open window, or
+            # the honest empty state, WEB-STA-004), the read MCP reaches too.
+            return JSONResponse(ops().invoke(principal(request), "project.get_delta", {"project_id": project_id}))
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},
@@ -153,36 +118,16 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
             deferred_until = body.get("deferred_until")
             command_id = body.get("command_id")
 
-            # Verify the proposal belongs to this review
-            proposal = ctx.project_delta_service._db.project_observations.get_proposal(
-                proposal_id,
-            )
-            if proposal is None:
-                return JSONResponse(
-                    {"code": "not_found",
-                     "message": f"Proposal {proposal_id!r} not found"},
-                    status_code=404,
-                )
-            if proposal.get("review_window_key") != review_id:
-                return JSONResponse(
-                    {"code": "not_found",
-                     "message": (
-                         f"Proposal {proposal_id!r} does not belong to "
-                         f"review {review_id!r}"
-                     )},
-                    status_code=404,
-                )
-
-            result = ctx.project_delta_service.decide_proposal(
-                principal(request),
-                project_id,
-                proposal_id,
-                verb,
-                patch=patch,
-                deferred_until=deferred_until,
-                command_id=command_id,
-            )
+            # PHILO-9-01: the declared project.decide_proposal; the service
+            # checks the proposal belongs to this review first (review_id).
+            result = ops().invoke(principal(request), "project.decide_proposal", {
+                "project_id": project_id, "review_id": review_id, "proposal_id": proposal_id,
+                "verb": verb, "patch": patch, "deferred_until": deferred_until,
+                "command_id": command_id,
+            })
             return JSONResponse(result)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "validation", "message": exc.detail}, status_code=400)
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},
@@ -211,13 +156,12 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
             body = await request.json()
             command_id = body.get("command_id")
 
-            result = ctx.project_delta_service.accept_review(
-                principal(request),
-                project_id,
-                review_id,
-                command_id=command_id,
-            )
+            result = ops().invoke(principal(request), "project.accept_review", {
+                "project_id": project_id, "review_id": review_id, "command_id": command_id,
+            })
             return JSONResponse(result)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "validation", "message": exc.detail}, status_code=400)
         except NotFound as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},

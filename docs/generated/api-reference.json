@@ -3021,7 +3021,7 @@
             "GET"
           ],
           "symbol": "api_list_ask_tasks",
-          "line": 111,
+          "line": 139,
           "parameters": [
             {
               "name": "request",
@@ -3099,7 +3099,7 @@
             "POST"
           ],
           "symbol": "api_discard_ask_task",
-          "line": 185,
+          "line": 213,
           "parameters": [
             {
               "name": "task_id",
@@ -3164,7 +3164,7 @@
             "POST"
           ],
           "symbol": "api_resume_ask_task",
-          "line": 136,
+          "line": 164,
           "parameters": [
             {
               "name": "task_id",
@@ -3233,7 +3233,7 @@
             "POST"
           ],
           "symbol": "api_record_ask_stop",
-          "line": 163,
+          "line": 191,
           "parameters": [
             {
               "name": "task_id",
@@ -8080,6 +8080,8 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo8_atlas.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8162,6 +8164,8 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo8_atlas.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -8263,6 +8267,8 @@
         "tests/unit/test_philo7_round_two.py",
         "tests/unit/test_philo7_shelf_alignment.py",
         "tests/unit/test_philo8_atlas.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -11187,7 +11193,7 @@
             "GET"
           ],
           "symbol": "api_desk_needs_you",
-          "line": 577,
+          "line": 598,
           "parameters": [
             {
               "name": "request",
@@ -11223,7 +11229,9 @@
         "tests/e2e/test_hs200_coverage_glass.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo4_02_generated_clearance.py",
-        "tests/unit/test_hs170_faces_wire.py"
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -11314,7 +11322,7 @@
             "GET"
           ],
           "symbol": "api_resource_relationships",
-          "line": 328,
+          "line": 382,
           "parameters": [
             {
               "name": "resource_ref",
@@ -21901,7 +21909,7 @@
             "GET"
           ],
           "symbol": "api_meeting_projects",
-          "line": 365,
+          "line": 419,
           "parameters": [
             {
               "name": "meeting_id",
@@ -24115,6 +24123,8 @@
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -24207,6 +24217,8 @@
         "tests/unit/test_philo7_membership_decisions.py",
         "tests/unit/test_philo7_rig_faithful.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py",
         "tests/unit/test_web_routes_ask.py",
         "tests/unit/test_web_routes_primitives.py",
@@ -26451,7 +26463,7 @@
             "GET"
           ],
           "symbol": "api_list_projects",
-          "line": 199,
+          "line": 227,
           "parameters": [
             {
               "name": "request",
@@ -26469,9 +26481,10 @@
           "calls": [
             "JSONResponse",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.list_projects"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -26515,6 +26528,11 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26551,7 +26569,7 @@
             "POST"
           ],
           "symbol": "api_create_project",
-          "line": 206,
+          "line": 234,
           "parameters": [
             {
               "name": "payload",
@@ -26573,10 +26591,10 @@
           "calls": [
             "JSONResponse",
             "log.error",
-            "payload.pop",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
-            "service.create_project",
             "str"
           ],
           "body_access_keys": [],
@@ -26621,6 +26639,11 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26707,7 +26730,7 @@
             "DELETE"
           ],
           "symbol": "api_archive_project",
-          "line": 251,
+          "line": 282,
           "parameters": [
             {
               "name": "project_id",
@@ -26729,9 +26752,10 @@
             "JSONResponse",
             "log.error",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.delete",
-            "service.archive_project",
             "str"
           ],
           "body_access_keys": [],
@@ -26770,6 +26794,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26806,7 +26834,7 @@
             "GET"
           ],
           "symbol": "api_get_project",
-          "line": 222,
+          "line": 251,
           "parameters": [
             {
               "name": "project_id",
@@ -26825,9 +26853,10 @@
             "JSONResponse",
             "error_500",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.get_project"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -26865,6 +26894,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -26901,7 +26934,7 @@
             "PATCH"
           ],
           "symbol": "api_update_project",
-          "line": 231,
+          "line": 260,
           "parameters": [
             {
               "name": "project_id",
@@ -26928,10 +26961,11 @@
             "JSONResponse",
             "log.error",
             "not_found",
+            "ops",
+            "ops().invoke",
             "payload.pop",
             "principal",
             "router.patch",
-            "service.update_project",
             "str"
           ],
           "body_access_keys": [],
@@ -26970,6 +27004,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27004,7 +27042,7 @@
             "GET"
           ],
           "symbol": "api_project_action_items",
-          "line": 392,
+          "line": 446,
           "parameters": [
             {
               "name": "project_id",
@@ -27063,6 +27101,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27099,7 +27141,7 @@
             "GET"
           ],
           "symbol": "api_project_artifacts",
-          "line": 401,
+          "line": 455,
           "parameters": [
             {
               "name": "project_id",
@@ -27158,6 +27200,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27194,7 +27240,7 @@
             "POST"
           ],
           "symbol": "api_save_ask_task",
-          "line": 93,
+          "line": 121,
           "parameters": [
             {
               "name": "project_id",
@@ -27259,6 +27305,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27293,7 +27343,7 @@
             "GET"
           ],
           "symbol": "api_list_project_briefings",
-          "line": 38,
+          "line": 66,
           "parameters": [
             {
               "name": "project_id",
@@ -27357,6 +27407,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27459,6 +27513,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27553,6 +27611,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27665,6 +27727,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27759,6 +27825,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27860,6 +27930,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27921,6 +27995,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -27955,7 +28033,7 @@
             "GET"
           ],
           "symbol": "api_list_items",
-          "line": 412,
+          "line": 466,
           "parameters": [
             {
               "name": "project_id",
@@ -27988,9 +28066,10 @@
             "JSONResponse",
             "error_500",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.list_items"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28028,6 +28107,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28062,7 +28145,7 @@
             "POST"
           ],
           "symbol": "api_create_item",
-          "line": 430,
+          "line": 483,
           "parameters": [
             {
               "name": "project_id",
@@ -28089,11 +28172,12 @@
             "JSONResponse",
             "log.error",
             "not_found",
-            "payload.pop",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
-            "service.create_item",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28131,6 +28215,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28165,7 +28253,7 @@
             "PATCH"
           ],
           "symbol": "api_update_item",
-          "line": 453,
+          "line": 504,
           "parameters": [
             {
               "name": "project_id",
@@ -28196,10 +28284,11 @@
             "JSONResponse",
             "log.error",
             "not_found",
+            "ops",
+            "ops().invoke",
             "payload.pop",
             "principal",
             "router.patch",
-            "service.update_item",
             "str"
           ],
           "body_access_keys": [],
@@ -28238,6 +28327,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28272,7 +28365,7 @@
             "POST"
           ],
           "symbol": "api_transition_item",
-          "line": 477,
+          "line": 530,
           "parameters": [
             {
               "name": "project_id",
@@ -28303,12 +28396,14 @@
             "JSONResponse",
             "log.error",
             "not_found",
+            "ops",
+            "ops().invoke",
             "payload.pop",
             "principal",
             "router.post",
-            "service.transition_item",
             "str",
-            "str(payload.pop('verb', '')).strip"
+            "str(payload.pop('verb', '')).strip",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -28346,6 +28441,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28382,7 +28481,7 @@
             "GET"
           ],
           "symbol": "api_project_meetings",
-          "line": 286,
+          "line": 318,
           "parameters": [
             {
               "name": "project_id",
@@ -28449,6 +28548,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28483,7 +28586,7 @@
             "DELETE"
           ],
           "symbol": "api_disassociate_meeting",
-          "line": 351,
+          "line": 405,
           "parameters": [
             {
               "name": "project_id",
@@ -28509,9 +28612,10 @@
           "calls": [
             "JSONResponse",
             "log.error",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.delete",
-            "service.disassociate_meeting",
             "str"
           ],
           "body_access_keys": [],
@@ -28550,6 +28654,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28584,7 +28692,7 @@
             "POST"
           ],
           "symbol": "api_associate_meeting",
-          "line": 337,
+          "line": 391,
           "parameters": [
             {
               "name": "project_id",
@@ -28610,9 +28718,10 @@
           "calls": [
             "JSONResponse",
             "log.error",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
-            "service.associate_meeting",
             "str"
           ],
           "body_access_keys": [],
@@ -28651,6 +28760,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28748,6 +28861,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28784,7 +28901,7 @@
             "GET"
           ],
           "symbol": "api_project_people",
-          "line": 673,
+          "line": 694,
           "parameters": [
             {
               "name": "project_id",
@@ -28843,6 +28960,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28941,6 +29062,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -28977,7 +29102,7 @@
             "GET"
           ],
           "symbol": "api_project_resources",
-          "line": 295,
+          "line": 327,
           "parameters": [
             {
               "name": "project_id",
@@ -28997,9 +29122,10 @@
           "calls": [
             "JSONResponse",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.list_resources"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29037,6 +29163,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29071,7 +29201,7 @@
             "DELETE"
           ],
           "symbol": "api_remove_project_resource",
-          "line": 317,
+          "line": 358,
           "parameters": [
             {
               "name": "project_id",
@@ -29090,16 +29220,22 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
-            400
+            400,
+            409
           ],
           "calls": [
             "JSONResponse",
             "error_500",
+            "isinstance",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
+            "request.body",
+            "request.json",
             "router.delete",
-            "service.remove_resource",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29137,6 +29273,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29171,7 +29311,7 @@
             "PUT"
           ],
           "symbol": "api_add_project_resource",
-          "line": 304,
+          "line": 336,
           "parameters": [
             {
               "name": "project_id",
@@ -29194,16 +29334,20 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
-            400
+            400,
+            409
           ],
           "calls": [
             "JSONResponse",
+            "dict",
             "error_500",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.put",
-            "service.add_resource",
-            "str"
+            "str",
+            "url_owns"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29241,6 +29385,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29275,7 +29423,7 @@
             "POST"
           ],
           "symbol": "api_restore_project",
-          "line": 265,
+          "line": 296,
           "parameters": [
             {
               "name": "project_id",
@@ -29294,6 +29442,7 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            400,
             409,
             500
           ],
@@ -29302,9 +29451,10 @@
             "body.get",
             "log.error",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
-            "service.restore_project",
             "str"
           ],
           "body_access_keys": [
@@ -29346,6 +29496,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29407,6 +29561,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29466,6 +29624,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29527,6 +29689,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29588,6 +29754,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29624,7 +29794,7 @@
             "GET"
           ],
           "symbol": "api_project_room",
-          "line": 47,
+          "line": 75,
           "parameters": [
             {
               "name": "project_id",
@@ -29643,9 +29813,10 @@
             "JSONResponse",
             "error_500",
             "not_found",
+            "ops",
+            "ops().invoke",
             "principal",
-            "router.get",
-            "service.room"
+            "router.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -29683,6 +29854,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29719,7 +29894,7 @@
             "POST"
           ],
           "symbol": "api_mark_room_read",
-          "line": 56,
+          "line": 84,
           "parameters": [
             {
               "name": "project_id",
@@ -29778,6 +29953,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29814,7 +29993,7 @@
             "GET"
           ],
           "symbol": "api_project_since_last_meeting",
-          "line": 374,
+          "line": 428,
           "parameters": [
             {
               "name": "project_id",
@@ -29873,6 +30052,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -29967,6 +30150,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30092,6 +30279,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30194,6 +30385,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30308,6 +30503,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30344,7 +30543,7 @@
             "GET"
           ],
           "symbol": "api_suggested_sources",
-          "line": 595,
+          "line": 616,
           "parameters": [
             {
               "name": "project_id",
@@ -30405,6 +30604,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30441,7 +30644,7 @@
             "POST"
           ],
           "symbol": "api_add_suggested_source",
-          "line": 609,
+          "line": 630,
           "parameters": [
             {
               "name": "project_id",
@@ -30513,6 +30716,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30549,7 +30756,7 @@
             "POST"
           ],
           "symbol": "api_dismiss_suggested_source",
-          "line": 648,
+          "line": 669,
           "parameters": [
             {
               "name": "project_id",
@@ -30620,6 +30827,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30654,7 +30865,7 @@
             "GET"
           ],
           "symbol": "api_project_summary",
-          "line": 383,
+          "line": 437,
           "parameters": [
             {
               "name": "project_id",
@@ -30713,6 +30924,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30749,7 +30964,7 @@
             "GET"
           ],
           "symbol": "api_list_updates",
-          "line": 55,
+          "line": 61,
           "parameters": [
             {
               "name": "project_id",
@@ -30773,8 +30988,9 @@
           "calls": [
             "JSONResponse",
             "_enrich_update",
-            "ctx.project_update_service.list_updates",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.get"
           ],
@@ -30814,6 +31030,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -30850,7 +31070,7 @@
             "POST"
           ],
           "symbol": "api_draft_update",
-          "line": 75,
+          "line": 81,
           "parameters": [
             {
               "name": "project_id",
@@ -30875,8 +31095,9 @@
           "calls": [
             "JSONResponse",
             "_enrich_update",
-            "ctx.project_update_service.draft_update_command",
             "error_500",
+            "ops",
+            "ops().invoke",
             "payload.get",
             "principal",
             "router.post",
@@ -30922,6 +31143,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -31020,6 +31245,10 @@
         "tests/unit/test_hs167_debts.py",
         "tests/unit/test_hs173_health_wire.py",
         "tests/unit/test_phase200_people_preparation.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_project_items.py",
         "tests/unit/test_project_revision_law.py",
         "tests/unit/test_project_room_fields_write.py",
@@ -34103,6 +34332,8 @@
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34219,6 +34450,8 @@
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
         "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py",
         "tests/unit/test_philo_graph_atlas.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -34572,7 +34805,9 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
-        "tests/unit/test_philo7_round_two.py"
+        "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34644,7 +34879,9 @@
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
         "tests/unit/test_philo7_grant_restart.py",
-        "tests/unit/test_philo7_round_two.py"
+        "tests/unit/test_philo7_round_two.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -34723,7 +34960,9 @@
         "tests/unit/test_philo5_the_loop_r2.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_file_and_find.py",
-        "tests/unit/test_philo7_grant_restart.py"
+        "tests/unit/test_philo7_grant_restart.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36298,7 +36537,8 @@
         "tests/e2e/test_hs163_steward_glass.py",
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
-        "tests/integration/test_steward_routes.py"
+        "tests/integration/test_steward_routes.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -36363,7 +36603,8 @@
         "tests/e2e/test_hs163_steward_glass.py",
         "tests/e2e/test_hs164_unattended_glass.py",
         "tests/e2e/test_hs166_jira_walk.py",
-        "tests/integration/test_steward_routes.py"
+        "tests/integration/test_steward_routes.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -39811,7 +40052,7 @@
             "PUT"
           ],
           "symbol": "api_save_update",
-          "line": 102,
+          "line": 109,
           "parameters": [
             {
               "name": "update_id",
@@ -39837,8 +40078,9 @@
           "calls": [
             "JSONResponse",
             "_enrich_update",
-            "ctx.project_update_service.save_update",
             "error_500",
+            "ops",
+            "ops().invoke",
             "payload.get",
             "principal",
             "router.put",
@@ -39856,7 +40098,11 @@
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
         "tests/integration/test_phase200_claim_support.py",
-        "tests/integration/test_update_routes.py"
+        "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -39888,7 +40134,7 @@
             "GET"
           ],
           "symbol": "api_update_markdown",
-          "line": 196,
+          "line": 206,
           "parameters": [
             {
               "name": "update_id",
@@ -39923,7 +40169,11 @@
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
         "tests/integration/test_phase200_claim_support.py",
-        "tests/integration/test_update_routes.py"
+        "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -39955,7 +40205,7 @@
             "POST"
           ],
           "symbol": "api_publish_update",
-          "line": 168,
+          "line": 176,
           "parameters": [
             {
               "name": "update_id",
@@ -39974,6 +40224,7 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            400,
             404,
             409
           ],
@@ -39981,8 +40232,9 @@
             "JSONResponse",
             "_enrich_update",
             "body.get",
-            "ctx.project_update_service.publish_update",
             "error_500",
+            "ops",
+            "ops().invoke",
             "principal",
             "router.post",
             "str"
@@ -39998,7 +40250,11 @@
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
         "tests/integration/test_phase200_claim_support.py",
-        "tests/integration/test_update_routes.py"
+        "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -40030,7 +40286,7 @@
             "POST"
           ],
           "symbol": "api_regenerate_update",
-          "line": 135,
+          "line": 143,
           "parameters": [
             {
               "name": "update_id",
@@ -40076,7 +40332,11 @@
         "tests/e2e/test_hs162_update_glass.py",
         "tests/e2e/test_hs200_claim_support_glass.py",
         "tests/integration/test_phase200_claim_support.py",
-        "tests/integration/test_update_routes.py"
+        "tests/integration/test_update_routes.py",
+        "tests/unit/test_philo9_compat.py",
+        "tests/unit/test_philo9_contract.py",
+        "tests/unit/test_philo9_delivery_record.py",
+        "tests/unit/test_philo9_room_contract.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {

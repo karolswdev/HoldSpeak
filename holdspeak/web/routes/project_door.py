@@ -13,7 +13,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError, ValidationError
 from ..context import WebContext
@@ -83,8 +85,13 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
                     {"code": "service_unavailable", "message": "Door service not configured"},
                     status_code=503,
                 )
-            result = svc.create(principal(request), outcome, sources)
+            # PHILO-9-01: the declared project.door.create, beside project.create.
+            result = operations.for_context(ctx).invoke(principal(request), "project.door.create", {
+                "outcome": outcome, "sources": sources,
+            })
             return JSONResponse(result)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "validation", "message": exc.detail}, status_code=400)
         except ValidationError as exc:
             return JSONResponse(
                 {"code": exc.code, "message": exc.detail},

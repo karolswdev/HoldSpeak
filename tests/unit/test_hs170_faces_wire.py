@@ -282,8 +282,17 @@ class TestNeedsYouAggregate:
             },
         }
 
-        class FakeProjectService:
-            def list_projects(self, principal, opts):
+        # PHILO-9-01: the route reaches the declared desk.needs_you operation,
+        # bound to a REAL ProjectService (its needs_you applies the mute rule);
+        # only the two Room reads the aggregate sums are stubbed.
+        from holdspeak.db import Database
+        from holdspeak.services.project_service import ProjectService
+
+        class FakeProjectService(ProjectService):
+            def __init__(self) -> None:
+                super().__init__(Database(tmp_path / "needs-you.db"))
+
+            def list_projects(self, principal, opts=None, **kwargs):
                 return _PROJECTS
 
             def room(self, principal, pid):

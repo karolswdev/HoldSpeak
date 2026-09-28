@@ -834,3 +834,119 @@ try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_lea
 try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_the_list_palette_delete_removes_the_selected_object[1440]
 try 3: PASSED tests/e2e/test_philo8_one_delete_glass.py::TestOneDelete::test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]
 ```
+
+### Captured run — 2026-09-28T12:58:48Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 215710429e4c7a445c08c492c59d82609e8f43d2
+
+```text
+HEAD = cde7e27225eb9d802e6afa64badc26f3df7ebf75; product diff vs origin/main:
+ 10 files changed, 252 insertions(+), 37 deletions(-)
+✓ built in 4.47s
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_clock_a_case_uses_is_declared]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_applicable_case_carries_one_trigger]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_face_cases_carry_both_ruled_viewports]
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_api_setup_step_exists_in_the_generated_openapi
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_applicable_predicate_is_a_kind_the_rig_implements]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_predicate_observes_a_selector_or_a_route]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_keeps_its_human_sentence]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_ui_action_is_one_the_rig_implements]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_precondition_check_compares_two_snapshots]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_precondition_check_observes_a_selector_or_a_route]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_check_asserts_the_result_the_trigger_must_produce]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_step_acts_on_a_root_placeholder]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_navigation_steps_carry_no_selector]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_desk_face_case_crosses_the_gate_first]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_captured_id_names_the_field_it_reads]
+PASSED tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_selection_is_visible[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_selection_is_visible[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_list_text_is_12px_and_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_list_text_is_12px_and_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_status_says_shown[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_status_says_shown[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_every_kept_column_is_in_view[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_every_kept_column_is_in_view[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_launch_submenu_keeps_itself_in_view
+PASSED tests/unit/test_philo9_04_sort_button_fence.py::test_the_sortable_table_has_no_raw_button
+PASSED tests/unit/test_philo9_04_sort_button_fence.py::test_a_raw_button_mutation_turns_the_fence_red
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_named_case_is_in_the_atlas
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_case_runs_at_both_widths
+PASSED tests/unit/test_philo9_04_atlas.py::test_face_checks_read_what_is_readable
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_menu_case_asks_44px_at_393_only
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_face_case_without_an_op_is_excluded_with_a_reason
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_state_id_resolves]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_reference_inside_the_atlas_resolves]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_sort_headers_are_the_library_button[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_sort_headers_are_the_library_button[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_row_menu_keeps_itself_in_view[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_row_menu_keeps_itself_in_view[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_open_row_menu_text_is_12px[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_open_row_menu_text_is_12px[393]
+237 passed in 422.84s (0:07:02)
+case.p9.list_status.shown 1440 exit=0  
+case.p9.list_status.shown 393 exit=0  
+case.p9.list_columns.in_view 1440 exit=0  
+case.p9.list_columns.in_view 393 exit=0  
+case.p9.list_sort.zone_pressed 1440 exit=0  
+case.p9.list_sort.zone_pressed 393 exit=0  
+case.p9.list_row_menu.delete_in_view 1440 exit=0  
+case.p9.list_row_menu.delete_in_view 393 exit=0  
+VERDICT: pass terminal=settled
+NOTE: predicate: 'PERSONAL' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 179, 'y': 174, 'w': 1082, 'h': 41}
+VERDICT: pass terminal=settled
+NOTE: predicate: 'PERSONAL' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 19, 'y': 249, 'w': 355, 'h': 78}
+VERDICT: pass terminal=settled
+NOTE: predicate: control owns all 9 hit points in viewport {'width': 1440, 'height': 900} with rect {'x': 206, 'y': 847, 'w': 272, 'h': 28}
+VERDICT: pass terminal=settled
+NOTE: predicate: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 11, 'y': 797, 'w': 371, 'h': 44}
+VERDICT: pass terminal=settled
+NOTE: predicate: aria-pressed='true', wanted 'true'
+VERDICT: pass terminal=settled
+NOTE: predicate: aria-pressed='true', wanted 'true'
+VERDICT: pass terminal=settled
+NOTE: predicate: '2 SHOWN OF 2' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1156, 'y': 76, 'w': 95, 'h': 16}
+VERDICT: pass terminal=settled
+NOTE: predicate: '2 SHOWN OF 2' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 29, 'y': 127, 'w': 95, 'h': 16}
+rig cases not passing:        0
+```
+
+### Captured run — 2026-09-28T13:08:21Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/web_unit.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 215710429e4c7a445c08c492c59d82609e8f43d2
+
+```text
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (5):
+  src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+Suite totals: 2927 passed, 0 failed, 0 skipped
+
+VERDICT: baseline-subset, zero branch-new
+ Test Files  323 passed (323)
+      Tests  2927 passed (2927)
+   Duration  35.27s (transform 16.92s, setup 32.70s, import 98.81s, tests 95.46s, environment 117.82s)
+token gate: clean (11 allow-listed exceptions, all in use)
+ Test Files  323 passed (323)
+      Tests  2927 passed (2927)
+✓ built in 4.58s
+bundle gate passed (Desk JS 1334646 B; Desk CSS 323393 B; source maps 0)
+baseline=0 vitest=0 check=0
+```

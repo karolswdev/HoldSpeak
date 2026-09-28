@@ -62,6 +62,10 @@ dependencies = [
     # Meeting summaries and OpenAI-compatible dictation use the lightweight
     # endpoint client.  Local model runtimes remain optional below.
     "openai>=1.0.0",
+    # PHILO-9-01 (F14): the application-operation contract validates every
+    # operation's arguments against its JSON Schema (holdspeak/operations.py),
+    # so a base install needs it to import the MCP catalogue at all.
+    "jsonschema>=4.21",
 ]
 
 [project.optional-dependencies]

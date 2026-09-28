@@ -571,6 +571,33 @@ def build_aggregate(
     }
 
 
+def apply_mute(aggregate: dict[str, Any], muted_ids: set[str]) -> dict[str, Any]:
+    """Apply the heartbeat's muted projects: one count everywhere (M1; PHILO-9-01 F13).
+
+    Muted items get ``muted: true`` and are excluded from ``count`` but
+    included in ``mutedCount``; ``projects`` counts only Rooms that still
+    contribute (counsel C2). Moved here from the HTTP route so the route and
+    MCP ``desk.needs_you`` reach one rule through ``ProjectService.needs_you``.
+    """
+    if not muted_ids:
+        return aggregate
+    unmuted = []
+    muted_count = 0
+    for item in aggregate.get("items", []):
+        if item.get("projectId") in muted_ids:
+            item["muted"] = True
+            muted_count += 1
+        else:
+            item["muted"] = False
+            unmuted.append(item)
+    aggregate["count"] = len(unmuted)
+    aggregate["mutedCount"] = muted_count
+    aggregate["projects"] = sorted(
+        {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
+    )
+    return aggregate
+
+
 def _carry(remembered: dict[str, Any] | None) -> list[dict[str, Any]]:
     """Replay a failed source's last-known items, marked as remembered."""
     if not remembered or not remembered.get("items"):

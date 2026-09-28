@@ -11,7 +11,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ...services.project_service import ProjectService
@@ -27,6 +29,32 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def url_owns(body: dict[str, Any], operation: str, **ids: str) -> dict[str, Any]:
+        """PHILO-9-01 round two (Codex Astra r1, P1): the URL names the target.
+
+        A body that names a target identifier (``project_id``, ``resource_ref``,
+        ``item_id``) is refused 400 -- also when it agrees with the URL -- so a
+        request to one Room can never write another. The URL's identifiers are
+        the operation's.
+        """
+        named = sorted(set(ids) & set(body))
+        if named:
+            raise OperationRefused(
+                "invalid_arguments", operation,
+                f"Invalid arguments for {operation}: {', '.join(named)} "
+                f"{'comes' if len(named) == 1 else 'come'} from the path, not the body",
+            )
+        return {**body, **ids}
+
+    def ops() -> Any:
+        """PHILO-9-01: the Room's declared operations (``holdspeak.operations``).
+
+        In the hub: the registry bound at composition to the hub's
+        ProjectService (the same object MCP reaches). A partially wired
+        context binds over the service it carries.
+        """
+        return operations.for_context(ctx, "project_service")
 
     def not_found(exc: NotFound, *, success: bool = False) -> JSONResponse:
         body: dict[str, Any] = {"error": "Project not found" if exc.kind == "project" else str(exc)}
@@ -46,7 +74,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects/{project_id}/room")
     async def api_project_room(project_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(service.room(principal(request), project_id))
+            return JSONResponse(ops().invoke(principal(request), "project.get_room", {"project_id": project_id}))
         except NotFound as exc:
             return not_found(exc)
         except Exception as exc:
@@ -198,17 +226,18 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects")
     async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:
-            return JSONResponse({"projects": service.list_projects(principal(request), {"include_archived": include_archived})})
+            return JSONResponse({"projects": ops().invoke(principal(request), "project.list", {"include_archived": include_archived})})
         except Exception as exc:
             return error_500(exc, log, "Failed to list projects")
 
     @router.post("/api/projects")
     async def api_create_project(payload: dict[str, Any], request: Request) -> Any:
         try:
-            cmd_id = payload.pop("command_id", None)
-            return JSONResponse({"success": True, "project": service.create_project(
-                principal(request), payload, command_id=cmd_id,
+            return JSONResponse({"success": True, "project": ops().invoke(
+                principal(request), "project.create", payload,
             )})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -221,7 +250,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects/{project_id}")
     async def api_get_project(project_id: str, request: Request) -> Any:
         try:
-            return JSONResponse(service.get_project(principal(request), project_id))
+            return JSONResponse(ops().invoke(principal(request), "project.get", {"project_id": project_id}))
         except NotFound as exc:
             return not_found(exc)
         except Exception as exc:
@@ -232,10 +261,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             expected_rev = payload.pop("expected_revision", None)
             cmd_id = payload.pop("command_id", None)
-            return JSONResponse({"success": True, "project": service.update_project(
-                principal(request), project_id, payload,
-                expected_revision=expected_rev, command_id=cmd_id,
-            )})
+            return JSONResponse({"success": True, "project": ops().invoke(principal(request), "project.update", {
+                "project_id": project_id, "patch": payload,
+                "expected_revision": expected_rev, "command_id": cmd_id,
+            })})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -250,7 +281,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/projects/{project_id}")
     async def api_archive_project(project_id: str, request: Request) -> Any:
         try:
-            service.archive_project(principal(request), project_id)
+            ops().invoke(principal(request), "project.archive", {"project_id": project_id})
             return JSONResponse({"success": True})
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
@@ -268,11 +299,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             body = payload or {}
             expected_rev = body.get("expected_revision")
             cmd_id = body.get("command_id")
-            result = service.restore_project(
-                principal(request), project_id,
-                expected_revision=expected_rev, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.restore", {
+                "project_id": project_id, "expected_revision": expected_rev, "command_id": cmd_id,
+            })
             return JSONResponse({"success": True, "project": result})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -294,7 +326,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects/{project_id}/resources")
     async def api_project_resources(project_id: str, request: Request) -> Any:
         try:
-            return JSONResponse({"resources": service.list_resources(principal(request), project_id)})
+            return JSONResponse({"resources": ops().invoke(principal(request), "project.resource.list", {"project_id": project_id})})
         except NotFound:
             return JSONResponse({"error": f"Unknown Project: {project_id}"}, status_code=404)
         except Exception as exc:
@@ -302,8 +334,17 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     @router.put("/api/projects/{project_id}/resources/{resource_ref:path}")
     async def api_add_project_resource(project_id: str, resource_ref: str, request: Request, payload: dict[str, Any] | None = None) -> Any:
+        # PHILO-9-01 (A1): the body's expected_revision and command_id reach
+        # the service (they were dropped, so a stale revision and a reused
+        # command id both wrote).
         try:
-            return JSONResponse({"resource": service.add_resource(principal(request), project_id, resource_ref, payload)})
+            body = dict(payload or {})
+            return JSONResponse({"resource": ops().invoke(principal(request), "project.resource.add", url_owns(
+                body, "project.resource.add", project_id=project_id, resource_ref=resource_ref,
+            ))})
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail,
+                                 "error_code": exc.code}, status_code=409)
         except ValidationError as exc:
             return JSONResponse({"error": exc.detail}, status_code=400)
         except ValueError as exc:
@@ -315,8 +356,21 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     @router.delete("/api/projects/{project_id}/resources/{resource_ref:path}")
     async def api_remove_project_resource(project_id: str, resource_ref: str, request: Request) -> Any:
+        # PHILO-9-01 (A1): an optional JSON body carries expected_revision and
+        # command_id to the service.
         try:
-            return JSONResponse({"success": True, "removed": service.remove_resource(principal(request), project_id, resource_ref)})
+            try:
+                body = await request.json() if await request.body() else {}
+            except ValueError:
+                return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
+            if not isinstance(body, dict):
+                return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
+            return JSONResponse({"success": True, "removed": ops().invoke(principal(request), "project.resource.remove", url_owns(
+                body, "project.resource.remove", project_id=project_id, resource_ref=resource_ref,
+            ))})
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail,
+                                 "error_code": exc.code}, status_code=409)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except NotFound as exc:
@@ -336,7 +390,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            service.associate_meeting(principal(request), project_id, meeting_id)
+            ops().invoke(principal(request), "project.link", {"project_id": project_id, "meeting_id": meeting_id})
             return JSONResponse({"success": True})
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
@@ -350,7 +404,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_disassociate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            service.disassociate_meeting(principal(request), project_id, meeting_id)
+            ops().invoke(principal(request), "project.unlink", {"project_id": project_id, "meeting_id": meeting_id})
             return JSONResponse({"success": True})
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
@@ -415,13 +469,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         limit: int = 200, offset: int = 0,
     ) -> Any:
         try:
-            return JSONResponse(service.list_items(
-                principal(request), project_id,
-                item_type=item_type, limit=limit, offset=offset,
-            ))
+            return JSONResponse(ops().invoke(principal(request), "project.item.list", {
+                "project_id": project_id, "item_type": item_type, "limit": limit, "offset": offset,
+            }))
         except NotFound as exc:
             return not_found(exc)
-        except ValidationError as exc:
+        except (ValidationError, OperationRefused) as exc:
             return JSONResponse({"error": exc.detail}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to list project items")
@@ -431,13 +484,11 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         project_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         try:
-            expected_rev = payload.pop("expected_revision", None)
-            cmd_id = payload.pop("command_id", None)
-            result = service.create_item(
-                principal(request), project_id, payload,
-                expected_revision=expected_rev, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.item.create",
+                                  url_owns(payload, "project.item.create", project_id=project_id))
             return JSONResponse({"success": True, "item": result})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -457,11 +508,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         try:
             expected_rev = payload.pop("expected_revision", None)
             cmd_id = payload.pop("command_id", None)
-            result = service.update_item(
-                principal(request), project_id, item_id, payload,
-                expected_revision=expected_rev, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.item.update", {
+                "project_id": project_id, "item_id": item_id, "patch": payload,
+                "expected_revision": expected_rev, "command_id": cmd_id,
+            })
             return JSONResponse({"success": True, "item": result})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -490,13 +543,12 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                     {"success": False, "error": "verb is required"},
                     status_code=400,
                 )
-            expected_rev = payload.pop("expected_revision", None)
-            cmd_id = payload.pop("command_id", None)
-            result = service.transition_item(
-                principal(request), project_id, item_id, verb, payload,
-                expected_revision=expected_rev, command_id=cmd_id,
-            )
+            result = ops().invoke(principal(request), "project.item.transition", {
+                **url_owns(payload, "project.item.transition", project_id=project_id, item_id=item_id), "verb": verb,
+            })
             return JSONResponse({"success": True, "item": result})
+        except OperationRefused as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
         except ConflictError as exc:
             return JSONResponse({"success": False, "error": exc.detail,
                                  "error_code": exc.code}, status_code=409)
@@ -510,7 +562,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     # ── HS-170-04 / HS-171-03: desk needs-you aggregate (cached) ────────
 
-    from ...services.needs_you_aggregate import NeedsYouCache, build_aggregate, shared_last_known
+    from ...services.needs_you_aggregate import NeedsYouCache, shared_last_known
 
     # The owner principal for background rebuilds (the cache builder runs
     # outside a request context).
@@ -527,44 +579,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     ctx.needs_you_last_known = _last_known  # type: ignore[attr-defined]
 
     def _build_needs_you() -> dict:
+        # PHILO-9-01 (F13): the declared desk.needs_you operation -- the one
+        # MCP reaches -- builds the aggregate and applies the heartbeat's
+        # muted projects (one count everywhere). The Door's upcoming meetings
+        # are the hub's, held by this transport.
         door = ctx.door_service
         door_upcoming = getattr(door, "_upcoming", None) if door else None
-        aggregate = build_aggregate(
-            list_projects=service.list_projects,
-            room=service.room,
-            principal=_owner_principal,
-            door_upcoming=door_upcoming,
-            last_known=_last_known,
-        )
-        # M1 (counsel): apply the mute list from heartbeat settings so
-        # the route's count matches the notification edge count (one count
-        # everywhere).  Muted items get ``muted: true`` and are excluded
-        # from ``count`` but included in ``mutedCount``.
-        try:
-            from ...services.heartbeat_service import HeartbeatService
-            from ...db import get_database
-            hb = HeartbeatService(get_database())
-            muted_ids = set(hb.get_settings().get("muted_projects", []))
-        except Exception:
-            muted_ids = set()
-        if muted_ids:
-            unmuted = []
-            muted_count = 0
-            for item in aggregate.get("items", []):
-                if item.get("projectId") in muted_ids:
-                    item["muted"] = True
-                    muted_count += 1
-                else:
-                    item["muted"] = False
-                    unmuted.append(item)
-            aggregate["count"] = len(unmuted)
-            aggregate["mutedCount"] = muted_count
-            # One count everywhere: "across M projects" counts only Rooms
-            # that still contribute (counsel C2).
-            aggregate["projects"] = sorted(
-                {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
-            )
-        return aggregate
+        return ops().invoke(_owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
 
     _needs_you_cache = NeedsYouCache(
         _build_needs_you, max_age_s=900.0, db_factory=_get_db,
