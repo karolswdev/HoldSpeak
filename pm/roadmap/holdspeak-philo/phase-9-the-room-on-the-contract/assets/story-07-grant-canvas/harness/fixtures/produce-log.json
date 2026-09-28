@@ -1,0 +1,53 @@
+{
+  "home_is_isolated": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-07-wire-u38gexvj",
+  "steps": [
+    [
+      "remote on",
+      [
+        200,
+        {
+          "success": true,
+          "enabled": true
+        }
+      ]
+    ],
+    [
+      "issue desk-agent",
+      200,
+      {
+        "id": "c684c362c41d4a86",
+        "identity": "desk-agent",
+        "palette": "DESK",
+        "expires_at": 567176.620538291
+      }
+    ],
+    [
+      "issue sweep-runner",
+      200,
+      {
+        "id": "79cb103d744147ac",
+        "identity": "sweep-runner",
+        "palette": "PROJECT",
+        "expires_at": 610376.622253625
+      }
+    ],
+    [
+      "desk-agent uses /api/mcp",
+      200
+    ],
+    [
+      "desk grant desk-agent",
+      200
+    ],
+    [
+      "create Payments ledger cutover",
+      200,
+      "proj-2222598a3320"
+    ],
+    [
+      "create Hiring loop",
+      200,
+      "proj-c2314d8233c2"
+    ]
+  ]
+}

@@ -48,5 +48,6 @@ PROVISIONAL: 1–1.5 engineering days, the canvas included.
 
 ## Notes
 
+- 2026-09-27 — the list canvas RATIFIED by the owner ("Ratify as drawn"), after Codex Astra canvases r1 DNR → r2 DNR → r3 RATIFY: the accent selection colours (Q6); at 393 the fold line (Q7). Canvas: `assets/story-04-list-canvas/`.
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The 393 Zone column is worse than the Phase 8 record ("`1 ITEM` shows as `1 ITE`"): on this main the whole column is off screen.
 - 2026-09-27 — round two (Codex Astra r1 F7, F8 paid): preservation green at the unaffected width; the sort headers a structural fence; fences ship with the story.
