@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-9-01; the owner's Q1 ruling (by effect); **[the steward lifecycle beat](../../../../docs/internal/philo/phase-9/steward-beat/README.md)** (the charter's five points, B2 and R4-1), authored by Astra and checked by Muad'Dib before build; B1 remains a separate brief condition
 - **Unblocks:** PHILO-9-07, PHILO-9-05, PHILO-9-06
 - **Owner:** implementation: Muad'Dib's lane (Fedaykin, Opus 5.5), Codex Astra checks; prerequisite design beat: Astra, Muad'Dib checks (owner's lane assignment, 2026-09-27)
@@ -29,6 +29,68 @@
 
 - **R4-1:** the steward beat settles agent-started children (`holdspeak/kernel/causation.py:28-40` refuses an agent's child without a live owner continuation): how the agent's grant (story 07) and the owner's policy authorize each child, including effects outside the grant (`holdspeak/services/project_steward_service.py:1313` passes the initiator into `decide_proposal`); the revoke/expiry cutoff without manufacturing an owner principal; `project.stop_steward` bound to the stored `requested_by` (`:455-462`), the project resolved from the stored run.
 - **R4-2:** `project.mark_update_delivered` and `POST /api/updates/{id}/delivered` land here with their admission (story 01 supplies the `project_update_deliveries` table and the read-backs).
+
+## The routes and tools this story admits or refuses (Codex required it; the implementation brief, 2026-09-28)
+
+Grounded on main `d05e0eb5` (route declarations by file:line). "Admitted" = one kernel operation and one terminal receipt; an AGENT (PROJECT credential) is refused `project_delegation_required` with a receipt until story 07's grant names the operation. "Conditional" = admitted for the form the admission table names, exempt for the other form. The B2 edge gives exactly the admitted and conditional rows below `AGENT_SUBMIT` in `required_right` (`holdspeak/principals.py:296`), by exact method and pattern; no prefix. A conditional route's adapter re-applies the OWNER right to its exempt form before any service call (a protocol refusal, no receipt). Every other row keeps today's edge right.
+
+**HTTP, admitted (edge `AGENT_SUBMIT`):**
+
+| Method and pattern | Declaration | Operation | Admission |
+|---|---|---|---|
+| `DELETE /api/projects/{project_id}` | `holdspeak/web/routes/projects.py:281` | `project.archive` | admitted (story 01 row, enforced here) |
+| `POST /api/projects/{project_id}/meetings/{meeting_id}` | `projects.py:390` | `project.link` | admitted; `watch.create` stays its child |
+| `DELETE /api/projects/{project_id}/meetings/{meeting_id}` | `projects.py:404` | `project.unlink` | admitted |
+| `PUT /api/projects/{project_id}/resources/{resource_ref:path}` | `projects.py:335` | `project.resource.add` | admitted |
+| `DELETE /api/projects/{project_id}/resources/{resource_ref:path}` | `projects.py:357` | `project.resource.remove` | admitted |
+| `POST /api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide` | `holdspeak/web/routes/project_reviews.py:109` | `project.decide_proposal` | admitted, all four verbs |
+| `POST /api/projects/{project_id}/reviews/{review_id}/accept` | `project_reviews.py:151` | `project.accept_review` | admitted |
+| `POST /api/updates/{update_id}/publish` | `holdspeak/web/routes/project_updates.py:175` | `project.publish_update` | admitted (grant set, story 07) |
+| `POST /api/updates/{update_id}/delivered` | new, `project_updates.py` | `project.mark_update_delivered` | admitted; owner-only (never granted) |
+| `POST /api/projects/door/count` | `holdspeak/web/routes/project_door.py:40` | `project.door.count` (new row, HTTP only) | admitted (egress) |
+| `PUT /api/projects/{project_id}/steward/policy` | `holdspeak/web/routes/steward.py:224` | `project.configure_steward` (write form) | admitted |
+| `POST /api/projects/{project_id}/steward/runs` | `steward.py:62` | `project.run_steward` | admitted (grant set, story 07) |
+| `POST /api/steward/runs/{run_id}/stop` | `steward.py:190` | `project.stop_steward` | admitted (grant set, story 07) |
+| `POST /api/steward/trigger` | `steward.py:403` | `project.steward.trigger` | admitted |
+| `POST /api/nudges/{step_id}/send` | `steward.py:454` | `nudge.send` | admitted (egress) |
+| `POST /api/watches/{watch_id}/test` | `holdspeak/web/routes/watches.py:119` | `project.watch.test` | admitted (egress) |
+| `POST /api/watches/{watch_id}/evaluate` | `holdspeak/web/routes/providers.py:572` | `project.watch.evaluate` | admitted (egress) |
+| `PUT /api/watches/{watch_id}/rules` | `watches.py:229` | `project.watch.set_rules` | admitted |
+| `POST /api/watches/{watch_id}/pause` | `watches.py:163` | `project.watch.pause` | admitted |
+| `POST /api/watches/{watch_id}/resume` | `watches.py:185` | `project.watch.resume` | admitted |
+| `POST /api/watches/{watch_id}/retire` | `watches.py:207` | `project.watch.retire` | admitted |
+| `PATCH /api/watches/{watch_id}` | `watches.py:89` | `project.watch.update` (new row, HTTP only; the charter's "HTTP capability exceptions") | admitted (changes what may act) |
+| `POST /api/watches/{watch_id}/baseline` | `watches.py:141` | `project.watch.baseline` (new row, HTTP only; same table) | admitted (egress) |
+| `POST /api/projects/{project_id}/suggested-sources/{ref:path}/add` | `projects.py:629` (today `{ref}`, one segment: F16) | `project.add_suggested_source` | admitted (filing; arms egress) |
+
+**HTTP, conditional (edge `AGENT_SUBMIT`; the adapter re-applies OWNER to the exempt form):**
+
+| Method and pattern | Declaration | Operation | Admitted form / exempt form |
+|---|---|---|---|
+| `POST /api/projects/door` | `project_door.py:71` | `project.door.create` | a non-empty `sources` / a bare create |
+| `POST /api/connections/{provider}/recheck` | `holdspeak/web/routes/connections.py:50` | `connection.recheck` | `provider` in {`github`, `jira`, `confluence`} / {`calendar`, `models`} |
+
+**HTTP, reads and exempt edits through the registry (edge right unchanged: OWNER; no operation of their own):** `GET /api/projects/{project_id}/steward/policy` (`steward.py:207`, `project.configure_steward` read form); `GET /api/steward/runs/{run_id}` (`steward.py:169`, `project.get_steward_run`); `GET /api/projects/{project_id}/nudges` (`steward.py:441`, `steward.nudges`); `POST /api/nudges/{step_id}/dismiss` (`steward.py:480`, `nudge.dismiss`, exempt); `GET /api/watches/{watch_id}` (`watches.py:73`, `project.watch.inspect`); `GET /api/projects/{project_id}/suggested-sources` (`projects.py:615`, `project.suggested_sources`); `POST /api/projects/{project_id}/suggested-sources/{ref:path}/dismiss` (`projects.py:668`, `project.dismiss_suggested_source`, exempt); `GET /api/connections` (`connections.py:32`, `connection.list`, a cached read under B1). Story 01's exempt rows keep their routes and rights (`project.create`, `project.update`, `project.restore`, `project.open_review`, `project.draft_update`, `project.update_draft`, the item routes) and gain no operation.
+
+**Unchanged and out (named so no edge map guesses them):** `GET /api/projects/{project_id}/steward/runs` (`steward.py:151`, history read); `GET /api/watches`, `GET /api/projects/{project_id}/watches` (`watches.py:40`, `:56`); `POST /api/updates/{update_id}/regenerate` (`project_updates.py:142`: exempt, its model call keeps `inference.invoke`); `GET /api/updates/{update_id}/markdown` (`project_updates.py:205`, copy for delivery: a read); the provider routes `providers.py:100-536` (the `provider.*` migration is deferred; their GitHub/Jira/Confluence recheck routes stay OWNER at the edge and are BACKLOG debt, "PHILO-9 charter follow-ups"); the setup interview routes.
+
+**MCP tools (dispatch through the one registry; palette unchanged; each admitted row's refusal carries its receipt):**
+
+- Admitted: `project.archive`, `project.link`, `project.unlink`, `project.decide_proposal`, `project.accept_review`, `project.publish_update`, `project.resource.add`, `project.resource.remove` (story 01's rows, enforced here); `project.run_steward`, `project.stop_steward`, `project.steward.trigger`, `nudge.send`, `project.watch.test`, `project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`, `project.watch.resume`, `project.watch.retire`, `project.add_suggested_source`, `project.mark_update_delivered` (new public tool).
+- Conditional: `project.configure_steward` (admitted when any write field is present; a read otherwise); `connection.recheck` (admitted for `github`, `jira`, `confluence`; exempt for `calendar`, `models`).
+- Reads and exempt edits (no operation of their own): `project.get_steward_run`, `steward.nudges`, `nudge.dismiss`, `project.watch.inspect`, `project.suggested_sources`, `project.dismiss_suggested_source`, `connection.list`; story 01's exempt and read rows.
+- Out, unchanged: `provider.*` (13) and `project.setup.*` (10), still callable, migration deferred.
+
+**Internal (no transport, never grantable):** `project.steward.effect` (the beat §5: one child per executed policy slot that has no admitted operation of its own), whose children are the existing `project.decide_proposal` and `inference.invoke` where the slot uses them.
+
+## B1 settled: the connection read contract (2026-09-28)
+
+- **GitHub, Jira, Confluence rows in `connection.list` are cached reads.** Each row returns the state stored by the last real probe, with that row's own `last_checked_at` (the stored `watch_provider_connections.last_checked_at`, `holdspeak/services/github_provider.py:256-284`, the Jira and Confluence `_persist_connection`) and `checked_age_seconds` computed from it. A provider or connection with no stored check returns the state `never_checked` and `last_checked_at: null`, not `not_configured` ("Off" / "Not set up"). `connection.list` makes no `gh`, `acli` or network call (today `_github_entry` runs `connection_status`, `holdspeak/services/connections_service.py:154-177`, and each read stamps `datetime.now()` as its check time, `:172`, `:216`, `:227`, `:294`).
+- **Calendar and Models stay live local reads** (`connections_service.py:392`, `:431`): configuration and assignment are read now; no egress; `last_checked_at` stays null for them because nothing is checked remotely, and the face shows no age for them.
+- **The probe lives only in `connection.recheck`**, admitted for `github`, `jira`, `confluence` (egress), exempt for `calendar`, `models`.
+- **Confluence Recheck gets a real probe** (not withheld): the adapter already has `connection_status(principal, ref)`, which runs `acli` under its lock and persists the state and time (`holdspeak/services/confluence_provider.py:228`, `:271`, `:453`); `ConnectionsService.recheck("confluence")` calls it for the named connection or for every stored one, as Jira does (`connections_service.py:249-275`). Today it only re-reads rows (`:135`).
+- **Every consumer of the List, named:** (1) the Connections face, `web/src/pages/cores/connections/ConnectionsPane.tsx` and its decoder `web/src/pages/cores/connections/api.ts` (`decodeState` at `:65` learns `never_checked`; each card shows its own row's age or "Never checked" as words in its existing chip line; the one-newest-time footer at `ConnectionsPane.tsx:502-509` stops being the only time); (2) the Door's source rows, `web/src/features/project-room/door/useDoorController.ts:9`, `:98-111`, `:194-209` (reads `state` and `connections[]`; `never_checked` reads as not yet connected, and the Door's own count stays admitted separately); (3) the setup interview's annotations, `holdspeak/services/project_setup_service.py:1431` (reads `state` and `account` only; it gets the cached state, which is the point: the interview's migration is deferred and it must not probe); (4) the parked setup face `web/src/features/project-room/_parked/setup/` (parked, not routed; it decodes through the same `api.ts`). No other caller of `list_tools` or `GET /api/connections` exists (`grep` over `holdspeak/` and `web/src/`).
+- **The face change is words and chips on the existing cards only** (the age string, "Never checked", the Confluence Recheck now real). If the build needs a new element or layout, the lane stops and reports: a canvas is owed first (UX-CANON §A.2).
 
 ## Scope
 
