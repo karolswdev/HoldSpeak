@@ -610,3 +610,74 @@ def test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer(hub: Hub) 
     _, opened = _tool(c, "project.open_review", {"project_id": pid})
     _, delta = _tool(c, "project.get_delta", {"project_id": pid})
     assert _resolve(delta, "review_id") == [opened["review_id"]]
+
+
+# ── Round three: Codex Astra r2 on PR #680 (checks/story-01-built-astra-r2.md) ─
+#
+# Ported from Astra's probes (test_review_r2.py). A replay answers the ORIGINAL
+# response the command recorded, never one rebuilt from the row as it is now:
+# after a later write, and for a DELETE that removed nothing. Red at c74a214d.
+
+
+@pytest.mark.parametrize("later", ["edit", "remove"])
+@pytest.mark.parametrize("transport", ["http", "mcp"])
+def test_r2_a_replay_after_a_later_write_answers_the_original(hub: Hub, later: str, transport: str) -> None:
+    pid, nid = _project(hub), _note(hub, "Replay")
+    url = f"/api/projects/{pid}/resources/note:{nid}"
+    args = {"relationship": "member", "command_id": "pcmd_r2_first"}
+    first = hub.client.put(url, json=args)
+    assert first.status_code == 200, first.text
+    if later == "edit":
+        changed = hub.client.put(url, json={"relationship": "output", "command_id": "pcmd_r2_later"})
+    else:
+        changed = hub.client.request("DELETE", url, json={"command_id": "pcmd_r2_later"})
+    assert changed.status_code == 200, changed.text
+    before = _revision(hub, pid)
+    if transport == "http":
+        replay = hub.client.put(url, json=args)
+        assert replay.status_code == 200, replay.text
+        body = replay.json()
+    else:
+        is_error, body = _tool(hub.client, "project.resource.add", {"project_id": pid, "resource_ref": f"note:{nid}", **args})
+        assert not is_error, body
+    assert _revision(hub, pid) == before, "a replay wrote"
+    assert body == first.json()
+
+
+@pytest.mark.parametrize("transport", ["http", "mcp"])
+def test_r2_a_delete_replay_keeps_its_original_false(hub: Hub, transport: str) -> None:
+    pid, nid = _project(hub), _note(hub, "Not filed")
+    url = f"/api/projects/{pid}/resources/note:{nid}"
+    args = {"command_id": "pcmd_r2_remove"}
+    first = hub.client.request("DELETE", url, json=args)
+    assert first.status_code == 200 and first.json()["removed"] is False, first.text
+    if transport == "http":
+        replay = hub.client.request("DELETE", url, json=args)
+        assert replay.status_code == 200, replay.text
+        body = replay.json()
+    else:
+        is_error, body = _tool(hub.client, "project.resource.remove", {"project_id": pid, "resource_ref": f"note:{nid}", **args})
+        assert not is_error, body
+    assert body == first.json()
+
+
+@pytest.mark.parametrize("method,key", [("PUT", "project_id"), ("PUT", "resource_ref"), ("DELETE", "project_id"),
+                                        ("DELETE", "resource_ref"), ("CREATE", "project_id"),
+                                        ("TRANSITION", "project_id"), ("TRANSITION", "item_id"), ("PATCH", "item_id")])
+def test_r2_a_body_id_equal_to_the_url_is_still_refused_without_a_write(hub: Hub, method: str, key: str) -> None:
+    """Astra r2 confirmed R1-1 with these probes; kept as the preservation fence."""
+    pid, nid = _project(hub), _note(hub, "Equal")
+    c = hub.client
+    item = c.post(f"/api/projects/{pid}/items", json={"item_type": "milestone", "title": "M"}).json()["item"]["id"]
+    before = _revision(hub, pid)
+    body = {key: {"project_id": pid, "resource_ref": f"note:{nid}", "item_id": item}[key]}
+    if method in {"PUT", "DELETE"}:
+        r = c.request(method, f"/api/projects/{pid}/resources/note:{nid}", json=body)
+    elif method == "CREATE":
+        r = c.post(f"/api/projects/{pid}/items", json={**body, "item_type": "milestone", "title": "Ignored"})
+    elif method == "TRANSITION":
+        r = c.post(f"/api/projects/{pid}/items/{item}/transition", json={**body, "verb": "missed"})
+    else:
+        r = c.patch(f"/api/projects/{pid}/items/{item}", json={**body, "title": "Ignored"})
+    assert r.status_code == 400, r.text
+    assert _revision(hub, pid) == before

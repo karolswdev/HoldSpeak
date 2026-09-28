@@ -3358,9 +3358,13 @@ class ProjectService:
                                   "resource_ref": ref_str, **body})
         replay = self._check_idempotency(command_id, req_hash, "add_resource")
         if replay is not None:
-            # PHILO-9-01 round two (Codex Astra r1, P2): the replay answers the
-            # first response whole -- the filed row and the recorded envelope --
-            # not only the command envelope.
+            # PHILO-9-01 round three (Codex Astra r2, R1-2): the replay answers
+            # the ORIGINAL response, recorded whole with the command -- never
+            # one rebuilt from the row as it is now. A command recorded before
+            # this change holds only its envelope: that one is answered as the
+            # row plus the envelope, as round two did.
+            if "resource_ref" in replay:
+                return replay
             row = self._db.project_relationships.get(project_id, ref_str, include_deleted=True)
             return {**row.to_dict(), **replay} if row is not None else replay
 
@@ -3451,17 +3455,20 @@ class ProjectService:
                 project_revision=new_revision,
                 changed_refs=(parse_ref(project_ref),),
             )
+            # The response, read in the same transaction, is recorded WITH the
+            # command (the existing result_json column), so a replay answers
+            # exactly it (Codex Astra r2, R1-2).
+            filed = conn.execute(
+                "SELECT * FROM project_resources WHERE project_id=? AND resource_ref=?",
+                (project_id, ref_str),
+            ).fetchone()
+            result = self._db.project_relationships._row(filed).to_dict()
+            result.update(_envelope_to_dict(envelope))
             self._record_command(
                 conn, cmd_id, project_id, "add_resource",
-                req_hash, envelope,
+                req_hash, envelope, result=result,
             )
 
-        # Read the committed row through the repo layer (read-only).
-        row = self._db.project_relationships.get(
-            project_id, ref_str, include_deleted=True,
-        )
-        result = row.to_dict()  # type: ignore[union-attr]
-        result.update(_envelope_to_dict(envelope))
         return result
 
     def remove_resource(
@@ -3477,7 +3484,10 @@ class ProjectService:
                                   "resource_ref": ref_str, "action": "remove"})
         replay = self._check_idempotency(command_id, req_hash, "remove_resource")
         if replay is not None:
-            return True
+            # Codex Astra r2 (R1-2): the original answer, a no-op's false
+            # included. A command recorded before this change has no
+            # ``removed``: it answers True, as before.
+            return bool(replay.get("removed", True))
 
         cmd_id = command_id or generate_pcmd_id()
         now_iso = datetime.now().isoformat()
@@ -3554,6 +3564,7 @@ class ProjectService:
             self._record_command(
                 conn, cmd_id, project_id, "remove_resource",
                 req_hash, envelope,
+                result={**_envelope_to_dict(envelope), "removed": deleted},
             )
 
         return deleted
@@ -4652,10 +4663,16 @@ class ProjectService:
         command_kind: str,
         request_hash: str,
         envelope: CommandResultEnvelope,
+        *,
+        result: Optional[dict[str, Any]] = None,
     ) -> None:
-        """Record a completed command in the idempotency ledger."""
+        """Record a completed command in the idempotency ledger.
+
+        ``result``: the whole response to replay (PHILO-9-01 round three);
+        by default the envelope alone, as before.
+        """
         now_iso = datetime.now().isoformat()
-        result_json = json.dumps(_envelope_to_dict(envelope), ensure_ascii=False)
+        result_json = json.dumps(result if result is not None else _envelope_to_dict(envelope), ensure_ascii=False)
         conn.execute(
             """
             INSERT INTO project_commands (

@@ -56,6 +56,18 @@ The check is committed verbatim: `checks/story-01-built-astra-r1.md`. Its reprod
 | 4 (P2) | `latest_published` looked only in the ten newest rows | `_read_room_updates` reads the newest published update on its own query, with its deliveries | `test_r1_p4_latest_published_survives_eleven_newer_drafts` (publish, a delivery, eleven drafts) |
 | 5 (P2) | HTTP item create refused the consumed `source_observation_id` | Added to `project.item.create` (HTTP only, as `created_by_ref` and `provenance_kind`) | `test_r1_p5_http_item_create_keeps_source_observation_id`; the census `test_every_field_the_service_consumed_is_still_accepted[…]`: an AST read of every body key the service consumed (`create_project`, `create_item`, `update_item`, `add_resource`) is in its closed descriptor |
 
+## Round three: Codex Astra r2 (DO-NOT-RATIFY at `c74a214d`), paid
+
+Committed verbatim: `checks/story-01-built-astra-r2.md`. R1-1, 3, 4, 5 and the automations fix were confirmed paid; R1-2 was not: the replay rebuilt its answer from the row as it is NOW (after a later edit it answered `output`; after a removal `deleted: true`), and a DELETE that removed nothing answered `false`, then `true` on its replay.
+
+- **Repair (the smallest lawful change, no new ledger):** `ProjectService._record_command` takes the whole response (`result=`) and stores it in the existing `project_commands.result_json` column, in the same transaction as the write. `add_resource` records the filed row, read inside the transaction, with its envelope; `remove_resource` records the envelope with `removed`. A replay answers exactly the stored response, a no-op DELETE's `false` included. A command recorded before this change holds only its envelope and is answered as before (the row + the envelope; `removed: true`).
+- **Fences:** Astra's six probes ported (`test_r2_a_replay_after_a_later_write_answers_the_original[http|mcp × edit|remove]`, `test_r2_a_delete_replay_keeps_its_original_false[http|mcp]`): **6 failed at `c74a214d`** (capture 09:25:38; the product tree was unchanged against `c74a214d`), **green after** (capture 09:27:24). Astra's eight equal-id refusal probes are kept as preservation (green before and after). Astra's own file `test_review_r2.py`, run unchanged on this head: 14 passed (capture 09:27:37).
+
+## Verification on the final head
+
+- **Story 01 has no face criterion.** Its criteria are backend, MCP, HTTP and discovery; the Room's face (items, copy and confirm, F1–F3/F7/F10/F11 on the glass) is story 03's, on its ratified canvases. No 1440/393 shot is owed by this story, and none is claimed.
+- **The rig's `op` step on a real hub process:** `tests/unit/test_philo9_rig_op.py` boots `holdspeak web` through `scripts/graph_walk.py`'s `Hub` on an isolated HOME and drives the job through `POST /api/mcp`: `project.create` → `project.item.create` ×2 (the past-due milestone, the risk) → `project.item.list` → `project.get_room` (health `at_risk`, the milestone in NEEDS YOU) → `desk.needs_you` → `decision.create` → `project.resource.add` and its replay (equal) → `project.resource.list` → `project.resource.remove` → `project.draft_update` → `project.publish_update` → `project.list_updates` (published `body_md`, `deliveries: []`). The 14 observation records (op, refusal, elapsed, capture) are printed in the capture 09:27:51 ("RIG OP OBSERVATIONS"). These are op observations, not an assembled atlas file: the phase atlas file is story 05's assembly.
+
 ## CI (the full suite on the PR)
 
 **Run 1** — https://github.com/karolswdev/HoldSpeak/actions/runs/36373291968 on head `9b944418` (round two + main merged): **failure**. Documentation Navigation, DeskOS Web Quality, Linux Smoke and Critical Journeys (G0) green; Unit Tests, Integration Tests (macOS) and E2E Tests (macOS) red. Compared failure-by-failure with main's own run on `ffbeb04b` (https://github.com/karolswdev/HoldSpeak/actions/runs/36367372840, also **failure**: Unit Tests and E2E red): 75 failing ids here, 74 on main, **71 identical** (the Phase 143 census reds, `test_thread_modes` desk/chase sizes, `test_product_copy` debt, `test_phase200_continuity`, the CI runner's missing Playwright browser for `test_graph_walk_calibration`/`first_paint`/`philo4_02`, `git show` of commits absent from the CI checkout, and the E2E glass families). **Four were branch-new, and three were this story's regressions, now repaired:**
@@ -986,4 +998,61 @@ SKIPPED [1] tests/unit/test_project_room_schema.py:390: Owner's real DB not foun
 SKIPPED [1] tests/unit/test_project_updates_schema.py:576: Owner's real DB not found (CI or isolated HOME)
 XFAIL tests/unit/test_philo9_discovery.py::test_mark_it_delivered_maps_to_its_tool - PHILO-9-02 lands project.mark_update_delivered (R4-2)
 2701 passed, 3 skipped, 1 xfailed in 128.35s (0:02:08)
+```
+
+### Captured run — 2026-09-28T09:25:38Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider tests/unit/test_philo9_room_contract.py -k r2 -rf --tb=no`
+- **Cwd:** .
+- **Exit code:** 1
+- **Index-tree:** 79379e155fe6e0418a0de08de402e3dd46e802b0
+
+```text
+FFFFFF........                                                           [100%]
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_replay_after_a_later_write_answers_the_original[http-edit]
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_replay_after_a_later_write_answers_the_original[http-remove]
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_replay_after_a_later_write_answers_the_original[mcp-edit]
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_replay_after_a_later_write_answers_the_original[mcp-remove]
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_delete_replay_keeps_its_original_false[http]
+FAILED tests/unit/test_philo9_room_contract.py::test_r2_a_delete_replay_keeps_its_original_false[mcp]
+6 failed, 8 passed, 23 deselected in 13.48s
+```
+
+### Captured run — 2026-09-28T09:27:24Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider tests/unit/test_philo9_room_contract.py -k r2 -rf --tb=no`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 79379e155fe6e0418a0de08de402e3dd46e802b0
+
+```text
+..............                                                           [100%]
+14 passed, 23 deselected in 11.54s
+```
+
+### Captured run — 2026-09-28T09:27:37Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -p no:cacheprovider .tmp/astra_test_review_r2.py --rootdir=.`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 79379e155fe6e0418a0de08de402e3dd46e802b0
+
+```text
+..............                                                           [100%]
+14 passed in 14.10s
+```
+
+### Captured run — 2026-09-28T09:27:51Z
+
+- **Command:** `bash .tmp/iso.sh uv run pytest -q -s -p no:cacheprovider tests/unit/test_philo9_rig_op.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 79379e155fe6e0418a0de08de402e3dd46e802b0
+
+```text
+
+RIG OP OBSERVATIONS [{"op": "project.create", "refusal": null, "elapsed_s": 0.021, "captured": {"name": "project_id", "path": "project.id", "value": "proj-d2a58809ea05"}}, {"op": "project.item.create", "refusal": null, "elapsed_s": 0.01, "captured": null}, {"op": "project.item.create", "refusal": null, "elapsed_s": 0.002, "captured": null}, {"op": "project.item.list", "refusal": null, "elapsed_s": 0.003, "captured": null}, {"op": "project.get_room", "refusal": null, "elapsed_s": 0.006, "captured": null}, {"op": "desk.needs_you", "refusal": null, "elapsed_s": 0.005, "captured": null}, {"op": "decision.create", "refusal": null, "elapsed_s": 0.006, "captured": {"name": "decision_id", "path": "id", "value": "decision_21b935dbdd51"}}, {"op": "project.resource.add", "refusal": null, "elapsed_s": 0.002, "captured": null}, {"op": "project.resource.add", "refusal": null, "elapsed_s": 0.001, "captured": null}, {"op": "project.resource.list", "refusal": null, "elapsed_s": 0.002, "captured": null}, {"op": "project.resource.remove", "refusal": null, "elapsed_s": 0.002, "captured": null}, {"op": "project.draft_update", "refusal": null, "elapsed_s": 0.005, "captured": {"name": "update_id", "path": "update.id", "value": "pupd_dab3799c98814305b28bccfca20800b0"}}, {"op": "project.publish_update", "refusal": null, "elapsed_s": 0.003, "captured": null}, {"op": "project.list_updates", "refusal": null, "elapsed_s": 0.001, "captured": null}]
+.
+1 passed in 2.66s
 ```
