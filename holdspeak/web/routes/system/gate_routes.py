@@ -59,16 +59,19 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         # grant is revoked FIRST, with its own receipt -- even when no
         # credential remains -- and only then the credential. A kernel
         # refusal returns its error and leaves the credential.
-        from ....services import desk_delegation
+        from ....services import desk_delegation, project_delegation
 
         try:
             grant = desk_delegation.revoke_for_credential(request.state.principal, identity)
+            # PHILO-9-07: its LIVE project grants too, durably first.
+            project_grants = project_delegation.revoke_for_credential(request.state.principal, identity)
         except ServiceError as exc:
             return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
                                 status_code=int(exc.context.get("status") or 409))
         return JSONResponse({"principal": "agent", "identity": identity,
                              "revoked": request.app.state.agent_credentials.revoke(identity),
-                             "grant_revoked": grant is not None, **(grant or {})})
+                             "grant_revoked": grant is not None, **(grant or {}),
+                             "project_grants_revoked": project_grants})
 
     @router.delete("/api/principals/self")
     async def api_revoke_self(request: Request) -> Any:

@@ -1851,6 +1851,25 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_desk_delegation_one_live
 ON kernel_desk_delegations(agent_identity) WHERE state='LIVE';
 CREATE INDEX IF NOT EXISTS idx_desk_delegations_agent_state
 ON kernel_desk_delegations(agent_identity, state);
+-- PHILO-9-07: the owner's project delegation grant (the Q2 ruling): Phase 7's
+-- desk grant columns plus project_id; one LIVE row per (agent, project); the
+-- terms, with the operations, stored in the row. Never sync.
+CREATE TABLE IF NOT EXISTS kernel_project_delegations (
+    id TEXT PRIMARY KEY,
+    agent_identity TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    delegator_kind TEXT NOT NULL, delegator_identity TEXT NOT NULL,
+    operations_json TEXT NOT NULL,
+    terms_sha256 TEXT NOT NULL, expires_at REAL,
+    state TEXT NOT NULL CHECK (state IN ('LIVE','REVOKED','EXPIRED')),
+    revoked_at REAL, revocation_reason TEXT NOT NULL DEFAULT '',
+    grant_operation_id TEXT NOT NULL,
+    created_at REAL NOT NULL, updated_at REAL NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_project_delegation_one_live
+ON kernel_project_delegations(agent_identity, project_id) WHERE state='LIVE';
+CREATE INDEX IF NOT EXISTS idx_project_delegations_agent_project_state
+ON kernel_project_delegations(agent_identity, project_id, state);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (

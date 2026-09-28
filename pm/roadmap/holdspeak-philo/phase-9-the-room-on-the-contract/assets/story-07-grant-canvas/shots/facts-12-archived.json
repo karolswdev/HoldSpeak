@@ -1,0 +1,2681 @@
+{
+ "summary": {
+  "renders": 4,
+  "browser_errors": [],
+  "small_text": {},
+  "raw_buttons": {},
+  "overflow": [],
+  "chips_measured": 70,
+  "contrast_min": 6.99,
+  "contrast_under_4_5": [],
+  "buttons_probed": 26,
+  "points_probed": 234,
+  "not_owned": []
+ },
+ "boards": {
+  "12-archived-a-1440": {
+   "caption": "AGENTS · 2 ACTIVE CREDENTIALS",
+   "rows": [
+    {
+     "text": "● desk-agent ✓ FILING ALLOWED DESK EXPIRES SEP 28 LAST USED 2 H AGO ▸ Projects Stop filing Revoke credential",
+     "nested": false,
+     "open": false,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Stop filing",
+       "species": "btn btn--ghost btn--sm"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    },
+    {
+     "text": "● sweep-runner ✓ RUN AND PUBLISH ALLOWED PAYMENTS LEDGER CUTOVER PROJECT EXPIRES SEP 29 NEVER USED ▸ Projects Revoke credential",
+     "nested": false,
+     "open": true,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    }
+   ],
+   "ledger_present": true,
+   "receipt_well": null,
+   "foot": "« PREFS",
+   "small_text": [],
+   "open_menus": 0,
+   "footer_scanned": true,
+   "raw_buttons": [],
+   "contrast": [
+    {
+     "text": "2 CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "AGENTS · 2 ACTIVE CREDENTIALS",
+     "cls": "surface-ledger-count",
+     "ratio": 16.14,
+     "fs": 12
+    },
+    {
+     "text": "2 ACTIVE CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 11
+    },
+    {
+     "text": "✓ FILING ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 12
+    },
+    {
+     "text": "DESK",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 28",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "LAST USED 2 H AGO",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 6.99,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 11
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    },
+    {
+     "text": "PAYMENTS LEDGER CUTOVER",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "PROJECT",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 29",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "NEVER USED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "ARCHIVED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    }
+   ],
+   "scroll_width": 1440,
+   "body_overflow_x": false,
+   "pointer": [
+    {
+     "text": "Stop filing",
+     "in_foot": false,
+     "face": {
+      "w": 97.2,
+      "h": 24
+     },
+     "target": {
+      "w": 97.2,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1206.0,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1206.0,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1206.0,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1324.8,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1324.8,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Allow run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 169.2,
+      "h": 24
+     },
+     "target": {
+      "w": 169.2,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 407.6,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 407.6,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 407.6,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Stop run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 162,
+      "h": 24
+     },
+     "target": {
+      "w": 162,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 715.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 715.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 715.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Issue credential",
+     "in_foot": false,
+     "face": {
+      "w": 141.2,
+      "h": 28
+     },
+     "target": {
+      "w": 141.2,
+      "h": 28
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 109.6,
+       "y": 389.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 40,
+       "y": 376.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 179.2,
+       "y": 376.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 40,
+       "y": 402.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 179.2,
+       "y": 402.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 109.6,
+       "y": 376.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 109.6,
+       "y": 402.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 40,
+       "y": 389.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 179.2,
+       "y": 389.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "« PREFS",
+     "in_foot": true,
+     "face": {
+      "w": 73.45,
+      "h": 20
+     },
+     "target": {
+      "w": 73.45,
+      "h": 20
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1354.3,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1354.3,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1354.3,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    }
+   ]
+  },
+  "12b-archived-off-a-1440": {
+   "caption": "AGENTS · 2 ACTIVE CREDENTIALS",
+   "rows": [
+    {
+     "text": "● desk-agent ✓ FILING ALLOWED DESK EXPIRES SEP 28 LAST USED 2 H AGO ▸ Projects Stop filing Revoke credential",
+     "nested": false,
+     "open": false,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Stop filing",
+       "species": "btn btn--ghost btn--sm"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    },
+    {
+     "text": "● sweep-runner ✓ RUN AND PUBLISH ALLOWED PAYMENTS LEDGER CUTOVER PROJECT EXPIRES SEP 29 NEVER USED ▸ Projects Revoke credential",
+     "nested": false,
+     "open": true,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    }
+   ],
+   "ledger_present": true,
+   "receipt_well": null,
+   "foot": "« PREFS",
+   "small_text": [],
+   "open_menus": 0,
+   "footer_scanned": true,
+   "raw_buttons": [],
+   "contrast": [
+    {
+     "text": "AGENTS · 2 ACTIVE CREDENTIALS",
+     "cls": "surface-ledger-count",
+     "ratio": 16.14,
+     "fs": 12
+    },
+    {
+     "text": "2 ACTIVE CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 11
+    },
+    {
+     "text": "✓ FILING ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 12
+    },
+    {
+     "text": "DESK",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 28",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "LAST USED 2 H AGO",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 6.99,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 11
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    },
+    {
+     "text": "PAYMENTS LEDGER CUTOVER",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "PROJECT",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 29",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "NEVER USED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "ARCHIVED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    }
+   ],
+   "scroll_width": 1440,
+   "body_overflow_x": false,
+   "pointer": [
+    {
+     "text": "Stop filing",
+     "in_foot": false,
+     "face": {
+      "w": 97.2,
+      "h": 24
+     },
+     "target": {
+      "w": 97.2,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1206.0,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1206.0,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1206.0,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1158.4,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1253.6,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1324.8,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 235.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 257.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 246.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1324.8,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 269.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1324.8,
+       "y": 291.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1255.6,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1394,
+       "y": 280.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Allow run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 169.2,
+      "h": 24
+     },
+     "target": {
+      "w": 169.2,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 407.6,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 407.6,
+       "y": 308.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 407.6,
+       "y": 330.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 324,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 491.2,
+       "y": 319.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Stop run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 162,
+      "h": 24
+     },
+     "target": {
+      "w": 162,
+      "h": 24
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 715.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 715.7,
+       "y": 336.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 715.7,
+       "y": 358.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 635.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 795.7,
+       "y": 347.2,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "« PREFS",
+     "in_foot": true,
+     "face": {
+      "w": 73.45,
+      "h": 20
+     },
+     "target": {
+      "w": 73.45,
+      "h": 20
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 1354.3,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1354.3,
+       "y": 644.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1354.3,
+       "y": 662.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1318.5,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 1390,
+       "y": 653.5,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    }
+   ]
+  },
+  "12-archived-a-393": {
+   "caption": "AGENTS · 2 ACTIVE CREDENTIALS",
+   "rows": [
+    {
+     "text": "● desk-agent ✓ FILING ALLOWED DESK EXPIRES SEP 28 LAST USED 2 H AGO ▸ Projects Stop filing Revoke credential",
+     "nested": false,
+     "open": false,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Stop filing",
+       "species": "btn btn--ghost btn--sm"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    },
+    {
+     "text": "● sweep-runner ✓ RUN AND PUBLISH ALLOWED PAYMENTS LEDGER CUTOVER PROJECT EXPIRES SEP 29 NEVER USED ▸ Projects Revoke credential",
+     "nested": false,
+     "open": true,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    }
+   ],
+   "ledger_present": true,
+   "receipt_well": null,
+   "foot": "« PREFS",
+   "small_text": [],
+   "open_menus": 0,
+   "footer_scanned": true,
+   "raw_buttons": [],
+   "contrast": [
+    {
+     "text": "2 CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "AGENTS · 2 ACTIVE CREDENTIALS",
+     "cls": "surface-ledger-count",
+     "ratio": 16.14,
+     "fs": 12
+    },
+    {
+     "text": "2 ACTIVE CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 11
+    },
+    {
+     "text": "✓ FILING ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 12
+    },
+    {
+     "text": "DESK",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 28",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "LAST USED 2 H AGO",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 6.99,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 11
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    },
+    {
+     "text": "PAYMENTS LEDGER CUTOVER",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "PROJECT",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 29",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "NEVER USED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "ARCHIVED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    }
+   ],
+   "scroll_width": 393,
+   "body_overflow_x": false,
+   "pointer": [
+    {
+     "text": "Stop filing",
+     "in_foot": false,
+     "face": {
+      "w": 97.2,
+      "h": 24
+     },
+     "target": {
+      "w": 97.2,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 183.0,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 183.0,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 183.0,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 301.8,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 301.8,
+       "y": 410.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 389.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 389.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 431.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 431.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 389.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 431.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 410.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 410.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Allow run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 169.2,
+      "h": 24
+     },
+     "target": {
+      "w": 169.2,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 115.6,
+       "y": 472.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 451.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 451.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 493.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 493.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 115.6,
+       "y": 451.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 115.6,
+       "y": 493.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 472.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 472.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Stop run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 162,
+      "h": 24
+     },
+     "target": {
+      "w": 162,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 281,
+       "y": 574.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 595.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 595.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 281,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 281,
+       "y": 595.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 574.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 574.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Issue credential",
+     "in_foot": false,
+     "face": {
+      "w": 141.2,
+      "h": 28
+     },
+     "target": {
+      "w": 141.2,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 85.6,
+       "y": 644.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 16,
+       "y": 623.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 155.2,
+       "y": 623.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 16,
+       "y": 665.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 155.2,
+       "y": 665.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 85.6,
+       "y": 623.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 85.6,
+       "y": 665.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 16,
+       "y": 644.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 155.2,
+       "y": 644.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "« PREFS",
+     "in_foot": true,
+     "face": {
+      "w": 73.45,
+      "h": 20
+     },
+     "target": {
+      "w": 73.45,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 331.3,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 331.3,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 331.3,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    }
+   ]
+  },
+  "12b-archived-off-a-393": {
+   "caption": "AGENTS · 2 ACTIVE CREDENTIALS",
+   "rows": [
+    {
+     "text": "● desk-agent ✓ FILING ALLOWED DESK EXPIRES SEP 28 LAST USED 2 H AGO ▸ Projects Stop filing Revoke credential",
+     "nested": false,
+     "open": false,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Stop filing",
+       "species": "btn btn--ghost btn--sm"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    },
+    {
+     "text": "● sweep-runner ✓ RUN AND PUBLISH ALLOWED PAYMENTS LEDGER CUTOVER PROJECT EXPIRES SEP 29 NEVER USED ▸ Projects Revoke credential",
+     "nested": false,
+     "open": true,
+     "verbs": [
+      {
+       "text": "▸\nProjects",
+       "species": "btn--chrome surface-disclosure-trigger"
+      },
+      {
+       "text": "Revoke credential",
+       "species": "btn btn--ghost btn--sm"
+      }
+     ],
+     "refused_code": null
+    }
+   ],
+   "ledger_present": true,
+   "receipt_well": null,
+   "foot": "« PREFS",
+   "small_text": [],
+   "open_menus": 0,
+   "footer_scanned": true,
+   "raw_buttons": [],
+   "contrast": [
+    {
+     "text": "AGENTS · 2 ACTIVE CREDENTIALS",
+     "cls": "surface-ledger-count",
+     "ratio": 16.14,
+     "fs": 12
+    },
+    {
+     "text": "2 ACTIVE CREDENTIALS",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 11
+    },
+    {
+     "text": "✓ FILING ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 9.85,
+     "fs": 12
+    },
+    {
+     "text": "DESK",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 28",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "LAST USED 2 H AGO",
+     "cls": "surface-token",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 6.99,
+     "fs": 12
+    },
+    {
+     "text": "●",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 11
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    },
+    {
+     "text": "PAYMENTS LEDGER CUTOVER",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "PROJECT",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "EXPIRES SEP 29",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "NEVER USED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "Projects",
+     "cls": "surface-disclosure-label",
+     "ratio": 7.39,
+     "fs": 12
+    },
+    {
+     "text": "ARCHIVED",
+     "cls": "surface-token",
+     "ratio": 7.63,
+     "fs": 12
+    },
+    {
+     "text": "✓ RUN AND PUBLISH ALLOWED",
+     "cls": "surface-state-chip",
+     "ratio": 10.18,
+     "fs": 12
+    }
+   ],
+   "scroll_width": 393,
+   "body_overflow_x": false,
+   "pointer": [
+    {
+     "text": "Stop filing",
+     "in_foot": false,
+     "face": {
+      "w": 97.2,
+      "h": 24
+     },
+     "target": {
+      "w": 97.2,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 183.0,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 183.0,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 183.0,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 135.4,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 230.6,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 301.8,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 359.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 401.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 380.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Revoke credential",
+     "in_foot": false,
+     "face": {
+      "w": 140.41,
+      "h": 24
+     },
+     "target": {
+      "w": 140.41,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 301.8,
+       "y": 446.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 425.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 425.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 467.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 467.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 425.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 301.8,
+       "y": 467.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 232.6,
+       "y": 446.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 371,
+       "y": 446.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Allow run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 169.2,
+      "h": 24
+     },
+     "target": {
+      "w": 169.2,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 115.6,
+       "y": 532.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 511.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 511.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 115.6,
+       "y": 511.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 115.6,
+       "y": 553.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 32,
+       "y": 532.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 199.2,
+       "y": 532.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "Stop run and publish",
+     "in_foot": false,
+     "face": {
+      "w": 162,
+      "h": 24
+     },
+     "target": {
+      "w": 162,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 281,
+       "y": 634.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 613.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 613.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 655.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 655.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 281,
+       "y": 613.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 281,
+       "y": 655.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 201,
+       "y": 634.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 361,
+       "y": 634.1,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    },
+    {
+     "text": "« PREFS",
+     "in_foot": true,
+     "face": {
+      "w": 73.45,
+      "h": 20
+     },
+     "target": {
+      "w": 73.45,
+      "h": 44
+     },
+     "owned": true,
+     "points": [
+      {
+       "x": 331.3,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 331.3,
+       "y": 678,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 331.3,
+       "y": 720,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 295.5,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      },
+      {
+       "x": 367,
+       "y": 699,
+       "efp": true,
+       "pointer": true,
+       "hit": "btn"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

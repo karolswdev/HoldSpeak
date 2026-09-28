@@ -39,7 +39,13 @@ def causality(
     if not direct_parent_principal and not delegated_continuation:
         raise KernelRefused("parent_operation_scope_required")
     if principal.kind is PrincipalKind.AGENT and not delegated_continuation:
-        raise KernelRefused("parent_continuation_identity_required")
+        # PHILO-9-07 (the steward beat, section 4): the one alternative to an
+        # owner continuation -- a child the hub's steward service makes for
+        # the agent's OWN run, under that run's frozen grant and policy.
+        from .project import agent_steward_child
+
+        if not (direct_parent_principal and agent_steward_child(request.name, principal, parent_id)):
+            raise KernelRefused("parent_continuation_identity_required")
     return parent_id, str(parent["correlation_id"] or parent_id)
 
 

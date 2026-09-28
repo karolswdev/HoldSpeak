@@ -51,6 +51,10 @@ The face reads `state` only. Chip: `LIVE` → ALLOWED; `REVOKED`/`EXPIRED` → S
 | 10 | The last orphan stopped | project LIVE, then REVOKED by this Stop; no credentials; OFF | the row is gone; nothing left, so no ledger; foot `STOPPED 14:13` and its well open: `SUCCEEDED`, `RUN AND PUBLISH STOPPED`, the project, `sweep-runner`, `BY OWNER` |
 | 11 | The owner revokes a credential | `sweep-runner`'s project grant LIVE, then REVOKED (`credential_revoked`) before its credential is removed | `sweep-runner`'s row is gone; no orphan remains; foot `STOPPED 14:15` and its well open: `SUCCEEDED`, `RUN AND PUBLISH STOPPED`, `CREDENTIAL REVOKED`, the project, `sweep-runner`, `BY OWNER` |
 
+| 12 | Archived project, grant LIVE, ON (board `12-archived`) and OFF (`12b-archived-off`) | LIVE (Payments, archived) | Payments line: `ARCHIVED` word chip, ALLOWED, `Stop run and publish` (never Allow on an archived project); Hiring unchanged; OFF keeps the row (live authority) |
+
+Board 12 **added 2026-09-28 by Muad'Dib's ruling, a stop-authority state the canvas omitted; the owner sees it with the closing shots** (Codex Astra r1 on PR #685, finding 2: archive keeps a project's grants, so a LIVE grant on an archived project must stay visible and stoppable). Shot with the same harness (`ONLY_BOARDS=12-archived,12b-archived-off shoot.py a`; facts `shots/facts-12-archived.json`: 4 renders, 0 small text, 0 raw buttons, contrast min 6.99, 234 points all owned). Set A only.
+
 ## The strings (proposed)
 
 | Slot | Set A (recommended) | Set B |

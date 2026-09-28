@@ -80,7 +80,7 @@ type StoredProjectGrant = {
   expires_at: number | null;
 };
 /** The wire: the EFFECTIVE projection of the latest stored row. */
-type ProjectDelegation = Delegation & { project_id: string; project_name: string };
+type ProjectDelegation = Delegation & { project_id: string; project_name: string; project_archived?: boolean };
 type OrphanProjectDelegation = ProjectDelegation & { identity: string };
 type ProposedCredential = Omit<Credential, "palette"> & {
   palette: string;
@@ -132,7 +132,8 @@ function project(row: StoredProjectGrant | undefined, now: number): Delegation |
 }
 
 /** GET /api/settings/remote as story 07 would return it. */
-function serve(identities: string[], stored: StoredProjectGrant[], enabled = true, deskStored: StoredDeskGrant[] = []): Wire {
+function serve(identities: string[], stored: StoredProjectGrant[], enabled = true, deskStored: StoredDeskGrant[] = [],
+               archived: string[] = []): Wire {
   const nameOf = (id: string) => PROJECTS.find((p) => p.id === id)?.name ?? id;
   const latest = (identity: string, projectId: string) =>
     stored.filter((g) => g.identity === identity && g.project_id === projectId).at(-1);
@@ -148,7 +149,8 @@ function serve(identities: string[], stored: StoredProjectGrant[], enabled = tru
       palette: ISSUED_PALETTE[c.identity] ?? String(c.palette),
       project_delegations: pairs
         .filter(([identity]) => identity === c.identity)
-        .map(([identity, pid]) => ({ project_id: pid, project_name: nameOf(pid), ...project(latest(identity, pid), NOW_S)! })),
+        .map(([identity, pid]) => ({ project_id: pid, project_name: nameOf(pid), project_archived: archived.includes(pid),
+                                     ...project(latest(identity, pid), NOW_S)! })),
     })),
     // Phase 7's rule, unchanged: every desk grant LIVE in storage whose
     // identity has no credential row, projected (a past expiry says EXPIRED).
@@ -308,13 +310,21 @@ function ProjectLines({
 }: { cred: ProposedCredential; words: Words; refusals: Record<string, Refusal> }) {
   // The Settings grammar (GadgetRow, as the Remote access group itself):
   // the project's name is the label; its grant chip and verb are the gadget.
+  // Added 2026-09-28 (Muad'Dib's ruling): an archived project keeps its
+  // grant, so a LIVE grant on it stays listed -- ARCHIVED, Stop only.
+  const archivedLive = cred.project_delegations.filter((g) => g.project_archived && g.state === "LIVE");
+  const lines = [
+    ...PROJECTS.filter((p) => !archivedLive.some((g) => g.project_id === p.id)).map((p) => ({ id: p.id, name: p.name, archived: false })),
+    ...archivedLive.map((g) => ({ id: g.project_id, name: g.project_name, archived: true })),
+  ];
   return (
     <div data-testid={`project-lines-${cred.identity}`}>
-      {PROJECTS.map((p) => {
+      {lines.map((p) => {
         const grant = cred.project_delegations.find((g) => g.project_id === p.id) ?? null;
         return (
           <GadgetRow key={p.id} label={p.name}>
             <span className="grant-canvas-line" data-testid={`project-line-${p.id}`}>
+              {p.archived ? <span className="surface-token" data-chip>ARCHIVED</span> : null}
               <ProjectGrantChip grant={grant} words={words} />
               <RefusalChip refusal={refusals[`${cred.identity}/${p.id}`]} />
               <Button variant="ghost" dense data-testid="project-grant-verb">
@@ -551,6 +561,12 @@ function boardFor(name: string, words: Words): Board {
         foot: <Foot act={refused} open />,
       };
     }
+    case "12-archived":
+      // Added 2026-09-28 by Muad'Dib's ruling: Payments archived with its grant
+      // still LIVE (archive keeps grants); the line stays, ARCHIVED, Stop only.
+      return { body: P(serve(BOTH, [g("LIVE")], true, [], [PAYMENTS.id]), { open: ["sweep-runner"] }), foot: <Foot act={null} /> };
+    case "12b-archived-off":
+      return { body: P(serve(BOTH, [g("LIVE")], false, [], [PAYMENTS.id]), { open: ["sweep-runner"] }), foot: <Foot act={null} /> };
     case "9-two-projects":
       return {
         body: P(serve(BOTH, [g("LIVE"), g("LIVE", HIRING.id, null, "sweep-runner", "projdeleg_77d0")])),

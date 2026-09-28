@@ -32,6 +32,7 @@ import {
   type CycleOption,
 } from "../../desk/surface/gadgets";
 import {
+  Disclosure,
   Receipt,
   countToken,
   humanTime,
@@ -269,14 +270,27 @@ type RemoteCredential = {
 type GrantState = "LIVE" | "REVOKED" | "EXPIRED";
 type Delegation = { state: GrantState; grant_id: string; expires_at: number | null };
 type OrphanDelegation = Delegation & { identity: string };
+/* PHILO-9-07: the owner's project delegation grant, per (agent, project) (the
+ * RATIFIED canvas, pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-
+ * contract/assets/story-07-grant-canvas/README.md, set A). The same rule: the
+ * server sends the EFFECTIVE state; the face reads `state` only. */
+type ProjectDelegation = Delegation & { project_id: string; project_name: string; project_archived?: boolean };
+type OrphanProjectDelegation = ProjectDelegation & { identity: string };
+type ProjectFact = { id: string; name: string; is_archived?: boolean | number | null };
 
 type RemoteWire = {
   enabled: boolean;
   bind_host: string | null;
   port: number | null;
-  credentials: (RemoteCredential & { delegation?: Delegation | null })[];
+  credentials: (RemoteCredential & {
+    delegation?: Delegation | null;
+    /** One per project with any stored grant row (absent = never granted). */
+    project_delegations?: ProjectDelegation[];
+  })[];
   /** Grants LIVE in storage whose identity has no credential row. */
   delegations?: OrphanDelegation[];
+  /** Project grants LIVE in storage whose identity has no credential row. */
+  project_delegations?: OrphanProjectDelegation[];
   active_count: number;
   total_count: number;
 };
@@ -297,6 +311,33 @@ export const GRANT_WORDS = {
   agents: "AGENTS",
 } as const;
 
+/** PHILO-9-07: the project grant's ratified words (set A, the owner,
+ *  2026-09-27: "Ratify as drawn"). The fences read them from here. */
+export const PROJECT_GRANT_WORDS = {
+  allow: "Allow run and publish",
+  stop: "Stop run and publish",
+  live: "RUN AND PUBLISH ALLOWED",
+  stopped: "RUN AND PUBLISH STOPPED",
+  actAllow: "ALLOW RUN AND PUBLISH",
+  actStop: "STOP RUN AND PUBLISH",
+  projects: "Projects",
+  credentialRevoked: "CREDENTIAL REVOKED",
+  archived: "ARCHIVED",
+} as const;
+
+/** Palette compatibility (the canvas's settled rule): a grant's controls
+ *  show only where the credential's ISSUED palette holds the tools that grant
+ *  covers (measured with holdspeak.mcp.palettes.resolve_palette; fenced
+ *  against it by tests/unit/test_philo9_project_grant_face_rule.py). */
+export const PROJECT_GRANT_PALETTES = ["PROJECT", "SWEEP", "DESK", "ALL"] as const;
+export const DESK_GRANT_PALETTES = ["DESK", "ALL"] as const;
+
+function paletteHolds(palette: string | string[] | null, named: readonly string[], prefixes: readonly string[]): boolean {
+  if (!palette) return true; // unrestricted
+  if (typeof palette === "string") return named.includes(palette);
+  return palette.some((tool) => prefixes.some((prefix) => tool.startsWith(prefix)));
+}
+
 /** The kernel's refusal codes (verbatim) and their plain face tokens; the
  *  code rides `data-code` for the fence. */
 export const GRANT_REFUSAL_TOKEN: Record<string, string> = {
@@ -304,6 +345,9 @@ export const GRANT_REFUSAL_TOKEN: Record<string, string> = {
   desk_delegation_required: "NO GRANT",
   desk_delegation_revoked: "GRANT STOPPED",
   desk_delegation_expired: "GRANT EXPIRED",
+  project_delegation_required: "NO GRANT",
+  project_delegation_revoked: "GRANT STOPPED",
+  project_delegation_expired: "GRANT EXPIRED",
   invalid_arguments: "BAD REQUEST",
 };
 
@@ -320,6 +364,11 @@ export type GrantAct = {
   time: string;
   /** MMM D. */
   date: string;
+  /** PHILO-9-07: a project grant's act names its project. */
+  kind?: "desk" | "project";
+  project?: string;
+  /** Set when the grant ended because the owner revoked the credential. */
+  reason?: string;
 };
 
 function receiptClock(createdAt: unknown): { time: string; date: string } {
@@ -330,12 +379,34 @@ function receiptClock(createdAt: unknown): { time: string; date: string } {
 
 function grantActFrom(
   body: unknown, outcome: GrantAct["outcome"], verb: GrantVerbKind, identity: string, code?: string,
+  extra: Partial<GrantAct> = {},
 ): GrantAct | null {
   const record = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
   const receipt = (record.receipt && typeof record.receipt === "object" ? record.receipt : {}) as Record<string, unknown>;
   const operationId = String(record.operation_id ?? receipt.operation_id ?? "");
   if (!operationId) return null;
-  return { operation_id: operationId, outcome, verb, code, identity, ...receiptClock(receipt.created_at) };
+  return { operation_id: operationId, outcome, verb, code, identity, ...receiptClock(receipt.created_at), ...extra };
+}
+
+function ProjectGrantChip({ grant }: { grant: Delegation | null | undefined }) {
+  if (!grant) return null; // never granted: no chip
+  return grant.state === "LIVE"
+    ? <StateChip state="success" label={PROJECT_GRANT_WORDS.live} data-testid="project-grant-chip" />
+    : <StateChip state="idle" label={PROJECT_GRANT_WORDS.stopped} data-testid="project-grant-chip" />;
+}
+
+/** The closed row's summary: only LIVE authority. One project by name; more by count. */
+function ProjectGrantSummary({ grants }: { grants: ProjectDelegation[] }) {
+  const live = grants.filter((g) => g.state === "LIVE");
+  if (live.length === 0) return null;
+  return (
+    <span data-testid="project-grant-summary">
+      <StateChip state="success" label={PROJECT_GRANT_WORDS.live} />{" "}
+      <span className="surface-token" data-chip>
+        {live.length === 1 ? live[0].project_name.toUpperCase() : countToken(live.length, "PROJECT", "PROJECTS")}
+      </span>
+    </span>
+  );
 }
 
 function GrantChip({ grant }: { grant: Delegation | null | undefined }) {
@@ -358,6 +429,7 @@ function GrantRefusalChip({ refusal }: { refusal?: GrantRefusal }) {
 /** The grant's receipt, readable after its row is gone (one species for both outcomes). */
 export function GrantReceiptWell({ act }: { act: GrantAct }) {
   const ok = act.outcome === "succeeded";
+  const words = act.kind === "project" ? PROJECT_GRANT_WORDS : GRANT_WORDS;
   return (
     <SurfaceWell head="RECEIPT">
       <div
@@ -370,12 +442,14 @@ export function GrantReceiptWell({ act }: { act: GrantAct }) {
         {ok ? <StateChip state="success" label="SUCCEEDED" /> : <StateChip state="failure" label="REFUSED" />}
         <span className="surface-token" data-chip>
           {ok
-            ? (act.verb === "stop" ? GRANT_WORDS.stopped : GRANT_WORDS.live)
-            : (act.verb === "stop" ? GRANT_WORDS.actStop : GRANT_WORDS.actAllow)}
+            ? (act.verb === "stop" ? words.stopped : words.live)
+            : (act.verb === "stop" ? words.actStop : words.actAllow)}
         </span>
         {!ok && act.code ? (
           <span className="surface-token" data-chip>{GRANT_REFUSAL_TOKEN[act.code] ?? act.code}</span>
         ) : null}
+        {act.reason ? <span className="surface-token" data-chip>{act.reason}</span> : null}
+        {act.project ? <span className="gadget-fact">{act.project}</span> : null}
         <span className="gadget-fact">{act.identity}</span>
         <span className="surface-token" data-chip>BY OWNER</span>
         <span className="surface-token" data-chip data-muted>{act.date} {act.time}</span>
@@ -645,6 +719,9 @@ export function RemoteAccessModule({
   const [toggleBusy, setToggleBusy] = useState(false);
   const [granting, setGranting] = useState<string | null>(null);
   const [refusals, setRefusals] = useState<Record<string, GrantRefusal>>({});
+  // PHILO-9-07: the projects a credential row can grant, and which rows are open.
+  const [projects, setProjects] = useState<ProjectFact[]>([]);
+  const [openRows, setOpenRows] = useState<string[]>([]);
 
   const fetchRemote = useCallback(async () => {
     try {
@@ -743,6 +820,42 @@ export function RemoteAccessModule({
     }
   };
 
+  /** PHILO-9-07: Allow / Stop run and publish -- project.delegation.grant / .revoke. */
+  const setProjectGrant = async (identity: string, projectId: string, projectName: string, verb: GrantVerbKind) => {
+    const key = `${identity}/${projectId}`;
+    const extra = { kind: "project" as const, project: projectName };
+    setGranting(key);
+    setError("");
+    try {
+      const result = await apiFetch(
+        `/api/settings/remote/delegations/${encodeURIComponent(identity)}/projects/${encodeURIComponent(projectId)}`,
+        { method: verb === "allow" ? "PUT" : "DELETE", ...(verb === "allow" ? { json: {} } : {}) },
+      );
+      setRefusals((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+      const act = grantActFrom(result, "succeeded", verb, identity, undefined, extra);
+      if (act) onGrantAct?.(act);
+    } catch (err) {
+      const payload = err instanceof ApiError ? err.payload : null;
+      const code = payload && typeof payload === "object"
+        ? String((payload as Record<string, unknown>).error ?? "")
+        : "";
+      if (code) {
+        setRefusals((current) => ({ ...current, [key]: { verb, code } }));
+        const act = grantActFrom(payload, "refused", verb, identity, code, extra);
+        if (act) onGrantAct?.(act);
+      } else {
+        setError(readableError(err));
+      }
+    } finally {
+      setGranting(null);
+      await fetchRemote();
+    }
+  };
+
   const revokeCredential = async (id: string, identity: string) => {
     setRevoking(id);
     setError("");
@@ -750,9 +863,18 @@ export function RemoteAccessModule({
       const result = await apiFetch<Record<string, unknown>>(`/api/settings/remote/credentials/${id}`, {
         method: "DELETE",
       });
-      // Durable first: the credential's LIVE grant was revoked BEFORE the
-      // credential, with its own receipt (credential_revoked).
-      if (result?.grant_revoked) {
+      // Durable first: the credential's LIVE grants were revoked BEFORE the
+      // credential, each with its own receipt (credential_revoked).
+      const projectEnded = Array.isArray(result?.project_grants_revoked)
+        ? (result.project_grants_revoked as Record<string, unknown>[])
+        : [];
+      if (projectEnded.length > 0) {
+        const last = projectEnded[projectEnded.length - 1];
+        const act = grantActFrom(last, "succeeded", "stop", identity, undefined, {
+          kind: "project", project: String(last.project_name ?? ""), reason: PROJECT_GRANT_WORDS.credentialRevoked,
+        });
+        if (act) onGrantAct?.(act);
+      } else if (result?.grant_revoked) {
         const act = grantActFrom(result, "succeeded", "stop", identity);
         if (act) onGrantAct?.(act);
       }
@@ -775,12 +897,23 @@ export function RemoteAccessModule({
   const enabled = wire?.enabled ?? false;
   const allCredentials = wire?.credentials ?? [];
   // PHILO-7-02: a grant is authority, whatever the transport switch says.
-  // ON: every credential row. OFF: the credential rows whose effective grant
-  // is LIVE. Always: every grant row with no credential.
+  // ON: every credential row. OFF: the credential rows with a LIVE desk or
+  // (PHILO-9-07) a LIVE project grant. Always: every grant row with no credential.
   const credentials = enabled
     ? allCredentials
-    : allCredentials.filter((c) => c.delegation?.state === "LIVE");
+    : allCredentials.filter((c) => c.delegation?.state === "LIVE"
+        || (c.project_delegations ?? []).some((g) => g.state === "LIVE"));
   const delegations = wire?.delegations ?? [];
+  const projectOrphans = wire?.project_delegations ?? [];
+  const toggleRow = (identity: string, open: boolean) => {
+    setOpenRows((rows) => (open ? [...rows.filter((r) => r !== identity), identity] : rows.filter((r) => r !== identity)));
+    if (open) {
+      // The projects the row can grant: every project that is not archived.
+      void apiFetch<{ projects?: ProjectFact[] }>("/api/projects")
+        .then((listed) => setProjects((listed?.projects ?? []).filter((p) => !p.is_archived)))
+        .catch((err) => setError(readableError(err)));
+    }
+  };
   const activeCount = credentials.filter((c) => c.active).length;
   const totalCount = allCredentials.length;
   const addressToken = enabled && wire?.port
@@ -810,7 +943,7 @@ export function RemoteAccessModule({
 
       {/* PHILO-7-02: the ledger renders when any credential row OR any
           grant row is visible, whatever the switch says. */}
-      {credentials.length > 0 || delegations.length > 0 ? (
+      {credentials.length > 0 || delegations.length > 0 || projectOrphans.length > 0 ? (
         <SurfaceLedger
           count={<>
             {GRANT_WORDS.agents}
@@ -822,50 +955,118 @@ export function RemoteAccessModule({
           </>}
           cols="room"
         >
-          {credentials.map((cred) => (
-            <SurfaceLedgerRow
-              key={cred.id}
-              lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
-              primary={cred.identity}
-              expands={false}
-              data-testid={`credential-row-${cred.id}`}
-              cells={<>
-                <GrantChip grant={cred.delegation} />
-                <GrantRefusalChip refusal={refusals[cred.identity]} />
-                <span className="surface-token" data-chip>{paletteLabel(cred.palette)}</span>
-                {cred.active ? (
-                  <span className="surface-token" data-chip>
-                    EXPIRES {formatExpiry(cred.expires_at)}
+          {credentials.map((cred) => {
+            const projectGrants = cred.project_delegations ?? [];
+            const projectCapable = paletteHolds(cred.palette, PROJECT_GRANT_PALETTES, ["project.run_steward"]);
+            // A LIVE desk grant always keeps its chip and its Stop (a grant is authority).
+            const deskCapable = paletteHolds(cred.palette, DESK_GRANT_PALETTES, ["desk.", "zone.", "decision.", "note.", "kb."])
+              || cred.delegation?.state === "LIVE";
+            const isOpen = projectCapable && openRows.includes(cred.identity);
+            const bodyId = `project-lines-${cred.id}`;
+            return (
+              <SurfaceLedgerRow
+                key={cred.id}
+                lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
+                primary={cred.identity}
+                expands={false}
+                open={isOpen}
+                data-testid={`credential-row-${cred.id}`}
+                cells={<>
+                  {deskCapable ? <GrantChip grant={cred.delegation} /> : null}
+                  <GrantRefusalChip refusal={refusals[cred.identity]} />
+                  <ProjectGrantSummary grants={projectGrants} />
+                  <span className="surface-token" data-chip data-testid="palette-token">{paletteLabel(cred.palette)}</span>
+                  {cred.active ? (
+                    <span className="surface-token" data-chip>
+                      EXPIRES {formatExpiry(cred.expires_at)}
+                    </span>
+                  ) : (
+                    <StateChip state="warning" label="EXPIRED" />
+                  )}
+                  <span className="surface-token" data-chip data-muted>
+                    {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
                   </span>
-                ) : (
-                  <StateChip state="warning" label="EXPIRED" />
-                )}
-                <span className="surface-token" data-chip data-muted>
-                  {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
-                </span>
-              </>}
-              trailing={<>
-                <Button
-                  variant="ghost"
-                  dense
-                  disabled={granting === cred.identity}
-                  onClick={() => void setGrant(cred.identity, cred.delegation?.state === "LIVE" ? "stop" : "allow")}
-                  data-testid="grant-verb"
-                >
-                  {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
-                </Button>
-                <Button
-                  variant="ghost"
-                  dense
-                  disabled={revoking === cred.id}
-                  onClick={() => void revokeCredential(cred.id, cred.identity)}
-                  data-testid="credential-revoke"
-                >
-                  {GRANT_WORDS.revokeCredential}
-                </Button>
-              </>}
-            />
-          ))}
+                </>}
+                trailing={<>
+                  {projectCapable ? (
+                    // The library Disclosure's trigger; its body is the row's own
+                    // expansion slot (the HS-200-15 pattern). No popover, no modal.
+                    <Disclosure
+                      label={PROJECT_GRANT_WORDS.projects}
+                      ariaLabel={`${PROJECT_GRANT_WORDS.projects}: ${cred.identity}`}
+                      open={isOpen}
+                      onOpenChange={(open) => toggleRow(cred.identity, open)}
+                      controlsId={bodyId}
+                      variant="default"
+                    >
+                      {null}
+                    </Disclosure>
+                  ) : null}
+                  {deskCapable ? (
+                    <Button
+                      variant="ghost"
+                      dense
+                      disabled={granting === cred.identity}
+                      onClick={() => void setGrant(cred.identity, cred.delegation?.state === "LIVE" ? "stop" : "allow")}
+                      data-testid="grant-verb"
+                    >
+                      {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    dense
+                    disabled={revoking === cred.id}
+                    onClick={() => void revokeCredential(cred.id, cred.identity)}
+                    data-testid="credential-revoke"
+                  >
+                    {GRANT_WORDS.revokeCredential}
+                  </Button>
+                </>}
+              >
+                {projectCapable ? (
+                  <div id={bodyId} data-testid={`project-lines-${cred.identity}`}>
+                    {[
+                      ...projects.map((p) => ({ id: p.id, name: p.name, archived: false })),
+                      // Archive keeps a grant (the charter): a LIVE grant on an
+                      // archived project stays listed, Stop only, never Allow.
+                      ...projectGrants
+                        .filter((g) => g.project_archived && g.state === "LIVE")
+                        .map((g) => ({ id: g.project_id, name: g.project_name, archived: true })),
+                    ].map((p) => {
+                      const grant = projectGrants.find((g) => g.project_id === p.id) ?? null;
+                      const key = `${cred.identity}/${p.id}`;
+                      const live = grant?.state === "LIVE";
+                      return (
+                        <GadgetRow key={p.id} label={p.name}>
+                          <span className="prefs-project-line" data-testid={`project-line-${p.id}`}>
+                            {p.archived ? (
+                              <span className="surface-token" data-chip data-testid="project-archived">
+                                {PROJECT_GRANT_WORDS.archived}
+                              </span>
+                            ) : null}
+                            <ProjectGrantChip grant={grant} />
+                            <GrantRefusalChip refusal={refusals[key]} />
+                            {live || !p.archived ? (
+                              <Button
+                                variant="ghost"
+                                dense
+                                disabled={granting === key}
+                                onClick={() => void setProjectGrant(cred.identity, p.id, p.name, live ? "stop" : "allow")}
+                                data-testid="project-grant-verb"
+                              >
+                                {live ? PROJECT_GRANT_WORDS.stop : PROJECT_GRANT_WORDS.allow}
+                              </Button>
+                            ) : null}
+                          </span>
+                        </GadgetRow>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </SurfaceLedgerRow>
+            );
+          })}
           {delegations.map((grant) => (
             <SurfaceLedgerRow
               key={grant.grant_id}
@@ -891,6 +1092,40 @@ export function RemoteAccessModule({
               ) : undefined}
             />
           ))}
+          {/* PHILO-9-07: a LIVE project grant with no credential row (a restart
+              or a lost credential), beside Phase 7's desk orphans, with its Stop. */}
+          {projectOrphans.map((grant) => {
+            const key = `${grant.identity}/${grant.project_id}`;
+            return (
+              <SurfaceLedgerRow
+                key={grant.grant_id}
+                lead={<StateChip state="idle" label="" icon="●" />}
+                primary={grant.identity}
+                expands={false}
+                data-testid={`project-delegation-row-${grant.grant_id}`}
+                cells={<>
+                  <ProjectGrantChip grant={grant} />
+                  <GrantRefusalChip refusal={refusals[key]} />
+                  <span className="surface-token" data-chip>{grant.project_name.toUpperCase()}</span>
+                  {grant.project_archived ? (
+                    <span className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</span>
+                  ) : null}
+                  <span className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</span>
+                </>}
+                trailing={grant.state === "LIVE" ? (
+                  <Button
+                    variant="ghost"
+                    dense
+                    disabled={granting === key}
+                    onClick={() => void setProjectGrant(grant.identity, grant.project_id, grant.project_name, "stop")}
+                    data-testid="project-grant-verb"
+                  >
+                    {PROJECT_GRANT_WORDS.stop}
+                  </Button>
+                ) : undefined}
+              />
+            );
+          })}
         </SurfaceLedger>
       ) : null}
 
