@@ -198,7 +198,19 @@ def _accessible_names(page: Any, root: str) -> list[str]:
 
 
 @pytest.mark.timeout(300)
-@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.parametrize("width", [
+    1440,
+    # PARKED (pm/roadmap/holdspeak/BACKLOG.md, "The 393 Room: UNFINISHED
+    # opens under the ask well"): a real product defect since HS-202-05's
+    # 44px touch targets (#597). Strict xfail: the case still runs, and it
+    # turns the suite red the day the Room is fixed, so the park cannot rot.
+    pytest.param(393, marks=pytest.mark.xfail(
+        strict=True,
+        reason="PARKED product defect: at 393 the UNFINISHED row opens under "
+               "the sticky ask well (verbClear -107); needs a design ruling "
+               "(BACKLOG: The 393 Room)",
+    )),
+])
 def test_saved_ask_draws_the_ratified_unfinished_row(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:

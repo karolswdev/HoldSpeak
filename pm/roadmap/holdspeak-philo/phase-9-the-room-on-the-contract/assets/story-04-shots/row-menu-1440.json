@@ -1,0 +1,333 @@
+{
+  "facts": {
+    "attention_tokens": [
+      {
+        "px": 12,
+        "ratio": 4.99,
+        "text": "ATTN 1"
+      }
+    ],
+    "cells_past_right_edge": 0,
+    "headers": [
+      {
+        "in_view": true,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_last": {
+      "bottom": 875,
+      "text": "Delete Delete",
+      "top": 847,
+      "vh": 900
+    },
+    "menu_rows": [
+      {
+        "bottom": 611,
+        "h": 28,
+        "text": "Open",
+        "top": 583
+      },
+      {
+        "bottom": 639,
+        "h": 28,
+        "text": "Get Info",
+        "top": 611
+      },
+      {
+        "bottom": 667,
+        "h": 28,
+        "text": "Ask this project · Select a Pr",
+        "top": 639
+      },
+      {
+        "bottom": 695,
+        "h": 28,
+        "text": "Ask AI",
+        "top": 667
+      },
+      {
+        "bottom": 723,
+        "h": 28,
+        "text": "Continue in thread",
+        "top": 695
+      },
+      {
+        "bottom": 751,
+        "h": 28,
+        "text": "Edit",
+        "top": 723
+      },
+      {
+        "bottom": 779,
+        "h": 28,
+        "text": "Rename F2",
+        "top": 751
+      },
+      {
+        "bottom": 807,
+        "h": 28,
+        "text": "Duplicate",
+        "top": 779
+      },
+      {
+        "bottom": 835,
+        "h": 28,
+        "text": "Move to Zone",
+        "top": 807
+      },
+      {
+        "bottom": 875,
+        "h": 28,
+        "text": "Delete Delete",
+        "top": 847
+      }
+    ],
+    "min_text_ratio": 5.74,
+    "raw_buttons_in_list": [],
+    "row_words": [
+      " | [ ] 1:1 prep | NOTE |  | ",
+      " | [ ] A very long note title that names the whole architecture decision record for the card ledger | NOTE |  | ",
+      " | [ ] About me PERSONAL | NOTE | PERSONAL | ",
+      " | [ ] Current priorities WORK | NOTE | WORK | ",
+      " | [ ] Effect guard | NOTE |  | ",
+      " | [ ] Egress guard | NOTE |  | ",
+      " | [ ] How I like help PERSONAL | NOTE | PERSONAL | ",
+      " | [ ] Incident review 42 | NOTE |  | ",
+      " | [ ] Ledger cutover plan PAYMENTS ATTN 1 | NOTE | PAYMENTS | ATTN 1",
+      " | [ ] Meeting preferences MEETINGS | NOTE | MEETINGS | ",
+      " | [ ] People & vocabulary REFERENCE | NOTE | REFERENCE | ",
+      " | [ ] Priya 1:1 notes | NOTE |  | ",
+      " | [ ] Q4 capacity | NOTE |  | ",
+      " | [ ] Start here INBOX | NOTE | INBOX | ",
+      " | [ ] Tomas growth plan | NOTE |  | ",
+      " | [ ] Vendor risk list | NOTE |  | ",
+      " | [ ] Weekly update | NOTE |  | ",
+      " | [ ] Chase | AGENT |  | ",
+      " | [ ] Desk | AGENT |  | ",
+      " | [ ] Draft | AGENT |  | ",
+      " | [ ] Interview | AGENT |  | ",
+      " | [ ] Plan | AGENT |  | ",
+      " | [ ] Project | AGENT |  | ",
+      " | [ ] Everyday context | KNOWLEDGE |  | "
+    ],
+    "scroll_width": 1440,
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "desk-menu-label",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Ask this project"
+      },
+      {
+        "cls": "quiet",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Select a Project"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES · 1 ATTN"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "pointer": [
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Open"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Get Info"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Ask this project · Select a Pr"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Ask AI"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Continue in thread"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Edit"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Rename F2"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Duplicate"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Move to Zone"
+    },
+    {
+      "face": {
+        "h": 28,
+        "w": 272
+      },
+      "not_owned": [],
+      "points": 9,
+      "text": "Delete Delete"
+    }
+  ]
+}

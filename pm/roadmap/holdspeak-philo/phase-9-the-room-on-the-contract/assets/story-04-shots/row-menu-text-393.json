@@ -1,0 +1,59 @@
+{
+  "small_text": [],
+  "text_styles": [
+    {
+      "cls": "desk-menu-label",
+      "count": 1,
+      "ground": "rgb(36,40,51)",
+      "ink": "rgb(155,162,176)",
+      "px": 12,
+      "ratio": 5.74,
+      "sample": "Ask this project"
+    },
+    {
+      "cls": "quiet",
+      "count": 1,
+      "ground": "rgb(36,40,51)",
+      "ink": "rgb(155,162,176)",
+      "px": 12,
+      "ratio": 5.74,
+      "sample": "Select a Project"
+    },
+    {
+      "cls": "desk-list-fold-token",
+      "count": 16,
+      "ground": "rgb(28,31,39)",
+      "ink": "rgb(155,162,176)",
+      "px": 12,
+      "ratio": 6.42,
+      "sample": "ZONE"
+    },
+    {
+      "cls": "",
+      "count": 1,
+      "ground": "rgb(28,31,39)",
+      "ink": "rgb(155,162,176)",
+      "px": 12,
+      "ratio": 6.42,
+      "sample": "NOTES"
+    },
+    {
+      "cls": "desk-menu-label",
+      "count": 9,
+      "ground": "rgb(36,40,51)",
+      "ink": "rgb(242,243,245)",
+      "px": 12,
+      "ratio": 13.26,
+      "sample": "Open"
+    },
+    {
+      "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+      "count": 10,
+      "ground": "rgb(28,31,39)",
+      "ink": "rgb(242,243,245)",
+      "px": 13,
+      "ratio": 14.84,
+      "sample": "Payments"
+    }
+  ]
+}

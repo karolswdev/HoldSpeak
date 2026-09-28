@@ -608,7 +608,17 @@ def test_a_finished_job_broadcasts_aftercare_ready_and_the_queue_frame(tmp_path,
     )
     assert worker is not None
     assert _wait(lambda: bool(_rows(db, "intel_snapshots")), timeout=30.0, nudge=worker.wake)
-    assert _wait(lambda: any(t == "runtime_queue" for t, _ in frames), timeout=10.0)
+    # PHILO-3-02 publishes a `runtime_queue` frame at CLAIM time, before the
+    # provider runs, and the snapshot row lands before the job completes. So
+    # neither says the finished-job callback has run: wait for the frame this
+    # test is about, then for the queue frame the callback sends after it.
+    def _ready_then_queue() -> bool:
+        kinds_in_order = [t for t, _ in list(frames)]
+        if "aftercare_ready" not in kinds_in_order:
+            return False
+        return "runtime_queue" in kinds_in_order[kinds_in_order.index("aftercare_ready"):]
+
+    assert _wait(_ready_then_queue, timeout=10.0), [t for t, _ in frames]
 
     kinds = {t for t, _ in frames}
     assert "runtime_queue" in kinds, kinds

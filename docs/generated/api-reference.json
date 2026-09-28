@@ -3466,6 +3466,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_principal_separation.py",
         "tests/unit/test_authority_routes.py"
       ],
@@ -10986,6 +10987,7 @@
       "source": "holdspeak/web/routes/desk_actuators.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_web_companion_github.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -11014,6 +11016,7 @@
       "source": "holdspeak/web/routes/desk_actuators.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_web_companion_github.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -11279,6 +11282,7 @@
       "source": "holdspeak/web/routes/projections.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/unit/test_graph_walk_calibration.py",
         "tests/unit/test_philo_graph_schema.py",
         "tests/unit/test_web_routes_projections.py"
@@ -14806,6 +14810,7 @@
         "tests/e2e/test_philo8_01_list_rename_glass.py",
         "tests/e2e/test_philo8_01_zone_name_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
@@ -14893,6 +14898,7 @@
         "tests/e2e/test_philo8_01_list_rename_glass.py",
         "tests/e2e/test_philo8_01_zone_name_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/uat/test_seeding.py",
         "tests/unit/test_philo5_graph_op.py",
@@ -14972,6 +14978,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -15042,6 +15049,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -15125,6 +15133,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -15193,6 +15202,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -15269,6 +15279,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -15349,6 +15360,7 @@
       "test_candidates": [
         "tests/e2e/test_philo304_thought_foot_reflow.py",
         "tests/e2e/test_philo8_01_list_rename_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/unit/test_philo7_article_xi.py",
         "tests/unit/test_philo7_compat.py",
@@ -24122,6 +24134,7 @@
         "tests/e2e/test_hs202_03_species_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_phase200_one_composition_root_processes.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/uat/test_induction_integration_local.py",
@@ -24216,6 +24229,7 @@
         "tests/e2e/test_hs202_03_species_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/integration/test_phase200_one_composition_root_processes.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/uat/test_induction_integration_local.py",

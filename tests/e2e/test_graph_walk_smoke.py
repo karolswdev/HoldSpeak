@@ -197,7 +197,11 @@ def _assert_observation_shape(record, viewport, out):
     # what product wiring this hub HAS and LACKS — so no observation is read
     # as if it came from the whole product (Astra's counsel item 8)
     wiring = prov["product_wiring"]
-    assert "the database owner lock" in wiring["has"]
+    # The label the producer writes (scripts/graph_walk.py, `claim_database`
+    # with the port published since PHILO-5-01 e4010fd47); a refused lock
+    # lands in "lacks" instead, so this still fails when the hub is not
+    # the owner.
+    assert "the database owner lock (port published)" in wiring["has"]
     assert "the intelligence queue drainer" in wiring["has"]
     assert any("AudioRecorder" in lack for lack in wiring["lacks"])
     assert any("HotkeyListener" in lack for lack in wiring["lacks"])

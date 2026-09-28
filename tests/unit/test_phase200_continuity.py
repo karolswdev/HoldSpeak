@@ -419,7 +419,11 @@ def test_the_last_known_observation_survives_a_restart(tmp_path: Path) -> None:
                                                    label="Q4 Platform", project_id="p-q4")
 
     fresh = LastKnownStore(db_factory=lambda: Database(tmp_path / "continuity.db"))
-    recalled = fresh.recall("project:p-q4")
+    # The recall reads on the same pinned clock as the aggregate below: the
+    # wall clock would age this fixed observation past REPLAY_HORIZON_DAYS
+    # (it did on 2026-09-21) and the fence would test the horizon instead.
+    clock = datetime(2026, 9, 7, 9, 12)
+    recalled = fresh.recall("project:p-q4", now=clock)
     assert recalled is not None and recalled["observed_at"] == observed
     assert recalled["items"] == items and fresh.source_ids() == ["project:p-q4"]
     assert LastKnownStore().recall("project:p-q4") is None, "without a factory the store is what it was"
@@ -429,7 +433,7 @@ def test_the_last_known_observation_survives_a_restart(tmp_path: Path) -> None:
 
     aggregate = build_aggregate(
         list_projects=lambda *_: [{"id": "p-q4", "name": "Q4 Platform"}], room=failing_room,
-        principal=OWNER, now=datetime(2026, 9, 7, 9, 12), last_known=fresh,
+        principal=OWNER, now=clock, last_known=fresh,
     )
     assert aggregate["complete"] is False
     carried = [i for i in aggregate["items"] if i.get("fromLastObservation")]

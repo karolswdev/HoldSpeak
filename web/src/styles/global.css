@@ -66,8 +66,8 @@ body {
 }
 
 ::selection {
-  background: var(--accent-soft);
-  color: var(--text);
+  background: var(--selection-bg);
+  color: var(--selection-ink);
 }
 
 /* ============================================================
