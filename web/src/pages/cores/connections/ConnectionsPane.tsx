@@ -316,7 +316,8 @@ function JiraCards({
           <span className="connections-tool-label">Jira</span>
         </span>
         <div className="connections-tool-chips">
-          <StateChip state="idle" label="Not set up" />
+          {/* PHILO-9-02 B1 (Codex Astra r1 finding 7): the empty card says the tool's own state. */}
+          <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
           <ProvenanceChip source="acli" />
         </div>
         <div className="connections-jira-ghost-fields">

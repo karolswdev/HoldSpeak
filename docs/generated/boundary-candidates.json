@@ -5272,6 +5272,16 @@
       "review": "candidate_only"
     },
     {
+      "path": "holdspeak/services/github_provider.py",
+      "line": 193,
+      "kinds": [
+        "process_or_shell"
+      ],
+      "excerpt": "# the local binary check (no subprocess either way).",
+      "line_sha256": "427fe00fd5579bc06534b236b2559aaf2a3bd180ec965301dde72fe78366905e",
+      "review": "candidate_only"
+    },
+    {
       "path": "holdspeak/services/inference_acquisition_service.py",
       "line": 22,
       "kinds": [
@@ -5683,7 +5693,7 @@
     },
     {
       "path": "holdspeak/services/watch_service.py",
-      "line": 1068,
+      "line": 1074,
       "kinds": [
         "process_or_shell"
       ],

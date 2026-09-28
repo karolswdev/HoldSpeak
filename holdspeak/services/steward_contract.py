@@ -525,7 +525,16 @@ class StewardContract:
             outcomes: dict[str, Any] = {"evaluate": [], "runs": []}
             try:
                 if wired_watch is not None:
-                    outcomes["evaluate"] = wired_watch.evaluate_due(principal, limit=None)
+                    # Each due watch's evaluation (a provider read) is its own
+                    # admitted child of the trigger, with its leaf receipt.
+                    def admit(watch_id: str, evaluate: Callable[[], Any]) -> Any:
+                        result, _kernel = project_kernel.run(
+                            self._db, principal, "project.watch.evaluate", {"watch_id": watch_id},
+                            lambda _payload: evaluate(), parent_operation_id=handle.operation_id,
+                        )
+                        return result
+
+                    outcomes["evaluate"] = wired_watch.evaluate_due(principal, limit=None, admit=admit)
                 if wired_steward is not None:
                     outcomes["runs"] = wired_steward.run_due(principal, parent_operation_id=handle.operation_id)
                 # The terminal result carries the watch and run outcomes (the

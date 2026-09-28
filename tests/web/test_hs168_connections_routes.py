@@ -46,17 +46,22 @@ def _connected_gh() -> MagicMock:
         "error_code": None,
         "error_detail": None,
     }
-    # PHILO-9-02 B1: the list reads the stored probe (the shape the real
-    # ``GitHubProviderAdapter.stored_status`` returns: no login is stored).
-    gh.stored_status.return_value = {
-        "state": "connected",
-        "error_code": None,
-        "error_detail": None,
-        "display": {},
-        "last_checked_at": "2026-09-28T10:00:00+00:00",
-    }
     gh.discover.return_value = {"state": "ready", "items": []}
     return gh
+
+
+def _probed_real_gh(db: Database) -> Any:
+    """A real GitHubProviderAdapter whose ``gh auth status`` probe answered 'testuser'."""
+    import subprocess
+
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    def runner(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(argv, 0, stdout="Logged in to github.com account testuser (keyring)", stderr="")
+
+    adapter = GitHubProviderAdapter(db=db, runner=runner)
+    adapter.connection_status(OWNER)
+    return adapter
 
 
 def _disconnected_gh() -> MagicMock:
@@ -111,7 +116,10 @@ def setup_rig(tmp_path, monkeypatch):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
 
     gh_adapter = _connected_gh()
-    conn_svc = ConnectionsService(github_adapter=gh_adapter)
+    # PHILO-9-02 B1 (Codex Astra r1 finding 8): the Connections list reads the
+    # REAL adapter's stored probe -- probed once through the adapter's own
+    # runner seam, never a double that invents the stored fields.
+    conn_svc = ConnectionsService(github_adapter=_probed_real_gh(db))
 
     project_svc = ProjectService(db)
     watch_svc = WatchService(db)
@@ -226,8 +234,7 @@ class TestSuggestAnnotation:
             assert "connection" in p, f"Proposal {p['id']} missing connection annotation"
             conn = p["connection"]
             assert conn["state"] == DISPLAY_CONNECTED
-            # PHILO-9-02 B1: a cached GitHub read names no login (not stored).
-            assert "account" in conn
+            assert conn["account"] is not None
 
 
 # ── Known scopes on session ──────────────────────────────────────────

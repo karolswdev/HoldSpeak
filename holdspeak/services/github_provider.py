@@ -188,7 +188,10 @@ class GitHubProviderAdapter:
             if self._db is not None else None
         )
         checked_at = (row or {}).get("last_checked_at") or None
-        if self._runner is None and shutil.which("gh") is None:
+        # PHILO-9-02 B1 (Codex Astra r1 finding 7): a stored check answers
+        # with the state that check stored; only a never-checked row reads
+        # the local binary check (no subprocess either way).
+        if not (row and checked_at) and self._runner is None and shutil.which("gh") is None:
             return {
                 "state": STATE_UNAVAILABLE,
                 "error_code": CODE_UNAVAILABLE,
