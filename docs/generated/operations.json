@@ -3635,7 +3635,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "write",
-      "result": "{success: true, receipt: the comment receipt (comment_url, pr_number, reviewer ...)} and the kernel operation_id and receipt",
+      "result": "{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

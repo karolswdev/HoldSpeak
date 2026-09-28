@@ -626,7 +626,9 @@ class StewardContract:
             raise ServiceError(code, code.replace("_", " "),
                                context={"status": 404 if code == "nudge_not_found" else 409,
                                         **{k: v for k, v in result.items() if k != "error"}})
-        return result
+        # Codex Astra r3: the comment's own evidence (URL, reviewer, time) and the
+        # kernel receipt the transports add are two things, under two keys.
+        return {"success": True, "comment_receipt": result.get("receipt")}
 
     # ── recovery (the beat, section 3; L6) ────────────────────────────
 

@@ -24556,6 +24556,8 @@
         }
       ],
       "test_candidates": [
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
@@ -24630,6 +24632,8 @@
         }
       ],
       "test_candidates": [
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo9_02_round_three.py",
         "tests/unit/test_philo9_steward_admission.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",

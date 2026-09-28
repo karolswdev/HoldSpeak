@@ -230,7 +230,7 @@ NUDGE_SEND = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="write",
-    result="{success: true, receipt: the comment receipt (comment_url, pr_number, reviewer ...)} and the kernel operation_id and receipt",
+    result="{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
     refusals=_CONTRACT_REFUSALS + ("nudge_not_found", "nudge_not_proposed", "empty_text", "the policy or gh refusals",
                                    "project_delegation_required"),
     completion="synchronous; steward.nudges shows it sent",

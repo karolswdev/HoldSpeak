@@ -63,6 +63,10 @@ Named behaviour changes in round two: `run_once` on a project with an active run
 
 **Story 02's atlas cases:** `docs/internal/philo/graph/atlas-phase9-steward.json` (its own file, so story 05 assembles it beside `atlas-phase9.json`): `case.p9.steward.run_receipted`, `case.p9.update.mark_delivered_receipted`, `case.p9.project.archive_receipted`, `case.p9.connections.never_checked`. Actual observations (all `pass`, real hub, isolated HOME): `docs/internal/philo/graph/observations/muaddib/20260928T1449*Z-case.p9.*-muaddib-1440/observation.json`. `docs/generated/graph.json` joins `atlas.json` only, so it does not change (story 05 assembles). The atlas cases were not run red on the 24576f25 export.
 
+## Round three, condition: the nudge's two receipts (Codex Astra r3 on 588fb994)
+
+Counsel r3 (`checks/story-02-built-astra-r3.md`, RATIFY-WITH-CONDITIONS: A-D paid, the replay exceptions lawful, the restore-test change honest). The one condition: `nudge.send` answered the kernel receipt over the comment's own receipt on both transports (the route and the MCP envelope write `receipt` after the service result). Fix: `send_nudge_command` (the admitted entry) answers `{success, comment_receipt}`; the transports add `operation_id` and the kernel `receipt`, so the transported answer carries both under distinct keys. `send_nudge` itself is unchanged (its callers read `receipt`); the web client reads `success` only. The declaration reads `{success: true, comment_receipt: ..., operation_id, receipt: the kernel receipt}`; its producer in `test_philo5_the_loop_r2.py` now reads the TRANSPORTED HTTP answer. Fence: `test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt[http,mcp]` (counsel's probe: the real sender and connector, a canned `gh pr comment` answer), red on a `588fb994` export (`assets/story-02-proof/red-588fb994-nudge-response.txt`: 2 failed, "comment receipt is overwritten"), green below; mutation M45. The shape producer passes on the export too (the old declaration named only `success` and `receipt`): it is a fence of the new declaration, not a red. Two BACKLOG rows from counsel's MISSED: the nudge's production path (a real watch→steward probe proposed no nudge; unclassified) and the inherited ~5 s observer lock wait on proposal acceptance.
+
 ## Round three (Codex Astra r2 on 7119cfd9; Muad'Dib's rulings A-D)
 
 Counsel r2 (`checks/story-02-built-astra-r2.md`, DO-NOT-RATIFY, narrowing) confirmed r1 F1, F3, F4, F6, F7 and F8 paid. Its reproductions (`/tmp/holdspeak-counsel-684-r2-*.py`) are ported into `tests/unit/test_philo9_02_round_three.py`. Red: `assets/story-02-proof/red-7119cfd9-round-three.txt` (an export of `7119cfd9`, the fence file copied in: 9 failed, 0 passed; every red is an assertion, none a missing symbol: the injection seams fall back to 7119cfd9's own). Green: the captured runs below. Mutations M40-M44 added (44 run, 0 missed).
@@ -1146,4 +1150,76 @@ tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_pro
 tests/unit/test_philo5_the_loop_r2.py::test_shelf_writes_and_reads_traverse_the_registry_on_both_transports
 
 51 tests collected in 0.20s
+```
+
+### Captured run — 2026-09-28T16:27:40Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python -m pytest -q -n 8 -p no:cacheprovider -rf tests/unit/test_philo9_02_round_three.py tests/unit/test_philo9_02_round_two.py tests/unit/test_philo5_the_loop_r2.py tests/unit/test_hs173_nudge_wire.py tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_steward_lifecycle.py tests/unit/test_project_mcp.py tests/unit/test_philo_graph_atlas.py tests/unit/test_philo_census.py tests/integration/test_steward_routes.py tests/mcp/test_hs168_connection_tools.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 47db05f7b57c26ed3d9ade73dfcd6e378bed5f58
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+........................................................................ [ 88%]
+.....................................                                    [100%]
+325 passed in 31.56s
+```
+
+### Captured run — 2026-09-28T16:28:12Z
+
+- **Command:** `.tmp/iso.sh .venv/bin/python .tmp/mutate.py M45`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 47db05f7b57c26ed3d9ade73dfcd6e378bed5f58
+
+```text
+RED (caught): M45 r3: a sent nudge answers the raw service result (the kernel receipt overwrites the comment's) [holdspeak/services/steward_contract.py] -> FAILED tests/unit/test_philo9_02_round_three.py::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt[http] | FAILED tests/unit/test_philo9_02_round_three.py::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt[mcp] | 2 failed in 1.95s
+MUTATIONS: 1 run, 0 missed
+```
+
+### Captured run — 2026-09-28T16:28:15Z
+
+- **Command:** `bash .tmp/docs_checks.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 47db05f7b57c26ed3d9ade73dfcd6e378bed5f58
+
+```text
+== gen_operations_json.py --check
+OK docs/generated/operations.json
+== gen_mcp_sidecar_doc.py --check
+wrote docs/MCP_SIDECAR.md
+  237 tools across 42 families
+== check_docs.py
+Documentation navigation: 70 files checked; local targets and Markdown headings resolve.
+== philo_repository_census.py --check
+Repository census: 5 outputs verified.
+== philo_api_reference.py --check
+API reference checked
+== philo_boundary_census.py --check
+Boundary candidate census checked
+== philo_doctor_reference.py --check
+Doctor reference: 41 check functions
+== philo_config_reference.py --check
+Configuration declaration reference is current
+== philo_graph_reference.py --check
+note: subtype conflict iface.face.first_words: astra=face.card; muaddib=face.panel
+graph join checked: docs/generated/graph.json; 14 subtype conflict note(s)
+== validate_architecture.py
+Architecture metadata: 4 shard(s), 147 record(s)
+Architecture metadata validation passed.
+== generate_capability_docs.py --check
+Architecture documentation checked (10 outputs).
+== check_doc_coverage.py --check
+Documentation coverage checked.
+== residual_census.py --check
+RESIDUAL FENCE GREEN: 240 identities match /Users/karol/dev/tools/wt-philo-9-02
+Documentation navigation: 3 files checked; local targets and Markdown headings resolve.
+DOCS RC=0
 ```
