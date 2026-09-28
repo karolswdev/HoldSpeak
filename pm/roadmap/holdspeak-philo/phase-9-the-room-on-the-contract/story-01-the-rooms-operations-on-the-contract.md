@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of the charter (his Q0, Q1 and Q3 rulings shape this story)
 - **Unblocks:** PHILO-9-02, PHILO-9-03's backend, PHILO-9-05, PHILO-9-06
 - **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks

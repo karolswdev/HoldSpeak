@@ -288,7 +288,7 @@ The red-first law for this phase (Codex Astra r1 F8): **behavioural red** at eac
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| PHILO-9-01 | The Room's operations on the contract (and discovery) | backlog | [story-01-the-rooms-operations-on-the-contract](./story-01-the-rooms-operations-on-the-contract.md) | — |
+| PHILO-9-01 | The Room's operations on the contract (and discovery) | in-progress | [story-01-the-rooms-operations-on-the-contract](./story-01-the-rooms-operations-on-the-contract.md) | — |
 | PHILO-9-02 | The steward and the connectors under Article XI | backlog | [story-02-the-steward-and-the-connectors-under-article-xi](./story-02-the-steward-and-the-connectors-under-article-xi.md) | — |
 | PHILO-9-03 | The Room's face tells the truth (canvas first) | backlog | [story-03-the-rooms-face-tells-the-truth](./story-03-the-rooms-face-tells-the-truth.md) | — |
 | PHILO-9-04 | The desk debts: the selection and the list face (canvas first) | backlog | [story-04-the-desk-debts](./story-04-the-desk-debts.md) | — |
