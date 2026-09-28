@@ -483,7 +483,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
     # (atlas-phase7.json: nine desk pairs, two receipt cases, four refusal
     # receipts, three note siblings). PHILO-8-03 adds 5 (atlas-phase8.json:
     # two zones, the rename, the taken name, the list delete, two deletes).
-    assert len(siblings) == 44
+    # PHILO-9-05 adds 1 (atlas-phase9.json: the Room's mark delivered).
+    assert len(siblings) == 45
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {
@@ -496,6 +497,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'decision.supersede', 'decision.delete',
         # PHILO-8-03: the rename the list's name field writes.
         'zone.update',
+        # PHILO-9-05: the Room's delivery record.
+        'project.mark_update_delivered',
     }
     readable = {
         'decision.read', 'decision.list', 'meeting.list', 'meeting.read',
@@ -503,6 +506,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'thought.workbench.read', 'thought.list',
         'note.read', 'note.list', 'zone.read', 'zone.list', 'zone.members',
         'kb.read', 'kb.list', 'kb.members', 'kernel.receipt.read',
+        # PHILO-9-05: the Room's update list.
+        'project.list_updates',
     }
     problems: list[str] = []
     for case in siblings:

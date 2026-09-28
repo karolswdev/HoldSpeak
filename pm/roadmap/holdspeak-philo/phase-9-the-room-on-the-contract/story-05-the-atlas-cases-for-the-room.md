@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 9
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-9-01, PHILO-9-02, PHILO-9-03, PHILO-9-04, PHILO-9-07 (each ships its own fences and atlas cases)
 - **Unblocks:** PHILO-9-06
 - **Owner:** Astra (Luna); Muad'Dib checks
@@ -20,9 +20,9 @@ Stories 01–04 each ship the executable fences and atlas cases for their own re
 
 ## Acceptance criteria
 
-- [ ] Every Phase 9 case passes at the widths the charter's red-first matrix names, on the phase head; each case's red (or preservation green) record is the one its story kept — this story claims no new red.
-- [ ] The Phase 7 and Phase 8 atlas cases still pass; the counts are reported.
-- [ ] The api/`op`/browser equivalence holds for each durable outcome and refusal; real and replayed runs are retained apart.
+- [x] Every Phase 9 case passes at the widths the charter's red-first matrix names, on the phase head; each case's red (or preservation green) record is the one its story kept — this story claims no new red.
+- [x] The Phase 7 and Phase 8 atlas cases still pass; the counts are reported.
+- [x] The api/`op`/browser equivalence holds for each durable outcome and refusal; real and replayed runs are retained apart.
 
 ## Effort (not a promise)
 
@@ -36,3 +36,4 @@ PROVISIONAL: 0.5–1 engineering day.
 
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 - 2026-09-27 — round two (Codex Astra r1 F7 paid): assembly, rerun and equivalence only; the file keeps its name for the story link.
+- 2026-09-28 — built by the Fedaykin lane (Opus 5.5) for Muad'Dib on main `79fdee3c` (stories 01, 02, 03, 04, 07 merged). The census, the five authored gaps, the reruns and the equivalence are in `evidence-story-05.md`. Muad'Dib's brief allowed authoring "only the gaps the census proves"; the Scope's "Out: authoring a new face case" is overridden by that brief for the three face cases below, and each is named as such. The steward file (`atlas-phase9-steward.json`) is not folded into `atlas-phase9.json`: story 02's retained observations under `docs/internal/philo/graph/observations/muaddib/` name its path and sha256, and the owner rules "never delete, park instead". The phase atlas is the two files; `tests/unit/test_philo9_atlas.py` applies the general fences to both.

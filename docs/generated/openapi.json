@@ -17353,24 +17353,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Payload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "content": {
@@ -20974,24 +20956,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Payload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "content": {
@@ -21450,18 +21414,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": true,
-                "title": "Payload",
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
@@ -21570,24 +21522,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Payload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "content": {
@@ -21618,7 +21552,7 @@
     },
     "/api/projects/{project_id}/suggested-sources": {
       "get": {
-        "description": "List pending suggested sources for a Room.",
+        "description": "List pending suggested sources for a Room (PHILO-9-02: the declared read).",
         "operationId": "api_suggested_sources_api_projects__project_id__suggested_sources_get",
         "parameters": [
           {
@@ -21658,7 +21592,7 @@
     },
     "/api/projects/{project_id}/suggested-sources/{ref}/add": {
       "post": {
-        "description": "Accept a suggested source -- creates a Watch source via the existing path.",
+        "description": "Watch a suggested source: the resource AND the armed watch, or a named refusal.\n\nPHILO-9-02 (F16, F17): ``{ref:path}`` so a GitHub ``owner/repo``\nreaches the route; the declared, admitted operation writes the Room's\nsource, its watch and the accepted suggestion in ONE transaction, or\nrefuses by name with the suggestion still pending.",
         "operationId": "api_add_suggested_source_api_projects__project_id__suggested_sources__ref__add_post",
         "parameters": [
           {
@@ -24177,6 +24111,102 @@
         ]
       }
     },
+    "/api/settings/remote/delegations/{identity}/projects/{project_id}": {
+      "delete": {
+        "operationId": "revoke_project_delegation_api_settings_remote_delegations__identity__projects__project_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Project Delegation",
+        "tags": [
+          "mcp-http"
+        ]
+      },
+      "put": {
+        "operationId": "grant_project_delegation_api_settings_remote_delegations__identity__projects__project_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Grant Project Delegation",
+        "tags": [
+          "mcp-http"
+        ]
+      }
+    },
     "/api/settings/secrets/{secret_id}": {
       "delete": {
         "operationId": "api_delete_secret_api_settings_secrets__secret_id__delete",
@@ -26551,6 +26581,46 @@
         "summary": "Api Save Update"
       }
     },
+    "/api/updates/{update_id}/delivered": {
+      "post": {
+        "description": "Mark it delivered: one admitted record per confirmation (R4-2).\n\nBody (optional): ``{delivered_to, command_id}``. The face mints ONE\n``command_id`` per press of Mark delivered and keeps it across its\nretries; a repeat of that key answers the original record.",
+        "operationId": "api_mark_update_delivered_api_updates__update_id__delivered_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "update_id",
+            "required": true,
+            "schema": {
+              "title": "Update Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Mark Update Delivered Api Updates  Update Id  Delivered Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Mark Update Delivered"
+      }
+    },
     "/api/updates/{update_id}/markdown": {
       "get": {
         "operationId": "api_update_markdown_api_updates__update_id__markdown_get",
@@ -26604,24 +26674,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Payload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "content": {

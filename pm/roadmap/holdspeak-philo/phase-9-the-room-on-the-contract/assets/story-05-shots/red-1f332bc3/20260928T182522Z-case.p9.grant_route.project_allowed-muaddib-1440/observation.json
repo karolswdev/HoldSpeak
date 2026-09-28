@@ -1,0 +1,270 @@
+{
+  "id": "obs-20260928T182522Z-case.p9.grant_route.project_allowed-muaddib-1440",
+  "run_id": "20260928T182522Z-case.p9.grant_route.project_allowed-muaddib-1440",
+  "case_id": "case.p9.grant_route.project_allowed",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase9.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.route.project_delegation_grant"
+  ],
+  "state_id": "state.desk_presentation.p9_grant_face",
+  "provenance": {
+    "revision": "79fdee3c01d529c0f3f98ebc7d4b9620b7cfca06",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "b4ce1d4dd694f6b3a2058179ca4e1f6e118c9bfc1cd01617de9684d45fce8148",
+      "assets": [
+        "index-1hPsy_Mx.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52314",
+      "port": 52314,
+      "pid": 47726,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uslu0xha",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uslu0xha/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-09-28T18:25:22.253908+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase9.json",
+      "sha256": "9c0d5b7542859c159649e991d00b97a3e23f25bc659f85248122359406dd91ba",
+      "version": "phase9-room"
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "engine_replay_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/remote",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "enabled": true
+      },
+      "response_sha256": "5b1e3cf20eb79591a38a63d8d23b664b3498c02b5f47d6dca5df7bfdb6a66bef"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/settings/remote/credentials",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "token": "LrQ1pUKg8LF3MG_d7SUWlX2kPyltHYJKryJ9wNZk5xw",
+        "id": "2d76efab6bd9441b",
+        "identity": "sweep-runner",
+        "palette": "PROJECT",
+        "expires_at": 626640.138975708
+      },
+      "response_sha256": "6934aab6cd2b190386bb67fd9a927e0e310ddac0823ba330419f2730aa56bacf",
+      "captured": {
+        "name": "identity",
+        "path": "identity",
+        "value": "sweep-runner"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-b2e4c4d92528",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-09-28T12:25:23.799780",
+          "updated_at": "2026-09-28T12:25:23.799780",
+          "result_kind": "created",
+          "project_id": "proj-b2e4c4d92528",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-b2e4c4d92528"
+          ]
+        }
+      },
+      "response_sha256": "bb8d06ef06a7bc932b2f56fcc7b5974e9c7fed518cf946588c7eb01a12b3d913",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-b2e4c4d92528"
+      }
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; no browser. project.delegation.grant is HTTP only (in no MCP palette), so its non-face path is the route.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "identity": "sweep-runner",
+    "project_id": "proj-b2e4c4d92528"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:52314",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/settings/remote",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/settings/remote",
+      "status": 200,
+      "collection": "credentials",
+      "row_count": 1,
+      "payload_sha256": "e5ec4babcf11f838ecf86734632eba391eb200bc74f710a9a9754fab3cbec182",
+      "rows": [
+        {
+          "id": "2d76efab6bd9441b",
+          "identity": "sweep-runner",
+          "palette": "PROJECT",
+          "expires_at": 1790663123.79802,
+          "last_used_at": null,
+          "active": true,
+          "delegation": null
+        }
+      ],
+      "payload": {
+        "enabled": true,
+        "bind_host": null,
+        "port": null,
+        "credentials": [
+          {
+            "id": "2d76efab6bd9441b",
+            "identity": "sweep-runner",
+            "palette": "PROJECT",
+            "expires_at": 1790663123.79802,
+            "last_used_at": null,
+            "active": true,
+            "delegation": null
+          }
+        ],
+        "delegations": [],
+        "active_count": 1,
+        "total_count": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "e5ec4babcf11f838ecf86734632eba391eb200bc74f710a9a9754fab3cbec182"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/settings/remote",
+        "status": 200,
+        "payload": {
+          "enabled": true,
+          "bind_host": null,
+          "port": null,
+          "credentials": [
+            {
+              "id": "2d76efab6bd9441b",
+              "identity": "sweep-runner",
+              "palette": "PROJECT",
+              "expires_at": 1790663123.7980196,
+              "last_used_at": null,
+              "active": true,
+              "delegation": null
+            }
+          ],
+          "delegations": [],
+          "active_count": 1,
+          "total_count": 1
+        },
+        "body_sha256": "81a616ba7eaf7b68a29494e69e4fa4441673c9cb3234c1973b12fea69cbab1f7"
+      }
+    ],
+    "at_utc": "2026-09-28T18:25:23.803511+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "placeholder(s) ['grant_op'] are bound by the trigger's own `capture_as`; `expected` is resolved after it fires (fields naming them are not read before the trigger)",
+    "BLOCKED: capture_as 'grant_op': no value at 'operation_id' in the response of PUT /api/settings/remote/delegations/sweep-runner/projects/proj-b2e4c4d92528"
+  ],
+  "complete": true,
+  "pending_placeholders": [
+    "grant_op"
+  ],
+  "trigger_error": {
+    "step": {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/settings/remote/delegations/{identity}/projects/{project_id}",
+      "adapter": "http-route",
+      "body": {},
+      "capture_as": "grant_op",
+      "capture_path": "operation_id",
+      "why": "the owner's grant, the same route the face's Allow calls"
+    },
+    "error": "capture_as 'grant_op': no value at 'operation_id' in the response of PUT /api/settings/remote/delegations/sweep-runner/projects/proj-b2e4c4d92528"
+  },
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uslu0xha/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uslu0xha/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52314"
+  ],
+  "duration_s": 1.751
+}
