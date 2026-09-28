@@ -34,6 +34,7 @@ function chipState(state: ConnectionState): ChipState {
     case "unavailable": return "failure";
     case "degraded": return "unreachable";
     case "not_configured": return "idle";
+    case "never_checked": return "idle";
   }
 }
 
@@ -48,7 +49,41 @@ export function chipLabel(state: ConnectionState, providerId: string): string {
     case "not_configured":
       if (providerId === "jira" || providerId === "confluence") return "Not set up";
       return "Off";
+    case "never_checked": return "Never checked";
   }
+}
+
+/** PHILO-9-02 B1: the age of this row's own stored check, as words. */
+export function checkedAgo(
+  lastCheckedAt: string | undefined | null,
+  ageSeconds?: number,
+  now: number = Date.now(),
+): string | undefined {
+  let seconds: number | undefined;
+  if (lastCheckedAt) {
+    const then = Date.parse(lastCheckedAt);
+    if (!Number.isNaN(then)) seconds = Math.max(0, Math.floor((now - then) / 1000));
+  }
+  if (seconds === undefined && typeof ageSeconds === "number") seconds = Math.max(0, ageSeconds);
+  if (seconds === undefined) return undefined;
+  if (seconds < 60) return "Checked now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Checked ${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Checked ${hours} h ago`;
+  return `Checked ${Math.floor(hours / 24)} d ago`;
+}
+
+/** The state chip words: the state, then this row's own check age. */
+export function stateWords(
+  state: ConnectionState,
+  providerId: string,
+  row: { last_checked_at?: string; checked_age_seconds?: number },
+): string {
+  const label = chipLabel(state, providerId);
+  if (state === "never_checked") return label;
+  const age = checkedAgo(row.last_checked_at, row.checked_age_seconds);
+  return age ? `${label} · ${age}` : label;
 }
 
 function toolTier(state: ConnectionState): string | undefined {
@@ -151,7 +186,7 @@ function GitHubCard({
         <span title={state === "degraded" ? (tool.error_detail ?? undefined) : undefined}>
           <StateChip
             state={chipState(state)}
-            label={chipLabel(state, "github")}
+            label={stateWords(state, "github", tool)}
           />
         </span>
         <ProvenanceChip source="gh" boundary="github.com" />
@@ -217,7 +252,7 @@ function JiraConnectionRow({
       </span>
       <span className="connections-tool-summary">{conn.account.email}</span>
       <div className="connections-tool-chips">
-        <StateChip state={chipState(state)} label={chipLabel(state, "jira")} />
+        <StateChip state={chipState(state)} label={stateWords(state, "jira", conn)} />
         <ProvenanceChip source="acli" boundary={site} />
       </div>
       <div className="connections-tool-actions">
@@ -281,7 +316,8 @@ function JiraCards({
           <span className="connections-tool-label">Jira</span>
         </span>
         <div className="connections-tool-chips">
-          <StateChip state="idle" label="Not set up" />
+          {/* PHILO-9-02 B1 (Codex Astra r1 finding 7): the empty card says the tool's own state. */}
+          <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "jira", tool)} />
           <ProvenanceChip source="acli" />
         </div>
         <div className="connections-jira-ghost-fields">
@@ -342,7 +378,7 @@ function ConfluenceConnectionRow({
       </span>
       <span className="connections-tool-summary">{conn.account.email}</span>
       <div className="connections-tool-chips">
-        <StateChip state={chipState(state)} label={chipLabel(state, "confluence")} />
+        <StateChip state={chipState(state)} label={stateWords(state, "confluence", conn)} />
         <ProvenanceChip source="acli" boundary={site} />
       </div>
       <div className="connections-tool-actions">
@@ -389,7 +425,7 @@ function ConfluenceCards({
           <span className="connections-tool-label">Confluence</span>
         </span>
         <div className="connections-tool-chips">
-          <StateChip state={chipState(tool.state)} label={chipLabel(tool.state, "confluence")} />
+          <StateChip state={chipState(tool.state)} label={stateWords(tool.state, "confluence", tool)} />
           <ProvenanceChip source="acli" />
         </div>
       </div>

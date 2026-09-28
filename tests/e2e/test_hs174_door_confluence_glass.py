@@ -75,13 +75,15 @@ def _seed_confluence_connection(
     from holdspeak.db import get_database
     db = get_database()
     ref = f"{site}|{email}"
+    # PHILO-9-02 (B1): the Connections list is a cached read; a row reads
+    # "connected" only with the time of the check that stored it.
     with db._connection() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO watch_provider_connections "
             "(id, provider_id, external_connection_ref, state, "
-            " last_connected_at, created_at, updated_at) "
+            " last_connected_at, last_checked_at, created_at, updated_at) "
             "VALUES (?, 'confluence', ?, ?, "
-            " datetime('now'), datetime('now'), datetime('now'))",
+            " datetime('now'), datetime('now'), datetime('now'), datetime('now'))",
             (f"wpc-confluence-{ref}", ref, state),
         )
 

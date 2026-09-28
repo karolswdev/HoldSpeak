@@ -116,7 +116,7 @@ class TestImmediateId:
 
         original_execute = svc.execute_phases
 
-        def slow_execute(principal, run_id, project_id):
+        def slow_execute(principal, run_id, project_id, **_kernel):
             phase_started.set()
             phase_release.wait(timeout=10)
             original_execute(principal, run_id, project_id)
@@ -158,7 +158,7 @@ class TestPollToCompleted:
 
         # Patch execute_phases to complete immediately with an honest
         # run record (no collaborators wired).
-        def mock_execute(principal, run_id, project_id):
+        def mock_execute(principal, run_id, project_id, **_kernel):
             """Simulate a successful run with steps."""
             from holdspeak.project_contracts import generate_pststep_id
             db.steward_runs.update_run_state(run_id, state="running", phase="observe")
@@ -228,7 +228,7 @@ class TestPollToCompleted:
         db, client, svc = rig
         pid = _seed_project(db, project_id="proj-list-01")
 
-        def mock_execute(principal, run_id, project_id):
+        def mock_execute(principal, run_id, project_id, **_kernel):
             summary = json.dumps({"outcome": "completed"})
             db.steward_runs.update_run_state(
                 run_id, state="completed", summary_json=summary,
@@ -259,7 +259,7 @@ class TestStopMidRun:
         phase_started = threading.Event()
         stop_done = threading.Event()
 
-        def blocking_execute(principal, run_id, project_id):
+        def blocking_execute(principal, run_id, project_id, **_kernel):
             db.steward_runs.update_run_state(run_id, state="running", phase="observe")
             phase_started.set()
             # Wait for stop to be sent
@@ -525,7 +525,7 @@ class TestActiveRunConflict:
 
         phase_hold = threading.Event()
 
-        def blocking_execute(principal, run_id, project_id):
+        def blocking_execute(principal, run_id, project_id, **_kernel):
             db.steward_runs.update_run_state(run_id, state="running", phase="observe")
             phase_hold.wait(timeout=10)
 
@@ -559,7 +559,7 @@ class TestCommandReplay:
         db, client, svc = rig
         pid = _seed_project(db, project_id="proj-rep-01")
 
-        def mock_execute(principal, run_id, project_id):
+        def mock_execute(principal, run_id, project_id, **_kernel):
             summary = json.dumps({"outcome": "completed"})
             db.steward_runs.update_run_state(
                 run_id, state="completed", summary_json=summary,

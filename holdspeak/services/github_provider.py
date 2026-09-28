@@ -175,6 +175,46 @@ class GitHubProviderAdapter:
             return {"state": "connected", "connections": 1, "connected": 1}
         return {"state": "partial", "connections": 1 if row else 0, "connected": 0}
 
+    def stored_status(self, principal: Principal) -> dict[str, Any] | None:
+        """The last probe's stored result, or ``None`` if never checked.
+
+        PHILO-9-02 B1: the cached read behind ``connection.list``.  NEVER
+        runs ``gh``: it reads the row ``connection_status`` persisted.  The
+        binary-presence check is ``shutil.which`` (a local PATH lookup, no
+        subprocess), the same fast path ``connection_status`` takes.
+        """
+        row = (
+            self._db.automations.get_provider_connection(self._connection_id())
+            if self._db is not None else None
+        )
+        checked_at = (row or {}).get("last_checked_at") or None
+        # PHILO-9-02 B1 (Codex Astra r1 finding 7): a stored check answers
+        # with the state that check stored; only a never-checked row reads
+        # the local binary check (no subprocess either way).
+        if not (row and checked_at) and self._runner is None and shutil.which("gh") is None:
+            return {
+                "state": STATE_UNAVAILABLE,
+                "error_code": CODE_UNAVAILABLE,
+                "error_detail": "GitHub CLI (gh) is not installed",
+                "display": {},
+                "last_checked_at": checked_at,
+            }
+        if not row or not checked_at:
+            return None
+        state = str(row.get("state") or "")
+        return {
+            "state": state,
+            "error_code": row.get("last_error_code") or None,
+            "error_detail": row.get("last_error_detail") or None,
+            "display": (
+                {"recovery_hint": "gh auth login"}
+                if state == STATE_OWNER_ACTION_REQUIRED
+                else {"account": row.get("external_connection_ref")}
+                if state == STATE_CONNECTED and row.get("external_connection_ref") else {}
+            ),
+            "last_checked_at": checked_at,
+        }
+
     # ── Connection status (PROV-003, PROV-004) ───────────────────────
 
     def _connection_id(self) -> str:
@@ -268,6 +308,7 @@ class GitHubProviderAdapter:
                 ),
                 last_error_code=result.get("error_code") or "",
                 last_error_detail=result.get("error_detail") or "",
+                external_connection_ref=(result.get("display") or {}).get("account") or "",
             )
         else:
             repo.create_provider_connection(
@@ -285,6 +326,7 @@ class GitHubProviderAdapter:
                 last_connected_at=now_iso if result["state"] == STATE_CONNECTED else None,
                 last_error_code=result.get("error_code") or "",
                 last_error_detail=result.get("error_detail") or "",
+                external_connection_ref=(result.get("display") or {}).get("account") or "",
             )
 
     # ── Discovery (PROV-006) ─────────────────────────────────────────

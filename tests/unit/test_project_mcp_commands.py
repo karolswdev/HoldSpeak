@@ -798,6 +798,8 @@ def test_all_command_tools_discoverable() -> None:
         "project.update_draft", "project.publish_update",
         # PHILO-9-01: the seven item and resource tools (the charter's table).
         "project.item.list", "project.item.create", "project.item.update", "project.item.transition", "project.resource.list", "project.resource.add", "project.resource.remove",
+        # PHILO-9-02: mark it delivered (the Q0 ruling; R4-2).
+        "project.mark_update_delivered",
         # HS-165-03: steward, setup, watch drivers
         "project.configure_steward", "project.run_steward",
         "project.stop_steward", "project.get_steward_run",

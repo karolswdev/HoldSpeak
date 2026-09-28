@@ -156,6 +156,8 @@ class WebContext:
     # execution.  Composed with collector + delta + update + project +
     # door collaborators.
     project_steward_service: Optional[Any] = None
+    # PHILO-9-02: the suggested sources (a suggestion becomes a watched source).
+    suggested_source_service: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None

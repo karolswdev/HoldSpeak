@@ -333,6 +333,44 @@ class TestDebt3AcliFileLock:
             lock._rlock.release()
 
 
+def _steward_ctx(db: Any) -> Any:
+    """PHILO-9-02: a real WebContext with the real steward service (the routes reach its operations)."""
+    from holdspeak.services.project_steward_service import ProjectStewardService
+    from holdspeak.web.context import WebContext
+
+    return WebContext(get_state=lambda: {}, project_steward_service=ProjectStewardService(db, None, None))
+
+
+def _owner_client(router: Any) -> Any:
+    """The router under an OWNER principal (an admitted write needs the authenticated principal)."""
+    from fastapi import FastAPI
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.testclient import TestClient
+
+    class _Owner(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            request.state.principal = _owner()
+            return await call_next(request)
+
+    app = FastAPI()
+    app.add_middleware(_Owner)
+    app.include_router(router)
+    return TestClient(app)
+
+
+def _await_receipt(db: Any, operation_id: str, timeout: float = 20.0) -> dict[str, Any]:
+    import time as _time
+
+    deadline = _time.monotonic() + timeout
+    while _time.monotonic() < deadline:
+        with db._connection() as conn:
+            row = conn.execute("SELECT * FROM kernel_receipts WHERE operation_id=?", (operation_id,)).fetchone()
+        if row is not None:
+            return dict(row)
+        _time.sleep(0.05)
+    raise AssertionError(f"no terminal receipt for {operation_id}")
+
+
 # ── Debt 4: The cadence write wire ────────────────────────────────────
 
 
@@ -346,18 +384,14 @@ class TestDebt4CadenceWriteWire:
         from unittest.mock import AsyncMock
 
         # Build a mock context
-        ctx = MagicMock()
-        ctx.project_steward_service = MagicMock()
-        ctx.project_steward_service._db = db
+        ctx = _steward_ctx(db)
         router = build_steward_router(ctx)
 
         # Find the PUT policy handler
         from starlette.testclient import TestClient
         from fastapi import FastAPI
 
-        app = FastAPI()
-        app.include_router(router)
-        client = TestClient(app)
+        client = _owner_client(router)
 
         response = client.put(
             "/api/projects/proj1/steward/policy",
@@ -371,17 +405,13 @@ class TestDebt4CadenceWriteWire:
         """Cadence above 10080 is rejected."""
         db = _make_db(tmp_path)
 
-        ctx = MagicMock()
-        ctx.project_steward_service = MagicMock()
-        ctx.project_steward_service._db = db
+        ctx = _steward_ctx(db)
 
         from holdspeak.web.routes.steward import build_steward_router
         from starlette.testclient import TestClient
         from fastapi import FastAPI
 
-        app = FastAPI()
-        app.include_router(build_steward_router(ctx))
-        client = TestClient(app)
+        client = _owner_client(build_steward_router(ctx))
 
         response = client.put(
             "/api/projects/proj1/steward/policy",
@@ -422,17 +452,13 @@ class TestDebt4CadenceWriteWire:
             enabled=1,
         )
 
-        ctx = MagicMock()
-        ctx.project_steward_service = MagicMock()
-        ctx.project_steward_service._db = db
+        ctx = _steward_ctx(db)
 
         from holdspeak.web.routes.steward import build_steward_router
         from starlette.testclient import TestClient
         from fastapi import FastAPI
 
-        app = FastAPI()
-        app.include_router(build_steward_router(ctx))
-        client = TestClient(app)
+        client = _owner_client(build_steward_router(ctx))
 
         response = client.put(
             f"/api/projects/{project_id}/steward/policy",
@@ -457,17 +483,13 @@ class TestDebt5TriggerRoute:
         """When scheduler services are not wired, returns typed refusal."""
         db = _make_db(tmp_path)
 
-        ctx = MagicMock()
-        ctx.project_steward_service = MagicMock()
-        ctx.project_steward_service._db = db
+        ctx = _steward_ctx(db)
 
         from holdspeak.web.routes.steward import build_steward_router
         from starlette.testclient import TestClient
         from fastapi import FastAPI
 
-        app = FastAPI()
-        app.include_router(build_steward_router(ctx))
-        client = TestClient(app)
+        client = _owner_client(build_steward_router(ctx))
 
         # Ensure the conductor services are NOT wired
         import holdspeak.workbench_conductor as conductor
@@ -482,17 +504,13 @@ class TestDebt5TriggerRoute:
         """When wired, calls evaluate_due + run_due and returns outcomes."""
         db = _make_db(tmp_path)
 
-        ctx = MagicMock()
-        ctx.project_steward_service = MagicMock()
-        ctx.project_steward_service._db = db
+        ctx = _steward_ctx(db)
 
         from holdspeak.web.routes.steward import build_steward_router
         from starlette.testclient import TestClient
         from fastapi import FastAPI
 
-        app = FastAPI()
-        app.include_router(build_steward_router(ctx))
-        client = TestClient(app)
+        client = _owner_client(build_steward_router(ctx))
 
         mock_watch_svc = MagicMock()
         mock_watch_svc.evaluate_due.return_value = [
@@ -510,8 +528,9 @@ class TestDebt5TriggerRoute:
             assert response.status_code == 200
             body = response.json()
             assert body["success"] is True
-            assert len(body["evaluate_outcomes"]) == 1
-            assert len(body["run_outcomes"]) == 1
+            # PHILO-9-02: the pending handle; the ONE receipt carries the outcomes.
+            outcome = json.loads(_await_receipt(db, body["operation_id"])["outcome"])
+            assert outcome["evaluated"] == 1 and outcome["runs"] == ["run_started"]
             mock_watch_svc.evaluate_due.assert_called_once()
             mock_steward_svc.run_due.assert_called_once()
 

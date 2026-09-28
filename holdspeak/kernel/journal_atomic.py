@@ -55,6 +55,29 @@ def insert_operation(conn: Any, values: Mapping[str, Any], now: float) -> None:
     )
 
 
+def create_operation(store: Any, values: Mapping[str, Any]) -> Any:
+    """``JournalStore.create_operation``: the replay lookup and the INSERT under ONE write lock.
+
+    PHILO-9-02 (law 9, the same-key race closed as a class): ``BEGIN
+    IMMEDIATE`` is taken BEFORE the ``(principal_identity, idempotency_key)``
+    lookup, so two callers with one key cannot both find it absent: the loser
+    waits, then finds the winner's row (a replay, or
+    ``idempotency_payload_mismatch``), never a raw UNIQUE failure.
+    """
+    with store._connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        existing = conn.execute(
+            "SELECT * FROM kernel_operations WHERE principal_identity=? AND idempotency_key=?",
+            (values["principal_identity"], values["idempotency_key"]),
+        ).fetchone()
+        if existing is not None:
+            if str(existing["envelope_sha256"]) != values["envelope_sha256"]:
+                raise KernelRefused("idempotency_payload_mismatch", operation_id=str(existing["operation_id"]))
+            return existing
+        insert_operation(conn, values, store._clock())
+        return conn.execute(_OPERATION_SQL, (values["operation_id"],)).fetchone()
+
+
 def create_refused_with_receipt(store: Any, values: Mapping[str, Any], outcome: str) -> tuple[Any, Any]:
     """T1: the refused row and its receipt in ONE transaction.
 
@@ -89,32 +112,49 @@ def transition_and_receipt(
     """Steps 1-6 above; returns the operation row and the receipt row."""
     with store._connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        existing = conn.execute(RECEIPT_SQL, (operation_id,)).fetchone()
-        if existing is not None:
-            if strict:
-                raise KernelRefused("operation_already_terminal", operation_id=operation_id)
-            return conn.execute(_OPERATION_SQL, (operation_id,)).fetchone(), existing
+        return transition_and_receipt_in(
+            conn, store, operation_id, expected_revision, state, outcome, result_ref, strict=strict,
+            decision=decision, warrant_revoked=warrant_revoked, effect=effect, attest=attest,
+        )
+
+
+def transition_and_receipt_in(
+    conn: Any, store: Any, operation_id: str, expected_revision: int, state: str, outcome: str,
+    result_ref: str = "", *, strict: bool = False, decision: str | None = None,
+    warrant_revoked: int | None = None, effect: Callable[[Any], None] | None = None,
+    attest: Callable[[Any, Any, Any], None] | None = None,
+) -> tuple[Any, Any]:
+    """Steps 1-6 inside a write transaction the CALLER holds (PHILO-9-02 round three).
+
+    A Room service ends its admitted operation in the same transaction as its
+    domain write and its recorded answer; the caller's commit is the one commit.
+    """
+    existing = conn.execute(RECEIPT_SQL, (operation_id,)).fetchone()
+    if existing is not None:
         if strict:
-            current = conn.execute("SELECT revision FROM kernel_operations WHERE operation_id=?", (operation_id,)).fetchone()
-            if current is None or int(current["revision"]) != int(expected_revision):
-                raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
-        if effect is not None:
-            effect(conn)
-        assignments, values = ["state=?", "revision=revision+1", "updated_at=?"], [state, store._clock()]
-        for column, value in (("decision", decision), ("warrant_revoked", warrant_revoked)):
-            if value is not None:
-                assignments.append(f"{column}=?")
-                values.append(value)
-        changed = conn.execute(
-            f"UPDATE kernel_operations SET {','.join(assignments)} WHERE operation_id=? AND revision=?",
-            (*values, operation_id, expected_revision),
-        ).rowcount
-        if changed != 1:
+            raise KernelRefused("operation_already_terminal", operation_id=operation_id)
+        return conn.execute(_OPERATION_SQL, (operation_id,)).fetchone(), existing
+    if strict:
+        current = conn.execute("SELECT revision FROM kernel_operations WHERE operation_id=?", (operation_id,)).fetchone()
+        if current is None or int(current["revision"]) != int(expected_revision):
             raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
-        conn.execute(_INSERT_RECEIPT, ("rcpt_" + uuid.uuid4().hex, operation_id, state, outcome,
-                                       result_ref, store._clock()))
-        operation = conn.execute(_OPERATION_SQL, (operation_id,)).fetchone()
-        receipt = conn.execute(RECEIPT_SQL, (operation_id,)).fetchone()
-        if attest is not None:
-            attest(conn, operation, receipt)
-        return operation, receipt
+    if effect is not None:
+        effect(conn)
+    assignments, values = ["state=?", "revision=revision+1", "updated_at=?"], [state, store._clock()]
+    for column, value in (("decision", decision), ("warrant_revoked", warrant_revoked)):
+        if value is not None:
+            assignments.append(f"{column}=?")
+            values.append(value)
+    changed = conn.execute(
+        f"UPDATE kernel_operations SET {','.join(assignments)} WHERE operation_id=? AND revision=?",
+        (*values, operation_id, expected_revision),
+    ).rowcount
+    if changed != 1:
+        raise KernelRefused("operation_revision_conflict", operation_id=operation_id)
+    conn.execute(_INSERT_RECEIPT, ("rcpt_" + uuid.uuid4().hex, operation_id, state, outcome,
+                                   result_ref, store._clock()))
+    operation = conn.execute(_OPERATION_SQL, (operation_id,)).fetchone()
+    receipt = conn.execute(RECEIPT_SQL, (operation_id,)).fetchone()
+    if attest is not None:
+        attest(conn, operation, receipt)
+    return operation, receipt

@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 import secrets
 import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 
 class PrincipalKind(str, Enum):
@@ -293,6 +294,54 @@ def derive_owner(token: Optional[str], expected: Optional[str]) -> Optional[Prin
     return None
 
 
+# PHILO-9-02 (B2; the steward beat, section 6): the exact method and route
+# patterns of the Room's ADMITTED and CONDITIONAL operations. An authenticated
+# agent reaches the declared operation, whose kernel path refuses it
+# ``project_delegation_required`` WITH a receipt (or, after story 07, executes
+# under a LIVE project grant) -- never the edge's receipt-less 403. Exact
+# patterns, no prefix: every other Room route keeps its OWNER edge right, and a
+# conditional route's adapter re-applies OWNER to its exempt form.
+_SEGMENT = r"[^/]+"
+_ROOM_AGENT_SUBMIT: tuple[tuple[str, Any], ...] = tuple(
+    (verb, re.compile("^" + pattern.replace("{id}", _SEGMENT).replace("{path}", ".+") + "$"))
+    for verb, pattern in (
+        ("DELETE", "/api/projects/{id}"),
+        ("POST", "/api/projects/{id}/meetings/{id}"),
+        ("DELETE", "/api/projects/{id}/meetings/{id}"),
+        ("PUT", "/api/projects/{id}/resources/{path}"),
+        ("DELETE", "/api/projects/{id}/resources/{path}"),
+        ("POST", "/api/projects/{id}/reviews/{id}/proposals/{id}/decide"),
+        ("POST", "/api/projects/{id}/reviews/{id}/accept"),
+        ("POST", "/api/updates/{id}/publish"),
+        ("POST", "/api/updates/{id}/delivered"),
+        ("POST", "/api/projects/door/count"),
+        ("PUT", "/api/projects/{id}/steward/policy"),
+        ("POST", "/api/projects/{id}/steward/runs"),
+        ("POST", "/api/steward/runs/{id}/stop"),
+        ("POST", "/api/steward/trigger"),
+        ("POST", "/api/nudges/{id}/send"),
+        ("POST", "/api/watches/{id}/test"),
+        ("POST", "/api/watches/{id}/evaluate"),
+        ("PUT", "/api/watches/{id}/rules"),
+        ("POST", "/api/watches/{id}/pause"),
+        ("POST", "/api/watches/{id}/resume"),
+        ("POST", "/api/watches/{id}/retire"),
+        ("PATCH", "/api/watches/{id}"),
+        ("POST", "/api/watches/{id}/baseline"),
+        ("POST", "/api/projects/{id}/suggested-sources/{path}/add"),
+        # conditional (the adapter re-applies OWNER to the exempt form)
+        ("POST", "/api/projects/door"),
+        ("POST", "/api/connections/{id}/recheck"),
+    )
+)
+
+
+def room_agent_submit(method: str, path: str) -> bool:
+    """True for exactly the Room's admitted and conditional HTTP routes (B2)."""
+    verb = str(method or "").upper()
+    return any(verb == want and pattern.match(path) for want, pattern in _ROOM_AGENT_SUBMIT)
+
+
 def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     """Return the centralized edge right for one HTTP route.
 
@@ -328,6 +377,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     # agent too, so an agent's attempt is refused BY THE KERNEL with a receipt
     # (owner_principal_required), never by the edge with none.
     if path.startswith("/api/settings/remote/delegations/") and verb in {"PUT", "DELETE"}:
+        return PrincipalRight.AGENT_SUBMIT
+    if room_agent_submit(verb, path):
         return PrincipalRight.AGENT_SUBMIT
     if path == "/api/kernel/read" or path == "/api/kernel/events":
         return PrincipalRight.AGENT_READ

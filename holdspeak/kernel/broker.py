@@ -115,7 +115,7 @@ class Broker(ExecutorPlane):
             except Exception:
                 pass
             return refused
-        if operation["state"] != "admitting":
+        if operation["state"] != "admitting" or operation["operation_id"] != operation_id:  # a replay (law 9)
             spec.codec.admit(request, admission, principal, operation["operation_id"])
             return self._handle(operation)
         self.store.append(
@@ -250,8 +250,8 @@ class Broker(ExecutorPlane):
                 "principal_identity": operation["principal_identity"],
                 "parent_operation_id": operation.get("parent_operation_id") or "",
                 "issued_at": now,
-                "expires_at": now + claim_ttl,
-                "execution_expires_at": now + execution_ttl,
+                "expires_at": desk_broker.child_deadline(self.store, operation, now + claim_ttl),
+                "execution_expires_at": desk_broker.child_deadline(self.store, operation, now + execution_ttl),
                 "uses": 1,
                 "continuation_identities": list(
                     getattr(spec.codec, "continuation_identities", lambda _native: ())(
@@ -307,7 +307,7 @@ class Broker(ExecutorPlane):
         # Scheduler authority is never generic: the controller sets this
         # one-shot private guard only while opening a validated delegated parent.
         elif principal.kind not in {PrincipalKind.OWNER, PrincipalKind.AGENT} and not (
-            principal.kind is PrincipalKind.SCHEDULER and ((getattr(self, "_delegated_schedule_admission", False) and request.name == "workbench.run") or getattr(self, "_trusted_scheduler_child", False))
+            principal.kind is PrincipalKind.SCHEDULER and ((getattr(self, "_delegated_schedule_admission", False) and request.name == "workbench.run") or desk_broker.trusted_scheduler(self, request.name, principal))
         ): raise KernelRefused("declared_capability_required")
         layers.append("declared_capability")
         admission = spec.codec.validate(request)

@@ -197,7 +197,8 @@ def test_configure_steward_emits_event(db: Database) -> None:
             "SELECT * FROM service_events WHERE event_type='steward.configured'"
         ).fetchall()
     assert len(rows) >= 1
-    assert rows[0]["producer"] == "steward.mcp"
+    # PHILO-9-02: one declared operation for both transports: one producer.
+    assert rows[0]["producer"] == "ProjectStewardService"
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -398,7 +399,7 @@ def test_run_steward_poll_reaches_terminal(db: Database) -> None:
 
     from holdspeak.services.project_steward_service import ProjectStewardService
 
-    def fast_execute(self, principal, run_id, project_id):
+    def fast_execute(self, principal, run_id, project_id, **_kernel):
         """Simulate fast completion by updating run state directly."""
         self._db.steward_runs.update_run_state(
             run_id, state="completed", phase="complete",
@@ -748,7 +749,7 @@ def test_legacy_family_untouched() -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
-def test_project_family_tool_count_is_64() -> None:
+def test_project_family_tool_count_is_65() -> None:
     """The project family ships the expected number of tools."""
     # 17 original + 5 steward + 5 setup + 1 setup.clarify_jira_scope + 4 provider + 3 jira provider + 3 jira discover/search/validate + 7 watch = 45
     # HS-168-02: + connection.list / connection.recheck (45 -> 47).
@@ -756,7 +757,8 @@ def test_project_family_tool_count_is_64() -> None:
     # Reach: + three Confluence operations (50 -> 53).
     # Interview: + four setup-proposal operations (53 -> 57).
     # PHILO-9-01: + the seven item and resource tools (57 -> 64).
-    assert len(project_family.TOOLS) == 64
+    # PHILO-9-02: + project.mark_update_delivered (64 -> 65).
+    assert len(project_family.TOOLS) == 65
 
 
 def test_graduated_watch_states_constant() -> None:

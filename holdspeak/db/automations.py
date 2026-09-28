@@ -119,6 +119,19 @@ class AutomationRepository(BaseRepository):
             )
         return len(rows)
 
+    @staticmethod
+    def set_project_cadence_in_txn(conn: Any, project_id: str, minutes: int) -> int:
+        """PHILO-9-02: a steward policy write's cadence, INSIDE its transaction.
+
+        ``project.configure_steward`` writes the policy, its owner operation and
+        its receipt in one transaction; the project's watch cadence it carries
+        commits with them. Returns the count updated.
+        """
+        return conn.execute(
+            "UPDATE connector_watches SET evaluation_cadence_minutes = ? WHERE project_id = ?",
+            (int(minutes), project_id),
+        ).rowcount
+
     def list_enabled_legacy_watches(self) -> list[dict[str, Any]]:
         """Select enabled watches eligible for legacy refresh_due_watches.
 
@@ -658,6 +671,9 @@ class AutomationRepository(BaseRepository):
             "state", "capability_manifest_json", "capability_revision",
             "discovery_state", "last_checked_at", "last_connected_at",
             "last_error_code", "last_error_detail",
+            # PHILO-9-02 (B1): the GitHub login the probe read, so the
+            # cached read shows the account (not a secret).
+            "external_connection_ref",
         }
         updates = {k: v for k, v in fields.items() if k in _ALLOWED}
         if not updates:

@@ -481,9 +481,12 @@ class TestRouteLevelPassThrough:
             yield TestClient(app)
 
     def test_restore_route_success(self, rig, client) -> None:
-        db, _svc = rig
+        db, svc = rig
         proj = client.post("/api/projects", json={"name": "Restore Me"}).json()["project"]
-        client.delete(f"/api/projects/{proj['id']}")
+        # PHILO-9-02: the archive route is admitted (Article XI) and needs the
+        # hub's authenticated principal, which this bare router has not; the
+        # restore route under test is exempt. Archive through the service.
+        assert svc.archive_project(OWNER, proj["id"]) is True
         resp = client.post(f"/api/projects/{proj['id']}/restore", json={})
         assert resp.status_code == 200
         body = resp.json()

@@ -94,7 +94,10 @@ class BoundExceeded(Exception):
         )
 
 
-class ProjectStewardService:
+from holdspeak.services.steward_contract import StewardAuthorityLost, StewardContract  # noqa: E402
+
+
+class ProjectStewardService(StewardContract):
     """Run coordination for the Project Steward (SS9.1, SS9.2).
 
     Constructed with a db handle, an evidence collector, and a delta service.
@@ -141,6 +144,8 @@ class ProjectStewardService:
     def run_due(
         self,
         principal: Principal,
+        *,
+        parent_operation_id: str = "",
     ) -> list[dict[str, Any]]:
         """Drain pending watch effects with action_kind='project.steward.run_once'.
 
@@ -162,7 +167,7 @@ class ProjectStewardService:
         for effect in pending:
             effect_id = effect["id"]
             try:
-                outcome = self._drain_one_run_effect(principal, effect)
+                outcome = self._drain_one_run_effect(principal, effect, parent_operation_id=parent_operation_id)
                 outcomes.append(outcome)
             except Exception as exc:
                 # Per-effect isolation: never poison the loop.
@@ -188,6 +193,8 @@ class ProjectStewardService:
         self,
         principal: Principal,
         effect: dict[str, Any],
+        *,
+        parent_operation_id: str = "",
     ) -> dict[str, Any]:
         """Process one pending project.steward.run_once effect.
 
@@ -310,13 +317,29 @@ class ProjectStewardService:
                 "run_state": existing.get("state", ""),
             }
 
-        # Gate 5: start a new run.
+        # Gate 5: start a new run -- PHILO-9-02: admitted through the kernel
+        # (the beat, section 4): the conductor's SCHEDULER under the owner's
+        # recorded policy, or the owner's trigger (its child). Worked on this
+        # thread; its one terminal receipt is written when it ends.
+        from holdspeak.services.errors import ServiceError as _ServiceError
+
         try:
-            run_id = self.insert_run(
-                principal, project_id, watermark=watermark,
-            )
-        except ActiveRunExistsError:
-            # STW-002 absorbed as resolution, not error.
+            started = self.start_scheduled(principal, project_id, watermark,
+                                           parent_operation_id=parent_operation_id)
+            run_id = str(started.get("run_id") or "")
+        except _ServiceError as exc:
+            if exc.code != "active_run_exists":
+                self._db.automations.update_effect(
+                    effect_id, state="skipped", error_code=exc.code, error_detail=exc.detail,
+                )
+                return {
+                    "effect_id": effect_id,
+                    "outcome": "refused",
+                    "code": exc.code,
+                    "operation_id": exc.context.get("operation_id"),
+                    "project_id": project_id,
+                    "watermark": watermark,
+                }
             active = self._db.steward_runs.get_active_run(project_id)
             active_id = active["id"] if active else "unknown"
             self._db.automations.update_effect(
@@ -333,9 +356,7 @@ class ProjectStewardService:
                 "run_id": active_id,
                 "run_state": "active",
             }
-
-        # Execute synchronously (conductor pattern; 04 wires the block).
-        self.execute_phases(principal, run_id, project_id)
+        # STW-002 above: an active run is absorbed as resolution, not error.
 
         # Read back the terminal state for verification.
         final_run = self._db.steward_runs.get_run(run_id)
@@ -371,15 +392,18 @@ class ProjectStewardService:
         thread).  STW-002: ActiveRunExistsError propagates to the caller
         as a typed refusal.
         """
-        run_id = self.insert_run(
-            principal, project_id,
-            policy_id=policy_id, watermark=watermark,
+        # PHILO-9-02 (the steward beat, section 2: "Synchronous internal
+        # run_once uses the same admission and terminal path"): one admitted
+        # project.run_steward, worked on this thread, its one receipt written
+        # when the run ends. A refusal raises its named ServiceError.
+        from holdspeak.services import project_kernel
+
+        started, _kernel = project_kernel.run(
+            self._db, principal, "project.run_steward", {"project_id": str(project_id).strip(), "watermark": watermark},
+            lambda payload: self._start_admitted(principal, payload["project_id"], payload.get("watermark") or "",
+                                                 background=False),
         )
-
-        # Execute the six phases on the calling thread (conductor pattern).
-        self.execute_phases(principal, run_id, project_id)
-
-        return run_id
+        return str(started["run_id"])
 
     def find_run_by_watermark(
         self, project_id: str, watermark: str,
@@ -527,6 +551,8 @@ class ProjectStewardService:
         principal: Principal,
         run_id: str,
         project_id: str,
+        *,
+        handle: Any = None,
     ) -> None:
         """Walk OBSERVE -> ... -> RECORD with a checkpoint per transition.
 
@@ -538,9 +564,21 @@ class ProjectStewardService:
         Failure isolation per the conductor's patterns (SS9.1): exceptions
         are caught, the run is marked failed with an honest summary, and
         the caller is not poisoned.
+
+        PHILO-9-02: with the run operation's ``handle`` (an admitted run),
+        every end writes the run row and the operation's ONE receipt in ONE
+        transaction (``_close_run``), and each phase starts at a boundary
+        check (the durable stop, the frozen policy).
         """
+        phase_results: dict[str, Any] = {}
         try:
-            # Transition queued -> running.
+            # PHILO-9-02 (Codex Astra r1 finding 1): an admitted run whose
+            # worker starts after its run ended (reaped, stopped, recovered)
+            # writes nothing: the terminal winner stands.
+            if handle is not None:
+                self._boundary(run_id)
+            # Transition queued -> running (never out of a terminal state:
+            # the repository's write is state-guarded).
             self._db.steward_runs.update_run_state(
                 run_id, state="running", phase="observe",
             )
@@ -564,10 +602,11 @@ class ProjectStewardService:
             except Exception:
                 pass  # Event emission must never poison the run.
 
-            phase_results: dict[str, Any] = {}
-
             for phase in PHASES:
-                # STW-003: check durable stop BETWEEN phases.
+                # STW-003: check durable stop BETWEEN phases (PHILO-9-02:
+                # and the frozen authority, for an admitted run).
+                if handle is not None:
+                    self._boundary(run_id)
                 self._check_stop(run_id)
 
                 # Checkpoint: update run phase.
@@ -656,6 +695,14 @@ class ProjectStewardService:
                     )
                     raise
 
+                except StewardAuthorityLost as lost:
+                    self._db.steward_steps.update_step(
+                        step_id,
+                        state="interrupted",
+                        error_json=json.dumps({"reason": lost.code}),
+                    )
+                    raise
+
                 except Exception as exc:
                     self._db.steward_steps.update_step(
                         step_id,
@@ -668,25 +715,28 @@ class ProjectStewardService:
                     raise
 
             # All six phases complete: mark the run completed.
-            summary = json.dumps({
+            completed = {
                 "outcome": "completed",
                 "phases_completed": list(PHASES),
                 "phase_results": {
                     k: (v if isinstance(v, dict) else {"ok": True})
                     for k, v in phase_results.items()
                 },
-            }, default=str)
+            }
+            if handle is not None:
+                self._close_run(handle, run_id, "completed", "succeeded", "completed", completed)
+                return
             self._db.steward_runs.update_run_state(
                 run_id,
                 state="completed",
-                summary_json=summary,
+                summary_json=json.dumps(completed, default=str),
             )
 
         except StopRequested:
             # Graceful stop: run transitions stopping -> interrupted.
             current = self._db.steward_runs.get_run(run_id)
             interrupted_phase = current["phase"] if current else "unknown"
-            summary = json.dumps({
+            stopped = {
                 "outcome": "interrupted",
                 "reason": "stop_requested",
                 "interrupted_phase": interrupted_phase,
@@ -694,13 +744,31 @@ class ProjectStewardService:
                     p for p in PHASES
                     if p in phase_results
                 ],
-            }, default=str)
-            self._db.steward_runs.update_run_state(
-                run_id,
-                state="interrupted",
-                summary_json=summary,
-            )
+            }
+            if handle is not None:
+                self._close_run(handle, run_id, "interrupted", "cancelled", "stop_requested", stopped)
+            else:
+                self._db.steward_runs.update_run_state(
+                    run_id,
+                    state="interrupted",
+                    summary_json=json.dumps(stopped, default=str),
+                )
             log.info("Run %s stopped at phase %s", run_id, interrupted_phase)
+
+        except StewardAuthorityLost as lost:
+            # PHILO-9-02 (the beat, section 3): the frozen policy changed or
+            # was disabled at a boundary: the run ends refused with the
+            # code; the effects it completed stay true (no rollback).
+            refused = {
+                "outcome": "interrupted",
+                "reason": lost.code,
+                "phases_completed": [p for p in PHASES if p in phase_results],
+            }
+            if handle is not None:
+                self._close_run(handle, run_id, "interrupted", "refused", lost.code, refused)
+            else:
+                self._db.steward_runs.update_run_state(
+                    run_id, state="interrupted", summary_json=json.dumps(refused, default=str))
 
         except Exception as exc:
             # Failure isolation: mark failed, never poison the caller.
@@ -712,11 +780,15 @@ class ProjectStewardService:
                     if p in phase_results
                 ],
             }, default=str)
-            self._db.steward_runs.update_run_state(
-                run_id,
-                state="failed",
-                summary_json=summary,
-            )
+            if handle is not None:
+                self._close_run(handle, run_id, "failed", "failed", type(exc).__name__[:60] or "failed",
+                                json.loads(summary))
+            else:
+                self._db.steward_runs.update_run_state(
+                    run_id,
+                    state="failed",
+                    summary_json=summary,
+                )
             log.error("Run %s failed: %s", run_id, exc, exc_info=True)
 
     # ── per-phase dispatch ────────────────────────────────────────────
@@ -795,11 +867,50 @@ class ProjectStewardService:
         # HS-173: collect CI history (last 10 runs per repo) for health
         # derivations.  Persisted on the step's observed_state_json so
         # the Room read never calls `gh` itself.
-        ci_history = self._collect_ci_history(principal, project_id)
+        ci_history = self._observe_ci(principal, project_id, result)
         if ci_history:
             result["ci_history"] = ci_history
 
         return result
+
+    def _observe_ci(
+        self, principal: Principal, project_id: str, result: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """OBSERVE's provider read (the beat, section 5): an admitted child of an admitted run.
+
+        An OWNER run reads CI under the owner's run gesture. A SCHEDULER (or,
+        after story 07, an AGENT) run needs ``refresh_sources`` in its frozen
+        policy; without it the prior observations stay, with a named skip.
+        """
+        from holdspeak.kernel import project as rooms
+
+        context = rooms.current_steward_context()
+        if context is None or not self._has_ci_targets(project_id):
+            return self._collect_ci_history(principal, project_id)
+        if context.get("actor_kind") != "owner":
+            run = self._db.steward_runs.get_run(str(context["run_id"])) or {}
+            try:
+                frozen = json.loads(run.get("authority_json") or "{}").get("policy_terms") or {}
+            except (TypeError, ValueError):
+                frozen = {}
+            if "refresh_sources" not in (frozen.get("eligible_effect_kinds") or []):
+                result["ci_history_skipped"] = "refresh_sources_not_eligible"
+                return []
+        return self._child(
+            principal, rooms.STEWARD_EFFECT,
+            {"run_id": context["run_id"], "project_id": project_id, "effect_kind": "observe_ci"},
+            lambda: self._collect_ci_history(principal, project_id),
+        )
+
+    def _has_ci_targets(self, project_id: str) -> bool:
+        automations = getattr(self._db, "automations", None)
+        if automations is None:
+            return False
+        try:
+            watches = automations.list_project_watches(project_id)
+        except Exception:
+            return False
+        return any(w.get("connector_id") == "gh" and w.get("query_kind") == "branch_ci" for w in watches)
 
     def _collect_ci_history(
         self, principal: Principal, project_id: str,
@@ -867,8 +978,11 @@ class ProjectStewardService:
         STW-007: model failure falls back to deterministic with a receipt.
         """
         review = self._delta.open_review(principal, project_id)
+        # PHILO-9-02 (F20): the producer returns ``review_id``
+        # (project_delta_service.py); reading ``id`` recorded "" for a
+        # review COMPARE really opened.
         return {
-            "review_id": review.get("id", ""),
+            "review_id": review.get("review_id") or review.get("id", ""),
             "proposal_count": len(review.get("proposals", [])),
             "proposals": review.get("proposals", []),
         }
@@ -926,6 +1040,15 @@ class ProjectStewardService:
             policy.get("eligible_effect_kinds_json", "[]")))
         max_actions = policy.get("max_actions_per_run", 10)
         max_retries = policy.get("max_retries", 3)
+        # PHILO-9-02 (the steward beat, section 4; Muad'Dib r1 C2): an
+        # admitted run acts under its FROZEN policy. A policy saved later
+        # cannot enlarge it (a changed one refuses it at the boundary); a
+        # no-policy owner run keeps its empty effects.
+        frozen = self._frozen_terms(run_id)
+        if frozen is not None:
+            eligible_kinds = set(frozen.get("eligible_effect_kinds") or [])
+            max_actions = frozen.get("max_actions_per_run", 10) if frozen else 10
+            max_retries = frozen.get("max_retries", 3) if frozen else 3
 
         # Collect the run's watermark for Door dedup.
         run_row = self._db.steward_runs.get_run(run_id)
@@ -1031,12 +1154,21 @@ class ProjectStewardService:
             )
             seq += 1
 
-            # Apply the effect with retry logic (STW-008).
-            receipt = self._apply_effect_with_retry(
-                principal, run_id, project_id, step_id,
-                effect_kind, phase_results, watermark,
-                max_retries=max_retries,
-            )
+            # Apply the effect with retry logic (STW-008). PHILO-9-02 (the
+            # beat, section 5): an executed slot is ONE child operation of
+            # the run; apply_proposal_effects has none of its own -- each
+            # acceptance is its own project.decide_proposal child.
+            def _slot(effect_kind: str = effect_kind, step_id: str = step_id) -> dict[str, Any]:
+                return self._apply_effect_with_retry(
+                    principal, run_id, project_id, step_id,
+                    effect_kind, phase_results, watermark,
+                    max_retries=max_retries,
+                )
+
+            if effect_kind == "apply_proposal_effects":
+                receipt = _slot()
+            else:
+                receipt = self._effect_child(principal, run_id, project_id, effect_kind, _slot)
 
             effect_receipts.append(receipt)
             if receipt.get("outcome") == "applied":
@@ -1117,6 +1249,16 @@ class ProjectStewardService:
                     step_id,
                     state="interrupted",
                     error_json=json.dumps({"reason": "stop_requested"}),
+                )
+                raise
+
+            except StewardAuthorityLost as lost:
+                # The beat, section 4: an authority refusal is control flow,
+                # never a retry or a skipped effect.
+                self._db.steward_steps.update_step(
+                    step_id,
+                    state="interrupted",
+                    error_json=json.dumps({"reason": lost.code}),
                 )
                 raise
 
@@ -1260,7 +1402,7 @@ class ProjectStewardService:
             review = self._delta.open_review(principal, project_id)
             return {
                 "effect": "create_proposals",
-                "review_id": review.get("id", ""),
+                "review_id": review.get("review_id") or review.get("id", ""),
                 "proposal_count": len(review.get("proposals", [])),
             }
         except Exception as exc:
@@ -1310,10 +1452,19 @@ class ProjectStewardService:
             proposal_kind = proposal.get("proposal_kind", "")
             proposal_id = proposal.get("id", "")
 
-            # Accept through the delta's decide_proposal verb.
+            # Accept through the delta's decide_proposal verb. PHILO-9-02:
+            # each acceptance is ONE project.decide_proposal child of the run
+            # (the beat, section 5), with the cutoff checked between proposals.
             try:
-                result = self._delta.decide_proposal(
-                    principal, project_id, proposal_id, "accept",
+                review_id = str(compare_result.get("review_id") or "")
+                result = self._child(
+                    principal, "project.decide_proposal",
+                    {"project_id": project_id, "review_id": review_id, "proposal_id": proposal_id,
+                     "verb": "accept", "effect_kind": "apply_proposal_effects"},
+                    lambda proposal_id=proposal_id, review_id=review_id: self._delta.decide_proposal(
+                        principal, project_id, proposal_id, "accept",
+                        **({"review_id": review_id} if review_id else {}),
+                    ),
                 )
                 applied.append({
                     "proposal_id": proposal_id,
@@ -1321,6 +1472,8 @@ class ProjectStewardService:
                     "result": "accepted",
                     "item_id": result.get("item_id"),
                 })
+            except (StopRequested, StewardAuthorityLost):
+                raise  # the beat, section 4: control flow through the broad catch
             except Exception as exc:
                 skipped.append({
                     "proposal_id": proposal_id,

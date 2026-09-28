@@ -50,6 +50,20 @@ def _connected_gh() -> MagicMock:
     return gh
 
 
+def _probed_real_gh(db: Database) -> Any:
+    """A real GitHubProviderAdapter whose ``gh auth status`` probe answered 'testuser'."""
+    import subprocess
+
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+
+    def runner(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(argv, 0, stdout="Logged in to github.com account testuser (keyring)", stderr="")
+
+    adapter = GitHubProviderAdapter(db=db, runner=runner)
+    adapter.connection_status(OWNER)
+    return adapter
+
+
 def _disconnected_gh() -> MagicMock:
     gh = MagicMock()
     gh.connection_status.return_value = {
@@ -102,7 +116,10 @@ def setup_rig(tmp_path, monkeypatch):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
 
     gh_adapter = _connected_gh()
-    conn_svc = ConnectionsService(github_adapter=gh_adapter)
+    # PHILO-9-02 B1 (Codex Astra r1 finding 8): the Connections list reads the
+    # REAL adapter's stored probe -- probed once through the adapter's own
+    # runner seam, never a double that invents the stored fields.
+    conn_svc = ConnectionsService(github_adapter=_probed_real_gh(db))
 
     project_svc = ProjectService(db)
     watch_svc = WatchService(db)

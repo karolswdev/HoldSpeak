@@ -4183,7 +4183,11 @@ CREATE TABLE IF NOT EXISTS steward_policies (
     -- HS-173-04: per-project nudge comment template ({days} placeholder).
     nudge_template TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    -- PHILO-9-02 (the steward beat, section 4): the owner's latest admitted
+    -- operation that wrote these terms (project.configure_steward, or
+    -- project.archive turning unattended runs off). NULL: never recorded.
+    configure_operation_id TEXT REFERENCES kernel_operations(operation_id)
 );
 CREATE INDEX IF NOT EXISTS idx_steward_policies_project
     ON steward_policies(project_id);
@@ -4205,10 +4209,17 @@ CREATE TABLE IF NOT EXISTS steward_runs (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     started_at TEXT,
-    completed_at TEXT
+    completed_at TEXT,
+    -- PHILO-9-02 (the steward beat, section 2): the run's kernel operation
+    -- (required for every admitted run; NULL only on a run from before) and
+    -- its frozen authority (the policy snapshot and its provenance).
+    operation_id TEXT REFERENCES kernel_operations(operation_id),
+    authority_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_steward_runs_project
     ON steward_runs(project_id, state);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_steward_runs_operation
+    ON steward_runs(operation_id) WHERE operation_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_steward_runs_one_active_per_project
     ON steward_runs(project_id)
     WHERE state IN ('queued', 'running', 'stopping');

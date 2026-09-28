@@ -31,10 +31,97 @@ _JIRA_KEY_RE = re.compile(r"\b([A-Z][A-Z0-9]+-\d+)\b")
 
 
 class SuggestedSourceService:
-    """Stateless scanner + CRUD over the source_suggestions table."""
+    """Stateless scanner + CRUD over the source_suggestions table.
 
-    def __init__(self, db: Any) -> None:
+    PHILO-9-02: the hub composes ONE instance with its ProjectService; the
+    three suggested-source operations (``project.suggested_sources``,
+    ``project.add_suggested_source``, ``project.dismiss_suggested_source``)
+    are bound to it (``holdspeak/room_operations.py``). Accepting a
+    suggestion is a durable, truthful outcome (F5, F16, F17): the Room files
+    the source AND arms its watch in one transaction, or the call is refused
+    by name and the suggestion stays pending.
+    """
+
+    def __init__(self, db: Any, *, project_service: Any = None) -> None:
         self._db = db
+        self._project_service = project_service
+
+    # ---- The Room's operations (PHILO-9-02) -------------------------------
+
+    def _projects(self) -> Any:
+        if self._project_service is None:
+            from .project_service import ProjectService
+
+            self._project_service = ProjectService(self._db)
+        return self._project_service
+
+    def pending(self, principal: Any, project_id: str) -> list[dict[str, Any]]:
+        """The Room's pending suggestions (an unknown project: ``not_found``)."""
+        self._projects().get_project(principal, project_id)
+        return self.list_suggestions(project_id, status="pending")
+
+    def add(self, principal: Any, project_id: str, reference: str,
+            command_id: str | None = None) -> dict[str, Any]:
+        """Watch a suggested source: the resource AND the armed watch, or a named refusal.
+
+        GitHub ``owner/repo`` arms the review-queue watch on that repository;
+        a Jira ``PROJ-123`` arms the due-risk watch on project ``PROJ`` through
+        a CONNECTED Jira account (the stored connection state; no provider
+        call here). Without one: ``jira_connection_required``, and the
+        suggestion stays pending.
+        """
+        from .errors import NotFound, ServiceError
+
+        projects = self._projects()
+        projects.get_project(principal, project_id)
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                (project_id, reference),
+            ).fetchone()
+            if row is None and command_id:
+                # A retry of a mark that already accepted it answers from its command record.
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=?",
+                    (project_id, reference),
+                ).fetchone()
+        if row is None:
+            raise NotFound("suggestion", reference)
+        suggestion = dict(row)
+        provider = str(suggestion["provider"])
+        if provider == "github":
+            from holdspeak import github_templates
+
+            spec = github_templates.compile("watch.github.review_queue", suggestion["reference"], {})
+        elif provider == "jira":
+            from holdspeak import jira_templates
+
+            connected = [c for c in self._db.automations.list_provider_connections(provider_id="jira")
+                         if str(c.get("state") or "") == "connected"]
+            if not connected:
+                raise ServiceError(
+                    "jira_connection_required",
+                    "No connected Jira account can watch this issue. Connect Jira in Connections, then add it again.",
+                    context={"status": 409, "reference": suggestion["reference"]},
+                )
+            connection_ref = str(connected[0].get("external_connection_ref") or connected[0].get("connection_ref") or "")
+            project_key = str(suggestion["reference"]).upper().rsplit("-", 1)[0]
+            spec = jira_templates.compile("watch.jira.due_risk", {
+                "connection_ref": connection_ref, "projects": [project_key], "issue_types": [],
+            })
+        else:
+            raise ServiceError("source_unsupported", f"A {provider} suggestion cannot be watched.",
+                               context={"status": 409})
+        return projects.add_source_watch(
+            principal, project_id, suggestion_id=str(suggestion["id"]),
+            resource_ref=f"integration:{provider}:{suggestion['reference']}", spec=spec, command_id=command_id,
+        )
+
+    def dismiss(self, principal: Any, project_id: str, reference: str) -> dict[str, Any]:
+        """The suggestion never shows again for this Room."""
+        self._projects().get_project(principal, project_id)
+        pending = self.find_pending_by_reference(project_id, reference)
+        return {"suggestion": self.dismiss_suggestion(pending["id"])}
 
     # ---- Scanner -------------------------------------------------------------
 

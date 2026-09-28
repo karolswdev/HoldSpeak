@@ -19,6 +19,7 @@ from ...services.errors import ConflictError, NotFound, ServiceError, Validation
 from ...services.project_service import ProjectService
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
 
 log = get_logger("web.routes.projects")
 
@@ -280,14 +281,17 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     @router.delete("/api/projects/{project_id}")
     async def api_archive_project(project_id: str, request: Request) -> Any:
+        # PHILO-9-02: admitted (story 01's row, enforced): one operation, one receipt.
         try:
-            ops().invoke(principal(request), "project.archive", {"project_id": project_id})
-            return JSONResponse({"success": True})
-        except ConflictError as exc:
+            _archived, kernel = ops().invoke_receipted(principal(request), "project.archive", {"project_id": project_id})
+            return JSONResponse({"success": True, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                return JSONResponse({"success": False, "error": "Project not found", **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
-                                 "error_code": exc.code}, status_code=409)
-        except NotFound as exc:
-            return not_found(exc, success=True)
+                                 "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except Exception as exc:
             log.error(f"Failed to archive project: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
@@ -333,24 +337,31 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list Project resources")
 
     @router.put("/api/projects/{project_id}/resources/{resource_ref:path}")
-    async def api_add_project_resource(project_id: str, resource_ref: str, request: Request, payload: dict[str, Any] | None = None) -> Any:
+    async def api_add_project_resource(project_id: str, resource_ref: str, request: Request) -> Any:
         # PHILO-9-01 (A1): the body's expected_revision and command_id reach
         # the service (they were dropped, so a stale revision and a reused
-        # command id both wrote).
+        # command id both wrote). PHILO-9-02: admitted; a body that is not an
+        # object is its operation's invalid_arguments refusal with a receipt.
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.resource.add", optional=True)
+        if refused is not None:
+            return refused
         try:
-            body = dict(payload or {})
-            return JSONResponse({"resource": ops().invoke(principal(request), "project.resource.add", url_owns(
+            resource, kernel = ops().invoke_receipted(principal(request), "project.resource.add", url_owns(
                 body, "project.resource.add", project_id=project_id, resource_ref=resource_ref,
-            ))})
-        except ConflictError as exc:
+            ))
+            return JSONResponse({"resource": resource, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                return JSONResponse({"error": "Project not found" if exc.kind == "project" else str(exc),
+                                     **refusal_fields(exc)}, status_code=404)
+            if isinstance(exc, ValidationError):
+                return JSONResponse({"error": exc.detail, **refusal_fields(exc)}, status_code=400)
             return JSONResponse({"success": False, "error": exc.detail,
-                                 "error_code": exc.code}, status_code=409)
-        except ValidationError as exc:
-            return JSONResponse({"error": exc.detail}, status_code=400)
+                                 "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound as exc:
-            return not_found(exc)
+            return JSONResponse({"error": str(exc), **refusal_fields(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to add Project resource")
 
@@ -358,23 +369,24 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     async def api_remove_project_resource(project_id: str, resource_ref: str, request: Request) -> Any:
         # PHILO-9-01 (A1): an optional JSON body carries expected_revision and
         # command_id to the service.
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.resource.remove", optional=True)
+        if refused is not None:
+            return refused
         try:
-            try:
-                body = await request.json() if await request.body() else {}
-            except ValueError:
-                return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
-            if not isinstance(body, dict):
-                return JSONResponse({"error": "the body must be a JSON object"}, status_code=400)
-            return JSONResponse({"success": True, "removed": ops().invoke(principal(request), "project.resource.remove", url_owns(
+            removed, kernel = ops().invoke_receipted(principal(request), "project.resource.remove", url_owns(
                 body, "project.resource.remove", project_id=project_id, resource_ref=resource_ref,
-            ))})
-        except ConflictError as exc:
+            ))
+            return JSONResponse({"success": True, "removed": removed, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                return JSONResponse({"error": "Project not found" if exc.kind == "project" else str(exc),
+                                     **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
-                                 "error_code": exc.code}, status_code=409)
+                                 "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound as exc:
-            return not_found(exc)
+            return JSONResponse({"error": str(exc), **refusal_fields(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to remove Project resource")
 
@@ -390,13 +402,15 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            ops().invoke(principal(request), "project.link", {"project_id": project_id, "meeting_id": meeting_id})
-            return JSONResponse({"success": True})
-        except ConflictError as exc:
+            _done, kernel = ops().invoke_receipted(principal(request), "project.link", {"project_id": project_id, "meeting_id": meeting_id})
+            return JSONResponse({"success": True, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                return JSONResponse({"success": False, "error": str(exc), **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
-                                 "error_code": exc.code}, status_code=409)
-        except NotFound as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+                                 "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except Exception as exc:
             log.error(f"Failed to associate meeting: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
@@ -404,13 +418,15 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.delete("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_disassociate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
-            ops().invoke(principal(request), "project.unlink", {"project_id": project_id, "meeting_id": meeting_id})
-            return JSONResponse({"success": True})
-        except ConflictError as exc:
+            _done, kernel = ops().invoke_receipted(principal(request), "project.unlink", {"project_id": project_id, "meeting_id": meeting_id})
+            return JSONResponse({"success": True, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                return JSONResponse({"success": False, "error": str(exc), **refusal_fields(exc)}, status_code=404)
             return JSONResponse({"success": False, "error": exc.detail,
-                                 "error_code": exc.code}, status_code=409)
-        except NotFound as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+                                 "error_code": exc.code, **refusal_fields(exc)}, status_code=409)
         except Exception as exc:
             log.error(f"Failed to disassociate meeting: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
@@ -614,76 +630,53 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/projects/{project_id}/suggested-sources")
     async def api_suggested_sources(project_id: str, request: Request) -> Any:
-        """List pending suggested sources for a Room."""
+        """List pending suggested sources for a Room (PHILO-9-02: the declared read)."""
         try:
-            service.get_project(principal(request), project_id)
-            from ...services.suggested_source_service import SuggestedSourceService
-            sug = SuggestedSourceService(service._db)
-            rows = sug.list_suggestions(project_id, status="pending")
-            return JSONResponse({"suggestions": rows})
+            return JSONResponse({"suggestions": ops().invoke(
+                principal(request), "project.suggested_sources", {"project_id": project_id})})
         except NotFound as exc:
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to list suggested sources")
 
-    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/add")
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref:path}/add")
     async def api_add_suggested_source(project_id: str, ref: str, request: Request) -> Any:
-        """Accept a suggested source -- creates a Watch source via the existing path."""
+        """Watch a suggested source: the resource AND the armed watch, or a named refusal.
+
+        PHILO-9-02 (F16, F17): ``{ref:path}`` so a GitHub ``owner/repo``
+        reaches the route; the declared, admitted operation writes the Room's
+        source, its watch and the accepted suggestion in ONE transaction, or
+        refuses by name with the suggestion still pending.
+        """
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.add_suggested_source",
+                                              optional=True)
+        if refused is not None:
+            return refused
         try:
-            p = principal(request)
-            service.get_project(p, project_id)
-            from ...services.suggested_source_service import SuggestedSourceService
-            sug = SuggestedSourceService(service._db)
-
-            # Find the suggestion by reference.
-            with service._db._connection() as conn:
-                row = conn.execute(
-                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-                    (project_id, ref),
-                ).fetchone()
-            if row is None:
-                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
-
-            suggestion = dict(row)
-            # Accept: mark as accepted and create the source.
-            sug.accept_suggestion(suggestion["id"])
-
-            # Create the Watch source through add_resource.
-            resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
-            try:
-                result = service.add_resource(
-                    p, project_id, resource_ref,
-                    {"relationship": "source", "provider": suggestion["provider"]},
-                )
-            except Exception:
-                # Resource add failed but suggestion is already accepted -- still report.
-                result = {"resource_ref": resource_ref, "state": "accepted_no_watch"}
-
-            return JSONResponse({"suggestion": suggestion, "resource": result})
-        except NotFound as exc:
-            return not_found(exc)
+            result, kernel = ops().invoke_receipted(principal(request), "project.add_suggested_source", url_owns(
+                body, "project.add_suggested_source", project_id=project_id, reference=ref))
+            return JSONResponse({**result, **kernel_fields(kernel)})
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            if isinstance(exc, NotFound):
+                message = "Suggestion not found or already resolved" if exc.kind == "suggestion" else "Project not found"
+                return JSONResponse({"error": message, **refusal_fields(exc)}, status_code=404)
+            status = int(exc.context.get("status") or 409)
+            return JSONResponse({"success": False, "error": exc.detail, "code": exc.code, "error_code": exc.code,
+                                 **refusal_fields(exc)}, status_code=status)
         except Exception as exc:
             return error_500(exc, log, "Failed to add suggested source")
 
-    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/dismiss")
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref:path}/dismiss")
     async def api_dismiss_suggested_source(project_id: str, ref: str, request: Request) -> Any:
         """Dismiss a suggested source -- never suggest again for this Room."""
         try:
-            service.get_project(principal(request), project_id)
-            from ...services.suggested_source_service import SuggestedSourceService
-            sug = SuggestedSourceService(service._db)
-
-            with service._db._connection() as conn:
-                row = conn.execute(
-                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-                    (project_id, ref),
-                ).fetchone()
-            if row is None:
-                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
-
-            suggestion = sug.dismiss_suggestion(dict(row)["id"])
-            return JSONResponse({"suggestion": suggestion})
+            return JSONResponse(ops().invoke(principal(request), "project.dismiss_suggested_source",
+                                             {"project_id": project_id, "reference": ref}))
         except NotFound as exc:
+            if exc.kind == "suggestion":
+                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to dismiss suggested source")

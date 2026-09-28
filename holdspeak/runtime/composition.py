@@ -109,6 +109,7 @@ class RuntimeServices:
     project_evidence_collector: Optional[Any] = None
     watch_service: Optional[Any] = None            # gh watch kwargs
     connections_service: Optional[Any] = None
+    suggested_source_service: Optional[Any] = None  # PHILO-9-02: project_service=
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
@@ -376,6 +377,7 @@ def services_from_web_context(
         "project_evidence_collector",
         "watch_service",
         "connections_service",
+        "suggested_source_service",
         "inference_setup_service",
         "inference_acquisition_service",
         "model_library_service",
@@ -452,8 +454,35 @@ def _compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> N
             project_service=project,
             watch_service=_held("watch_service") or WatchService(db, observer=observer),
         )
+    # PHILO-9-02: the steward, the watches, the connections and the suggested
+    # sources (the hub composes each; a partial context gets the bare builds
+    # the MCP project family makes off-hub).
+    watch = _held("watch_service")
+    if watch is None:
+        from holdspeak.services.watch_service import WatchService
+
+        watch = WatchService(db, observer=observer)
+    steward = _held("project_steward_service")
+    if steward is None:
+        from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
+        from holdspeak.services.project_steward_service import ProjectStewardService
+
+        steward = ProjectStewardService(db, ProjectEvidenceCollector(db), delta,
+                                        update_service=update, project_service=project)
+    connections = _held("connections_service")
+    if connections is None:
+        from holdspeak.services.connections_service import ConnectionsService
+
+        connections = ConnectionsService()
+    suggested = _held("suggested_source_service")
+    if suggested is None:
+        from holdspeak.services.suggested_source_service import SuggestedSourceService
+
+        suggested = SuggestedSourceService(db, project_service=project)
     for name, instance in (("project_service", project), ("project_delta_service", delta),
-                           ("project_update_service", update), ("project_door_service", door)):
+                           ("project_update_service", update), ("project_door_service", door),
+                           ("watch_service", watch), ("project_steward_service", steward),
+                           ("connections_service", connections), ("suggested_source_service", suggested)):
         setattr(services, name, instance)
         try:
             setattr(ctx, name, instance)

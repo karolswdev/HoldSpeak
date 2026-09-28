@@ -3,8 +3,8 @@
 * Every row names its real method on the hub's service and is bound to the
   hub's ONE instance (the identity fence).
 * Every row declares its Article XI admission BY EFFECT exactly as the phase
-  status's admission table rules it (Q1); story 01 DECLARES it, PHILO-9-02
-  ENFORCES it: until then an admitted row makes no kernel operation.
+  status's admission table rules it (Q1); story 01 DECLARED it, PHILO-9-02
+  ENFORCES it: an admitted row makes one kernel operation with its receipt.
 * Every MCP tool and HTTP route of the slice passes through the ONE
   ``OperationRegistry.invoke`` (a recording fence on the hub's registry).
 * The PROJECT palette refuses a tool outside it and admits the new tools,
@@ -100,8 +100,8 @@ def test_each_row_declares_its_admission_by_effect_and_story_02_enforces_it(name
     assert admission is not None, name
     assert (admission.rule, admission.arguments) == ADMISSION_TABLE[name]
     assert admission.condition
-    if admission.rule != "exempt":
-        assert admission.enforced is False, f"{name}: PHILO-9-02 enforces the Room's admission"
+    # PHILO-9-02: every Room row is enforced (story 01 declared them false).
+    assert admission.enforced is True, f"{name}: PHILO-9-02 enforces the Room's admission"
     exported = json.loads((Path(__file__).resolve().parents[2] / "docs" / "generated" / "operations.json").read_text())
     row = next(op for op in exported["operations"] if op["name"] == name)
     assert row["admission"]["rule"] == admission.rule and row["admission"]["enforced"] is admission.enforced
@@ -121,16 +121,20 @@ def test_each_row_is_bound_to_the_hubs_one_instance(hub: Hub, name: str) -> None
     assert hub.root.operations.target(name) is getattr(hub.root, field), name
 
 
-def test_an_admitted_row_makes_no_kernel_operation_until_story_02(hub: Hub) -> None:
-    def ops() -> int:
+def test_an_admitted_row_makes_one_kernel_operation_with_its_receipt(hub: Hub) -> None:
+    """PHILO-9-02 flipped story 01's declaration: archive is now ONE operation and ONE receipt."""
+    def ops() -> list[tuple[str, str]]:
         with hub.db._connection() as conn:
-            return conn.execute("SELECT COUNT(*) FROM kernel_operations").fetchone()[0]
+            return [(r[0], r[1]) for r in conn.execute(
+                "SELECT o.name, r.outcome FROM kernel_operations o JOIN kernel_receipts r"
+                " ON r.operation_id=o.operation_id ORDER BY o.created_at")]
 
     pid = hub.client.post("/api/projects", json={"name": "Declared"}).json()["project"]["id"]
     before = ops()
     is_error, archived = hub.mcp("project.archive", {"project_id": pid})
     assert not is_error, archived
-    assert ops() == before
+    assert ops()[len(before):] == [("project.archive", "succeeded")]
+    assert archived["operation_id"] and archived["receipt"]["state"] == "succeeded"
 
 
 @pytest.fixture

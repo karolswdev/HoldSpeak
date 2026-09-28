@@ -554,8 +554,14 @@ class StewardRunRepository(BaseRepository):
         updates.append("updated_at = ?")
         params.append(now_iso)
         params.append(str(run_id).strip())
+        # PHILO-9-02 (Codex Astra r1 finding 1): a terminal run is final. A
+        # late worker (its run already reaped, stopped or recovered) can
+        # never write it back to running: the terminal winner stands and the
+        # project's active-run slot stays free.
+        guard = ("AND state IN ('queued', 'running')" if state == "running"
+                 else "AND state NOT IN ('completed', 'failed', 'interrupted')")
         conn.execute(
-            f"UPDATE steward_runs SET {', '.join(updates)} WHERE id = ?",
+            f"UPDATE steward_runs SET {', '.join(updates)} WHERE id = ? {guard}",
             params,
         )
 

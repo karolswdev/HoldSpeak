@@ -215,8 +215,17 @@ class _FakeDelta:
 
 def _make_service(
     conn: sqlite3.Connection,
-) -> tuple[ProjectStewardService, _FakeDB]:
-    db = _FakeDB(conn)
+) -> tuple[ProjectStewardService, Any]:
+    """PHILO-9-02: the REAL Database over the test's file.
+
+    A drained run is admitted through the kernel now (the steward beat,
+    section 4), which needs the real database the kernel journal lives in;
+    the fake DB carried only the steward repositories.
+    """
+    from holdspeak.db.core import Database
+
+    path = conn.execute("PRAGMA database_list").fetchone()[2]
+    db = Database(Path(path))
     svc = ProjectStewardService(db, _FakeCollector(), _FakeDelta())
     return svc, db
 

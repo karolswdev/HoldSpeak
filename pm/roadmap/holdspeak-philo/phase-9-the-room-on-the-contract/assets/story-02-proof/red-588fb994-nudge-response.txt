@@ -1,0 +1,5 @@
+E       AssertionError: comment receipt is overwritten: {'operation_id': 'op_ee42ead7a3c34ae8aec003737c3cbaf5', 'receipt': {'actor_identity': 'owner-session', 'actor_kind': 'owner', 'authority_basis': 'authenticated_principal+declared_capab
+E       AssertionError: comment receipt is overwritten: {'success': True, 'receipt': {'receipt_id': 'rcpt_b82d35ca8a2c42fd8d5eedcc3cea3cbb', 'operation_id': 'op_0c8c41d0bba246ef950a98e072bcc48d', 'state': 'succeeded', 'outcome': 'succeeded'
+FAILED tests/unit/test_philo9_02_round_three.py::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt[mcp]
+FAILED tests/unit/test_philo9_02_round_three.py::test_r3_a_sent_nudge_answers_the_comment_receipt_and_the_kernel_receipt[http]
+2 failed, 37 passed in 9.84s

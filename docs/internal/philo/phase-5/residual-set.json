@@ -435,6 +435,144 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/people.py::build_people_router.projects",
       "discriminator": "ProjectService"
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "connection.list",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "connection.recheck",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "nudge.dismiss",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "nudge.send",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.add_suggested_source",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.configure_steward",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.dismiss_suggested_source",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.get_steward_run",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.run_steward",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.steward.trigger",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.stop_steward",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.suggested_sources",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.evaluate",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.inspect",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.pause",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.resume",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.retire",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.set_rules",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "project.watch.test",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "mcp",
+      "entry_point": "steward.nudges",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_add_suggested_source",
+      "discriminator": "SuggestedSourceService"
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_dismiss_suggested_source",
+      "discriminator": "SuggestedSourceService"
+    },
+    {
+      "story": "PHILO-9-02",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_suggested_sources",
+      "discriminator": "SuggestedSourceService"
     }
   ],
   "public_tools_added": [
@@ -492,6 +630,11 @@
       "story": "PHILO-9-01",
       "tool": "project.resource.remove",
       "operation": "project.resource.remove"
+    },
+    {
+      "story": "PHILO-9-02",
+      "tool": "project.mark_update_delivered",
+      "operation": "project.mark_update_delivered"
     }
   ],
   "moved": [
@@ -505,11 +648,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 263,
-    "residual_mcp": 205,
-    "residual_http": 58,
-    "http_constructions": 59,
-    "public_tools": 236
+    "residual_identities": 240,
+    "residual_mcp": 185,
+    "residual_http": 55,
+    "http_constructions": 56,
+    "public_tools": 237
   },
   "entries": [
     {
@@ -649,18 +792,6 @@
       "entry_point": "concierge.propose",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/concierge.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "connection.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "connection.recheck",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
     {
       "transport": "mcp",
@@ -1018,18 +1149,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "nudge.dismiss",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "nudge.send",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "people.agenda.add",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/people.py)"
@@ -1180,36 +1299,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "project.add_suggested_source",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.configure_steward",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.dismiss_suggested_source",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.get_steward_run",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.run_steward",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "project.setup.answer",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
@@ -1265,66 +1354,6 @@
     {
       "transport": "mcp",
       "entry_point": "project.setup.test_proposal",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.steward.trigger",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.stop_steward",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.suggested_sources",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.evaluate",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.inspect",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.pause",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.resume",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.retire",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.set_rules",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.watch.test",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
@@ -1531,12 +1560,6 @@
       "entry_point": "settings.update",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/settings.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "steward.nudges",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "mcp",
@@ -1998,24 +2021,6 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/workflows.py::build_workflows_router.svc",
       "discriminator": "PrimitiveService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_add_suggested_source",
-      "discriminator": "SuggestedSourceService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_dismiss_suggested_source",
-      "discriminator": "SuggestedSourceService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_suggested_sources",
-      "discriminator": "SuggestedSourceService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
     {

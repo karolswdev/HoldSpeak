@@ -7,6 +7,11 @@ moves onto the contract and their HTTP routes: the tool names, the answer's
 envelope keys, the refusal code (MCP) and the status and envelope keys (HTTP)
 of an unknown project, update or item, and ``project_request_invalid`` for an
 empty id. Values that differ run to run (ids, times) are never compared.
+
+PHILO-9-02 (the named difference): an ADMITTED call's answer -- and a refusal
+of one -- also carries its kernel ``operation_id`` and ``receipt`` (a
+superset; the steward beat, section 6). The envelope keys are compared
+without those two.
 """
 from __future__ import annotations
 
@@ -35,6 +40,14 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 def _call(hub: Hub, name: str, args: dict[str, Any]) -> tuple[bool, Any]:
     return hub.mcp(name, args)
+
+
+#: PHILO-9-02: the kernel fields an admitted call (or its refusal) adds.
+_KERNEL = {"operation_id", "receipt"}
+
+
+def _keys(value: dict[str, Any]) -> set[str]:
+    return set(value) - _KERNEL
 
 
 @pytest.fixture
@@ -72,7 +85,7 @@ def test_the_eighteen_mcp_answers_keep_their_envelopes(hub: Hub, room: dict[str,
         is_error, value = _call(hub, name, args)
         assert not is_error, (name, value)
         if keys is not None:
-            assert set(value) == keys, (name, sorted(value))
+            assert _keys(value) == keys, (name, sorted(value))
     _, got = _call(hub, "project.get", {"project_id": pid})
     assert got["id"] == pid and "name" in got
     _, the_room = _call(hub, "project.get_room", {"project_id": pid})
@@ -112,7 +125,7 @@ def test_the_http_routes_keep_their_envelopes_and_statuses(hub: Hub, room: dict[
     for method, path, body, keys in ok:
         resp = c.request(method, path, json=body) if body is not None else c.request(method, path)
         assert resp.status_code == 200, (path, resp.text)
-        assert set(resp.json()) == keys, (path, sorted(resp.json()))
+        assert _keys(resp.json()) == keys, (path, sorted(resp.json()))
     refused = [
         ("GET", "/api/projects/proj-none", None, 404, {"error"}),
         ("GET", "/api/projects/proj-none/room", None, 404, {"error"}),
@@ -129,5 +142,5 @@ def test_the_http_routes_keep_their_envelopes_and_statuses(hub: Hub, room: dict[
     for method, path, body, status, keys in refused:
         resp = c.request(method, path, json=body) if body is not None else c.request(method, path)
         assert resp.status_code == status, (path, resp.status_code, resp.text)
-        assert set(resp.json()) == keys, (path, sorted(resp.json()))
+        assert _keys(resp.json()) == keys, (path, sorted(resp.json()))
     json.dumps(room)  # the fixture's values are plain

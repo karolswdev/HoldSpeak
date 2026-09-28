@@ -12,20 +12,17 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
-import hashlib
-import json
-import sqlite3
-import threading
 from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
 from holdspeak.principals import Principal
-from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from holdspeak.services.errors import ConflictError, ServiceError, ValidationError
 
 # HS-165-03: graduated watch boundary — these states belong to the
 # graduated WatchSpec@1 machinery (project.watch.* tools).  Legacy
 # rows (state='') belong to the reactions family (watch.*/reaction.*).
+# PHILO-9-02: the boundary itself lives in WatchService._graduated now.
 _GRADUATED_WATCH_STATES = frozenset({"active", "tested", "paused", "retired"})
 
 
@@ -477,6 +474,23 @@ TOOLS: list[dict[str, Any]] = [
                 "command_id": {"type": "string"},
             },
             "required": ["project_id", "resource_ref"],
+            "additionalProperties": False,
+        },
+    },
+    # PHILO-9-02 (the Q0 ruling; R4-2): the eighth new tool. Its words come
+    # from its declared operation (``_describe_from_operations``).
+    {
+        "name": "project.mark_update_delivered",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.mark_update_delivered@1",
+            "type": "object",
+            "properties": {
+                "update_id": {"type": "string"},
+                "delivered_to": {"type": "string", "maxLength": 200},
+                "command_id": {"type": "string"},
+            },
+            "required": ["update_id"],
             "additionalProperties": False,
         },
     },
@@ -1118,6 +1132,7 @@ def _build_connections_service():
     return ConnectionsService(
         github_adapter=_github_adapter(),
         jira_adapter=_jira_adapter(),
+        confluence_adapter=_confluence_adapter(),  # PHILO-9-02 (B1): the Confluence row and its probe
         config_loader=Config.load,
         inference_assignment_service=_assignment_service(),
     )
@@ -1185,42 +1200,6 @@ def _build_confluence_adapter():
         return None
 
 
-def _request_hash(payload: dict[str, Any]) -> str:
-    """Deterministic hash for idempotency (mirrors steward route)."""
-    material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                          ensure_ascii=True, default=str)
-    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
-
-
-def _record_steward_command(
-    db: Any,
-    command_id: str,
-    project_id: str,
-    command_kind: str,
-    request_hash: str,
-    result: dict[str, Any],
-) -> None:
-    """Record a completed steward command via the DB layer (MCP-001: no SQL)."""
-    result_json = json.dumps(result, ensure_ascii=False, default=str)
-    try:
-        db.projects.insert_project_command(
-            command_id=command_id,
-            project_id=project_id,
-            command_kind=command_kind,
-            request_hash=request_hash,
-            status="completed",
-        )
-    except sqlite3.IntegrityError:
-        # The command row already exists (replay); anything else must
-        # surface through the tool's error mapping.
-        pass
-    db.projects.complete_project_command(
-        command_id,
-        status="completed",
-        result_json=result_json,
-    )
-
-
 # The native provider families (mirrors providers.py:31-43).
 # One source of truth for the native provider list (counsel S-3):
 from holdspeak.web.routes.providers import _NATIVE_PROVIDERS  # noqa: E402
@@ -1240,28 +1219,6 @@ def _require_id(arguments: dict[str, Any], key: str) -> str:
             context={"status": 400},
         )
     return value
-
-
-def _require_graduated_watch(watch_id: str) -> dict[str, Any]:
-    """Load a watch and refuse if it is a legacy (reactions-family) row.
-
-    HS-165-03 boundary rule: graduated tools operate ONLY on rows
-    whose state is in _GRADUATED_WATCH_STATES.  Legacy rows (state='')
-    belong to the reactions family.
-    """
-    db = db_or(get_database)
-    watch = db.automations.get_watch(watch_id)
-    if not watch:
-        raise NotFound("watch", watch_id)
-    state = watch.get("state") or ""
-    if state not in _GRADUATED_WATCH_STATES:
-        raise ServiceError(
-            "legacy_watch_boundary",
-            f"Watch {watch_id!r} is a legacy row (state={state!r}). "
-            f"Use the reactions family tools (watch.list / watch.refresh) instead.",
-            context={"watch_id": watch_id, "state": state, "status": 409},
-        )
-    return watch
 
 
 # ── Steward serialization (mirrors steward.py:370-481) ───────────────
@@ -1312,292 +1269,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name in ROOM_TOOL_OPERATIONS:
         return _room_tool(name, arguments, principal)
 
-    # ── steward driver tools (HS-165-03) ────────────────────────────
-    # Mirrors: holdspeak/web/routes/steward.py
+    # ── PHILO-9-02: the steward, the watches, the suggested sources and the
+    # connections, through the ONE registry (``holdspeak/room_operations.py``),
+    # bound at hub composition to the hub's services. ─────────────────────
 
-    if name == "project.configure_steward":
-        # Web parity: steward.py:206 api_get_steward_policy (GET)
-        #              steward.py:223 api_put_steward_policy (PUT)
-        # Service seam: steward_policies DB layer (same as the route)
-        project_id = _require_id(arguments, "project_id")
-        # Detect read vs write: if only project_id is supplied, it's a GET
-        write_fields = {
-            "enabled", "unattended_enabled", "eligible_effect_kinds",
-            "max_retries", "max_actions_per_run", "cooldown_seconds", "bounds",
-            "evaluation_cadence_minutes",
-        }
-        is_write = any(arguments.get(f) is not None for f in write_fields)
-
-        svc = _steward_service()
-
-        if not is_write:
-            # GET: read the policy
-            policy = svc._db.steward_policies.get_policy_for_project(project_id)
-            return {"policy": _serialize_policy(policy)}
-
-        # PUT: validate and upsert
-        from holdspeak.services.project_steward_service import EFFECT_KINDS
-        from holdspeak.project_contracts import generate_pstpol_id
-
-        eligible = arguments.get("eligible_effect_kinds")
-        if eligible is not None:
-            if not isinstance(eligible, list):
-                raise ValidationError("eligible_effect_kinds must be a list")
-            invalid_kinds = [k for k in eligible if k not in EFFECT_KINDS]
-            if invalid_kinds:
-                raise ValidationError(
-                    f"Invalid effect kinds: {invalid_kinds}. Valid: {list(EFFECT_KINDS)}"
-                )
-
-        for field in ("max_retries", "max_actions_per_run", "cooldown_seconds"):
-            val = arguments.get(field)
-            if val is not None:
-                if not isinstance(val, int) or val < 0:
-                    raise ValidationError(f"{field} must be a non-negative integer")
-
-        enabled = arguments.get("enabled")
-        if enabled is not None and not isinstance(enabled, bool):
-            raise ValidationError("enabled must be a boolean")
-        unattended_enabled = arguments.get("unattended_enabled")
-        if unattended_enabled is not None and not isinstance(unattended_enabled, bool):
-            raise ValidationError("unattended_enabled must be a boolean")
-
-        cadence_minutes = arguments.get("evaluation_cadence_minutes")
-        if cadence_minutes is not None:
-            if not isinstance(cadence_minutes, int) or cadence_minutes < 1:
-                raise ValidationError(
-                    "evaluation_cadence_minutes must be an integer >= 1"
-                )
-            if cadence_minutes > 10080:
-                raise ValidationError(
-                    "evaluation_cadence_minutes cannot exceed 10080 (7 days)"
-                )
-
-        existing = svc._db.steward_policies.get_policy_for_project(project_id)
-        if existing is None:
-            policy_id = generate_pstpol_id()
-            svc._db.steward_policies.insert_policy(
-                policy_id=policy_id,
-                project_id=project_id,
-                eligible_effect_kinds_json=json.dumps(eligible or []),
-                max_retries=arguments.get("max_retries", 3),
-                max_actions_per_run=arguments.get("max_actions_per_run", 10),
-                cooldown_seconds=arguments.get("cooldown_seconds", 0),
-                bounds_json=json.dumps(arguments.get("bounds", {})),
-                enabled=1 if arguments.get("enabled", True) else 0,
-                unattended_enabled=1 if arguments.get("unattended_enabled", False) else 0,
-            )
-        else:
-            policy_id = existing["id"]
-            update_kwargs: dict[str, Any] = {}
-            if eligible is not None:
-                update_kwargs["eligible_effect_kinds_json"] = json.dumps(eligible)
-            if arguments.get("max_retries") is not None:
-                update_kwargs["max_retries"] = arguments["max_retries"]
-            if arguments.get("max_actions_per_run") is not None:
-                update_kwargs["max_actions_per_run"] = arguments["max_actions_per_run"]
-            if arguments.get("cooldown_seconds") is not None:
-                update_kwargs["cooldown_seconds"] = arguments["cooldown_seconds"]
-            if arguments.get("bounds") is not None:
-                update_kwargs["bounds_json"] = json.dumps(arguments["bounds"])
-            if enabled is not None:
-                update_kwargs["enabled"] = 1 if enabled else 0
-            if unattended_enabled is not None:
-                update_kwargs["unattended_enabled"] = 1 if unattended_enabled else 0
-            if update_kwargs:
-                svc._db.steward_policies.update_policy(policy_id, **update_kwargs)
-
-        if cadence_minutes is not None:
-            try:
-                watches = svc._db.automations.list_project_watches(project_id)
-                for w in watches:
-                    svc._db.automations.update_watch_spec(
-                        w["id"],
-                        evaluation_cadence_minutes=cadence_minutes,
-                    )
-            except Exception:
-                pass
-
-        policy = svc._db.steward_policies.get_policy(policy_id)
-
-        # steward.configured event (mirrors steward.py:335-361)
-        try:
-            from holdspeak.services.service_event_ledger import ServiceEventLedger
-            ledger = ServiceEventLedger(svc._db)
-            with svc._db._connection() as conn:
-                ledger.append_in_transaction(
-                    conn,
-                    principal,
-                    event_type="steward.configured",
-                    producer="steward.mcp",
-                    subject_ref=f"steward_policy:{policy_id}",
-                    source_revision="",
-                    facts={
-                        "policy_id": policy_id,
-                        "project_id": project_id,
-                        "enabled": bool(policy["enabled"]) if policy else False,
-                        "unattended_enabled": bool(
-                            policy.get("unattended_enabled", 0)
-                        ) if policy else False,
-                    },
-                    refs=[
-                        f"project:{project_id}",
-                        f"steward_policy:{policy_id}",
-                    ],
-                )
-        except Exception:
-            pass  # Event emission must never fail the policy response.
-
-        return {"success": True, "policy": _serialize_policy(policy)}
-
-    if name == "project.run_steward":
-        # Web parity: steward.py:61 api_start_steward_run
-        # MCP-003: insert_run on the call thread (typed refusals surface
-        # synchronously), then hand phase execution to a daemon thread.
-        # run_id returned PROMPTLY.
-        from holdspeak.db.steward import ActiveRunExistsError
-        from holdspeak.services.project_steward_service import (
-            CooldownActiveError,
-            StewardDisabledError,
-        )
-        from holdspeak.project_contracts import generate_pcmd_id
-
-        project_id = _require_id(arguments, "project_id")
-        watermark = str(arguments.get("watermark", "") or "")
-        cmd_id = arguments.get("command_id")
-
-        req_hash = _request_hash({
-            "project_id": project_id,
-            "action": "run_once",
-            "watermark": watermark,
-        })
-
-        # command_id replay (mirrors steward.py:78-91)
-        db = db_or(get_database)
-        if cmd_id is not None:
-            existing = db.projects.get_project_command(cmd_id)
-            if existing is not None:
-                if (existing["status"] == "completed"
-                        and existing["request_hash"] == req_hash):
-                    if existing["result_json"]:
-                        return json.loads(existing["result_json"])
-                    return {"success": True, "run_id": None}
-                if existing["request_hash"] != req_hash:
-                    raise ConflictError(
-                        "same command_id with different request hash",
-                        code="idempotency_conflict",
-                    )
-
-        svc = _steward_service()
-
-        try:
-            run_id = svc.insert_run(principal, project_id, watermark=watermark)
-        except ActiveRunExistsError:
-            raise ServiceError(
-                "active_run_exists",
-                f"Project {project_id} already has an active steward run (STW-002)",
-                context={"status": 409},
-            )
-        except StewardDisabledError:
-            raise ServiceError(
-                "steward_disabled",
-                "The steward policy is disabled for this project",
-                context={"status": 409},
-            )
-        except CooldownActiveError as exc:
-            raise ServiceError(
-                "cooldown_active",
-                f"Cooling down: {exc.seconds_remaining}s remaining",
-                context={"status": 409},
-            )
-
-        result_payload = {"success": True, "run_id": run_id}
-
-        # Record command for replay
-        _record_steward_command(
-            svc._db, cmd_id or generate_pcmd_id(),
-            project_id, "run_once", req_hash, result_payload,
-        )
-
-        # MCP-003: phase execution on a daemon thread.
-        def _execute() -> None:
-            try:
-                svc.execute_phases(principal, run_id, project_id)
-            except Exception:
-                pass
-
-        t = threading.Thread(target=_execute, daemon=True)
-        t.start()
-
-        return result_payload
-
-    if name == "project.stop_steward":
-        # Web parity: steward.py:189 api_stop_steward_run
-        # Service seam: ProjectStewardService.stop
-        run_id = _require_id(arguments, "run_id")
-        svc = _steward_service()
-        run = svc._db.steward_runs.get_run(run_id)
-        if run is None:
-            raise NotFound("steward_run", run_id)
-        svc.stop(run_id)
-        return {"success": True, "run_id": run_id}
-
-    if name == "project.get_steward_run":
-        # Web parity: steward.py:168 api_get_steward_run
-        # Service seam: steward_runs + steward_steps DB layer
-        run_id = _require_id(arguments, "run_id")
-        svc = _steward_service()
-        run = svc._db.steward_runs.get_run(run_id)
-        if run is None:
-            raise NotFound("steward_run", run_id)
-        steps = svc._db.steward_steps.list_steps(run_id)
-        return {
-            "run": _serialize_run(run),
-            "steps": [_serialize_step(s) for s in steps],
-        }
-
-    if name == "project.steward.trigger":
-        # HS-167-02: evaluate_due + run_due NOW through the conductor's
-        # get_scheduler_services seam. Web parity: steward.py trigger
-        # route. Desk-wide (principal-scoped) by contract; unwired =
-        # typed refusal (honest); a raised error is surfaced, never
-        # dressed as success.
-        from holdspeak.workbench_conductor import get_scheduler_services
-        wired_watch, wired_steward = get_scheduler_services()
-
-        if wired_watch is None and wired_steward is None:
-            # HS-200-45 R6: this RAISES now. The comment above claims "a raised
-            # error is surfaced, never dressed as success" -- but it was a
-            # `return`, so the sidecar wrapped it with `isError: false` and a
-            # naive caller read a refusal as a completed trigger. And it was
-            # the ONLY branch reachable from the old sidecar, which never
-            # called `set_scheduler_services`: every steward trigger over MCP
-            # "succeeded" and ran nothing.
-            raise ServiceError(
-                # The code the HTTP 503 path and docs/PROJECT_ROOMS.md already
-                # name is kept; only the ENVELOPE changes, from a returned
-                # success to a raised refusal.
-                "scheduler_not_wired",
-                "project.steward.trigger needs the conductor's scheduler "
-                "services, which only the running hub wires "
-                "(set_scheduler_services is called by `holdspeak web`'s "
-                "conductor). Nothing was evaluated and no steward run started. "
-                "Start the hub and retry -- the stdio sidecar forwards this "
-                "call to it."
-            )
-
-        # HS-200-43 F2: explicit trigger = the owner's hand = unbounded.
-        eval_outcomes = (
-            wired_watch.evaluate_due(principal, limit=None)
-            if wired_watch is not None else []
-        )
-        run_outcomes = wired_steward.run_due(principal) if wired_steward is not None else []
-
-        return {
-            "success": True,
-            "evaluate_outcomes": eval_outcomes,
-            "run_outcomes": run_outcomes,
-        }
+    if name in STEWARD_TOOL_OPERATIONS:
+        return _room_tool(name, arguments, principal)
 
     # ── setup driver tools (HS-165-03) ──────────────────────────────
     # Mirrors: holdspeak/web/routes/project_setup.py
@@ -1867,125 +1544,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             raise ValidationError("connection_ref and space_key are required")
         return adapter.validate_scope(principal, ref, space_key)
 
-    # ── graduated watch driver tools (HS-165-03) ────────────────────
-    # Mirrors: holdspeak/web/routes/watches.py + providers.py:158
-    # BOUNDARY: these tools operate ONLY on graduated rows.
-
-    if name == "project.watch.inspect":
-        # Web parity: watches.py:73 get_watch
-        # Service seam: WatchService.get_watch
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        return _watch_service().get_watch(principal, watch_id)
-
-    if name == "project.watch.test":
-        # Web parity: watches.py:119 test_watch
-        # Service seam: WatchService.test_watch
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        return _watch_service().test_watch(principal, watch_id)
-
-    if name == "project.watch.evaluate":
-        # Web parity: providers.py:158 evaluate_watch
-        # Service seam: WatchService.evaluate_once
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        result = _watch_service().evaluate_once(principal, watch_id)
-        return {"success": True, **result}
-
-    if name == "project.watch.set_rules":
-        # Web parity: watches.py:229 set_rules
-        # Service seam: WatchService.set_rules
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        rules = arguments.get("rules") or []
-        result = _watch_service().set_rules(principal, watch_id, rules)
-        # HS-167-02: optional cadence write (range-fenced by schema).
-        cadence = arguments.get("evaluation_cadence_minutes")
-        if cadence is not None:
-            cadence = int(cadence)
-            if cadence < 1 or cadence > 10080:
-                raise ValidationError(
-                    "evaluation_cadence_minutes must be 1..10080",
-                )
-            db_or(get_database).automations.update_watch_spec(
-                watch_id, evaluation_cadence_minutes=cadence,
-            )
-            result["evaluation_cadence_minutes"] = cadence
-        return result
-
-    if name == "project.watch.pause":
-        # Web parity: watches.py:163 pause_watch
-        # Service seam: WatchService.pause_watch
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        return _watch_service().pause_watch(principal, watch_id)
-
-    if name == "project.watch.resume":
-        # Web parity: watches.py:185 resume_watch
-        # Service seam: WatchService.resume_watch
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        return _watch_service().resume_watch(principal, watch_id)
-
-    if name == "project.watch.retire":
-        # Web parity: watches.py:205 retire_watch
-        # Service seam: WatchService.retire_watch
-        watch_id = _require_id(arguments, "watch_id")
-        _require_graduated_watch(watch_id)
-        return _watch_service().retire_watch(principal, watch_id)
-
-    # ── HS-172-06: suggested source tools ──────────────────────────
-
-    if name == "project.suggested_sources":
-        project_id = _require_id(arguments, "project_id")
-        from holdspeak.services.suggested_source_service import SuggestedSourceService
-        sug = SuggestedSourceService(svc._db)
-        return {"suggestions": sug.list_suggestions(project_id, status="pending")}
-
-    if name == "project.add_suggested_source":
-        project_id = _require_id(arguments, "project_id")
-        reference = str(arguments.get("reference") or "").strip()
-        if not reference:
-            raise ValidationError("reference is required")
-        from holdspeak.services.suggested_source_service import SuggestedSourceService
-        sug = SuggestedSourceService(svc._db)
-        pending = sug.find_pending_by_reference(project_id, reference)
-        suggestion = sug.accept_suggestion(pending["id"])
-        resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
-        try:
-            resource = svc.add_resource(
-                principal, project_id, resource_ref,
-                {"relationship": "source", "provider": suggestion["provider"]},
-            )
-        except Exception:
-            resource = {"resource_ref": resource_ref, "state": "accepted_no_watch"}
-        return {"suggestion": suggestion, "resource": resource}
-
-    if name == "project.dismiss_suggested_source":
-        project_id = _require_id(arguments, "project_id")
-        reference = str(arguments.get("reference") or "").strip()
-        if not reference:
-            raise ValidationError("reference is required")
-        from holdspeak.services.suggested_source_service import SuggestedSourceService
-        sug = SuggestedSourceService(svc._db)
-        pending = sug.find_pending_by_reference(project_id, reference)
-        return {"suggestion": sug.dismiss_suggestion(pending["id"])}
-
-    # ── HS-168-02: connection tools ─────────────────────────────────
-
-    if name == "connection.list":
-        # Web parity: connections.py list_connections
-        # Service seam: ConnectionsService.list_tools
-        return _connections_service().list_tools(principal)
-
-    if name == "connection.recheck":
-        # Web parity: connections.py recheck_connection
-        # Service seam: ConnectionsService.recheck
-        provider_id = _require_id(arguments, "provider_id")
-        ref = arguments.get("ref")
-        return _connections_service().recheck(principal, provider_id, ref=ref)
-
     raise LookupError(name)
 
 
@@ -2019,6 +1577,37 @@ ROOM_TOOL_OPERATIONS: dict[str, str] = {
     "project.resource.remove": "project.resource.remove",
 }
 
+#: PHILO-9-02: the steward, the nudges, the watches, the suggested sources and
+#: the connections -> the declared operation each reaches
+#: (``holdspeak/room_operations.py``). The nudges' three tools are declared in
+#: ``holdspeak/mcp/tools.py`` and dispatch here too (F9: no MagicMock).
+STEWARD_TOOL_OPERATIONS: dict[str, str] = {
+    "project.configure_steward": "project.configure_steward",
+    "project.run_steward": "project.run_steward",
+    "project.stop_steward": "project.stop_steward",
+    "project.get_steward_run": "project.get_steward_run",
+    "project.steward.trigger": "project.steward.trigger",
+    "steward.nudges": "steward.nudges",
+    "nudge.send": "nudge.send",
+    "nudge.dismiss": "nudge.dismiss",
+    "project.watch.inspect": "project.watch.inspect",
+    "project.watch.test": "project.watch.test",
+    "project.watch.evaluate": "project.watch.evaluate",
+    "project.watch.set_rules": "project.watch.set_rules",
+    "project.watch.pause": "project.watch.pause",
+    "project.watch.resume": "project.watch.resume",
+    "project.watch.retire": "project.watch.retire",
+    "project.suggested_sources": "project.suggested_sources",
+    "project.add_suggested_source": "project.add_suggested_source",
+    "project.dismiss_suggested_source": "project.dismiss_suggested_source",
+    "connection.list": "connection.list",
+    "connection.recheck": "connection.recheck",
+    "project.mark_update_delivered": "project.mark_update_delivered",
+}
+#: Every tool of this family that reaches a declared operation.
+TOOL_OPERATIONS: dict[str, str] = {**ROOM_TOOL_OPERATIONS, **STEWARD_TOOL_OPERATIONS}
+_GRADUATED_TOOLS = frozenset(name for name in STEWARD_TOOL_OPERATIONS if name.startswith("project.watch."))
+
 #: The tools that took ``_require_id`` before PHILO-9-01 keep its refusal
 #: (``project_request_invalid``) for an empty id.
 _REQUIRED_IDS: dict[str, tuple[str, ...]] = {
@@ -2031,6 +1620,15 @@ _REQUIRED_IDS: dict[str, tuple[str, ...]] = {
     "project.accept_review": ("project_id", "review_id"),
     "project.list_updates": ("project_id",), "project.draft_update": ("project_id",),
     "project.update_draft": ("update_id",), "project.publish_update": ("update_id",),
+    # PHILO-9-02: the tools that took ``_require_id`` before keep it too.
+    "project.configure_steward": ("project_id",), "project.run_steward": ("project_id",),
+    "project.stop_steward": ("run_id",), "project.get_steward_run": ("run_id",),
+    "project.watch.inspect": ("watch_id",), "project.watch.test": ("watch_id",),
+    "project.watch.evaluate": ("watch_id",), "project.watch.set_rules": ("watch_id",),
+    "project.watch.pause": ("watch_id",), "project.watch.resume": ("watch_id",),
+    "project.watch.retire": ("watch_id",), "project.suggested_sources": ("project_id",),
+    "project.add_suggested_source": ("project_id",), "project.dismiss_suggested_source": ("project_id",),
+    "connection.recheck": ("provider_id",),
 }
 
 #: The seven new tools: their published input schema is the charter's table
@@ -2038,6 +1636,7 @@ _REQUIRED_IDS: dict[str, tuple[str, ...]] = {
 _NEW_ROOM_TOOLS = frozenset({
     "project.item.list", "project.item.create", "project.item.update", "project.item.transition",
     "project.resource.list", "project.resource.add", "project.resource.remove",
+    "project.mark_update_delivered",
 })
 
 
@@ -2050,9 +1649,21 @@ def _ops():
         project_service=_service,
         project_delta_service=_delta_service,
         project_update_service=_update_service,
+        project_steward_service=_steward_service,
+        watch_service=_watch_service,
+        connections_service=_connections_service,
+        suggested_source_service=lambda: runtime_service(
+            "suggested_source_service", lambda: _build_suggested_source_service()),
         kernel_read_service=lambda: runtime_service(
             "kernel_read_service", lambda: KernelReadService(db_or(get_database))),
     )
+
+
+def _build_suggested_source_service():
+    """PHILO-9-02: the suggested sources over the same ProjectService (off-hub only)."""
+    from holdspeak.services.suggested_source_service import SuggestedSourceService
+
+    return SuggestedSourceService(db_or(get_database), project_service=_service())
 
 
 def _room_arguments(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -2064,6 +1675,11 @@ def _room_arguments(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         args = {"include_archived": True} if arguments.get("include_archived") else {}
     if name == "project.draft_update":
         args["generator"] = str(arguments.get("generator") or "deterministic").strip()
+    if name in {"project.add_suggested_source", "project.dismiss_suggested_source"}:
+        reference = str(arguments.get("reference") or "").strip()
+        if not reference:
+            raise ValidationError("reference is required")
+        args["reference"] = reference
     return args
 
 
@@ -2079,15 +1695,22 @@ def _room_tool(name: str, arguments: dict[str, Any], principal: Principal) -> An
             where = ".".join(str(part) for part in error.absolute_path)
             raise ValidationError(f"Invalid arguments for {name}: {where + ': ' if where else ''}{error.message}",
                                   code="validation")
-    operation = ROOM_TOOL_OPERATIONS[name]
+    operation = TOOL_OPERATIONS[name]
     try:
         if operation == "desk.needs_you":  # pragma: no cover - tools.py owns desk.needs_you
             raise LookupError(name)
-        result = _ops().invoke(principal, operation, _room_arguments(name, arguments))
+        # PHILO-9-02: the graduated-watch boundary is the service's (held).
+        held = {"graduated_only": True} if name in _GRADUATED_TOOLS else None
+        registry = _ops()
+        args = _room_arguments(name, arguments)
+        result, kernel = (registry.invoke_receipted(principal, operation, args) if held is None
+                          else registry.invoke_receipted(principal, operation, args, held=held))
     except OperationRefused as exc:
         # The charter's code for an argument the contract refuses is validation.
+        # PHILO-9-02: an admitted operation's refusal carries its receipt.
         code = "validation" if exc.code == "invalid_arguments" else exc.code
-        raise ValidationError(exc.detail, code=code, context={"refusal": exc.code}) from exc
+        raise ValidationError(exc.detail, code=code,
+                              context={"refusal": exc.code, **(getattr(exc, "kernel", None) or {})}) from exc
     except PublishedUpdateError as exc:
         raise ConflictError(str(exc), code="published_update") from exc
     except ServiceError:
@@ -2095,8 +1718,14 @@ def _room_tool(name: str, arguments: dict[str, Any], principal: Principal) -> An
     except ValueError as exc:
         # add_resource / remove_resource refuse a bad reference or relationship
         # with a ValueError; the charter maps it to validation.
-        raise ValidationError(str(exc), code="validation") from exc
-    return _room_envelope(name, result)
+        raise ValidationError(str(exc), code="validation",
+                              context=dict(getattr(exc, "kernel", None) or {})) from exc
+    envelope = _room_envelope(name, result)
+    if kernel and isinstance(envelope, dict):
+        # PHILO-9-02: an ADMITTED call answers with its operation and receipt.
+        envelope = {**envelope, "operation_id": kernel.get("operation_id"), "receipt": kernel.get("receipt"),
+                    **({"state": kernel["state"]} if kernel.get("state") and "state" not in envelope else {})}
+    return envelope
 
 
 def _room_envelope(name: str, result: Any) -> Any:
@@ -2119,6 +1748,12 @@ def _room_envelope(name: str, result: Any) -> Any:
         return {"resource": result}
     if name == "project.resource.remove":
         return {"success": True, "removed": result}
+    if name == "project.watch.evaluate":
+        return {"success": True, **result}
+    if name in {"project.suggested_sources"}:
+        return {"suggestions": result}
+    if name == "steward.nudges":
+        return {"nudges": result}
     return result
 
 
@@ -2132,7 +1767,7 @@ def _describe_from_operations() -> None:
 
     declared = {d.name: d for d in operations.DESCRIPTORS}
     for tool in TOOLS:
-        operation = ROOM_TOOL_OPERATIONS.get(tool["name"])
+        operation = TOOL_OPERATIONS.get(tool["name"])
         if operation is None:
             continue
         descriptor = declared[operation]
