@@ -265,6 +265,15 @@ ROOM_WRITE_METHODS: frozenset[str] = frozenset({
 })
 
 
+#: PHILO-9-03 (F7): admitted Room operations whose write is a ProjectService
+#: call -- already a pipeline receipt, so the kernel read skips them.
+_SERVICE_OBSERVED_OPERATIONS: frozenset[str] = frozenset({
+    "project.create", "project.archive", "project.restore", "project.update",
+    "project.link", "project.unlink",
+})
+_SERVICE_OBSERVED_PREFIXES: tuple[str, ...] = ("project.item.", "project.resource.", "project.door.")
+
+
 def _count_unit(count: int, unit: str) -> str:
     """``1 DAY`` / ``2 DAYS`` -- HS-200-16.
 
@@ -2146,9 +2155,27 @@ class ProjectService:
                 "       origin, caller, caller_identity, "
                 "       result_summary, error "
                 "FROM pipeline_events "
-                f"WHERE args_summary LIKE ? AND method IN ({marks}) "
+                # PHILO-9-03 (F7): the create that made the Room names its id
+                # in its result, not its arguments.
+                f"WHERE ((args_summary LIKE ? AND method IN ({marks})) "
+                "   OR (method = 'create_project' AND result_summary LIKE ?)) "
                 "ORDER BY timestamp DESC LIMIT ?",
-                (f"%{project_id}%", *writes, _LIMIT),
+                (f"%{project_id}%", *writes, f"%{project_id}%", _LIMIT),
+            ).fetchall()
+            # PHILO-9-03 (F7): the Room's admitted writes outside the observed
+            # services (publish, delivery, the steward's run, the review) are
+            # kernel receipts, not pipeline events: read them by the target
+            # the operation named -- the project, one of its updates or runs.
+            kernel_rows = conn.execute(
+                "SELECT o.operation_id, o.name, o.principal_kind, o.principal_identity, "
+                "       r.state, r.created_at "
+                "FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id = o.operation_id "
+                "WHERE o.parent_operation_id = '' AND ("
+                "   o.target_ref = ? "
+                "   OR o.target_ref IN (SELECT 'project_update:' || id FROM project_updates WHERE project_id = ?) "
+                "   OR o.target_ref IN (SELECT 'steward_run:' || id FROM steward_runs WHERE project_id = ?)) "
+                "ORDER BY r.created_at DESC LIMIT ?",
+                (f"project:{project_id}", project_id, project_id, _LIMIT * 3),
             ).fetchall()
         items = []
         for row in rows:
@@ -2166,7 +2193,27 @@ class ProjectService:
                 "at": row["timestamp"],
                 "timestamp": row["timestamp"],
             })
-        return {"items": items}
+        for row in kernel_rows:
+            name = str(row["name"])
+            # A ProjectService write is already its pipeline event above.
+            if name in _SERVICE_OBSERVED_OPERATIONS or name.startswith(_SERVICE_OBSERVED_PREFIXES):
+                continue
+            state = str(row["state"])
+            agent = str(row["principal_kind"]) != "owner"
+            items.append({
+                "id": str(row["operation_id"]),
+                "op": name.removeprefix("project."),
+                "label": name,
+                "title": name,
+                "outcome": "ok" if state == "succeeded" else state,
+                "origin": None,
+                "caller": str(row["principal_identity"]) if agent else None,
+                "identity": str(row["principal_identity"]) or None,
+                "at": row["created_at"],
+                "timestamp": row["created_at"],
+            })
+        items.sort(key=lambda item: float(item["timestamp"] or 0), reverse=True)
+        return {"items": items[:_LIMIT]}
 
     # ── read marker (HS-169-04) ─────────────────────────────────────
 

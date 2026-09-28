@@ -557,8 +557,12 @@ def _run_artboard_rig(
                 if (token) sizes.add(Math.round(parseFloat(getComputedStyle(token).fontSize)));
                 return Array.from(sizes);
             }""")
-            assert len(font_sizes) >= 3, (
-                f"Expected >= 3 distinct font sizes (caption, primary, token); got {font_sizes}"
+            # PHILO-9-03: the ratified Room canvases put every `.surface-token`
+            # on the 12 px readable floor (UX-CANON; was 11 px), so the token
+            # and the caption now share 12 px; the steps stay distinct by size
+            # (caption/token vs primary) and by face (mono capitals).
+            assert min(font_sizes) >= 12 and len(font_sizes) >= 2, (
+                f"Expected >= 2 distinct font sizes, none under 12 px (caption, primary, token); got {font_sizes}"
             )
 
             # ── No raw <button> in the section ──

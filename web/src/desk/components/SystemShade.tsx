@@ -16,7 +16,7 @@ import { egressForEvent, receiptLabel } from "../surface/egress";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { MicButton } from "./MicButton";
-import { openPrimitive, openSurfaceOr, openSurfaceWhenReady } from "../shell";
+import { openPrimitive, openProjectRoom, openSurfaceOr, openSurfaceWhenReady } from "../shell";
 import {
   readCoverage,
   observedToken,
@@ -455,7 +455,7 @@ function ShadeCoverage({
       openSurfaceOr("configure-settings", "/settings", "connections");
       return;
     }
-    openSurfaceOr("project-room", "/projects", gap.project_id ?? "");
+    openProjectRoom(gap.project_id);
   };
   return (
     <section
@@ -591,7 +591,7 @@ function ShadeProjects({
                   variant="ghost"
                   onClick={() => {
                     onClose();
-                    openSurfaceOr("project-room", "/projects", room.projectId);
+                    openProjectRoom(room.projectId);
                   }}
                 >
                   Open

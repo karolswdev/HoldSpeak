@@ -303,13 +303,22 @@
   color: var(--danger, #f87171);
 }
 
-/* ── Condition 7: ask well sticky at the foot at ALL widths ── */
+/* ── Condition 7: ask well sticky at the foot of a wide window ── */
 .room-ask-container {
   position: sticky;
   bottom: 0;
   z-index: var(--desk-z-local);
   background: var(--surface-1, #15171d);
   padding-bottom: 8px;
+}
+/* PHILO-9-03 (F10, the ratified items canvas): at a narrow window the sticky
+   well covered the Steward verb and the SOURCES head. At the narrow
+   container the well is in the flow (the last section), so it never covers
+   a verb or a head. */
+@container surface (max-width: 559px) {
+  .room-ask-container {
+    position: static;
+  }
 }
 
 /* ── moment 4: new needs-you row accent fade ── */

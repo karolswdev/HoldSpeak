@@ -23,6 +23,8 @@
 
 .surface-provenance-source {
   color: var(--text-muted);
+  /* PHILO-9-03: the 12 px floor (the chip's own face is 10 px). */
+  font-size: var(--desk-surface-label-size);
 }
 
 .surface-provenance-boundary {

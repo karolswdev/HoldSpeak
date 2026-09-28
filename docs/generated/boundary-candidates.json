@@ -6803,7 +6803,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1866,
+      "line": 1868,
       "kinds": [
         "http_client"
       ],
@@ -6813,7 +6813,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1920,
+      "line": 1922,
       "kinds": [
         "http_client"
       ],
@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1979,
+      "line": 1975,
       "kinds": [
         "http_client"
       ],
@@ -7873,7 +7873,7 @@
     },
     {
       "path": "web/src/features/project-room/steward/__tests__/StewardPosture.test.tsx",
-      "line": 54,
+      "line": 55,
       "kinds": [
         "http_client"
       ],

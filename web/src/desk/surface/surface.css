@@ -574,7 +574,9 @@
    (never color alone: the token IS the words). */
 .surface-token {
   font-family: var(--font-mono);
-  font-size: 11px;
+  /* PHILO-9-03 (the ratified Room canvases): the 12 px readable floor (was
+     11 px: the Room's head chips, the NEEDS YOU why token, the update band). */
+  font-size: var(--desk-surface-label-size);
   font-weight: 600;
   letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;

@@ -869,7 +869,9 @@
 }
 .gadget-chip-egress[data-scope="mixed"],
 .gadget-chip-egress[data-scope="cloud"] {
-  color: var(--accent);
+  /* PHILO-9-03: --accent read 4.29:1 on the surface; --accent-hover is the
+     same ember, lighter (5.47:1). */
+  color: var(--accent-hover);
 }
 /* HS-174-04 — the REMOTE badge: accent outline (stroke not fill),
    never the warning tone.  A fourth egress token --egress-remote. */

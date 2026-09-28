@@ -47,6 +47,11 @@ fenced separately. Lane B must render an unexecuted Review chain as absent or
 
 ## The 393 Room: UNFINISHED opens under the ask well
 
+**PAID 2026-09-28 by PHILO-9-03 (F10):** at a narrow window the ask well is in
+the flow (the owner-ratified items canvas; `web/src/features/project-room/project-room.css`),
+so the row no longer opens under it; the strict xfail is removed and the test
+passes at 393 (`pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-03.md`).
+
 **2026-09-27, parked by the main-reds lane (fix/main-e2e-inherited-reds).**
 `tests/e2e/test_hs200_task_resume_glass.py::test_saved_ask_draws_the_ratified_unfinished_row[393]`
 is a strict expected failure. It is a real product defect, not a test defect.
@@ -1356,6 +1361,14 @@ Story 08's daily fixture records actual plugin structured output but supplies ar
 | The editor's AI bar (`web/src/desk/components/EditorAIBar.tsx`) opens over a selection and covers the note body at 393 (the selected line is hidden under it) and runs past the edit window's right edge at 1440 (seen in `assets/story-04-shots/editor-selected-aibar-{393,1440}.png`). Not measured on main; the bar is not touched by PHILO-9-04. | face | PHILO-9-04 round two shots | UNASSIGNED |
 | The real-pointer passes in `tests/e2e/test_philo9_04_desk_debts_glass.py` run about 15× slower with motion on: 5.65 s against 0.38 s per nine-point sample under reduced motion (Codex Astra's measure). Run the rig's pointer passes with reduced motion (`reduced_motion="reduce"` on the browser context) wherever motion is not what the test proves, then lower the `timeout(900)` on the Launch-submenu fence and the `timeout(600)` on the sort-Button and row-menu fences. | test speed (Tenet 3) | `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/checks/story-04-built-astra-r2.md` | UNASSIGNED |
 | At 393 the open row menu covers the dock (the keep-in-view rule keeps it inside the viewport, not above the dock). Stated as a limit on the ratified canvas (`assets/story-04-list-canvas/README.md` "Limits"). | face | the ratified canvas | recorded; no action |
+
+## PHILO-9-03 follow-ups — 2026-09-28 (the Fedaykin lane, `pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/evidence-story-03.md`)
+
+| Item | Kind | Source | Home |
+|---|---|---|---|
+| At 1440 the sticky Ask well lies over the section head at the fold on the first view (`RECEIPTS` in `assets/story-03-shots/items-late-section-1440.png`); the body scrolls it clear. The ratified items canvas draws it and Condition 7 keeps the well sticky at a wide window; a repair needs a design ruling: the well moved out of the scroll body (the window foot) or no longer always in view. No verb lies under it (fenced). | face | story 03 note; Codex Astra canvases r2 F5 | UNASSIGNED; needs the owner's ruling |
+| The Room's health reason and NEEDS YOU row say `1 OVERDUE` and `OVERDUE · 7 DAYS` (story 01, `holdspeak/services/project_service.py` `_room_overdue_milestone_items` and the health reason); the ratified items canvas's shim drew `1 MILESTONE LATE` and `MILESTONE · 7 DAYS LATE`. The ITEMS row says `7 DAYS LATE` as drawn. A one-line backend change if the canvas words are wanted. | words | the items canvas vs story 01 | UNASSIGNED |
+| A scheduled steward run refused `steward_policy_required` is recorded only in the trigger's receipt; no Room read carries it, so the Room face names the refusal only for a start pressed on the face. | read | steward beat §4 (face half) | UNASSIGNED; a Room read field (story 01 lane) |
 
 ## PHILO-9 charter follow-ups — 2026-09-27 (the Fedaykin docs lane, `docs/internal/philo/phase-9/grounding/README.md`)
 

@@ -93,6 +93,11 @@ export function receiptLabel(event: {
     return "STEWARD RUN";
   }
 
+  // PHILO-9-03 (F7): the owner's confirmation that he delivered an update.
+  if (op === "mark_update_delivered") {
+    return "MARKED DELIVERED";
+  }
+
   // Reads: list_*, get_*, room
   if (op.startsWith("list_")) {
     const noun = op.slice(5).replace(/_/g, " ").toUpperCase();

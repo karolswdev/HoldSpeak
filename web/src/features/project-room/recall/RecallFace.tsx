@@ -34,7 +34,7 @@
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { openSurfaceOr } from "../../../desk/shell";
+import { openProjectRoom, openSurfaceOr } from "../../../desk/shell";
 import {
   FilterTokens,
   SurfaceFooter,
@@ -81,7 +81,7 @@ export function MemorySnippet({ value }: { value: string }) {
 }
 
 function openProject(projectId: string) {
-  openSurfaceOr("project-room", "/projects", `project:${projectId}`);
+  openProjectRoom(projectId);
 }
 
 function Chip({ label, tone, testid }: { label: string; tone?: string; testid?: string }) {

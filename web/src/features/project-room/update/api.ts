@@ -3,8 +3,8 @@
 // Fixture shapes mined from tests/integration/test_update_routes.py.
 
 import { apiFetch } from "../../../lib/api";
-import type { ProjectUpdate } from "./model";
-import { decodeUpdate } from "./model";
+import type { Delivery, ProjectUpdate } from "./model";
+import { decodeDelivery, decodeUpdate } from "./model";
 
 /** GET /api/projects/{id}/updates — list all (optionally filtered). */
 export async function fetchUpdates(
@@ -63,6 +63,22 @@ export async function publishUpdate(
     { method: "POST", json: {} },
   );
   return decodeUpdate(raw.update);
+}
+
+/** POST /api/updates/{id}/delivered (PHILO-9-02's route; the Q0 ruling):
+ *  he confirms he delivered the published text himself. One press of Mark
+ *  delivered mints ONE command_id and keeps it across its retries; the hub
+ *  replays that key to the original row. */
+export async function markDelivered(
+  updateId: string,
+  deliveredTo: string,
+  commandId: string,
+): Promise<Delivery> {
+  const raw = await apiFetch<{ delivery: Record<string, unknown> }>(
+    `/api/updates/${encodeURIComponent(updateId)}/delivered`,
+    { method: "POST", json: { delivered_to: deliveredTo.trim() || null, command_id: commandId } },
+  );
+  return decodeDelivery(raw.delivery);
 }
 
 /** GET /api/updates/{id}/markdown — the copyable body. */

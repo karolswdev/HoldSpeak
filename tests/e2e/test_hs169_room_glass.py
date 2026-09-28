@@ -379,8 +379,11 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
                 }""")
                 assert title_width_check is None, f"393 title width: {title_width_check}"
 
-            # Probe (condition 7): ask well visible within window body
-            ask_well_visible = page.evaluate("""() => {
+            # Probe (condition 7): ask well visible within window body.
+            # PHILO-9-03 (F10, the owner-ratified items canvas): at a narrow
+            # window the well is in the flow, the last section, so it covers no
+            # verb or head; the condition-7 probe holds for a wide window only.
+            ask_well_visible = None if width < 560 else page.evaluate("""() => {
                 const well = document.querySelector('[data-testid="room-ask-well"]');
                 const win = document.querySelector('.desk-surface-window');
                 if (!well || !win) return 'missing';

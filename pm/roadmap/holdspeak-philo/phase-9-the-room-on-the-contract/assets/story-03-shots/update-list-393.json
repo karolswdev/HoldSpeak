@@ -1,0 +1,56 @@
+{
+  "ask_well_position": null,
+  "controls_in_items": 0,
+  "deliver_to": null,
+  "deliver_verb": null,
+  "delivered_chips": [],
+  "delivery_egress": 0,
+  "delivery_head": null,
+  "delivery_rows": [],
+  "h_overflow": false,
+  "head_chips": [],
+  "headline": null,
+  "item_danger_tokens": [],
+  "item_leads": [],
+  "item_rows": [],
+  "items_head": null,
+  "items_section_present": false,
+  "modal": false,
+  "needs_you": [],
+  "plan": [],
+  "pointer": [],
+  "raw_buttons": [],
+  "receipts": [],
+  "row_tokens": [
+    {
+      "lifecycle": "published",
+      "tokens": [
+        "PUBLISHED",
+        "REV 1"
+      ]
+    },
+    {
+      "lifecycle": "draft",
+      "tokens": [
+        "DRAFT",
+        "REV 1"
+      ]
+    }
+  ],
+  "small_text": [],
+  "small_text_count": 0,
+  "steward_outcome": null,
+  "title": "Payments ledger cutover",
+  "under_ask_well": [],
+  "update_emblems": [
+    "▤",
+    "▤"
+  ],
+  "update_list_head": "UPDATES 2",
+  "update_rows": [
+    "just now ▤ PUBLISHED REV 1 DETERMINISTIC ›",
+    "just now ▤ DRAFT REV 1 DETERMINISTIC ›"
+  ],
+  "window": true,
+  "words_send": false
+}

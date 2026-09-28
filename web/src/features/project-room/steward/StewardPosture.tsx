@@ -62,6 +62,15 @@ const GRANT_TOKENS: Record<string, string> = {
   github_comment: "REVIEWER NUDGE",
 };
 
+/** PHILO-9-03: the hub's run refusals, in plain words (the code rides
+ *  `data-code`). */
+const RUN_REFUSAL_TOKEN: Record<string, string> = {
+  steward_policy_required: "NO SAVED POLICY",
+  project_delegation_required: "OWNER ONLY",
+  steward_disabled: "STEWARD OFF",
+  cooldown_active: "COOLING DOWN",
+};
+
 function grantToken(kind: string): string {
   return GRANT_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
 }
@@ -99,6 +108,43 @@ interface PlanResult {
   effectChips: { label: string; ref?: string }[];
   hasPartial: boolean;
   phaseCount: number;
+  counts: RunCounts;
+}
+
+/** PHILO-9-03 (F3): what the run did, read from the hub's run -- never from
+ *  the phase checkpoint steps. Sources: OBSERVE's coverage; proposals:
+ *  COMPARE's review; effects: the run's EFFECT steps that completed (each
+ *  phase also writes a `phase:*` checkpoint step, which is no source, no
+ *  proposal and no effect). `noEffectAllowed`: the policy the run froze made
+ *  no effect kind eligible, so ACT skipped every slot. */
+export interface RunCounts {
+  sources: number | null;
+  proposals: number | null;
+  effects: number;
+  reviewId: string;
+  noEffectAllowed: boolean;
+}
+
+function phaseResult(run: StewardRun, phase: string): Record<string, unknown> {
+  const pr = (run.summary as Record<string, unknown>).phase_results as Record<string, unknown> | undefined;
+  const body = pr?.[phase];
+  return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+}
+
+export function runCounts(steps: StewardStep[], run: StewardRun): RunCounts {
+  const observe = phaseResult(run, "observe");
+  const compare = phaseResult(run, "compare");
+  const act = phaseResult(run, "act");
+  const coverage = observe.coverage;
+  const sources = coverage && typeof coverage === "object" ? Object.keys(coverage as object).length : null;
+  const proposals = compare.proposal_count != null ? Number(compare.proposal_count) : null;
+  const effects = steps.filter((s) => !s.effectKind.startsWith("phase:") && s.state === "completed").length;
+  const skipped = Array.isArray(act.effects_skipped) ? (act.effects_skipped as Record<string, unknown>[]) : [];
+  const executed = Array.isArray(act.effect_receipts) ? (act.effect_receipts as unknown[]).length : 0;
+  const noEffectAllowed =
+    "effects_skipped" in act && executed === 0 && skipped.length > 0 &&
+    skipped.every((x) => x.reason === "not_in_eligible_effect_kinds");
+  return { sources, proposals, effects, reviewId: String(compare.review_id ?? ""), noEffectAllowed };
 }
 
 function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
@@ -116,6 +162,7 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
   const effectChips: { label: string; ref?: string }[] = [];
   let hasPartial = false;
   let phaseCount = 0;
+  const counts = runCounts(steps, run);
 
   const planSteps: PlanStep[] = PHASES.map((phase) => {
     const phaseSteps = byPhase.get(phase) ?? [];
@@ -150,18 +197,27 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
     }
     if (status !== "queued") phaseCount++;
 
-    // Rate = COUNTS ONLY, never effect-kind names
+    // Rate = COUNTS ONLY, never effect-kind names. PHILO-9-03 (F3): the
+    // counts are the run's own (runCounts), never the phase checkpoint steps;
+    // no counter of zero (UX-CANON): a zero is said in words.
     const rateParts: string[] = [];
-    if (phase === "observe" && phaseSteps.length > 0) {
-      rateParts.push(`${phaseSteps.length} source${phaseSteps.length === 1 ? "" : "s"}`);
+    const ran = phaseSteps.length > 0;
+    if (phase === "observe" && ran && counts.sources != null) {
+      rateParts.push(counts.sources > 0 ? pluralize(counts.sources, "source") : "no source");
       const totalCalls = phaseSteps.reduce((sum, s) => sum + (s.receipt.calls ?? 0), 0);
       if (totalCalls > 0) {
         rateParts.push(`${totalCalls} call${totalCalls === 1 ? "" : "s"}`);
       }
-    } else if (phase === "propose" && phaseSteps.length > 0) {
-      rateParts.push(String(phaseSteps.length));
-    } else if (phase === "act" && phaseSteps.length > 0) {
-      rateParts.push(`${phaseSteps.length} effect${phaseSteps.length === 1 ? "" : "s"}`);
+    } else if (phase === "compare" && ran && counts.reviewId) {
+      rateParts.push("review opened");
+    } else if (phase === "propose" && ran && counts.proposals != null) {
+      rateParts.push(counts.proposals > 0 ? pluralize(counts.proposals, "proposal") : "no proposal");
+    } else if (phase === "act" && ran && status === "done") {
+      rateParts.push(
+        counts.effects > 0
+          ? pluralize(counts.effects, "effect")
+          : counts.noEffectAllowed ? "no effect allowed" : "no effect",
+      );
     }
 
     let detail: string | undefined;
@@ -178,7 +234,7 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
     };
   });
 
-  return { planSteps, allRefs, effectChips, hasPartial, phaseCount };
+  return { planSteps, allRefs, effectChips, hasPartial, phaseCount, counts };
 }
 
 /* ── Run detail view: ProgressPlan + effect/receipt chips ── */
@@ -186,9 +242,11 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
 function RunDetail({
   ctrl,
   onOpenRef,
+  onOpenReview,
 }: {
   ctrl: StewardController;
   onOpenRef: (ref: string) => void;
+  onOpenReview?: () => void;
 }) {
   const run = ctrl.currentRun;
   if (!run) return null;
@@ -197,7 +255,7 @@ function RunDetail({
   const reason = summaryReasonLabel(run.summary.reason);
   const degraded = coverageSummary(run);
 
-  const { planSteps, allRefs, effectChips, hasPartial, phaseCount } =
+  const { planSteps, allRefs, effectChips, hasPartial, phaseCount, counts } =
     buildPlanSteps(ctrl.currentSteps, run);
 
   const runIndex = ctrl.runs.findIndex((r) => r.id === run.id);
@@ -258,17 +316,44 @@ function RunDetail({
             </span>
           ))}
           {allRefs.map((ref) => (
-            <button
+            <Button
               key={ref}
-              type="button"
-              className="desk-chip quiet steward-receipt-ref"
+              dense
+              variant="ghost"
+              className="steward-receipt-ref"
               data-testid="steward-receipt-ref"
               data-ref={ref}
               onClick={() => onOpenRef(ref)}
             >
               {refHumanLabel(ref)}
-            </button>
+            </Button>
           ))}
+        </div>
+      ) : null}
+
+      {/* PHILO-9-03 (F3): what the run did, in its own counts. COMPARE opened
+          a review: the run is not empty even with no effect, so the review is
+          shown with its way in. No effect kind eligible: said in words. */}
+      {counts.reviewId || counts.noEffectAllowed ? (
+        <div className="steward-run-outcome" data-testid="steward-run-outcome">
+          {counts.reviewId ? (
+            <span className="steward-run-review" data-testid="steward-run-review" data-review-id={counts.reviewId}>
+              <StateChip state="success" label="REVIEW OPENED" />
+              {counts.proposals ? (
+                <span className="surface-token" data-chip>{pluralize(counts.proposals, "PROPOSAL")}</span>
+              ) : null}
+              {onOpenReview ? (
+                <Button dense variant="ghost" onClick={onOpenReview} data-testid="steward-open-review">
+                  Review
+                </Button>
+              ) : null}
+            </span>
+          ) : null}
+          {counts.noEffectAllowed ? (
+            <span data-testid="steward-no-effect-allowed">
+              <StateChip state="idle" label="NO EFFECT ALLOWED" />
+            </span>
+          ) : null}
         </div>
       ) : null}
 
@@ -613,7 +698,14 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
 
 /* ── Main Steward posture ── */
 
-export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
+export function StewardPosture({
+  ctrl,
+  onOpenReview,
+}: {
+  ctrl: StewardController;
+  /** PHILO-9-03 (F3): open the review the run's COMPARE opened. */
+  onOpenReview?: () => void;
+}) {
   const onOpenRef = useCallback((ref: string) => {
     openSourceRef(ref);
   }, []);
@@ -658,6 +750,15 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
           </Button>
         </SurfaceVerbs>
 
+        {ctrl.runRefusal ? (
+          <span className="steward-run-refused" data-testid="steward-run-refused" data-code={ctrl.runRefusal}>
+            <StateChip state="failure" label="REFUSED" />
+            <span className="surface-token" data-chip>
+              {RUN_REFUSAL_TOKEN[ctrl.runRefusal] ?? ctrl.runRefusal.toUpperCase().replace(/_/g, " ")}
+            </span>
+          </span>
+        ) : null}
+
         {ctrl.error ? (
           <SurfaceState error={ctrl.error} onRetry={() => void ctrl.enterSteward()} />
         ) : null}
@@ -694,7 +795,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
     return (
       <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
         {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
-        <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} />
+        <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} onOpenReview={onOpenReview} />
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
