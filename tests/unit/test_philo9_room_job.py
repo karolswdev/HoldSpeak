@@ -299,19 +299,25 @@ def _room_face() -> dict[str, Any]:
 def test_the_room_face_shows_every_fixture_value_at_both_widths(width: str) -> None:
     fixture = _json(RUN / "fixture.json")["fixture"]
     face = _room_face()["widths"][width]
-    assert face["findings"] == []
-    assert driver.face_findings(fixture, face["facts"], {"receipts": face["hub_room_receipts"]}) == []
+    # ITEMS: the recapture with the seen-in-the-unobscured-viewport collector
+    # (Codex Astra r1 on #687); the first capture's 393 items shot was the head.
+    reshoot = _json(RUN / "observations" / "room-items-reshoot.json")["widths"][width]
+    assert reshoot["findings"] == [] and reshoot["items"]["rows_total"] == len(reshoot["items"]["seen_on"]) == 2
+    facts = {**face["facts"], "items": reshoot["items"]}
+    assert driver.face_findings(fixture, facts, {"receipts": face["hub_room_receipts"]}) == []
     receipts = face["facts"]["receipts"]["receipts"]
     assert any("STEWARD RUN" in r and "REFUSED NO GRANT" in r for r in receipts), receipts
     assert any("MARK DELIVERED" in r and "REFUSED OWNER ONLY" in r for r in receipts), receipts
     assert [p for run in face["facts"]["steward_runs"] for p in run["plan"] if "Act" in p] == ["✓ Act 1 effect"] * 2
 
 
-@pytest.mark.parametrize("mutation", ["late_words", "one_delivery", "no_refusal", "risk_impact", "small_text"])
+@pytest.mark.parametrize("mutation", ["late_words", "one_delivery", "no_refusal", "risk_impact", "small_text",
+                                      "risk_row_unseen"])
 def test_each_face_mutation_is_red(mutation: str) -> None:
     fixture = _json(RUN / "fixture.json")["fixture"]
     face = copy.deepcopy(_room_face()["widths"]["393"])
     facts = face["facts"]
+    facts["items"] = _json(RUN / "observations" / "room-items-reshoot.json")["widths"]["393"]["items"]
     if mutation == "late_words":
         facts["room"]["needs_you_why"] = ["OVERDUE · 3 DAYS"]
     elif mutation == "one_delivery":
@@ -320,6 +326,9 @@ def test_each_face_mutation_is_red(mutation: str) -> None:
         facts["receipts"]["receipts"] = [r for r in facts["receipts"]["receipts"] if "REFUSED" not in r]
     elif mutation == "risk_impact":
         facts["items"]["item_rows"] = [r.replace("IMPACT HIGH", "IMPACT LOW") for r in facts["items"]["item_rows"]]
+    elif mutation == "risk_row_unseen":
+        facts["items"]["seen_on"] = {"0": facts["items"]["seen_on"]["0"]}
+        facts["items"]["item_rows"] = facts["items"]["item_rows"][:1]
     else:
         facts["room"]["small_text"] = ["10 px"]
     assert driver.face_findings(fixture, facts, {"receipts": face["hub_room_receipts"]})
@@ -340,8 +349,16 @@ def test_the_grant_row_keeps_stop_on_the_archived_project_and_its_receipt() -> N
 
 def test_every_face_shot_is_retained() -> None:
     names = {p.name for p in (RUN / "shots").glob("*.png")}
-    for stem in ("room-head", "room-items", "room-receipts-1", "updates-list", "update-delivered", "steward-run-1",
+    for stem in ("room-head", "room-items-1", "room-receipts-1", "updates-list", "update-delivered", "steward-run-1",
                  "steward-run-2", "grant-archived-live"):
         for width in (1440, 393):
             assert f"{stem}-{width}.png" in names, (stem, width)
     assert {"grant-stopped-receipt-1440.png", "grant-stopped-after-393.png"} <= names
+
+
+def test_the_superseded_393_items_shot_was_the_head_shot() -> None:
+    """Codex Astra r1 on #687: the first capture's 393 ITEMS shot is byte-identical
+    to the head shot (parked under shots/superseded/); the recapture is not."""
+    shots = RUN / "shots"
+    assert (shots / "superseded" / "room-items-393.png").read_bytes() == (shots / "room-head-393.png").read_bytes()
+    assert (shots / "room-items-1-393.png").read_bytes() != (shots / "room-head-393.png").read_bytes()

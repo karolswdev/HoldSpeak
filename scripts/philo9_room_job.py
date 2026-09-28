@@ -728,8 +728,20 @@ ROOM_FACTS = r"""() => {
   const anchor = document.querySelector('[data-testid=room-body], [data-testid=update-posture], [data-testid=steward-posture]');
   const win = anchor ? anchor.closest('.desk-window') : null;
   if (!win) return {window: false};
-  const text = (sel) => [...win.querySelectorAll(sel)].filter((e) => e.getBoundingClientRect().height > 0)
-    .map((e) => e.innerText.replace(/\s+/g, ' ').trim());
+  // Seen = in the UNOBSCURED viewport: three points of the element (its top-left
+  // and bottom-right corners, inset 2 px, and its centre) each hit the element
+  // itself or its content. elementFromPoint answers null off-screen and the
+  // covering element under the Ask well, the window foot or the dock (Codex
+  // Astra r1 on #687: a positive height is not visibility).
+  const seen = (e) => {
+    const r = e.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    const pts = [[r.left + 2, r.top + 2], [r.left + r.width / 2, r.top + r.height / 2], [r.right - 2, r.bottom - 2]];
+    return pts.every(([x, y]) => { const hit = document.elementFromPoint(x, y); return !!hit && (hit === e || e.contains(hit)); });
+  };
+  const words = (e) => e.innerText.replace(/\s+/g, ' ').trim();
+  const text = (sel) => [...win.querySelectorAll(sel)].filter(seen).map(words);
+  const rows = (sel) => [...win.querySelectorAll(sel)].map((e, i) => [i, words(e), seen(e)]);
   const small = [];
   const GLYPH = /^[●○✓✗⚠—↻ℹ«»·▤›×\s>]+$/;
   const walker = document.createTreeWalker(win, NodeFilter.SHOW_TEXT);
@@ -747,6 +759,8 @@ ROOM_FACTS = r"""() => {
     needs_you: text('[data-testid=needs-you-row]'),
     needs_you_why: text('[data-testid=needs-you-why]'),
     item_rows: text('[data-testid=item-row]'),
+    item_all: rows('[data-testid=item-row]'),
+    receipt_all: rows('[data-testid=receipt-row]'),
     update_rows: text('[data-testid=update-list-item]'),
     delivered_chips: text('[data-testid=update-delivered-chip]'),
     delivery_rows: text('[data-testid=delivery-row]'),
@@ -825,6 +839,10 @@ def face_findings(fixture: dict[str, Any], facts: dict[str, Any], hub_room: dict
         f.append(f"NEEDS YOU does not say MILESTONE · {days} DAYS LATE: {room.get('needs_you_why')}")
     if not any(title in r for r in room.get("needs_you", [])):
         f.append(f"NEEDS YOU does not list {title!r}")
+    for part in ("items", "receipts"):
+        data = facts.get(part) or {}
+        if data.get("rows_total") is not None and len(data.get("seen_on") or {}) != data["rows_total"]:
+            f.append(f"{part}: {len(data.get('seen_on') or {})} of {data['rows_total']} rows seen")
     items = (facts.get("items") or {}).get("item_rows", [])
     if not any(title in r and f"{days} DAYS LATE" in r for r in items):
         f.append(f"ITEMS does not show {title!r} {days} DAYS LATE: {items}")
@@ -862,6 +880,39 @@ def face_findings(fixture: dict[str, Any], facts: dict[str, Any], hub_room: dict
     return f
 
 
+def _page_rows(run_dir: Path, page: Any, testid: str, name: str, width: int) -> tuple[dict[str, Any], list[str]]:
+    """Every row of a section on a shot: each row not yet SEEN is scrolled to
+    the centre of the window and shot; the facts keep only rows seen in the
+    unobscured viewport (their union, in order), and the shot each was seen on."""
+    selector = f"[data-testid={testid}]"
+    page.locator(selector).first.wait_for(timeout=20_000)
+    count = page.locator(selector).count()
+    seen: dict[int, tuple[str, str]] = {}
+    shots: list[str] = []
+    facts: dict[str, Any] = {}
+    for index in range(count):
+        if index in seen:
+            continue
+        page.evaluate("""([sel, i]) => document.querySelectorAll(sel)[i].scrollIntoView({block: 'center'})""",
+                      [selector, index])
+        page.wait_for_timeout(300)
+        shot = _snap(run_dir, page, f"{name}-{len(shots) + 1}", width)
+        shots.append(shot)
+        facts = page.evaluate(ROOM_FACTS)
+        key = "item_all" if testid == "item-row" else "receipt_all"
+        for i, words, visible in facts.get(key) or []:
+            if visible and i not in seen:
+                seen[i] = (words, shot)
+        if index not in seen:
+            raise RuntimeError(f"{testid} {index} is not visible after scrolling it to the centre at {width}px")
+    rows = [seen[i][0] for i in sorted(seen)]
+    facts = dict(facts)
+    facts["item_rows" if testid == "item-row" else "receipts"] = rows
+    facts["seen_on"] = {str(i): seen[i][1] for i in sorted(seen)}
+    facts["rows_total"] = count
+    return facts, shots
+
+
 def _shoot_room(run_dir: Path, hub: Any, pid: str, fixture: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
     """The Room after the job at 1440x900 and 393x852, through the merged face:
     NEEDS YOU and the late milestone, ITEMS, the update list and the delivered
@@ -884,20 +935,10 @@ def _shoot_room(run_dir: Path, hub: Any, pid: str, fixture: dict[str, Any], upda
                 page.wait_for_timeout(900)
                 facts["room"] = page.evaluate(ROOM_FACTS)
                 out["shots"].append(_snap(run_dir, page, "room-head", width))
-                _scroll_to(page, "[data-testid=item-row]")
-                facts["items"] = page.evaluate(ROOM_FACTS)
-                out["shots"].append(_snap(run_dir, page, "room-items", width))
-                _scroll_to(page, "[data-testid=receipt-row]")
-                facts["receipts"] = page.evaluate(ROOM_FACTS)
-                # Every receipt row on a shot: page the rows from the top (the
-                # Ask well floats over the window's foot).
-                count = page.locator("[data-testid=receipt-row]").count()
-                step = 3 if width < 1000 else 4
-                for shot_index, first in enumerate(range(0, count, step)):
-                    page.evaluate("""(i) => { const rows = document.querySelectorAll('[data-testid=receipt-row]');
-                        rows[i].scrollIntoView({block: 'start'}); }""", first)
-                    page.wait_for_timeout(250)
-                    out["shots"].append(_snap(run_dir, page, f"room-receipts-{shot_index + 1}", width))
+                facts["items"], shots = _page_rows(run_dir, page, "item-row", "room-items", width)
+                out["shots"] += shots
+                facts["receipts"], shots = _page_rows(run_dir, page, "receipt-row", "room-receipts", width)
+                out["shots"] += shots
                 page.locator("[data-testid=updates-verb]").click()
                 page.locator("[data-testid=update-list]").wait_for(timeout=20_000)
                 page.wait_for_timeout(400)
@@ -1109,6 +1150,8 @@ def _parser() -> argparse.ArgumentParser:
     pr.add_argument("--out", required=True)
     pr.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
     pr.add_argument("--face", action="store_true")
+    rs = sub.add_parser("reshoot-items", help="recapture ITEMS against a retained run's hub state (a DB copy)")
+    rs.add_argument("run_dir", type=Path)
     fence = sub.add_parser("fence", help="run the fences over a retained run (no new session)")
     fence.add_argument("run_dir", type=Path)
     return parser
@@ -1210,12 +1253,63 @@ def probe(args: argparse.Namespace) -> int:
     return 0
 
 
+def reshoot_items(args: argparse.Namespace) -> int:
+    """Recapture the Room's ITEMS at both widths against a retained run's hub
+    state (a COPY of its ``db-proof.sqlite``; no client session), with the
+    seen-in-the-unobscured-viewport collector (Codex Astra r1 on #687)."""
+    run_dir = Path(args.run_dir).resolve()
+    fixture = json.loads((run_dir / "fixture.json").read_text())["fixture"]
+    legs = json.loads((run_dir / "owner_job" / "readbacks.json").read_text())
+    pid = legs["readbacks"]["project_id"]
+    temp_root = Path(tempfile.mkdtemp(prefix="philo9-06-reshoot-"))
+    home = temp_root / "hub-home"
+    db = home / ".local/share/holdspeak/holdspeak.db"
+    db.parent.mkdir(parents=True)
+    shutil.copy2(run_dir / "db-proof.sqlite", db)
+    hub = p7._gw().Hub(home, token=TOKEN).start()
+    out: dict[str, Any] = {"source": "db-proof.sqlite (a copy; the retained file is unchanged)",
+                           "sha256": hashlib.sha256((run_dir / "db-proof.sqlite").read_bytes()).hexdigest(),
+                           "project_id": pid, "widths": {}}
+    try:
+        from playwright.sync_api import sync_playwright
+
+        glass = _glass()
+        glass._ensure_build()
+        _e, got = _owner_call(hub, "project.get", {"project_id": pid})
+        out["project_state"] = {k: (got or {}).get(k) for k in ("name", "is_archived")}
+        with sync_playwright() as play:
+            browser, pages, errors = _pages(play, hub)
+            try:
+                for width, page in pages.items():
+                    _stage(page, hub, "open-project-memory", f"project:{pid}")
+                    glass._normal_chair(page)
+                    page.locator("[data-testid=room-body]").wait_for(timeout=20_000)
+                    page.wait_for_timeout(900)
+                    items, shots = _page_rows(run_dir, page, "item-row", "room-items", width)
+                    facts = {"items": items}
+                    out["widths"][width] = {"items": items, "shots": shots,
+                                            "findings": [x for x in face_findings(fixture, facts, {})
+                                                         if x.startswith(("ITEMS", "items"))]}
+                out["page_errors"] = errors
+            finally:
+                browser.close()
+    finally:
+        hub.stop()
+    p7._json_dump(run_dir / "observations" / "room-items-reshoot.json", out)
+    findings = [f"{w}: {x}" for w, v in out["widths"].items() for x in v["findings"]] + out.get("page_errors", [])
+    print(json.dumps({"project": out["project_state"], "findings": findings,
+                      "shots": [s for v in out["widths"].values() for s in v["shots"]]}, indent=1))
+    return 0 if not findings else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.mode == "fence":
         return fence_run(args.run_dir.resolve())
     if args.mode == "probe":
         return probe(args)
+    if args.mode == "reshoot-items":
+        return reshoot_items(args)
     try:
         return _run(args)
     except Exception as exc:  # noqa: BLE001

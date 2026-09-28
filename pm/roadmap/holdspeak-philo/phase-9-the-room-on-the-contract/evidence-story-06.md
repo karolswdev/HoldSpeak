@@ -21,6 +21,18 @@ The run's own status reads BLOCKED on four lines, two driver defects, both repai
 
 Pending: the Room's face at 1440 and 393 (after PHILO-9-03 merges; `--face`), then the owner's review of the shots. A fresh full run with `--face` replaces this attempt as the final record.
 
+## Round four — Codex Astra r1 on #687 (RATIFY-WITH-CONDITIONS, `checks/story-06-built-astra-r1.md`)
+
+**The merge condition, paid.** The first capture's `room-items-393.png` was byte-identical to `room-head-393.png`: the risk row was below the fold, and the collector counted any element with a positive height. Now:
+
+- The collector counts a row only when it is SEEN: three points of it (two inset corners and its centre) hit the row itself under `elementFromPoint`, which answers nothing off-screen and the covering element under the Ask well, the window foot or the dock (`ROOM_FACTS` `seen`). Each ITEMS and RECEIPTS row not yet seen is scrolled to the window's centre and shot; a row never seen stops the run (`_page_rows`); `face_findings` requires every row seen. Red at `7a169aa3` (the capture below: the old collector counted an off-screen and a covered row), green on the branch (`tests/e2e/test_philo9_06_seen_collector.py`).
+- The ITEMS shots were recaptured against the retained hub state — a copy of the run's `db-proof.sqlite`, no new client session (`reshoot-items`): `shots/room-items-1-1440.png`, `shots/room-items-1-393.png`, each showing the complete risk row. The copy is the state after the face leg, so the project reads archived; its ITEMS section is unchanged by that. The first captures are parked under `shots/superseded/`.
+- **Not re-proved by machine:** the head, RECEIPTS, update and steward facts in `observations/room.json` were collected by the height-only collector. Their shots were reviewed by eye (the RECEIPTS pages overlap and show all ten rows at both widths); the next run uses the seen collector throughout.
+
+**Not overclaimed:** refusals recorded before round two (an owner-only operation refused `project_delegation_required`) still render NO GRANT; only receipts written after the change say OWNER ONLY. The 393 Stop shot proves the line's removal after a reload, not the receipt's survival during that click (story 07's glass proves that at both widths).
+
+**Ledgered (nonblocking):** the NEEDS YOU "IT" fallback abbreviation, "Regenerate" → "New draft" on a published update, and RECEIPTS as the recent ten — BACKLOG "PHILO-9 charter follow-ups". Story 05's atlas reruns stay owed before the phase closes.
+
 ## The final closing run (merged main `79fdee3c` + this branch; PHILO-9-03's face)
 
 `assets/story-06-shots/final/20260928T172621Z-room-job/` — `--client codex --legs owner,agent --face`, Codex 0.155.1, `gpt-6-astra`, effort medium. OUTCOME COMPLETED, no blocker. Before it, `probe` confirmed every expectation reachable on a rig hub with no client (`assets/story-06-shots/probe/`).
@@ -39,7 +51,7 @@ Every fixture value read back through the contract (`owner_job/readbacks.json`, 
 | Shot (`assets/story-06-shots/final/20260928T172621Z-room-job/shots/`) | What it shows |
 |---|---|
 | `room-head-{1440,393}.png` | "1 needs you"; AT RISK; **1 MILESTONE LATE**; NEEDS YOU "Cutover rehearsal" **MILESTONE · 3 DAYS LATE** (the fixture's 3 days) |
-| `room-items-{1440,393}.png` | ITEMS 2: Cutover rehearsal MILESTONE · DUE SEP 25 · 3 DAYS LATE; Old ledger freeze slips RISK · LIKELIHOOD MEDIUM · IMPACT HIGH |
+| `room-items-1-{1440,393}.png` | ITEMS 2: Cutover rehearsal MILESTONE · DUE SEP 25 · 3 DAYS LATE; Old ledger freeze slips RISK · LIKELIHOOD MEDIUM · IMPACT HIGH — both rows SEEN in the unobscured viewport (round four; `observations/room-items-reshoot.json`) |
 | `room-receipts-{1..3}-1440.png`, `room-receipts-{1..4}-393.png` | RECEIPTS 10 (the Room's latest ten): the agent's STEWARD RUN and PUBLISH UPDATE; its refusals ✗ REFUSED **NO GRANT** (run, publish before the grant) and ✗ REFUSED **OWNER ONLY** (mark delivered, before and with the grant); ALLOW RUN AND PUBLISH (the owner's grant); MARKED DELIVERED ×3 |
 | `updates-list-{1440,393}.png` | two published updates: ✓ DELIVERED ×2 (the owner's) and ✓ DELIVERED ×1 (the agent's, marked by the owner) |
 | `update-delivered-{1440,393}.png` | the owner's update: DELIVERED 2 — Priya, Tomas, each with its time |
@@ -297,4 +309,54 @@ HEALED (5):
 Suite totals: 2943 passed, 0 failed, 0 skipped
 
 VERDICT: baseline-subset, zero branch-new
+```
+
+### Captured run — 2026-09-28T17:47:59Z
+
+- **Command:** `.venv/bin/python /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/scratchpad/red_seen.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc1254cbd42371f6ffe3539520ae2a3a11b0b9d5
+
+```text
+7a169aa3 collector item_rows: ['Cutover rehearsal', 'Covered risk', 'Old ledger freeze slips']
+RED (expected): an off-screen and a covered row counted
+```
+
+### Captured run — 2026-09-28T17:48:49Z
+
+- **Command:** `.venv/bin/python scripts/philo9_room_job.py fence pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-06-shots/final/20260928T172621Z-room-job`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc1254cbd42371f6ffe3539520ae2a3a11b0b9d5
+
+```text
+fixture_before_run=[]
+session_isolation=[]
+account_leaks=[]
+pairing owner_job=[]
+pairing owner_find=[]
+pairing agent_ungranted=[]
+pairing agent_granted=[]
+owner content=[]
+owner receipts=[]
+agent ungranted=[]
+agent granted=[]
+owner_job zero_read=0
+owner_find zero_read=0
+agent_ungranted zero_read=0
+agent_granted zero_read=0
+FENCES GREEN
+```
+
+### Captured run — 2026-09-28T17:48:49Z
+
+- **Command:** `.venv/bin/python -m pytest -q tests/unit/test_philo9_room_job.py tests/e2e/test_philo9_06_seen_collector.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** cc1254cbd42371f6ffe3539520ae2a3a11b0b9d5
+
+```text
+...............................................                          [100%]
+47 passed in 2.45s
 ```
