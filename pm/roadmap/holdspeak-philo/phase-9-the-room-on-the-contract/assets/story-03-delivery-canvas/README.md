@@ -1,6 +1,6 @@
 # PHILO-9-03 canvas 2: copy and confirm delivery
 
-**Status: DRAFT, round two, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The rulings: Q0 "Copy to clipboard only" and "Several per update". Round two pays Codex Astra r1 findings 4 and 5 (`../../checks/canvases-astra-r1.md`).
+**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The rulings: Q0 "Copy to clipboard only" and "Several per update". Round two paid Codex Astra r1 findings 4 and 5 (`../../checks/canvases-astra-r1.md`); round three pays Codex Astra r2 findings 1–3 (`../../checks/canvases-astra-r2.md`): the held confirmation bound to its update, the draft's content repairs under the `surface` container, and a real nine-point pointer pass.
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<board>-<width>.png` (1440x900 and 393x852, device scale 2); rendered facts: `shots/facts.json`.
@@ -15,12 +15,14 @@
   3. **The failure faces** (Astra r1 F4): a named refusal (`✗ REFUSED` + the plain token, the hub code on `data-code`); and a result unknown (`⚠ NO ANSWER · RESULT UNKNOWN`, the verb becomes `Retry`). Never "not marked".
   4. **The update list:** the DELIVERED chip (`?chip=count` → `✓ DELIVERED ×3`; `?chip=latest` → `✓ DELIVERED SEP 27 21:30 · LENA`) and the F11 words (`UPDATES N`; `PUBLISHED` `REV 1`; the `▤` glyph).
   5. **Back** sits in the editor's head verbs (`SurfaceVerbs`, the sticky head species), not at the foot of the body (below).
-- **The canvas carries the library repairs its geometry needs** (`harness/canvas.css`, "PROPOSED LIBRARY REPAIRS"; the story 03 build moves each into the named file): `.surface-token` and `.surface-provenance-source` at 12 px; the editor rail's chips at 12 px, the rail wrapping, and the editor column shrinkable (`.desk-editor` one `minmax(0, 1fr)` column; `.update-editor`/`.update-body-editor` children `min-width: 0`), so the draft editor no longer runs past the body at 393; the body mic in its own line at 393 (it sat absolute over the rail's `List` and `1.`); the mixed/cloud egress chip text `--accent-hover` (4.29:1 → 5.47:1); and at 393 a 44 × 44 size for the non-`.btn` controls touched (the To field's in-well mic, the rail chips, the body mic). The citation chips (SOURCES) and the claim-ref chips (`ITEM`) are the library `Button` (`ghost`, dense), not raw `<button>`s, so they carry the library's 44 px halo at 393.
+- **The canvas carries the library repairs its geometry needs** (`harness/canvas.css`, "PROPOSED LIBRARY REPAIRS"; the story 03 build moves each into the named file): `.surface-token` and `.surface-provenance-source` at 12 px; the editor rail's chips at 12 px, the rail wrapping, and the editor column shrinkable (`.desk-editor` one `minmax(0, 1fr)` column; `.update-editor`/`.update-body-editor` children `min-width: 0`), so the draft editor no longer runs past the body; the body mic in its own line (it sat absolute over the rail's `List` and `1.`) — these content repairs sit under `@container surface (max-width: 559px)` (`canvas.css:71`), so a narrow window on a wide desktop gets them too (Astra r2 F2); the mixed/cloud egress chip text `--accent-hover` (4.29:1 → 5.47:1); and, as a DEVICE rule only (`@media (max-width: 420px)`, `canvas.css:93`, UX-CANON D's one exception), a 44 × 44 size for the non-`.btn` controls touched (the To field's in-well mic, the rail chips, the body mic). No content moves in that rule. The citation chips (SOURCES) and the claim-ref chips (`ITEM`) are the library `Button` (`ghost`, dense), not raw `<button>`s, so they carry the library's 44 px halo at 393.
 - **The unbuilt backend is stated, not posed** (`harness/shim.ts`): the stored rows of `project_update_deliveries` stand in `sessionStorage`; `GET …/updates` carries `deliveries`; `POST /api/updates/{id}/delivered` refuses a draft `update_not_published`, replays a known `command_id`, refuses a changed payload under the same key `idempotency_conflict`, else appends one row. **Two fixture faults, stated on their boards:** `__philoRefuseNext` (the next mark answers 409 with a named hub code) and `__philoLoseNext` (the next mark COMMITS its row, then the answer is lost as a network error). Copy is the product's real Copy (`clipboard_head` in `facts.json`).
 
-## The retry rule (settled; Astra r1 F4)
+## The retry rule (settled; Astra r1 F4, r2 F1)
 
-One confirmation is one `{command_id, delivered_to}`. A press mints a key only when no confirmation is held. While a confirmation is **pending** or its result is **unknown**, the To field is **locked** to that confirmation's payload: a retry can never send the key with a different To. A new key is minted only after the result is **known** — a row came back (the field clears) or the hub named a refusal (the field unlocks with his words). A lost answer keeps the key and the payload; `Retry` sends both again, and the hub's replay returns the original row if it was recorded. (`proposedUpdateController.ts:97-117`, `:263-304`.)
+One confirmation is one `{update_id, command_id, delivered_to}`, held **per update** (`proposedUpdateController.ts:95-125`). A press mints a key only when that update holds no confirmation. While a confirmation is **pending** or its result is **unknown**, that update's To field is **locked** to the held payload, and the request always goes to the **held** `update_id` — never to whichever update is open (`:290`). Opening another update neither takes over nor clears the lock, the unknown result or the Retry: each update keeps its own. A new key is minted only after the result is **known** — a row came back (the field clears) or the hub named a refusal (the field unlocks with his words). A lost answer keeps the update, the key and the payload; `Retry` sends all three again, and the hub's replay returns the original row if it was recorded.
+
+Proved at both widths with real clicks (boards 6c → 6f; `facts.json`): lose the answer on A → Back → open B (B: field free, no Retry, no unknown — `b_state`) → Back → open A (A: `RESULT UNKNOWN`, `Lena` locked, Retry — `a_state`) → Retry: the call goes to A's URL with the same key and To (`retry_same_update`, `retry_same_key`, `retry_same_to` all true) → one Lena row on A (`lena_rows_on_a` 1), none on B (`b_rows_after` 0, `b_calls` 0). On board 6e A's history already lists the Lena row: the read shows what the hub recorded, while the face keeps the press's result unknown until Retry resolves it.
 
 ## Settled (not asked)
 
@@ -40,7 +42,9 @@ One confirmation is one `{command_id, delivered_to}`. A press mints a key only w
 | 6 | The mistake kept | Priya was the wrong person; `Tomas` added; both rows; `DELIVERED 2` |
 | 6b | Refused (fixture code) | `✗ REFUSED` `NOT PUBLISHED`, `data-code="update_not_published"`; nothing recorded; the field unlocked with `Priya` |
 | 6c | Result unknown (fixture fault) | `⚠ NO ANSWER · RESULT UNKNOWN`; the field locked to `Lena`; the verb `Retry` |
-| 6d | Retried | `Retry` sent the same key and To (`retry_same_key`, `retry_same_to` true): one `Lena` row (`DELIVERED 3`) |
+| 6d | Another update, clean | Back, open update B: its field free, no Retry, no unknown result, no rows |
+| 6e | Back on A | A still `⚠ NO ANSWER · RESULT UNKNOWN`, `Lena` locked, `Retry`; the read lists the committed Lena row |
+| 6f | Retried on A | Retry to A's URL, same key and To: one `Lena` row on A (`DELIVERED 3`); B has none |
 | 7a | List, chip ×N — after Back | Back returned to the list at both widths (`_back`); `✓ DELIVERED ×3` |
 | 7b | List, chip latest | `✓ DELIVERED SEP 27 21:30 · LENA` |
 | 8 | A draft | no DELIVERY; the rail wraps inside the body at 393; the body mic on its own line |
@@ -53,7 +57,7 @@ One confirmation is one `{command_id, delivered_to}`. A press mints a key only w
 | Field | `To` (name and placeholder); mic `Speak To` |
 | Verb | `Mark delivered`; `Retry` while the result is unknown |
 | History row | `✓` · the To or `—` · `MMM D HH:MM` |
-| Refused | `✗ REFUSED` + `NOT PUBLISHED` (`update_not_published`) / `OWNER ONLY` (`project_delegation_required`) / `KEY USED WITH OTHER TO` (`idempotency_conflict`; the lock makes it unreachable from this face) |
+| Refused | `✗ REFUSED` + `NOT PUBLISHED` (`update_not_published`) / `OWNER ONLY` (`project_delegation_required`) / `ALREADY USED` (`idempotency_conflict`: the hub saw this key with other arguments. The held-per-update lock keeps this face from causing it, but the hub still returns it to another client or a stale tab, so the face names it) |
 | Result unknown | `⚠ NO ANSWER · RESULT UNKNOWN` |
 | List chip | `✓ DELIVERED ×N` or `✓ DELIVERED MMM D HH:MM · <TO>` |
 | Never | "send", "sent", "not marked", an egress badge, a modal |
@@ -63,14 +67,14 @@ One confirmation is one `{command_id, delivered_to}`. A press mints a key only w
 1. **The list chip: `DELIVERED ×3` (7a) or the latest time and To (7b)?** Both fit at 393. Recommended: ×N — short; the names are in the history on the update.
 2. **DELIVERY first on the published update, above the body** (the To field beside its verb), not in the footer beside Copy? Recommended: yes.
 
-## Measurements (`shots/facts.json`, 28 renders; boards 0a/0b are the product today)
+## Measurements (`shots/facts.json`, 32 renders; boards 0a/0b are the product today)
 
 On every proposal board (1–8), at 1440 and 393, the whole Room window **including its footer**:
 
 - **Text under 12 px:** 0 (proposal and inherited).
 - **Raw (non-library) buttons:** 0 (today's boards: 10 on 0b, the citation chips).
 - **Chip contrast:** every chip ≥ 5.47:1 (lowest: `LOCAL + CLOUD`, now `--accent-hover`; today 4.29:1).
-- **Pointer ownership:** every control this canvas touched — Mark delivered / Retry, the To mic, Back, the citation and claim-ref Buttons, the draft rail's chips and the body mic — owned at centre and four corners (the 44 × 44 target at 393): 280 control renders (5 points each) over the 24 proposal renders, 0 failures.
+- **Pointer pass (Astra r2 F3; `harness/shoot.py:166-236`):** every Button in the window — body, head verbs and footer (menus when open; none open on these boards) — at NINE points (centre, four edge midpoints, four corners, inset 1 px; the painted face at 1440, the 44 × 44 target at 393), each with `elementFromPoint` AND a real `page.mouse.move` whose `pointermove` target is recorded. Proposal boards (1–8), both widths: **332 touched-control renders, 0 failures** (Mark delivered / Retry, the To mic, Back, the citation and claim-ref Buttons, the draft rail's chips and the body mic); the untouched footer verbs (Regenerate, Copy, Save, Publish) are owned too. 4,698 points in all.
 - **Horizontal overflow:** none (page and window body), including the draft at 393.
 - **Back:** returned to the list at 1440 and 393 (`facts.json` `_back`: one click each).
 - **"send"/"sent", egress badge in the delivery states, modal:** none. **Double-click:** one call, one row, both widths.
@@ -93,9 +97,12 @@ On every proposal board (1–8), at 1440 and 393, the whole Room window **includ
 | To `Priya`, press; To `Tomas`, press | two rows read back from the hub in the same fence; the face shows both; the chip reads the ratified form | new |
 | a double-click on one press | one row, one `command_id` | new |
 | the hub refuses | `REFUSED` + the token; `data-code` equals the hub's code; the field unlocked | new |
-| the answer is lost after commit | `RESULT UNKNOWN`; the field locked; `Retry` sends the same key and To; one row | new |
+| the answer is lost after commit | `RESULT UNKNOWN`; the field locked; `Retry` sends the same update, key and To; one row | new |
+| lost on A → Back → open B → Back → open A → Retry | B clean (free field, no Retry); A still unknown with Retry; the retry's URL is A's, same key and To; one row on A, zero rows and zero calls on B | new (round one's face sent A's key to B's URL → `idempotency_conflict`) |
+| the hub answers `idempotency_conflict` | `REFUSED` + `ALREADY USED`, `data-code` the hub's code | new |
 | Back at 393 | one click returns to the list | no click (round one) |
-| every state | no "send"; no egress badge; no modal; no text under 12 px; every touched control owned (44 × 44 at 393) | — |
+| a narrow window on a wide desktop | the draft editor's content repairs apply (container rule), no overflow | mutation: the rule under viewport media |
+| every state | no "send"; no egress badge; no modal; no text under 12 px; every touched control owned at nine points by `elementFromPoint` and a real pointer move (44 × 44 at 393) | — |
 
 ## Reproduce
 

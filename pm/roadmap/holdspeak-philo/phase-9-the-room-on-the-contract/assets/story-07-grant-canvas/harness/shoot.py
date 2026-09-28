@@ -124,7 +124,8 @@ POINTS = """([width]) => {
       i, text: b.innerText.replace(/\\s+/g, ' ').trim(), in_foot: !!b.closest('.desk-surface-foot'),
       face: {w: +r.width.toFixed(2), h: +r.height.toFixed(2)},
       target: {w: +(box.r - box.l).toFixed(2), h: +(box.b - box.t).toFixed(2)},
-      points: [[(box.l + box.r) / 2, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1]],
+      points: [[(box.l + box.r) / 2, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1],
+               [(box.l + box.r) / 2, box.t + 1], [(box.l + box.r) / 2, box.b - 1], [box.l + 1, cy], [box.r - 1, cy]],
     };
   });
 }"""

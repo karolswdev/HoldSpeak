@@ -53,7 +53,7 @@ declare global {
   interface Window {
     __philoHold?: boolean;
     __philoRelease?: () => void;
-    __philoDeliveryCalls?: { command_id: string; delivered_to: string | null; status: number }[];
+    __philoDeliveryCalls?: { update_id: string; command_id: string; delivered_to: string | null; status: number }[];
     __philoRefuseNext?: string;
     __philoLoseNext?: boolean;
   }
@@ -154,7 +154,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       await new Promise((r) => setTimeout(r, 250));
     }
     const upd = known.get(mark[1]);
-    const log = (status: number) => window.__philoDeliveryCalls!.push({ command_id: cmd, delivered_to: to, status });
+    const log = (status: number) => window.__philoDeliveryCalls!.push({ update_id: mark[1], command_id: cmd, delivered_to: to, status });
     // Fixture refusal (Astra r1 F4): the hub's named refusal, injected once.
     if (window.__philoRefuseNext) {
       const code = window.__philoRefuseNext;

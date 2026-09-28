@@ -13,7 +13,7 @@ DELIVERY = ITEMS.parent / "story-03-delivery-canvas"
 PAGES = {
     ITEMS: ("Room items canvas", "PHILO-9-03 · the ITEMS section", [
         ("0-today", "0 · Today", "No items section; ON TRACK; the milestone 7 days late is not shown."),
-        ("1a-late-first-view", "1a · Late, first view", "AT RISK + 1 MILESTONE LATE; NEEDS YOU row; ITEMS 3 after NEEDS YOU."),
+        ("1a-late-first-view", "1a · Late, first view", "AT RISK + 1 MILESTONE LATE; NEEDS YOU row; ITEMS 5 after NEEDS YOU."),
         ("1b-late-items", "1b · Late, the section", "Late first; the open risk; planned; MISSED (failure ✗); DROPPED (idle —). No Add, no row verb."),
         ("1c-sources-in-view", "1c · SOURCES in view", "At 393 the Ask well is in the flow: it covers no verb and no head (F10)."),
         ("2a-reached-first-view", "2a · Reached, first view", "A real transition to reached: ON TRACK again."),
@@ -32,7 +32,9 @@ PAGES = {
         ("6-mistake-kept", "6 · The mistake kept", "Priya was wrong; Tomas added; both rows stay; DELIVERED 2."),
         ("6b-refused", "6b · Refused", "A named refusal: REFUSED · NOT PUBLISHED (data-code update_not_published). The field unlocks."),
         ("6c-result-unknown", "6c · Result unknown", "The answer was lost: NO ANSWER · RESULT UNKNOWN; the field locked to Lena; the verb is Retry."),
-        ("6d-retried-one-row", "6d · Retried", "Retry sent the same key and To: one Lena row (the hub replayed it)."),
+        ("6d-other-update-clean", "6d · Another update, clean", "Back, open update B: its field is free, no Retry, no unknown result. A keeps its own."),
+        ("6e-back-on-a-still-unknown", "6e · Back on A", "A still shows RESULT UNKNOWN, Lena locked, Retry. The read already lists the committed Lena row."),
+        ("6f-retried-one-row", "6f · Retried on A", "Retry went to A with the same key and To: one Lena row on A, none on B."),
         ("7a-list-chip-count", "7a · List chip, ×N (after Back)", "Back returned to the list at both widths; DELIVERED ×3 counts every mark."),
         ("7b-list-chip-latest", "7b · List chip, latest", "DELIVERED <time> · LENA."),
         ("8-draft-no-mark", "8 · A draft", "No DELIVERY, no Mark delivered."),

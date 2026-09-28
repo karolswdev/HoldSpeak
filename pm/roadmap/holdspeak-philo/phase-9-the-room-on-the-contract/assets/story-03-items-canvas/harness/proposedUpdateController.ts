@@ -92,28 +92,36 @@ export function useUpdateController(
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   // PROPOSAL: the confirm verb. The To field is free text, optional.
-  const [deliverToDraft, setDeliverToDraft] = useState("");
-  const [deliverBusy, setDeliverBusy] = useState(false);
-  // PROPOSAL (Astra r1 F4) — the settled retry rule. One confirmation = one
-  // {command_id, delivered_to}. While it is PENDING or UNCERTAIN the To field
-  // is LOCKED to that confirmation's payload, so a retry can never reuse the
-  // key with a different payload. A new key is minted only after the result
-  // is KNOWN (a row came back, or a named refusal).
+  // PROPOSAL (Astra r1 F4, r2 F1) — the settled retry rule. One confirmation
+  // = one {update_id, command_id, delivered_to}. While it is PENDING or
+  // UNCERTAIN the To field of THAT update is LOCKED to that payload, so a
+  // retry can never reuse the key with a different payload or a different
+  // update. The request always goes to the HELD update_id, never to whatever
+  // update is open. A new key is minted only after the result is KNOWN (a
+  // row came back, or a named refusal).
   //   refused   -> the hub named the reason (4xx + error_code); the key is
   //                spent, the field unlocks.
   //   uncertain -> no answer (network lost, 5xx, timeout): the confirmation
-  //                may or may not be recorded. Retry sends the SAME key and
-  //                payload; the hub's replay returns the original row if it was.
-  const [deliverOutcome, setDeliverOutcome] = useState<
-    { kind: "none" } | { kind: "refused"; code: string } | { kind: "uncertain" }
-  >({ kind: "none" });
-  const confirmation = useRef<{ key: string; to: string } | null>(null);
-  const [lockedTo, setLockedTo] = useState<string | null>(null);
-  const deliverTo = lockedTo ?? deliverToDraft;
+  //                may or may not be recorded. Retry sends the SAME update,
+  //                key and To; the hub's replay returns the original row.
+  // Each update keeps its own state: opening another update neither takes
+  // over nor clears the lock, the uncertainty or the Retry.
+  type Outcome = { kind: "none" } | { kind: "refused"; code: string } | { kind: "uncertain" };
+  type Held = { updateId: string; key: string; to: string };
+  const holds = useRef(new Map<string, Held>());
+  const [toDrafts, setToDrafts] = useState<Record<string, string>>({});
+  const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
+  const [busyIds, setBusyIds] = useState<Record<string, boolean>>({});
+  const [, setHoldTick] = useState(0);
+  const openId = current?.id ?? "";
+  const openHold = openId ? holds.current.get(openId) : undefined;
+  const deliverTo = openHold ? openHold.to : toDrafts[openId] ?? "";
+  const deliverBusy = !!busyIds[openId];
+  const deliverOutcome: Outcome = outcomes[openId] ?? { kind: "none" };
   const setDeliverTo = useCallback((v: string) => {
-    if (confirmation.current) return; // locked while pending or uncertain
-    setDeliverToDraft(v);
-  }, []);
+    if (!openId || holds.current.has(openId)) return; // locked while held
+    setToDrafts((d) => ({ ...d, [openId]: v }));
+  }, [openId]);
   const deliverError = deliverOutcome.kind === "none" ? "" : deliverOutcome.kind;
 
   // ── Enter update posture (fetch list) ──
@@ -262,26 +270,31 @@ export function useUpdateController(
 
   // ── PROPOSAL: Mark delivered ──
   const markDelivered = useCallback(async () => {
-    if (!current || current.lifecycle !== "published" || deliverBusy) return;
-    // A new confirmation only when none is pending or uncertain; a retry
-    // reuses the held key AND the held payload.
-    if (!confirmation.current) {
-      confirmation.current = { key: crypto.randomUUID(), to: deliverToDraft };
-      setLockedTo(deliverToDraft);
+    if (!current || current.lifecycle !== "published") return;
+    const uid = current.id;
+    if (busyIds[uid]) return;
+    // A new confirmation only when this update holds none; a retry reuses
+    // the held update, key AND payload.
+    let held = holds.current.get(uid);
+    if (!held) {
+      held = { updateId: uid, key: crypto.randomUUID(), to: toDrafts[uid] ?? "" };
+      holds.current.set(uid, held);
+      setHoldTick((n) => n + 1);
     }
-    const { key, to } = confirmation.current;
-    setDeliverBusy(true);
-    setDeliverOutcome({ kind: "none" });
+    const { updateId, key, to } = held;
+    const setOutcome = (o: Outcome) => setOutcomes((m) => ({ ...m, [updateId]: o }));
+    const release = () => { holds.current.delete(updateId); setHoldTick((n) => n + 1); };
+    setBusyIds((b) => ({ ...b, [updateId]: true }));
+    setOutcome({ kind: "none" });
     try {
-      const row = await updateApi.markDelivered(current.id, to, key);
-      confirmation.current = null;
-      setLockedTo(null);
+      const row = await updateApi.markDelivered(updateId, to, key);
+      release();
       const add = (u: ProjectUpdate) =>
         u.id === row.updateId && !u.deliveries.some((d) => d.id === row.id)
           ? { ...u, deliveries: [...u.deliveries, row] } : u;
       setCurrent((u) => (u ? add(u) : u));
       setUpdates((list) => list.map(add));
-      setDeliverToDraft("");
+      setToDrafts((d) => ({ ...d, [updateId]: "" }));
       onRoomRefresh();
     } catch (reason) {
       const code =
@@ -291,17 +304,17 @@ export function useUpdateController(
       if (code) {
         // Known result: a named refusal. The key is spent; the field unlocks
         // with his words still in it.
-        confirmation.current = null;
-        setLockedTo(null);
-        setDeliverOutcome({ kind: "refused", code });
+        release();
+        setToDrafts((d) => ({ ...d, [updateId]: to }));
+        setOutcome({ kind: "refused", code });
       } else {
-        // Unknown result: keep the key AND the payload for Retry.
-        setDeliverOutcome({ kind: "uncertain" });
+        // Unknown result: keep the update, the key AND the payload for Retry.
+        setOutcome({ kind: "uncertain" });
       }
     } finally {
-      setDeliverBusy(false);
+      setBusyIds((b) => ({ ...b, [updateId]: false }));
     }
-  }, [current, deliverBusy, deliverToDraft, onRoomRefresh]);
+  }, [current, busyIds, toDrafts, onRoomRefresh]);
 
   // ── Edit body handler ──
   const handleEditBody = useCallback((value: string) => {
@@ -353,7 +366,7 @@ export function useUpdateController(
     deliverBusy,
     deliverError,
     deliverOutcome,
-    deliverLocked: lockedTo !== null,
+    deliverLocked: !!openHold,
 
     // Busy states
     draftBusy,

@@ -53,5 +53,6 @@ PROVISIONAL: 2.5–3.5 engineering days (the beat and the canvas included).
 
 ## Notes
 
+- 2026-09-27 — canvases round three (Codex Astra canvases r2 finding 5): the build diagnoses one open the canvas accepted: on grant canvas board 11 at 393 the Settings window sits about 58 px lower than on the other boards (cause unknown; nothing is cut off). Find the cause during integration and fence the window's position after a credential revoke.
 - 2026-09-27 — round six (Codex Astra r4): R4-1 in the beat, R4-2 the real-grant refusal of mark delivered, R4-3 the orphan and Remote-Access-OFF states on the canvas.
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib on the owner's Q2 ruling; unratified. A new story rather than growing story 02 (Tenet 1): story 02 already carries 20 descriptors, the admission table, the steward beat and the B1/B2 repairs, and this grant has its own beat, canvas and owner review.

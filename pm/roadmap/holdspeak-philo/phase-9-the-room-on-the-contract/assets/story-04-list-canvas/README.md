@@ -71,10 +71,10 @@ The text scan and the contrast scan cover the list AND every open menu (the Work
 | `ATTN 1` (12 px on `--surface-2`) | **3.92:1** (`--accent`, 10 px) | **3.92:1** | **4.99:1** (`--accent-hover`) | **4.99:1** |
 | The census `ALL` verb (dived) | not measured | not measured | 4.99:1 | 4.99:1 |
 | Lowest text contrast (list + menu) | **3.92:1** (ATTN) | 5.74:1 | 4.99:1 | 4.99:1 |
-| Pointer ownership | not probed | not probed | **23 controls, 115 points, all owned** | **23 controls, 115 points, all owned** |
+| Pointer ownership (real pointer + `elementFromPoint`) | not probed | not probed | **23 controls, 207 points, all owned** | **23 controls, 207 points, all owned** |
 | Page errors | 0 | 0 | 0 | 0 |
 
-**Pointer ownership** (`facts.json` `pointer`): the sort Buttons (boards 1, 2, 4), the census ALL verb (board 4) and the ten menu rows (board 3). Each control: its centre and four corners inset 1 px, `elementFromPoint` must land inside that control. At 1440 the points are on the painted face; at 393 on the 44 × 44 target (the face's width, 44 px tall on its centre; the sort Buttons are 44-71 px wide by the library's `min-inline-size`). Every point on every probed control is owned, at both widths.
+**Pointer ownership** (`facts.json` `pointer`): the sort Buttons (boards 1, 2, 4), the census ALL verb (board 4) and the ten menu rows (board 3). Each control is probed at nine points: the centre, the four edge midpoints and the four corners, inset 1 px. At each point `elementFromPoint` must land inside the control, AND a real pointer move (`page.mouse.move`) must dispatch a `pointermove` whose target is inside the control (the grant canvas's method). At 1440 the points are on the painted face; at 393 on the 44 × 44 target (the face's width, 44 px tall on its centre; the sort Buttons are 44-71 px wide by the library's `min-inline-size`; the menu rows are 44 px tall). Per width: 23 controls (4 sort Buttons on boards 1 and 2; 4 sort Buttons and ALL on board 4; all 10 menu rows on board 3), 207 points, every point owned by both checks, at both widths (round three, Codex Astra r2 finding 3).
 
 ## Two questions for the owner
 
@@ -105,7 +105,7 @@ Real hub, isolated HOME, rendered at 1440 and 393; each red on main first:
 | The row menu on a row near the bottom at 393 | every menu row is at least 44 px; the last menu item's bottom is at or above the viewport's bottom | 28 px rows; cut 15 px |
 | The list and an open menu | no visible text under 12 px; every text at least 4.5:1 on its composited ground | ATTN 3.92:1 |
 | Dive into a zone at 393 | `document.documentElement.scrollWidth` equals 393 | (unknown on main; 394 in round one) |
-| Any board at 393 | `elementFromPoint` at the centre and corners of each sort Button, the ALL verb and each menu row lands in that control | not probed |
+| Any board at 393 | at the centre, edge midpoints and corners of each sort Button, the ALL verb and each menu row, both `elementFromPoint` and a real pointer move land in that control | not probed |
 
 ## Reproduce
 
@@ -126,7 +126,7 @@ The script refuses to start if port 4443 is already served (a stale server would
 | A real nonzero Attention | `harness/shoot.py:247-262` (neutral mode + a GitHub proposal bound to the note, through the real routes; never executed) | `_seed.attention_subject_counts` = `{needs_attention: 1}`; ATTN 1 rendered on boards 4 and 7 |
 | ATTN contrast | today 3.92:1 (`--accent`, 10 px); `harness/canvas.css:89-93` gives `.desk-list-attention` `--accent-hover`, as the ALL verb | 4.99:1 at 12 px, both widths |
 | Container queries per canon | `harness/canvas.css:79-87` makes `.desk-list-face` the `surface` container (not `.desk-listmode`: layout containment would capture its fixed foot); the fold is `@container surface (max-width: 720px)` (`:119`), as `list-view.css` does. "The build picks one" is removed | the fold renders at 393 on every board; 1440 keeps the four columns |
-| Pointer ownership | `harness/shoot.py` `POINTS` / `HIT` / `pointer()`: centre + four corners, 44 × 44 at 393 | 23 controls, 115 points per width, all owned |
+| Pointer ownership | `harness/shoot.py:178-218` (`POINTS`, `HIT`, `PM_ARM`, `PM_READ`) and `:326` (`pointer()`): nine points (centre, edge midpoints, corners), `elementFromPoint` and a real pointer move each; 44 × 44 at 393 (round three) | 23 controls, 207 points per width, all owned |
 | Questions | two kept (selection, fold); the menu rule stated as settled | this README |
 
 Found on the way: the Floor's list is in no window body, so no ancestor is a `surface` container and the two `@container surface (max-width: 720px)` blocks in `list-view.css` never apply to it today. That is why its columns run off the right edge at 393. The container above repairs it.

@@ -68,27 +68,17 @@ html body .desk-next .gadget-chip-egress[data-scope="cloud"] {
     position: static;
   }
 }
-/* UX-CANON C at 393: every control this canvas touches owns 44 x 44. The
-   library Button carries a halo (global.css:170); the controls below are not
-   `.btn` (chrome species, the in-well mic), so they take the size itself. */
-@media (max-width: 420px) {
-  /* the To field's in-well mic (gadgets.css:365, 20 x 20) */
-  html body .desk-next .p9-deliver-to .gadget-string .desk-mic {
-    width: var(--desk-button-hit-size);
-    height: var(--desk-button-hit-size);
-  }
+/* CONTENT layout follows the `surface` container (UX-CANON D, Astra r2 F2):
+   a narrow window on a wide desktop gets the same repair as a phone. */
+@container surface (max-width: 559px) {
   /* update-posture.css:57 the body mic sat absolute over the rail's "List"
-     and "1." chips; at 393 it takes its own line, right-aligned, 44 x 44. */
+     and "1." chips; in a narrow window it takes its own line, right-aligned. */
   html body .desk-next .update-body-editor-mic {
     position: static;
     align-self: flex-end;
   }
-  html body .desk-next .update-body-editor-mic .desk-mic {
-    width: var(--desk-button-hit-size);
-    height: var(--desk-button-hit-size);
-  }
   /* update-posture.css:50 the editor column took its content's width (flex
-     items default to min-width: auto): the rail ran past the body at 393. */
+     items default to min-width: auto): the rail ran past the body. */
   html body .desk-next .update-editor > *,
   html body .desk-next .update-body-editor > * {
     min-width: 0;
@@ -99,7 +89,17 @@ html body .desk-next .gadget-chip-egress[data-scope="cloud"] {
   html body .desk-next .desk-editor {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* the draft editor's rail chips and its mic (inline-editor.css:129) */
+}
+/* DEVICE target size only (UX-CANON D's one exception, :119; the shape of
+   global.css:170): every control this canvas touches owns 44 x 44 at the
+   narrow device. These are not `.btn` (chrome species, the in-well mics), so
+   they take the size themselves. No content moves here. */
+@media (max-width: 420px) {
+  html body .desk-next .p9-deliver-to .gadget-string .desk-mic,
+  html body .desk-next .update-body-editor-mic .desk-mic {
+    width: var(--desk-button-hit-size);
+    height: var(--desk-button-hit-size);
+  }
   html body .desk-next .desk-editor-toolbar .desk-chip,
   html body .desk-next .desk-editor-toolbar .desk-mic {
     min-height: var(--desk-button-hit-size);

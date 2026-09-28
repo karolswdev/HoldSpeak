@@ -176,9 +176,11 @@ FACTS = r"""() => {
 }"""
 
 POINTS = r"""([width, kinds]) => {
-  // The controls this canvas touches: the visible sort Buttons and the open
-  // menu's rows. 1440: the painted face, centre + four corners inset 1 px.
-  // 393: the 44 x 44 target (the face's width, 44 px tall, on its centre).
+  // The controls this canvas touches: the visible sort Buttons, the census
+  // ALL verb and every row of the open menu. Nine points each: the centre,
+  // the four edge midpoints and the four corners, inset 1 px. 1440: the
+  // painted face. 393: the 44 x 44 target (the face's width, at least 44 px
+  // tall, on the face's centre; UX-CANON C, docs/internal/UX-CANON.md:100).
   // An earlier board's probe marks stay on nodes React kept; clear them so
   // an index names one control only.
   document.querySelectorAll('[data-probe]').forEach(e => e.removeAttribute('data-probe'));
@@ -196,15 +198,24 @@ POINTS = r"""([width, kinds]) => {
       face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, target: {w: +(box.r - box.l).toFixed(1), h: +(box.b - box.t).toFixed(1)},
       margin_block: getComputedStyle(b).marginTop + ' ' + getComputedStyle(b).marginBottom,
       in_view: box.t >= 0 && box.b <= innerHeight && box.l >= 0 && box.r <= innerWidth,
-      points: [[(box.l + box.r) / 2, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1]]};
+      points: (() => { const cx = (box.l + box.r) / 2, l = box.l + 1, rr = box.r - 1, t = box.t + 1, bb = box.b - 1;
+        return [[cx, cy, 'centre'], [cx, t, 'top'], [rr, cy, 'right'], [cx, bb, 'bottom'], [l, cy, 'left'],
+                [l, t, 'top-left'], [rr, t, 'top-right'], [l, bb, 'bottom-left'], [rr, bb, 'bottom-right']]; })()};
   });
 }"""
 
 HIT = r"""([i, x, y]) => {
   const b = document.querySelector(`[data-probe="${i}"]`);
   const el = document.elementFromPoint(x, y);
-  return {ok: !!el && b.contains(el), hit: el ? String(el.className || el.tagName).split(' ')[0] : null};
+  return {ok: !!el && !!b && b.contains(el), hit: el ? String(el.className || el.tagName).split(' ')[0] : null};
 }"""
+
+# The real pointer: the target of the last pointermove the browser dispatched
+# (the grant canvas's method, story-07-grant-canvas/harness/shoot.py).
+PM_ARM = r"""() => { window.__pm = null; if (!window.__pmArmed) { window.__pmArmed = true;
+  document.addEventListener('pointermove', e => { window.__pm = e.target; }, true); } }"""
+PM_READ = r"""([i]) => { const b = document.querySelector(`[data-probe="${i}"]`); const t = window.__pm;
+  return {ok: !!t && !!b && b.contains(t), hit: t ? String(t.className || t.tagName).split(' ')[0] : null}; }"""
 
 SELECTION = r"""(sel) => {
   const C = window.__c;
@@ -313,28 +324,36 @@ def main() -> None:
                         page.wait_for_timeout(1200)
 
                     def pointer(kinds: list[str]) -> list[dict]:
-                        # elementFromPoint at each point, without scrolling (the
-                        # probe measures the board as shot; points off screen are
-                        # reported, not moved into view).
+                        # Each point twice, without scrolling (the board as shot;
+                        # points off screen are reported, not moved into view):
+                        # `elementFromPoint`, then a REAL pointer move there and the
+                        # target of the pointermove the browser dispatched. A point
+                        # is owned only when both land inside the control.
+                        page.evaluate(PM_ARM)
                         result = []
                         for probe in page.evaluate(POINTS, [width, kinds]):
                             pts = []
-                            for x, y in probe["points"]:
+                            for x, y, where in probe["points"]:
+                                q = {"at": where, "x": round(x, 1), "y": round(y, 1)}
                                 if not (0 <= x < width and 0 <= y < height):
-                                    pts.append({"x": round(x, 1), "y": round(y, 1), "ok": None, "hit": "off-screen"})
+                                    pts.append(q | {"efp": None, "pointer": None, "hit": "off-screen"})
                                     continue
                                 h = page.evaluate(HIT, [probe["i"], x, y])
-                                pts.append({"x": round(x, 1), "y": round(y, 1), "ok": h["ok"], "hit": h["hit"]})
-                            on = [q for q in pts if q["ok"] is not None]
+                                page.mouse.move(x, y)
+                                m = page.evaluate(PM_READ, [probe["i"]])
+                                pts.append(q | {"efp": h["ok"], "pointer": m["ok"], "hit": h["hit"], "pointer_hit": m["hit"]})
+                            on = [q for q in pts if q["efp"] is not None]
                             result.append({k: probe[k] for k in ("text", "kind", "face", "target", "in_view", "margin_block")} | {
-                                "owned": (all(q["ok"] for q in on) if len(on) == len(pts) else None), "points": pts})
+                                "owned": (all(q["efp"] and q["pointer"] for q in on) if len(on) == len(pts) else None),
+                                "points": pts})
+                        page.mouse.move(2, 60)
                         return result
 
                     # Pointer ownership where the board shows the touched controls
                     # unobscured: the sort Buttons at the top of the list, the
                     # census ALL verb when dived, the menu rows when the menu is open.
                     PROBE = {"1-list": ["sort"], "2-sorted-by-zone": ["sort"], "4-one-shown": ["sort", "census"],
-                             "3-row-menu-bottom": ["menu"]}
+                             "3-row-menu-bottom": ["menu"]}  # every menu row, all ten
 
                     def shoot(board: str, extra: dict | None = None) -> None:
                         key = f"{board}-{width}"

@@ -1,6 +1,6 @@
 # PHILO-9-03 canvas 1: the ITEMS section in the Room
 
-**Status: DRAFT, round two, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The Q3 ruling: "Show them; enter by MCP" — the Room shows its items; no Add control on the face. Round two pays Codex Astra r1 findings 5 and 7 (`../../checks/canvases-astra-r1.md`).
+**Status: DRAFT, round three, for the owner's ratification** (UX-CANON §A.2). Nothing here is built in product code. The Q3 ruling: "Show them; enter by MCP" — the Room shows its items; no Add control on the face. Round two paid Codex Astra r1 findings 5 and 7 (`../../checks/canvases-astra-r1.md`); round three adds the real nine-point pointer pass (Codex Astra r2 F3, `../../checks/canvases-astra-r2.md`).
 
 - Review page (every board, both widths): `index.html` in this folder.
 - Boards: `shots/<board>-<width>.png` (1440x900 and 393x852, device scale 2); rendered facts: `shots/facts.json`.
@@ -55,7 +55,7 @@ On every proposal board (1a–4), at 1440 and 393, the whole Room window **inclu
 - **Text under 12 px:** 0 (proposal and inherited).
 - **Raw (non-library) buttons:** 0.
 - **Chip contrast (WCAG, text over the composited background):** every chip ≥ 5.8:1 (lowest: `1 MILESTONE LATE`, 5.8:1).
-- **Pointer ownership:** every control this canvas touched (the items `Retry`) is owned at its centre and four corners, the 44 × 44 target at 393.
+- **Pointer pass (Astra r2 F3; `harness/shoot.py:166-236`):** every Button in the Room window, body and footer, at nine points (centre, four edge midpoints, four corners, inset 1 px; the 44 × 44 target at 393), each by `elementFromPoint` AND a real `page.mouse.move` with its `pointermove` target recorded — 1,341 points. The control this canvas touched (the items `Retry`) is owned at all nine points at both widths; the footer `Refresh` and the SOURCES `Steward` are owned too.
 - **The Ask well (F10) at 393:** `under_ask_well` is empty on every board (the well is `position: static`); on board 0 (today, sticky) it covers `SOURCES`, `Steward` and `RECEIPTS 10`.
 - **Horizontal overflow:** none. **Add controls inside ITEMS:** 0. **Modal / "send":** none.
 

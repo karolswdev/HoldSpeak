@@ -80,7 +80,7 @@ The face reads `state` only. Chip: `LIVE` → ALLOWED; `REVOKED`/`EXPIRED` → S
 - Raw `<button>` without the library `.btn`: **0**.
 - Horizontal overflow (page or window body): **0**.
 - Contrast: **736** chips, tokens and labels (`StateChip`, `surface-token`, `gadget-fact`, `Receipt`, the ledger caption, the Disclosure label), text against the background composited from its ancestors: lowest **5.33:1**; none under 4.5:1.
-- Pointer: **292** controls, **1460** points (centre + four corners; the painted face at 1440, the 44 × 44 target at 393), each by `elementFromPoint` AND a real pointer move: **all owned**. This includes every `▸ Projects` trigger, every desk and project grant verb, every orphan Stop, and the footer receipt Button and `« PREFS`.
+- Pointer: **292** controls, **2628** points (nine per control: centre, four corners and four edge midpoints, each inset 1 px; the painted face at 1440, the 44 × 44 target at 393), each by `elementFromPoint` AND a real pointer move: **all owned**. This includes every `▸ Projects` trigger, every desk and project grant verb, every orphan Stop, and the footer receipt Button and `« PREFS`.
 - Browser errors: **0** (an earlier draft nested a ledger inside the row's expansion and made `<li>` inside `<li>`; the lines are now `GadgetRow`s).
 
 ## Limits (what the boards are not)
@@ -105,7 +105,7 @@ Real hub, isolated HOME, real credentials, the real `PUT`/`DELETE /api/settings/
 | Restart or lost credential, grants still LIVE | the desk orphan (Stop filing) and the project orphan (Stop run and publish) both render, ON and OFF | mutation: OFF hides them; the desk orphans dropped by the new renderer |
 | Stop on the last orphan | the row is gone; `.surface-ledger` is absent; the foot receipt Button is owned at centre + corners; its well reads `SUCCEEDED`, the STOPPED words, the project, the identity | mutation: the receipt rendered inside the ledger |
 | Refused Stop | `[data-code=project_delegation_required]` on the line; the foot `REFUSED`; its well matches the route's refusal | mutation: the refusal dropped on reread |
-| Every state | 0 text under 12 px; 0 raw buttons; every chip ≥ 4.5:1; every Button owned; no overflow | this canvas's probe |
+| Every state | 0 text under 12 px; 0 raw buttons; every chip ≥ 4.5:1; every Button owned at nine points; no overflow | this canvas's probe |
 
 ## Reproduce
 

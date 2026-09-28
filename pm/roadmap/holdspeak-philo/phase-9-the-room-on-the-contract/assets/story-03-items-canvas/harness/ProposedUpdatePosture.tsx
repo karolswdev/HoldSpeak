@@ -35,7 +35,7 @@ export const DELIVERY_WORDS = {
  *  The code rides `data-code` for the fence. */
 const REFUSAL_TOKEN: Record<string, string> = {
   update_not_published: "NOT PUBLISHED",
-  idempotency_conflict: "KEY USED WITH OTHER TO",
+  idempotency_conflict: "ALREADY USED",
   project_delegation_required: "OWNER ONLY",
 };
 
@@ -404,7 +404,7 @@ function UpdateList({
                 primary={
                   // PROPOSAL 3 (F11): the words spaced; the time lives in the row's time slot.
                   <span
-                    className="update-list-row p9-update-row" data-p9="f11"
+                    className="update-list-row p9-update-row" data-p9="f11" data-update-id={update.id}
                     data-lifecycle={update.lifecycle}
                     data-generator={update.generator}
                   >

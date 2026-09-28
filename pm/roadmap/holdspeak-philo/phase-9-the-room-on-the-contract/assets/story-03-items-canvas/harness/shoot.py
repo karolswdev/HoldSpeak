@@ -156,33 +156,85 @@ FACTS = r"""() => {
   };
 }"""
 
-# Pointer ownership of EVERY Button in the Room window, body and footer
-# (centre + four corners inset 1 px; at 393 the 44 x 44 target, UX-CANON C).
-# Each is scrolled into view to probe; every scroll position is restored.
-POINTS = r"""([width]) => {
+# ── The pointer pass (UX-CANON C; Astra r2 F3) ─────────────────────────────
+# EVERY Button in the Room window (body, head verbs and footer; menus when
+# open), NINE points each: the centre, the four edge midpoints and the four
+# corners, inset 1 px, of the painted face at 1440 and of the 44 x 44 target at
+# 393. Each point: `elementFromPoint` AND a real `page.mouse.move`, recording
+# the `pointermove` target (the grant canvas's method). Each control is
+# scrolled into view to probe; every scroll position is restored after.
+CONTROLS = r"""() => {
   const anchor = document.querySelector('[data-testid=room-body], [data-testid=update-posture]');
   const win = anchor ? anchor.closest('.desk-window') : null;
   if (!win) return [];
-  const scrolled = [...win.querySelectorAll('*')].filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]);
-  const btns = [...win.querySelectorAll('.btn, .btn--chrome')].filter((b) => b.getBoundingClientRect().width);
-  const out = btns.map((b, i) => {
+  window.__scrollSnap = [...document.querySelectorAll('*')].filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]);
+  window.__pm = null;
+  if (!window.__pmHooked) { document.addEventListener('pointermove', (e) => { window.__pm = e.target; }, true); window.__pmHooked = true; }
+  const menus = [...document.querySelectorAll('[role=menu]')];
+  const btns = [...win.querySelectorAll('.btn, .btn--chrome'), ...menus.flatMap((m) => [...m.querySelectorAll('button, [role=menuitem]')])]
+    .filter((b) => b.getBoundingClientRect().width);
+  return btns.map((b, i) => {
     b.dataset.probe = String(i);
-    b.scrollIntoView({block: 'center', inline: 'nearest'});
-    const r = b.getBoundingClientRect();
-    const cy = r.top + r.height / 2, cx = r.left + r.width / 2;
-    const w = width <= 420 ? Math.max(44, r.width) : r.width, h = width <= 420 ? Math.max(44, r.height) : r.height;
-    const box = {l: cx - w / 2, r: cx + w / 2, t: cy - h / 2, b: cy + h / 2};
-    const pts = [[cx, cy], [box.l + 1, box.t + 1], [box.r - 1, box.t + 1], [box.l + 1, box.b - 1], [box.r - 1, box.b - 1]];
-    return {text: (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30), in_foot: !!b.closest('.desk-surface-foot, .surface-footer'),
-      proposal: !!b.closest('[data-p9]'), touched: !!(b.closest('[data-p9]') || b.closest('.desk-editor-toolbar') || b.closest('.update-body-editor-mic') || b.matches('[data-testid=update-claim-ref], [data-testid=update-verb-back]')), face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, points: pts.map(([x, y]) => {
-      const el = document.elementFromPoint(x, y);
-      return {x: Math.round(x), y: Math.round(y), owned: !!el && b.contains(el), hit: el ? String(el.className || el.tagName).split(' ')[0] : null};
-    })};
-  }).map((p) => ({...p, owned: p.points.every((q) => q.owned)}));
-  for (const [e, t, l] of scrolled.reverse()) { e.scrollTop = t; e.scrollLeft = l; }
-  for (const e of win.querySelectorAll('*')) { if (!scrolled.some(([s]) => s === e) && e.scrollTop) e.scrollTop = 0; }
-  return out;
+    return {i, text: (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30),
+      in_foot: !!b.closest('.desk-surface-foot, .surface-footer'), in_menu: !!b.closest('[role=menu]'),
+      proposal: !!b.closest('[data-p9]'),
+      touched: !!(b.closest('[data-p9]') || b.closest('.desk-editor-toolbar') || b.closest('.update-body-editor-mic')
+        || b.matches('[data-testid=update-claim-ref], [data-testid=update-verb-back]'))};
+  });
 }"""
+
+POINTS9 = r"""([i, width]) => {
+  const b = document.querySelector(`[data-probe="${i}"]`);
+  b.scrollIntoView({block: 'center', inline: 'nearest'});
+  const r = b.getBoundingClientRect();
+  const cy = r.top + r.height / 2, cx = r.left + r.width / 2;
+  const w = width <= 420 ? Math.max(44, r.width) : r.width, h = width <= 420 ? Math.max(44, r.height) : r.height;
+  const L = cx - w / 2 + 1, R = cx + w / 2 - 1, T = cy - h / 2 + 1, B = cy + h / 2 - 1;
+  return {face: {w: +r.width.toFixed(1), h: +r.height.toFixed(1)}, target: {w: +w.toFixed(1), h: +h.toFixed(1)},
+    points: [[cx, cy], [cx, T], [R, cy], [cx, B], [L, cy], [L, T], [R, T], [L, B], [R, B]]};
+}"""
+
+HIT = r"""([i, x, y]) => {
+  const b = document.querySelector(`[data-probe="${i}"]`);
+  const el = document.elementFromPoint(x, y);
+  return {efp: !!el && b.contains(el), hit: el ? String(el.className && typeof el.className === 'string' ? el.className : el.tagName).split(' ')[0] : null};
+}"""
+
+PM_OWNED = r"""([i]) => { const b = document.querySelector(`[data-probe="${i}"]`); return !!window.__pm && b.contains(window.__pm); }"""
+
+RESTORE = r"""() => { for (const [e, t, l] of (window.__scrollSnap || []).reverse()) { e.scrollTop = t; e.scrollLeft = l; } }"""
+
+NAMES = ["centre", "top", "right", "bottom", "left", "top-left", "top-right", "bottom-left", "bottom-right"]
+
+# The open update's delivery face, read back (Astra r2 F1).
+DELIVERY_STATE = r"""() => {
+  const i = document.querySelector('[data-testid=deliver-to]');
+  return {
+    field: i ? {value: i.value, disabled: i.disabled} : null,
+    retry: !!document.querySelector('[data-testid=deliver-retry]'),
+    mark: !!document.querySelector('[data-testid=deliver-verb]'),
+    unknown: !!document.querySelector('[data-testid=deliver-uncertain]'),
+    rows: [...document.querySelectorAll('[data-testid=delivery-row]')].map((r) => r.innerText.replace(/\s+/g, ' ').trim()),
+  };
+}"""
+
+
+def pointer_pass(page, width: int) -> list[dict]:
+    out = []
+    for c in page.evaluate(CONTROLS):
+        geo = page.evaluate(POINTS9, [c["i"], width])
+        pts = []
+        for name, (x, y) in zip(NAMES, geo["points"]):
+            hit = page.evaluate(HIT, [c["i"], x, y])
+            page.mouse.move(x, y)
+            pm = page.evaluate(PM_OWNED, [c["i"]])
+            pts.append({"at": name, "x": round(x, 1), "y": round(y, 1), "efp": hit["efp"], "pointer": pm, "hit": hit["hit"]})
+        out.append({**{k: c[k] for k in ("text", "in_foot", "in_menu", "proposal", "touched")}, "face": geo["face"],
+                    "target": geo["target"], "owned": all(p["efp"] and p["pointer"] for p in pts), "points": pts})
+    page.mouse.move(1, 1)
+    page.evaluate(RESTORE)
+    page.wait_for_timeout(100)
+    return out
 
 
 def main() -> None:
@@ -243,6 +295,13 @@ def main() -> None:
         upd = d["update"]["id"]
         s2, pub = hub_api(hub_url, "POST", f"/api/updates/{upd}/publish", {})
         seed["update"] = {"draft": s, "publish": s2, "id": upd, "lifecycle": (pub or {}).get("update", {}).get("lifecycle")}
+        # Astra r2 F1: a second published update (B), to prove a held
+        # confirmation stays with A.
+        s3, d3 = hub_api(hub_url, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"})
+        upd_b = d3["update"]["id"]
+        s4, pub_b = hub_api(hub_url, "POST", f"/api/updates/{upd_b}/publish", {})
+        seed["update_b"] = {"draft": s3, "publish": s4, "id": upd_b,
+                            "lifecycle": (pub_b or {}).get("update", {}).get("lifecycle")}
         facts_items["_seed"] = facts_delivery["_seed"] = seed
         print("seed", json.dumps(seed)[:400])
 
@@ -289,10 +348,16 @@ def main() -> None:
                 page.locator("[data-testid=update-list]").wait_for(timeout=15_000)
                 page.wait_for_timeout(500)
 
-            def open_update(page, lifecycle: str):
-                page.locator(f"[data-testid=update-list-item]:has([data-lifecycle={lifecycle}])").first.click()
+            def open_update(page, lifecycle: str, uid: str | None = None):
+                sel = f"[data-update-id='{uid}']" if uid else f"[data-lifecycle={lifecycle}]"
+                page.locator(f"[data-testid=update-list-item]:has({sel})").first.click()
                 page.locator("[data-testid=update-editor]").wait_for(timeout=15_000)
                 page.wait_for_timeout(600)
+
+            def go_back(page):
+                page.locator("[data-testid=update-verb-back]").click()
+                page.locator("[data-testid=update-list]").wait_for(timeout=10_000)
+                page.wait_for_timeout(400)
 
             def shoot(page, out: Path, facts: dict, board: str, width: int, extra: dict | None = None):
                 page.mouse.move(1, 1)
@@ -300,7 +365,7 @@ def main() -> None:
                 key = f"{board}-{width}"
                 page.screenshot(path=str(out / f"{key}.png"))
                 f = page.evaluate(FACTS)
-                f["pointer"] = page.evaluate(POINTS, [width])
+                f["pointer"] = pointer_pass(page, width)
                 if extra:
                     f.update(extra)
                 facts[key] = f
@@ -368,7 +433,7 @@ def main() -> None:
                 ctx, page = open_page(canvas_origin, width, height)
                 open_room(page, NAME)
                 enter_updates(page)
-                open_update(page, "published")
+                open_update(page, "published", upd)
                 page.locator("[data-testid=update-verb-copy]").click()
                 page.wait_for_timeout(400)
                 clip = page.evaluate("navigator.clipboard.readText().catch(e => 'ERR ' + e)")
@@ -378,7 +443,7 @@ def main() -> None:
                 boot(page)
                 open_room(page, NAME)
                 enter_updates(page)
-                open_update(page, "published")
+                open_update(page, "published", upd)
                 shoot(page, DS, facts_delivery, "2-returned", width)
                 # To "Priya" (the mistaken one), then the press held: the pending face.
                 page.locator("[data-testid=deliver-to]").fill("Priya")
@@ -417,13 +482,34 @@ def main() -> None:
                   return {disabled: i.disabled, value: i.value}; }""")
                 shoot(page, DS, facts_delivery, "6c-result-unknown", width, {"to_field_during_unknown": locked_try,
                       "calls": page.evaluate("window.__philoDeliveryCalls")})
+                # Astra r2 F1: the unresolved confirmation stays with update A.
+                # Back -> open B: B is clean (free field, no Retry, no unknown).
+                go_back(page)
+                open_update(page, "published", upd_b)
+                b_state = page.evaluate(DELIVERY_STATE)
+                shoot(page, DS, facts_delivery, "6d-other-update-clean", width, {"b_state": b_state})
+                # Back -> open A: A still holds its unknown result and its Retry.
+                go_back(page)
+                open_update(page, "published", upd)
+                a_state = page.evaluate(DELIVERY_STATE)
+                shoot(page, DS, facts_delivery, "6e-back-on-a-still-unknown", width, {"a_state": a_state})
                 page.locator("[data-testid=deliver-retry]").click()
-                page.wait_for_function("document.querySelectorAll('[data-testid=delivery-row]').length >= 3", timeout=10_000)
+                page.locator("[data-testid=deliver-uncertain]").wait_for(state="detached", timeout=10_000)
                 page.wait_for_timeout(400)
                 calls = page.evaluate("window.__philoDeliveryCalls")
-                shoot(page, DS, facts_delivery, "6d-retried-one-row", width, {"calls": calls,
-                      "retry_same_key": len(calls) >= 2 and calls[-1]["command_id"] == calls[-2]["command_id"],
-                      "retry_same_to": len(calls) >= 2 and calls[-1]["delivered_to"] == calls[-2]["delivered_to"]})
+                lost, retry = calls[-2], calls[-1]
+                a_rows = page.evaluate("[...document.querySelectorAll('[data-testid=delivery-row]')].map(r => r.innerText.replace(/\\s+/g, ' ').trim())")
+                shoot(page, DS, facts_delivery, "6f-retried-one-row", width, {"calls": calls,
+                      "retry_same_update": retry["update_id"] == lost["update_id"] == upd,
+                      "retry_same_key": retry["command_id"] == lost["command_id"],
+                      "retry_same_to": retry["delivered_to"] == lost["delivered_to"],
+                      "lena_rows_on_a": sum("Lena" in r for r in a_rows)})
+                # B still has no delivery.
+                go_back(page)
+                open_update(page, "published", upd_b)
+                facts_delivery[f"6f-retried-one-row-{width}"]["b_rows_after"] = page.evaluate(
+                    "document.querySelectorAll('[data-testid=delivery-row]').length")
+                facts_delivery[f"6f-retried-one-row-{width}"]["b_calls"] = sum(1 for c in calls if c["update_id"] == upd_b)
                 # Back to the list (the 393 defect of round one: diagnosed here).
                 back = page.locator("[data-testid=update-verb-back]")
                 back.scroll_into_view_if_needed()
