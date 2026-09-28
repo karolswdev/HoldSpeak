@@ -1,0 +1,18 @@
+# PHILO-10 grounding probe: the existing file-write connector (Phase 37 outbox).
+# Run: HOME=$(mktemp -d) .venv/bin/python <this file>
+import os, tempfile
+from pathlib import Path
+from holdspeak.plugins.builtin.followup_ticket_actuator import build_outbox_connector
+from types import SimpleNamespace
+
+out = Path(tempfile.mkdtemp()) / "outbox"
+c = build_outbox_connector(out)
+r1 = c(SimpleNamespace(payload={"filename": "update.md", "body": "first"}))
+r2 = c(SimpleNamespace(payload={"filename": "update.md", "body": "second"}))
+r3 = c(SimpleNamespace(payload={"filename": "../../escape.md", "body": "x"}))
+print("r1", r1)
+print("r2", r2)
+print("same path, second write overwrote:", (out / "update.md").read_text() == "second")
+print("r3 (traversal clamped to name)", r3)
+print("files:", sorted(p.name for p in out.iterdir()))
+print("HOME isolated:", os.environ["HOME"].startswith(("/var/folders", "/tmp", "/private")))

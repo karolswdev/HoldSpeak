@@ -1,0 +1,55 @@
+# PHILO-10-03 - The email channel — a provider interface
+
+- **Project:** holdspeak-philo
+- **Phase:** 10
+- **Status:** backlog
+- **Depends on:** PHILO-10-01; the Codex Astra check of the round-four email delta; the owner's Q1 ruling (2026-09-28) and Q6 ("Scratch targets you name")
+- **Unblocks:** PHILO-10-05, PHILO-10-06
+- **Owner:** Muad'Dib's lane (Fedaykin, Opus 5.5); Codex Astra checks
+- **Closure finding:** the owner's Q1 ruling; `docs/internal/philo/phase-10/grounding/keyring-probe.out.txt`
+- **Design:** `design/send-lifecycle.md` sections 3, 4, 4a, 5, 6 and 8 (binding); Codex Astra r3 conditions (`checks/charter-astra-r3.md`)
+- **Canvas:** the email destination's fields are on the story 04 setup canvas
+
+## The owner's ruling
+
+"Nah man. Not mail.app since it wouldn’t work on non-Macs. Let’s have it declare an interface that would allow us to plug it into major providers like sendgrid and so on." (2026-09-28, AskUserQuestion)
+
+## Problem
+
+He picked "Email". HoldSpeak has no mail path. It must work off a Mac too, and it must admit the major providers without a change to its callers.
+
+## Scope
+
+- **In:**
+  - **The contract.** An `EmailProvider` Protocol (`name`, `host`, `limits`, `serialize(message)`, `preview(body_bytes)`, `plan(body_bytes)`, `interpret(status, headers, error_excerpt)`) and one registry table `EMAIL_PROVIDERS`. No discovery, no entry points (design section 8).
+  - **One byte contract.** At prepare, the message (from, to[], cc[], subject, text — **text only** in this phase) is serialized once into SendGrid's exact JSON request body. That body is the frozen payload and its digest. The readable preview is parsed from it. Dispatch sends those bytes.
+  - **The network seam (this story owns it).** `data_classes=("email_message",)`, `payload_material={"payload_digest": …}`, the parent, the authenticated owner principal and the broker are passed through `build_gated_connector` → `_route` → `PermissionGate.open_outbound_socket` → `run_external_egress`. Today it hashes the destination only and declares `connector_request` (`holdspeak/connector_runtime.py:194-233`).
+  - **SendGrid, the one implementation.** `POST https://api.sendgrid.com/v3/mail/send` as an `external.egress` child of the send, allowed host `api.sendgrid.com`, data class `email_message`, badge `cloud`. The proof is `X-Message-Id` on `202`: internal `sent`, face word **ACCEPTED BY SENDGRID** (accepted for processing, not delivered). A 4xx is FAILED only when its status and discriminator are pinned: `403` + sender-identity → `sender_not_verified`; another `403` → `sendgrid_forbidden`; `400`, `401`, `413`, `429`. A timeout, a dropped connection after the request left, a 5xx, a 3xx or any unpinned answer is UNKNOWN. An UNKNOWN email is never retried by the product. A future provider's mixed acceptance would be UNKNOWN `partial_acceptance`.
+  - **The key.** Held in the OS keychain through `keyring`: macOS Keychain, Linux Secret Service, Windows Credential Manager, behind a native-only allow-list copied from the People key store (`holdspeak/people/keys.py:53-71`). Any other backend is refused `email_key_store_not_native`. The key is never planning material (not in the payload, the `GatedOperation`, `payload_material`, `args` or `kwargs`), a row, a receipt, argv, a log or a file. Only the dispatch opener reads it and sets the header. **Redirects are disabled.** **Transport exceptions are sanitized before the native result is recorded**, and this story repairs the existing leak at `holdspeak/kernel/external_egress.py:290` for every caller. The webhook actuator's redirect leak (`holdspeak/plugins/builtin/webhook_post_actuator.py:125-133`) is ledgered in the BACKLOG, not touched here.
+  - **The sender.** The destination's account freezes `{provider, from_email, from_name, key_ref}`. A changed sender refuses `destination_changed`.
+  - **Size and recipients.** Limits refused by name before dispatch: provisional 1 MB and 20 recipients, pinned from SendGrid's published reference.
+- **Out:** Postmark, Mailgun, SES and generic SMTP (BACKLOG; each is one class and one table row later). The Mail.app draft channel (parked, BACKLOG). The Gmail API. Attachments.
+
+## Acceptance criteria
+
+- [ ] The email send is one `channel.send` with one `external.egress` child to `api.sendgrid.com:443`, parented, under the authenticated owner principal, data class `email_message`. The bytes on the wire (a recording opener) equal the frozen request body, and the egress admission's `payload_digest` equals its digest. Two different bodies produce two different digests (red on main: `connector_runtime.py:215` gives them one). A request to any other host is refused by the kernel.
+- [ ] Through the real producer with a recording opener: `202` + `X-Message-Id` → `sent`, face and read-back **ACCEPTED BY SENDGRID** with the id; each pinned 4xx → FAILED with its name; the two `403` discriminators map apart; an unpinned 4xx, a 5xx, a timeout after the request left, `202` without an id → UNKNOWN; a 3xx is not followed (UNKNOWN `redirect_refused`) and no `Authorization` reaches a second host. The crash fences R1–R6 hold for email (design section 4a).
+- [ ] An exception carrying a synthetic key and body leaves neither in the native result, the broker's full read, a receipt or a log (red on main at `external_egress.py:290`).
+- [ ] No key and no body in the kernel journal, a receipt, a log, an error or a tracked file (a sentinel fence). The journal carries `destination:<id>`, `egress:api.sendgrid.com:443`, `data-class:email_message` and the digest.
+- [ ] Key custody: a native backend stores and reads the key. The `fail` backend, a chainer with no native store, and a file-based backend each refuse `email_key_store_not_native`. The tests inject a memory store and never touch the real keychain.
+- [ ] A second provider can be added with one class and one table row: a fence registers a recording test provider and sends through it with no caller change.
+- [ ] The real-account leg, apart from the rehearsals (Q6, "Scratch targets you name"): one real send through his SendGrid account from a verified sender to his own address, with `X-Message-Id` recorded and the mail found in his inbox; or the limit named.
+
+## Effort (not a promise)
+
+PROVISIONAL: 1.5–2 engineering days.
+
+## Test plan
+
+- **Integration:** a recording HTTPS opener minted through the real `plan` (no network in a lane); the kernel's egress admission with the real allow-list; the memory key store; the crash fences.
+- **Real send:** the Q6 leg only, on his own session.
+
+## Notes
+
+- 2026-09-28 — round four: redrawn on the owner's Q1 ruling. The Mail.app / `osascript` design of rounds one to three is parked (BACKLOG "Mail.app draft channel"; the history keeps it). Nothing was sent; no call was made to SendGrid in the grounding.
+- 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib.

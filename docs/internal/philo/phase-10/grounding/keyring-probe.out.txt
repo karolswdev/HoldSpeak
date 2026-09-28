@@ -1,0 +1,7 @@
+keyring version: 25.7.0
+active backend: keyring.backends.macOS.Keyring
+backends importable here: ['keyring.backends.chainer.ChainerBackend', 'keyring.backends.fail.Keyring', 'keyring.backends.macOS.Keyring']
+module present: keyring.backends.macOS
+module present: keyring.backends.SecretService
+module present: keyring.backends.Windows
+module present: keyring.backends.fail

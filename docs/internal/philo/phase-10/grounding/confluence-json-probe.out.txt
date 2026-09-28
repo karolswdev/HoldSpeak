@@ -1,0 +1,6 @@
+## acli confluence blog create --generate-json
+✗ Error: unauthorized: use 'acli confluence auth login' to authenticate
+## --from-json with a 0600 file and no --title in argv (no login: which error comes first)
+✗ Error: unauthorized: use 'acli confluence auth login' to authenticate
+## --from-json plus --title (conflict or override?)
+✗ Error: unauthorized: use 'acli confluence auth login' to authenticate

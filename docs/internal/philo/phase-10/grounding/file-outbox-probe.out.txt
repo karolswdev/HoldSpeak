@@ -1,0 +1,6 @@
+r1 {'path': '/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmpz0pt4fqx/outbox/update.md', 'bytes': 5, 'dry_run': False}
+r2 {'path': '/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmpz0pt4fqx/outbox/update.md', 'bytes': 6, 'dry_run': False}
+same path, second write overwrote: True
+r3 (traversal clamped to name) {'path': '/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmpz0pt4fqx/outbox/escape.md', 'bytes': 1, 'dry_run': False}
+files: ['escape.md', 'update.md']
+HOME isolated: True

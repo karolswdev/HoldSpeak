@@ -1,0 +1,22 @@
+#!/bin/zsh
+# PHILO-10 round two: what each CLI accepts as a body source (isolated HOME; no account; nothing sent).
+export HOME=$(mktemp -d)
+echo "## getconf ARG_MAX"; getconf ARG_MAX
+echo "## gh issue comment / pr comment: body sources"; gh issue comment --help 2>&1 | grep -E -- '--body-file'; gh pr comment --help 2>&1 | grep -E -- '--body-file'
+echo "## acli jira workitem comment create: body sources and --key"; acli jira workitem comment create --help 2>&1 | grep -E -- '--body-file|--key|--body '
+echo "## acli jira: does --body-file - read stdin? (no account: which error comes first)"; printf 'x' | acli jira workitem comment create --key ABC-1 --body-file - 2>&1 | head -2
+echo "## acli jira: a private file"; f=$(mktemp); chmod 600 $f; printf 'x' > $f; ls -l $f | awk '{print $1}'; acli jira workitem comment create --key ABC-1 --body-file $f 2>&1 | head -2; rm -f $f
+echo "## acli confluence blog create: body sources"; acli confluence blog create --help 2>&1 | grep -E -- '--from-file|--from-json|--body '
+echo "## osascript: a fixed script reads the document from a 0600 file given as an argument (no text in the script source)"
+d=$(mktemp -d); chmod 700 $d
+printf '%s' 'Line one "quoted" & end tell -- not code' > $d/body.txt; chmod 600 $d/body.txt
+cat > $d/read.applescript <<'AS'
+on run argv
+  set p to item 1 of argv
+  set t to read (POSIX file p) as «class utf8»
+  return t
+end run
+AS
+osascript $d/read.applescript $d/body.txt; echo "osascript rc=$?"
+rm -rf $d
+echo "## acli credential custody hint"; strings /opt/homebrew/bin/acli | grep -o "github.com/zalando/go-keyring[.A-Za-z]*" | sort -u
