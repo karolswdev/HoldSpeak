@@ -826,7 +826,7 @@ class TestRoomReceipts:
             db,
             event_id="ev-room-remote",
             service="ProjectService",
-            method="room",
+            method="update_project",
             origin="remote",
             caller="192.168.1.43",
             caller_identity="sweep-runner",
@@ -838,12 +838,25 @@ class TestRoomReceipts:
             db,
             event_id="ev-room-local",
             service="ProjectService",
-            method="list_projects",
+            method="add_resource",
             origin="local",
             caller="",
             caller_identity="",
             args_summary=_json.dumps({"project_id": "proj-1"}),
             timestamp=time.time() - 1,
+        )
+
+        # PHILO-9-01 (F7): a READ of the Room is not a receipt.
+        _insert_pipeline_event(
+            db,
+            event_id="ev-room-read",
+            service="ProjectService",
+            method="room",
+            origin="local",
+            caller="",
+            caller_identity="",
+            args_summary=_json.dumps({"project_id": "proj-1"}),
+            timestamp=time.time() + 1,
         )
 
         from holdspeak.services.project_service import ProjectService
@@ -862,8 +875,8 @@ class TestRoomReceipts:
         assert remote_item["origin"] == "remote"
         assert remote_item["caller"] == "192.168.1.43"
         assert remote_item["identity"] == "sweep-runner"
-        assert remote_item["op"] == "room"
-        assert remote_item["title"] == "ProjectService.room"
+        assert remote_item["op"] == "update_project"
+        assert remote_item["title"] == "ProjectService.update_project"
 
         # Second item should be local.
         local_item = items[1]

@@ -28,17 +28,17 @@ A client that knows only the catalogue cannot put a thing in a project: the only
 
 Per the charter's red-first law: behavioural red through the real hub where the defect lives; new exposure proved by equivalence; missing-symbol or unknown-tool failures are never counted.
 
-- [ ] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
-- [ ] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
-- [ ] The seven new tools this story exposes match the charter's table, which follows the service (`project.item.list` → `{items, limit, offset}`, limit clamped 1–1000; refusal codes `validation`, `not_found`, `stale_revision`, `idempotency_conflict`; the closed patch fields and vocabularies); each one's durable outcome, result body and code↔status mapping equal the HTTP route's in one hub and across a restart — the charter's compatibility mapping is the only difference, and message text is never compared.
-- [ ] `kernel.receipt` is in the `PROJECT` and `SWEEP` palettes; an agent on each reads its own operation's receipt and is refused another principal's (fenced through dispatch).
-- [ ] NEEDS YOU's review row says "1 proposal waiting" for one (F22; red on main: "1 proposals waiting").
-- [ ] The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project", "what needs me", "draft my update", "publish my update in the Room", "copy my update for delivery" and "mark it delivered" to a tool and an argument path; no project tool's description says the product sends, emails or posts the update.
-- [ ] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
-- [ ] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
-- [ ] The reconcile creates `project_update_deliveries` on an existing database; the repository inserts delivery rows and has no update or delete path for them; `project_updates` is not written by a delivery (the published-update guard untouched, fenced by a mutation that writes it); two rows for one update read back in order through `list_updates` and the Room read.
-- [ ] A past-due milestone turns the Room's health and appears in its NEEDS YOU read (red on main). RECEIPTS in the Room read are the Room's writes (red on main: reads).
-- [ ] Existing names, arguments, envelopes and refusals are kept (the compatibility tables); palette refusal tested through dispatch.
+- [x] A clean base install imports `holdspeak.mcp.tools` (red on main: `ModuleNotFoundError: jsonschema`).
+- [x] The 18 MCP and 3 HTTP identities leave the residual set (or MOVE with a named reason); the fence fails on a new residual identity on a copy of main.
+- [x] The seven new tools this story exposes match the charter's table, which follows the service (`project.item.list` → `{items, limit, offset}`, limit clamped 1–1000; refusal codes `validation`, `not_found`, `stale_revision`, `idempotency_conflict`; the closed patch fields and vocabularies); each one's durable outcome, result body and code↔status mapping equal the HTTP route's in one hub and across a restart — the charter's compatibility mapping is the only difference, and message text is never compared.
+- [x] `kernel.receipt` is in the `PROJECT` and `SWEEP` palettes; an agent on each reads its own operation's receipt and is refused another principal's (fenced through dispatch).
+- [x] NEEDS YOU's review row says "1 proposal waiting" for one (F22; red on main: "1 proposals waiting").
+- [ ] (OPEN: every phrase but "mark it delivered" is proved; that tool lands in PHILO-9-02 by the charter's R4-2, and a strict expected failure pins the row) The discovery fence reads only the real `tools/list` answer and maps "make a project", "add a milestone / risk to a project", "what needs me", "draft my update", "publish my update in the Room", "copy my update for delivery" and "mark it delivered" to a tool and an argument path; no project tool's description says the product sends, emails or posts the update.
+- [x] `project.get_room` and `GET /api/projects/{id}/room` report a published update and a completed steward run (red on main: `not_yet_built`).
+- [x] With a muted project, `desk.needs_you` and `GET /api/desk/needs-you` give the same count (red on main).
+- [x] The reconcile creates `project_update_deliveries` on an existing database; the repository inserts delivery rows and has no update or delete path for them; `project_updates` is not written by a delivery (the published-update guard untouched, fenced by a mutation that writes it); two rows for one update read back in order through `list_updates` and the Room read.
+- [x] A past-due milestone turns the Room's health and appears in its NEEDS YOU read (red on main). RECEIPTS in the Room read are the Room's writes (red on main: reads).
+- [x] Existing names, arguments, envelopes and refusals are kept (the compatibility tables); palette refusal tested through dispatch.
 
 ## Effort (not a promise)
 
@@ -52,6 +52,7 @@ PROVISIONAL: 3–4 engineering days (the delivery record included).
 
 ## Notes
 
+- 2026-09-27 — BUILT by the Fedaykin lane on `feat/philo-9-01-room-operations` (from main `ffbeb04b`); in progress. Every criterion above is proved in `evidence-story-01.md` except the discovery row "mark it delivered", whose tool this story does not build (R4-2). Named differences, recorded in the evidence's compatibility table: the HTTP item and project-create bodies now close their argument NAMES (an unknown field is refused 400, the Phase 5 rule); the HTTP resource routes now honour `expected_revision` and `command_id` (A1).
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 - 2026-09-27 — round seven (the owner's "Several per update"): the two columns replaced by the `project_update_deliveries` table.
 - 2026-09-27 — round six (Codex Astra r4, R4-2): the delivery tool and its admission moved to story 02; this story keeps the storage, the metadata-only write and the read-backs.

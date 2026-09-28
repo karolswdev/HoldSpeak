@@ -796,6 +796,8 @@ def test_all_command_tools_discoverable() -> None:
         "project.decide_proposal", "project.accept_review",
         "project.list_updates", "project.draft_update",
         "project.update_draft", "project.publish_update",
+        # PHILO-9-01: the seven item and resource tools (the charter's table).
+        "project.item.list", "project.item.create", "project.item.update", "project.item.transition", "project.resource.list", "project.resource.add", "project.resource.remove",
         # HS-165-03: steward, setup, watch drivers
         "project.configure_steward", "project.run_steward",
         "project.stop_steward", "project.get_steward_run",

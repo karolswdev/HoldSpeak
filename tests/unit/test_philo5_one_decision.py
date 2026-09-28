@@ -230,6 +230,14 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "zone.file", "zone.unfile", "zone.members", "kb.member.add", "kb.member.remove", "kb.members",
         "decision.delete", "decision.status", "decision.supersede",
         "kernel.receipt.read",
+        # PHILO-9-01: the Room on the contract, one row per operation.
+        "project.list", "project.get", "project.get_room", "project.create", "project.door.create",
+        "project.update", "project.archive", "project.restore", "project.link", "project.unlink",
+        "project.open_review", "project.get_delta", "project.decide_proposal", "project.accept_review",
+        "project.list_updates", "project.draft_update", "project.update_draft", "project.publish_update",
+        "desk.needs_you",
+        "project.item.list", "project.item.create", "project.item.update", "project.item.transition",
+        "project.resource.list", "project.resource.add", "project.resource.remove",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

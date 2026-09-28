@@ -802,10 +802,37 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "decision.delete": {"kind": "tool", "name": "desk.delete"},
     "decision.supersede": {"kind": "tool", "name": "decision.supersede"},
     "kernel.receipt.read": {"kind": "tool", "name": "kernel.receipt"},
+    # PHILO-9-01: the Room's operations; each MCP tool carries the canonical
+    # arguments by the same names.
+    "project.list": {"kind": "tool", "name": "project.list"},
+    "project.get": {"kind": "tool", "name": "project.get"},
+    "project.get_room": {"kind": "tool", "name": "project.get_room"},
+    "project.create": {"kind": "tool", "name": "project.create"},
+    "project.update": {"kind": "tool", "name": "project.update"},
+    "project.archive": {"kind": "tool", "name": "project.archive"},
+    "project.restore": {"kind": "tool", "name": "project.restore"},
+    "project.link": {"kind": "tool", "name": "project.link"},
+    "project.unlink": {"kind": "tool", "name": "project.unlink"},
+    "project.open_review": {"kind": "tool", "name": "project.open_review"},
+    "project.get_delta": {"kind": "tool", "name": "project.get_delta"},
+    "project.decide_proposal": {"kind": "tool", "name": "project.decide_proposal"},
+    "project.accept_review": {"kind": "tool", "name": "project.accept_review"},
+    "project.list_updates": {"kind": "tool", "name": "project.list_updates"},
+    "project.draft_update": {"kind": "tool", "name": "project.draft_update"},
+    "project.update_draft": {"kind": "tool", "name": "project.update_draft"},
+    "project.publish_update": {"kind": "tool", "name": "project.publish_update"},
+    "desk.needs_you": {"kind": "tool", "name": "desk.needs_you"},
+    "project.item.list": {"kind": "tool", "name": "project.item.list"},
+    "project.item.create": {"kind": "tool", "name": "project.item.create"},
+    "project.item.update": {"kind": "tool", "name": "project.item.update"},
+    "project.item.transition": {"kind": "tool", "name": "project.item.transition"},
+    "project.resource.list": {"kind": "tool", "name": "project.resource.list"},
+    "project.resource.add": {"kind": "tool", "name": "project.resource.add"},
+    "project.resource.remove": {"kind": "tool", "name": "project.resource.remove"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
-OP_HTTP_ONLY = frozenset({"decision.status"})
+OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
@@ -824,6 +851,9 @@ OP_READ_OBSERVATIONS = frozenset({
     "thought.read", "thought.workbench.read", "thought.list",
     "note.read", "note.list", "zone.read", "zone.list", "kb.read", "kb.list",
     "zone.members", "kb.members", "kernel.receipt.read",
+    # PHILO-9-01: the Room's reads.
+    "project.list", "project.get", "project.get_room", "project.get_delta", "project.list_updates",
+    "desk.needs_you", "project.item.list", "project.resource.list",
 })
 
 
@@ -938,8 +968,8 @@ def _op_arguments(name: str, args: dict[str, Any]) -> dict[str, Any]:
 def _op_request(name: str, args: dict[str, Any], request_id: int) -> dict[str, Any]:
     projection = OP_MCP_PROJECTIONS.get(name)
     if name in OP_HTTP_ONLY:
-        raise Blocked(f"operation {name!r} has no MCP exposure (HTTP only); "
-                      "over MCP the same change is decision.update")
+        raise Blocked(f"operation {name!r} has no MCP exposure (HTTP only)"
+                      + ("; over MCP the same change is decision.update" if name == "decision.status" else ""))
     if projection is None:
         raise Blocked(f"operation {name!r} is not in the rig's canonical MCP map")
     # These projections have no place to carry the canonical pagination or

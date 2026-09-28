@@ -9,9 +9,14 @@ from typing import Any
 
 
 def _lazy_project_palette() -> frozenset[str]:
-    """PROJECT palette -- every tool in the project family."""
+    """PROJECT palette -- every tool in the project family, and the receipt read.
+
+    PHILO-9-01: ``kernel.receipt`` joins PROJECT (and so SWEEP): an agent reads
+    its own operation's receipt; the kernel's read scope refuses another
+    principal's (``holdspeak/kernel/broker.py``). Palettes only gain tools.
+    """
     from holdspeak.mcp.families.project import PROJECT_PALETTE
-    return PROJECT_PALETTE
+    return PROJECT_PALETTE | {"kernel.receipt"}
 
 
 def _lazy_heartbeat_names() -> frozenset[str]:

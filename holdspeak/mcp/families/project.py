@@ -345,6 +345,141 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── PHILO-9-01: items and resources (the charter's table) ────────
+    {
+        "name": "project.item.list",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.item.list@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "item_type": {"type": "string", "enum": ["milestone", "risk", "dependency", "signal", "workstream"]},
+                "limit": {"type": "integer"},
+                "offset": {"type": "integer", "minimum": 0},
+            },
+            "required": ["project_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.item.create",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.item.create@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "item_type": {"type": "string", "enum": ["milestone", "risk", "dependency", "signal", "workstream"]},
+                "title": {"type": "string", "minLength": 1},
+                "summary": {"type": ["string", "null"]},
+                "severity": {"type": ["string", "null"], "enum": ["critical", "high", "medium", "low", None]},
+                "owner_ref": {"type": ["string", "null"]},
+                "due_at": {"type": ["string", "null"]},
+                "sort_key": {"type": ["number", "null"]},
+                "lifecycle": {"type": "string", "enum": [
+                    "planned", "reached", "missed", "dropped", "open", "mitigated", "accepted", "closed",
+                    "healthy", "at_risk", "broken", "resolved", "active", "retired", "paused", "done"]},
+                "details": {"type": ["object", "null"]},
+                "expected_revision": {"type": "integer"},
+                "command_id": {"type": "string"},
+            },
+            "required": ["project_id", "item_type", "title"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.item.update",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.item.update@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "item_id": {"type": "string"},
+                "patch": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "minLength": 1},
+                        "summary": {"type": ["string", "null"]},
+                        "severity": {"type": ["string", "null"], "enum": ["critical", "high", "medium", "low", None]},
+                        "owner_ref": {"type": ["string", "null"]},
+                        "due_at": {"type": ["string", "null"]},
+                        "sort_key": {"type": ["number", "null"]},
+                        "details": {"type": ["object", "null"]},
+                        "lifecycle": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "minProperties": 1,
+                },
+                "expected_revision": {"type": "integer"},
+                "command_id": {"type": "string"},
+            },
+            "required": ["project_id", "item_id", "patch"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.item.transition",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.item.transition@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "item_id": {"type": "string"},
+                "verb": {"type": "string", "minLength": 1},
+                "expected_revision": {"type": "integer"},
+                "command_id": {"type": "string"},
+            },
+            "required": ["project_id", "item_id", "verb"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.resource.list",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.resource.list@1",
+            "type": "object",
+            "properties": {"project_id": {"type": "string"}},
+            "required": ["project_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.resource.add",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.resource.add@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "resource_ref": {"type": "string"},
+                "relationship": {"type": "string", "enum": ["member", "source", "output", "related"]},
+                "expected_revision": {"type": "integer"},
+                "command_id": {"type": "string"},
+            },
+            "required": ["project_id", "resource_ref"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.resource.remove",
+        "description": "",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.resource.remove@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "resource_ref": {"type": "string"},
+                "expected_revision": {"type": "integer"},
+                "command_id": {"type": "string"},
+            },
+            "required": ["project_id", "resource_ref"],
+            "additionalProperties": False,
+        },
+    },
     # ── steward driver tools (HS-165-03) ────────────────────────────
     {
         "name": "project.configure_steward",
@@ -1165,253 +1300,17 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         extra = {"repo": arguments.get("repo")} if name.endswith("clarify_repo_scope") else {}
         return method(principal, arguments["session_id"], arguments["proposal_id"], **extra)
 
-    # ── reads (HS-165-01) ────────────────────────────────────────────
+    # ── PHILO-9-01: the Room's operations, through the ONE registry ──────
+    #
+    # The Room's lifecycle, review and update tools, ``desk.needs_you`` and
+    # the seven item/resource tools are declared operations
+    # (``holdspeak.operations``), bound at hub composition to the hub's
+    # ProjectService, ProjectDeltaService and ProjectUpdateService. The tool
+    # names its operation; the envelope below is the transport's (the same
+    # shapes these tools answered before).
 
-    if name == "project.list":
-        svc = _service()
-        filters: dict[str, Any] = {}
-        if arguments.get("include_archived"):
-            filters["include_archived"] = True
-        return {"projects": svc.list_projects(principal, filters)}
-
-    if name == "project.get":
-        project_id = _require_id(arguments, "project_id")
-        return _service().get_project(principal, project_id)
-
-    if name == "project.get_room":
-        project_id = _require_id(arguments, "project_id")
-        return _service().room(principal, project_id)
-
-    # ── lifecycle commands (HS-165-02) ───────────────────────────────
-    # Mirrors: holdspeak/web/routes/projects.py
-
-    if name == "project.create":
-        # Web parity: projects.py:63 api_create_project
-        # Service seam: ProjectService.create_project
-        payload = dict(arguments)
-        cmd_id = payload.pop("command_id", None)
-        result = _service().create_project(
-            principal, payload, command_id=cmd_id,
-        )
-        return {"success": True, "project": result}
-
-    if name == "project.update":
-        # Web parity: projects.py:88 api_update_project
-        # Service seam: ProjectService.update_project
-        project_id = _require_id(arguments, "project_id")
-        patch = arguments.get("patch") or {}
-        expected_rev = arguments.get("expected_revision")
-        cmd_id = arguments.get("command_id")
-        result = _service().update_project(
-            principal, project_id, patch,
-            expected_revision=expected_rev,
-            command_id=cmd_id,
-        )
-        return {"success": True, "project": result}
-
-    if name == "project.archive":
-        # Web parity: projects.py:108 api_archive_project
-        # Service seam: ProjectService.archive_project
-        project_id = _require_id(arguments, "project_id")
-        expected_rev = arguments.get("expected_revision")
-        cmd_id = arguments.get("command_id")
-        _service().archive_project(
-            principal, project_id,
-            expected_revision=expected_rev,
-            command_id=cmd_id,
-        )
-        return {"success": True}
-
-    if name == "project.restore":
-        # Web parity: projects.py:122 api_restore_project
-        # Service seam: ProjectService.restore_project
-        project_id = _require_id(arguments, "project_id")
-        expected_rev = arguments.get("expected_revision")
-        cmd_id = arguments.get("command_id")
-        result = _service().restore_project(
-            principal, project_id,
-            expected_revision=expected_rev,
-            command_id=cmd_id,
-        )
-        return {"success": True, "project": result}
-
-    # ── link / unlink (meeting association) ──────────────────────────
-    # Mirrors: projects.py:193 api_associate_meeting, :207 api_disassociate_meeting
-
-    if name == "project.link":
-        # Service seam: ProjectService.associate_meeting
-        project_id = _require_id(arguments, "project_id")
-        meeting_id = _require_id(arguments, "meeting_id")
-        expected_rev = arguments.get("expected_revision")
-        cmd_id = arguments.get("command_id")
-        _service().associate_meeting(
-            principal, project_id, meeting_id,
-            expected_revision=expected_rev,
-            command_id=cmd_id,
-        )
-        return {"success": True}
-
-    if name == "project.unlink":
-        # Service seam: ProjectService.disassociate_meeting
-        project_id = _require_id(arguments, "project_id")
-        meeting_id = _require_id(arguments, "meeting_id")
-        expected_rev = arguments.get("expected_revision")
-        cmd_id = arguments.get("command_id")
-        _service().disassociate_meeting(
-            principal, project_id, meeting_id,
-            expected_revision=expected_rev,
-            command_id=cmd_id,
-        )
-        return {"success": True}
-
-    # ── review commands ──────────────────────────────────────────────
-    # Mirrors: holdspeak/web/routes/project_reviews.py
-
-    if name == "project.open_review":
-        # Web parity: project_reviews.py:37 open_review
-        # Service seam: ProjectDeltaService.open_review
-        project_id = _require_id(arguments, "project_id")
-        return _delta_service().open_review(principal, project_id)
-
-    if name == "project.get_delta":
-        # Web parity: project_reviews.py:89 get_delta
-        # Service seam: ProjectDeltaService._find_open_review + _load_frozen_window
-        # (same private seams the Web route uses -- parity-warts-included ruling)
-        project_id = _require_id(arguments, "project_id")
-        svc = _service()
-        svc._require_project(project_id)
-        delta_svc = _delta_service()
-        open_review = delta_svc._find_open_review(project_id)
-        if open_review is not None:
-            return delta_svc._load_frozen_window(open_review)
-        # Honest empty state (WEB-STA-004) -- parity with the Web
-        # route's empty branch incl. source_coverage (counsel S-2).
-        db = db_or(get_database)
-        room_fields = db.projects.get_project_room_fields(project_id)
-        last_accepted_at = (room_fields or {}).get("last_review_at")
-        source_coverage = None
-        try:
-            reviews = delta_svc._db.project_observations.list_reviews(
-                project_id, status="accepted", limit=1,
-            )
-            if reviews:
-                manifest_json = reviews[0].get("source_manifest_json", "{}")
-                manifest = (
-                    json.loads(manifest_json)
-                    if isinstance(manifest_json, str) else manifest_json
-                )
-                source_coverage = {
-                    k: v.get("state", "unknown")
-                    for k, v in manifest.items()
-                }
-        except Exception:
-            pass
-        return {
-            "open_review": None,
-            "last_accepted_at": last_accepted_at,
-            "source_coverage": source_coverage,
-        }
-
-    if name == "project.decide_proposal":
-        # Web parity: project_reviews.py:144 decide_proposal
-        # Service seam: ProjectDeltaService.decide_proposal
-        # COPIED ROUTE GLUE: proposal-belongs-to-review check (project_reviews.py:157-174)
-        project_id = _require_id(arguments, "project_id")
-        review_id = _require_id(arguments, "review_id")
-        proposal_id = _require_id(arguments, "proposal_id")
-        verb = str(arguments.get("verb") or "").strip()
-        patch = arguments.get("patch")
-        deferred_until = arguments.get("deferred_until")
-        cmd_id = arguments.get("command_id")
-
-        # Route glue: verify proposal belongs to this review
-        db = db_or(get_database)
-        proposal = db.project_observations.get_proposal(proposal_id)
-        if proposal is None:
-            raise NotFound("proposal", proposal_id)
-        if proposal.get("review_window_key") != review_id:
-            raise ServiceError(
-                "not_found",
-                f"Proposal {proposal_id!r} does not belong to review {review_id!r}",
-                context={"proposal_id": proposal_id, "review_id": review_id},
-            )
-
-        return _delta_service().decide_proposal(
-            principal, project_id, proposal_id, verb,
-            patch=patch,
-            deferred_until=deferred_until,
-            command_id=cmd_id,
-        )
-
-    if name == "project.accept_review":
-        # Web parity: project_reviews.py:206 accept_review
-        # Service seam: ProjectDeltaService.accept_review
-        project_id = _require_id(arguments, "project_id")
-        review_id = _require_id(arguments, "review_id")
-        cmd_id = arguments.get("command_id")
-        return _delta_service().accept_review(
-            principal, project_id, review_id,
-            command_id=cmd_id,
-        )
-
-    # ── update commands ──────────────────────────────────────────────
-    # Mirrors: holdspeak/web/routes/project_updates.py
-
-    if name == "project.list_updates":
-        # Web parity: project_updates.py:48 api_list_updates
-        # Service seam: ProjectUpdateService.list_updates
-        project_id = _require_id(arguments, "project_id")
-        lifecycle = arguments.get("lifecycle")
-        updates = _update_service().list_updates(
-            principal, project_id, lifecycle=lifecycle,
-        )
-        return {"updates": updates}
-
-    if name == "project.draft_update":
-        # Web parity: project_updates.py:68 api_draft_update
-        # Service seam: ProjectUpdateService.draft_update_command
-        project_id = _require_id(arguments, "project_id")
-        generator = str(arguments.get("generator") or "deterministic").strip()
-        cmd_id = arguments.get("command_id")
-        result = _update_service().draft_update_command(
-            principal, project_id,
-            generator=generator, command_id=cmd_id,
-        )
-        return {"success": True, "update": result}
-
-    if name == "project.update_draft":
-        # Web parity: project_updates.py:94 api_save_update
-        # Service seam: ProjectUpdateService.save_update
-        update_id = _require_id(arguments, "update_id")
-        body_md = arguments.get("body_md")
-        cmd_id = arguments.get("command_id")
-        try:
-            result = _update_service().save_update(
-                principal, update_id,
-                body_md=body_md, command_id=cmd_id,
-            )
-        except PublishedUpdateError as exc:
-            raise ConflictError(
-                str(exc),
-                code="published_update",
-            ) from exc
-        return {"success": True, "update": result}
-
-    if name == "project.publish_update":
-        # Web parity: project_updates.py:160 api_publish_update
-        # Service seam: ProjectUpdateService.publish_update
-        update_id = _require_id(arguments, "update_id")
-        cmd_id = arguments.get("command_id")
-        try:
-            result = _update_service().publish_update(
-                principal, update_id, command_id=cmd_id,
-            )
-        except PublishedUpdateError as exc:
-            raise ConflictError(
-                str(exc),
-                code="published_update",
-            ) from exc
-        return {"success": True, "update": result}
+    if name in ROOM_TOOL_OPERATIONS:
+        return _room_tool(name, arguments, principal)
 
     # ── steward driver tools (HS-165-03) ────────────────────────────
     # Mirrors: holdspeak/web/routes/steward.py
@@ -2088,6 +1987,164 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return _connections_service().recheck(principal, provider_id, ref=ref)
 
     raise LookupError(name)
+
+
+# ── PHILO-9-01: the Room's tools on the one contract ─────────────────
+
+#: MCP tool -> the declared operation it reaches (``holdspeak.operations``).
+ROOM_TOOL_OPERATIONS: dict[str, str] = {
+    "project.list": "project.list",
+    "project.get": "project.get",
+    "project.get_room": "project.get_room",
+    "project.create": "project.create",
+    "project.update": "project.update",
+    "project.archive": "project.archive",
+    "project.restore": "project.restore",
+    "project.link": "project.link",
+    "project.unlink": "project.unlink",
+    "project.open_review": "project.open_review",
+    "project.get_delta": "project.get_delta",
+    "project.decide_proposal": "project.decide_proposal",
+    "project.accept_review": "project.accept_review",
+    "project.list_updates": "project.list_updates",
+    "project.draft_update": "project.draft_update",
+    "project.update_draft": "project.update_draft",
+    "project.publish_update": "project.publish_update",
+    "project.item.list": "project.item.list",
+    "project.item.create": "project.item.create",
+    "project.item.update": "project.item.update",
+    "project.item.transition": "project.item.transition",
+    "project.resource.list": "project.resource.list",
+    "project.resource.add": "project.resource.add",
+    "project.resource.remove": "project.resource.remove",
+}
+
+#: The tools that took ``_require_id`` before PHILO-9-01 keep its refusal
+#: (``project_request_invalid``) for an empty id.
+_REQUIRED_IDS: dict[str, tuple[str, ...]] = {
+    "project.get": ("project_id",), "project.get_room": ("project_id",),
+    "project.update": ("project_id",), "project.archive": ("project_id",),
+    "project.restore": ("project_id",), "project.link": ("project_id", "meeting_id"),
+    "project.unlink": ("project_id", "meeting_id"), "project.open_review": ("project_id",),
+    "project.get_delta": ("project_id",),
+    "project.decide_proposal": ("project_id", "review_id", "proposal_id"),
+    "project.accept_review": ("project_id", "review_id"),
+    "project.list_updates": ("project_id",), "project.draft_update": ("project_id",),
+    "project.update_draft": ("update_id",), "project.publish_update": ("update_id",),
+}
+
+#: The seven new tools: their published input schema is the charter's table
+#: and is checked here, at the MCP edge (a refusal is ``validation``).
+_NEW_ROOM_TOOLS = frozenset({
+    "project.item.list", "project.item.create", "project.item.update", "project.item.transition",
+    "project.resource.list", "project.resource.add", "project.resource.remove",
+})
+
+
+def _ops():
+    """The hub's bound registry, else one bound over this family's bare services."""
+    from holdspeak import operations
+    from holdspeak.services.kernel_read_service import KernelReadService
+
+    return operations.for_runtime(
+        project_service=_service,
+        project_delta_service=_delta_service,
+        project_update_service=_update_service,
+        kernel_read_service=lambda: runtime_service(
+            "kernel_read_service", lambda: KernelReadService(db_or(get_database))),
+    )
+
+
+def _room_arguments(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    for key in _REQUIRED_IDS.get(name, ()):
+        args[key] = _require_id(arguments, key)
+    if name == "project.list":
+        # The tool answered only a truthy include_archived before.
+        args = {"include_archived": True} if arguments.get("include_archived") else {}
+    if name == "project.draft_update":
+        args["generator"] = str(arguments.get("generator") or "deterministic").strip()
+    return args
+
+
+def _room_tool(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
+    from jsonschema import Draft202012Validator
+
+    from holdspeak.operations import OperationRefused
+
+    if name in _NEW_ROOM_TOOLS:
+        schema = next(tool["inputSchema"] for tool in TOOLS if tool["name"] == name)
+        error = next(iter(Draft202012Validator(schema).iter_errors(arguments)), None)
+        if error is not None:
+            where = ".".join(str(part) for part in error.absolute_path)
+            raise ValidationError(f"Invalid arguments for {name}: {where + ': ' if where else ''}{error.message}",
+                                  code="validation")
+    operation = ROOM_TOOL_OPERATIONS[name]
+    try:
+        if operation == "desk.needs_you":  # pragma: no cover - tools.py owns desk.needs_you
+            raise LookupError(name)
+        result = _ops().invoke(principal, operation, _room_arguments(name, arguments))
+    except OperationRefused as exc:
+        # The charter's code for an argument the contract refuses is validation.
+        code = "validation" if exc.code == "invalid_arguments" else exc.code
+        raise ValidationError(exc.detail, code=code, context={"refusal": exc.code}) from exc
+    except PublishedUpdateError as exc:
+        raise ConflictError(str(exc), code="published_update") from exc
+    except ServiceError:
+        raise
+    except ValueError as exc:
+        # add_resource / remove_resource refuse a bad reference or relationship
+        # with a ValueError; the charter maps it to validation.
+        raise ValidationError(str(exc), code="validation") from exc
+    return _room_envelope(name, result)
+
+
+def _room_envelope(name: str, result: Any) -> Any:
+    """The envelope each tool answered before PHILO-9-01 (unchanged)."""
+    if name == "project.list":
+        return {"projects": result}
+    if name in {"project.create", "project.update", "project.restore"}:
+        return {"success": True, "project": result}
+    if name in {"project.archive", "project.link", "project.unlink"}:
+        return {"success": True}
+    if name == "project.list_updates":
+        return {"updates": result}
+    if name in {"project.draft_update", "project.update_draft", "project.publish_update"}:
+        return {"success": True, "update": result}
+    if name in {"project.item.create", "project.item.update", "project.item.transition"}:
+        return {"success": True, "item": result}
+    if name == "project.resource.list":
+        return {"resources": result}
+    if name == "project.resource.add":
+        return {"resource": result}
+    if name == "project.resource.remove":
+        return {"success": True, "removed": result}
+    return result
+
+
+def _describe_from_operations() -> None:
+    """F12: a Room tool's words ARE its operation's words (one source).
+
+    The tool keeps its published argument types; its description and each
+    argument's description come from the declared operation.
+    """
+    from holdspeak import operations
+
+    declared = {d.name: d for d in operations.DESCRIPTORS}
+    for tool in TOOLS:
+        operation = ROOM_TOOL_OPERATIONS.get(tool["name"])
+        if operation is None:
+            continue
+        descriptor = declared[operation]
+        tool["description"] = descriptor.description
+        props = descriptor.args_schema.get("properties", {})
+        for key, spec in tool["inputSchema"].get("properties", {}).items():
+            words = (props.get(key) or {}).get("description")
+            if words:
+                spec["description"] = words
+
+
+_describe_from_operations()
 
 
 # ── MCP-007: PROJECT_PALETTE ─────────────────────────────────────────

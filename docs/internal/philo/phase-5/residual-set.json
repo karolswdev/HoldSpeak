@@ -309,6 +309,132 @@
       "transport": "mcp",
       "entry_point": "zone.unfile",
       "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.list",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.get",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.get_room",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.create",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.update",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.archive",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.restore",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.link",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.unlink",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.open_review",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.get_delta",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.decide_proposal",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.accept_review",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.list_updates",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.draft_update",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.update_draft",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "project.publish_update",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "mcp",
+      "entry_point": "desk.needs_you",
+      "discriminator": ""
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router._build_needs_you",
+      "discriminator": "HeartbeatService"
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router._project_service",
+      "discriminator": "ProjectService"
+    },
+    {
+      "story": "PHILO-9-01",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/people.py::build_people_router.projects",
+      "discriminator": "ProjectService"
     }
   ],
   "public_tools_added": [
@@ -331,6 +457,41 @@
       "story": "PHILO-7-02",
       "tool": "kernel.receipt",
       "operation": "kernel.receipt.read"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.item.list",
+      "operation": "project.item.list"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.item.create",
+      "operation": "project.item.create"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.item.update",
+      "operation": "project.item.update"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.item.transition",
+      "operation": "project.item.transition"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.resource.list",
+      "operation": "project.resource.list"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.resource.add",
+      "operation": "project.resource.add"
+    },
+    {
+      "story": "PHILO-9-01",
+      "tool": "project.resource.remove",
+      "operation": "project.resource.remove"
     }
   ],
   "moved": [
@@ -344,11 +505,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 284,
-    "residual_mcp": 223,
-    "residual_http": 61,
-    "http_constructions": 63,
-    "public_tools": 229
+    "residual_identities": 263,
+    "residual_mcp": 205,
+    "residual_http": 58,
+    "http_constructions": 59,
+    "public_tools": 236
   },
   "entries": [
     {
@@ -578,12 +739,6 @@
       "entry_point": "desk.list",
       "discriminator": "kind=chains",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch; generic getattr over PrimitiveService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "desk.needs_you",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
     {
       "transport": "mcp",
@@ -1025,19 +1180,7 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "project.accept_review",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "project.add_suggested_source",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.archive",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
@@ -1049,85 +1192,13 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "project.create",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.decide_proposal",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "project.dismiss_suggested_source",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
     {
       "transport": "mcp",
-      "entry_point": "project.draft_update",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.get",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.get_delta",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.get_room",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "project.get_steward_run",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.link",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.list_updates",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.open_review",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.publish_update",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.restore",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
@@ -1212,24 +1283,6 @@
     {
       "transport": "mcp",
       "entry_point": "project.suggested_sources",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.unlink",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.update",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "project.update_draft",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
@@ -1745,12 +1798,6 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router._project_service",
-      "discriminator": "ProjectService",
-      "reason": "route builds its own service instance instead of the hub's bound one (2 constructions)"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/cadence.py::build_cadence_router",
       "discriminator": "CadenceService",
       "reason": "route builds its own service instance instead of the hub's bound one"
@@ -1883,12 +1930,6 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/people.py::build_people_router.projects",
-      "discriminator": "ProjectService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/people.py::build_people_router.workbenches",
       "discriminator": "WorkbenchService",
       "reason": "route builds its own service instance instead of the hub's bound one"
@@ -1957,12 +1998,6 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/workflows.py::build_workflows_router.svc",
       "discriminator": "PrimitiveService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/projects.py::build_projects_router._build_needs_you",
-      "discriminator": "HeartbeatService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
     {

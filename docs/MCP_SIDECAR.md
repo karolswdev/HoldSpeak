@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-229 tools across 42 families. The default non-owner discovery lists 34
+236 tools across 42 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -539,7 +539,7 @@ actions. The initial implementation and its limits are documented in the
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 229 tools across 42 families.
+**Registry totals:** 236 tools across 42 families.
 
 #### ask (4)
 
@@ -735,7 +735,7 @@ actions. The initial implementation and its limits are documented in the
 - `practice_recipe.get`
 - `practice_recipe.list`
 
-#### project (42)
+#### project (49)
 
 - `project.accept_review`
 - `project.add_suggested_source`
@@ -749,11 +749,18 @@ actions. The initial implementation and its limits are documented in the
 - `project.get_delta`
 - `project.get_room`
 - `project.get_steward_run`
+- `project.item.create`
+- `project.item.list`
+- `project.item.transition`
+- `project.item.update`
 - `project.link`
 - `project.list`
 - `project.list_updates`
 - `project.open_review`
 - `project.publish_update`
+- `project.resource.add`
+- `project.resource.list`
+- `project.resource.remove`
 - `project.restore`
 - `project.run_steward`
 - `project.setup.answer`
@@ -1001,13 +1008,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 57
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 64
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 57 tools
-instead of 229.
+the palette. A client that lists tools through this filter sees 64 tools
+instead of 236.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

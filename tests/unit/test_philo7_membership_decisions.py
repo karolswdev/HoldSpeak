@@ -229,9 +229,15 @@ def test_the_residual_set_paid_exactly_the_enumerated_identities() -> None:
     assert not (paid & listed)
     assert census.check(REPO, committed) == []
     measurements = committed["measurements"]
-    assert (measurements["residual_identities"], measurements["residual_mcp"], measurements["residual_http"]) == (284, 223, 61)
+    # PHILO-7-02 left (284, 223, 61) and 229 public tools; a later story's
+    # paid entries and added tools are its own (PHILO-9-01 onward).
+    later = [e for e in committed["paid"] if e["story"].startswith("PHILO-9")]
+    later_added = [a for a in committed["public_tools_added"] if a["story"].startswith("PHILO-9")]
+    assert (measurements["residual_identities"] + len(later),
+            measurements["residual_mcp"] + sum(1 for e in later if e["transport"] == "mcp"),
+            measurements["residual_http"] + sum(1 for e in later if e["transport"] == "http")) == (284, 223, 61)
     # A separate measurement: the receipt read is the one new public tool.
-    assert measurements["public_tools"] == 229
+    assert measurements["public_tools"] - len(later_added) == 229
     added = [a for a in committed["public_tools_added"] if a["story"] == "PHILO-7-02"]
     assert added == [{"story": "PHILO-7-02", "tool": "kernel.receipt", "operation": "kernel.receipt.read"}]
 
