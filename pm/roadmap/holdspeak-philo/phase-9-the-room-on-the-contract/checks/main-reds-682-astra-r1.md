@@ -1,0 +1,25 @@
+VERDICT: RATIFY
+
+FINDINGS:
+
+1. **The 393px task-resume defect is quarantined, not repaired.** This PR adds one named, strict xfail and a matching backlog entry. The inspected shot confirms that the composer covers Resume. This remains a **PRODUCT defect against Tenets 2 and 3**. No tests were deleted; no new skips were added. `tests/e2e/test_hs200_task_resume_glass.py:203`, `pm/roadmap/holdspeak/BACKLOG.md:48`.
+
+2. **The failed-refresh CI failure is addressed by an ENVIRONMENT mitigation.** Reduced motion removes rendering contention without changing the delete assertions or eight-second deadline. At `d57f79a3`, I obtained **three consecutive passes at each width**, then **three consecutive passes of the exact three-worker workload** used by the earlier 2/3-failure comparison. DELETE arrived after eight seconds and the receipt returned after Retry. The default-motion performance defect remains open—**Tenets 3 and 6**—and the backlog correctly says no product fix is scheduled. [Serial proof](/tmp/astra-pr682-refresh), [parallel proof](/tmp/astra-pr682-refresh-parallel), `pm/roadmap/holdspeak/BACKLOG.md:66`.
+
+3. **The rig fences still catch the original timing mistakes.** Independently rerun against the real atlas case and isolated hub: current suite **10 passed**; stripped guards **4 failed**; loading the actual pre-fix `4905986f` delivery function into memory **2 failed**, both widths. The failures were the intended false `pass` instead of `blocked`, with the delay injected. [Green](/tmp/astra-pr682-guards/green.log:1), [r1 red](/tmp/astra-pr682-guards/r1_stripped.log:234), [r2 red](/tmp/astra-pr682-guards/r2_old_delivery.log:119).
+
+4. **The one-delete assertions remain intact.** I inspected the lane’s actual mutation outputs: false Undo produces **4 failures**, and removing same-target protection produces **5 failures**, including Workbench. These fail on wrong durable outcomes, not incidental timeouts. The 1440/393 receipt shots remain readable. [False-Undo proof](/Users/karol/.claude/projects/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/subagents/agent-a8f66b354c9b38576.jsonl:349), [same-target proof](/Users/karol/.claude/projects/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/subagents/agent-a8f66b354c9b38576.jsonl:361).
+
+5. **Dock is correctly classified PRODUCT, fixed red-first.** The mount-only effect preserves ResizeObserver updates and removes the cleanup/republication between pointerdown and click. The lane records the pre-fix failure, pointer-event diagnosis and two passing preparation-brief cases afterward. `web/src/desk/components/window/Dock.tsx:96`, [green evidence](/Users/karol/.claude/projects/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/subagents/agent-a80e04725a18920f5.jsonl:314).
+
+6. **The remaining TEST classifications are sound.** Thought-note now selects the ratified write and filing lines separately; hiding the write receipt still fails all four affected cases. Graph smoke matches the real owner-lock producer’s label and still requires it in `has`. Census changes re-anchor existing sites and explicitly classify five registry calls; allow-list counts retain membership checks; copy debt shrinks; continuity pins the clock; intel-drain waits for the completion event and subsequent queue frame. My run of all six changed unit files: **107 passed**. [Thought mutation](/Users/karol/.claude/projects/-Users-karol-dev-tools-HoldSpeak/c59536e9-4c14-410c-8d54-e0c2beed10bc/subagents/agent-a80e04725a18920f5.jsonl:383), `scripts/graph_walk.py:2739`, [unit proof](/tmp/astra-pr682-units.log:3).
+
+7. **The workflow changes correctly repair ENVIRONMENT deficiencies.** Chromium remains available under isolated HOME, historical Git objects are fetched, and required WebKit cases execute rather than skip. Exact-head CI reports **10,641 unit passes** and **373 E2E passes**, with **46 E2E skips and five xfails**. Both WebKit cases passed. `.github/workflows/test.yml:94`, [CI run](https://github.com/karolswdev/HoldSpeak/actions/runs/36410130113).
+
+CONDITIONS: None additional for this repair scope. Keep both named product debts open. GitHub reports #682 merged during this review; this verdict applies to `d57f79a3`.
+
+MISSED: No additional unledgered product defect found. Highest remaining owner cost is the covered Resume control; next is difficult Undo under default-motion rendering contention. Green CI does not close either.
+
+TUESDAY: Brief interaction improves and the inspected receipts are readable; resuming saved work at 393px remains obstructed.
+
+UNKNOWN: I did not rerun every historical seven-round product revision or the owner’s real desk. Delete mutation results were verified from lane execution records; rig mutations and focused repeats were independently executed. No tracked files changed.
