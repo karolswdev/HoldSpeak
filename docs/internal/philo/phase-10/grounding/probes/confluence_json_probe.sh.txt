@@ -1,0 +1,11 @@
+#!/bin/zsh
+# PHILO-10 round three: can acli confluence blog create take the title from a file? (isolated HOME; nothing sent)
+export HOME=$(mktemp -d)
+echo "## acli confluence blog create --generate-json"; acli confluence blog create --generate-json 2>&1
+d=$(mktemp -d); chmod 700 $d; f=$d/payload.json
+printf '%s' '{"spaceId":"12345","title":"PRIVATE-TITLE-SENTINEL","body":{"representation":"storage","value":"<p>x</p>"},"status":"current"}' > $f; chmod 600 $f
+echo "## --from-json with a 0600 file and no --title in argv (no login: which error comes first)"
+acli confluence blog create --from-json $f 2>&1 | head -3
+echo "## --from-json plus --title (conflict or override?)"
+acli confluence blog create --from-json $f --title other 2>&1 | head -3
+rm -rf $d
