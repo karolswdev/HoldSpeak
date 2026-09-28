@@ -159,7 +159,12 @@ def _make_service(
     collector: Optional[Any] = None,
     delta: Optional[Any] = None,
 ) -> tuple[ProjectStewardService, _FakeDB]:
-    db = _FakeDB(conn)
+    # PHILO-9-02: run_once is an admitted operation now (the steward beat,
+    # section 2): the REAL Database over the test's file, which carries the
+    # kernel journal the admission writes.
+    from holdspeak.db.core import Database
+
+    db = Database(Path(conn.execute("PRAGMA database_list").fetchone()[2]))
     svc = ProjectStewardService(
         db,
         collector or _FakeCollector(),
@@ -338,9 +343,13 @@ class TestSTW002Uniqueness:
             requested_by="test",
         )
 
-        # A second run_once should fail at insert.
-        with pytest.raises(ActiveRunExistsError):
+        # A second run_once should fail at insert. PHILO-9-02: run_once is
+        # admitted; its refusal is the named ServiceError with its receipt.
+        from holdspeak.services.errors import ServiceError
+
+        with pytest.raises(ServiceError) as refused:
             svc.run_once(_principal(), "proj-1")
+        assert refused.value.code == "active_run_exists" and refused.value.context.get("receipt")
 
     def test_different_projects_independent(self, tmp_path: Path) -> None:
         conn = _make_conn(tmp_path)

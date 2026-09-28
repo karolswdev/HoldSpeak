@@ -1039,8 +1039,14 @@ class WatchService:
         principal: Principal,
         *,
         limit: int | None = WATCH_SWEEP_MAX,
+        admit: Any = None,
     ) -> list[dict[str, Any]]:
         """Evaluate graduated watches that are due based on their cadence.
+
+        PHILO-9-02 (the steward beat, section 4: "watch evaluation keeps its
+        own admission"): ``admit(watch_id, evaluate)`` -- given by the owner's
+        admitted trigger -- runs each watch's evaluation as its own admitted
+        ``project.watch.evaluate`` child with its leaf receipt.
 
         Per-watch isolation: one failure isolates, the outcome is
         recorded, and the loop continues.  NEVER raises.
@@ -1154,19 +1160,20 @@ class WatchService:
                     watch_id, next_eval_iso, self._repo,
                 )
 
-                result = self._evaluate_core(
-                    principal, watch_id,
-                    trigger_kind="scheduled",
-                    now_iso=now_iso,
-                    txn_hook=txn_hook,
-                )
+                def _evaluate(watch_id: str = watch_id, txn_hook: Any = txn_hook) -> tuple[Any, Any]:
+                    result = self._evaluate_core(
+                        principal, watch_id,
+                        trigger_kind="scheduled",
+                        now_iso=now_iso,
+                        txn_hook=txn_hook,
+                    )
+                    # ── HS-164-03: rule matching + effect recording ───
+                    # HS-200-43: through the shared guard, so a manual
+                    # evaluation mints the identical effects.
+                    return result, self._record_effects_if_any(result, watch_id)
 
-                # ── HS-164-03: rule matching + effect recording ───
-                # HS-200-43: through the shared guard, so a manual
-                # evaluation mints the identical effects.
-                matched_effects = self._record_effects_if_any(
-                    result, watch_id,
-                )
+                result, matched_effects = (_evaluate() if admit is None
+                                           else admit(watch_id, _evaluate))
 
                 outcome_type = "probe_half_open" if is_probe else "evaluated"
                 # Idempotent no_op is still a successful evaluation

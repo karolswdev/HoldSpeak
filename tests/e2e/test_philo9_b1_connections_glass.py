@@ -147,3 +147,47 @@ def test_each_card_shows_its_own_age(tmp_path: Path, monkeypatch: pytest.MonkeyP
         server.stop()
 
     assert not errors, f"Page errors: {errors}"
+
+
+# ── Codex Astra r1 finding 7: the empty Jira card says its own state ─────
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.parametrize("acli", ["present", "absent"])
+def test_the_empty_jira_card_shows_its_own_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+                                                 width: int, acli: str) -> None:
+    """No Jira row: the card's chip is the tool's own state, never a hardcoded "Not set up".
+
+    ``acli`` on PATH (a local ``shutil.which``, no subprocess): "Never checked";
+    missing: "acli missing". Red at 24576f25: "Not set up" in both branches.
+    """
+    import shutil
+
+    _ensure_build()
+    from playwright.sync_api import sync_playwright
+
+    real_which = shutil.which
+    monkeypatch.setattr(shutil, "which", lambda name, *a, **k: (
+        ("/usr/local/bin/acli" if acli == "present" else None) if name == "acli" else real_which(name, *a, **k)))
+    gh, runner = CountingRunner(), CountingRunner()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=gh, acli_runner=runner)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 1100})
+            page.emulate_media(reduced_motion="reduce")
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _navigate_to_connections(page, url)
+            _settle(page)
+            info = _chip(page, "connections-jira")
+            want = "Never checked" if acli == "present" else "acli missing"
+            assert info["text"] == want, f"{info['text']!r} != {want!r}"
+            assert info["visible"] and info["insideCard"] and info["insideViewport"], info
+            suffix = "desktop" if width == 1440 else "phone"
+            SHOTS.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(SHOTS / f"b1-jira-empty-{acli}-{suffix}.png"), full_page=True)
+            browser.close()
+    finally:
+        server.stop()

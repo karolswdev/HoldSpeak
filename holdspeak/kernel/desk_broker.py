@@ -114,6 +114,26 @@ def trusted_scheduler(broker: Any, name: str, principal: Any) -> bool:
     return bool(getattr(broker, "_trusted_scheduler_child", False)) or scheduler_may_submit(name, principal)
 
 
+def child_deadline(store: Any, operation: Mapping[str, Any], proposed: float) -> float:
+    """PHILO-9-02 (the steward beat, section 3, "Liveness"): a child never outlives its parent.
+
+    A child of a Room operation (a steward effect, a proposal decision, a
+    watch evaluation under the trigger, a model draft under a draft effect)
+    gets the earlier of its own execution deadline and its parent's, so the
+    liveness reaper settles it no later than the parent.
+    """
+    from .project import is_project
+
+    parent_id = str(operation.get("parent_operation_id") or "")
+    if not parent_id:
+        return proposed
+    parent = store.operation(parent_id)
+    if parent is None or not (is_project(parent.get("name")) or is_project(operation.get("name"))):
+        return proposed
+    parent_deadline = float((parent.get("warrant") or {}).get("execution_expires_at") or 0)
+    return min(proposed, parent_deadline) if parent_deadline else proposed
+
+
 def reject(broker: Any, operation_id: str, expected_revision: int) -> dict[str, Any]:
     """T4."""
     ended, receipt = broker.store.transition_and_receipt(

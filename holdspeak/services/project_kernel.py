@@ -296,7 +296,8 @@ def _call(broker: Any, name: str, handle: KernelHandle, payload: dict[str, Any],
         return result, {"operation_id": handle.operation_id, "receipt": None, "state": "claimed"}
     if not handle.closed:
         try:
-            handle.terminal("succeeded", "succeeded", _result_ref(handle.target))
+            handle.terminal("succeeded", "succeeded", _result_ref(handle.target),
+                            effect=_store_result(handle.operation_id, result))
         except KernelRefused as lost:
             if lost.reason not in STRICT_CONFLICTS:
                 raise
@@ -333,8 +334,10 @@ def _replayed(broker: Any, principal: Any, name: str, operation_id: str, payload
             if state != "succeeded":
                 raise _refused(name, broker, operation_id, receipt)
             return _answer(broker, principal, name, operation, target, payload, call, receipt)
-        if name in rooms.ASYNC_OPERATIONS and state == "claimed":
-            # The steward's work is running: its pending handle answers.
+        if name in rooms.ASYNC_OPERATIONS and state == "claimed" and _durable(broker, name, operation_id):
+            # The steward's work is running AND its durable row exists: its
+            # pending handle answers (Codex Astra r1 finding 4: never a
+            # handle without its run).
             return _answer(broker, principal, name, operation, target, payload, call, None)
         if state in {"awaiting_decision", "awaiting_execution", "claimed"} and (owner or _claim_flight(flight)):
             # No caller in this process is executing it (its terminal write
@@ -349,9 +352,43 @@ def _replayed(broker: Any, principal: Any, name: str, operation_id: str, payload
         time.sleep(0.02)
 
 
+_NO_RESULT = object()
+
+
+def _store_result(operation_id: str, result: Any) -> Callable[[Any], None]:
+    """The original answer, written in the terminal transaction (Codex Astra r1 finding 5)."""
+    material = json.dumps(result, default=str)
+
+    def effect(conn: Any) -> None:
+        conn.execute("INSERT OR IGNORE INTO project_operation_results (operation_id, result_json) VALUES (?, ?)",
+                     (operation_id, material))
+
+    return effect
+
+
+def _stored_result(broker: Any, operation_id: str) -> Any:
+    with broker.store._connection() as conn:
+        row = conn.execute("SELECT result_json FROM project_operation_results WHERE operation_id=?",
+                           (operation_id,)).fetchone()
+    return json.loads(row[0]) if row is not None else _NO_RESULT
+
+
+def _durable(broker: Any, name: str, operation_id: str) -> bool:
+    """Whether an asynchronous operation's pending handle is backed by its durable row."""
+    if name != "project.run_steward":
+        return True
+    with broker.store._connection() as conn:
+        return conn.execute("SELECT 1 FROM steward_runs WHERE operation_id=?", (operation_id,)).fetchone() is not None
+
+
 def _answer(broker: Any, principal: Any, name: str, operation: Mapping[str, Any], target: str,
             payload: dict[str, Any], call: Callable[[dict[str, Any]], Any], receipt: Any) -> tuple[Any, dict[str, Any]]:
     """A replay: the method answers from what it recorded, under a handle that writes nothing."""
+    if receipt is not None:
+        stored = _stored_result(broker, str(operation["operation_id"]))
+        if stored is not _NO_RESULT:
+            # The original answer, recorded with the receipt: nothing runs again.
+            return stored, {"operation_id": str(operation["operation_id"]), "receipt": dict(receipt)}
     handle = KernelHandle(broker, name, str(operation["operation_id"]), int(operation["revision"]), target, principal)
     handle.replay = True
     handle.receipt = dict(receipt) if receipt is not None else None

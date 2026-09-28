@@ -392,15 +392,18 @@ class ProjectStewardService(StewardContract):
         thread).  STW-002: ActiveRunExistsError propagates to the caller
         as a typed refusal.
         """
-        run_id = self.insert_run(
-            principal, project_id,
-            policy_id=policy_id, watermark=watermark,
+        # PHILO-9-02 (the steward beat, section 2: "Synchronous internal
+        # run_once uses the same admission and terminal path"): one admitted
+        # project.run_steward, worked on this thread, its one receipt written
+        # when the run ends. A refusal raises its named ServiceError.
+        from holdspeak.services import project_kernel
+
+        started, _kernel = project_kernel.run(
+            self._db, principal, "project.run_steward", {"project_id": str(project_id).strip(), "watermark": watermark},
+            lambda payload: self._start_admitted(principal, payload["project_id"], payload.get("watermark") or "",
+                                                 background=False),
         )
-
-        # Execute the six phases on the calling thread (conductor pattern).
-        self.execute_phases(principal, run_id, project_id)
-
-        return run_id
+        return str(started["run_id"])
 
     def find_run_by_watermark(
         self, project_id: str, watermark: str,
@@ -569,7 +572,13 @@ class ProjectStewardService(StewardContract):
         """
         phase_results: dict[str, Any] = {}
         try:
-            # Transition queued -> running.
+            # PHILO-9-02 (Codex Astra r1 finding 1): an admitted run whose
+            # worker starts after its run ended (reaped, stopped, recovered)
+            # writes nothing: the terminal winner stands.
+            if handle is not None:
+                self._boundary(run_id)
+            # Transition queued -> running (never out of a terminal state:
+            # the repository's write is state-guarded).
             self._db.steward_runs.update_run_state(
                 run_id, state="running", phase="observe",
             )

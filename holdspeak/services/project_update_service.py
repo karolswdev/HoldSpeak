@@ -1459,6 +1459,17 @@ class ProjectUpdateService:
 
         payload = _build_model_prompt(det_claims)
 
+        # PHILO-9-02 (the steward beat, section 5): a model draft made inside
+        # the steward's draft_update effect is that effect's CHILD -- the
+        # existing inference.invoke keeps its own admission and receipt, and
+        # its deadline is clamped to the effect's (``desk_broker.child_deadline``).
+        from ..kernel.project import STEWARD_EFFECT
+        from . import project_kernel
+
+        running = project_kernel.current()
+        parent_operation_id = (running.operation_id
+                               if running is not None and running.name == STEWARD_EFFECT and not running.replay
+                               else "")
         request = InvocationRequest(
             deployment_revision=deployment_rev_id,
             definition_origin=ServiceContract.for_payload(
@@ -1466,6 +1477,7 @@ class ProjectUpdateService:
             ),
             deadline_at=_time.time() + 120,
             payload=payload,
+            parent_operation_id=parent_operation_id,
         )
 
         captured: list[Any] = []

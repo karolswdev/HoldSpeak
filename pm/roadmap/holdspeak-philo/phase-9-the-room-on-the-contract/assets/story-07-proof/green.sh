@@ -7,10 +7,8 @@ PY=$PWD/.venv/bin/python
 MINE=(tests/unit/test_philo9_project_grant.py tests/unit/test_philo9_project_grant_lifecycle.py
       tests/unit/test_philo9_project_grant_restart.py tests/unit/test_philo9_project_grant_face_rule.py)
 HOME=$(mktemp -d) $PY -m pytest --collect-only -q -p no:cacheprovider $MINE | tail -1
-HOME=$(mktemp -d) $PY -m pytest -q -n 8 -p no:cacheprovider -rf $MINE \
-  tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_steward_lifecycle.py \
-  tests/unit/test_philo9_steward_restart.py tests/unit/test_philo9_command_race.py tests/unit/test_philo9_mark_delivered.py \
-  tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py tests/unit/test_philo9_compat.py \
+# Every Phase 9 unit fence (story 02's round two included), then the neighbours.
+HOME=$(mktemp -d) $PY -m pytest -q -n 8 -p no:cacheprovider -rf tests/unit/test_philo9_*.py \
   tests/unit/test_philo7_grant_lifecycle.py tests/unit/test_philo7_grant_restart.py tests/unit/test_philo7_article_xi.py \
   tests/unit/test_philo7_round_two.py tests/unit/test_philo7_file_and_find.py tests/unit/test_philo7_compat.py \
   tests/unit/test_hs174_reach_wire.py tests/integration/test_hs174_runner_loopback.py tests/unit/test_kernel_broker.py \

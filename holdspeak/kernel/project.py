@@ -138,7 +138,7 @@ def scheduler_may_submit(name: str, principal: Any) -> bool:
         return True
     context = _STEWARD_CONTEXT.get()
     return bool(context and context.get("actor_kind") == "scheduler"
-                and name in {STEWARD_EFFECT, "project.decide_proposal"})
+                and name in {STEWARD_EFFECT, "project.decide_proposal", "inference.invoke"})
 
 
 def scheduler_approves(operation: Mapping[str, Any], principal: Any) -> bool:
@@ -153,8 +153,16 @@ def scheduler_approves(operation: Mapping[str, Any], principal: Any) -> bool:
     if name == "project.run_steward":
         return _SCHEDULER_ROOT.get() is not None
     context = _STEWARD_CONTEXT.get()
-    return bool(context and name in {STEWARD_EFFECT, "project.decide_proposal"}
-                and str(operation.get("parent_operation_id") or "") == str(context.get("operation_id") or ""))
+    parent = str(operation.get("parent_operation_id") or "")
+    # A model draft under the scheduler run's draft effect (the beat, section
+    # 5): the broker's causality already bound it to a claimed parent of this
+    # same actor.
+    return bool(context and (
+        (name in {STEWARD_EFFECT, "project.decide_proposal"} and parent == str(context.get("operation_id") or ""))
+        or (name in _SCHEDULER_MODEL_CHILDREN and context.get("actor_kind") == "scheduler" and parent)))
+
+
+_SCHEDULER_MODEL_CHILDREN = frozenset({"inference.invoke"})
 
 
 # ── the project delegation grant (PHILO-9-07) ────────────────────────────
