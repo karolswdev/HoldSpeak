@@ -480,17 +480,24 @@ export function WorkMenu({
   // (the list's row menu at 393: Delete cut 15 px). Runs after layout and
   // before paint, so the panel never shows cut, then moves. Every WorkMenu
   // consumer gets it.
+  // Round two (Codex Astra r1 finding 2): the desktop submenu keeps itself in
+  // view by the same measurement; past the right edge it opens on the
+  // parent panel's left side, and only if that does not fit is it clamped.
   useLayoutEffect(() => {
-    const el = panelRef.current;
-    if (!el) return;
     const margin = 8;
-    const r = el.getBoundingClientRect();
-    if (r.bottom > window.innerHeight - margin) {
-      el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
-    }
-    if (!NARROW() && r.right > window.innerWidth - margin) {
-      el.style.left = `${Math.max(margin, window.innerWidth - margin - r.width)}px`;
-    }
+    const keepInView = (el: HTMLElement | null, flipFrom?: DOMRect) => {
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.bottom > window.innerHeight - margin) {
+        el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
+      }
+      if (!NARROW() && r.right > window.innerWidth - margin) {
+        const flipped = flipFrom ? flipFrom.left - r.width - 1 : -1;
+        el.style.left = `${flipped >= margin ? flipped : Math.max(margin, window.innerWidth - margin - r.width)}px`;
+      }
+    };
+    keepInView(panelRef.current);
+    keepInView(subRef.current, panelRef.current?.getBoundingClientRect());
   });
 
   // The desktop dismissal rule: any outside pointer-down, Escape from

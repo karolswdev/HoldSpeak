@@ -858,7 +858,7 @@
         {
           "path": "web/src/desk/components/DeskMenu.tsx",
           "symbol": "useLayoutEffect(() => {",
-          "line": 483,
+          "line": 486,
           "claim": "the work menu keeps its measured panel inside the viewport"
         },
         {

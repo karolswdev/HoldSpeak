@@ -159,7 +159,8 @@ SELECTION = r"""(sel) => {
 POINTS = r"""([width, kinds]) => {
   document.querySelectorAll('[data-probe]').forEach(e => e.removeAttribute('data-probe'));
   const pick = {sort: '.desk-listmode thead .btn', menu: '[role=menu] [role=menuitem]', census: '.desk-list-census .btn',
-                name: '.desk-listmode tbody .desk-sortable-table-open'};
+                name: '.desk-listmode tbody .desk-sortable-table-open',
+                submenu: "[role=menu][aria-label='Launch submenu'] [role=menuitem]"};
   // The name Buttons (the fold line rides inside them at 393): the first six
   // wholly in the upper band of the viewport, clear of the fixed dock.
   const band = (b) => { const r = b.getBoundingClientRect(); return r.top >= 60 && r.bottom <= innerHeight * 0.6; };
@@ -190,6 +191,33 @@ PM_ARM = r"""() => { window.__pm = null; if (!window.__pmArmed) { window.__pmArm
 PM_READ = r"""([i]) => { const b = document.querySelector(`[data-probe="${i}"]`); const t = window.__pm;
   return {ok: !!t && !!b && b.contains(t), hit: t ? String(t.className || t.tagName).split(' ')[0] : null}; }"""
 
+
+# Round two (Codex Astra r1 finding 1): every selection host inside a scope —
+# form fields and the CodeMirror lines — measured by its own ::selection pair,
+# composited over its own ground: the selection against the ground, and the
+# selected text against the selection.
+HOSTS = r"""(scope) => {
+  const C = window.__c;
+  const root = document.querySelector(scope);
+  if (!root) return null;
+  return [...root.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, .cm-line')]
+    .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+    .map(e => {
+      const s = getComputedStyle(e, '::selection');
+      const g = C.ground(e);
+      const p = C.over(C.parse(s.backgroundColor) || {r: 0, g: 0, b: 0, a: 0}, g);
+      const ink = C.over(C.parse(s.color), p);
+      return {host: e.classList.contains('cm-line') ? 'codemirror' : e.tagName.toLowerCase(),
+        cls: String(e.className).slice(0, 50), selection_bg: s.backgroundColor, selection_ink: s.color,
+        ground: C.hex(g), selection_vs_ground: C.ratio(p, g), selected_text_vs_selection: C.ratio(ink, p)};
+    });
+}"""
+MENUS = r"""() => [...document.querySelectorAll('[role=menu]')].filter(e => e.getBoundingClientRect().height > 0).map(e => {
+  const r = e.getBoundingClientRect();
+  return {label: e.getAttribute('aria-label'), left: Math.round(r.left), top: Math.round(r.top),
+    right: Math.round(r.right), bottom: Math.round(r.bottom), vw: innerWidth, vh: innerHeight,
+    in_view: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight};
+})"""
 
 def _record(name: str, width: int, data: Any) -> None:
     (SHOTS / f"{name}-{width}.json").write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
@@ -497,6 +525,123 @@ class TestDeskDebtsGlass:
                 _record("row-menu-text", width, {"small_text": f["small_text"], "text_styles": f["text_styles"]})
                 assert f["small_text_count"] == 0, f["small_text"]
                 assert f["min_text_ratio"] >= 4.5, f["text_styles"]
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    # ── round two (Codex Astra r1, checks/story-04-built-astra-r1.md) ──────
+
+    def _open_note_editor(self, page: Any) -> Any:
+        row = page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first
+        row.scroll_into_view_if_needed()
+        row.click(button="right")
+        page.get_by_role("menuitem", name="Edit", exact=True).click()
+        editor = page.locator(".cm-content").first
+        editor.wait_for(timeout=T)
+        return editor
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_editor_selection_is_readable(self, width: int) -> None:
+        """Finding 1: selected note text in the CodeMirror editor reads 4.5:1
+        or more on a selection that reads 3:1 against the editor (red at
+        f58cb5b0: 1.33:1, the tint ground under the page ink). The census
+        covers every selection host in the open editor window: the title
+        field, the body lines, the tags field."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                editor = self._open_note_editor(page)
+                editor.fill("Review the ledger cutover plan with Priya.")
+                editor.click()
+                page.keyboard.press("ControlOrMeta+a")
+                # The shot before the editor's AI bar opens over a selection
+                # (EditorAIBar; at 393 it covers the body: BACKLOG
+                # "PHILO-9-04 follow-ups"), and one after it.
+                page.wait_for_timeout(60)
+                page.screenshot(path=str(SHOTS / f"editor-selected-{width}.png"))
+                page.wait_for_timeout(300)
+                page.screenshot(path=str(SHOTS / f"editor-selected-aibar-{width}.png"))
+                selected = page.evaluate("window.getSelection().toString()")
+                window = page.evaluate(HOSTS, ".desk-window:has(.cm-content)") or []
+                _record("editor-selection", width, {"selected": selected, "hosts": window})
+                assert "ledger cutover" in selected, selected
+                cm = [h for h in window if h["host"] == "codemirror"]
+                assert cm, window
+                for h in window:
+                    assert h["selected_text_vs_selection"] >= 4.5, h
+                    assert h["selection_vs_ground"] >= 3.0, h
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_thread_composer_selection_is_readable(self, width: int) -> None:
+        """Finding 1's census: the thread composer's textarea (the draft
+        field; row menu > Continue in thread) takes the same pair."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                row = page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first
+                row.scroll_into_view_if_needed()
+                row.click(button="right")
+                page.get_by_role("menuitem", name="Continue in thread", exact=True).click()
+                area = page.locator("textarea").first
+                area.wait_for(timeout=T)
+                area.fill("Ask Priya about the cutover date")
+                area.evaluate("e => { e.focus(); e.select(); }")
+                page.wait_for_timeout(300)
+                hosts = [h for h in page.evaluate(HOSTS, "body") if h["host"] == "textarea"]
+                page.screenshot(path=str(SHOTS / f"composer-selected-{width}.png"))
+                _record("composer-selection", width, {"hosts": hosts})
+                assert hosts, "no textarea measured"
+                for h in hosts:
+                    assert h["selected_text_vs_selection"] >= 4.5, h
+                    assert h["selection_vs_ground"] >= 3.0, h
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    def test_the_launch_submenu_keeps_itself_in_view(self) -> None:
+        """Finding 2 (inherited on main): the Floor menu opened near the
+        bottom-right corner at 1440, then Launch; both panels end inside the
+        viewport (main: the Desk menu to 1454 x 906, the Launch submenu to
+        1474 x 1034). 1440 only: at the narrow desk the submenu replaces its
+        panel (DeskMenu.tsx), which the row-menu fence covers."""
+        from playwright.sync_api import sync_playwright
+
+        width = 1440
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                self._palette(page, "Spatial view")
+                page.locator("[id='desk-palette-option-desk.toggle-view']").click()
+                page.locator(".desk-world").wait_for(timeout=T)
+                page.wait_for_timeout(3000)
+                page.mouse.click(1422, 650, button="right")
+                page.wait_for_timeout(400)
+                if not page.get_by_role("menuitem", name="Launch", exact=False).count():
+                    page.mouse.click(1400, 620, button="right")
+                    page.wait_for_timeout(500)
+                page.get_by_role("menuitem", name="Launch", exact=False).first.hover()
+                page.locator("[role=menu][aria-label='Launch submenu']").wait_for(timeout=T)
+                page.wait_for_timeout(400)
+                menus = page.evaluate(MENUS)
+                page.screenshot(path=str(SHOTS / f"launch-submenu-{width}.png"))
+                owned = self._pointer(page, width, ["submenu"])
+                _record("launch-submenu", width, {"menus": menus, "pointer": owned})
+                assert owned and all(not p["not_owned"] for p in owned), owned
+                assert any(m["label"] == "Launch submenu" for m in menus), menus
+                assert all(m["in_view"] for m in menus), menus
+                sub = next(m for m in menus if m["label"] == "Launch submenu")
+                parent = next(m for m in menus if m["label"] != "Launch submenu")
+                assert sub["right"] <= parent["left"] or sub["left"] >= parent["right"], (sub, parent)
                 assert not errors, errors
             finally:
                 browser.close()
