@@ -1,0 +1,3914 @@
+{
+  "0-today-list-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 975,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 975,
+        "right": 1070,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1070,
+        "right": 1165,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1165,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 41,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1011,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1106,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1234,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "0-today-list-393": {
+    "cells_past_right_edge": 82,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": false,
+        "left": 67,
+        "right": 685,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": false,
+        "left": 685,
+        "right": 764,
+        "text": "KIND"
+      },
+      {
+        "in_view": false,
+        "left": 764,
+        "right": 842,
+        "text": "ZONE"
+      },
+      {
+        "in_view": false,
+        "left": 842,
+        "right": 922,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 30,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 117,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 722,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 800,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 912,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 20,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 11,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "0-today-row-menu-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 975,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 975,
+        "right": 1070,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1070,
+        "right": 1165,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1165,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": {
+      "bottom": 875,
+      "cut_px": 0,
+      "right": 491,
+      "text": "Delete Delete",
+      "top": 847,
+      "vh": 900
+    },
+    "menu_last": {
+      "bottom": 875,
+      "cut_px": 0,
+      "right": 491,
+      "text": "Delete Delete",
+      "top": 847,
+      "vh": 900
+    },
+    "menu_opened": true,
+    "menu_row_bottom": 710,
+    "menu_row_y": 668,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 41,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1011,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1106,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1234,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "0-today-row-menu-393": {
+    "cells_past_right_edge": 82,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": false,
+        "left": 67,
+        "right": 685,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": false,
+        "left": 685,
+        "right": 764,
+        "text": "KIND"
+      },
+      {
+        "in_view": false,
+        "left": 764,
+        "right": 842,
+        "text": "ZONE"
+      },
+      {
+        "in_view": false,
+        "left": 842,
+        "right": 922,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": {
+      "bottom": 867,
+      "cut_px": 15,
+      "right": 382,
+      "text": "Delete Delete",
+      "top": 839,
+      "vh": 852
+    },
+    "menu_last": {
+      "bottom": 867,
+      "cut_px": 15,
+      "right": 382,
+      "text": "Delete Delete",
+      "top": 839,
+      "vh": 852
+    },
+    "menu_opened": true,
+    "menu_row_bottom": 702,
+    "menu_row_y": 636,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "2 ITEMS"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "NOTES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "NOTE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "PERSONAL"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "NOTE"
+      }
+    ],
+    "small_text_count": 25,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 117,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 722,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 800,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 912,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 24,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "NOTES"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 14,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Hiring"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "0-today-selection-palette-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 975,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 975,
+        "right": 1070,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1070,
+        "right": 1165,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1165,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "selection": {
+      "end": 14,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 14,
+      "painted": "rgb(39,33,34)",
+      "selected_text_vs_selection": 14.21,
+      "selection_bg": "rgba(168, 110, 74, 0.12)",
+      "selection_ink": "rgb(242, 243, 245)",
+      "selection_vs_field": 1.14,
+      "selector": "[aria-controls=desk-palette-listbox]",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 41,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1011,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1106,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1234,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "0-today-selection-palette-393": {
+    "cells_past_right_edge": 85,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": -39,
+        "right": 9,
+        "text": ""
+      },
+      {
+        "in_view": false,
+        "left": 9,
+        "right": 627,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": false,
+        "left": 627,
+        "right": 706,
+        "text": "KIND"
+      },
+      {
+        "in_view": false,
+        "left": 706,
+        "right": 784,
+        "text": "ZONE"
+      },
+      {
+        "in_view": false,
+        "left": 784,
+        "right": 864,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "selection": {
+      "end": 14,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 14,
+      "painted": "rgb(39,33,34)",
+      "selected_text_vs_selection": 14.21,
+      "selection_bg": "rgba(168, 110, 74, 0.12)",
+      "selection_ink": "rgb(242, 243, 245)",
+      "selection_vs_field": 1.14,
+      "selector": "[aria-controls=desk-palette-listbox]",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 31,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 59,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 664,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 742,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 854,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 21,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 11,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "0-today-selection-zone-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 975,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 975,
+        "right": 1070,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1070,
+        "right": 1165,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1165,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "selection": {
+      "end": 8,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 8,
+      "painted": "rgb(39,33,34)",
+      "selected_text_vs_selection": 14.21,
+      "selection_bg": "rgba(168, 110, 74, 0.12)",
+      "selection_ink": "rgb(242, 243, 245)",
+      "selection_vs_field": 1.14,
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 41,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1011,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1106,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 1234,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 17,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "0-today-selection-zone-393": {
+    "cells_past_right_edge": 84,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": -39,
+        "right": 9,
+        "text": ""
+      },
+      {
+        "in_view": false,
+        "left": 9,
+        "right": 627,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": false,
+        "left": 627,
+        "right": 706,
+        "text": "KIND"
+      },
+      {
+        "in_view": false,
+        "left": 706,
+        "right": 784,
+        "text": "ZONE"
+      },
+      {
+        "in_view": false,
+        "left": 784,
+        "right": 864,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [
+      "desk-sortable-table-sort is-current",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort",
+      "desk-sortable-table-sort"
+    ],
+    "selection": {
+      "end": 8,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 8,
+      "painted": "rgb(39,33,34)",
+      "selected_text_vs_selection": 14.21,
+      "selection_bg": "rgba(168, 110, 74, 0.12)",
+      "selection_ink": "rgb(242, 243, 245)",
+      "selection_vs_field": 1.14,
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [
+      {
+        "cls": "",
+        "px": 10,
+        "text": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "of"
+      },
+      {
+        "cls": "desk-list-status",
+        "px": 10,
+        "text": "24"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "px": 10,
+        "text": "Name"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Kind"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Zone"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "px": 10,
+        "text": "Attention"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONES"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "EMPTY"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "1 ITEM"
+      },
+      {
+        "cls": "",
+        "px": 10,
+        "text": "ZONE"
+      }
+    ],
+    "small_text_count": 31,
+    "sort_verbs": [
+      {
+        "library": false,
+        "pressed": null,
+        "right": 59,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 664,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 742,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": false,
+        "pressed": null,
+        "right": 854,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWNS OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "24 SHOWNS"
+      },
+      {
+        "cls": "desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "",
+        "count": 21,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 10,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 10,
+        "ratio": 14.84,
+        "sample": "Name"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 10,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "1-list-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1091,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "is-fold",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "1-list-393": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 33,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-narrow-on",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 10,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "2-sorted-by-zone-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE ↑"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 261,
+        "text": "NAME",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 0,
+        "text": "Zone ↑",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 1107,
+        "text": "ZONE ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Name"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "is-fold",
+        "count": 27,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Zone"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 17,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "2-sorted-by-zone-393": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 33,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME KIND ZONE ↑ ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 121,
+        "text": "NAME",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 169,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 221,
+        "text": "ZONE ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 0,
+        "text": "Zone ↑",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Name"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current i",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 13.26,
+        "sample": "Zone"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 9,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Architecture reviews"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "3-row-menu-bottom-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": {
+      "bottom": 875,
+      "cut_px": 0,
+      "right": 491,
+      "text": "Delete Delete",
+      "top": 847,
+      "vh": 900
+    },
+    "menu_last": {
+      "bottom": 875,
+      "cut_px": 0,
+      "right": 491,
+      "text": "Delete Delete",
+      "top": 847,
+      "vh": 900
+    },
+    "menu_opened": true,
+    "menu_row_bottom": 730,
+    "menu_row_y": 688,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1091,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 9 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "is-fold",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "3-row-menu-bottom-393": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 9 ZONES",
+    "fold_lines_visible": 33,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": {
+      "bottom": 841,
+      "cut_px": 0,
+      "right": 382,
+      "text": "Delete Delete",
+      "top": 813,
+      "vh": 852
+    },
+    "menu_last": {
+      "bottom": 841,
+      "cut_px": 0,
+      "right": 382,
+      "text": "Delete Delete",
+      "top": 813,
+      "vh": 852
+    },
+    "menu_opened": true,
+    "menu_row_bottom": 702,
+    "menu_row_y": 624,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "NOTES"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-open",
+        "count": 10,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 13,
+        "ratio": 14.84,
+        "sample": "Payments"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "4-one-shown-1440": {
+    "cells_past_right_edge": 0,
+    "census": "ALL1 ITEM",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 691,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 691,
+        "right": 826,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 826,
+        "right": 1042,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1042,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 4.99,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 725,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 859,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1115,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "1 SHOWN OF 1",
+    "text_styles": [
+      {
+        "cls": "btn btn--ghost btn--sm desk-list-open desk-surface",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ALL"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "1 ITEM"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "1 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "PAYMENTS"
+      },
+      {
+        "cls": "is-fold",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "NOTE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "4-one-shown-393": {
+    "cells_past_right_edge": 0,
+    "census": "ALL1 ITEM",
+    "fold_lines_visible": 1,
+    "h_overflow": true,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 4.99,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "1 SHOWN OF 1",
+    "text_styles": [
+      {
+        "cls": "btn btn--ghost btn--sm desk-list-open desk-surface",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(188,128,88)",
+        "px": 12,
+        "ratio": 4.99,
+        "sample": "ALL"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "1 ITEM"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "1 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-narrow-on",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "PAYMENTS"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "NOTE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "5-selection-zone-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 5.74,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "selection": {
+      "end": 8,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 8,
+      "painted": "rgb(168,110,74)",
+      "selected_text_vs_selection": 4.56,
+      "selection_bg": "rgb(168, 110, 74)",
+      "selection_ink": "rgb(14, 15, 19)",
+      "selection_vs_field": 4.26,
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1091,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 1,
+        "ground": "rgb(36,40,51)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 5.74,
+        "sample": "Attention"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "is-fold",
+        "count": 30,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 17,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "5-selection-zone-393": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 33,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "selection": {
+      "end": 8,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 8,
+      "painted": "rgb(168,110,74)",
+      "selected_text_vs_selection": 4.56,
+      "selection_bg": "rgb(168, 110, 74)",
+      "selection_ink": "rgb(14, 15, 19)",
+      "selection_vs_field": 4.26,
+      "selector": ".desk-listmode input.desk-zone-rename",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-narrow-on",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 9,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "6-selection-palette-1440": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 0,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 179,
+        "right": 227,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 227,
+        "right": 952,
+        "text": "NAME ↑"
+      },
+      {
+        "in_view": true,
+        "left": 952,
+        "right": 1058,
+        "text": "KIND"
+      },
+      {
+        "in_view": true,
+        "left": 1058,
+        "right": 1163,
+        "text": "ZONE"
+      },
+      {
+        "in_view": true,
+        "left": 1163,
+        "right": 1261,
+        "text": "ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "selection": {
+      "end": 14,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 14,
+      "painted": "rgb(168,110,74)",
+      "selected_text_vs_selection": 4.56,
+      "selection_bg": "rgb(168, 110, 74)",
+      "selection_ink": "rgb(14, 15, 19)",
+      "selection_vs_field": 4.26,
+      "selector": "[aria-controls=desk-palette-listbox]",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 277,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 986,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1091,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 1237,
+        "text": "ATTENTION",
+        "visible": true
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 2,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "is-fold",
+        "count": 31,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 18,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 900,
+    "vw": 1440
+  },
+  "6-selection-palette-393": {
+    "cells_past_right_edge": 0,
+    "census": "24 ITEMS · 10 ZONES",
+    "fold_lines_visible": 34,
+    "h_overflow": false,
+    "headers": [
+      {
+        "in_view": true,
+        "left": 19,
+        "right": 67,
+        "text": ""
+      },
+      {
+        "in_view": true,
+        "left": 67,
+        "right": 374,
+        "text": "NAME ↑ KIND ZONE ATTENTION"
+      }
+    ],
+    "menu_delete": null,
+    "menu_last": null,
+    "min_text_ratio": 6.42,
+    "page_errors": [],
+    "raw_buttons_in_list": [],
+    "selection": {
+      "end": 14,
+      "field_bg": "rgb(21,23,29)",
+      "focused": true,
+      "length": 14,
+      "painted": "rgb(168,110,74)",
+      "selected_text_vs_selection": 4.56,
+      "selection_bg": "rgb(168, 110, 74)",
+      "selection_ink": "rgb(14, 15, 19)",
+      "selection_vs_field": 4.26,
+      "selector": "[aria-controls=desk-palette-listbox]",
+      "start": 0,
+      "unselected_text_vs_field": 16.14
+    },
+    "small_text": [],
+    "small_text_count": 0,
+    "sort_verbs": [
+      {
+        "library": true,
+        "pressed": "true",
+        "right": 125,
+        "text": "NAME ↑",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 173,
+        "text": "KIND",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 221,
+        "text": "ZONE",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 296,
+        "text": "ATTENTION",
+        "visible": true
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Kind",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Zone",
+        "visible": false
+      },
+      {
+        "library": true,
+        "pressed": "false",
+        "right": 0,
+        "text": "Attention",
+        "visible": false
+      }
+    ],
+    "status": "24 SHOWN OF 24",
+    "text_styles": [
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 ITEMS · 10 ZONES"
+      },
+      {
+        "cls": "desk-list-status",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "24 SHOWN"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-narrow-on",
+        "count": 3,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "Kind"
+      },
+      {
+        "cls": "",
+        "count": 1,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONES"
+      },
+      {
+        "cls": "desk-list-fold-token",
+        "count": 16,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(155,162,176)",
+        "px": 12,
+        "ratio": 6.42,
+        "sample": "ZONE"
+      },
+      {
+        "cls": "btn btn--ghost btn--sm desk-sortable-table-sort is-current",
+        "count": 10,
+        "ground": "rgb(28,31,39)",
+        "ink": "rgb(242,243,245)",
+        "px": 12,
+        "ratio": 14.84,
+        "sample": "Name"
+      }
+    ],
+    "vh": 852,
+    "vw": 393
+  },
+  "_home_is_isolated": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-04-canvas-i0h2phkn",
+  "_seed": {
+    "filed": "note:note_3dc14ed02df8 -> Payments",
+    "notes": 7,
+    "zones": 3
+  }
+}

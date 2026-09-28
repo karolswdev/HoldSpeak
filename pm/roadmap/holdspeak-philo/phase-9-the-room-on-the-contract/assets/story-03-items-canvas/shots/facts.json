@@ -1,0 +1,2373 @@
+{
+  "_seed": {
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-03-canvas-mj2gbnvk",
+    "today": "2026-09-27",
+    "projects": {
+      "Payments ledger cutover": [
+        200,
+        "proj-b0f9676e1a47"
+      ],
+      "Vendor review": [
+        200,
+        "proj-7d93ad994421"
+      ]
+    },
+    "items": [
+      {
+        "status": 200,
+        "id": "pitem_ec6c5e9b1d574ec1bbdeeba6c6095f24",
+        "title": "Cutover rehearsal",
+        "due_at": "2026-09-20"
+      },
+      {
+        "status": 200,
+        "id": "pitem_e1c23daf04f940cfa64a335ef984a4a0",
+        "title": "Old ledger freeze slips",
+        "due_at": null
+      },
+      {
+        "status": 200,
+        "id": "pitem_799c562b897f47c99941bd3364f18690",
+        "title": "Ledger go-live",
+        "due_at": "2026-10-11"
+      }
+    ],
+    "update": {
+      "draft": 200,
+      "publish": 200,
+      "id": "pupd_5717c1a2e9364775a787db54f8a178f9",
+      "lifecycle": "published"
+    },
+    "transition": {
+      "status": 200,
+      "lifecycle": "reached"
+    }
+  },
+  "0-today-1440": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:06 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": []
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1a-late-first-view-1440": {
+    "window": true,
+    "headline": "1 needs you",
+    "head_chips": [
+      "● AT RISK",
+      "1 MILESTONE LATE"
+    ],
+    "needs_you": [
+      "▣ Cutover rehearsal MILESTONE · 7 DAYS LATE"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "● Cutover rehearsal MILESTONE DUE SEP 20 7 DAYS LATE",
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:06 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "1 MILESTONE LATE",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        },
+        {
+          "text": "MILESTONE · 7 DAYS LATE",
+          "fs": 11,
+          "cls": "surface-token room-why-token"
+        },
+        {
+          "text": "SUN 20:06",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● AT RISK",
+        "proposal": false,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "1 MILESTONE LATE",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MILESTONE · 7 DAYS LATE",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "●",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "7 DAYS LATE",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:06",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1b-late-items-1440": {
+    "window": true,
+    "headline": "1 needs you",
+    "head_chips": [
+      "● AT RISK",
+      "1 MILESTONE LATE"
+    ],
+    "needs_you": [
+      "▣ Cutover rehearsal MILESTONE · 7 DAYS LATE"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "● Cutover rehearsal MILESTONE DUE SEP 20 7 DAYS LATE",
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:06 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "1 MILESTONE LATE",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        },
+        {
+          "text": "MILESTONE · 7 DAYS LATE",
+          "fs": 11,
+          "cls": "surface-token room-why-token"
+        },
+        {
+          "text": "SUN 20:06",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● AT RISK",
+        "proposal": false,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "1 MILESTONE LATE",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MILESTONE · 7 DAYS LATE",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "●",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "7 DAYS LATE",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:06",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "3a-empty-absent-1440": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:06 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": []
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "3b-empty-bare-head-1440": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS",
+    "items_section_present": true,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:06 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:06",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:06",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "0-today-393": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:06",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:06",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1a-late-first-view-393": {
+    "window": true,
+    "headline": "1 needs you",
+    "head_chips": [
+      "● AT RISK",
+      "1 MILESTONE LATE"
+    ],
+    "needs_you": [
+      "▣ Cutover rehearsal MILESTONE · 7 DAYS LATE"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "● Cutover rehearsal MILESTONE DUE SEP 20 7 DAYS LATE",
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "1 MILESTONE LATE",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        },
+        {
+          "text": "MILESTONE · 7 DAYS LATE",
+          "fs": 11,
+          "cls": "surface-token room-why-token"
+        },
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● AT RISK",
+        "proposal": false,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "1 MILESTONE LATE",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MILESTONE · 7 DAYS LATE",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "●",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "7 DAYS LATE",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1b-late-items-393": {
+    "window": true,
+    "headline": "1 needs you",
+    "head_chips": [
+      "● AT RISK",
+      "1 MILESTONE LATE"
+    ],
+    "needs_you": [
+      "▣ Cutover rehearsal MILESTONE · 7 DAYS LATE"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "● Cutover rehearsal MILESTONE DUE SEP 20 7 DAYS LATE",
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "1 MILESTONE LATE",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        },
+        {
+          "text": "MILESTONE · 7 DAYS LATE",
+          "fs": 11,
+          "cls": "surface-token room-why-token"
+        },
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● AT RISK",
+        "proposal": false,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "1 MILESTONE LATE",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MILESTONE · 7 DAYS LATE",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "●",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "7 DAYS LATE",
+        "proposal": true,
+        "ratio": 6.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "3a-empty-absent-393": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:06",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:06",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "3b-empty-bare-head-393": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS",
+    "items_section_present": true,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "2a-reached-first-view-1440": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11",
+      "✓ Cutover rehearsal MILESTONE DUE SEP 20 REACHED"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REACHED",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "2b-reached-items-1440": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11",
+      "✓ Cutover rehearsal MILESTONE DUE SEP 20 REACHED"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REACHED",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "2a-reached-first-view-393": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11",
+      "✓ Cutover rehearsal MILESTONE DUE SEP 20 REACHED"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REACHED",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "2b-reached-items-393": {
+    "window": true,
+    "headline": "Nothing needs you",
+    "head_chips": [
+      "● ON TRACK"
+    ],
+    "needs_you": [
+      "Nothing needs you"
+    ],
+    "items_head": "ITEMS 3",
+    "items_section_present": true,
+    "item_rows": [
+      "⚠ Old ledger freeze slips RISK LIKELIHOOD HIGH IMPACT HIGH",
+      "○ Ledger go-live MILESTONE DUE OCT 11",
+      "✓ Cutover rehearsal MILESTONE DUE SEP 20 REACHED"
+    ],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "READ 20:07 Refresh",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "SUN 20:07",
+          "fs": 11,
+          "cls": "surface-token room-chip-faint"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "● ON TRACK",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "⚠",
+        "proposal": true,
+        "ratio": 11.35,
+        "fs": 12
+      },
+      {
+        "text": "RISK",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "LIKELIHOOD HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "IMPACT HIGH",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "○",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE OCT 11",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "MILESTONE",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DUE SEP 20",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REACHED",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "●",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SUN 20:07",
+        "proposal": false,
+        "ratio": 5.8,
+        "fs": 11
+      },
+      {
+        "text": "MODEL · NOT SET",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "_browser_errors": [
+    "393: Back did not return to the list; Escape used"
+  ]
+}

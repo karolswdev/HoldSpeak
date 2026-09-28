@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk list canvas</title>
+<style>
+/* Product token values (web/src/styles/tokens.css). */
+:root {
+  --bg: #0e0f13; --surface-1: #15171d; --surface-2: #1c1f27; --border: #2a2e3e;
+  --text: #f2f3f5; --text-muted: #9ba2b0; --accent: #a86e4a; --accent-hover: #bc8058;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+:root:not([data-theme="light"]) { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font-ui); }
+main { max-width: 1400px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font: 600 20px var(--font-ui); margin: 0 0 4px; }
+h2 { font: 600 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 32px 0 8px; }
+p, li { color: var(--text-muted); font-size: 13px; }
+table { border-collapse: collapse; font-size: 13px; margin: 8px 0; width: 100%; max-width: 880px; }
+th, td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { font: 600 12px var(--font-mono); color: var(--text-muted); letter-spacing: .05em; }
+b { color: var(--text); }
+.board { border-top: 1px solid var(--border); padding-top: 8px; }
+.pair { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+figure { margin: 0; }
+figure.w1440 { flex: 1 1 640px; min-width: 0; }
+figure.w393 { flex: 0 1 300px; }
+figure img { width: 100%; height: auto; border: 1px solid var(--border); display: block; background: var(--surface-1); }
+figcaption { font: 600 12px var(--font-mono); color: var(--text-muted); margin-top: 4px; }
+ol li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Desk list canvas (PHILO-9-04)</h1>
+<p>DRAFT for the owner's ratification. The product app on a real hub (isolated HOME); board 0 is today, boards 1-6 swap three species for marked proposal copies. Numbers: <code>shots/facts.json</code>; details: <code>README.md</code>.</p>
+
+<h2>Questions</h2>
+<ol>
+<li><b>The selection token: the accent ground with the page ink, desk-wide?</b> 4.26:1 against the field (today 1.14:1); the selected text 4.56:1. Recommended: yes.</li>
+<li><b>At 393, fold Kind, Zone and Attention into a second line under the name, their sort Buttons in the Name header?</b> Other options: scroll the table sideways; drop Zone and Attention at 393. Recommended: the fold line.</li>
+<li><b>The menu species keeps its panel inside the viewport, for every desk menu?</b> Recommended: yes.</li>
+</ol>
+
+<h2>Measurements</h2>
+<table>
+<tr><th>Measure</th><th>Today 1440</th><th>Today 393</th><th>Proposal 1440</th><th>Proposal 393</th></tr>
+<tr><td>Text under 12 px in the list</td><td>41</td><td>30</td><td>0</td><td>0</td></tr>
+<tr><td>Raw sort buttons</td><td>4</td><td>4</td><td>0</td><td>0</td></tr>
+<tr><td>Cells past the right edge</td><td>0</td><td>82</td><td>0</td><td>0</td></tr>
+<tr><td>Row menu Delete bottom / viewport</td><td>875 / 900</td><td>867 / 852 (cut 15)</td><td>875 / 900</td><td>841 / 852</td></tr>
+<tr><td>Selection vs field</td><td>1.14:1</td><td>1.14:1</td><td>4.26:1</td><td>4.26:1</td></tr>
+<tr><td>Selected text vs selection</td><td>14.21:1</td><td>14.21:1</td><td>4.56:1</td><td>4.56:1</td></tr>
+<tr><td>Horizontal overflow</td><td>no</td><td>no</td><td>no</td><td>board 4 only (unknown source)</td></tr>
+</table>
+
+<section class="board"><h2>0 · Today: the list</h2><p>"24 SHOWNS OF 24"; at 393 only NAME shows.</p>
+<div class="pair"><figure class="w1440"><img src="shots/0-today-list-1440.png" alt="Today, the list at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/0-today-list-393.png" alt="Today, the list at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>0 · Today: the row menu near the bottom</h2><p>At 393 Delete is cut 15 px.</p>
+<div class="pair"><figure class="w1440"><img src="shots/0-today-row-menu-1440.png" alt="Today, the row menu at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/0-today-row-menu-393.png" alt="Today, the row menu at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>0 · Today: the selection (zone name field)</h2><p>1.14:1: the selected name looks unselected.</p>
+<div class="pair"><figure class="w1440"><img src="shots/0-today-selection-zone-field-1440.png" alt="Today, the selected zone name field at 1440" loading="lazy"><figcaption>1440 (field)</figcaption></figure><figure class="w393"><img src="shots/0-today-selection-zone-field-393.png" alt="Today, the selected zone name field at 393" loading="lazy"><figcaption>393 (field)</figcaption></figure></div></section>
+
+<section class="board"><h2>0 · Today: the selection (palette)</h2>
+<div class="pair"><figure class="w1440"><img src="shots/0-today-selection-palette-1440.png" alt="Today, the palette selection at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/0-today-selection-palette-393.png" alt="Today, the palette selection at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>1 · The list</h2><p>"24 SHOWN OF 24"; 12 px; at 393 the fold line and the sort Buttons in the Name header.</p>
+<div class="pair"><figure class="w1440"><img src="shots/1-list-1440.png" alt="The proposed list at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/1-list-393.png" alt="The proposed list at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>2 · Sorted by Zone</h2><p>The pressed sort Button shows ↑.</p>
+<div class="pair"><figure class="w1440"><img src="shots/2-sorted-by-zone-1440.png" alt="Sorted by zone at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/2-sorted-by-zone-393.png" alt="Sorted by zone at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>3 · The row menu near the bottom</h2><p>The panel stays in view: Delete bottom 841 of 852 at 393.</p>
+<div class="pair"><figure class="w1440"><img src="shots/3-row-menu-bottom-1440.png" alt="The row menu at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/3-row-menu-bottom-393.png" alt="The row menu at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>4 · One shown</h2><p>Dive into Payments: "1 SHOWN OF 1".</p>
+<div class="pair"><figure class="w1440"><img src="shots/4-one-shown-1440.png" alt="One shown at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/4-one-shown-393.png" alt="One shown at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+
+<section class="board"><h2>5 · The selection (zone name field)</h2><p>The accent ground, the page ink: 4.26:1 and 4.56:1.</p>
+<div class="pair"><figure class="w1440"><img src="shots/5-selection-zone-1440.png" alt="Proposed selection in the zone name field at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/5-selection-zone-393.png" alt="Proposed selection in the zone name field at 393" loading="lazy"><figcaption>393</figcaption></figure></div>
+<div class="pair"><figure class="w1440"><img src="shots/5-selection-zone-field-1440.png" alt="The field, close, at 1440" loading="lazy"><figcaption>1440 (field)</figcaption></figure><figure class="w393"><img src="shots/5-selection-zone-field-393.png" alt="The field, close, at 393" loading="lazy"><figcaption>393 (field)</figcaption></figure></div></section>
+
+<section class="board"><h2>6 · The selection (palette)</h2>
+<div class="pair"><figure class="w1440"><img src="shots/6-selection-palette-1440.png" alt="Proposed selection in the palette at 1440" loading="lazy"><figcaption>1440</figcaption></figure><figure class="w393"><img src="shots/6-selection-palette-393.png" alt="Proposed selection in the palette at 393" loading="lazy"><figcaption>393</figcaption></figure></div></section>
+</main>
+</body>
+</html>

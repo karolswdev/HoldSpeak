@@ -1,0 +1,2876 @@
+{
+  "_seed": {
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-03-canvas-mj2gbnvk",
+    "today": "2026-09-27",
+    "projects": {
+      "Payments ledger cutover": [
+        200,
+        "proj-b0f9676e1a47"
+      ],
+      "Vendor review": [
+        200,
+        "proj-7d93ad994421"
+      ]
+    },
+    "items": [
+      {
+        "status": 200,
+        "id": "pitem_ec6c5e9b1d574ec1bbdeeba6c6095f24",
+        "title": "Cutover rehearsal",
+        "due_at": "2026-09-20"
+      },
+      {
+        "status": 200,
+        "id": "pitem_e1c23daf04f940cfa64a335ef984a4a0",
+        "title": "Old ledger freeze slips",
+        "due_at": null
+      },
+      {
+        "status": 200,
+        "id": "pitem_799c562b897f47c99941bd3364f18690",
+        "title": "Ledger go-live",
+        "due_at": "2026-10-11"
+      }
+    ],
+    "update": {
+      "draft": 200,
+      "publish": 200,
+      "id": "pupd_5717c1a2e9364775a787db54f8a178f9",
+      "lifecycle": "published"
+    },
+    "transition": {
+      "status": 200,
+      "lifecycle": "reached"
+    }
+  },
+  "0a-today-list-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "DRAFTS 1",
+    "update_rows": [
+      "1m ago E PUBLISHEDRev 11m agoDeterministic draft DETERMINISTIC ›"
+    ],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 1",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Published",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": false,
+        "ratio": 9.32,
+        "fs": 11
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "0b-today-published-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1-after-copy-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copied",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copied",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 750,
+            "y": 200,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "clipboard_head": "## Progress\n\n- Risk [high]: Old ledger freeze slips -- open\n- Milestone: Cutover"
+  },
+  "2-returned-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 750,
+            "y": 200,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "3-to-typed-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "Priya",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 750,
+            "y": 200,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "4-pending-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": true,
+    "deliver_to": {
+      "value": "Priya",
+      "disabled": true
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 142.8,
+          "h": 26
+        },
+        "points": [
+          {
+            "x": 738,
+            "y": 201,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 667,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 667,
+            "y": 213,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 213,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "5-delivered-once-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [
+      "✓ Priya SEP 27 20:07"
+    ],
+    "delivery_head": "DELIVERED 1",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:07",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 750,
+            "y": 200,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "calls_after_double_click": [
+      {
+        "command_id": "c2e49645-76e5-4772-b5af-a67dc3d157f3",
+        "delivered_to": "Priya",
+        "status": 200
+      }
+    ]
+  },
+  "6-mistake-kept-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [
+      "✓ Priya SEP 27 20:07",
+      "✓ Tomas SEP 27 20:07"
+    ],
+    "delivery_head": "DELIVERED 2",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:07",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:07",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 750,
+            "y": 200,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 189,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 691,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 808,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "calls": [
+      {
+        "command_id": "c2e49645-76e5-4772-b5af-a67dc3d157f3",
+        "delivered_to": "Priya",
+        "status": 200
+      },
+      {
+        "command_id": "fdb7ad07-9e9a-43aa-bf25-9892e88c7628",
+        "delivered_to": "Tomas",
+        "status": 200
+      }
+    ]
+  },
+  "7a-list-chip-count-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "UPDATES 1",
+    "update_rows": [
+      "1m ago ▤ PUBLISHED REV 1 ✓ DELIVERED ×2 DETERMINISTIC ›"
+    ],
+    "delivered_chips": [
+      "✓ DELIVERED ×2"
+    ],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 1",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓ DELIVERED ×2",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "7b-list-chip-latest-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "UPDATES 1",
+    "update_rows": [
+      "1m ago ▤ PUBLISHED REV 1 ✓ DELIVERED SEP 27 20:07 · TOMAS DETERMINISTIC ›"
+    ],
+    "delivered_chips": [
+      "✓ DELIVERED SEP 27 20:07 · TOMAS"
+    ],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 1",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓ DELIVERED SEP 27 20:07 · TOMAS",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "8-draft-no-mark-1440": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": "Copy",
+    "lifecycle_band": "○ DRAFT DETERMINISTIC REV 1",
+    "footer": "UPDATE DRAFT · DETERMINISTIC Save Regenerate Copy Publish",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "B",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "I",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "U",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "H1",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "H2",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "H3",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "List",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "1.",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "</>",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "Link",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "Quote",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "○ DRAFT",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "0a-today-list-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "DRAFTS 2",
+    "update_rows": [
+      "just now E DRAFTRev 1just nowDeterministic draft DETERMINISTIC ›",
+      "2m ago E PUBLISHEDRev 12m agoDeterministic draft DETERMINISTIC ›"
+    ],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 2",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Draft",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        },
+        {
+          "text": "Published",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "DRAFT",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": false,
+        "ratio": 9.32,
+        "fs": 11
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "0b-today-published-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "1-after-copy-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copied",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copied",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 319,
+            "y": 232,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "clipboard_head": "## Progress\n\n- Risk [high]: Old ledger freeze slips -- open\n- Milestone: Cutover"
+  },
+  "2-returned-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 319,
+            "y": 232,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "3-to-typed-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "Priya",
+      "disabled": false
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 319,
+            "y": 232,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "4-pending-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": true,
+    "deliver_to": {
+      "value": "Priya",
+      "disabled": true
+    },
+    "delivery_rows": [],
+    "delivery_head": "DELIVERY",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 142.8,
+          "h": 26
+        },
+        "points": [
+          {
+            "x": 307,
+            "y": 233,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 236,
+            "y": 212,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 212,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 236,
+            "y": 254,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 254,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ]
+  },
+  "5-delivered-once-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [
+      "✓ Priya SEP 27 20:08"
+    ],
+    "delivery_head": "DELIVERED 1",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:08",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 319,
+            "y": 232,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "calls_after_double_click": [
+      {
+        "command_id": "0a9abdf3-449a-464b-a9e1-5b761dd7f0af",
+        "delivered_to": "Priya",
+        "status": 200
+      }
+    ]
+  },
+  "6-mistake-kept-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": "Mark delivered",
+    "deliver_verb_busy": false,
+    "deliver_to": {
+      "value": "",
+      "disabled": false
+    },
+    "delivery_rows": [
+      "✓ Priya SEP 27 20:08",
+      "✓ Tomas SEP 27 20:08"
+    ],
+    "delivery_head": "DELIVERED 2",
+    "copy_verb": "Copy",
+    "lifecycle_band": "✓ PUBLISHED DETERMINISTIC REV 1",
+    "footer": "UPDATE PUBLISHED · DETERMINISTIC Regenerate Copy",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Published updates are read-only",
+          "fs": 11,
+          "cls": "surface-token"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "✓ PUBLISHED",
+        "proposal": false,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:08",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "SEP 27 20:08",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "PUBLISHED UPDATES ARE READ-ONLY",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      }
+    ],
+    "raw_buttons": [
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned",
+      "Ledger go-live -- planned",
+      "Old ledger freeze slips -- ope",
+      "Cutover rehearsal -- planned,…",
+      "Ledger go-live -- planned, due"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": [
+      {
+        "text": "Mark delivered",
+        "face": {
+          "w": 118.8,
+          "h": 24
+        },
+        "points": [
+          {
+            "x": 319,
+            "y": 232,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 211,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 260,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          },
+          {
+            "x": 377,
+            "y": 253,
+            "owned": true,
+            "hit": "btn"
+          }
+        ],
+        "owned": true
+      }
+    ],
+    "calls": [
+      {
+        "command_id": "0a9abdf3-449a-464b-a9e1-5b761dd7f0af",
+        "delivered_to": "Priya",
+        "status": 200
+      },
+      {
+        "command_id": "03199bf0-60ed-490c-8861-ec3595d037b2",
+        "delivered_to": "Tomas",
+        "status": 200
+      }
+    ]
+  },
+  "7a-list-chip-count-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "UPDATES 2",
+    "update_rows": [
+      "just now ▤ DRAFT REV 1 DETERMINISTIC ›",
+      "2m ago ▤ PUBLISHED REV 1 ✓ DELIVERED ×2 DETERMINISTIC ›"
+    ],
+    "delivered_chips": [
+      "✓ DELIVERED ×2"
+    ],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 2",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        },
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "DRAFT",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓ DELIVERED ×2",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "7b-list-chip-latest-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": "UPDATES 2",
+    "update_rows": [
+      "just now ▤ DRAFT REV 1 DETERMINISTIC ›",
+      "2m ago ▤ PUBLISHED REV 1 ✓ DELIVERED SEP 27 20:08 · TOMAS DETERMINISTIC ›"
+    ],
+    "delivered_chips": [
+      "✓ DELIVERED SEP 27 20:08 · TOMAS"
+    ],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": null,
+    "lifecycle_band": null,
+    "footer": "UPDATES 2",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        },
+        {
+          "text": "deterministic",
+          "fs": 10,
+          "cls": "surface-provenance-source"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "LOCAL + CLOUD",
+        "proposal": false,
+        "ratio": 4.29,
+        "fs": 12
+      },
+      {
+        "text": "DRAFT",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      },
+      {
+        "text": "PUBLISHED",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "REV 1",
+        "proposal": true,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "✓ DELIVERED SEP 27 20:08 · TOMAS",
+        "proposal": true,
+        "ratio": 9.85,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 10
+      }
+    ],
+    "raw_buttons": [],
+    "h_overflow": false,
+    "body_overflow_x": false,
+    "pointer": []
+  },
+  "8-draft-no-mark-393": {
+    "window": true,
+    "headline": null,
+    "head_chips": [],
+    "needs_you": [],
+    "items_head": null,
+    "items_section_present": false,
+    "item_rows": [],
+    "add_controls_in_items": 0,
+    "update_list_head": null,
+    "update_rows": [],
+    "delivered_chips": [],
+    "deliver_verb": null,
+    "deliver_verb_busy": null,
+    "deliver_to": null,
+    "delivery_rows": [],
+    "delivery_head": null,
+    "copy_verb": "Copy",
+    "lifecycle_band": "○ DRAFT DETERMINISTIC REV 1",
+    "footer": "UPDATE DRAFT · DETERMINISTIC Save Regenerate Copy Publish",
+    "words_send": false,
+    "egress_badges": [],
+    "modal": false,
+    "small_text": {
+      "proposal": [],
+      "inherited": [
+        {
+          "text": "Deterministic",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "Rev",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "1",
+          "fs": 11,
+          "cls": "surface-token"
+        },
+        {
+          "text": "B",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "I",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "U",
+          "fs": 11,
+          "cls": ""
+        },
+        {
+          "text": "H1",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "H2",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "H3",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "List",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "1.",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "</>",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "Link",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        },
+        {
+          "text": "Quote",
+          "fs": 11,
+          "cls": "btn--chrome desk-chip quiet"
+        }
+      ]
+    },
+    "chips": [
+      {
+        "text": "○ DRAFT",
+        "proposal": false,
+        "ratio": 7.39,
+        "fs": 12
+      },
+      {
+        "text": "DETERMINISTIC",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "REV 1",
+        "proposal": false,
+        "ratio": 6.99,
+        "fs": 11
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "OBSERVATION",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      },
+      {
+        "text": "✓ SUPPORTED",
+        "proposal": false,
+        "ratio": 9.38,
+        "fs": 12
+      },
+      {
+        "text": "○ UNREVIEWED",
+        "proposal": false,
+        "ratio": 7.03,
+        "fs": 12
+      }
+    ],
+    "raw_buttons": [
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM",
+      "ITEM"
+    ],
+    "h_overflow": false,
+    "body_overflow_x": true,
+    "pointer": []
+  },
+  "_browser_errors": [
+    "393: Back did not return to the list; Escape used"
+  ]
+}

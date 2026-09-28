@@ -1,0 +1,24 @@
+/* PHILO-9-03 canvas only: layout for the two proposed lines. Every species
+ * style (StringGadget, Button, StateChip, SurfaceLedger) is the product's. */
+.desk-next .p9-deliver-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.desk-next .p9-deliver-to {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+}
+.desk-next .p9-deliver-to .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .p9-update-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,0 +1,117 @@
+/* PHILO-9-04 canvas — the PROPOSED library CSS (not built).
+ *
+ * Each block names the product file it would change. In the build these are
+ * edits of the named rules, not new overrides; here they carry a `:root body`
+ * prefix only so they win over the product sheet in the dev server's style
+ * order. The selection token lands in web/src/styles/tokens.css + global.css,
+ * the rest in web/src/desk/components/list-view.css (the list and the one
+ * sortable-table species).
+ */
+
+/* 1. The selection token, desk-wide (tokens.css; global.css:68-71).
+ * Today: `::selection { background: var(--accent-soft) }` = rgba(168,110,74,.12),
+ * which paints 1.13:1 against the field. Proposed: the signal accent as the
+ * ground, the page ink as the text. */
+:root {
+  --selection-bg: var(--accent);
+  --selection-ink: var(--bg);
+}
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-ink);
+}
+
+/* 2. The 12 px floor in the list (list-view.css:61, :76, and the sortable
+ * table species' 10 / 11 px rules). The token is the library's readable
+ * floor, --desk-surface-label-size (12 px, tokens.css:301). */
+:root body .desk-next .desk-list-band,
+:root body .desk-next .desk-list-status,
+:root body .desk-list-census,
+:root body .desk-sortable-table thead th,
+:root body .desk-sortable-table-group th,
+:root body .desk-next .desk-list-face .surface-ledger-cell,
+:root body .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(3),
+:root body .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(4),
+:root body .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(5),
+:root body .desk-next .desk-list-mark {
+  font-size: var(--desk-surface-label-size);
+}
+/* The census's ALL verb (a Button in the census): 12 px, and the ember's
+ * lighter step, since --accent on --surface-2 is 3.92:1 (under 4.5). */
+:root body .desk-next .desk-list-face .desk-surface {
+  font-size: var(--desk-surface-label-size);
+  color: var(--accent-hover);
+}
+
+/* 3. The sort headers are the library Button (ghost, dense); the th keeps
+ * the table's mono caps and the Button takes them. */
+:root body .desk-sortable-table-sorts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+}
+:root body .desk-sortable-table thead .desk-sortable-table-sort.btn {
+  margin-inline-start: -8px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--text-muted);
+}
+:root body .desk-sortable-table thead .desk-sortable-table-sort.btn.is-current {
+  color: var(--text);
+}
+:root body .desk-sortable-table .is-narrow-only {
+  display: none;
+}
+
+/* 4. The fold at <= 720 px: Kind, Zone and Attention leave the grid and
+ * ride a second line inside the name Button (one 44 px target holds both
+ * lines); their sort Buttons join the Name header. */
+:root body .desk-list-fold {
+  display: none;
+}
+@media (max-width: 720px) {
+  :root body .desk-sortable-table th.is-fold,
+  :root body .desk-sortable-table td.is-fold {
+    display: none;
+  }
+  :root body .desk-sortable-table .is-narrow-only {
+    display: inline-flex;
+  }
+  :root body .desk-sortable-table thead .desk-sortable-table-sort.btn {
+    margin-inline-start: 0;
+  }
+  :root body .desk-next .desk-list-sortable .desk-sortable-table td:nth-child(2),
+  :root body .desk-next .desk-list-sortable .desk-sortable-table th:nth-child(2) {
+    width: 100%;
+    white-space: normal;
+  }
+  :root body .desk-next .desk-list-sortable .desk-sortable-table-open {
+    display: grid;
+    justify-items: start;
+    justify-content: start;
+    white-space: normal;
+    text-align: left;
+    height: auto;
+    row-gap: 2px;
+  }
+  :root body .desk-next .desk-list-sortable .desk-list-name-cell {
+    grid-template-columns: auto 1fr;
+    column-gap: 5px;
+  }
+  :root body .desk-list-fold {
+    display: flex;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    color: var(--text-muted);
+    font: 600 var(--desk-surface-label-size) var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+  :root body .desk-list-fold-token + .desk-list-fold-token::before {
+    content: "·";
+    margin-inline-end: 6px;
+    color: var(--text-faint);
+  }
+}
