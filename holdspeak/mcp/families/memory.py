@@ -13,7 +13,7 @@ from holdspeak.services.memory_service import MemoryService
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "memory.search",
-        "description": "Search the long-horizon memory store. Results are filtered by the principal's read permission.",
+        "description": "Search the words in your memory: decisions, meetings, notes, threads, actions and the milestones and risks inside projects. It returns those records, never a project itself: projects are listed by project.list. Results are filtered by the principal's read permission.",
         "inputSchema": {
             "type": "object",
             "properties": {

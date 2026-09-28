@@ -364,6 +364,13 @@ def _codex_mcp_calls(stage_dir: Path) -> list[dict[str, Any]]:
             result = {"error": item.get("error")}
         else:
             result = None
+        # PHILO-9-06: Codex (0.155) records a server answer with
+        # ``isError: true`` as item ``status: "failed"`` and omits the flag;
+        # the canonical projection would read the omission as false and no
+        # refused call could pair with its own server row.
+        if item.get("status") == "failed" and isinstance(result, dict) \
+                and "isError" not in result and "error" not in result:
+            result = {**result, "isError": True}
         event_id = item.get("id") or item.get("call_id") or event.get("id")
         calls.append({
             "tool": item.get("tool"),

@@ -1,0 +1,37 @@
+{
+  "blocked": [],
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "face": {
+    "grant_shots": [
+      "shots/grant-archived-live-1440.png",
+      "shots/grant-archived-live-393.png",
+      "shots/grant-stopped-receipt-1440.png",
+      "shots/grant-stopped-after-393.png"
+    ],
+    "room_shots": [
+      "shots/room-head-1440.png",
+      "shots/room-items-1440.png",
+      "shots/room-receipts-1-1440.png",
+      "shots/room-receipts-2-1440.png",
+      "shots/room-receipts-3-1440.png",
+      "shots/updates-list-1440.png",
+      "shots/update-delivered-1440.png",
+      "shots/steward-run-1-1440.png",
+      "shots/steward-run-2-1440.png",
+      "shots/room-head-393.png",
+      "shots/room-items-393.png",
+      "shots/room-receipts-1-393.png",
+      "shots/room-receipts-2-393.png",
+      "shots/room-receipts-3-393.png",
+      "shots/room-receipts-4-393.png",
+      "shots/updates-list-393.png",
+      "shots/update-delivered-393.png",
+      "shots/steward-run-1-393.png",
+      "shots/steward-run-2-393.png"
+    ]
+  },
+  "finished_at": "2026-09-28T17:29:16.540795+00:00",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "outcome": "completed",
+  "started_at": "2026-09-28T17:26:21.873935+00:00"
+}

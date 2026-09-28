@@ -100,6 +100,15 @@ export function receiptLabel(event: {
     return receiptFace(event.outcome).state === "success" ? "MARKED DELIVERED" : "MARK DELIVERED";
   }
 
+  // PHILO-9-06: the owner's project grant, in the grant row's act words
+  // (SettingsCore PROJECT_GRANT_WORDS actAllow / actStop).
+  if (op === "delegation.grant") {
+    return "ALLOW RUN AND PUBLISH";
+  }
+  if (op === "delegation.revoke") {
+    return "STOP RUN AND PUBLISH";
+  }
+
   // Reads: list_*, get_*, room
   if (op.startsWith("list_")) {
     const noun = op.slice(5).replace(/_/g, " ").toUpperCase();
@@ -123,7 +132,12 @@ export function receiptLabel(event: {
 const REFUSAL_WORDS: Record<string, string> = {
   update_not_published: "NOT PUBLISHED",
   idempotency_conflict: "ALREADY USED",
-  project_delegation_required: "OWNER ONLY",
+  // PHILO-9-06: the grant row's own words (SettingsCore GRANT_REFUSAL_TOKEN).
+  // Outside the grant's bound the hub answers owner_principal_required.
+  owner_principal_required: "OWNER ONLY",
+  project_delegation_required: "NO GRANT",
+  project_delegation_revoked: "GRANT STOPPED",
+  project_delegation_expired: "GRANT EXPIRED",
   steward_policy_required: "NO SAVED POLICY",
   steward_disabled: "STEWARD OFF",
   cooldown_active: "COOLING DOWN",

@@ -1,0 +1,840 @@
+{
+  "page_errors": [],
+  "shots": [
+    "shots/room-head-1440.png",
+    "shots/room-items-1440.png",
+    "shots/room-receipts-1-1440.png",
+    "shots/room-receipts-2-1440.png",
+    "shots/room-receipts-3-1440.png",
+    "shots/updates-list-1440.png",
+    "shots/update-delivered-1440.png",
+    "shots/steward-run-1-1440.png",
+    "shots/steward-run-2-1440.png",
+    "shots/room-head-393.png",
+    "shots/room-items-393.png",
+    "shots/room-receipts-1-393.png",
+    "shots/room-receipts-2-393.png",
+    "shots/room-receipts-3-393.png",
+    "shots/room-receipts-4-393.png",
+    "shots/updates-list-393.png",
+    "shots/update-delivered-393.png",
+    "shots/steward-run-1-393.png",
+    "shots/steward-run-2-393.png"
+  ],
+  "widths": {
+    "393": {
+      "facts": {
+        "items": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "receipts": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "room": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "steward": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [
+            "\u2713 Observe 4 sources",
+            "\u2713 Compare review opened",
+            "\u2713 Propose no proposal",
+            "\u2713 Act 1 effect",
+            "\u2713 Verify",
+            "\u2713 Record"
+          ],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": "\u2713 REVIEW OPENED Review",
+          "steward_state": "COMPLETED",
+          "update_rows": [],
+          "window": true
+        },
+        "steward_list": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "steward_runs": [
+          {
+            "delivered_chips": [],
+            "delivery_rows": [],
+            "h_overflow": false,
+            "head_tokens": [],
+            "headline": null,
+            "item_rows": [],
+            "modal": false,
+            "needs_you": [],
+            "needs_you_why": [],
+            "plan": [
+              "\u2713 Observe 4 sources",
+              "\u2713 Compare review opened",
+              "\u2713 Propose no proposal",
+              "\u2713 Act 1 effect",
+              "\u2713 Verify",
+              "\u2713 Record"
+            ],
+            "raw_buttons": [],
+            "receipts": [],
+            "small_text": [],
+            "steward_outcome": "\u2713 REVIEW OPENED Review",
+            "steward_state": "COMPLETED",
+            "update_rows": [],
+            "window": true
+          },
+          {
+            "delivered_chips": [],
+            "delivery_rows": [],
+            "h_overflow": false,
+            "head_tokens": [],
+            "headline": null,
+            "item_rows": [],
+            "modal": false,
+            "needs_you": [],
+            "needs_you_why": [],
+            "plan": [
+              "\u2713 Observe 4 sources",
+              "\u2713 Compare review opened",
+              "\u2713 Propose no proposal",
+              "\u2713 Act 1 effect",
+              "\u2713 Verify",
+              "\u2713 Record"
+            ],
+            "raw_buttons": [],
+            "receipts": [],
+            "small_text": [],
+            "steward_outcome": "\u2713 REVIEW OPENED Review",
+            "steward_state": "COMPLETED",
+            "update_rows": [],
+            "window": true
+          }
+        ],
+        "update": {
+          "delivered_chips": [],
+          "delivery_rows": [
+            "\u2713 Priya SEP 28 11:27",
+            "\u2713 Tomas SEP 28 11:27"
+          ],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "updates": {
+          "delivered_chips": [
+            "\u2713 DELIVERED \u00d71",
+            "\u2713 DELIVERED \u00d72"
+          ],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [
+            "just now \u25a4 PUBLISHED REV 2 \u2713 DELIVERED \u00d71 DETERMINISTIC \u203a",
+            "just now \u25a4 SUPERSEDED REV 1 DETERMINISTIC \u203a",
+            "2m ago \u25a4 PUBLISHED REV 1 \u2713 DELIVERED \u00d72 DETERMINISTIC \u203a"
+          ],
+          "window": true
+        }
+      },
+      "findings": [],
+      "hub_room_receipts": {
+        "items": [
+          {
+            "at": 1790616513.151244,
+            "caller": null,
+            "id": "op_974edd75833a427bb7a1e3ebff892181",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616513.151244,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616508.78737,
+            "caller": "codex-project-agent",
+            "id": "op_2c75d21f02584e47911db8b9e8c38ce2",
+            "identity": "codex-project-agent",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "owner_principal_required",
+            "timestamp": 1790616508.78737,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616503.939305,
+            "caller": "codex-project-agent",
+            "id": "op_6b12f4cd8bf149c0b0bc3563a459326d",
+            "identity": "codex-project-agent",
+            "label": "project.publish_update",
+            "op": "publish_update",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616503.939305,
+            "title": "project.publish_update"
+          },
+          {
+            "at": 1790616497.7231731,
+            "caller": "codex-project-agent",
+            "id": "op_bc0e000ba4d8465698163aa008637f79",
+            "identity": "codex-project-agent",
+            "label": "project.run_steward",
+            "op": "run_steward",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616497.7231731,
+            "title": "project.run_steward"
+          },
+          {
+            "at": 1790616484.1863391,
+            "caller": null,
+            "id": "op_a2a22aa2d51145be9176d6d8a725a3fe",
+            "identity": "owner-session",
+            "label": "project.delegation.grant",
+            "op": "delegation.grant",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616484.1863391,
+            "title": "project.delegation.grant"
+          },
+          {
+            "at": 1790616477.467359,
+            "caller": "codex-project-agent",
+            "id": "op_42da8b018a444891a9f497129e267e00",
+            "identity": "codex-project-agent",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "owner_principal_required",
+            "timestamp": 1790616477.467359,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616477.462145,
+            "caller": "codex-project-agent",
+            "id": "op_8404765568264e4d844d5f8c6acea7a3",
+            "identity": "codex-project-agent",
+            "label": "project.publish_update",
+            "op": "publish_update",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "project_delegation_required",
+            "timestamp": 1790616477.462145,
+            "title": "project.publish_update"
+          },
+          {
+            "at": 1790616473.157099,
+            "caller": "codex-project-agent",
+            "id": "op_88f354bbbd824f99a6eeb74e055e8413",
+            "identity": "codex-project-agent",
+            "label": "project.run_steward",
+            "op": "run_steward",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "project_delegation_required",
+            "timestamp": 1790616473.157099,
+            "title": "project.run_steward"
+          },
+          {
+            "at": 1790616424.163414,
+            "caller": null,
+            "id": "op_14f172433a6b4f80863fe87614037e0c",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616424.163414,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616424.1579351,
+            "caller": null,
+            "id": "op_0d7e14878e364ffbbe53963100d55510",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616424.1579351,
+            "title": "project.mark_update_delivered"
+          }
+        ],
+        "state": "ok"
+      }
+    },
+    "1440": {
+      "facts": {
+        "items": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "receipts": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "room": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [
+            "\u25cf AT RISK",
+            "1 MILESTONE LATE"
+          ],
+          "headline": "1 needs you",
+          "item_rows": [
+            "\u25cf Cutover rehearsal MILESTONE DUE SEP 25 3 DAYS LATE",
+            "\u26a0 Old ledger freeze slips RISK LIKELIHOOD MEDIUM IMPACT HIGH"
+          ],
+          "modal": false,
+          "needs_you": [
+            "IT Cutover rehearsal MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "needs_you_why": [
+            "MILESTONE \u00b7 3 DAYS LATE"
+          ],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [
+            "\u25cf MARKED DELIVERED",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u25cf PUBLISH UPDATE CODEX-PROJECT-AGENT",
+            "\u25cf STEWARD RUN CODEX-PROJECT-AGENT",
+            "\u25cf ALLOW RUN AND PUBLISH",
+            "\u2717 MARK DELIVERED \u2717 REFUSED OWNER ONLY CODEX-PROJECT-AGENT",
+            "\u2717 PUBLISH UPDATE \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u2717 STEWARD RUN \u2717 REFUSED NO GRANT CODEX-PROJECT-AGENT",
+            "\u25cf MARKED DELIVERED",
+            "\u25cf MARKED DELIVERED"
+          ],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "steward": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [
+            "\u2713 Observe 4 sources",
+            "\u2713 Compare review opened",
+            "\u2713 Propose no proposal",
+            "\u2713 Act 1 effect",
+            "\u2713 Verify",
+            "\u2713 Record"
+          ],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": "\u2713 REVIEW OPENED Review",
+          "steward_state": "COMPLETED",
+          "update_rows": [],
+          "window": true
+        },
+        "steward_list": {
+          "delivered_chips": [],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "steward_runs": [
+          {
+            "delivered_chips": [],
+            "delivery_rows": [],
+            "h_overflow": false,
+            "head_tokens": [],
+            "headline": null,
+            "item_rows": [],
+            "modal": false,
+            "needs_you": [],
+            "needs_you_why": [],
+            "plan": [
+              "\u2713 Observe 4 sources",
+              "\u2713 Compare review opened",
+              "\u2713 Propose no proposal",
+              "\u2713 Act 1 effect",
+              "\u2713 Verify",
+              "\u2713 Record"
+            ],
+            "raw_buttons": [],
+            "receipts": [],
+            "small_text": [],
+            "steward_outcome": "\u2713 REVIEW OPENED Review",
+            "steward_state": "COMPLETED",
+            "update_rows": [],
+            "window": true
+          },
+          {
+            "delivered_chips": [],
+            "delivery_rows": [],
+            "h_overflow": false,
+            "head_tokens": [],
+            "headline": null,
+            "item_rows": [],
+            "modal": false,
+            "needs_you": [],
+            "needs_you_why": [],
+            "plan": [
+              "\u2713 Observe 4 sources",
+              "\u2713 Compare review opened",
+              "\u2713 Propose no proposal",
+              "\u2713 Act 1 effect",
+              "\u2713 Verify",
+              "\u2713 Record"
+            ],
+            "raw_buttons": [],
+            "receipts": [],
+            "small_text": [],
+            "steward_outcome": "\u2713 REVIEW OPENED Review",
+            "steward_state": "COMPLETED",
+            "update_rows": [],
+            "window": true
+          }
+        ],
+        "update": {
+          "delivered_chips": [],
+          "delivery_rows": [
+            "\u2713 Priya SEP 28 11:27",
+            "\u2713 Tomas SEP 28 11:27"
+          ],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [],
+          "window": true
+        },
+        "updates": {
+          "delivered_chips": [
+            "\u2713 DELIVERED \u00d71",
+            "\u2713 DELIVERED \u00d72"
+          ],
+          "delivery_rows": [],
+          "h_overflow": false,
+          "head_tokens": [],
+          "headline": null,
+          "item_rows": [],
+          "modal": false,
+          "needs_you": [],
+          "needs_you_why": [],
+          "plan": [],
+          "raw_buttons": [],
+          "receipts": [],
+          "small_text": [],
+          "steward_outcome": null,
+          "steward_state": null,
+          "update_rows": [
+            "just now \u25a4 PUBLISHED REV 2 \u2713 DELIVERED \u00d71 DETERMINISTIC \u203a",
+            "just now \u25a4 SUPERSEDED REV 1 DETERMINISTIC \u203a",
+            "2m ago \u25a4 PUBLISHED REV 1 \u2713 DELIVERED \u00d72 DETERMINISTIC \u203a"
+          ],
+          "window": true
+        }
+      },
+      "findings": [],
+      "hub_room_receipts": {
+        "items": [
+          {
+            "at": 1790616513.151244,
+            "caller": null,
+            "id": "op_974edd75833a427bb7a1e3ebff892181",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616513.151244,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616508.78737,
+            "caller": "codex-project-agent",
+            "id": "op_2c75d21f02584e47911db8b9e8c38ce2",
+            "identity": "codex-project-agent",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "owner_principal_required",
+            "timestamp": 1790616508.78737,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616503.939305,
+            "caller": "codex-project-agent",
+            "id": "op_6b12f4cd8bf149c0b0bc3563a459326d",
+            "identity": "codex-project-agent",
+            "label": "project.publish_update",
+            "op": "publish_update",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616503.939305,
+            "title": "project.publish_update"
+          },
+          {
+            "at": 1790616497.7231731,
+            "caller": "codex-project-agent",
+            "id": "op_bc0e000ba4d8465698163aa008637f79",
+            "identity": "codex-project-agent",
+            "label": "project.run_steward",
+            "op": "run_steward",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616497.7231731,
+            "title": "project.run_steward"
+          },
+          {
+            "at": 1790616484.1863391,
+            "caller": null,
+            "id": "op_a2a22aa2d51145be9176d6d8a725a3fe",
+            "identity": "owner-session",
+            "label": "project.delegation.grant",
+            "op": "delegation.grant",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616484.1863391,
+            "title": "project.delegation.grant"
+          },
+          {
+            "at": 1790616477.467359,
+            "caller": "codex-project-agent",
+            "id": "op_42da8b018a444891a9f497129e267e00",
+            "identity": "codex-project-agent",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "owner_principal_required",
+            "timestamp": 1790616477.467359,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616477.462145,
+            "caller": "codex-project-agent",
+            "id": "op_8404765568264e4d844d5f8c6acea7a3",
+            "identity": "codex-project-agent",
+            "label": "project.publish_update",
+            "op": "publish_update",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "project_delegation_required",
+            "timestamp": 1790616477.462145,
+            "title": "project.publish_update"
+          },
+          {
+            "at": 1790616473.157099,
+            "caller": "codex-project-agent",
+            "id": "op_88f354bbbd824f99a6eeb74e055e8413",
+            "identity": "codex-project-agent",
+            "label": "project.run_steward",
+            "op": "run_steward",
+            "origin": null,
+            "outcome": "refused",
+            "reason": "project_delegation_required",
+            "timestamp": 1790616473.157099,
+            "title": "project.run_steward"
+          },
+          {
+            "at": 1790616424.163414,
+            "caller": null,
+            "id": "op_14f172433a6b4f80863fe87614037e0c",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616424.163414,
+            "title": "project.mark_update_delivered"
+          },
+          {
+            "at": 1790616424.1579351,
+            "caller": null,
+            "id": "op_0d7e14878e364ffbbe53963100d55510",
+            "identity": "owner-session",
+            "label": "project.mark_update_delivered",
+            "op": "mark_update_delivered",
+            "origin": null,
+            "outcome": "ok",
+            "reason": null,
+            "timestamp": 1790616424.1579351,
+            "title": "project.mark_update_delivered"
+          }
+        ],
+        "state": "ok"
+      }
+    }
+  }
+}

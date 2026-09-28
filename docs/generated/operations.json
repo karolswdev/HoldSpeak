@@ -1814,7 +1814,7 @@
     {
       "name": "project.list",
       "version": 1,
-      "description": "Find your projects: every project, newest first. Archived projects only with include_archived. Each project's id is what the other project tools take as project_id.",
+      "description": "Find a project by its name: every project with its name and id, newest first. Archived projects only with include_archived. Each project's id is what the other project tools take as project_id.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -3550,7 +3550,7 @@
         "invalid_arguments",
         "authority_in_arguments",
         "scheduler_not_wired",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "asynchronous; kernel.receipt reads the trigger's receipt when its runs end",
       "exposure": [
@@ -3651,7 +3651,7 @@
         "nudge_not_proposed",
         "empty_text",
         "the policy or gh refusals",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "synchronous; steward.nudges shows it sent",
       "exposure": [
@@ -4226,7 +4226,7 @@
         "NotFound not_found: unknown project, or no pending suggestion",
         "ServiceError jira_connection_required: no connected Jira account",
         "ServiceError source_unsupported",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "synchronous; project.resource.list and project.get_room (sources) read it back",
       "exposure": [
@@ -4349,7 +4349,7 @@
         "unknown_operation",
         "invalid_arguments",
         "authority_in_arguments",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "synchronous; connection.list shows the new check time",
       "exposure": [
@@ -4410,7 +4410,7 @@
         "invalid_arguments",
         "authority_in_arguments",
         "ValidationError validation",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "synchronous",
       "exposure": [
@@ -4467,7 +4467,7 @@
         "NotFound not_found: unknown update",
         "ValidationError update_not_published",
         "idempotency_conflict",
-        "project_delegation_required"
+        "owner_principal_required"
       ],
       "completion": "synchronous; project.list_updates lists the delivery (deliveries, oldest first)",
       "exposure": [

@@ -1,0 +1,642 @@
+{
+  "owner_mark": {
+    "answer": {
+      "delivery": {
+        "delivered_at": "2026-09-28T16:42:22+00:00",
+        "delivered_to": "Priya",
+        "id": "pdel_2c3b05c76ab91200",
+        "operation_id": "op_2610754a214a4984b56278040e3a4f7a",
+        "project_id": "proj-97e8af72068c",
+        "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+      },
+      "operation_id": "op_2610754a214a4984b56278040e3a4f7a",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790613742.201029,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_2610754a214a4984b56278040e3a4f7a",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_6036a77a4a6d48de8ee2b9c3c08d451d",
+        "result_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f",
+        "state": "succeeded",
+        "target_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+      },
+      "success": true
+    },
+    "deliveries": [
+      "Priya"
+    ],
+    "receipt": {
+      "actor_identity": "owner-session",
+      "actor_kind": "owner",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "created_at": 1790613742.201029,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_2610754a214a4984b56278040e3a4f7a",
+      "outcome": "succeeded",
+      "receipt_id": "rcpt_6036a77a4a6d48de8ee2b9c3c08d451d",
+      "result_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f",
+      "state": "succeeded",
+      "target_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+    },
+    "refused": false
+  },
+  "receipts": [
+    {
+      "operation": {
+        "authority_basis": "project-delegation:projdeleg_43a06cedc6f94f7a8cc0087c699880eb:sha256:00f4fa092ae07b6d567a7c1ef7d10d25cf9364b5c77fce6cf1ea086cf2183e23",
+        "delegator_kind": "owner",
+        "name": "project.run_steward",
+        "operation_id": "op_d08c3e2c6cca40df8b12d98244847f3d",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 11,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "project-delegation:projdeleg_43a06cedc6f94f7a8cc0087c699880eb:sha256:00f4fa092ae07b6d567a7c1ef7d10d25cf9364b5c77fce6cf1ea086cf2183e23",
+        "created_at": 1790613723.6326761,
+        "delegator_identity": "owner-session",
+        "delegator_kind": "owner",
+        "operation_id": "op_d08c3e2c6cca40df8b12d98244847f3d",
+        "outcome": "completed",
+        "receipt_id": "rcpt_e7bc49609c694280ba4c22697149dea1",
+        "result_ref": "steward_run:pstrun_b9e0cd29d2a657578a06523acbef5990",
+        "state": "succeeded",
+        "target_ref": "project:proj-97e8af72068c"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "project-steward:pstrun_b9e0cd29d2a657578a06523acbef5990:sha256:b83b19740f98378e68d6bf23e2a4722ed5a70f4e21a501861a7c3be7d0403293",
+        "delegator_kind": "owner",
+        "name": "project.steward.effect",
+        "operation_id": "op_f815dd67205f433c970c06a0d28648b7",
+        "parent_operation_id": "op_d08c3e2c6cca40df8b12d98244847f3d",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 12,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "project-steward:pstrun_b9e0cd29d2a657578a06523acbef5990:sha256:b83b19740f98378e68d6bf23e2a4722ed5a70f4e21a501861a7c3be7d0403293",
+        "created_at": 1790613723.631364,
+        "delegator_identity": "owner-session",
+        "delegator_kind": "owner",
+        "operation_id": "op_f815dd67205f433c970c06a0d28648b7",
+        "outcome": "applied",
+        "receipt_id": "rcpt_00f33772797a480a9bb5b442e58d1492",
+        "result_ref": "steward_run:pstrun_b9e0cd29d2a657578a06523acbef5990",
+        "state": "succeeded",
+        "target_ref": "steward_run:pstrun_b9e0cd29d2a657578a06523acbef5990"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "project-delegation:projdeleg_43a06cedc6f94f7a8cc0087c699880eb:sha256:00f4fa092ae07b6d567a7c1ef7d10d25cf9364b5c77fce6cf1ea086cf2183e23",
+        "delegator_kind": "owner",
+        "name": "project.publish_update",
+        "operation_id": "op_4720276943d74e5ab02b26b3db0a0117",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 13,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "project-delegation:projdeleg_43a06cedc6f94f7a8cc0087c699880eb:sha256:00f4fa092ae07b6d567a7c1ef7d10d25cf9364b5c77fce6cf1ea086cf2183e23",
+        "created_at": 1790613732.6778932,
+        "delegator_identity": "owner-session",
+        "delegator_kind": "owner",
+        "operation_id": "op_4720276943d74e5ab02b26b3db0a0117",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_ac3768b18c9041cfa379e89084c28a4f",
+        "result_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f",
+        "state": "succeeded",
+        "target_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "refused_at_admission",
+        "delegator_kind": "",
+        "name": "project.mark_update_delivered",
+        "operation_id": "op_86583e49d08040958ece984717ace9b9",
+        "parent_operation_id": "",
+        "principal_identity": "codex-project-agent",
+        "principal_kind": "agent",
+        "rid": 14,
+        "state": "refused"
+      },
+      "receipt": {
+        "actor_identity": "codex-project-agent",
+        "actor_kind": "agent",
+        "authority_basis": "refused_at_admission",
+        "created_at": 1790613737.6080709,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_86583e49d08040958ece984717ace9b9",
+        "outcome": "project_delegation_required",
+        "receipt_id": "rcpt_0fab1aa21c2c4976ac477be5f5c077d2",
+        "result_ref": "",
+        "state": "refused",
+        "target_ref": "project_update:pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+      }
+    }
+  ],
+  "run": {
+    "operation_id": "op_d08c3e2c6cca40df8b12d98244847f3d",
+    "receipt": {
+      "actor_identity": "codex-project-agent",
+      "actor_kind": "agent",
+      "authority_basis": "project-delegation:projdeleg_43a06cedc6f94f7a8cc0087c699880eb:sha256:00f4fa092ae07b6d567a7c1ef7d10d25cf9364b5c77fce6cf1ea086cf2183e23",
+      "created_at": 1790613723.6326761,
+      "delegator_identity": "owner-session",
+      "delegator_kind": "owner",
+      "operation_id": "op_d08c3e2c6cca40df8b12d98244847f3d",
+      "outcome": "completed",
+      "receipt_id": "rcpt_e7bc49609c694280ba4c22697149dea1",
+      "result_ref": "steward_run:pstrun_b9e0cd29d2a657578a06523acbef5990",
+      "state": "succeeded",
+      "target_ref": "project:proj-97e8af72068c"
+    },
+    "run": {
+      "completed_at": "2026-09-28T16:42:03+00:00",
+      "created_at": "2026-09-28T16:42:03+00:00",
+      "id": "pstrun_b9e0cd29d2a657578a06523acbef5990",
+      "phase": "record",
+      "policy_id": "pstpol_fa6e4425c72a4f8cb410946f737d5987",
+      "project_id": "proj-97e8af72068c",
+      "requested_by": "principal:codex-project-agent",
+      "started_at": "2026-09-28T16:42:03+00:00",
+      "state": "completed",
+      "stop_requested_at": null,
+      "summary": {
+        "outcome": "completed",
+        "phase_results": {
+          "act": {
+            "actions_taken": 1,
+            "effect_receipts": [
+              {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied",
+                "result": {
+                  "effect": "draft_update",
+                  "generator": "deterministic",
+                  "generator_host": null,
+                  "generator_model": null,
+                  "lifecycle": "draft",
+                  "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+                },
+                "step_id": "pststep_ba6fe980064c46199ae5f065bf8342ce"
+              }
+            ],
+            "effects_skipped": [
+              {
+                "effect_kind": "refresh_sources",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_proposals",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "apply_proposal_effects",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_door_item",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              },
+              {
+                "effect_kind": "github_comment",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              }
+            ]
+          },
+          "compare": {
+            "proposal_count": 0,
+            "proposals": [],
+            "review_id": "prev_840eae74e07c4418996ffa1ada5c160b"
+          },
+          "observe": {
+            "coverage": {
+              "native:decisions": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:followthrough": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:meetings": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:resources": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              }
+            }
+          },
+          "propose": {
+            "proposal_count": 0,
+            "proposals": [],
+            "review_id": "prev_840eae74e07c4418996ffa1ada5c160b"
+          },
+          "record": {
+            "event_recorded": true
+          },
+          "verify": {
+            "actions_taken": 1,
+            "effect_receipts": [
+              {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied",
+                "result": {
+                  "effect": "draft_update",
+                  "generator": "deterministic",
+                  "generator_host": null,
+                  "generator_model": null,
+                  "lifecycle": "draft",
+                  "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+                },
+                "step_id": "pststep_ba6fe980064c46199ae5f065bf8342ce"
+              }
+            ],
+            "effects_skipped": [
+              {
+                "effect_kind": "refresh_sources",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_proposals",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "apply_proposal_effects",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_door_item",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              },
+              {
+                "effect_kind": "github_comment",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              }
+            ],
+            "has_real_effects": true,
+            "proposal_count": 0,
+            "review_id": "prev_840eae74e07c4418996ffa1ada5c160b",
+            "source_count": 4,
+            "verified_effects": 1
+          }
+        },
+        "phases_completed": [
+          "observe",
+          "compare",
+          "propose",
+          "act",
+          "verify",
+          "record"
+        ]
+      },
+      "updated_at": "2026-09-28T16:42:03+00:00",
+      "watermark": ""
+    },
+    "steps": [
+      {
+        "effect_kind": "phase:observe",
+        "error": null,
+        "expected": {},
+        "id": "pststep_7360448782da4fd6aa77eda92ce9af97",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:observe",
+        "observed": {
+          "coverage": {
+            "native:decisions": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:followthrough": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:meetings": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            },
+            "native:resources": {
+              "inserted": 0,
+              "no_op": 0,
+              "state": "ok"
+            }
+          }
+        },
+        "phase": "observe",
+        "receipt": {},
+        "seq": 0,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "phase:compare",
+        "error": null,
+        "expected": {},
+        "id": "pststep_52b7b77d43e748d4a72d1c5ae4486685",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:compare",
+        "observed": {
+          "proposal_count": 0,
+          "proposals": [],
+          "review_id": "prev_840eae74e07c4418996ffa1ada5c160b"
+        },
+        "phase": "compare",
+        "receipt": {},
+        "seq": 1,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "phase:propose",
+        "error": null,
+        "expected": {},
+        "id": "pststep_5168d5ccd88648beaa5d3df9d6477855",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:propose",
+        "observed": {
+          "proposal_count": 0,
+          "proposals": [],
+          "review_id": "prev_840eae74e07c4418996ffa1ada5c160b"
+        },
+        "phase": "propose",
+        "receipt": {},
+        "seq": 2,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "phase:act",
+        "error": null,
+        "expected": {},
+        "id": "pststep_3bb879c4af564e0a8f177b9c10588488",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:act",
+        "observed": {
+          "actions_taken": 1,
+          "effect_receipts": [
+            {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied",
+              "result": {
+                "effect": "draft_update",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "lifecycle": "draft",
+                "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+              },
+              "step_id": "pststep_ba6fe980064c46199ae5f065bf8342ce"
+            }
+          ],
+          "effects_skipped": [
+            {
+              "effect_kind": "refresh_sources",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_proposals",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "apply_proposal_effects",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_door_item",
+              "limit": 1,
+              "reason": "max_actions_per_run_exceeded"
+            },
+            {
+              "effect_kind": "github_comment",
+              "limit": 1,
+              "reason": "max_actions_per_run_exceeded"
+            }
+          ]
+        },
+        "phase": "act",
+        "receipt": {},
+        "seq": 3,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "draft_update",
+        "error": null,
+        "expected": {
+          "effect": "draft_update",
+          "project_id": "proj-97e8af72068c"
+        },
+        "id": "pststep_ba6fe980064c46199ae5f065bf8342ce",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:draft_update",
+        "observed": {
+          "effect": "draft_update",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "lifecycle": "draft",
+          "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+        },
+        "phase": "act",
+        "receipt": {
+          "attempt": 1,
+          "effect_kind": "draft_update",
+          "outcome": "applied"
+        },
+        "seq": 4,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "phase:verify",
+        "error": null,
+        "expected": {},
+        "id": "pststep_9f05752d9c08416fac172a3fc1bbf243",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:verify",
+        "observed": {
+          "actions_taken": 1,
+          "effect_receipts": [
+            {
+              "attempt": 1,
+              "effect_kind": "draft_update",
+              "outcome": "applied",
+              "result": {
+                "effect": "draft_update",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "lifecycle": "draft",
+                "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+              },
+              "step_id": "pststep_ba6fe980064c46199ae5f065bf8342ce"
+            }
+          ],
+          "effects_skipped": [
+            {
+              "effect_kind": "refresh_sources",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_proposals",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "apply_proposal_effects",
+              "reason": "not_in_eligible_effect_kinds"
+            },
+            {
+              "effect_kind": "create_door_item",
+              "limit": 1,
+              "reason": "max_actions_per_run_exceeded"
+            },
+            {
+              "effect_kind": "github_comment",
+              "limit": 1,
+              "reason": "max_actions_per_run_exceeded"
+            }
+          ],
+          "has_real_effects": true,
+          "proposal_count": 0,
+          "review_id": "prev_840eae74e07c4418996ffa1ada5c160b",
+          "source_count": 4,
+          "verified_effects": 1
+        },
+        "phase": "verify",
+        "receipt": {},
+        "seq": 5,
+        "state": "completed"
+      },
+      {
+        "effect_kind": "phase:record",
+        "error": null,
+        "expected": {},
+        "id": "pststep_bbb845865d65423fbf748b3b8cb00b50",
+        "idempotency_key": "pstrun_b9e0cd29d2a657578a06523acbef5990:record",
+        "observed": {
+          "event_recorded": true
+        },
+        "phase": "record",
+        "receipt": {},
+        "seq": 6,
+        "state": "completed"
+      }
+    ]
+  },
+  "updates": {
+    "updates": [
+      {
+        "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+        "created_at": "2026-09-28T16:42:03+00:00",
+        "deliveries": [
+          {
+            "delivered_at": "2026-09-28T16:42:22+00:00",
+            "delivered_to": "Priya",
+            "id": "pdel_2c3b05c76ab91200",
+            "operation_id": "op_2610754a214a4984b56278040e3a4f7a",
+            "project_id": "proj-97e8af72068c",
+            "update_id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f"
+          }
+        ],
+        "draft_revision": 2,
+        "fallback_reason": null,
+        "fallback_receipt": null,
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "id": "pupd_f8d4125f3d3448a9ae55a604b6c4120f",
+        "lifecycle": "published",
+        "project_id": "proj-97e8af72068c",
+        "project_revision": 4,
+        "published_at": "2026-09-28T16:42:12+00:00",
+        "review_id": "prev_840eae74e07c4418996ffa1ada5c160b",
+        "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":4,\"review_id\":\"prev_840eae74e07c4418996ffa1ada5c160b\"}",
+        "updated_at": "2026-09-28T16:42:12+00:00"
+      },
+      {
+        "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r4\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+        "created_at": "2026-09-28T16:41:23+00:00",
+        "deliveries": [],
+        "draft_revision": 1,
+        "fallback_reason": null,
+        "fallback_receipt": null,
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "id": "pupd_e081db43f800463a80e45dbb33ccac46",
+        "lifecycle": "superseded",
+        "project_id": "proj-97e8af72068c",
+        "project_revision": 4,
+        "published_at": null,
+        "review_id": "prev_840eae74e07c4418996ffa1ada5c160b",
+        "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":4,\"review_id\":\"prev_840eae74e07c4418996ffa1ada5c160b\"}",
+        "updated_at": "2026-09-28T16:42:03+00:00"
+      },
+      {
+        "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_3f5ffa29c2fe4e11ab631799896e4a05\"],\"source_version\":\"project:proj-97e8af72068c@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d7e0c666006f4eaa9de3b0d18e6a8be1\"],\"source_version\":\"project:proj-97e8af72068c@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+        "created_at": "2026-09-28T16:40:41+00:00",
+        "deliveries": [
+          {
+            "delivered_at": "2026-09-28T16:40:52+00:00",
+            "delivered_to": "Priya",
+            "id": "pdel_a32d03bb068d3ac2",
+            "operation_id": "op_e097231e23a547ca809d42efa04087ce",
+            "project_id": "proj-97e8af72068c",
+            "update_id": "pupd_f3c4b32cadf545ecb29a938a5443751d"
+          },
+          {
+            "delivered_at": "2026-09-28T16:40:52+00:00",
+            "delivered_to": "Tomas",
+            "id": "pdel_f1cd6ded07c9bfc8",
+            "operation_id": "op_e4218fe78c904697b9e0d04241d3f8ff",
+            "project_id": "proj-97e8af72068c",
+            "update_id": "pupd_f3c4b32cadf545ecb29a938a5443751d"
+          }
+        ],
+        "draft_revision": 1,
+        "fallback_reason": null,
+        "fallback_receipt": null,
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "id": "pupd_f3c4b32cadf545ecb29a938a5443751d",
+        "lifecycle": "published",
+        "project_id": "proj-97e8af72068c",
+        "project_revision": 3,
+        "published_at": "2026-09-28T16:40:52+00:00",
+        "review_id": "prev_840eae74e07c4418996ffa1ada5c160b",
+        "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"review_id\":\"prev_840eae74e07c4418996ffa1ada5c160b\"}",
+        "updated_at": "2026-09-28T16:40:52+00:00"
+      }
+    ]
+  }
+}

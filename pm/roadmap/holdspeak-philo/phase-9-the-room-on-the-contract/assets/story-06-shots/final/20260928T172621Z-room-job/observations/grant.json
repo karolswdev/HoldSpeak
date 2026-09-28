@@ -1,0 +1,128 @@
+{
+  "archive": {
+    "answer": {
+      "operation_id": "op_eed7fd4ccd9644b2a04120b5bdb88f20",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790616545.041758,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_eed7fd4ccd9644b2a04120b5bdb88f20",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_838b63a32ef0419999a54d8ee37d17f5",
+        "result_ref": "project:proj-d36364f17ef7",
+        "state": "succeeded",
+        "target_ref": "project:proj-d36364f17ef7"
+      },
+      "success": true
+    },
+    "route": "DELETE /api/projects/proj-d36364f17ef7 (owner token)",
+    "status": 200
+  },
+  "findings": [],
+  "page_errors": [],
+  "shots": [
+    "shots/grant-archived-live-1440.png",
+    "shots/grant-archived-live-393.png",
+    "shots/grant-stopped-receipt-1440.png",
+    "shots/grant-stopped-after-393.png"
+  ],
+  "stop_receipt": {
+    "consistency": "committed",
+    "objects": [
+      {
+        "native_receipts": [],
+        "operation": {
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "claimed_by": "hub-project-writer",
+          "correlation_id": "op_974c673943654ea094214a259bb8e91f",
+          "created_at": 1790616552.715122,
+          "decision": "approve",
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "envelope_sha256": "sha256:0c2a526e631bd9c2de48ba656aa24ea64442fba469f4b03c429774f91233c5bb",
+          "idempotency_key": "project.delegation.revoke:636d143d-0184-47ce-adcb-60714dc8b78d",
+          "name": "project.delegation.revoke",
+          "native_id": "636d143d-0184-47ce-adcb-60714dc8b78d",
+          "operation_id": "op_974c673943654ea094214a259bb8e91f",
+          "parent_operation_id": "",
+          "placement": "node:hub-project-writer",
+          "policy_version": "operation-policy/v2",
+          "principal_identity": "owner-session",
+          "principal_kind": "owner",
+          "request_id": "636d143d-0184-47ce-adcb-60714dc8b78d",
+          "revision": 5,
+          "state": "succeeded",
+          "target_ref": "project:proj-d36364f17ef7",
+          "updated_at": 1790616552.716453,
+          "version": 1,
+          "warrant": {
+            "continuation_identities": [],
+            "envelope_sha256": "sha256:0c2a526e631bd9c2de48ba656aa24ea64442fba469f4b03c429774f91233c5bb",
+            "execution_expires_at": 1790620152.715828,
+            "expires_at": 1790616582.715828,
+            "issued_at": 1790616552.715828,
+            "native_id": "636d143d-0184-47ce-adcb-60714dc8b78d",
+            "operation_id": "op_974c673943654ea094214a259bb8e91f",
+            "parent_operation_id": "",
+            "placement": "node:hub-project-writer",
+            "policy_version": "operation-policy/v2",
+            "principal_identity": "owner-session",
+            "principal_kind": "owner",
+            "signature": "54b77f045428726be844d725838bdc10a5126a62cd2524b95758d411086e64dc",
+            "target_binding": "project:proj-d36364f17ef7",
+            "target_ref": "project:proj-d36364f17ef7",
+            "uses": 1,
+            "warrant_id": "war_43c611ea904742a3a7bfaaba3b98745b"
+          },
+          "warrant_revoked": 0
+        },
+        "receipt": {
+          "actor_identity": "owner-session",
+          "actor_kind": "owner",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "created_at": 1790616552.716467,
+          "delegator_identity": "",
+          "delegator_kind": "",
+          "operation_id": "op_974c673943654ea094214a259bb8e91f",
+          "outcome": "succeeded",
+          "receipt_id": "rcpt_baf3b6d7aa2e4576a2937132a6b837a0",
+          "result_ref": "project:proj-d36364f17ef7",
+          "state": "succeeded",
+          "target_ref": "project:proj-d36364f17ef7"
+        },
+        "ref": "operation:op_974c673943654ea094214a259bb8e91f"
+      }
+    ],
+    "view": "receipt"
+  },
+  "widths": {
+    "393": {
+      "archived": {
+        "archived_token": "ARCHIVED",
+        "chip": "\u2713 RUN AND PUBLISH ALLOWED",
+        "line": "ARCHIVED \u2713 RUN AND PUBLISH ALLOWED Stop run and publish",
+        "verb": "Stop run and publish"
+      },
+      "stopped": {
+        "line_present": false,
+        "row": "\u25cf codex-project-agent PROJECT EXPIRES SEP 28 LAST USED 46 S AGO \u25b8 Projects Revoke credential"
+      }
+    },
+    "1440": {
+      "archived": {
+        "archived_token": "ARCHIVED",
+        "chip": "\u2713 RUN AND PUBLISH ALLOWED",
+        "line": "ARCHIVED \u2713 RUN AND PUBLISH ALLOWED Stop run and publish",
+        "verb": "Stop run and publish"
+      },
+      "stopped": {
+        "foot": "STOPPED 11:29",
+        "operation_id": "op_974c673943654ea094214a259bb8e91f",
+        "well": "\u2713 SUCCEEDED RUN AND PUBLISH STOPPED Payments ledger cutover codex-project-agent BY OWNER SEP 28 11:29"
+      }
+    }
+  }
+}
