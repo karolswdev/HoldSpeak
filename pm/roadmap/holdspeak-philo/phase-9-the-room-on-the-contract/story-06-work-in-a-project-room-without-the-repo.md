@@ -47,6 +47,7 @@ PROVISIONAL: about 1.5 engineering days (two legs), plus the owner's review.
 
 ## Notes
 
+- 2026-09-28 — round two (Muad'Dib's ruling on rehearsal one): the two catalogue gaps paid red → green (an owner-only operation refuses an agent `owner_principal_required`; `project.list` names "find a project by its name", `memory.search` no longer reads as a project search); the grant pointer to BACKLOG. Rehearsal two completed with no blocker; find it cold took `project.list`.
 - 2026-09-28 — the driver `scripts/philo9_room_job.py` (the Phase 7 machinery reused) and its fences (`tests/unit/test_philo9_room_job.py`); the fixture `story-06-fixture.json`; one rehearsal of the three MCP legs, every fixture value read back (`docs/internal/philo/phase-9/room-job/rehearsal.md`; it becomes `evidence-story-06.md` with the done flip). The AGENT leg runs as two fresh sessions (before and after the grant; the owner grants between them), the Phase 7 precedent. The face leg waits for PHILO-9-03. Status stays in-progress — Fedaykin lane (Opus 5.5).
 - 2026-09-27 — drafted by the Fedaykin docs lane for Muad'Dib; unratified. The rehearsal runs on the owner's Codex account; a quota stop blocks it (Phase 7 story 04 precedent).
 - 2026-09-27 — round seven (the owner's "Several per update"): the fixture marks delivered twice and reads both back.

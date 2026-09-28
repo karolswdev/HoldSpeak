@@ -451,9 +451,10 @@ def agent_findings(label: str, receipts: list[dict[str, Any]], *, identity: str,
     marks = by_name.get(agent["owner_only_refused"]) or []
     if not marks:
         f.append(f"the agent never tried {agent['owner_only_refused']}")
+    owner_code = agent.get("owner_only_code", agent["refusal_code"])
     for r in marks:
-        if r["receipt"].get("state") != "refused" or r["receipt"].get("outcome") != agent["refusal_code"]:
-            f.append(f"{agent['owner_only_refused']} was not refused {agent['refusal_code']}: {r['receipt'].get('outcome')!r}")
+        if r["receipt"].get("state") != "refused" or r["receipt"].get("outcome") != owner_code:
+            f.append(f"{agent['owner_only_refused']} was not refused {owner_code}: {r['receipt'].get('outcome')!r}")
     for name in agent["refused_before_grant"]:
         rows = by_name.get(name) or []
         if not rows:
@@ -569,6 +570,7 @@ def _run(args: argparse.Namespace) -> int:
         blocked += stops
         ops = _ops_since(hub, rowid)
         calls = _tool_calls(_window(hub, run_dir, "owner_find"))
+        out["owner_find_tools"] = [name for name, _a, _t in calls]
         out["checks"]["owner_find"] = find_cold_findings(calls, pid, update, fixture, ops)
         blocked += [f"owner_find: {x}" for x in out["checks"]["owner_find"]]
 

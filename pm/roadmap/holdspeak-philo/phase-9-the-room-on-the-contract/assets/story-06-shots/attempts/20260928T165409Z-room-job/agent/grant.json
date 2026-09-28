@@ -1,0 +1,39 @@
+{
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1790614559.243941,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_f7ccb71718c84cebbc1a9653eb866d3e",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_ce70b4eefde740d8aa2e79f9a2ab38f5",
+    "result_ref": "project-delegation:projdeleg_5f2101d6bb244baa9afbf862f55f1fe9",
+    "state": "succeeded",
+    "target_ref": "project:proj-f0413aa05d63"
+  },
+  "response": {
+    "agent_identity": "codex-project-agent",
+    "grant_id": "projdeleg_5f2101d6bb244baa9afbf862f55f1fe9",
+    "operation_id": "op_f7ccb71718c84cebbc1a9653eb866d3e",
+    "project_id": "proj-f0413aa05d63",
+    "receipt": {
+      "actor_identity": "owner-session",
+      "actor_kind": "owner",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "created_at": 1790614559.243941,
+      "delegator_identity": "",
+      "delegator_kind": "",
+      "operation_id": "op_f7ccb71718c84cebbc1a9653eb866d3e",
+      "outcome": "succeeded",
+      "receipt_id": "rcpt_ce70b4eefde740d8aa2e79f9a2ab38f5",
+      "result_ref": "project-delegation:projdeleg_5f2101d6bb244baa9afbf862f55f1fe9",
+      "state": "succeeded",
+      "target_ref": "project:proj-f0413aa05d63"
+    },
+    "success": true
+  },
+  "route": "PUT /api/settings/remote/delegations/codex-project-agent/projects/proj-f0413aa05d63",
+  "status": 200
+}

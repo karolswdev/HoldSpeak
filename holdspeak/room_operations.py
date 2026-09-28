@@ -10,7 +10,8 @@ the real method on the hub's service and its Article XI admission BY EFFECT
 (the owner's Q1; the phase status's admission table). Enforced: an ADMITTED
 row is one kernel operation with one terminal receipt
 (``services/project_kernel.py``); an agent is refused
-``project_delegation_required`` with a receipt until story 07's grant names it.
+``project_delegation_required`` with a receipt until story 07's grant names it (PHILO-9-06: an
+operation outside the grant's bound is refused ``owner_principal_required``).
 
 The words name the owner's jobs and where every id comes from. The product
 sends no update: nudge.send is a GitHub comment the owner reviews and sends.
@@ -185,7 +186,7 @@ STEWARD_TRIGGER = OperationDescriptor(
     effect="write",
     result="{success: true, operation_id, state, receipt} (receipt null until its runs end); the terminal "
            "receipt's result names the watch and run outcomes",
-    refusals=_CONTRACT_REFUSALS + ("scheduler_not_wired", "project_delegation_required"),
+    refusals=_CONTRACT_REFUSALS + ("scheduler_not_wired", "owner_principal_required"),
     completion="asynchronous; kernel.receipt reads the trigger's receipt when its runs end",
     exposure=("http:POST /api/steward/trigger", "mcp:project.steward.trigger"),
     service="project_steward_service",
@@ -234,7 +235,7 @@ NUDGE_SEND = OperationDescriptor(
     effect="write",
     result="{success: true, comment_receipt: the comment's own receipt (comment_url, pr_number, reviewer, timestamp ...), operation_id, receipt: the kernel receipt}",
     refusals=_CONTRACT_REFUSALS + ("nudge_not_found", "nudge_not_proposed", "empty_text", "the policy or gh refusals",
-                                   "project_delegation_required"),
+                                   "owner_principal_required"),
     completion="synchronous; steward.nudges shows it sent",
     exposure=("http:POST /api/nudges/{step_id}/send", "mcp:nudge.send"),
     service="project_steward_service",
@@ -378,7 +379,7 @@ SUGGESTED_ADD = OperationDescriptor(
     result="{suggestion (status accepted), resource (the filed source), watch (the armed watch)}",
     refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown project, or no pending suggestion",
                                    "ServiceError jira_connection_required: no connected Jira account",
-                                   "ServiceError source_unsupported", "project_delegation_required"),
+                                   "ServiceError source_unsupported", "owner_principal_required"),
     completion="synchronous; project.resource.list and project.get_room (sources) read it back",
     exposure=("http:POST /api/projects/{project_id}/suggested-sources/{ref}/add", "mcp:project.add_suggested_source"),
     service="suggested_source_service",
@@ -446,7 +447,7 @@ CONNECTION_RECHECK = OperationDescriptor(
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result="the provider's tool entry, as connection.list gives it",
-    refusals=_CONTRACT_REFUSALS + ("project_delegation_required",),
+    refusals=_CONTRACT_REFUSALS + ("owner_principal_required",),
     completion="synchronous; connection.list shows the new check time",
     exposure=("http:POST /api/connections/{provider}/recheck", "mcp:connection.recheck"),
     service="connections_service",
@@ -480,7 +481,7 @@ DOOR_COUNT = OperationDescriptor(
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result="the counts per watch key (count, label, host, counted_at)",
-    refusals=_CONTRACT_REFUSALS + ("ValidationError validation", "project_delegation_required"),
+    refusals=_CONTRACT_REFUSALS + ("ValidationError validation", "owner_principal_required"),
     completion="synchronous",
     exposure=("http:POST /api/projects/door/count",),
     service="project_door_service",
@@ -511,7 +512,7 @@ UPDATE_MARK_DELIVERED = OperationDescriptor(
     effect="write",
     result="{success: true, delivery: {id, update_id, project_id, delivered_at, delivered_to, operation_id}} and the receipt",
     refusals=_CONTRACT_REFUSALS + ("NotFound not_found: unknown update", "ValidationError update_not_published",
-                                   "idempotency_conflict", "project_delegation_required"),
+                                   "idempotency_conflict", "owner_principal_required"),
     completion="synchronous; project.list_updates lists the delivery (deliveries, oldest first)",
     exposure=("http:POST /api/updates/{update_id}/delivered", "mcp:project.mark_update_delivered"),
     service="project_update_service",

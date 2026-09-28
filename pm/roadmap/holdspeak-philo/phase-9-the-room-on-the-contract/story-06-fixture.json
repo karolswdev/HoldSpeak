@@ -1,6 +1,7 @@
 {
   "story": "PHILO-9-06",
   "written": "2026-09-28",
+  "revised": "2026-09-28: owner_only_code (PHILO-9-06 gap 1, Muad'Dib's ruling); rehearsal two",
   "source": "current-phase-status.md \"The closing contract\" and story-06 Scope; fixed before the run",
   "client": "codex",
   "legs": ["owner", "agent"],
@@ -45,6 +46,7 @@
     "refusal_code": "project_delegation_required",
     "bound": ["project.publish_update", "project.run_steward", "project.stop_steward"],
     "owner_only_refused": "project.mark_update_delivered",
+    "owner_only_code": "owner_principal_required",
     "owner_marks_delivered_to": "Priya"
   },
   "find_cold": {

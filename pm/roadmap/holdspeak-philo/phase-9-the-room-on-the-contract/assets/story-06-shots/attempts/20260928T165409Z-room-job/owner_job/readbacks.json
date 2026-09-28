@@ -1,0 +1,3462 @@
+{
+  "operations": [
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "project.configure_steward",
+      "operation_id": "op_66a6684d2f7347ddb50ac87592159231",
+      "parent_operation_id": "",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 1,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "project.run_steward",
+      "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+      "parent_operation_id": "",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 2,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "project-steward:pstrun_4688f11b0acf54e7b7175c5e3caee886:sha256:7f532c209992b1066a9d68188d559858a91f9fe91a626162a6b3e612f98b96f6",
+      "delegator_kind": "owner",
+      "name": "project.steward.effect",
+      "operation_id": "op_fb818f669c4640ebac42cbbc2d009d4d",
+      "parent_operation_id": "op_730efe93715d45b082bd6725efc068b6",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 3,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "project.publish_update",
+      "operation_id": "op_38a565219621424ca7ffc57822cbc245",
+      "parent_operation_id": "",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 4,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "project.mark_update_delivered",
+      "operation_id": "op_824d1a175530405798be8b10d735046d",
+      "parent_operation_id": "",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 5,
+      "state": "succeeded"
+    },
+    {
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "delegator_kind": "",
+      "name": "project.mark_update_delivered",
+      "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+      "parent_operation_id": "",
+      "principal_identity": "owner-session",
+      "principal_kind": "owner",
+      "rid": 6,
+      "state": "succeeded"
+    }
+  ],
+  "readbacks": {
+    "edit_after_publish": {
+      "answer": {
+        "code": "published_update",
+        "error": "Cannot modify published update pupd_6aeab558f62a4e8e81128eac792ae529"
+      },
+      "operations": [],
+      "refused": true
+    },
+    "items": [
+      {
+        "created_at": "2026-09-28T10:54:39.480733",
+        "created_by_ref": "principal:owner-session",
+        "details_json": "{}",
+        "due_at": "2026-09-25",
+        "id": "pitem_39a9b66901124f0e97b76b0807c41461",
+        "item_type": "milestone",
+        "lifecycle": "planned",
+        "owner_ref": null,
+        "project_id": "proj-f0413aa05d63",
+        "provenance_kind": "owner",
+        "revision": 0,
+        "severity": null,
+        "sort_key": null,
+        "source_observation_id": null,
+        "summary": null,
+        "title": "Cutover rehearsal",
+        "updated_at": "2026-09-28T10:54:39.480733"
+      },
+      {
+        "created_at": "2026-09-28T10:54:39.485272",
+        "created_by_ref": "principal:owner-session",
+        "details_json": "{\"likelihood\": \"medium\", \"impact\": \"high\", \"mitigation\": \"Freeze the schema by Friday\"}",
+        "due_at": null,
+        "id": "pitem_d3fa8eae3e4c4e249f227e54bdcada60",
+        "item_type": "risk",
+        "lifecycle": "open",
+        "owner_ref": null,
+        "project_id": "proj-f0413aa05d63",
+        "provenance_kind": "owner",
+        "revision": 0,
+        "severity": null,
+        "sort_key": null,
+        "source_observation_id": null,
+        "summary": null,
+        "title": "Old ledger freeze slips",
+        "updated_at": "2026-09-28T10:54:39.485272"
+      }
+    ],
+    "needs_you": {
+      "complete": true,
+      "computedAt": "2026-09-28T10:55:05.469587",
+      "count": 1,
+      "coverage": [
+        {
+          "kind": "project",
+          "label": "Payments ledger cutover",
+          "observed_at": "2026-09-28T10:54:56.927470",
+          "project_id": "proj-f0413aa05d63",
+          "reason": null,
+          "repair": null,
+          "source_id": "project:proj-f0413aa05d63",
+          "state": "available"
+        },
+        {
+          "kind": "meeting",
+          "label": "Payments ledger cutover",
+          "observed_at": "2026-09-28T10:54:56.927470",
+          "project_id": "proj-f0413aa05d63",
+          "reason": null,
+          "repair": null,
+          "source_id": "meeting:proj-f0413aa05d63",
+          "state": "available"
+        },
+        {
+          "kind": "commitment",
+          "label": "Payments ledger cutover",
+          "observed_at": "2026-09-28T10:54:56.927470",
+          "project_id": "proj-f0413aa05d63",
+          "reason": null,
+          "repair": null,
+          "source_id": "commitment:proj-f0413aa05d63",
+          "state": "available"
+        }
+      ],
+      "items": [
+        {
+          "ageToken": "2026-09-25",
+          "dedupCount": 1,
+          "dueAt": "2026-09-25",
+          "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+          "kind": "milestone",
+          "projectId": "proj-f0413aa05d63",
+          "projectName": "Payments ledger cutover",
+          "rank": 1,
+          "rankClass": "overdue",
+          "ref": "Cutover rehearsal",
+          "severity": "danger",
+          "since": "2026-09-25",
+          "source": "item",
+          "sources": [
+            {
+              "fromLastObservation": false,
+              "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+              "observedAt": null,
+              "severity": "danger",
+              "source": "item",
+              "title": "Cutover rehearsal",
+              "verbHref": null,
+              "why": "OVERDUE \u00b7 3 DAYS"
+            }
+          ],
+          "title": "Cutover rehearsal",
+          "verbHref": null,
+          "why": "OVERDUE \u00b7 3 DAYS"
+        }
+      ],
+      "next": null,
+      "projects": [
+        "proj-f0413aa05d63"
+      ],
+      "stale": false,
+      "sweepId": null
+    },
+    "project_id": "proj-f0413aa05d63",
+    "projects_named": [
+      {
+        "context": {},
+        "created_at": "2026-09-28T10:54:32.404243",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-f0413aa05d63",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Payments ledger cutover",
+        "team_members": [],
+        "updated_at": "2026-09-28T10:54:56.927470"
+      }
+    ],
+    "reads": {
+      "items": {
+        "adapter": "mcp-http-read",
+        "args": {
+          "project_id": "proj-f0413aa05d63"
+        },
+        "domain_response": {
+          "items": [
+            {
+              "created_at": "2026-09-28T10:54:39.480733",
+              "created_by_ref": "principal:owner-session",
+              "details_json": "{}",
+              "due_at": "2026-09-25",
+              "id": "pitem_39a9b66901124f0e97b76b0807c41461",
+              "item_type": "milestone",
+              "lifecycle": "planned",
+              "owner_ref": null,
+              "project_id": "proj-f0413aa05d63",
+              "provenance_kind": "owner",
+              "revision": 0,
+              "severity": null,
+              "sort_key": null,
+              "source_observation_id": null,
+              "summary": null,
+              "title": "Cutover rehearsal",
+              "updated_at": "2026-09-28T10:54:39.480733"
+            },
+            {
+              "created_at": "2026-09-28T10:54:39.485272",
+              "created_by_ref": "principal:owner-session",
+              "details_json": "{\"likelihood\": \"medium\", \"impact\": \"high\", \"mitigation\": \"Freeze the schema by Friday\"}",
+              "due_at": null,
+              "id": "pitem_d3fa8eae3e4c4e249f227e54bdcada60",
+              "item_type": "risk",
+              "lifecycle": "open",
+              "owner_ref": null,
+              "project_id": "proj-f0413aa05d63",
+              "provenance_kind": "owner",
+              "revision": 0,
+              "severity": null,
+              "sort_key": null,
+              "source_observation_id": null,
+              "summary": null,
+              "title": "Old ledger freeze slips",
+              "updated_at": "2026-09-28T10:54:39.485272"
+            }
+          ],
+          "limit": 200,
+          "offset": 0
+        },
+        "elapsed_s": 0.004,
+        "envelope": {
+          "id": 2,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"items\": [{\"created_at\": \"2026-09-28T10:54:39.480733\", \"created_by_ref\": \"principal:owner-session\", \"details_json\": \"{}\", \"due_at\": \"2026-09-25\", \"id\": \"pitem_39a9b66901124f0e97b76b0807c41461\", \"item_type\": \"milestone\", \"lifecycle\": \"planned\", \"owner_ref\": null, \"project_id\": \"proj-f0413aa05d63\", \"provenance_kind\": \"owner\", \"revision\": 0, \"severity\": null, \"sort_key\": null, \"source_observation_id\": null, \"summary\": null, \"title\": \"Cutover rehearsal\", \"updated_at\": \"2026-09-28T10:54:39.480733\"}, {\"created_at\": \"2026-09-28T10:54:39.485272\", \"created_by_ref\": \"principal:owner-session\", \"details_json\": \"{\\\"likelihood\\\": \\\"medium\\\", \\\"impact\\\": \\\"high\\\", \\\"mitigation\\\": \\\"Freeze the schema by Friday\\\"}\", \"due_at\": null, \"id\": \"pitem_d3fa8eae3e4c4e249f227e54bdcada60\", \"item_type\": \"risk\", \"lifecycle\": \"open\", \"owner_ref\": null, \"project_id\": \"proj-f0413aa05d63\", \"provenance_kind\": \"owner\", \"revision\": 0, \"severity\": null, \"sort_key\": null, \"source_observation_id\": null, \"summary\": null, \"title\": \"Old ledger freeze slips\", \"updated_at\": \"2026-09-28T10:54:39.485272\"}], \"limit\": 200, \"offset\": 0}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "project.item.list",
+        "refusal": null,
+        "request": {
+          "id": 2,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {
+              "project_id": "proj-f0413aa05d63"
+            },
+            "name": "project.item.list"
+          }
+        },
+        "response": {
+          "items": [
+            {
+              "created_at": "2026-09-28T10:54:39.480733",
+              "created_by_ref": "principal:owner-session",
+              "details_json": "{}",
+              "due_at": "2026-09-25",
+              "id": "pitem_39a9b66901124f0e97b76b0807c41461",
+              "item_type": "milestone",
+              "lifecycle": "planned",
+              "owner_ref": null,
+              "project_id": "proj-f0413aa05d63",
+              "provenance_kind": "owner",
+              "revision": 0,
+              "severity": null,
+              "sort_key": null,
+              "source_observation_id": null,
+              "summary": null,
+              "title": "Cutover rehearsal",
+              "updated_at": "2026-09-28T10:54:39.480733"
+            },
+            {
+              "created_at": "2026-09-28T10:54:39.485272",
+              "created_by_ref": "principal:owner-session",
+              "details_json": "{\"likelihood\": \"medium\", \"impact\": \"high\", \"mitigation\": \"Freeze the schema by Friday\"}",
+              "due_at": null,
+              "id": "pitem_d3fa8eae3e4c4e249f227e54bdcada60",
+              "item_type": "risk",
+              "lifecycle": "open",
+              "owner_ref": null,
+              "project_id": "proj-f0413aa05d63",
+              "provenance_kind": "owner",
+              "revision": 0,
+              "severity": null,
+              "sort_key": null,
+              "source_observation_id": null,
+              "summary": null,
+              "title": "Old ledger freeze slips",
+              "updated_at": "2026-09-28T10:54:39.485272"
+            }
+          ],
+          "limit": 200,
+          "offset": 0
+        }
+      },
+      "needs_you": {
+        "adapter": "mcp-http-read",
+        "args": {},
+        "domain_response": {
+          "complete": true,
+          "computedAt": "2026-09-28T10:55:05.469587",
+          "count": 1,
+          "coverage": [
+            {
+              "kind": "project",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "project:proj-f0413aa05d63",
+              "state": "available"
+            },
+            {
+              "kind": "meeting",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "meeting:proj-f0413aa05d63",
+              "state": "available"
+            },
+            {
+              "kind": "commitment",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "commitment:proj-f0413aa05d63",
+              "state": "available"
+            }
+          ],
+          "items": [
+            {
+              "ageToken": "2026-09-25",
+              "dedupCount": 1,
+              "dueAt": "2026-09-25",
+              "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+              "kind": "milestone",
+              "projectId": "proj-f0413aa05d63",
+              "projectName": "Payments ledger cutover",
+              "rank": 1,
+              "rankClass": "overdue",
+              "ref": "Cutover rehearsal",
+              "severity": "danger",
+              "since": "2026-09-25",
+              "source": "item",
+              "sources": [
+                {
+                  "fromLastObservation": false,
+                  "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+                  "observedAt": null,
+                  "severity": "danger",
+                  "source": "item",
+                  "title": "Cutover rehearsal",
+                  "verbHref": null,
+                  "why": "OVERDUE \u00b7 3 DAYS"
+                }
+              ],
+              "title": "Cutover rehearsal",
+              "verbHref": null,
+              "why": "OVERDUE \u00b7 3 DAYS"
+            }
+          ],
+          "next": null,
+          "projects": [
+            "proj-f0413aa05d63"
+          ],
+          "stale": false,
+          "sweepId": null
+        },
+        "elapsed_s": 0.005,
+        "envelope": {
+          "id": 3,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"complete\": true, \"computedAt\": \"2026-09-28T10:55:05.469587\", \"count\": 1, \"coverage\": [{\"kind\": \"project\", \"label\": \"Payments ledger cutover\", \"observed_at\": \"2026-09-28T10:54:56.927470\", \"project_id\": \"proj-f0413aa05d63\", \"reason\": null, \"repair\": null, \"source_id\": \"project:proj-f0413aa05d63\", \"state\": \"available\"}, {\"kind\": \"meeting\", \"label\": \"Payments ledger cutover\", \"observed_at\": \"2026-09-28T10:54:56.927470\", \"project_id\": \"proj-f0413aa05d63\", \"reason\": null, \"repair\": null, \"source_id\": \"meeting:proj-f0413aa05d63\", \"state\": \"available\"}, {\"kind\": \"commitment\", \"label\": \"Payments ledger cutover\", \"observed_at\": \"2026-09-28T10:54:56.927470\", \"project_id\": \"proj-f0413aa05d63\", \"reason\": null, \"repair\": null, \"source_id\": \"commitment:proj-f0413aa05d63\", \"state\": \"available\"}], \"items\": [{\"ageToken\": \"2026-09-25\", \"dedupCount\": 1, \"dueAt\": \"2026-09-25\", \"id\": \"proj-f0413aa05d63:item:Cutover rehearsal\", \"kind\": \"milestone\", \"projectId\": \"proj-f0413aa05d63\", \"projectName\": \"Payments ledger cutover\", \"rank\": 1, \"rankClass\": \"overdue\", \"ref\": \"Cutover rehearsal\", \"severity\": \"danger\", \"since\": \"2026-09-25\", \"source\": \"item\", \"sources\": [{\"fromLastObservation\": false, \"id\": \"proj-f0413aa05d63:item:Cutover rehearsal\", \"observedAt\": null, \"severity\": \"danger\", \"source\": \"item\", \"title\": \"Cutover rehearsal\", \"verbHref\": null, \"why\": \"OVERDUE \\u00b7 3 DAYS\"}], \"title\": \"Cutover rehearsal\", \"verbHref\": null, \"why\": \"OVERDUE \\u00b7 3 DAYS\"}], \"next\": null, \"projects\": [\"proj-f0413aa05d63\"], \"stale\": false, \"sweepId\": null}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "desk.needs_you",
+        "refusal": null,
+        "request": {
+          "id": 3,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {},
+            "name": "desk.needs_you"
+          }
+        },
+        "response": {
+          "complete": true,
+          "computedAt": "2026-09-28T10:55:05.469587",
+          "count": 1,
+          "coverage": [
+            {
+              "kind": "project",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "project:proj-f0413aa05d63",
+              "state": "available"
+            },
+            {
+              "kind": "meeting",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "meeting:proj-f0413aa05d63",
+              "state": "available"
+            },
+            {
+              "kind": "commitment",
+              "label": "Payments ledger cutover",
+              "observed_at": "2026-09-28T10:54:56.927470",
+              "project_id": "proj-f0413aa05d63",
+              "reason": null,
+              "repair": null,
+              "source_id": "commitment:proj-f0413aa05d63",
+              "state": "available"
+            }
+          ],
+          "items": [
+            {
+              "ageToken": "2026-09-25",
+              "dedupCount": 1,
+              "dueAt": "2026-09-25",
+              "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+              "kind": "milestone",
+              "projectId": "proj-f0413aa05d63",
+              "projectName": "Payments ledger cutover",
+              "rank": 1,
+              "rankClass": "overdue",
+              "ref": "Cutover rehearsal",
+              "severity": "danger",
+              "since": "2026-09-25",
+              "source": "item",
+              "sources": [
+                {
+                  "fromLastObservation": false,
+                  "id": "proj-f0413aa05d63:item:Cutover rehearsal",
+                  "observedAt": null,
+                  "severity": "danger",
+                  "source": "item",
+                  "title": "Cutover rehearsal",
+                  "verbHref": null,
+                  "why": "OVERDUE \u00b7 3 DAYS"
+                }
+              ],
+              "title": "Cutover rehearsal",
+              "verbHref": null,
+              "why": "OVERDUE \u00b7 3 DAYS"
+            }
+          ],
+          "next": null,
+          "projects": [
+            "proj-f0413aa05d63"
+          ],
+          "stale": false,
+          "sweepId": null
+        }
+      },
+      "project_list": {
+        "adapter": "mcp-http-read",
+        "args": {},
+        "domain_response": {
+          "projects": [
+            {
+              "context": {},
+              "created_at": "2026-09-28T10:54:32.404243",
+              "description": "",
+              "detection_threshold": 0.4,
+              "id": "proj-f0413aa05d63",
+              "is_archived": false,
+              "keywords": [],
+              "meeting_count": 0,
+              "name": "Payments ledger cutover",
+              "team_members": [],
+              "updated_at": "2026-09-28T10:54:56.927470"
+            }
+          ]
+        },
+        "elapsed_s": 0.033,
+        "envelope": {
+          "id": 1,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"projects\": [{\"context\": {}, \"created_at\": \"2026-09-28T10:54:32.404243\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-f0413aa05d63\", \"is_archived\": false, \"keywords\": [], \"meeting_count\": 0, \"name\": \"Payments ledger cutover\", \"team_members\": [], \"updated_at\": \"2026-09-28T10:54:56.927470\"}]}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "project.list",
+        "refusal": null,
+        "request": {
+          "id": 1,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {},
+            "name": "project.list"
+          }
+        },
+        "response": {
+          "projects": [
+            {
+              "context": {},
+              "created_at": "2026-09-28T10:54:32.404243",
+              "description": "",
+              "detection_threshold": 0.4,
+              "id": "proj-f0413aa05d63",
+              "is_archived": false,
+              "keywords": [],
+              "meeting_count": 0,
+              "name": "Payments ledger cutover",
+              "team_members": [],
+              "updated_at": "2026-09-28T10:54:56.927470"
+            }
+          ]
+        }
+      },
+      "room": {
+        "adapter": "mcp-http-read",
+        "args": {
+          "project_id": "proj-f0413aa05d63"
+        },
+        "domain_response": {
+          "changes": {
+            "recent": [
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "69716f523197624a01e10274097911c9",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_7c00e1e062584a1b82a1811a203ecfab",
+                "created_at": "2026-09-28T10:54:56.927470",
+                "id": "pchg_831c8f75dd18b1059ead3ff84e506e95",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 4,
+                "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "ea1ba90b4e3dfae1e89c1a1fd68cda29",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_17a5eeff9ae843a6b91578d40623bf6a",
+                "created_at": "2026-09-28T10:54:39.485272",
+                "id": "pchg_c552f3f26a0980877a1e225313dc350a",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 3,
+                "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_d3fa8eae3e4c4e249f227e54bdcada60\", \"item_type\": \"risk\", \"title\": \"Old ledger freeze slips\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "f3cf4ac9f48d229a403c5a54b9ffd4f5",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_a77bcfeebfd3478a9e7ffe540e037ec3",
+                "created_at": "2026-09-28T10:54:39.480733",
+                "id": "pchg_bd3679edaef061bb336ea9440fe28d7a",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 2,
+                "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_39a9b66901124f0e97b76b0807c41461\", \"item_type\": \"milestone\", \"title\": \"Cutover rehearsal\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "0336df9a18bfc9821f04390abdc83732",
+                "before_hash": null,
+                "change_kind": "project.created",
+                "command_id": "pcmd_dcdbbd30120c418b99357952c6205016",
+                "created_at": "2026-09-28T10:54:32.404243",
+                "id": "pchg_b05af6419c2a3e13a2968dc201f340a0",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 1,
+                "summary_json": "{\"name\": \"Payments ledger cutover\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              }
+            ],
+            "state": "ok"
+          },
+          "commitments": {
+            "items": [],
+            "state": "ok"
+          },
+          "decisions": {
+            "items": [],
+            "state": "ok"
+          },
+          "health": {
+            "assessment": "at_risk",
+            "checked_at": null,
+            "inputs": {
+              "ciFailing": false,
+              "overdue": 1,
+              "overdueMilestones": 1,
+              "reviewWaitingDays": null,
+              "targetPassed": false
+            },
+            "merge_queue_depth": 0,
+            "people": [],
+            "reason": "1 OVERDUE",
+            "signals": {
+              "ci": {
+                "failures_last_3": 0,
+                "flaky_branch_count": 0,
+                "present": false,
+                "queue": 0,
+                "tone": "green"
+              },
+              "issue_aging": {
+                "aged_count": 0,
+                "present": false,
+                "threshold_days": 14,
+                "tone": "green"
+              },
+              "release": {
+                "blockers": [],
+                "blockers_count": 0,
+                "composite": "green",
+                "present": false,
+                "signals": {
+                  "blockers": "green",
+                  "ci": "green",
+                  "overdue": "green",
+                  "review_wait": "green"
+                },
+                "tone": "green"
+              },
+              "review_wait": {
+                "median_days": 0.0,
+                "per_reviewer": [],
+                "present": false,
+                "tone": "green",
+                "waiting_count": 0
+              }
+            },
+            "state": "ok"
+          },
+          "items": {
+            "focus": [
+              {
+                "created_at": "2026-09-28T10:54:39.480733",
+                "created_by_ref": "principal:owner-session",
+                "details_json": "{}",
+                "due_at": "2026-09-25",
+                "id": "pitem_39a9b66901124f0e97b76b0807c41461",
+                "item_type": "milestone",
+                "lifecycle": "planned",
+                "owner_ref": null,
+                "project_id": "proj-f0413aa05d63",
+                "provenance_kind": "owner",
+                "revision": 0,
+                "severity": null,
+                "sort_key": null,
+                "source_observation_id": null,
+                "summary": null,
+                "title": "Cutover rehearsal",
+                "updated_at": "2026-09-28T10:54:39.480733"
+              },
+              {
+                "created_at": "2026-09-28T10:54:39.485272",
+                "created_by_ref": "principal:owner-session",
+                "details_json": "{\"likelihood\": \"medium\", \"impact\": \"high\", \"mitigation\": \"Freeze the schema by Friday\"}",
+                "due_at": null,
+                "id": "pitem_d3fa8eae3e4c4e249f227e54bdcada60",
+                "item_type": "risk",
+                "lifecycle": "open",
+                "owner_ref": null,
+                "project_id": "proj-f0413aa05d63",
+                "provenance_kind": "owner",
+                "revision": 0,
+                "severity": null,
+                "sort_key": null,
+                "source_observation_id": null,
+                "summary": null,
+                "title": "Old ledger freeze slips",
+                "updated_at": "2026-09-28T10:54:39.485272"
+              }
+            ],
+            "state": "ok",
+            "total": 2,
+            "totals_by_type": {
+              "milestone": 1,
+              "risk": 1
+            }
+          },
+          "meetings": {
+            "count": 0,
+            "latest": null,
+            "state": "ok"
+          },
+          "needsYou": {
+            "count": 1,
+            "items": [
+              {
+                "due_at": "2026-09-25",
+                "item_id": "pitem_39a9b66901124f0e97b76b0807c41461",
+                "item_type": "milestone",
+                "kind": "milestone",
+                "severity": "danger",
+                "since": "2026-09-25",
+                "source": "item",
+                "title": "Cutover rehearsal",
+                "url": null,
+                "verb": "open",
+                "why": "OVERDUE \u00b7 3 DAYS"
+              }
+            ],
+            "state": "ok"
+          },
+          "nextCheckAt": null,
+          "observed_at": "2026-09-28T10:54:56.927470",
+          "project": {
+            "context": {},
+            "created_at": "2026-09-28T10:54:32.404243",
+            "description": "",
+            "detection_threshold": 0.4,
+            "id": "proj-f0413aa05d63",
+            "is_archived": false,
+            "keywords": [],
+            "last_review_at": null,
+            "last_review_id": null,
+            "lifecycle": "active",
+            "meeting_count": 0,
+            "modules_json": null,
+            "name": "Payments ledger cutover",
+            "next_review_at": null,
+            "outcome_text": null,
+            "owner_ref": null,
+            "posture": null,
+            "posture_reason": null,
+            "purpose": null,
+            "review_cadence_json": null,
+            "revision": 4,
+            "start_at": null,
+            "target_at": null,
+            "team_members": [],
+            "template_key": null,
+            "updated_at": "2026-09-28T10:54:56.927470"
+          },
+          "project_id": "proj-f0413aa05d63",
+          "receipts": {
+            "items": [
+              {
+                "at": 1790614479.4851892,
+                "caller": "127.0.0.1",
+                "id": "89de088d-35b0-413c-8a16-2964e01a92be",
+                "identity": "owner-session",
+                "label": "ProjectService.create_item",
+                "op": "create_item",
+                "origin": null,
+                "outcome": "ok",
+                "timestamp": 1790614479.4851892,
+                "title": "ProjectService.create_item"
+              },
+              {
+                "at": 1790614479.480603,
+                "caller": "127.0.0.1",
+                "id": "f2419199-ad5f-4f0e-ad2b-d07ea51a66a4",
+                "identity": "owner-session",
+                "label": "ProjectService.create_item",
+                "op": "create_item",
+                "origin": null,
+                "outcome": "ok",
+                "timestamp": 1790614479.480603,
+                "title": "ProjectService.create_item"
+              }
+            ],
+            "state": "ok"
+          },
+          "resources": {
+            "count": 0,
+            "latest": null,
+            "state": "ok"
+          },
+          "review": {
+            "last_accepted_at": null,
+            "open_review_id": "prev_7f64e43df57340538953574b5c6c8651",
+            "pending_count": 0,
+            "state": "ok"
+          },
+          "revision": 4,
+          "sinceRead": {
+            "groups": [],
+            "readAt": null,
+            "state": "ok"
+          },
+          "sources": {
+            "count": 0,
+            "items": [],
+            "nextCheckAt": null,
+            "state": "ok"
+          },
+          "steward": {
+            "enabled": true,
+            "latest_run": {
+              "completed_at": "2026-09-28T16:54:45+00:00",
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+              "phase": "record",
+              "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+              "project_id": "proj-f0413aa05d63",
+              "requested_by": "principal:owner-session",
+              "started_at": "2026-09-28T16:54:45+00:00",
+              "state": "completed",
+              "stop_requested_at": null,
+              "summary": {
+                "outcome": "completed",
+                "phase_results": {
+                  "act": {
+                    "actions_taken": 1,
+                    "effect_receipts": [
+                      {
+                        "attempt": 1,
+                        "effect_kind": "draft_update",
+                        "outcome": "applied",
+                        "result": {
+                          "effect": "draft_update",
+                          "generator": "deterministic",
+                          "generator_host": null,
+                          "generator_model": null,
+                          "lifecycle": "draft",
+                          "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                        },
+                        "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                      }
+                    ],
+                    "effects_skipped": [
+                      {
+                        "effect_kind": "refresh_sources",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_proposals",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "apply_proposal_effects",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_door_item",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      },
+                      {
+                        "effect_kind": "github_comment",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      }
+                    ]
+                  },
+                  "compare": {
+                    "proposal_count": 0,
+                    "proposals": [],
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                  },
+                  "observe": {
+                    "coverage": {
+                      "native:decisions": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:followthrough": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:meetings": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:resources": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      }
+                    }
+                  },
+                  "propose": {
+                    "proposal_count": 0,
+                    "proposals": [],
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                  },
+                  "record": {
+                    "event_recorded": true
+                  },
+                  "verify": {
+                    "actions_taken": 1,
+                    "effect_receipts": [
+                      {
+                        "attempt": 1,
+                        "effect_kind": "draft_update",
+                        "outcome": "applied",
+                        "result": {
+                          "effect": "draft_update",
+                          "generator": "deterministic",
+                          "generator_host": null,
+                          "generator_model": null,
+                          "lifecycle": "draft",
+                          "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                        },
+                        "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                      }
+                    ],
+                    "effects_skipped": [
+                      {
+                        "effect_kind": "refresh_sources",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_proposals",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "apply_proposal_effects",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_door_item",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      },
+                      {
+                        "effect_kind": "github_comment",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      }
+                    ],
+                    "has_real_effects": true,
+                    "proposal_count": 0,
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                    "source_count": 4,
+                    "verified_effects": 1
+                  }
+                },
+                "phases_completed": [
+                  "observe",
+                  "compare",
+                  "propose",
+                  "act",
+                  "verify",
+                  "record"
+                ]
+              },
+              "updated_at": "2026-09-28T16:54:45+00:00",
+              "watermark": ""
+            },
+            "state": "ok",
+            "unattended_enabled": false
+          },
+          "target": {
+            "daysLeft": null,
+            "passed": false,
+            "state": "ok",
+            "targetAt": null
+          },
+          "updates": {
+            "count": 1,
+            "counts": {
+              "published": 1
+            },
+            "latest_published": {
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "deliveries": [
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Priya",
+                  "id": "pdel_81c487946d41d8e3",
+                  "operation_id": "op_824d1a175530405798be8b10d735046d",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Tomas",
+                  "id": "pdel_c1f5ee7a37d9d09e",
+                  "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                }
+              ],
+              "draft_revision": 1,
+              "generator": "deterministic",
+              "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+              "lifecycle": "published",
+              "project_id": "proj-f0413aa05d63",
+              "published_at": "2026-09-28T16:54:56+00:00",
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+              "updated_at": "2026-09-28T16:54:56+00:00"
+            },
+            "recent": [
+              {
+                "created_at": "2026-09-28T16:54:45+00:00",
+                "deliveries": [
+                  {
+                    "delivered_at": "2026-09-28T16:54:56+00:00",
+                    "delivered_to": "Priya",
+                    "id": "pdel_81c487946d41d8e3",
+                    "operation_id": "op_824d1a175530405798be8b10d735046d",
+                    "project_id": "proj-f0413aa05d63",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  },
+                  {
+                    "delivered_at": "2026-09-28T16:54:56+00:00",
+                    "delivered_to": "Tomas",
+                    "id": "pdel_c1f5ee7a37d9d09e",
+                    "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                    "project_id": "proj-f0413aa05d63",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  }
+                ],
+                "draft_revision": 1,
+                "generator": "deterministic",
+                "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+                "lifecycle": "published",
+                "project_id": "proj-f0413aa05d63",
+                "published_at": "2026-09-28T16:54:56+00:00",
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                "updated_at": "2026-09-28T16:54:56+00:00"
+              }
+            ],
+            "state": "ok"
+          }
+        },
+        "elapsed_s": 0.004,
+        "envelope": {
+          "id": 4,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"changes\": {\"recent\": [{\"actor_ref\": \"principal:owner-session\", \"after_hash\": \"69716f523197624a01e10274097911c9\", \"before_hash\": null, \"change_kind\": \"project.updated\", \"command_id\": \"pcmd_7c00e1e062584a1b82a1811a203ecfab\", \"created_at\": \"2026-09-28T10:54:56.927470\", \"id\": \"pchg_831c8f75dd18b1059ead3ff84e506e95\", \"project_id\": \"proj-f0413aa05d63\", \"project_revision\": 4, \"summary_json\": \"{\\\"action\\\": \\\"update.published\\\", \\\"update_id\\\": \\\"pupd_6aeab558f62a4e8e81128eac792ae529\\\"}\", \"target_ref\": \"project:proj-f0413aa05d63\"}, {\"actor_ref\": \"principal:owner-session\", \"after_hash\": \"ea1ba90b4e3dfae1e89c1a1fd68cda29\", \"before_hash\": null, \"change_kind\": \"project.updated\", \"command_id\": \"pcmd_17a5eeff9ae843a6b91578d40623bf6a\", \"created_at\": \"2026-09-28T10:54:39.485272\", \"id\": \"pchg_c552f3f26a0980877a1e225313dc350a\", \"project_id\": \"proj-f0413aa05d63\", \"project_revision\": 3, \"summary_json\": \"{\\\"action\\\": \\\"item.created\\\", \\\"item_id\\\": \\\"pitem_d3fa8eae3e4c4e249f227e54bdcada60\\\", \\\"item_type\\\": \\\"risk\\\", \\\"title\\\": \\\"Old ledger freeze slips\\\"}\", \"target_ref\": \"project:proj-f0413aa05d63\"}, {\"actor_ref\": \"principal:owner-session\", \"after_hash\": \"f3cf4ac9f48d229a403c5a54b9ffd4f5\", \"before_hash\": null, \"change_kind\": \"project.updated\", \"command_id\": \"pcmd_a77bcfeebfd3478a9e7ffe540e037ec3\", \"created_at\": \"2026-09-28T10:54:39.480733\", \"id\": \"pchg_bd3679edaef061bb336ea9440fe28d7a\", \"project_id\": \"proj-f0413aa05d63\", \"project_revision\": 2, \"summary_json\": \"{\\\"action\\\": \\\"item.created\\\", \\\"item_id\\\": \\\"pitem_39a9b66901124f0e97b76b0807c41461\\\", \\\"item_type\\\": \\\"milestone\\\", \\\"title\\\": \\\"Cutover rehearsal\\\"}\", \"target_ref\": \"project:proj-f0413aa05d63\"}, {\"actor_ref\": \"principal:owner-session\", \"after_hash\": \"0336df9a18bfc9821f04390abdc83732\", \"before_hash\": null, \"change_kind\": \"project.created\", \"command_id\": \"pcmd_dcdbbd30120c418b99357952c6205016\", \"created_at\": \"2026-09-28T10:54:32.404243\", \"id\": \"pchg_b05af6419c2a3e13a2968dc201f340a0\", \"project_id\": \"proj-f0413aa05d63\", \"project_revision\": 1, \"summary_json\": \"{\\\"name\\\": \\\"Payments ledger cutover\\\"}\", \"target_ref\": \"project:proj-f0413aa05d63\"}], \"state\": \"ok\"}, \"commitments\": {\"items\": [], \"state\": \"ok\"}, \"decisions\": {\"items\": [], \"state\": \"ok\"}, \"health\": {\"assessment\": \"at_risk\", \"checked_at\": null, \"inputs\": {\"ciFailing\": false, \"overdue\": 1, \"overdueMilestones\": 1, \"reviewWaitingDays\": null, \"targetPassed\": false}, \"merge_queue_depth\": 0, \"people\": [], \"reason\": \"1 OVERDUE\", \"signals\": {\"ci\": {\"failures_last_3\": 0, \"flaky_branch_count\": 0, \"present\": false, \"queue\": 0, \"tone\": \"green\"}, \"issue_aging\": {\"aged_count\": 0, \"present\": false, \"threshold_days\": 14, \"tone\": \"green\"}, \"release\": {\"blockers\": [], \"blockers_count\": 0, \"composite\": \"green\", \"present\": false, \"signals\": {\"blockers\": \"green\", \"ci\": \"green\", \"overdue\": \"green\", \"review_wait\": \"green\"}, \"tone\": \"green\"}, \"review_wait\": {\"median_days\": 0.0, \"per_reviewer\": [], \"present\": false, \"tone\": \"green\", \"waiting_count\": 0}}, \"state\": \"ok\"}, \"items\": {\"focus\": [{\"created_at\": \"2026-09-28T10:54:39.480733\", \"created_by_ref\": \"principal:owner-session\", \"details_json\": \"{}\", \"due_at\": \"2026-09-25\", \"id\": \"pitem_39a9b66901124f0e97b76b0807c41461\", \"item_type\": \"milestone\", \"lifecycle\": \"planned\", \"owner_ref\": null, \"project_id\": \"proj-f0413aa05d63\", \"provenance_kind\": \"owner\", \"revision\": 0, \"severity\": null, \"sort_key\": null, \"source_observation_id\": null, \"summary\": null, \"title\": \"Cutover rehearsal\", \"updated_at\": \"2026-09-28T10:54:39.480733\"}, {\"created_at\": \"2026-09-28T10:54:39.485272\", \"created_by_ref\": \"principal:owner-session\", \"details_json\": \"{\\\"likelihood\\\": \\\"medium\\\", \\\"impact\\\": \\\"high\\\", \\\"mitigation\\\": \\\"Freeze the schema by Friday\\\"}\", \"due_at\": null, \"id\": \"pitem_d3fa8eae3e4c4e249f227e54bdcada60\", \"item_type\": \"risk\", \"lifecycle\": \"open\", \"owner_ref\": null, \"project_id\": \"proj-f0413aa05d63\", \"provenance_kind\": \"owner\", \"revision\": 0, \"severity\": null, \"sort_key\": null, \"source_observation_id\": null, \"summary\": null, \"title\": \"Old ledger freeze slips\", \"updated_at\": \"2026-09-28T10:54:39.485272\"}], \"state\": \"ok\", \"total\": 2, \"totals_by_type\": {\"milestone\": 1, \"risk\": 1}}, \"meetings\": {\"count\": 0, \"latest\": null, \"state\": \"ok\"}, \"needsYou\": {\"count\": 1, \"items\": [{\"due_at\": \"2026-09-25\", \"item_id\": \"pitem_39a9b66901124f0e97b76b0807c41461\", \"item_type\": \"milestone\", \"kind\": \"milestone\", \"severity\": \"danger\", \"since\": \"2026-09-25\", \"source\": \"item\", \"title\": \"Cutover rehearsal\", \"url\": null, \"verb\": \"open\", \"why\": \"OVERDUE \\u00b7 3 DAYS\"}], \"state\": \"ok\"}, \"nextCheckAt\": null, \"observed_at\": \"2026-09-28T10:54:56.927470\", \"project\": {\"context\": {}, \"created_at\": \"2026-09-28T10:54:32.404243\", \"description\": \"\", \"detection_threshold\": 0.4, \"id\": \"proj-f0413aa05d63\", \"is_archived\": false, \"keywords\": [], \"last_review_at\": null, \"last_review_id\": null, \"lifecycle\": \"active\", \"meeting_count\": 0, \"modules_json\": null, \"name\": \"Payments ledger cutover\", \"next_review_at\": null, \"outcome_text\": null, \"owner_ref\": null, \"posture\": null, \"posture_reason\": null, \"purpose\": null, \"review_cadence_json\": null, \"revision\": 4, \"start_at\": null, \"target_at\": null, \"team_members\": [], \"template_key\": null, \"updated_at\": \"2026-09-28T10:54:56.927470\"}, \"project_id\": \"proj-f0413aa05d63\", \"receipts\": {\"items\": [{\"at\": 1790614479.4851892, \"caller\": \"127.0.0.1\", \"id\": \"89de088d-35b0-413c-8a16-2964e01a92be\", \"identity\": \"owner-session\", \"label\": \"ProjectService.create_item\", \"op\": \"create_item\", \"origin\": null, \"outcome\": \"ok\", \"timestamp\": 1790614479.4851892, \"title\": \"ProjectService.create_item\"}, {\"at\": 1790614479.480603, \"caller\": \"127.0.0.1\", \"id\": \"f2419199-ad5f-4f0e-ad2b-d07ea51a66a4\", \"identity\": \"owner-session\", \"label\": \"ProjectService.create_item\", \"op\": \"create_item\", \"origin\": null, \"outcome\": \"ok\", \"timestamp\": 1790614479.480603, \"title\": \"ProjectService.create_item\"}], \"state\": \"ok\"}, \"resources\": {\"count\": 0, \"latest\": null, \"state\": \"ok\"}, \"review\": {\"last_accepted_at\": null, \"open_review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"pending_count\": 0, \"state\": \"ok\"}, \"revision\": 4, \"sinceRead\": {\"groups\": [], \"readAt\": null, \"state\": \"ok\"}, \"sources\": {\"count\": 0, \"items\": [], \"nextCheckAt\": null, \"state\": \"ok\"}, \"steward\": {\"enabled\": true, \"latest_run\": {\"completed_at\": \"2026-09-28T16:54:45+00:00\", \"created_at\": \"2026-09-28T16:54:45+00:00\", \"id\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886\", \"phase\": \"record\", \"policy_id\": \"pstpol_fe90cf4817214bdab6f53789904015b9\", \"project_id\": \"proj-f0413aa05d63\", \"requested_by\": \"principal:owner-session\", \"started_at\": \"2026-09-28T16:54:45+00:00\", \"state\": \"completed\", \"stop_requested_at\": null, \"summary\": {\"outcome\": \"completed\", \"phase_results\": {\"act\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}]}, \"compare\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"observe\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"propose\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"record\": {\"event_recorded\": true}, \"verify\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"source_count\": 4, \"verified_effects\": 1}}, \"phases_completed\": [\"observe\", \"compare\", \"propose\", \"act\", \"verify\", \"record\"]}, \"updated_at\": \"2026-09-28T16:54:45+00:00\", \"watermark\": \"\"}, \"state\": \"ok\", \"unattended_enabled\": false}, \"target\": {\"daysLeft\": null, \"passed\": false, \"state\": \"ok\", \"targetAt\": null}, \"updates\": {\"count\": 1, \"counts\": {\"published\": 1}, \"latest_published\": {\"created_at\": \"2026-09-28T16:54:45+00:00\", \"deliveries\": [{\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Priya\", \"id\": \"pdel_81c487946d41d8e3\", \"operation_id\": \"op_824d1a175530405798be8b10d735046d\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, {\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Tomas\", \"id\": \"pdel_c1f5ee7a37d9d09e\", \"operation_id\": \"op_a88a0dfa1a034d1e9e483bae0aca1311\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}], \"draft_revision\": 1, \"generator\": \"deterministic\", \"id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\", \"lifecycle\": \"published\", \"project_id\": \"proj-f0413aa05d63\", \"published_at\": \"2026-09-28T16:54:56+00:00\", \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"updated_at\": \"2026-09-28T16:54:56+00:00\"}, \"recent\": [{\"created_at\": \"2026-09-28T16:54:45+00:00\", \"deliveries\": [{\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Priya\", \"id\": \"pdel_81c487946d41d8e3\", \"operation_id\": \"op_824d1a175530405798be8b10d735046d\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, {\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Tomas\", \"id\": \"pdel_c1f5ee7a37d9d09e\", \"operation_id\": \"op_a88a0dfa1a034d1e9e483bae0aca1311\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}], \"draft_revision\": 1, \"generator\": \"deterministic\", \"id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\", \"lifecycle\": \"published\", \"project_id\": \"proj-f0413aa05d63\", \"published_at\": \"2026-09-28T16:54:56+00:00\", \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"updated_at\": \"2026-09-28T16:54:56+00:00\"}], \"state\": \"ok\"}}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "project.get_room",
+        "refusal": null,
+        "request": {
+          "id": 4,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {
+              "project_id": "proj-f0413aa05d63"
+            },
+            "name": "project.get_room"
+          }
+        },
+        "response": {
+          "changes": {
+            "recent": [
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "69716f523197624a01e10274097911c9",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_7c00e1e062584a1b82a1811a203ecfab",
+                "created_at": "2026-09-28T10:54:56.927470",
+                "id": "pchg_831c8f75dd18b1059ead3ff84e506e95",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 4,
+                "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "ea1ba90b4e3dfae1e89c1a1fd68cda29",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_17a5eeff9ae843a6b91578d40623bf6a",
+                "created_at": "2026-09-28T10:54:39.485272",
+                "id": "pchg_c552f3f26a0980877a1e225313dc350a",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 3,
+                "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_d3fa8eae3e4c4e249f227e54bdcada60\", \"item_type\": \"risk\", \"title\": \"Old ledger freeze slips\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "f3cf4ac9f48d229a403c5a54b9ffd4f5",
+                "before_hash": null,
+                "change_kind": "project.updated",
+                "command_id": "pcmd_a77bcfeebfd3478a9e7ffe540e037ec3",
+                "created_at": "2026-09-28T10:54:39.480733",
+                "id": "pchg_bd3679edaef061bb336ea9440fe28d7a",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 2,
+                "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_39a9b66901124f0e97b76b0807c41461\", \"item_type\": \"milestone\", \"title\": \"Cutover rehearsal\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              },
+              {
+                "actor_ref": "principal:owner-session",
+                "after_hash": "0336df9a18bfc9821f04390abdc83732",
+                "before_hash": null,
+                "change_kind": "project.created",
+                "command_id": "pcmd_dcdbbd30120c418b99357952c6205016",
+                "created_at": "2026-09-28T10:54:32.404243",
+                "id": "pchg_b05af6419c2a3e13a2968dc201f340a0",
+                "project_id": "proj-f0413aa05d63",
+                "project_revision": 1,
+                "summary_json": "{\"name\": \"Payments ledger cutover\"}",
+                "target_ref": "project:proj-f0413aa05d63"
+              }
+            ],
+            "state": "ok"
+          },
+          "commitments": {
+            "items": [],
+            "state": "ok"
+          },
+          "decisions": {
+            "items": [],
+            "state": "ok"
+          },
+          "health": {
+            "assessment": "at_risk",
+            "checked_at": null,
+            "inputs": {
+              "ciFailing": false,
+              "overdue": 1,
+              "overdueMilestones": 1,
+              "reviewWaitingDays": null,
+              "targetPassed": false
+            },
+            "merge_queue_depth": 0,
+            "people": [],
+            "reason": "1 OVERDUE",
+            "signals": {
+              "ci": {
+                "failures_last_3": 0,
+                "flaky_branch_count": 0,
+                "present": false,
+                "queue": 0,
+                "tone": "green"
+              },
+              "issue_aging": {
+                "aged_count": 0,
+                "present": false,
+                "threshold_days": 14,
+                "tone": "green"
+              },
+              "release": {
+                "blockers": [],
+                "blockers_count": 0,
+                "composite": "green",
+                "present": false,
+                "signals": {
+                  "blockers": "green",
+                  "ci": "green",
+                  "overdue": "green",
+                  "review_wait": "green"
+                },
+                "tone": "green"
+              },
+              "review_wait": {
+                "median_days": 0.0,
+                "per_reviewer": [],
+                "present": false,
+                "tone": "green",
+                "waiting_count": 0
+              }
+            },
+            "state": "ok"
+          },
+          "items": {
+            "focus": [
+              {
+                "created_at": "2026-09-28T10:54:39.480733",
+                "created_by_ref": "principal:owner-session",
+                "details_json": "{}",
+                "due_at": "2026-09-25",
+                "id": "pitem_39a9b66901124f0e97b76b0807c41461",
+                "item_type": "milestone",
+                "lifecycle": "planned",
+                "owner_ref": null,
+                "project_id": "proj-f0413aa05d63",
+                "provenance_kind": "owner",
+                "revision": 0,
+                "severity": null,
+                "sort_key": null,
+                "source_observation_id": null,
+                "summary": null,
+                "title": "Cutover rehearsal",
+                "updated_at": "2026-09-28T10:54:39.480733"
+              },
+              {
+                "created_at": "2026-09-28T10:54:39.485272",
+                "created_by_ref": "principal:owner-session",
+                "details_json": "{\"likelihood\": \"medium\", \"impact\": \"high\", \"mitigation\": \"Freeze the schema by Friday\"}",
+                "due_at": null,
+                "id": "pitem_d3fa8eae3e4c4e249f227e54bdcada60",
+                "item_type": "risk",
+                "lifecycle": "open",
+                "owner_ref": null,
+                "project_id": "proj-f0413aa05d63",
+                "provenance_kind": "owner",
+                "revision": 0,
+                "severity": null,
+                "sort_key": null,
+                "source_observation_id": null,
+                "summary": null,
+                "title": "Old ledger freeze slips",
+                "updated_at": "2026-09-28T10:54:39.485272"
+              }
+            ],
+            "state": "ok",
+            "total": 2,
+            "totals_by_type": {
+              "milestone": 1,
+              "risk": 1
+            }
+          },
+          "meetings": {
+            "count": 0,
+            "latest": null,
+            "state": "ok"
+          },
+          "needsYou": {
+            "count": 1,
+            "items": [
+              {
+                "due_at": "2026-09-25",
+                "item_id": "pitem_39a9b66901124f0e97b76b0807c41461",
+                "item_type": "milestone",
+                "kind": "milestone",
+                "severity": "danger",
+                "since": "2026-09-25",
+                "source": "item",
+                "title": "Cutover rehearsal",
+                "url": null,
+                "verb": "open",
+                "why": "OVERDUE \u00b7 3 DAYS"
+              }
+            ],
+            "state": "ok"
+          },
+          "nextCheckAt": null,
+          "observed_at": "2026-09-28T10:54:56.927470",
+          "project": {
+            "context": {},
+            "created_at": "2026-09-28T10:54:32.404243",
+            "description": "",
+            "detection_threshold": 0.4,
+            "id": "proj-f0413aa05d63",
+            "is_archived": false,
+            "keywords": [],
+            "last_review_at": null,
+            "last_review_id": null,
+            "lifecycle": "active",
+            "meeting_count": 0,
+            "modules_json": null,
+            "name": "Payments ledger cutover",
+            "next_review_at": null,
+            "outcome_text": null,
+            "owner_ref": null,
+            "posture": null,
+            "posture_reason": null,
+            "purpose": null,
+            "review_cadence_json": null,
+            "revision": 4,
+            "start_at": null,
+            "target_at": null,
+            "team_members": [],
+            "template_key": null,
+            "updated_at": "2026-09-28T10:54:56.927470"
+          },
+          "project_id": "proj-f0413aa05d63",
+          "receipts": {
+            "items": [
+              {
+                "at": 1790614479.4851892,
+                "caller": "127.0.0.1",
+                "id": "89de088d-35b0-413c-8a16-2964e01a92be",
+                "identity": "owner-session",
+                "label": "ProjectService.create_item",
+                "op": "create_item",
+                "origin": null,
+                "outcome": "ok",
+                "timestamp": 1790614479.4851892,
+                "title": "ProjectService.create_item"
+              },
+              {
+                "at": 1790614479.480603,
+                "caller": "127.0.0.1",
+                "id": "f2419199-ad5f-4f0e-ad2b-d07ea51a66a4",
+                "identity": "owner-session",
+                "label": "ProjectService.create_item",
+                "op": "create_item",
+                "origin": null,
+                "outcome": "ok",
+                "timestamp": 1790614479.480603,
+                "title": "ProjectService.create_item"
+              }
+            ],
+            "state": "ok"
+          },
+          "resources": {
+            "count": 0,
+            "latest": null,
+            "state": "ok"
+          },
+          "review": {
+            "last_accepted_at": null,
+            "open_review_id": "prev_7f64e43df57340538953574b5c6c8651",
+            "pending_count": 0,
+            "state": "ok"
+          },
+          "revision": 4,
+          "sinceRead": {
+            "groups": [],
+            "readAt": null,
+            "state": "ok"
+          },
+          "sources": {
+            "count": 0,
+            "items": [],
+            "nextCheckAt": null,
+            "state": "ok"
+          },
+          "steward": {
+            "enabled": true,
+            "latest_run": {
+              "completed_at": "2026-09-28T16:54:45+00:00",
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+              "phase": "record",
+              "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+              "project_id": "proj-f0413aa05d63",
+              "requested_by": "principal:owner-session",
+              "started_at": "2026-09-28T16:54:45+00:00",
+              "state": "completed",
+              "stop_requested_at": null,
+              "summary": {
+                "outcome": "completed",
+                "phase_results": {
+                  "act": {
+                    "actions_taken": 1,
+                    "effect_receipts": [
+                      {
+                        "attempt": 1,
+                        "effect_kind": "draft_update",
+                        "outcome": "applied",
+                        "result": {
+                          "effect": "draft_update",
+                          "generator": "deterministic",
+                          "generator_host": null,
+                          "generator_model": null,
+                          "lifecycle": "draft",
+                          "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                        },
+                        "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                      }
+                    ],
+                    "effects_skipped": [
+                      {
+                        "effect_kind": "refresh_sources",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_proposals",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "apply_proposal_effects",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_door_item",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      },
+                      {
+                        "effect_kind": "github_comment",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      }
+                    ]
+                  },
+                  "compare": {
+                    "proposal_count": 0,
+                    "proposals": [],
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                  },
+                  "observe": {
+                    "coverage": {
+                      "native:decisions": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:followthrough": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:meetings": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      },
+                      "native:resources": {
+                        "inserted": 0,
+                        "no_op": 0,
+                        "state": "ok"
+                      }
+                    }
+                  },
+                  "propose": {
+                    "proposal_count": 0,
+                    "proposals": [],
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                  },
+                  "record": {
+                    "event_recorded": true
+                  },
+                  "verify": {
+                    "actions_taken": 1,
+                    "effect_receipts": [
+                      {
+                        "attempt": 1,
+                        "effect_kind": "draft_update",
+                        "outcome": "applied",
+                        "result": {
+                          "effect": "draft_update",
+                          "generator": "deterministic",
+                          "generator_host": null,
+                          "generator_model": null,
+                          "lifecycle": "draft",
+                          "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                        },
+                        "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                      }
+                    ],
+                    "effects_skipped": [
+                      {
+                        "effect_kind": "refresh_sources",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_proposals",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "apply_proposal_effects",
+                        "reason": "not_in_eligible_effect_kinds"
+                      },
+                      {
+                        "effect_kind": "create_door_item",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      },
+                      {
+                        "effect_kind": "github_comment",
+                        "limit": 1,
+                        "reason": "max_actions_per_run_exceeded"
+                      }
+                    ],
+                    "has_real_effects": true,
+                    "proposal_count": 0,
+                    "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                    "source_count": 4,
+                    "verified_effects": 1
+                  }
+                },
+                "phases_completed": [
+                  "observe",
+                  "compare",
+                  "propose",
+                  "act",
+                  "verify",
+                  "record"
+                ]
+              },
+              "updated_at": "2026-09-28T16:54:45+00:00",
+              "watermark": ""
+            },
+            "state": "ok",
+            "unattended_enabled": false
+          },
+          "target": {
+            "daysLeft": null,
+            "passed": false,
+            "state": "ok",
+            "targetAt": null
+          },
+          "updates": {
+            "count": 1,
+            "counts": {
+              "published": 1
+            },
+            "latest_published": {
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "deliveries": [
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Priya",
+                  "id": "pdel_81c487946d41d8e3",
+                  "operation_id": "op_824d1a175530405798be8b10d735046d",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Tomas",
+                  "id": "pdel_c1f5ee7a37d9d09e",
+                  "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                }
+              ],
+              "draft_revision": 1,
+              "generator": "deterministic",
+              "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+              "lifecycle": "published",
+              "project_id": "proj-f0413aa05d63",
+              "published_at": "2026-09-28T16:54:56+00:00",
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+              "updated_at": "2026-09-28T16:54:56+00:00"
+            },
+            "recent": [
+              {
+                "created_at": "2026-09-28T16:54:45+00:00",
+                "deliveries": [
+                  {
+                    "delivered_at": "2026-09-28T16:54:56+00:00",
+                    "delivered_to": "Priya",
+                    "id": "pdel_81c487946d41d8e3",
+                    "operation_id": "op_824d1a175530405798be8b10d735046d",
+                    "project_id": "proj-f0413aa05d63",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  },
+                  {
+                    "delivered_at": "2026-09-28T16:54:56+00:00",
+                    "delivered_to": "Tomas",
+                    "id": "pdel_c1f5ee7a37d9d09e",
+                    "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                    "project_id": "proj-f0413aa05d63",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  }
+                ],
+                "draft_revision": 1,
+                "generator": "deterministic",
+                "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+                "lifecycle": "published",
+                "project_id": "proj-f0413aa05d63",
+                "published_at": "2026-09-28T16:54:56+00:00",
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                "updated_at": "2026-09-28T16:54:56+00:00"
+              }
+            ],
+            "state": "ok"
+          }
+        }
+      },
+      "steward_run": {
+        "adapter": "mcp-http-read",
+        "args": {
+          "run_id": "pstrun_4688f11b0acf54e7b7175c5e3caee886"
+        },
+        "domain_response": {
+          "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+          "receipt": {
+            "actor_identity": "owner-session",
+            "actor_kind": "owner",
+            "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+            "created_at": 1790614485.904398,
+            "delegator_identity": "",
+            "delegator_kind": "",
+            "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+            "outcome": "completed",
+            "receipt_id": "rcpt_ff5c8693c2fb47eaa477dcf068e543f4",
+            "result_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886",
+            "state": "succeeded",
+            "target_ref": "project:proj-f0413aa05d63"
+          },
+          "run": {
+            "completed_at": "2026-09-28T16:54:45+00:00",
+            "created_at": "2026-09-28T16:54:45+00:00",
+            "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+            "phase": "record",
+            "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+            "project_id": "proj-f0413aa05d63",
+            "requested_by": "principal:owner-session",
+            "started_at": "2026-09-28T16:54:45+00:00",
+            "state": "completed",
+            "stop_requested_at": null,
+            "summary": {
+              "outcome": "completed",
+              "phase_results": {
+                "act": {
+                  "actions_taken": 1,
+                  "effect_receipts": [
+                    {
+                      "attempt": 1,
+                      "effect_kind": "draft_update",
+                      "outcome": "applied",
+                      "result": {
+                        "effect": "draft_update",
+                        "generator": "deterministic",
+                        "generator_host": null,
+                        "generator_model": null,
+                        "lifecycle": "draft",
+                        "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                      },
+                      "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                    }
+                  ],
+                  "effects_skipped": [
+                    {
+                      "effect_kind": "refresh_sources",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_proposals",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "apply_proposal_effects",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_door_item",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    },
+                    {
+                      "effect_kind": "github_comment",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    }
+                  ]
+                },
+                "compare": {
+                  "proposal_count": 0,
+                  "proposals": [],
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                },
+                "observe": {
+                  "coverage": {
+                    "native:decisions": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:followthrough": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:meetings": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:resources": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    }
+                  }
+                },
+                "propose": {
+                  "proposal_count": 0,
+                  "proposals": [],
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                },
+                "record": {
+                  "event_recorded": true
+                },
+                "verify": {
+                  "actions_taken": 1,
+                  "effect_receipts": [
+                    {
+                      "attempt": 1,
+                      "effect_kind": "draft_update",
+                      "outcome": "applied",
+                      "result": {
+                        "effect": "draft_update",
+                        "generator": "deterministic",
+                        "generator_host": null,
+                        "generator_model": null,
+                        "lifecycle": "draft",
+                        "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                      },
+                      "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                    }
+                  ],
+                  "effects_skipped": [
+                    {
+                      "effect_kind": "refresh_sources",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_proposals",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "apply_proposal_effects",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_door_item",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    },
+                    {
+                      "effect_kind": "github_comment",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    }
+                  ],
+                  "has_real_effects": true,
+                  "proposal_count": 0,
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                  "source_count": 4,
+                  "verified_effects": 1
+                }
+              },
+              "phases_completed": [
+                "observe",
+                "compare",
+                "propose",
+                "act",
+                "verify",
+                "record"
+              ]
+            },
+            "updated_at": "2026-09-28T16:54:45+00:00",
+            "watermark": ""
+          },
+          "steps": [
+            {
+              "effect_kind": "phase:observe",
+              "error": null,
+              "expected": {},
+              "id": "pststep_fdefbfef78aa46e7aa30be13ceadfb35",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:observe",
+              "observed": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "phase": "observe",
+              "receipt": {},
+              "seq": 0,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:compare",
+              "error": null,
+              "expected": {},
+              "id": "pststep_85b754123b4147ea85e58217ff24cdb5",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:compare",
+              "observed": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "phase": "compare",
+              "receipt": {},
+              "seq": 1,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:propose",
+              "error": null,
+              "expected": {},
+              "id": "pststep_4a056f50c8074afa9c4854a09a9c362e",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:propose",
+              "observed": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "phase": "propose",
+              "receipt": {},
+              "seq": 2,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:act",
+              "error": null,
+              "expected": {},
+              "id": "pststep_7c5254d36ee746ee90a44dcd3926b15e",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:act",
+              "observed": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ]
+              },
+              "phase": "act",
+              "receipt": {},
+              "seq": 3,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "draft_update",
+              "error": null,
+              "expected": {
+                "effect": "draft_update",
+                "project_id": "proj-f0413aa05d63"
+              },
+              "id": "pststep_202c5b44467544439cfe0525d76c954b",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:draft_update",
+              "observed": {
+                "effect": "draft_update",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "lifecycle": "draft",
+                "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+              },
+              "phase": "act",
+              "receipt": {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied"
+              },
+              "seq": 4,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:verify",
+              "error": null,
+              "expected": {},
+              "id": "pststep_e0c769e5f7ba42dbaed0573608d57e7f",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:verify",
+              "observed": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                "source_count": 4,
+                "verified_effects": 1
+              },
+              "phase": "verify",
+              "receipt": {},
+              "seq": 5,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:record",
+              "error": null,
+              "expected": {},
+              "id": "pststep_e43ab86e06184e7aadcc9c60a5af0990",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:record",
+              "observed": {
+                "event_recorded": true
+              },
+              "phase": "record",
+              "receipt": {},
+              "seq": 6,
+              "state": "completed"
+            }
+          ]
+        },
+        "elapsed_s": 0.003,
+        "envelope": {
+          "id": 5,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"operation_id\": \"op_730efe93715d45b082bd6725efc068b6\", \"receipt\": {\"actor_identity\": \"owner-session\", \"actor_kind\": \"owner\", \"authority_basis\": \"authenticated_principal+declared_capability+hard_prerequisites+interruption_policy\", \"created_at\": 1790614485.904398, \"delegator_identity\": \"\", \"delegator_kind\": \"\", \"operation_id\": \"op_730efe93715d45b082bd6725efc068b6\", \"outcome\": \"completed\", \"receipt_id\": \"rcpt_ff5c8693c2fb47eaa477dcf068e543f4\", \"result_ref\": \"steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886\", \"state\": \"succeeded\", \"target_ref\": \"project:proj-f0413aa05d63\"}, \"run\": {\"completed_at\": \"2026-09-28T16:54:45+00:00\", \"created_at\": \"2026-09-28T16:54:45+00:00\", \"id\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886\", \"phase\": \"record\", \"policy_id\": \"pstpol_fe90cf4817214bdab6f53789904015b9\", \"project_id\": \"proj-f0413aa05d63\", \"requested_by\": \"principal:owner-session\", \"started_at\": \"2026-09-28T16:54:45+00:00\", \"state\": \"completed\", \"stop_requested_at\": null, \"summary\": {\"outcome\": \"completed\", \"phase_results\": {\"act\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}]}, \"compare\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"observe\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"propose\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"record\": {\"event_recorded\": true}, \"verify\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"source_count\": 4, \"verified_effects\": 1}}, \"phases_completed\": [\"observe\", \"compare\", \"propose\", \"act\", \"verify\", \"record\"]}, \"updated_at\": \"2026-09-28T16:54:45+00:00\", \"watermark\": \"\"}, \"steps\": [{\"effect_kind\": \"phase:observe\", \"error\": null, \"expected\": {}, \"id\": \"pststep_fdefbfef78aa46e7aa30be13ceadfb35\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:observe\", \"observed\": {\"coverage\": {\"native:decisions\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:followthrough\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:meetings\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}, \"native:resources\": {\"inserted\": 0, \"no_op\": 0, \"state\": \"ok\"}}}, \"phase\": \"observe\", \"receipt\": {}, \"seq\": 0, \"state\": \"completed\"}, {\"effect_kind\": \"phase:compare\", \"error\": null, \"expected\": {}, \"id\": \"pststep_85b754123b4147ea85e58217ff24cdb5\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:compare\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"phase\": \"compare\", \"receipt\": {}, \"seq\": 1, \"state\": \"completed\"}, {\"effect_kind\": \"phase:propose\", \"error\": null, \"expected\": {}, \"id\": \"pststep_4a056f50c8074afa9c4854a09a9c362e\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:propose\", \"observed\": {\"proposal_count\": 0, \"proposals\": [], \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\"}, \"phase\": \"propose\", \"receipt\": {}, \"seq\": 2, \"state\": \"completed\"}, {\"effect_kind\": \"phase:act\", \"error\": null, \"expected\": {}, \"id\": \"pststep_7c5254d36ee746ee90a44dcd3926b15e\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:act\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}]}, \"phase\": \"act\", \"receipt\": {}, \"seq\": 3, \"state\": \"completed\"}, {\"effect_kind\": \"draft_update\", \"error\": null, \"expected\": {\"effect\": \"draft_update\", \"project_id\": \"proj-f0413aa05d63\"}, \"id\": \"pststep_202c5b44467544439cfe0525d76c954b\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:draft_update\", \"observed\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"phase\": \"act\", \"receipt\": {\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\"}, \"seq\": 4, \"state\": \"completed\"}, {\"effect_kind\": \"phase:verify\", \"error\": null, \"expected\": {}, \"id\": \"pststep_e0c769e5f7ba42dbaed0573608d57e7f\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:verify\", \"observed\": {\"actions_taken\": 1, \"effect_receipts\": [{\"attempt\": 1, \"effect_kind\": \"draft_update\", \"outcome\": \"applied\", \"result\": {\"effect\": \"draft_update\", \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"lifecycle\": \"draft\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, \"step_id\": \"pststep_202c5b44467544439cfe0525d76c954b\"}], \"effects_skipped\": [{\"effect_kind\": \"refresh_sources\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_proposals\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"apply_proposal_effects\", \"reason\": \"not_in_eligible_effect_kinds\"}, {\"effect_kind\": \"create_door_item\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}, {\"effect_kind\": \"github_comment\", \"limit\": 1, \"reason\": \"max_actions_per_run_exceeded\"}], \"has_real_effects\": true, \"proposal_count\": 0, \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"source_count\": 4, \"verified_effects\": 1}, \"phase\": \"verify\", \"receipt\": {}, \"seq\": 5, \"state\": \"completed\"}, {\"effect_kind\": \"phase:record\", \"error\": null, \"expected\": {}, \"id\": \"pststep_e43ab86e06184e7aadcc9c60a5af0990\", \"idempotency_key\": \"pstrun_4688f11b0acf54e7b7175c5e3caee886:record\", \"observed\": {\"event_recorded\": true}, \"phase\": \"record\", \"receipt\": {}, \"seq\": 6, \"state\": \"completed\"}]}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "project.get_steward_run",
+        "refusal": null,
+        "request": {
+          "id": 5,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {
+              "run_id": "pstrun_4688f11b0acf54e7b7175c5e3caee886"
+            },
+            "name": "project.get_steward_run"
+          }
+        },
+        "response": {
+          "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+          "receipt": {
+            "actor_identity": "owner-session",
+            "actor_kind": "owner",
+            "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+            "created_at": 1790614485.904398,
+            "delegator_identity": "",
+            "delegator_kind": "",
+            "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+            "outcome": "completed",
+            "receipt_id": "rcpt_ff5c8693c2fb47eaa477dcf068e543f4",
+            "result_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886",
+            "state": "succeeded",
+            "target_ref": "project:proj-f0413aa05d63"
+          },
+          "run": {
+            "completed_at": "2026-09-28T16:54:45+00:00",
+            "created_at": "2026-09-28T16:54:45+00:00",
+            "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+            "phase": "record",
+            "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+            "project_id": "proj-f0413aa05d63",
+            "requested_by": "principal:owner-session",
+            "started_at": "2026-09-28T16:54:45+00:00",
+            "state": "completed",
+            "stop_requested_at": null,
+            "summary": {
+              "outcome": "completed",
+              "phase_results": {
+                "act": {
+                  "actions_taken": 1,
+                  "effect_receipts": [
+                    {
+                      "attempt": 1,
+                      "effect_kind": "draft_update",
+                      "outcome": "applied",
+                      "result": {
+                        "effect": "draft_update",
+                        "generator": "deterministic",
+                        "generator_host": null,
+                        "generator_model": null,
+                        "lifecycle": "draft",
+                        "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                      },
+                      "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                    }
+                  ],
+                  "effects_skipped": [
+                    {
+                      "effect_kind": "refresh_sources",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_proposals",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "apply_proposal_effects",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_door_item",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    },
+                    {
+                      "effect_kind": "github_comment",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    }
+                  ]
+                },
+                "compare": {
+                  "proposal_count": 0,
+                  "proposals": [],
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                },
+                "observe": {
+                  "coverage": {
+                    "native:decisions": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:followthrough": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:meetings": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    },
+                    "native:resources": {
+                      "inserted": 0,
+                      "no_op": 0,
+                      "state": "ok"
+                    }
+                  }
+                },
+                "propose": {
+                  "proposal_count": 0,
+                  "proposals": [],
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+                },
+                "record": {
+                  "event_recorded": true
+                },
+                "verify": {
+                  "actions_taken": 1,
+                  "effect_receipts": [
+                    {
+                      "attempt": 1,
+                      "effect_kind": "draft_update",
+                      "outcome": "applied",
+                      "result": {
+                        "effect": "draft_update",
+                        "generator": "deterministic",
+                        "generator_host": null,
+                        "generator_model": null,
+                        "lifecycle": "draft",
+                        "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                      },
+                      "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                    }
+                  ],
+                  "effects_skipped": [
+                    {
+                      "effect_kind": "refresh_sources",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_proposals",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "apply_proposal_effects",
+                      "reason": "not_in_eligible_effect_kinds"
+                    },
+                    {
+                      "effect_kind": "create_door_item",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    },
+                    {
+                      "effect_kind": "github_comment",
+                      "limit": 1,
+                      "reason": "max_actions_per_run_exceeded"
+                    }
+                  ],
+                  "has_real_effects": true,
+                  "proposal_count": 0,
+                  "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                  "source_count": 4,
+                  "verified_effects": 1
+                }
+              },
+              "phases_completed": [
+                "observe",
+                "compare",
+                "propose",
+                "act",
+                "verify",
+                "record"
+              ]
+            },
+            "updated_at": "2026-09-28T16:54:45+00:00",
+            "watermark": ""
+          },
+          "steps": [
+            {
+              "effect_kind": "phase:observe",
+              "error": null,
+              "expected": {},
+              "id": "pststep_fdefbfef78aa46e7aa30be13ceadfb35",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:observe",
+              "observed": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "phase": "observe",
+              "receipt": {},
+              "seq": 0,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:compare",
+              "error": null,
+              "expected": {},
+              "id": "pststep_85b754123b4147ea85e58217ff24cdb5",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:compare",
+              "observed": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "phase": "compare",
+              "receipt": {},
+              "seq": 1,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:propose",
+              "error": null,
+              "expected": {},
+              "id": "pststep_4a056f50c8074afa9c4854a09a9c362e",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:propose",
+              "observed": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "phase": "propose",
+              "receipt": {},
+              "seq": 2,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:act",
+              "error": null,
+              "expected": {},
+              "id": "pststep_7c5254d36ee746ee90a44dcd3926b15e",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:act",
+              "observed": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ]
+              },
+              "phase": "act",
+              "receipt": {},
+              "seq": 3,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "draft_update",
+              "error": null,
+              "expected": {
+                "effect": "draft_update",
+                "project_id": "proj-f0413aa05d63"
+              },
+              "id": "pststep_202c5b44467544439cfe0525d76c954b",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:draft_update",
+              "observed": {
+                "effect": "draft_update",
+                "generator": "deterministic",
+                "generator_host": null,
+                "generator_model": null,
+                "lifecycle": "draft",
+                "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+              },
+              "phase": "act",
+              "receipt": {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied"
+              },
+              "seq": 4,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:verify",
+              "error": null,
+              "expected": {},
+              "id": "pststep_e0c769e5f7ba42dbaed0573608d57e7f",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:verify",
+              "observed": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                "source_count": 4,
+                "verified_effects": 1
+              },
+              "phase": "verify",
+              "receipt": {},
+              "seq": 5,
+              "state": "completed"
+            },
+            {
+              "effect_kind": "phase:record",
+              "error": null,
+              "expected": {},
+              "id": "pststep_e43ab86e06184e7aadcc9c60a5af0990",
+              "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:record",
+              "observed": {
+                "event_recorded": true
+              },
+              "phase": "record",
+              "receipt": {},
+              "seq": 6,
+              "state": "completed"
+            }
+          ]
+        }
+      },
+      "updates": {
+        "adapter": "mcp-http-read",
+        "args": {
+          "project_id": "proj-f0413aa05d63"
+        },
+        "domain_response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "deliveries": [
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Priya",
+                  "id": "pdel_81c487946d41d8e3",
+                  "operation_id": "op_824d1a175530405798be8b10d735046d",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Tomas",
+                  "id": "pdel_c1f5ee7a37d9d09e",
+                  "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                }
+              ],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+              "lifecycle": "published",
+              "project_id": "proj-f0413aa05d63",
+              "project_revision": 3,
+              "published_at": "2026-09-28T16:54:56+00:00",
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"review_id\":\"prev_7f64e43df57340538953574b5c6c8651\"}",
+              "updated_at": "2026-09-28T16:54:56+00:00"
+            }
+          ]
+        },
+        "elapsed_s": 0.003,
+        "envelope": {
+          "id": 6,
+          "jsonrpc": "2.0",
+          "result": {
+            "content": [
+              {
+                "text": "{\"updates\": [{\"body_md\": \"## Progress\\n\\n- Milestone: Cutover rehearsal -- planned\\n- Risk: Old ledger freeze slips -- open\\n\\n## Decisions\\n\\nNo decisions in this window.\\n\\n## Risks & Blockers\\n\\n- Risk: Old ledger freeze slips -- open\\n\\n## Dependencies\\n\\nNo dependencies tracked.\\n\\n## Next Actions\\n\\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\\n\\n## Source Coverage\\n\\nAll sources consulted successfully.\\n\", \"claims_json\": \"[{\\\"acceptance\\\":\\\"unreviewed\\\",\\\"kind\\\":\\\"observation\\\",\\\"refs\\\":[\\\"item:pitem_39a9b66901124f0e97b76b0807c41461\\\"],\\\"section\\\":\\\"progress\\\",\\\"span_id\\\":\\\"s_progress_0\\\",\\\"support\\\":\\\"supported\\\",\\\"support_record\\\":{\\\"fields\\\":[\\\"item_type\\\",\\\"severity\\\",\\\"title\\\",\\\"lifecycle\\\"],\\\"method\\\":\\\"field_mapping\\\",\\\"source_refs\\\":[\\\"item:pitem_39a9b66901124f0e97b76b0807c41461\\\"],\\\"source_version\\\":\\\"project:proj-f0413aa05d63@r3\\\"},\\\"text\\\":\\\"Milestone: Cutover rehearsal -- planned\\\"},{\\\"acceptance\\\":\\\"unreviewed\\\",\\\"kind\\\":\\\"observation\\\",\\\"refs\\\":[\\\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\\\"],\\\"section\\\":\\\"progress\\\",\\\"span_id\\\":\\\"s_progress_1\\\",\\\"support\\\":\\\"supported\\\",\\\"support_record\\\":{\\\"fields\\\":[\\\"item_type\\\",\\\"severity\\\",\\\"title\\\",\\\"lifecycle\\\"],\\\"method\\\":\\\"field_mapping\\\",\\\"source_refs\\\":[\\\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\\\"],\\\"source_version\\\":\\\"project:proj-f0413aa05d63@r3\\\"},\\\"text\\\":\\\"Risk: Old ledger freeze slips -- open\\\"},{\\\"acceptance\\\":\\\"unreviewed\\\",\\\"kind\\\":\\\"observation\\\",\\\"refs\\\":[\\\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\\\"],\\\"section\\\":\\\"risks_blockers\\\",\\\"span_id\\\":\\\"s_risks_blockers_0\\\",\\\"support\\\":\\\"supported\\\",\\\"support_record\\\":{\\\"fields\\\":[\\\"item_type\\\",\\\"severity\\\",\\\"title\\\",\\\"lifecycle\\\"],\\\"method\\\":\\\"field_mapping\\\",\\\"source_refs\\\":[\\\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\\\"],\\\"source_version\\\":\\\"project:proj-f0413aa05d63@r3\\\"},\\\"text\\\":\\\"Risk: Old ledger freeze slips -- open\\\"},{\\\"acceptance\\\":\\\"unreviewed\\\",\\\"kind\\\":\\\"observation\\\",\\\"refs\\\":[\\\"item:pitem_39a9b66901124f0e97b76b0807c41461\\\"],\\\"section\\\":\\\"next_actions\\\",\\\"span_id\\\":\\\"s_next_actions_0\\\",\\\"support\\\":\\\"supported\\\",\\\"support_record\\\":{\\\"fields\\\":[\\\"item_type\\\",\\\"title\\\",\\\"lifecycle\\\",\\\"due_at\\\"],\\\"method\\\":\\\"field_mapping\\\",\\\"source_refs\\\":[\\\"item:pitem_39a9b66901124f0e97b76b0807c41461\\\"],\\\"source_version\\\":\\\"project:proj-f0413aa05d63@r3\\\"},\\\"text\\\":\\\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\\\"}]\", \"created_at\": \"2026-09-28T16:54:45+00:00\", \"deliveries\": [{\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Priya\", \"id\": \"pdel_81c487946d41d8e3\", \"operation_id\": \"op_824d1a175530405798be8b10d735046d\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}, {\"delivered_at\": \"2026-09-28T16:54:56+00:00\", \"delivered_to\": \"Tomas\", \"id\": \"pdel_c1f5ee7a37d9d09e\", \"operation_id\": \"op_a88a0dfa1a034d1e9e483bae0aca1311\", \"project_id\": \"proj-f0413aa05d63\", \"update_id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\"}], \"draft_revision\": 1, \"fallback_reason\": null, \"fallback_receipt\": null, \"generator\": \"deterministic\", \"generator_host\": null, \"generator_model\": null, \"id\": \"pupd_6aeab558f62a4e8e81128eac792ae529\", \"lifecycle\": \"published\", \"project_id\": \"proj-f0413aa05d63\", \"project_revision\": 3, \"published_at\": \"2026-09-28T16:54:56+00:00\", \"review_id\": \"prev_7f64e43df57340538953574b5c6c8651\", \"source_manifest_json\": \"{\\\"caveats\\\":[],\\\"observation_ids\\\":[],\\\"project_revision\\\":3,\\\"review_id\\\":\\\"prev_7f64e43df57340538953574b5c6c8651\\\"}\", \"updated_at\": \"2026-09-28T16:54:56+00:00\"}]}",
+                "type": "text"
+              }
+            ],
+            "isError": false
+          }
+        },
+        "kind": "op",
+        "name": "project.list_updates",
+        "refusal": null,
+        "request": {
+          "id": 6,
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "arguments": {
+              "project_id": "proj-f0413aa05d63"
+            },
+            "name": "project.list_updates"
+          }
+        },
+        "response": {
+          "updates": [
+            {
+              "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+              "created_at": "2026-09-28T16:54:45+00:00",
+              "deliveries": [
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Priya",
+                  "id": "pdel_81c487946d41d8e3",
+                  "operation_id": "op_824d1a175530405798be8b10d735046d",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                {
+                  "delivered_at": "2026-09-28T16:54:56+00:00",
+                  "delivered_to": "Tomas",
+                  "id": "pdel_c1f5ee7a37d9d09e",
+                  "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                  "project_id": "proj-f0413aa05d63",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                }
+              ],
+              "draft_revision": 1,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+              "lifecycle": "published",
+              "project_id": "proj-f0413aa05d63",
+              "project_revision": 3,
+              "published_at": "2026-09-28T16:54:56+00:00",
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"review_id\":\"prev_7f64e43df57340538953574b5c6c8651\"}",
+              "updated_at": "2026-09-28T16:54:56+00:00"
+            }
+          ]
+        }
+      }
+    },
+    "room": {
+      "health": {
+        "assessment": "at_risk",
+        "checked_at": null,
+        "inputs": {
+          "ciFailing": false,
+          "overdue": 1,
+          "overdueMilestones": 1,
+          "reviewWaitingDays": null,
+          "targetPassed": false
+        },
+        "merge_queue_depth": 0,
+        "people": [],
+        "reason": "1 OVERDUE",
+        "signals": {
+          "ci": {
+            "failures_last_3": 0,
+            "flaky_branch_count": 0,
+            "present": false,
+            "queue": 0,
+            "tone": "green"
+          },
+          "issue_aging": {
+            "aged_count": 0,
+            "present": false,
+            "threshold_days": 14,
+            "tone": "green"
+          },
+          "release": {
+            "blockers": [],
+            "blockers_count": 0,
+            "composite": "green",
+            "present": false,
+            "signals": {
+              "blockers": "green",
+              "ci": "green",
+              "overdue": "green",
+              "review_wait": "green"
+            },
+            "tone": "green"
+          },
+          "review_wait": {
+            "median_days": 0.0,
+            "per_reviewer": [],
+            "present": false,
+            "tone": "green",
+            "waiting_count": 0
+          }
+        },
+        "state": "ok"
+      },
+      "needsYou": {
+        "count": 1,
+        "items": [
+          {
+            "due_at": "2026-09-25",
+            "item_id": "pitem_39a9b66901124f0e97b76b0807c41461",
+            "item_type": "milestone",
+            "kind": "milestone",
+            "severity": "danger",
+            "since": "2026-09-25",
+            "source": "item",
+            "title": "Cutover rehearsal",
+            "url": null,
+            "verb": "open",
+            "why": "OVERDUE \u00b7 3 DAYS"
+          }
+        ],
+        "state": "ok"
+      },
+      "review": {
+        "last_accepted_at": null,
+        "open_review_id": "prev_7f64e43df57340538953574b5c6c8651",
+        "pending_count": 0,
+        "state": "ok"
+      },
+      "steward": {
+        "enabled": true,
+        "latest_run": {
+          "completed_at": "2026-09-28T16:54:45+00:00",
+          "created_at": "2026-09-28T16:54:45+00:00",
+          "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+          "phase": "record",
+          "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+          "project_id": "proj-f0413aa05d63",
+          "requested_by": "principal:owner-session",
+          "started_at": "2026-09-28T16:54:45+00:00",
+          "state": "completed",
+          "stop_requested_at": null,
+          "summary": {
+            "outcome": "completed",
+            "phase_results": {
+              "act": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ]
+              },
+              "compare": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "observe": {
+                "coverage": {
+                  "native:decisions": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:followthrough": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:meetings": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  },
+                  "native:resources": {
+                    "inserted": 0,
+                    "no_op": 0,
+                    "state": "ok"
+                  }
+                }
+              },
+              "propose": {
+                "proposal_count": 0,
+                "proposals": [],
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+              },
+              "record": {
+                "event_recorded": true
+              },
+              "verify": {
+                "actions_taken": 1,
+                "effect_receipts": [
+                  {
+                    "attempt": 1,
+                    "effect_kind": "draft_update",
+                    "outcome": "applied",
+                    "result": {
+                      "effect": "draft_update",
+                      "generator": "deterministic",
+                      "generator_host": null,
+                      "generator_model": null,
+                      "lifecycle": "draft",
+                      "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                    },
+                    "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                  }
+                ],
+                "effects_skipped": [
+                  {
+                    "effect_kind": "refresh_sources",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_proposals",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "apply_proposal_effects",
+                    "reason": "not_in_eligible_effect_kinds"
+                  },
+                  {
+                    "effect_kind": "create_door_item",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  },
+                  {
+                    "effect_kind": "github_comment",
+                    "limit": 1,
+                    "reason": "max_actions_per_run_exceeded"
+                  }
+                ],
+                "has_real_effects": true,
+                "proposal_count": 0,
+                "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+                "source_count": 4,
+                "verified_effects": 1
+              }
+            },
+            "phases_completed": [
+              "observe",
+              "compare",
+              "propose",
+              "act",
+              "verify",
+              "record"
+            ]
+          },
+          "updated_at": "2026-09-28T16:54:45+00:00",
+          "watermark": ""
+        },
+        "state": "ok",
+        "unattended_enabled": false
+      },
+      "updates": {
+        "count": 1,
+        "counts": {
+          "published": 1
+        },
+        "latest_published": {
+          "created_at": "2026-09-28T16:54:45+00:00",
+          "deliveries": [
+            {
+              "delivered_at": "2026-09-28T16:54:56+00:00",
+              "delivered_to": "Priya",
+              "id": "pdel_81c487946d41d8e3",
+              "operation_id": "op_824d1a175530405798be8b10d735046d",
+              "project_id": "proj-f0413aa05d63",
+              "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+            },
+            {
+              "delivered_at": "2026-09-28T16:54:56+00:00",
+              "delivered_to": "Tomas",
+              "id": "pdel_c1f5ee7a37d9d09e",
+              "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+              "project_id": "proj-f0413aa05d63",
+              "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+            }
+          ],
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+          "lifecycle": "published",
+          "project_id": "proj-f0413aa05d63",
+          "published_at": "2026-09-28T16:54:56+00:00",
+          "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+          "updated_at": "2026-09-28T16:54:56+00:00"
+        },
+        "recent": [
+          {
+            "created_at": "2026-09-28T16:54:45+00:00",
+            "deliveries": [
+              {
+                "delivered_at": "2026-09-28T16:54:56+00:00",
+                "delivered_to": "Priya",
+                "id": "pdel_81c487946d41d8e3",
+                "operation_id": "op_824d1a175530405798be8b10d735046d",
+                "project_id": "proj-f0413aa05d63",
+                "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+              },
+              {
+                "delivered_at": "2026-09-28T16:54:56+00:00",
+                "delivered_to": "Tomas",
+                "id": "pdel_c1f5ee7a37d9d09e",
+                "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+                "project_id": "proj-f0413aa05d63",
+                "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+              }
+            ],
+            "draft_revision": 1,
+            "generator": "deterministic",
+            "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+            "lifecycle": "published",
+            "project_id": "proj-f0413aa05d63",
+            "published_at": "2026-09-28T16:54:56+00:00",
+            "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+            "updated_at": "2026-09-28T16:54:56+00:00"
+          }
+        ],
+        "state": "ok"
+      }
+    },
+    "steward_run": {
+      "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614485.904398,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+        "outcome": "completed",
+        "receipt_id": "rcpt_ff5c8693c2fb47eaa477dcf068e543f4",
+        "result_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886",
+        "state": "succeeded",
+        "target_ref": "project:proj-f0413aa05d63"
+      },
+      "run": {
+        "completed_at": "2026-09-28T16:54:45+00:00",
+        "created_at": "2026-09-28T16:54:45+00:00",
+        "id": "pstrun_4688f11b0acf54e7b7175c5e3caee886",
+        "phase": "record",
+        "policy_id": "pstpol_fe90cf4817214bdab6f53789904015b9",
+        "project_id": "proj-f0413aa05d63",
+        "requested_by": "principal:owner-session",
+        "started_at": "2026-09-28T16:54:45+00:00",
+        "state": "completed",
+        "stop_requested_at": null,
+        "summary": {
+          "outcome": "completed",
+          "phase_results": {
+            "act": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  },
+                  "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "limit": 1,
+                  "reason": "max_actions_per_run_exceeded"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "limit": 1,
+                  "reason": "max_actions_per_run_exceeded"
+                }
+              ]
+            },
+            "compare": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+            },
+            "observe": {
+              "coverage": {
+                "native:decisions": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:followthrough": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:meetings": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                },
+                "native:resources": {
+                  "inserted": 0,
+                  "no_op": 0,
+                  "state": "ok"
+                }
+              }
+            },
+            "propose": {
+              "proposal_count": 0,
+              "proposals": [],
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+            },
+            "record": {
+              "event_recorded": true
+            },
+            "verify": {
+              "actions_taken": 1,
+              "effect_receipts": [
+                {
+                  "attempt": 1,
+                  "effect_kind": "draft_update",
+                  "outcome": "applied",
+                  "result": {
+                    "effect": "draft_update",
+                    "generator": "deterministic",
+                    "generator_host": null,
+                    "generator_model": null,
+                    "lifecycle": "draft",
+                    "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                  },
+                  "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+                }
+              ],
+              "effects_skipped": [
+                {
+                  "effect_kind": "refresh_sources",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_proposals",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "apply_proposal_effects",
+                  "reason": "not_in_eligible_effect_kinds"
+                },
+                {
+                  "effect_kind": "create_door_item",
+                  "limit": 1,
+                  "reason": "max_actions_per_run_exceeded"
+                },
+                {
+                  "effect_kind": "github_comment",
+                  "limit": 1,
+                  "reason": "max_actions_per_run_exceeded"
+                }
+              ],
+              "has_real_effects": true,
+              "proposal_count": 0,
+              "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+              "source_count": 4,
+              "verified_effects": 1
+            }
+          },
+          "phases_completed": [
+            "observe",
+            "compare",
+            "propose",
+            "act",
+            "verify",
+            "record"
+          ]
+        },
+        "updated_at": "2026-09-28T16:54:45+00:00",
+        "watermark": ""
+      },
+      "steps": [
+        {
+          "effect_kind": "phase:observe",
+          "error": null,
+          "expected": {},
+          "id": "pststep_fdefbfef78aa46e7aa30be13ceadfb35",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:observe",
+          "observed": {
+            "coverage": {
+              "native:decisions": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:followthrough": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:meetings": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              },
+              "native:resources": {
+                "inserted": 0,
+                "no_op": 0,
+                "state": "ok"
+              }
+            }
+          },
+          "phase": "observe",
+          "receipt": {},
+          "seq": 0,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "phase:compare",
+          "error": null,
+          "expected": {},
+          "id": "pststep_85b754123b4147ea85e58217ff24cdb5",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:compare",
+          "observed": {
+            "proposal_count": 0,
+            "proposals": [],
+            "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+          },
+          "phase": "compare",
+          "receipt": {},
+          "seq": 1,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "phase:propose",
+          "error": null,
+          "expected": {},
+          "id": "pststep_4a056f50c8074afa9c4854a09a9c362e",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:propose",
+          "observed": {
+            "proposal_count": 0,
+            "proposals": [],
+            "review_id": "prev_7f64e43df57340538953574b5c6c8651"
+          },
+          "phase": "propose",
+          "receipt": {},
+          "seq": 2,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "phase:act",
+          "error": null,
+          "expected": {},
+          "id": "pststep_7c5254d36ee746ee90a44dcd3926b15e",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:act",
+          "observed": {
+            "actions_taken": 1,
+            "effect_receipts": [
+              {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied",
+                "result": {
+                  "effect": "draft_update",
+                  "generator": "deterministic",
+                  "generator_host": null,
+                  "generator_model": null,
+                  "lifecycle": "draft",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+              }
+            ],
+            "effects_skipped": [
+              {
+                "effect_kind": "refresh_sources",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_proposals",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "apply_proposal_effects",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_door_item",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              },
+              {
+                "effect_kind": "github_comment",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              }
+            ]
+          },
+          "phase": "act",
+          "receipt": {},
+          "seq": 3,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "draft_update",
+          "error": null,
+          "expected": {
+            "effect": "draft_update",
+            "project_id": "proj-f0413aa05d63"
+          },
+          "id": "pststep_202c5b44467544439cfe0525d76c954b",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:draft_update",
+          "observed": {
+            "effect": "draft_update",
+            "generator": "deterministic",
+            "generator_host": null,
+            "generator_model": null,
+            "lifecycle": "draft",
+            "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+          },
+          "phase": "act",
+          "receipt": {
+            "attempt": 1,
+            "effect_kind": "draft_update",
+            "outcome": "applied"
+          },
+          "seq": 4,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "phase:verify",
+          "error": null,
+          "expected": {},
+          "id": "pststep_e0c769e5f7ba42dbaed0573608d57e7f",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:verify",
+          "observed": {
+            "actions_taken": 1,
+            "effect_receipts": [
+              {
+                "attempt": 1,
+                "effect_kind": "draft_update",
+                "outcome": "applied",
+                "result": {
+                  "effect": "draft_update",
+                  "generator": "deterministic",
+                  "generator_host": null,
+                  "generator_model": null,
+                  "lifecycle": "draft",
+                  "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+                },
+                "step_id": "pststep_202c5b44467544439cfe0525d76c954b"
+              }
+            ],
+            "effects_skipped": [
+              {
+                "effect_kind": "refresh_sources",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_proposals",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "apply_proposal_effects",
+                "reason": "not_in_eligible_effect_kinds"
+              },
+              {
+                "effect_kind": "create_door_item",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              },
+              {
+                "effect_kind": "github_comment",
+                "limit": 1,
+                "reason": "max_actions_per_run_exceeded"
+              }
+            ],
+            "has_real_effects": true,
+            "proposal_count": 0,
+            "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+            "source_count": 4,
+            "verified_effects": 1
+          },
+          "phase": "verify",
+          "receipt": {},
+          "seq": 5,
+          "state": "completed"
+        },
+        {
+          "effect_kind": "phase:record",
+          "error": null,
+          "expected": {},
+          "id": "pststep_e43ab86e06184e7aadcc9c60a5af0990",
+          "idempotency_key": "pstrun_4688f11b0acf54e7b7175c5e3caee886:record",
+          "observed": {
+            "event_recorded": true
+          },
+          "phase": "record",
+          "receipt": {},
+          "seq": 6,
+          "state": "completed"
+        }
+      ]
+    },
+    "updates": [
+      {
+        "body_md": "## Progress\n\n- Milestone: Cutover rehearsal -- planned\n- Risk: Old ledger freeze slips -- open\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\n- Risk: Old ledger freeze slips -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Milestone: Cutover rehearsal -- planned, due 2026-09-25\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_d3fa8eae3e4c4e249f227e54bdcada60\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Risk: Old ledger freeze slips -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_39a9b66901124f0e97b76b0807c41461\"],\"source_version\":\"project:proj-f0413aa05d63@r3\"},\"text\":\"Milestone: Cutover rehearsal -- planned, due 2026-09-25\"}]",
+        "created_at": "2026-09-28T16:54:45+00:00",
+        "deliveries": [
+          {
+            "delivered_at": "2026-09-28T16:54:56+00:00",
+            "delivered_to": "Priya",
+            "id": "pdel_81c487946d41d8e3",
+            "operation_id": "op_824d1a175530405798be8b10d735046d",
+            "project_id": "proj-f0413aa05d63",
+            "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+          },
+          {
+            "delivered_at": "2026-09-28T16:54:56+00:00",
+            "delivered_to": "Tomas",
+            "id": "pdel_c1f5ee7a37d9d09e",
+            "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+            "project_id": "proj-f0413aa05d63",
+            "update_id": "pupd_6aeab558f62a4e8e81128eac792ae529"
+          }
+        ],
+        "draft_revision": 1,
+        "fallback_reason": null,
+        "fallback_receipt": null,
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "id": "pupd_6aeab558f62a4e8e81128eac792ae529",
+        "lifecycle": "published",
+        "project_id": "proj-f0413aa05d63",
+        "project_revision": 3,
+        "published_at": "2026-09-28T16:54:56+00:00",
+        "review_id": "prev_7f64e43df57340538953574b5c6c8651",
+        "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":3,\"review_id\":\"prev_7f64e43df57340538953574b5c6c8651\"}",
+        "updated_at": "2026-09-28T16:54:56+00:00"
+      }
+    ]
+  },
+  "receipts": [
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "project.configure_steward",
+        "operation_id": "op_66a6684d2f7347ddb50ac87592159231",
+        "parent_operation_id": "",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 1,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614485.8791099,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_66a6684d2f7347ddb50ac87592159231",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_d6a9762948b847dc80c1d594039975c8",
+        "result_ref": "project:proj-f0413aa05d63",
+        "state": "succeeded",
+        "target_ref": "project:proj-f0413aa05d63"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "project.run_steward",
+        "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+        "parent_operation_id": "",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 2,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614485.904398,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_730efe93715d45b082bd6725efc068b6",
+        "outcome": "completed",
+        "receipt_id": "rcpt_ff5c8693c2fb47eaa477dcf068e543f4",
+        "result_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886",
+        "state": "succeeded",
+        "target_ref": "project:proj-f0413aa05d63"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "project-steward:pstrun_4688f11b0acf54e7b7175c5e3caee886:sha256:7f532c209992b1066a9d68188d559858a91f9fe91a626162a6b3e612f98b96f6",
+        "delegator_kind": "owner",
+        "name": "project.steward.effect",
+        "operation_id": "op_fb818f669c4640ebac42cbbc2d009d4d",
+        "parent_operation_id": "op_730efe93715d45b082bd6725efc068b6",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 3,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "project-steward:pstrun_4688f11b0acf54e7b7175c5e3caee886:sha256:7f532c209992b1066a9d68188d559858a91f9fe91a626162a6b3e612f98b96f6",
+        "created_at": 1790614485.902585,
+        "delegator_identity": "owner-session",
+        "delegator_kind": "owner",
+        "operation_id": "op_fb818f669c4640ebac42cbbc2d009d4d",
+        "outcome": "applied",
+        "receipt_id": "rcpt_4f4a8febf75449d1bbda6312a0a3c061",
+        "result_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886",
+        "state": "succeeded",
+        "target_ref": "steward_run:pstrun_4688f11b0acf54e7b7175c5e3caee886"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "project.publish_update",
+        "operation_id": "op_38a565219621424ca7ffc57822cbc245",
+        "parent_operation_id": "",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 4,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614496.9278562,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_38a565219621424ca7ffc57822cbc245",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_9dac362f5a1446deb0bb0e17529b57bd",
+        "result_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529",
+        "state": "succeeded",
+        "target_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "project.mark_update_delivered",
+        "operation_id": "op_824d1a175530405798be8b10d735046d",
+        "parent_operation_id": "",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 5,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614496.93665,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_824d1a175530405798be8b10d735046d",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_555ea40727f34783b52c8b9e25cc8046",
+        "result_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529",
+        "state": "succeeded",
+        "target_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529"
+      }
+    },
+    {
+      "operation": {
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "delegator_kind": "",
+        "name": "project.mark_update_delivered",
+        "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+        "parent_operation_id": "",
+        "principal_identity": "owner-session",
+        "principal_kind": "owner",
+        "rid": 6,
+        "state": "succeeded"
+      },
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1790614496.942633,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_a88a0dfa1a034d1e9e483bae0aca1311",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_cf010d25a96c4c29b425d12d869f6397",
+        "result_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529",
+        "state": "succeeded",
+        "target_ref": "project_update:pupd_6aeab558f62a4e8e81128eac792ae529"
+      }
+    }
+  ]
+}

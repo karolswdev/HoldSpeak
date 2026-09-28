@@ -21,6 +21,16 @@ The run's own status reads BLOCKED on four lines, two driver defects, both repai
 
 Pending: the Room's face at 1440 and 393 (after PHILO-9-03 merges; `--face`), then the owner's review of the shots. A fresh full run with `--face` replaces this attempt as the final record.
 
+## Round two — the two catalogue gaps paid (Muad'Dib's ruling, 2026-09-28)
+
+Rehearsal one found them; each is red on main `5f9e5de0` and green on the branch (captures below):
+
+1. **An owner-only operation names the owner.** An agent's call outside the grant's bound (`project.mark_update_delivered`, `project.archive`, `project.configure_steward`, and every other admitted Room row outside {run, stop, publish}) is refused `owner_principal_required`, the code story 07 uses for grant and revoke; the bound keeps `project_delegation_required`. One receipt per refusal, unchanged. `holdspeak/kernel/project_codec.py` (authorize), the descriptors' refusal words (`holdspeak/room_operations.py`), `docs/generated/operations.json` regenerated. Fence: `tests/unit/test_philo9_owner_only_code.py` (a real PROJECT credential, MCP and HTTP, without and with a LIVE grant); the story 07 and story 02 fences updated to the new code.
+2. **Find a project by its name.** `project.list` says "Find a project by its name"; `memory.search` says it returns records inside projects, never a project, and points to `project.list`. Fence: `tests/unit/test_philo9_discovery.py` (the phrase maps to `project.list` alone; `memory.search` offers no project search).
+3. The grant pointer in the refusal: BACKLOG ("PHILO-9 charter follow-ups"), low.
+
+**Rehearsal two** (`attempts/20260928T165409Z-room-job`, the fixture revised with `owner_only_code`): OUTCOME COMPLETED, no blocker. Find it cold took `project.list` then `project.list_updates` (rehearsal one took `memory.search`). The agent's mark delivered was refused `owner_principal_required` in both agent sessions, and Codex told the owner "An owner must record delivery." Every fixture value read back; zero reads in all four sessions; fixture before the run, session isolation and the leak fence green.
+
 ## Proof
 
 ### Captured run — 2026-09-28T16:40:15Z
@@ -79,4 +89,82 @@ FENCES GREEN
 ........................................................................ [ 89%]
 .................                                                        [100%]
 161 passed in 3.12s
+```
+
+### Captured run — 2026-09-28T16:53:40Z
+
+- **Command:** `sh -c cd /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.0Cd8kYxTRJ && PYTHONPATH=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.0Cd8kYxTRJ /Users/karol/dev/tools/wt-philo-9-06/.venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_philo9_owner_only_code.py tests/unit/test_philo9_discovery.py 2>&1 | grep -E '^FAILED|passed|failed'; echo 'RED ON MAIN 5f9e5de08 (expected)'`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 847110f28b3996cdd64977b49434404b6afa5fec
+
+```text
+FAILED tests/unit/test_philo9_owner_only_code.py::test_an_owner_only_operation_is_refused_owner_principal_required[no_grant]
+FAILED tests/unit/test_philo9_owner_only_code.py::test_an_owner_only_operation_is_refused_owner_principal_required[live_grant]
+FAILED tests/unit/test_philo9_owner_only_code.py::test_no_owner_only_descriptor_names_a_delegation_code
+FAILED tests/unit/test_philo9_discovery.py::test_each_job_phrase_maps_to_one_tool_and_its_argument_path[find a project by its name]
+FAILED tests/unit/test_philo9_discovery.py::test_memory_search_does_not_offer_to_find_a_project
+5 failed, 31 passed in 8.00s
+RED ON MAIN 5f9e5de08 (expected)
+```
+
+### Captured run — 2026-09-28T16:54:09Z
+
+- **Command:** `.venv/bin/python scripts/philo9_room_job.py run --client codex --legs owner,agent --codex-auth /Users/karol/.codex/auth.json --out pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-06-shots/attempts`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 847110f28b3996cdd64977b49434404b6afa5fec
+
+```text
+RUN_DIR /Users/karol/dev/tools/wt-philo-9-06/pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-06-shots/attempts/20260928T165409Z-room-job
+PROOF REHEARSED; OWNER REVIEW PENDING
+OUTCOME COMPLETED
+FACE LEG PENDING: the Room's face at 1440 and 393 is shot after PHILO-9-03 (the Room's face) merges; rerun with --face.
+```
+
+### Captured run — 2026-09-28T16:57:04Z
+
+- **Command:** `.venv/bin/python scripts/philo9_room_job.py fence pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-06-shots/attempts/20260928T165409Z-room-job`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 847110f28b3996cdd64977b49434404b6afa5fec
+
+```text
+fixture_before_run=[]
+session_isolation=[]
+account_leaks=[]
+pairing owner_job=[]
+pairing owner_find=[]
+pairing agent_ungranted=[]
+pairing agent_granted=[]
+owner content=[]
+owner receipts=[]
+agent ungranted=[]
+agent granted=[]
+owner_job zero_read=0
+owner_find zero_read=0
+agent_ungranted zero_read=0
+agent_granted zero_read=0
+FENCES GREEN
+```
+
+### Captured run — 2026-09-28T16:57:05Z
+
+- **Command:** `.venv/bin/python -m pytest -q -n auto tests/unit/test_philo9_owner_only_code.py tests/unit/test_philo9_discovery.py tests/unit/test_philo9_room_job.py tests/unit/test_philo9_project_grant.py tests/unit/test_philo9_project_grant_lifecycle.py tests/unit/test_philo9_project_grant_restart.py tests/unit/test_philo9_steward_admission.py tests/unit/test_philo9_compat.py tests/unit/test_philo9_room_contract.py tests/unit/test_philo9_contract.py tests/unit/test_philo5_one_decision.py tests/unit/test_philo5_his_words.py tests/unit/test_philo7_file_and_find.py`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 847110f28b3996cdd64977b49434404b6afa5fec
+
+```text
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 62%]
+........................................................................ [ 78%]
+........................................................................ [ 94%]
+..........................                                               [100%]
+458 passed in 33.20s
 ```

@@ -29,8 +29,11 @@ PHASE5_RUN = REPO / (
 )
 STORY = REPO / "pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract"
 SHOTS = STORY / "assets/story-06-shots"
-#: The retained rehearsal (the first full run of the three MCP legs).
-RUN = SHOTS / "attempts/20260928T164015Z-room-job"
+#: Rehearsal one: its own audit refused the agent sessions' pairing (the
+#: Codex ``status: failed`` defect) and it found the two catalogue gaps.
+FIRST = SHOTS / "attempts/20260928T164015Z-room-job"
+#: Rehearsal two, after the gaps were paid: completed, no blocker.
+RUN = SHOTS / "attempts/20260928T165409Z-room-job"
 
 
 def _events(stage_dir: Path) -> list[dict[str, Any]]:
@@ -79,8 +82,10 @@ def test_every_client_call_pairs_with_one_hub_exchange_from_the_retained_records
     repaired = driver.repair_findings(RUN)
     for stage in driver.SESSIONS:
         assert repaired[f"pairing {stage}"] == [], stage
-    retained = _json(RUN / "codex" / "agent_ungranted" / "mcp-audit.json")
+    assert driver.repair_findings(FIRST)["pairing agent_ungranted"] == []
+    retained = _json(FIRST / "codex" / "agent_ungranted" / "mcp-audit.json")
     assert "project.run_steward" in str(retained["reconciliation_error"])
+    assert _json(RUN / "codex" / "agent_ungranted" / "mcp-audit.json")["reconciliation_error"] is None
 
 
 def test_a_refused_call_without_the_failed_status_does_not_pair(tmp_path: Path) -> None:
@@ -255,7 +260,26 @@ def test_the_agent_leg_refused_then_ran_inside_the_bound() -> None:
     assert driver.agent_findings("granted", granted, identity=identity, fixture=fixture, grant_id="pdg_other")
 
 
+def test_find_it_cold_took_project_list_after_the_discovery_repair() -> None:
+    """Rehearsal one took memory.search (it never returns a project); after
+    project.list named "find a project by its name", rehearsal two took it."""
+    assert _json(FIRST / "codex" / "owner_find" / "mcp-audit.json")["chosen_tools"][0] == "memory.search"
+    assert _json(RUN / "codex" / "owner_find" / "mcp-audit.json")["chosen_tools"][0] == "project.list"
+
+
+def test_the_agent_heard_owner_only_for_mark_delivered_after_the_repair() -> None:
+    fixture = _json(RUN / "fixture.json")["fixture"]
+    for label in ("ungranted", "granted"):
+        receipts = _json(RUN / f"agent_{label}" / "readbacks.json")["receipts"]
+        marks = [r["receipt"]["outcome"] for r in receipts if r["operation"]["name"] == "project.mark_update_delivered"]
+        assert marks == [fixture["agent"]["owner_only_code"]] == ["owner_principal_required"], label
+    first = _json(FIRST / "agent_granted" / "readbacks.json")["receipts"]
+    assert [r["receipt"]["outcome"] for r in first
+            if r["operation"]["name"] == "project.mark_update_delivered"] == ["project_delegation_required"]
+
+
 def test_the_run_status_is_labelled_rehearsed_and_the_face_pending() -> None:
     status = _json(RUN / "run-status.json")
+    assert status["outcome"] == "completed" and status["blocked"] == []
     assert status["label"] == "REHEARSED; OWNER REVIEW PENDING"
     assert "FACE LEG PENDING" in str(status["face"])

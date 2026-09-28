@@ -37,6 +37,8 @@ from typing import Any, Callable
 
 import pytest
 
+from holdspeak.kernel.project import PROJECT_GRANT_OPERATIONS
+
 from holdspeak.runtime import composition
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -491,8 +493,10 @@ def test_an_agent_without_a_grant_is_refused_with_a_receipt_and_nothing_changes(
     before, calls = _room_state(hub), gh.count()
     count = Count(hub)
     is_error, refused = _tool(agent, name, arguments(hub, ids))
-    assert is_error is True and refused.get("code") == "project_delegation_required", refused
-    made = _one(count, name, "project_delegation_required")
+    # PHILO-9-06: outside the grant's bound the code names the owner.
+    code = "project_delegation_required" if name in PROJECT_GRANT_OPERATIONS else "owner_principal_required"
+    assert is_error is True and refused.get("code") == code, refused
+    made = _one(count, name, code)
     assert (made["principal_kind"], made["principal_identity"]) == ("agent", AGENT_ID)
     assert refused.get("operation_id") == made["operation_id"] and refused.get("receipt"), refused
     assert _room_state(hub) == before, "an agent's refused write changed the Room"
@@ -532,8 +536,8 @@ def test_b2_a_project_credential_over_http_is_refused_with_a_receipt(rig: Any) -
         resp = send()
         assert resp.status_code == 403, (name, resp.text)
         body = resp.json()
-        assert body.get("code") == "project_delegation_required", (name, body)
-        made = _one(count, name, "project_delegation_required")
+        assert body.get("code") == "owner_principal_required", (name, body)  # PHILO-9-06: owner-only
+        made = _one(count, name, "owner_principal_required")
         assert body.get("operation_id") == made["operation_id"] and body.get("receipt")
         assert _room_state(hub)["projects"] == before_projects and gh.count() == calls, name
 

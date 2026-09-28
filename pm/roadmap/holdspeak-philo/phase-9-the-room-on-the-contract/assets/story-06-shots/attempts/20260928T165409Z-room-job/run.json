@@ -1,0 +1,23 @@
+{
+  "claim": "cold context (an empty scratch dir, scratch HOME/CODEX_HOME with only the auth file, `--ignore-user-config --ignore-rules`, no preamble), ZERO repository reads in the retained log, discovery from the catalogue alone",
+  "client": "codex",
+  "engine_mode": "none",
+  "face": "FACE LEG PENDING: the Room's face at 1440 and 393 is shot after PHILO-9-03 (the Room's face) merges; rerun with --face.",
+  "fixture_sha256": "a62a47db5e1d632474e52fe487ab306cbbe9b5fe866118a483b84a865a1ae597",
+  "hub_home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-46dsam3k/hub-home",
+  "label": "REHEARSED; OWNER REVIEW PENDING",
+  "legs": [
+    "owner",
+    "agent"
+  ],
+  "model": "gpt-6-astra",
+  "observed_sitting": false,
+  "reasoning_effort": "medium",
+  "sessions": [
+    "owner_job",
+    "owner_find",
+    "agent_ungranted",
+    "agent_granted"
+  ],
+  "temp_root": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo9-06-46dsam3k"
+}

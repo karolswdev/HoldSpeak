@@ -346,9 +346,10 @@ def test_every_operation_outside_the_bound_stays_refused_with_a_live_grant(hub: 
     agent = _agent(hub)
     _grant(hub, pid)
     is_error, body = _tool(agent, name, arguments(hub, ids))
-    assert is_error is True and body.get("code") == "project_delegation_required", body
+    # PHILO-9-06: no grant can admit it, so the code names the owner.
+    assert is_error is True and body.get("code") == "owner_principal_required", body
     op = _op(hub, body["operation_id"])
-    assert (op["name"], op["principal_identity"], op["outcome"]) == (name, AGENT_ID, "project_delegation_required")
+    assert (op["name"], op["principal_identity"], op["outcome"]) == (name, AGENT_ID, "owner_principal_required")
 
 
 def test_mark_delivered_archive_and_configure_are_refused_for_an_agent_in_every_case(hub: Hub) -> None:
@@ -373,7 +374,7 @@ def test_mark_delivered_archive_and_configure_are_refused_for_an_agent_in_every_
             assert _revoke(hub, pid).status_code == 200
         for name, (mcp, http) in rows.items():
             is_error, body = mcp()
-            assert is_error and body["code"] in {"project_delegation_required", "project_delegation_revoked"}, (phase, name, body)
+            assert is_error and body["code"] == "owner_principal_required", (phase, name, body)  # PHILO-9-06
             assert _op(hub, body["operation_id"])["outcome"] == body["code"]
             resp = http()
             assert resp.status_code == 403, (phase, name, resp.text)
@@ -425,7 +426,7 @@ def test_a_direct_proposal_decision_stays_refused_although_the_run_may_accept(hu
     _grant(hub, pid)
     is_error, body = _tool(agent, "project.decide_proposal", {"project_id": pid, "review_id": review,
                                                               "proposal_id": proposals[0], "verb": "accept"})
-    assert is_error and body["code"] == "project_delegation_required", body
+    assert is_error and body["code"] == "owner_principal_required", body  # PHILO-9-06
 
 
 def test_a_revoke_mid_run_refuses_the_next_child_with_its_receipt_and_ends_the_run(
