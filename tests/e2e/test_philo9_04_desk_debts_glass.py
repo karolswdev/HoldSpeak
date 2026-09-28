@@ -451,6 +451,7 @@ class TestDeskDebtsGlass:
                 browser.close()
 
     @pytest.mark.e2e
+    @pytest.mark.timeout(600)  # the real-pointer pass; 200 s on the macOS CI runner
     @pytest.mark.parametrize("width", WIDTHS)
     def test_the_sort_headers_are_the_library_button(self, width: int) -> None:
         """Every sort verb in the list header is the library Button (red on
@@ -484,6 +485,7 @@ class TestDeskDebtsGlass:
                 browser.close()
 
     @pytest.mark.e2e
+    @pytest.mark.timeout(600)  # the real-pointer pass; 200 s on the macOS CI runner
     @pytest.mark.parametrize("width", WIDTHS)
     def test_the_row_menu_keeps_itself_in_view(self, width: int) -> None:
         """The row menu on a row near the bottom edge: its last entry ends
@@ -608,6 +610,10 @@ class TestDeskDebtsGlass:
                 browser.close()
 
     @pytest.mark.e2e
+    # The spatial Floor plus a nine-point real-pointer pass over every submenu
+    # row outlasted the suite's 300 s bound on the macOS CI runner (PR #683 run
+    # 36387708744: the other fences there took up to 200 s each).
+    @pytest.mark.timeout(900)
     def test_the_launch_submenu_keeps_itself_in_view(self) -> None:
         """Finding 2 (inherited on main): the Floor menu opened near the
         bottom-right corner at 1440, then Launch; both panels end inside the

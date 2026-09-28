@@ -50,7 +50,12 @@
 - **Finding 2 PAID (inherited on main):** the Launch submenu of the Floor menu opened at the bottom-right at 1440 ended at 1474 × 1034 (main and `f58cb5b0`); main's Desk menu itself ended at 1454 × 906. The same measurement in the `WorkMenu` species now covers its desktop submenu (`DeskMenu.tsx`, the round-two `useLayoutEffect`): past the right edge the submenu opens on the parent panel's left side; past the bottom it moves up. Fence: `test_the_launch_submenu_keeps_itself_in_view` (1440 only; at the narrow desk the submenu replaces its panel). Red on main and at `f58cb5b0`; green after: Desk menu 1166–1432 × 566–892, Launch submenu 899–1165 × 438–892.
 - **The claim narrowed:** "every desk menu keeps itself in view" is proved for what was exercised: the list's row menu (1440, 393), the Floor's Desk menu and its Launch submenu (1440). The rule is the `WorkMenu` species' (every consumer gets it), but other menus and submenus were not each measured; Astra sampled the menu bar menus (fit).
 - **Finding 3:** the list repairs match the canvas (Astra's own reading); nothing to pay.
-- **CI on `f58cb5b0` (run 36381571475, at 06:40Z):** Documentation Navigation, DeskOS Web Quality, Critical Journeys (G0), Linux Smoke, Route screenshots pass; Unit Tests and E2E Tests (macOS) in progress and Integration Tests (macOS) queued for over an hour behind the shared runner queue. The round-two head's CI is recorded after it lands.
+- **CI on `f58cb5b0` (run 36381571475):** Documentation Navigation, DeskOS Web Quality, Critical Journeys (G0), Linux Smoke, Route screenshots pass; the macOS jobs were cancelled by the round-two push.
+- **CI on `0d7e987b` (run 36387708744), classified:**
+  - Documentation Navigation, Critical Journeys (G0), Linux Smoke, Route screenshots, **Integration Tests (macOS)**: pass.
+  - **Unit Tests: fail, inherited.** 24 failed + 31 errors; every one of the 55 is in main's own red on `1afcc576` (run 36369788814, job 108763477466: 27 failed, 31 errors; 58 ids, a superset: the Playwright-browser-missing unit rigs, the Phase 143 censuses, `test_product_copy`, `test_thread_modes`, the git-show-of-history tests). Branch-new: none.
+  - **DeskOS Web Quality: fail, one vitest case, not this diff:** `RecallFace.test.tsx` "Carry into brief … keeps focus" (a focus assertion). `RecallFace` imports neither file round two changed; the same job passed on `f58cb5b0`; the file passes 5/5 locally at `0d7e987b`. Flaky; re-run on the next head.
+  - **E2E Tests (macOS): fail.** (1) **Mine:** `test_the_launch_submenu_keeps_itself_in_view` hit the suite's 300 s per-test bound on the runner (the spatial Floor plus the nine-point pointer pass over every submenu row; the other fences took up to 200 s each there), which ends the pytest process; every other PHILO-9-04 fence passed in that job (18 of 18). Paid: `@pytest.mark.timeout(900)` on it, `600` on the two other pointer-pass fences. (2) **Inherited:** the `test_philo8_one_delete_glass.py` 1440 reds (main's run lists 16 E2E reds, this family among them); of the two not in main's list, `test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]` fails locally on main's product (`swap.sh main`) as on the branch (the palette option "detached from the DOM"), and `test_the_list_palette_delete_removes_the_selected_object[1440]` passes locally on both (flaky). PR #682 (`fix/main-e2e-inherited-reds`) is the home of that family.
 - **Green after round two:** capture 06:27:52Z (the glass, 19 cases incl. the five round-two runs, the unit and atlas fences, 237 passed; the rig's eight atlas runs pass); web unit 06:37:07Z (zero branch-new, 2927 passed, no Errors line, `npm run check` green); Documentation Navigation 06:40:25Z (every step exit 0). A capture at 06:18:29Z failed on a stale atlas source anchor (`DeskMenu.tsx`'s line moved); the atlas was regenerated and the next capture is green.
 
 ## Proof
@@ -668,4 +673,87 @@ rc=0
 Documentation coverage checked.
 +pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/docs_nav.sh:16> echo 'rc=0'
 rc=0
+```
+
+### Captured run — 2026-09-28T09:24:35Z
+
+- **Command:** `zsh pm/roadmap/holdspeak-philo/phase-9-the-room-on-the-contract/assets/story-04-proof/green.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 5d70e976979b3af3ed6c87590a98de9d7f462ca5
+
+```text
+HEAD = 0d7e987baf9a0f47f1232e7d833963436cd9bbb6; product diff vs origin/main:
+ 10 files changed, 252 insertions(+), 37 deletions(-)
+✓ built in 4.53s
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_clock_a_case_uses_is_declared]
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_api_setup_step_exists_in_the_generated_openapi
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_applicable_case_carries_one_trigger]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_face_cases_carry_both_ruled_viewports]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_applicable_predicate_is_a_kind_the_rig_implements]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_predicate_observes_a_selector_or_a_route]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_keeps_its_human_sentence]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_ui_action_is_one_the_rig_implements]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_precondition_check_compares_two_snapshots]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_precondition_check_observes_a_selector_or_a_route]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_check_asserts_the_result_the_trigger_must_produce]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_no_step_acts_on_a_root_placeholder]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_navigation_steps_carry_no_selector]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_desk_face_case_crosses_the_gate_first]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_captured_id_names_the_field_it_reads]
+PASSED tests/unit/test_philo_graph_atlas.py::test_summary_manual_retry_requires_failed_producer_and_current_route
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_selection_is_visible[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_editor_selection_is_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_selection_is_visible[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_list_text_is_12px_and_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_list_text_is_12px_and_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_thread_composer_selection_is_readable[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_status_says_shown[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_status_says_shown[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_every_kept_column_is_in_view[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_every_kept_column_is_in_view[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_launch_submenu_keeps_itself_in_view
+PASSED tests/unit/test_philo9_04_sort_button_fence.py::test_the_sortable_table_has_no_raw_button
+PASSED tests/unit/test_philo9_04_sort_button_fence.py::test_a_raw_button_mutation_turns_the_fence_red
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_named_case_is_in_the_atlas
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_case_runs_at_both_widths
+PASSED tests/unit/test_philo9_04_atlas.py::test_face_checks_read_what_is_readable
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_menu_case_asks_44px_at_393_only
+PASSED tests/unit/test_philo9_04_atlas.py::test_every_face_case_without_an_op_is_excluded_with_a_reason
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_state_id_resolves]
+PASSED tests/unit/test_philo9_04_atlas.py::test_the_general_fences_hold_for_phase9[test_every_case_reference_inside_the_atlas_resolves]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_sort_headers_are_the_library_button[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_sort_headers_are_the_library_button[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_row_menu_keeps_itself_in_view[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_row_menu_keeps_itself_in_view[393]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_open_row_menu_text_is_12px[1440]
+PASSED tests/e2e/test_philo9_04_desk_debts_glass.py::TestDeskDebtsGlass::test_the_open_row_menu_text_is_12px[393]
+237 passed in 487.49s (0:08:07)
+case.p9.list_status.shown 1440 exit=0  
+case.p9.list_status.shown 393 exit=0  
+case.p9.list_columns.in_view 1440 exit=0  
+case.p9.list_columns.in_view 393 exit=0  
+case.p9.list_sort.zone_pressed 1440 exit=0  
+case.p9.list_sort.zone_pressed 393 exit=0  
+case.p9.list_row_menu.delete_in_view 1440 exit=0  
+case.p9.list_row_menu.delete_in_view 393 exit=0  
+VERDICT: pass terminal=settled
+NOTE: predicate: 'PERSONAL' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 179, 'y': 174, 'w': 1082, 'h': 41}
+VERDICT: pass terminal=settled
+NOTE: predicate: 'PERSONAL' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 19, 'y': 249, 'w': 355, 'h': 78}
+VERDICT: pass terminal=settled
+NOTE: predicate: control owns all 9 hit points in viewport {'width': 1440, 'height': 900} with rect {'x': 206, 'y': 847, 'w': 272, 'h': 28}
+VERDICT: pass terminal=settled
+NOTE: predicate: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 11, 'y': 797, 'w': 371, 'h': 44}
+VERDICT: pass terminal=settled
+NOTE: predicate: aria-pressed='true', wanted 'true'
+VERDICT: pass terminal=settled
+NOTE: predicate: aria-pressed='true', wanted 'true'
+VERDICT: pass terminal=settled
+NOTE: predicate: '2 SHOWN OF 2' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1156, 'y': 76, 'w': 95, 'h': 16}
+VERDICT: pass terminal=settled
+NOTE: predicate: '2 SHOWN OF 2' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 29, 'y': 127, 'w': 95, 'h': 16}
+rig cases not passing:        0
 ```
