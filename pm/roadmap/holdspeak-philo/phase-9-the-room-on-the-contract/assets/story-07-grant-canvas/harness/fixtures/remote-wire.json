@@ -1,0 +1,32 @@
+{
+  "active_count": 2,
+  "bind_host": null,
+  "credentials": [
+    {
+      "active": true,
+      "delegation": {
+        "expires_at": null,
+        "grant_id": "deskdeleg_86fea9b760ec43b7a4051e9361ca304b",
+        "state": "LIVE"
+      },
+      "expires_at": 1790603660.0858488,
+      "id": "c684c362c41d4a86",
+      "identity": "desk-agent",
+      "last_used_at": 1790560460.0890057,
+      "palette": "ALL"
+    },
+    {
+      "active": true,
+      "delegation": null,
+      "expires_at": 1790646860.0875642,
+      "id": "79cb103d744147ac",
+      "identity": "sweep-runner",
+      "last_used_at": null,
+      "palette": "PROJECT"
+    }
+  ],
+  "delegations": [],
+  "enabled": true,
+  "port": null,
+  "total_count": 2
+}
