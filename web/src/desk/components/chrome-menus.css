@@ -96,6 +96,12 @@
 .desk-next .desk-work-menu {
   z-index: var(--desk-z-popover);
 }
+/* PHILO-9-04: the 12 px floor holds in the work menu as in the list: its
+   quiet reason ("Select a Project") and its keycap wells ("F2", "Delete"). */
+.desk-next .desk-work-menu .quiet,
+.desk-next .desk-work-menu .desk-menu-well {
+  font-size: var(--desk-surface-label-size);
+}
 /* HS-148-01: recessed separator — shadow + shine pair (the Amiga 2.0
    bevel system: dark rule on top, light shine below). */
 .desk-next .desk-menu-sep {
@@ -939,6 +945,14 @@
 }
 
 @media (max-width: 420px) {
+  /* PHILO-9-04: at the narrow desk each work-menu row owns the 44 px the
+     canon asks of a control (UX-CANON C, --desk-button-hit-size). The menu
+     portals outside every `surface` container, so this is a viewport block.
+     The keep-in-view rule (DeskMenu.tsx) measures the panel after these
+     rows are laid out. */
+  .desk-next .desk-work-menu [role="menuitem"] {
+    min-height: var(--desk-button-hit-size);
+  }
   /* The clock's date is redundant on the narrowest bar; its accessible name
      still carries both date and time. This preserves the search and privacy
      actions without making the fixed bar wider than the viewport. */

@@ -1,0 +1,903 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase9-room",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "1afcc57692325328964b0d63721d74d4af3c80ba",
+  "cases": [
+    {
+      "id": "case.p9.list_status.shown",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_zone_dive"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "2 SHOWN OF 2"
+        },
+        "observe_at": ".desk-list-status",
+        "words": "the owner dives into a zone of two notes; the list's status reads '2 SHOWN OF 2' (the status style sets capitals), readable, in the viewport. Red on main: '2 SHOWNS OF 2' at both widths."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_columns.in_view",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_zone_dive"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-listmode .desk-sortable-table-open[aria-label^='Personal zone']",
+        "why": "dive into the starter zone Personal (two starter notes: About me, How I like help)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "PERSONAL"
+        },
+        "observe_at": ".desk-listmode tbody tr:has(.desk-list-name-cell[aria-label^=About])",
+        "words": "the owner dives into a zone; the row 'About me' is wholly inside the viewport and names its zone PERSONAL: in the Zone column at 1440, on the fold line in the name Button at 393. Red on main at 393: the Kind, Zone and Attention cells run past the right edge, so the row is not in the viewport; preservation green at 1440."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_sort.zone_pressed",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_sort"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "role": "button",
+        "name": "Zone",
+        "exact": true,
+        "why": "the Zone sort verb: a column header at 1440, in the Name header at 393 (DeskSortableTable.tsx SortButton)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-pressed",
+          "value": "true"
+        },
+        "observe_at": ".desk-listmode thead .desk-sortable-table-sort.is-current",
+        "words": "the owner sorts the list by Zone; the sorted verb is the library Button and says it is pressed (aria-pressed true). Red on main at both widths: the sort verbs are raw buttons with no pressed state."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p9.list_row_menu.delete_in_view",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.list_row_menu"
+      ],
+      "state_id": "state.desk_presentation.p9_list_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "aria-pressed",
+            "value": "true"
+          },
+          "observe_at": "[data-testid=chair-floor-toggle]",
+          "why": "the Floor is the surface in front (the toggle is pressed)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 1",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_1",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 2",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_2",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 3",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_3",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 4",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_4",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 5",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_5",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Atlas list note 6",
+            "body_markdown": "A row for the list face"
+          },
+          "capture_as": "note_6",
+          "capture_path": "note.id",
+          "expect_status": 201,
+          "why": "more than 16 objects, so the Floor opens as the list at 393 (store/types.ts defaultViewFor)"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=chair-floor-toggle]",
+          "why": "go to the Floor (Dock.tsx chair-floor-toggle)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "List view",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "[id='desk-palette-option-desk.toggle-view']",
+          "at_width": 1440,
+          "why": "at 1440 the Floor opens spatial; the palette's List view (desk.toggle-view) opens the list"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode",
+          "why": "at 393 the Floor opens as the list (more than 16 objects)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-listmode .desk-list-name-cell[aria-label='Atlas list note 6']"
+        },
+        {
+          "kind": "ui",
+          "action": "focus",
+          "adapter": "ui-keyboard",
+          "selector": ".desk-listmode tbody tr.desk-sortable-table-row:last-child .desk-list-name-cell",
+          "why": "keyboard travel to the list's LAST row scrolls the page to its end; the row sits at the bottom edge"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-keyboard",
+        "key": "Shift+F10",
+        "why": "the row menu from the keyboard (DeskListView.tsx onRowKeyDown: ContextMenu or Shift+F10) on the focused last row"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "hit_target",
+          "min_width": 44,
+          "min_height": 28,
+          "min_height_by_viewport": {
+            "393": 44
+          }
+        },
+        "observe_at": ".desk-work-menu [role=menuitem]:last-of-type",
+        "words": "the owner opens the row menu on the list's last row, at the bottom edge; the menu's last entry (Delete) is wholly inside the viewport and owns its nine hit points; at 393 it is 44 px tall. Red on main at 393: the panel's guessed clamp leaves Delete cut 15 px, rows 28 px; preservation green at 1440."
+      },
+      "completion_bound_s": 25,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p9_list_face",
+      "family": "desk_presentation",
+      "values": {
+        "list": "the list face as the owner ratified it (2026-09-27)",
+        "width": "four columns at 1440; the fold line at 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "function FoldLine",
+          "line": 36,
+          "claim": "the fold: Kind, Zone and Attention ride the name Button in a surface of 720 px or less"
+        },
+        {
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "countToken(visible.length, \"SHOWN\", \"SHOWN\")",
+          "line": 351,
+          "claim": "the status says SHOWN for any count"
+        },
+        {
+          "path": "web/src/desk/components/DeskSortableTable.tsx",
+          "symbol": "function SortButton",
+          "line": 42,
+          "claim": "the one sort verb is the library Button, aria-pressed on the sorted column"
+        },
+        {
+          "path": "web/src/desk/components/DeskMenu.tsx",
+          "symbol": "useLayoutEffect(() => {",
+          "line": 486,
+          "claim": "the work menu keeps its measured panel inside the viewport"
+        },
+        {
+          "path": "web/src/desk/components/list-view.css",
+          "symbol": "container-name: surface;",
+          "line": 344,
+          "claim": "the list face is a surface container, so its @container rules apply on the Floor's list"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.list_status.shown",
+        "case.p9.list_columns.in_view",
+        "case.p9.list_sort.zone_pressed",
+        "case.p9.list_row_menu.delete_in_view"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: no Phase 9 case moves a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [
+    {
+      "id": "excluded.p9.list_face_op",
+      "applicability": "not_applicable",
+      "combination": "case.p9.list_status.shown, case.p9.list_columns.in_view, case.p9.list_sort.zone_pressed, case.p9.list_row_menu.delete_in_view with an .op sibling",
+      "reason": "each proves a FACE fact with no durable outcome: a status word, a row's geometry, a sort verb's pressed state, a menu's seat. There is no operation to pair."
+    },
+    {
+      "id": "excluded.p9.selection_and_text_floor",
+      "applicability": "not_applicable",
+      "combination": "the selection contrast (>= 3:1) and the list's 12 px text floor as atlas cases",
+      "reason": "the rig has no predicate that reads a computed style or a composited contrast (scripts/graph_walk.py check_predicate); a new predicate kind is rig work outside PHILO-9-04. Both are fenced as rendered at 1440 and 393 by tests/e2e/test_philo9_04_desk_debts_glass.py (test_the_selection_is_visible, test_the_list_text_is_12px_and_readable)."
+    }
+  ],
+  "council_readings": []
+}

@@ -182,7 +182,7 @@ describe("HS-111-07 the ledger face: same records", () => {
 
   it("keeps the honest count status", () => {
     renderList();
-    expect(screen.getByRole("status")).toHaveTextContent("4 SHOWNS of 4");
+    expect(screen.getByRole("status")).toHaveTextContent("4 SHOWN OF 4");
   });
 
   it("keeps repository roadmaps out of the ordinary root list", () => {
@@ -230,13 +230,13 @@ describe("HS-93-08 pagination at 1,000 items", () => {
   it("pages by 100 with an honest count and no focus loss", () => {
     renderList();
     expect(screen.getByRole("status")).toHaveTextContent(
-      "100 SHOWNS of 1000",
+      "100 SHOWN OF 1000",
     );
     const more = screen.getByRole("button", { name: "Show 100 more" });
     more.focus();
     fireEvent.click(more);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "200 SHOWNS of 1000",
+      "200 SHOWN OF 1000",
     );
     expect(document.activeElement).toBe(
       screen.getByRole("button", { name: "Show 100 more" }),

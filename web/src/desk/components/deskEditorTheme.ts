@@ -30,8 +30,15 @@ export const deskEditorTheme = EditorView.theme(
     ".cm-line": {
       padding: "0",
     },
+    // PHILO-9-04 round two (Codex Astra r1 finding 1): the editor takes the
+    // desk-wide selection pair, ground AND ink. The tint ground under the
+    // global page ink read 1.33:1; the accent ground with the page ink is
+    // 4.56:1 for the selected text.
     ".cm-selectionBackground, ::selection": {
-      backgroundColor: "var(--accent-tint) !important",
+      backgroundColor: "var(--selection-bg) !important",
+    },
+    "::selection": {
+      color: "var(--selection-ink)",
     },
     ".cm-cursor, .cm-dropCursor": {
       borderLeftColor: "var(--accent)",

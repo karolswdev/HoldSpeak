@@ -1,5 +1,6 @@
 import "./list-view.css";
 import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 import { useRovingRows } from "../surface/roving";
 import { SurfaceState } from "../surface/Surface";
 
@@ -29,6 +30,44 @@ export interface DeskSortableTableProps<T> {
   /** Lets a consumer retain a row-specific keyboard verb without a second table. */
   onRowKeyDown?: (event: KeyboardEvent<HTMLTableRowElement>, item: T) => void;
   onRowContextMenu?: (event: React.MouseEvent<HTMLTableRowElement>, item: T) => void;
+  /** PHILO-9-04 (the ratified list canvas): column keys that fold into the
+   *  first column in a `surface` of 720 px or less; their values ride a
+   *  second line in the first column's cell (the consumer draws it) and
+   *  their sort Buttons join the first sortable header. */
+  foldColumns?: string[];
+}
+
+/** PHILO-9-04: the one sort verb, the library Button (UX-CANON A.1). The
+ *  sorted column keeps its arrow and reads `aria-pressed`. */
+function SortButton({
+  label,
+  current,
+  dir,
+  onSort,
+  narrowOnly,
+}: {
+  label: string;
+  current: boolean;
+  dir: "asc" | "desc";
+  onSort: () => void;
+  narrowOnly?: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      dense
+      aria-pressed={current}
+      className={`desk-sortable-table-sort${current ? " is-current" : ""}${narrowOnly ? " is-narrow-only" : ""}`}
+      onClick={onSort}
+    >
+      {label}
+      {current ? (
+        <span className="desk-sortable-table-direction" aria-hidden="true">
+          {dir === "asc" ? " ↑" : " ↓"}
+        </span>
+      ) : null}
+    </Button>
+  );
 }
 
 /**
@@ -52,7 +91,12 @@ export function DeskSortableTable<T>({
   rowLabel,
   onRowKeyDown,
   onRowContextMenu,
+  foldColumns = [],
 }: DeskSortableTableProps<T>) {
+  const fold = new Set(foldColumns);
+  const firstSortable = columns.find((c) => c.sortable)?.key;
+  const sortOf = (key: string) =>
+    () => onSort(key, sort.key === key && sort.dir === "asc" ? "desc" : "asc");
   const rootRef = useRef<HTMLDivElement>(null);
   useRovingRows(rootRef, { selector: ".desk-sortable-table-row" });
 
@@ -84,6 +128,7 @@ export function DeskSortableTable<T>({
                 <th
                   key={column.key}
                   scope="col"
+                  className={fold.has(column.key) ? "is-fold" : undefined}
                   aria-sort={
                     column.sortable && isCurrent
                       ? sort.dir === "asc"
@@ -93,23 +138,23 @@ export function DeskSortableTable<T>({
                   }
                 >
                   {column.sortable ? (
-                    <button
-                      type="button"
-                      className={`desk-sortable-table-sort${isCurrent ? " is-current" : ""}`}
-                      onClick={() =>
-                        onSort(
-                          column.key,
-                          isCurrent && sort.dir === "asc" ? "desc" : "asc",
-                        )
-                      }
-                    >
-                      {column.label}
-                      {isCurrent ? (
-                        <span className="desk-sortable-table-direction" aria-hidden="true">
-                          {sort.dir === "asc" ? " ↑" : " ↓"}
-                        </span>
-                      ) : null}
-                    </button>
+                    <span className="desk-sortable-table-sorts">
+                      <SortButton label={column.label} current={isCurrent} dir={sort.dir} onSort={sortOf(column.key)} />
+                      {column.key === firstSortable
+                        ? columns
+                            .filter((c) => c.sortable && fold.has(c.key))
+                            .map((c) => (
+                              <SortButton
+                                key={c.key}
+                                label={c.label}
+                                current={sort.key === c.key}
+                                dir={sort.dir}
+                                onSort={sortOf(c.key)}
+                                narrowOnly
+                              />
+                            ))
+                        : null}
+                    </span>
                   ) : (
                     column.label
                   )}
@@ -140,6 +185,7 @@ export function DeskSortableTable<T>({
                 onRowKeyDown={onRowKeyDown}
                 onRowContextMenu={onRowContextMenu}
                 columnCount={columnCount}
+                fold={fold}
               />
             ))
           )}
@@ -162,10 +208,12 @@ function GroupRows<T>({
   onRowKeyDown,
   onRowContextMenu,
   columnCount,
+  fold,
 }: Omit<DeskSortableTableProps<T>, "data" | "sort" | "onSort" | "emptyLabel" | "groupBy" | "className"> & {
   label: string;
   items: T[];
   columnCount: number;
+  fold: Set<string>;
 }) {
   return (
     <>
@@ -199,7 +247,7 @@ function GroupRows<T>({
             onContextMenu={(event) => onRowContextMenu?.(event, item)}
           >
             {columns.map((column) => (
-              <td key={column.key}>{column.render(item)}</td>
+              <td key={column.key} className={fold.has(column.key) ? "is-fold" : undefined}>{column.render(item)}</td>
             ))}
             {rowActions ? (
               <td className="desk-sortable-table-actions">{rowActions(item)}</td>

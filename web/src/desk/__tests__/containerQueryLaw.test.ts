@@ -46,7 +46,10 @@ describe("HS-129-06 container-query law", () => {
     expect(intelligenceCss).toContain("@container surface (max-width: 560px)");
     expect(intelligenceCss).toContain("@container surface (max-width: 420px)");
     expect(roadmapWindowCss).toContain("@container surface (max-width: 720px)");
-    expect(listViewCss.match(/@container surface \(max-width: 720px\)/g)).toHaveLength(2);
+    // PHILO-9-04: the third block is the list face's fold (Kind, Zone and
+    // Attention ride the name Button in a surface of 720 px or less).
+    expect(listViewCss.match(/@container surface \(max-width: 720px\)/g)).toHaveLength(3);
+    expect(listViewCss).toMatch(/\.desk-next \.desk-list-face \{\s*container-type: inline-size;\s*container-name: surface;/);
 
     // The audited Repo breakpoint was removed before this story landed.
     expect(repoWindowCss).not.toMatch(/@media\s*\(\s*(?:max|min)-width/);
