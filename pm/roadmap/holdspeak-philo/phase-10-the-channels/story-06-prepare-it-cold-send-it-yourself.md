@@ -1,0 +1,38 @@
+# PHILO-10-06 - Prepare it cold, send it yourself
+
+- **Project:** holdspeak-philo
+- **Phase:** 10
+- **Status:** backlog
+- **Depends on:** PHILO-10-01 through PHILO-10-05; the owner's answer to Q6
+- **Unblocks:** the phase close
+- **Owner:** Astra (Luna) drives the cold session; Muad'Dib checks
+- **Closure finding:** the charter's exits 5 and 8
+- **Canvas:** none
+
+## Problem
+
+The owner's job: an agent gets the update ready to go; he looks once and presses Send; it is where it should be, with proof.
+
+## Scope
+
+- **In:** a cold-context Codex session (the Phase 9 R3 setup; zero repository reads in the retained log) finds a published update and a saved destination from the catalogue alone and prepares a send; the owner's Send is pressed on the face (rehearsed: the rig presses as the owner on an isolated hub); the Room shows SENT with its proof at 1440 and 393, read back from the hub; the same session's attempt to send is refused `owner_principal_required` with a receipt. The real-send legs Q6 allows: one per channel, each proof read back from the far side, redacted at capture.
+- **Out:** a sitting (never recorded as one).
+
+## Acceptance criteria
+
+- [ ] The prepared send, the owner's press, the record and the receipt read back from the hub; the agent's own send refused with its receipt.
+- [ ] The face at both widths shows PREPARED, then SENT with the proof.
+- [ ] The real-send legs as Q6 rules, or each limit named.
+- [ ] Rehearsed, owner-reviewed shots.
+
+## Effort (not a promise)
+
+PROVISIONAL: about 1 engineering day, plus the real-send legs.
+
+## Test plan
+
+- **Closing use:** the Phase 9 story 06 driver pattern, retained sessions, the zero-read fence.
+
+## Notes
+
+- 2026-09-28 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

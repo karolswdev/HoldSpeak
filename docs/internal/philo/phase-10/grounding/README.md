@@ -1,0 +1,87 @@
+# PHILO Phase 10 grounding — The Channels
+
+**Date:** 2026-09-28. **Base:** main `920e6189`. **Lane:** the Fedaykin docs lane (Opus 5.5) for Muad'Dib.
+**Isolation:** every probe ran with `HOME=$(mktemp -d)`; no real HOME, no owner DB, no account. Nothing was sent.
+
+The owner's words (2026-09-28): "I feel like 'delivery' should be an abstraction that we can plug many
+things into. [...] one implementation could be a simple file system delivery, another would be a slack
+message, another an e-mail [...] Not to mention gh work and acli work, that could also plug into that."
+
+## Files here
+
+| File | What |
+|---|---|
+| `cli-probe.out.txt` | `gh`, `acli`, `osascript` and Mail.app scripting on this machine (from `probes/cli_probe.sh.txt`) |
+| `file-outbox-probe.out.txt` | the existing file-write connector, run twice to the same name (from `probes/file_outbox_probe.py.txt`) |
+| `probes/` | the probe sources, stored as `.txt` so no runner collects them |
+
+## 1. The census: every outbound path that is a delivery or is shaped like one
+
+| # | Path | What leaves, to where | Admission today | Proof today | Shares with a Send |
+|---|---|---|---|---|---|
+| C1 | The update's Copy + Mark delivered (PHILO-9) | nothing leaves; he copies and confirms | `project.mark_update_delivered`, one kernel op, the row written in its terminal transaction (`holdspeak/services/project_update_service.py:1929-1980`) | the row: time, optional To, `operation_id NOT NULL UNIQUE` (`holdspeak/db/schema.py:4170-4186`) | the record, the idempotent key per press (`holdspeak/web/routes/project_updates.py:207-227`), the face (`web/src/features/project-room/update/UpdatePosture.tsx:52`, `:696`). Becomes the **manual** channel. |
+| C2 | `nudge.send` (the steward's reviewer nudge) | his text as a GitHub PR comment (`gh pr comment`) | `nudge.send` admitted (`holdspeak/room_operations.py:224-244`; `holdspeak/kernel/project.py:32-38`); the `gh` call is a separate `subprocess.exec` op | the comment URL parsed from `gh` stdout (`holdspeak/services/project_steward_service.py:1998-2045`) | a delivery in disguise: a rendered text, a GitHub target, a URL proof. See F4, F5. |
+| C3 | Cadence Telegram (N13) | Cadence messages to his paired chat | `external.egress`, destination `telegram:<method>:<chat>` (`holdspeak/cadence_telegram.py:31-57`) | Telegram's JSON answer (not stored as proof) | the egress op; a push to himself, not a document to others. Stays. |
+| C4 | Slack export of a meeting digest / follow-up | a Slack incoming webhook POST | an actuator proposal: propose → approve → execute (`holdspeak/slack_export.py:1-60`, `:166-217`; `holdspeak/services/meeting_aftercare_service.py:111`; face `web/src/pages/cores/history/AftercareGadgets.tsx:23-32`; the webhook in Settings, `web/src/pages/cores/SettingsCore.tsx:83`) | the proposal's audit row | a live Slack channel for meetings. The owner did not pick Slack for this phase: Out, unchanged. |
+| C5 | Meeting actuators: `gh issue create`, `gh pr comment`, commit status, webhook POST, the outbox file | GitHub, a webhook host, a local folder | actuator proposal + `ActuatorExecutor` claims its kernel op (`holdspeak/plugins/actuator_executor.py:234-257`); the effect through `build_gated_connector` (`holdspeak/plugins/gated_connector.py:236-288`) | the issue URL; the file path and bytes | **the write seam this phase composes** (F2). |
+| C6 | Intel queue failure alert | queue metrics to a webhook | `external.egress` (`holdspeak/intel_queue.py:915-940`) | none | an alert, not a document. Stays. |
+| C7 | Meeting export (download, CLI) | a file (download or `holdspeak history` write) | none (a read and a local write he asked for) | the file | the renderer for a later "meeting summary" payload (`holdspeak/meeting_exports.py`; `holdspeak/commands/history.py:11`). |
+| C8 | Voice macros (`open`, `sh -c`) | a local process | gated connector per macro (`holdspeak/plugins/voice_macro_connector.py:1-25`) | none | not a delivery. |
+
+Not deliveries: model calls to a remote endpoint (`holdspeak/intel/engine.py:356`, `holdspeak/kernel/inference_runner.py:814-818`), desktop notifications (`holdspeak/desktop_notify.py`), the Delivery Runtime package (F12).
+
+## 2. FINDINGs (ranked by what they cost the owner or the build)
+
+- **F1 — Nothing sends a document for him.** The update is copy and confirm by his Phase 9 Q0 ruling; the table's own comment says "the product sends nothing" (`holdspeak/db/schema.py:4170-4176`).
+- **F2 — The write seam already exists; the connector SDK is the read side.** `holdspeak/connector_sdk.py` describes read packs: `cli_enrichment` is "read-only CLI calls" (`:32`), `Snapshot` "never emit[s] effects" (`:767-776`), and the `acli_jira` / `acli_confluence` allow-lists are read-only verbs (`holdspeak/connector_packs/acli_jira.py:25-45`, `acli_confluence.py:27-46`). The write side is Phase 38's `holdspeak/plugins/gated_connector.py`: a `WriteConnectorManifest` with one permission and an allow-list that "can only narrow" (`:127-176`), and `build_gated_connector` = plan → kernel → interpret (`:236-288`). It has six live users (`github_issue_actuator.py`, `github_pr_actuator.py`, `webhook_post_actuator.py`, `slack_export.py`, `voice_macro_connector.py`, `missioncontrol_bridge.py`). **A channel is one `WriteConnectorManifest` + one `plan` + one `interpret`. No new SDK capability and no new plugin framework is needed.**
+- **F3 — A CLI send is admitted as `subprocess.exec`, not `external.egress`.** `gh`, `acli` and `osascript` run through `run_subprocess_operation` (`holdspeak/kernel/subprocess_exec.py:227-292`); its admission hashes binary, argv and cwd only (`:155-164`; the argv prefix check at `:150-154`), not `input=`. A body passed on stdin (`--body-file -`) is outside that hash: the body must ride in argv, or the parent op's payload hash must cover the rendered document. An AGENT principal is refused (`:177-186`, `:265-266`) — the owner's "You, every time" is already the kernel's rule for CLI effects.
+- **F4 — `nudge.send` records "result unknown" as "failed" and offers Send again.** A `gh` timeout is receipted `indeterminate` by the kernel (`subprocess_exec.py:282-289`), then `send_nudge` catches every exception as `outcome: failed` and returns the step to `proposed` (`project_steward_service.py:2049-2066`); the operation then ends on the named refusal `send_failed` (`holdspeak/services/steward_contract.py:649-660`). The kernel says unknown, the nudge says failed, and a second press can post the comment twice. Code-read; not run (no account on an isolated HOME).
+- **F5 — The nudge's `gh` op has no parent.** `run_subprocess_operation` sends no `parent_operation_id` (`subprocess_exec.py:249-260`) and `_route` passes none (`gated_connector.py:201-216`), so the comment is a root `subprocess.exec` beside `nudge.send`, not its child (Article XI.1, "nesting inside an admitted operation exempts nothing"; XI.2 on children).
+- **F6 — Every egress allow-list today is the destination itself.** Each caller passes `allowed_destinations=(destination,)` (`holdspeak/cadence_telegram.py:54`, `holdspeak/intel_queue.py:936`, `holdspeak/intel/engine.py:363`, `holdspeak/kernel/inference_runner.py:818`), so the check at `holdspeak/kernel/external_egress.py:168-169` cannot refuse them. Only `PermissionGate.open_outbound_socket` passes a manifest host list (`holdspeak/connector_runtime.py:194-233`). Saved destinations would be the first real list.
+- **F7 — The file-write connector overwrites without a word.** `build_outbox_connector` writes `Path.write_text` to `outbox/<name>` (`holdspeak/plugins/builtin/followup_ticket_actuator.py:112-146`). Probe (`file-outbox-probe.out.txt`): two writes to `update.md` → one file, the second body; `../../escape.md` is clamped to `escape.md` (`:138`). Proof is path + bytes, no digest.
+- **F8 — `acli` 1.3.36 cannot create or update a Confluence page.** `acli confluence page` offers only `view`; `blog create` exists (`--space-id`, `--title`, `--body` in storage-format XHTML, `--status current|draft`, `--json`). Jira has `workitem comment create` (`--key`, `--body` plain text or ADF, `--body-file`, `--jql`, `--json`) (`cli-probe.out.txt`). 1.3.39 is available; what it adds is unknown.
+- **F9 — An `acli` send must switch the account first, under the existing lock.** `acli` has one active account per product; the providers switch and verify under one cross-process lock (`holdspeak/services/jira_provider.py:81-175`, `:535-590`; `holdspeak/services/confluence_provider.py:8`, `:270-300`, `:544-580`). A send is switch → status → create inside that lock.
+- **F10 — Mail.app's `send` answers only true or false.** The scripting dictionary: `send` → "true if sending was successful" (`cli-probe.out.txt`, Mail sdef line 258-260); a `message id` is readable only on a stored message (line 592), not returned by `send`.
+- **F11 — HTML rendering is available only by accident.** `markdown-it-py` imports in the venv but is not declared in `pyproject.toml` (a transitive dependency); the Phase 9 F14 lesson (`jsonschema`) says declare it if a channel uses it.
+- **F12 — "Delivery" is a taken word in the code and the docs.** `holdspeak/delivery/` is the Delivery Runtime (HS-94-02, dw/gh delivery sources, `holdspeak/delivery/__init__.py:1-20`), and the repo runs Delivery Workbench. The product verb is **Send**; the code word is **channel**.
+- **F13 — Slack already sends meeting results** (C4). The owner's pick leaves Slack Out; its path stays as it is.
+- **F14 — "What is sent is what was previewed" exists as law for actuators.** `holdspeak/actuator_authority.py:1-40` binds payload hash, normalized destination, preview, renderer version and policy version at approval; the executor refuses a mismatch before egress (`holdspeak/plugins/actuator_executor.py:1-30`). A Send copies that parity, not the proposal table.
+
+## 3. Per channel, the mechanics on this machine
+
+| Channel | Command or call | Admission of the effect | "Sent" proof | Custody | Egress badge | Limits found |
+|---|---|---|---|---|---|---|
+| Manual | none (clipboard + his confirm) | `project.mark_update_delivered` (C1) | his confirmation row | none | none | unchanged |
+| File | write `<folder>/<name>.md`, never over an existing file | the Send op's own effect (a filing act, Article XI.1 "may be irreversible"); no child op kind for a local write exists | absolute path + sha256 of the bytes read back + size | a folder path (not a secret) | `local`, or `cloud` when the folder is under `~/Library/CloudStorage/` or `~/Library/Mobile Documents/` (a synced folder leaves the machine) | F7 (the old outbox overwrites) |
+| GitHub | `gh issue comment <n> --repo o/r --body <text>`; `gh pr comment` for a PR (the nudge precedent); `gh gist create` only if Q2 picks it | `subprocess.exec` child, argv-prefix scope | the comment URL on stdout (`project_steward_service.py:2000-2006` parses it) | his `gh` login; the token in the macOS keychain, the host list in `~/.config/gh` (`holdspeak/services/github_provider.py:81`) — HoldSpeak holds no token | `cloud` (github.com) | a comment is at most 65,536 characters (GitHub; not probed); `--body-file -` is outside the admission hash (F3) |
+| Jira | `acli jira workitem comment create --key K-1 --body <text> --json` | `subprocess.exec` children: switch, status, create, under the acli lock (F9) | the JSON answer; its shape is **unknown** until a real send (isolated HOME: `unauthorized`) | his `acli` login (site, email) | `cloud` (the site) | `--jql` / `--filter` fan out to many items: the plan never builds them |
+| Confluence | `acli confluence blog create --space-id <id> --title <t> --body <xhtml> --json` | as Jira | the JSON answer (shape unknown) | as Jira | `cloud` | no page create or update (F8); the body must be storage-format XHTML |
+| Email | see section 4 | Q1 | Q1 | Q1 | `cloud` | Q1 |
+
+**Real sends need his accounts.** On an isolated HOME: `gh` "not logged into any GitHub hosts"; `acli` "unauthorized" for Jira and Confluence (`cli-probe.out.txt`). A proof send needs a scratch HOME that holds only the login files (the Phase 9 R3 "auth file only" setup is the precedent) or a leg on his desk; each is a decision (Q6).
+
+## 4. Email: the transports, for the owner's word
+
+| | (a) SMTP, password in the keychain | (b) Mail.app by `osascript` | (c) Gmail API with OAuth | (d) Open a draft in Mail; he presses Send there |
+|---|---|---|---|---|
+| Custody | an app password in the macOS keychain through `keyring` (declared, `pyproject.toml:60`; the People key precedent `holdspeak/people/keys.py:1-50`) | none: Mail holds his accounts | an OAuth client, a refresh token in the keychain; a Google Cloud project he owns | none |
+| Sends as | the SMTP login | his Mail account, with a copy in his Sent box | his Gmail | him, by hand |
+| Admission | `external.egress` to `smtp-host:port` | `subprocess.exec` (`osascript`), the script built from the rendered message | `external.egress` to `gmail.googleapis.com` | a local act; then the manual confirm |
+| Proof | the server's `250` answer + the `Message-ID` HoldSpeak writes | "handed to Mail" (`send` = true, F10); the server's answer is not visible | the API's message id and thread id | his confirmation only |
+| Works with his work mail | only where the provider allows SMTP with an app password (many company tenants turn it off — not verified for his) | any account Mail has (Exchange, Google, IMAP) | Google only | any |
+| Setup face | host, port, user, password | pick the Mail account (read from Mail) | a consent flow | none |
+| New dependencies | none (`smtplib`, `email` are stdlib) | none | Google client libraries or hand-written HTTP; token refresh | none |
+| First-use cost | he makes an app password | macOS asks once to let HoldSpeak control Mail (the Automation prompt; which process it names under the hub's launch is **unknown**) | a Cloud project, a consent screen; tokens of an unverified app expire | none |
+| Platform | any | macOS only | any | macOS (or a `mailto:` link anywhere) |
+| Tenet 1 cost | medium (secret custody + TLS + a form) | low | high | lowest |
+
+**Recommendation: (b) Mail.app.** HoldSpeak holds no secret, it works with whatever account he already uses at work, and his Sent box is the record he trusts. The honest limit is the proof: the receipt says **HANDED TO MAIL**, not "delivered". If he wants server proof and his provider allows app passwords, (a) is the second choice. (c) fails Tenet 1. (d) is the manual channel with a head start and does not meet "Email" as he picked it.
+
+## 5. Unknown (not verified here)
+
+- The JSON answer of `acli jira workitem comment create --json` and `acli confluence blog create --json` (no account on an isolated HOME).
+- Whether `acli` 1.3.39 adds Confluence page create or update.
+- Whether `gh issue comment <n>` accepts a pull request number (the nudge uses `gh pr comment`).
+- Which process macOS names in the Automation prompt when the hub runs Mail by `osascript`, and whether the prompt appears when the hub runs under launchd.
+- Whether his mail provider allows SMTP with an app password.
+- Where `acli` keeps its login (a file under HOME or the keychain): it decides how a scratch-HOME proof send is set up.

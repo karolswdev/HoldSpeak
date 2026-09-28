@@ -1,0 +1,102 @@
+which gh: /opt/homebrew/bin/gh
+which acli: /opt/homebrew/bin/acli
+which osascript: /usr/bin/osascript
+gh version 2.86.0 (2026-01-21)
+acli version 1.3.36-stable
+You're using an outdated version 1.3.36-stable. Update to the latest version 1.3.39-stable.
+## gh auth status (isolated HOME)
+You are not logged into any GitHub hosts. To log in, run: gh auth login
+## acli jira auth status
+✗ Error: unauthorized: use 'acli jira auth login' to authenticate
+## acli confluence auth status
+✗ Error: unauthorized: use 'acli confluence auth login' to authenticate
+## gh issue comment --help (flags)
+FLAGS
+  -b, --body text        The comment body text
+  -F, --body-file file   Read body text from file (use "-" to read from standard input)
+      --create-if-none   Create a new comment if no comments are found. Can be used only with --edit-last
+      --delete-last      Delete the last comment of the current user
+      --edit-last        Edit the last comment of the current user
+  -e, --editor           Skip prompts and open the text editor to write the body in
+  -w, --web              Open the web browser to write the comment
+      --yes              Skip the delete confirmation prompt when --delete-last is provided
+
+INHERITED FLAGS
+## gh pr comment --help (body flags)
+  -b, --body text        The comment body text
+  -F, --body-file file   Read body text from file (use "-" to read from standard input)
+      --create-if-none   Create a new comment if no comments are found. Can be used only with --edit-last
+      --edit-last        Edit the last comment of the current user
+  $ gh pr comment 13 --body "Hi from GitHub CLI"
+## gh gist create --help (flags)
+FLAGS
+  -d, --desc string       A description for this gist
+  -f, --filename string   Provide a filename to be used when reading from standard input
+  -p, --public            List the gist publicly (default "secret")
+  -w, --web               Open the web browser with created gist
+
+INHERITED FLAGS
+## acli jira workitem comment --help
+Available Commands:
+  create      Create a comment on work items
+  delete      Delete a comment for a given workitem
+  list        List comments for a work item.
+  update      Update a comment on a work item.
+  visibility  Get visibility options for work item comments.
+
+## acli jira workitem comment create --help (flags)
+Flags:
+  -b, --body string        Comment body in plain text or Atlassian Document Format (ADF)
+  -F, --body-file string   Plain text file with text or Atlassian Document Format (ADF)
+  -e, --edit-last          Edit the last comment from the same author
+      --editor             Skip prompts and open the text editor to write the body
+      --filter string      Filter ID of work items to comment
+  -h, --help               Show help for command
+      --ignore-errors      Ignore the errors and continue
+      --jql string         JQL query for work items to comment
+      --json               Generate a JSON output
+  -k, --key string         A list of work item keys to comment
+## acli confluence --help
+Available Commands:
+  auth        Authenticate to use Confluence with OAuth or API token.
+  blog        Confluence blog commands.
+  page        Confluence page commands.
+  space       Confluence space commands.
+
+## acli confluence page --help
+Available Commands:
+  view        View details of a Confluence page.
+
+## acli confluence page create --help (falls back to the group help: no such verb)
+Available Commands:
+  view        View details of a Confluence page.
+
+## acli confluence blog --help
+Available Commands:
+  create      Create a new Confluence blog post in the specified space.
+  list        List Confluence blog posts.
+  view        View details of a Confluence blog post.
+
+## acli confluence blog create --help (flags)
+Flags:
+      --body string         Blog post content in Confluence storage format (XHTML)
+      --created-at string   ISO 8601 timestamp for when the blog post is created (optional)
+      --from-file string    Read blog post content from a file (plain text or HTML)
+      --from-json string    Read blog post payload from a JSON file
+      --generate-json       Generate example JSON structure for use with --from-json
+  -h, --help                Show help for command
+  -j, --json                Output result in JSON format
+      --private             Create the blog post as private
+      --space-id string     ID of the space where the blog post will be created
+      --status string       Status of the blog post (current for published or draft) (default "current")
+      --title string        Title of the blog post
+## Mail.app scripting: the send command (sdef; reads the app bundle, not HOME)
+258:		<command name="send" code="emsgsend" description="Sends a message.">
+259-			<direct-parameter type="outgoing message" description="the message to send"/>
+260-			<result type="boolean" description="true if sending was successful, false if not"/>
+261-		</command>
+592:			<property name="message id" code="meid" type="text" access="r" description="The unique message ID string">
+## markdown-it-py importable (transitive, not declared)
+<p><strong>On track</strong></p>
+
+pyproject.toml: no rich/markdown-it declared

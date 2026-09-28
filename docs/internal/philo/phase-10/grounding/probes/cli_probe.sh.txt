@@ -1,0 +1,23 @@
+#!/bin/zsh
+# PHILO-10 grounding: the channel CLIs on this machine, on an isolated HOME (no accounts).
+export HOME=$(mktemp -d)
+for c in gh acli osascript; do echo "which $c: $(which $c)"; done
+gh --version | head -1
+acli --version 2>&1 | head -2
+echo "## gh auth status (isolated HOME)"; gh auth status 2>&1 | head -2
+echo "## acli jira auth status"; acli jira auth status 2>&1 | head -1
+echo "## acli confluence auth status"; acli confluence auth status 2>&1 | head -1
+echo "## gh issue comment --help (flags)"; gh issue comment --help 2>&1 | sed -n '/^FLAGS/,/^INHERITED/p'
+echo "## gh pr comment --help (body flags)"; gh pr comment --help 2>&1 | grep -E -- '--body|--edit-last'
+echo "## gh gist create --help (flags)"; gh gist create --help 2>&1 | sed -n '/^FLAGS/,/^INHERITED/p'
+echo "## acli jira workitem comment --help"; acli jira workitem comment --help 2>&1 | sed -n '/Available/,/^$/p'
+echo "## acli jira workitem comment create --help (flags)"; acli jira workitem comment create --help 2>&1 | sed -n '/^Flags/,$p'
+echo "## acli confluence --help"; acli confluence --help 2>&1 | sed -n '/Available/,/^$/p'
+echo "## acli confluence page --help"; acli confluence page --help 2>&1 | sed -n '/Available/,/^$/p'
+echo "## acli confluence page create --help (falls back to the group help: no such verb)"; acli confluence page create --help 2>&1 | sed -n '/Available/,/^$/p'
+echo "## acli confluence blog --help"; acli confluence blog --help 2>&1 | sed -n '/Available/,/^$/p'
+echo "## acli confluence blog create --help (flags)"; acli confluence blog create --help 2>&1 | sed -n '/^Flags/,$p'
+echo "## Mail.app scripting: the send command (sdef; reads the app bundle, not HOME)"; sdef /System/Applications/Mail.app 2>/dev/null | grep -n -A3 '<command name="send"'
+sdef /System/Applications/Mail.app 2>/dev/null | grep -n 'name="message id"'
+echo "## markdown-it-py importable (transitive, not declared)"; cd /Users/karol/dev/tools/wt-philo-10-charter && .venv/bin/python -c "from markdown_it import MarkdownIt; print(MarkdownIt('commonmark').render('**On track**'))"
+grep -n -E '"rich|markdown' pyproject.toml || echo "pyproject.toml: no rich/markdown-it declared"
